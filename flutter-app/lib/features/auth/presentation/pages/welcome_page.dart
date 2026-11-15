@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -66,21 +67,27 @@ class _WelcomePageState extends State<WelcomePage>
                     ),
                     child: Row(
                       children: [
-                        GestureDetector(
-                          onTap: () =>
-                              LanguageSwitcherButton.showLanguageSheet(context),
-                          child: Container(
-                            height: 40,
-                            width: 40,
-                            decoration: BoxDecoration(
-                              color: const Color(
-                                0xFF30E8E8,
-                              ).withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(
-                              Icons.language,
-                              color: AppColors.accentMint,
+                        Semantics(
+                          button: true,
+                          label: 'common.language'.tr(),
+                          child: TapTarget(
+                            onTap: () =>
+                                LanguageSwitcherButton.showLanguageSheet(
+                                  context,
+                                ),
+                            child: Container(
+                              height: 40,
+                              width: 40,
+                              decoration: BoxDecoration(
+                                color: const Color(
+                                  0xFF30E8E8,
+                                ).withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                Icons.language,
+                                color: AppColors.accentMint,
+                              ),
                             ),
                           ),
                         ),

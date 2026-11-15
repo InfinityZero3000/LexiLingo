@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -101,7 +102,7 @@ class QuizProvider extends ChangeNotifier {
         },
         (dueList) async {
           if (dueList.isEmpty) {
-            _errorMessage = 'No vocabulary due for review!';
+            _errorMessage = 'flashcard.nothingDueBody'.tr();
             _isLoading = false;
             notifyListeners();
             return;
@@ -113,7 +114,8 @@ class QuizProvider extends ChangeNotifier {
         },
       );
     } catch (e) {
-      _errorMessage = 'Unexpected error: $e';
+      debugPrint('Unexpected vocabulary error: $e');
+      _errorMessage = 'flashcard.unexpectedError'.tr();
       _isLoading = false;
       notifyListeners();
     }
@@ -139,7 +141,7 @@ class QuizProvider extends ChangeNotifier {
         },
         (deckItems) async {
           if (deckItems.isEmpty) {
-            _errorMessage = 'No vocabulary found in this deck!';
+            _errorMessage = 'flashcard.noVocabularyInDeck'.tr();
             _isLoading = false;
             notifyListeners();
             return;
@@ -149,7 +151,8 @@ class QuizProvider extends ChangeNotifier {
         },
       );
     } catch (e) {
-      _errorMessage = 'Unexpected error: $e';
+      debugPrint('Unexpected vocabulary error: $e');
+      _errorMessage = 'flashcard.unexpectedError'.tr();
       _isLoading = false;
       notifyListeners();
     }
@@ -179,7 +182,9 @@ class QuizProvider extends ChangeNotifier {
         },
         (vocabItems) async {
           if (vocabItems.isEmpty) {
-            _errorMessage = 'No vocabulary found for topic: $tag';
+            _errorMessage = 'flashcard.noVocabularyForTopic'.tr(
+              namedArgs: {'topic': tag},
+            );
             _isLoading = false;
             notifyListeners();
             return;
@@ -210,7 +215,8 @@ class QuizProvider extends ChangeNotifier {
         },
       );
     } catch (e) {
-      _errorMessage = 'Unexpected error: $e';
+      debugPrint('Unexpected vocabulary error: $e');
+      _errorMessage = 'flashcard.unexpectedError'.tr();
       _isLoading = false;
       notifyListeners();
     }
@@ -220,7 +226,7 @@ class QuizProvider extends ChangeNotifier {
   /// publish the session (or an error when nothing usable was produced).
   Future<void> _finalizeWithCards(List<ReviewCardEntity> cards) async {
     if (cards.isEmpty) {
-      _errorMessage = 'Failed to load vocabulary items';
+      _errorMessage = 'flashcard.loadFailed'.tr();
       _isLoading = false;
       notifyListeners();
       return;
@@ -230,7 +236,7 @@ class QuizProvider extends ChangeNotifier {
     _buildQuestions(cards, pool);
 
     if (_questions.isEmpty) {
-      _errorMessage = 'Not enough vocabulary to build a quiz yet';
+      _errorMessage = 'flashcard.quizNotEnough'.tr();
       _isLoading = false;
       notifyListeners();
       return;

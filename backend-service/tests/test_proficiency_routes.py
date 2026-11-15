@@ -116,6 +116,7 @@ async def auth_client():
         mock_session.scalar = AsyncMock(return_value=None)
         mock_session.add = MagicMock()
         mock_session.commit = AsyncMock()
+        mock_session.flush = AsyncMock()
         mock_session.refresh = AsyncMock(side_effect=fake_refresh)
         yield mock_session
 
@@ -165,6 +166,7 @@ async def auth_client_with_profile():
         mock_session.scalar = AsyncMock(return_value=None)
         mock_session.add = MagicMock()
         mock_session.commit = AsyncMock()
+        mock_session.flush = AsyncMock()
         mock_session.refresh = AsyncMock()
         yield mock_session
 
@@ -548,6 +550,15 @@ class TestGetPlacementTest:
 # ===========================================================================
 # POST /proficiency/placement-test/submit
 # ===========================================================================
+
+@pytest.fixture(autouse=True)
+def _no_learner_state_epoch():
+    """The session here is a mock; the epoch bump has its own tests on SQLite."""
+    with patch(
+        "app.services.cefr_level_service.bump_learner_state_epoch", autospec=True
+    ):
+        yield
+
 
 class TestSubmitPlacementTest:
 

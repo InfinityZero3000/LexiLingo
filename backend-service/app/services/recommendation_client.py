@@ -54,7 +54,15 @@ class RecommendationClient:
                     response.status_code,
                 )
                 return None
-            return response.json()
+            data = response.json()
+            # A 200 that is not the ranker's shape (a proxy page, a contract
+            # drift) used to come back as "no recommendations, not degraded".
+            if not isinstance(data, dict) or not isinstance(
+                data.get("recommendations"), list
+            ):
+                logger.warning("recommendation_client: unexpected response shape")
+                return None
+            return data
         except Exception as exc:
             logger.warning("recommendation_client: %s", exc)
             return None

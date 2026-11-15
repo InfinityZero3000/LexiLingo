@@ -154,21 +154,24 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('LexiChatProvider', () {
-    test('legacy audio transcription requests language auto-detection', () async {
-      final aiClient = _CapturingAiApiClient();
-      final provider = LexiChatProvider(
-        repository: _FakeLexiChatRepository(),
-        aiClient: aiClient,
-      );
-      addTearDown(provider.dispose);
+    test(
+      'legacy audio transcription requests language auto-detection',
+      () async {
+        final aiClient = _CapturingAiApiClient();
+        final provider = LexiChatProvider(
+          repository: _FakeLexiChatRepository(),
+          aiClient: aiClient,
+        );
+        addTearDown(provider.dispose);
 
-      final transcript = await provider.transcribeAudio(
-        Uint8List.fromList([1, 2, 3]),
-      );
+        final transcript = await provider.transcribeAudio(
+          Uint8List.fromList([1, 2, 3]),
+        );
 
-      expect(aiClient.path, '/stt/transcribe?language=auto');
-      expect(transcript, 'xin chào');
-    });
+        expect(aiClient.path, '/stt/transcribe?language=auto');
+        expect(transcript, 'xin chào');
+      },
+    );
 
     test('builds web-safe request ids without crypto random', () async {
       final repo = _FakeLexiChatRepository();
@@ -279,6 +282,29 @@ void main() {
       expect(provider.messages.last.syncStatus, 'synced');
     });
 
+    test('an expired login says so, not the raw failure', () async {
+      final repo = _FakeLexiChatRepository()
+        ..pagedError = Exception('failed with status 401');
+      final provider = LexiChatProvider(
+        repository: repo,
+        aiClient: AiApiClient(),
+      );
+      addTearDown(provider.dispose);
+
+      await provider.selectSession(
+        LexiSessionSummary(
+          sessionId: 'old',
+          userId: 'me',
+          title: 'Old session',
+          createdAt: DateTime.parse('2026-05-30T00:00:00Z'),
+          updatedAt: DateTime.parse('2026-05-30T00:00:00Z'),
+          messageCount: 1,
+        ),
+      );
+
+      expect(provider.error, 'errors.sessionExpired');
+    });
+
     test('clears selected session when backend returns forbidden', () async {
       final repo = _FakeLexiChatRepository()
         ..pagedError = Exception(
@@ -303,7 +329,7 @@ void main() {
 
       expect(provider.session, isNull);
       expect(provider.messages, isEmpty);
-      expect(provider.error, contains('another account'));
+      expect(provider.error, 'errors.sessionOtherAccount');
     });
 
     test('assembles one duplex voice turn without duplicate messages', () {

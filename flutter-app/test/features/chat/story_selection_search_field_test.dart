@@ -11,12 +11,20 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class _StoryRepositoryStub implements StoryRepository {
+  // The search field only renders once there is something to search.
   @override
   Future<Either<Failure, List<StoryListItem>>> getStories({
     String? category,
     DifficultyLevel? difficultyLevel,
     int limit = 100,
-  }) async => const Right([]);
+  }) async => const Right([
+    StoryListItem(
+      storyId: 's1',
+      title: LocalizedTitle(vi: 'Ở sân bay', en: 'At the airport'),
+      difficultyLevel: DifficultyLevel.A2,
+      category: 'travel',
+    ),
+  ]);
 
   @override
   Future<Either<Failure, List<String>>> getCategories() async =>
@@ -40,6 +48,7 @@ void main() {
         ),
       ),
     );
+    await tester.pump();
     await tester.pump();
 
     final fieldCenter = tester.getCenter(find.byType(TextField));

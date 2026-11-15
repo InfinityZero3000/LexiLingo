@@ -514,20 +514,21 @@ void main() {
     expect(chat.audioMuted, isFalse);
   });
 
-  pageTest('backgrounding the app silences spoken replies even without a call', (
-    tester,
-  ) async {
-    await pumpPage(tester);
-    expect(chat.audioMuted, isFalse);
+  pageTest(
+    'backgrounding the app silences spoken replies even without a call',
+    (tester) async {
+      await pumpPage(tester);
+      expect(chat.audioMuted, isFalse);
 
-    goToBackground(tester);
-    await tester.pump(const Duration(milliseconds: 100));
-    expect(chat.audioMuted, isTrue);
+      goToBackground(tester);
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(chat.audioMuted, isTrue);
 
-    comeBack(tester);
-    await tester.pump(const Duration(milliseconds: 100));
-    expect(chat.audioMuted, isFalse);
-  });
+      comeBack(tester);
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(chat.audioMuted, isFalse);
+    },
+  );
 
   pageTest('returning to the app does not unmute a tab that is hidden', (
     tester,

@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
@@ -193,26 +194,29 @@ class TtsSpeedButton extends StatelessWidget {
     return Consumer<TtsSettingsProvider>(
       builder: (context, settings, child) {
         return Tooltip(
-          message:
-              'voice.ttsSpeedTooltip'.tr(namedArgs: {'speed': settings.speedLabel}),
+          message: 'voice.ttsSpeedTooltip'.tr(
+            namedArgs: {'speed': settings.speedLabel},
+          ),
           child: InkWell(
             onTap: () => settings.cycleSpeed(),
             onLongPress: () => _showSpeedBottomSheet(context, settings),
             borderRadius: BorderRadius.circular(size / 2),
-            child: Container(
-              width: size,
-              height: size,
-              decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Text(
-                  settings.speedLabel,
-                  style: TextStyle(
-                    fontSize: size * 0.3,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).primaryColor,
+            child: TapTargetBox(
+              child: Container(
+                width: size,
+                height: size,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    settings.speedLabel,
+                    style: TextStyle(
+                      fontSize: size * 0.3,
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).primaryColor,
+                    ),
                   ),
                 ),
               ),

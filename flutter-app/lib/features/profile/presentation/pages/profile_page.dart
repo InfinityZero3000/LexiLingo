@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/features/admin/admin_app.dart';
@@ -91,13 +92,14 @@ class _ProfilePageState extends State<ProfilePage> {
     final accent = AppColorRoles.primary(isDark);
 
     return Scaffold(
+      // "Member since" lives in the hero card, where it has the full width;
+      // next to four actions it was being cut to "Member since Nov 2…".
       appBar: AppBar(
-        toolbarHeight: 86,
         titleSpacing: 16,
         title: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: accent,
                 borderRadius: BorderRadius.circular(12),
@@ -105,32 +107,18 @@ class _ProfilePageState extends State<ProfilePage> {
               child: Icon(
                 Icons.person_rounded,
                 color: Theme.of(context).colorScheme.surface,
-                size: 22,
+                size: 20,
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'profile.title'.tr(),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    formatMemberSince(context, user?.createdAt),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColorRoles.textSecondary(isDark),
-                    ),
-                  ),
-                ],
+              child: Text(
+                'profile.title'.tr(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -140,7 +128,7 @@ class _ProfilePageState extends State<ProfilePage> {
           // Wallet/Gems Button
           Consumer<GamificationProvider>(
             builder: (context, gamification, _) {
-              return GestureDetector(
+              return TapTarget(
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const WalletScreen()),
@@ -181,13 +169,6 @@ class _ProfilePageState extends State<ProfilePage> {
             },
           ),
           IconButton(
-            icon: Icon(Icons.science_rounded, color: accent),
-            tooltip: 'practiceLab.shortTitle'.tr(),
-            onPressed: () {
-              Navigator.pushNamed(context, '/practice-lab');
-            },
-          ),
-          IconButton(
             icon: Icon(Icons.workspace_premium_rounded, color: accent),
             tooltip: 'premium.title'.tr(),
             onPressed: () {
@@ -196,6 +177,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
           IconButton(
             icon: Icon(Icons.settings, color: accent),
+            tooltip: 'profile.settings'.tr(),
             onPressed: () {
               Navigator.push(
                 context,

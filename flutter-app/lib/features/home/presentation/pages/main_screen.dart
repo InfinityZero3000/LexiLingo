@@ -6,14 +6,18 @@ import '../../../chat/presentation/providers/story_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import 'home_page.dart';
 import '../../../course/presentation/screens/course_list_screen.dart';
-import '../../../chat/presentation/pages/story_selection_page.dart';
+import '../../../practice/presentation/pages/practice_lab_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
-import '../../../lexi_chat/presentation/pages/lexi_chat_page.dart';
+import '../../../lexi_chat/presentation/pages/lexi_hub_page.dart';
 import 'package:lexilingo_app/core/network/api_config.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../gamification/presentation/providers/gamification_provider.dart';
 import '../../../gamification/presentation/widgets/starter_reward_dialog.dart';
+import '../../../level/presentation/providers/level_provider.dart';
+import '../../../progress/presentation/providers/streak_provider.dart';
+import 'package:lexilingo_app/core/services/app_navigation_service.dart';
+import '../providers/home_provider.dart';
 
 class MainScreen extends StatefulWidget {
   final int initialIndex;
@@ -41,9 +45,9 @@ const _tabs = <({IconData icon, IconData activeIcon, String label})>[
     label: 'home.navLexi',
   ),
   (
-    icon: PhosphorIconsRegular.chatCircleDots,
-    activeIcon: PhosphorIconsFill.chatCircleDots,
-    label: 'home.navTopic',
+    icon: PhosphorIconsRegular.flask,
+    activeIcon: PhosphorIconsFill.flask,
+    label: 'home.navPracticeLab',
   ),
   (
     icon: PhosphorIconsRegular.userCircle,
@@ -52,7 +56,7 @@ const _tabs = <({IconData icon, IconData activeIcon, String label})>[
   ),
 ];
 
-class _MainScreenState extends State<MainScreen> {
+class _MainScreenState extends State<MainScreen> with RouteAware {
   late int _currentIndex;
   bool _lexiWarmedUp = false;
   bool _starterRewardChecked = false;
@@ -62,6 +66,35 @@ class _MainScreenState extends State<MainScreen> {
   static const int _lexiTab = 2;
   static const int _profileTab = 4;
   final Map<int, Widget> _pageCache = {};
+  DateTime? _lastProgressRefresh;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route != null) AppNavigationService.routeObserver.subscribe(this, route);
+  }
+
+  @override
+  void dispose() {
+    AppNavigationService.routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() => _refreshProgress();
+
+  void _refreshProgress() {
+    final now = DateTime.now();
+    final last = _lastProgressRefresh;
+    if (last != null && now.difference(last) < const Duration(seconds: 2)) {
+      return;
+    }
+    _lastProgressRefresh = now;
+    context.read<HomeProvider>().refreshWeeklyProgressSilently();
+    context.read<LevelProvider>().fetchLevelFull();
+    context.read<StreakProvider>().loadStreak();
+  }
 
   Widget _buildPage(int index) {
     switch (index) {
@@ -70,9 +103,9 @@ class _MainScreenState extends State<MainScreen> {
       case 1:
         return const CourseListScreen();
       case 2:
-        return const LexiChatPage();
+        return const LexiHubPage();
       case 3:
-        return const StorySelectionPage();
+        return const PracticeLabPage();
       case 4:
         return const ProfilePage();
       default:
@@ -183,7 +216,7 @@ class _MainScreenState extends State<MainScreen> {
         if (!_pageCache.containsKey(i)) return const SizedBox.shrink();
         // Lexi keeps its mic and speaker; it has to be told when it is hidden.
         final page = switch (i) {
-          _lexiTab => LexiChatPage(isActive: _currentIndex == i),
+          _lexiTab => LexiHubPage(isActive: _currentIndex == i),
           // The tab stays mounted, so Profile reloads when it is selected.
           _profileTab => ProfilePage(isActive: _currentIndex == i),
           _ => _pageCache[i]!,
@@ -198,10 +231,12 @@ class _MainScreenState extends State<MainScreen> {
       _lexiWarmedUp = true;
       _warmupAiModels();
     }
+    final changed = index != _currentIndex;
     setState(() {
       _getPage(index); // build page lazily on first visit
       _currentIndex = index;
     });
+    if (changed && (index == 0 || index == _profileTab)) _refreshProgress();
   }
 
   Widget _buildNavigationRail(BuildContext context, double width) {

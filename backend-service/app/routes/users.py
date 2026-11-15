@@ -16,6 +16,13 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.crud.user import UserCRUD
 from app.models.user import User
+from app.services.cefr_level_service import (
+    apply_level_change,
+    get_or_create_profile,
+    level_verified,
+    normalise_level,
+    publish_level_change,
+)
 from app.schemas.user import UserResponse, UserUpdate
 from app.services.learner_state import bump_learner_state_epoch
 from app.schemas.common import MessageResponse, ApiResponse
@@ -25,7 +32,7 @@ from app.schemas.level import (
     WeeklyActivityResponse,
 )
 from app.services.level_service import LevelService, get_numeric_level_progress
-from app.services.rank_service import apply_rank_info_to_user, calculate_rank as calc_rank
+from app.services.rank_service import apply_rank_info_to_user, calculate_rank as calc_rank, rank_proficiency_level
 from app.services.user_stats_service import (
     get_user_stats,
     get_weekly_activity,
@@ -73,6 +80,8 @@ def _serialize_user_response(user: User) -> UserResponse:
         created_at=getattr(user, "created_at"),
         last_login=getattr(user, "last_login", None),
         cefr_level=_safe_str(getattr(user, "cefr_level", None), normalized_level),
+        certified_level=rank_proficiency_level(user),
+        level_verified=level_verified(user),
         goal=getattr(user, "goal", None),
         interest=getattr(user, "interest", None),
         total_xp=_safe_int(getattr(user, "total_xp", None), 0),
@@ -105,7 +114,7 @@ async def get_current_user_profile(
     # with the latest gamification constants
     rank_info = calc_rank(
         numeric_level=current_user.numeric_level or 1,
-        proficiency_level=current_user.level or "A1"
+        proficiency_level=rank_proficiency_level(current_user)
     )
     apply_rank_info_to_user(current_user, rank_info)
     await db.commit()
@@ -126,7 +135,21 @@ async def update_current_user_profile(
     """
     # Update user fields
     update_dict = update_data.model_dump(exclude_unset=True)
-    
+
+    # The level is the learner's working level; it goes through the one writer
+    # so the history row, the rank and the learner-state epoch all follow. It
+    # never moves the certified level, so it cannot buy rank.
+    reported_level = normalise_level(
+        update_dict.pop("level", None) or update_dict.pop("cefr_level", None)
+    )
+    update_dict.pop("cefr_level", None)
+    level_change = None
+    if reported_level is not None:
+        profile = await get_or_create_profile(db, current_user)
+        level_change = await apply_level_change(
+            db, current_user, profile, source="self", working=reported_level
+        )
+
     for field, value in update_dict.items():
         setattr(current_user, field, value)
 
@@ -135,13 +158,14 @@ async def update_current_user_profile(
 
     rank_info = calc_rank(
         numeric_level=current_user.numeric_level or 1,
-        proficiency_level=current_user.level or "A1"
+        proficiency_level=rank_proficiency_level(current_user)
     )
     apply_rank_info_to_user(current_user, rank_info)
     
     await db.commit()
     await db.refresh(current_user)
-    
+    await publish_level_change(level_change)
+
     return _serialize_user_response(current_user)
 
 
@@ -284,7 +308,7 @@ async def get_user_level_full(
     # Rank info
     rank_info = calc_rank(
         numeric_level=level_info.numeric_level,
-        proficiency_level=current_user.level
+        proficiency_level=rank_proficiency_level(current_user)
     )
     apply_rank_info_to_user(current_user, rank_info)
     await db.commit()
@@ -299,6 +323,8 @@ async def get_user_level_full(
             total_xp=current_user.total_xp,
             cefr_level=persisted_tier.code,
             cefr_name=persisted_tier.name,
+            certified_level=rank_proficiency_level(current_user),
+            level_verified=level_verified(current_user),
             cefr_progression_source="profile",
             xp_derived_cefr_level=xp_derived_status.current_tier.code,
             xp_derived_cefr_name=xp_derived_status.current_tier.name,

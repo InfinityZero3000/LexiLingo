@@ -68,10 +68,41 @@ wherever the format is known.
 - Difficulty scales the **step size**, not the numerator — the old bonus was
   clipped at 100, so A1 and C2 answers landed identically.
 - `confidence` comes from **cumulative** `exercises_completed`, not from the
-  current request. It gates promotion via `LevelThreshold.min_skill_confidence`:
+  current request. It gates readiness for the level test (`qualifies_for_next`) via
+  `LevelThreshold.min_skill_confidence`:
   volume asks "did you do enough?", confidence asks "do we know enough about
   you yet?". Without it, raw counts were the only real gate and a long chat
   session could satisfy them.
+- **Two CEFR levels, one writer.** The *working* level (`users.level` ==
+  `UserProficiencyProfile.assessed_level`) is what a learner studies at:
+  a test sets it and the learner may pick it either way (`PUT /proficiency/level`,
+  or `level` on `PUT /users/me`). The *certified* level (`users.certified_level`)
+  is what a test confirmed: only a test moves it, only upward, and **rank reads
+  it** (`rank_service.rank_proficiency_level`) — ranking on the working level
+  would let anyone climb by editing their profile. A working level above the
+  certified one is `level_verified: false`. Every change goes through
+  `cefr_level_service.apply_level_change` (history row `initial` / `promotion` /
+  `self_set`, rank, learner-state epoch) and, after the commit,
+  `publish_level_change` (learner card + `rec:insights:` cache). The epoch bump
+  is what refreshes ai-service: its `rec:v1:` key and TraceCAG artifacts carry
+  the epoch, not the level. Practice never moves either level —
+  `record_exercise_results_for_user` used to re-derive it from scratch every
+  batch (`calculate_overall_level` never read `current_level`), demoting on one
+  weak batch. `next_level.qualifies` means *ready for the exam*. A placement retake
+  may only raise (it is the promotion path until the level exam replaces it).
+  Nothing writes `demotion`; old rows remain.
+- **The promotion exam** (`/proficiency/level-exam/*`, `level_exam_service`) is
+  how the certified level rises after placement. One 5-question section per
+  level above the certified one, as far as `question_bank` can fill (a published
+  `test_exams` row narrows the pool and sets `passing_score`); the result is the
+  highest level reached through an **unbroken** run of passed sections, so one
+  sitting can certify several levels. Gate: `qualifies_for_next` from the
+  *certified* level, then a 24h cooldown after a failed **or lapsed** sitting
+  (counting lapses stops "start, read the paper, let it expire, start again").
+  Graded on the server; a question it cannot grade for certain (not multiple
+  choice, answer not exactly one of its options) is left out of the paper.
+  Refusals carry `error.details.reason` — raise them through `_refusal`, never
+  with a dict `detail`, which the global handler turns into a Python repr.
 - One weighted overall score, `ProficiencyService.weighted_overall`. There were
   four different formulas; two overwrote each other, so the number a learner
   saw was not the number their promotion was judged on.
@@ -358,7 +389,8 @@ any one of them degrades a feature; losing the process costs chat, translate, ST
 and TRACE-CAG all at once. So **every optional subsystem is wrapped**, and new
 ones must be:
 
-- Redis / Groq key pool — caught and logged (unless `GROQ_REQUIRE_SEVEN_KEYS`).
+- Redis / Groq key pool — caught and logged. Any number of keys works; the old
+  exactly-seven rule (`GROQ_REQUIRE_SEVEN_KEYS`) was removed 2026-11-13.
 - Piper TTS warmup — caught and logged.
 - **Learner observation forwarder** — caught and logged since 2026-10-02. It only
   forwards skill evidence to backend-service; chat has to keep working without it.
@@ -411,12 +443,36 @@ whatever the machine has.
 
 ---
 
+## Workflow — branches, PRs, releases
+
+Full text in `docs/operations/WORKFLOW.md`. `dev` is the trunk **and production**: a merge deploys (VPS images via auto-deploy, web and admin to Vercel).
+
+- Branch from `origin/dev` in your own worktree (`git worktree add`), never in the shared checkout; open a PR into `dev`; squash-merge. No direct pushes to `dev` or `main`, no hotfix branches.
+- The PR title is the squash commit and a release-notes line: `type(scope): subject` (`feat fix perf refactor docs test chore ci build style revert`). The `PR title` check fails otherwise.
+- Fill the PR template's **Deploy impact**. Compose, `gateway/` and `.env.production*` are not carried by images; they need `scripts/deploy-one-shot.sh`.
+- Releases: `scripts/release.sh patch|minor|major` opens `chore(release): vX.Y.Z`; merging it tags, publishes the GitHub Release and tags the images. One version, five files, `scripts/check-versions.sh`. Do not bump versions by hand.
+
 ## Production Deploy — hard rules
 
-Prod is a VPS at `/opt/lexilingo` (`sgp1-01-lexi`), branch `dev`, docker-compose
-with `--env-file .env.production --env-file .env.production.secrets`.
+Prod is the LXD container `lexilingo` on the shared OVH VPS (`ovh-vps`), at
+`/opt/lexilingo`, branch `dev`, docker-compose with
+`--env-file .env.production --env-file .env.production.secrets`.
 
-**Always deploy with `./scripts/deploy-one-shot.sh`.** It does the safe thing:
+**Backend and ai-service deploy themselves; nothing is built on the VPS.**
+The `images` job in `ci.yml` builds `ghcr.io/infinityzero3000/lexilingo/{backend,ai-service}:sha-<sha>`
+only after all seven test jobs pass, and `lexilingo-auto-deploy.timer` on the box
+runs `scripts/auto-deploy.sh` every 2 minutes: newest dev CI run green → pull →
+`up -d --no-deps --no-build` the changed services → verify the whole stack →
+roll back to the previous tags if it fails. `docker-compose.images.yml` swaps
+only the `image:` of the four app services; databases, volumes and mounts are
+untouched. Design, first switch and manual rollback: `docs/operations/AUTO_DEPLOY.md`.
+
+- The checkout on the VPS is **config and data, not code**: uploaded media
+  (`backend-service/data/media`, ~300 MB) and `ai-service/data` are bind-mounted
+  from it. Never delete or reset it to "go source-free" — move those mounts first.
+- Compose, gateway and env changes are not in an image; roll them out by hand.
+
+**For anything auto-deploy does not cover, use `./scripts/deploy-one-shot.sh`.** It does the safe thing:
 `pull` → `up -d --remove-orphans` → per-service health wait → smoke test.
 Compose then recreates only what actually changed and leaves the old container
 running until the new one is up.
@@ -485,9 +541,14 @@ Rules that exist because they were violated:
 - **`OnFailure` goes in `[Unit]`.** In `[Service]` systemd ignores it with only
   a log line, so failures alert nobody. Verify with
   `systemctl show -p OnFailure --value <unit>` — empty means broken.
-- **Backups are still LOCAL ONLY.** They sit on the same disk as the database.
-  Set `OFFSITE_RCLONE_REMOTE` on `lexilingo-backup.service` to fix this; the
-  script warns on every run until you do.
+- **The server dumps cover the two databases only.** Uploaded media and
+  `ai-service/data` live in the checkout and were never in them.
+- **The off-box copy is the developer's Mac.** `scripts/pull-backups-to-mac.sh --install`
+  (LaunchAgent `me.lexilingo.backup-pull`) pulls every set 20 min after the server
+  backup, verifies each against its manifest, and also copies media and
+  `ai-service/data` into `~/Backups/lexilingo`. It never deletes on the Mac what
+  the server deleted. A Mac that is off for days means no fresh copy — check
+  `~/Backups/lexilingo/LAST_RUN`.
 
 ## Testing
 

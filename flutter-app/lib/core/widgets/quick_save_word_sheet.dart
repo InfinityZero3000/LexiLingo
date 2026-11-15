@@ -126,7 +126,7 @@ class _QuickSaveWordSheetState extends State<_QuickSaveWordSheet> {
       if (!mounted) return;
       setState(() {
         _isSaving = false;
-        _error = 'Could not save this word. Please try again.';
+        _error = 'errors.saveFailed'.tr();
       });
 
       if (!widget.hostContext.mounted) return;

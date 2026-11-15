@@ -91,8 +91,16 @@ List<PracticeLabItem> recommendedPracticeItems({
   required List<PracticeLabItem> items,
   int limit = 2,
   bool hasPremium = false,
+  int? dueVocabularyCount,
 }) {
-  bool usable(PracticeLabItem item) => hasPremium || !item.premiumOnly;
+  // Null means unknown (still loading, or the request failed): keep offering
+  // the card rather than hiding it on a guess. Zero is a fact: "review your
+  // due words" would open an empty session.
+  bool usable(PracticeLabItem item) {
+    if (!hasPremium && item.premiumOnly) return false;
+    return !(dueVocabularyCount == 0 &&
+        item.destination == PracticeLabDestination.vocabularyReview);
+  }
 
   // One card per skill. Two cards share a skill (reading is both the news
   // card and the mistake notebook), so an unfiltered take(2) could hand back

@@ -1,10 +1,11 @@
 name: CI
 
+# dev is the trunk: every change arrives by PR and every push to dev deploys. main only trails the last release.
 on:
   push:
-    branches: [main, feature, "feature/**", develop, dev]
+    branches: [dev]
   pull_request:
-    branches: [main, feature, dev]
+    branches: [dev]
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -245,12 +246,14 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: ai-service/requirements.txt
+          cache-dependency-path: |
+            ai-service/requirements.txt
+            ai-service/requirements-dev.txt
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -c constraints-ai.txt -r requirements.txt ruff
+          pip install -c constraints-ai.txt -r requirements-dev.txt ruff
 
       - name: Ruff focused STT correctness checks
         run: ruff check --select E9,F63,F7,F82 api/routes/stt.py api/services/stt tests/stt
@@ -422,3 +425,70 @@ jobs:
       - name: Check formatting (non-blocking)
         run: dart format --output=none --set-exit-if-changed lib/
         continue-on-error: true
+
+  # ──────────────────────────────────────────────
+  # Deploy script decisions (what ships, what restarts, nothing destructive)
+  # ──────────────────────────────────────────────
+  deploy-scripts:
+    name: Deploy Script Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: auto-deploy decision tests
+        run: bash scripts/tests/test_auto_deploy.sh
+      - name: every service declares one product version
+        run: bash scripts/check-versions.sh
+      - name: release scripts (version bump, release notes)
+        run: bash scripts/tests/test_release_scripts.sh
+
+  # ──────────────────────────────────────────────
+  # Images → GHCR, only after every job above is green.
+  # The VPS runs nothing but these, so a green CI run for a SHA
+  # means its images exist (scripts/auto-deploy.sh relies on it).
+  # ──────────────────────────────────────────────
+  images:
+    name: Build & Push Images
+    needs: [backend, backend-migrations, ai, mcp, admin, flutter, deploy-scripts]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - image: backend
+            context: backend-service
+          - image: ai-service
+            context: ai-service
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # The ai-service image is ~4 GB (torch CPU, llama-cpp-python); a stock runner runs out of disk without this.
+      - name: Free runner disk
+        if: matrix.image == 'ai-service'
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.context }}/Dockerfile.prod
+          push: true
+          # sha-<full sha> is what the VPS pins; the branch tag is only a convenience for humans.
+          tags: |
+            ghcr.io/infinityzero3000/lexilingo/${{ matrix.image }}:sha-${{ github.sha }}
+            ghcr.io/infinityzero3000/lexilingo/${{ matrix.image }}:${{ github.ref_name }}
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,scope=${{ matrix.image }},mode=max

@@ -11,6 +11,7 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import delete, func, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.learner_state import (
@@ -470,8 +471,11 @@ async def bump_learner_state_epoch(
     so bumping it here is what makes those artifacts refresh instead of
     silently going stale after learner state changes.
     """
+    # SQLite (the unit tests) has the same upsert under its own dialect; the
+    # Postgres path is unchanged.
+    insert = sqlite_insert if session.bind.dialect.name == "sqlite" else pg_insert
     await session.execute(
-        pg_insert(LearnerStateProfile)
+        insert(LearnerStateProfile)
         .values(user_id=user_id, state_epoch=0, updated_at=now)
         .on_conflict_do_nothing(index_elements=["user_id"])
     )

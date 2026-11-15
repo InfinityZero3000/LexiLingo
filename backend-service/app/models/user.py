@@ -38,6 +38,9 @@ class User(Base):
     native_language: Mapped[str] = mapped_column(String(10), default="vi")
     target_language: Mapped[str] = mapped_column(String(10), default="en")
     level: Mapped[str] = mapped_column(String(20), default="A1")  # A1, A2, B1, B2, C1, C2
+    # Highest level a test has confirmed. `level` is the working level the
+    # learner studies at and may set themselves; rank and badges read this one.
+    certified_level: Mapped[str | None] = mapped_column(String(5), nullable=True)
     # Onboarding preferences — used to personalize chat/course content. Free-form
     # short slugs from the onboarding UI (e.g. "career", "daily-life"), not enums,
     # since the option set is expected to evolve independently of this schema.

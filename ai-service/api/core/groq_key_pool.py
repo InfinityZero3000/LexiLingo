@@ -62,7 +62,7 @@ def resolve_groq_model(*env_vars: str) -> str:
     return DEFAULT_GROQ_MODEL
 
 
-def parse_groq_keys(raw: str, *, require_seven: bool = False) -> List[str]:
+def parse_groq_keys(raw: str) -> List[str]:
     """Parse configured keys without ever logging their values."""
     if not raw.strip():
         keys: List[str] = []
@@ -73,8 +73,6 @@ def parse_groq_keys(raw: str, *, require_seven: bool = False) -> List[str]:
         keys = [part.strip() for part in parts]
     if len(set(keys)) != len(keys):
         raise ValueError("GROQ_API_KEYS contains a duplicate entry")
-    if require_seven and len(keys) != 7:
-        raise ValueError("GROQ_API_KEYS must contain exactly seven unique keys")
     return keys
 
 
@@ -319,8 +317,7 @@ def build_groq_key_pool(redis_client: redis.Redis) -> Optional[GroqKeyPool]:
     """
     global _pool_instance
     raw = os.getenv("GROQ_API_KEYS", "").strip() or os.getenv("GROQ_API_KEY", "").strip()
-    require_seven = os.getenv("GROQ_REQUIRE_SEVEN_KEYS", "false").lower() == "true"
-    keys = parse_groq_keys(raw, require_seven=require_seven)
+    keys = parse_groq_keys(raw)
 
     if not keys:
         return None

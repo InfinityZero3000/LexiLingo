@@ -62,7 +62,8 @@ class PromoBannerSection extends StatelessWidget {
                             child: CachedNetworkImage(
                               imageUrl: banner.imageUrl,
                               fit: BoxFit.cover,
-                              errorWidget: (_, __, ___) => const SizedBox.shrink(),
+                              errorWidget: (_, __, ___) =>
+                                  const SizedBox.shrink(),
                             ),
                           ),
                         ),

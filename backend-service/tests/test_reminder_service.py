@@ -60,6 +60,21 @@ from pydantic import ValidationError
 from app.schemas.reminders import ReminderPreferenceUpdate
 
 
+@pytest.mark.parametrize("alias", ["Asia/Saigon", "Asia/Calcutta", "Europe/Kiev"])
+def test_legacy_timezone_aliases_browsers_still_report_are_accepted(alias):
+    # Chrome on macOS reports Asia/Saigon; python:slim ships no alias table,
+    # so without the tzdata package the whole preferences update was a 422.
+    assert ReminderPreferenceUpdate(timezone=alias).timezone == alias
+
+
+def test_tzdata_ships_with_the_app_not_just_the_os():
+    # CI runners and dev machines have a system zoneinfo, the slim prod image
+    # does not, so the alias test above cannot fail there. Guard the dependency.
+    import importlib.util
+
+    assert importlib.util.find_spec("tzdata") is not None
+
+
 def test_timezone_must_be_an_iana_name():
     assert ReminderPreferenceUpdate(timezone="Europe/Paris").timezone == "Europe/Paris"
     with pytest.raises(ValidationError):

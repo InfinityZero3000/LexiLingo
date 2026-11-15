@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../domain/entities/notification_entity.dart';
@@ -129,8 +130,8 @@ class NotificationProvider with ChangeNotifier {
       _unreadCount = await _repository.getUnreadCount();
       _errorMessage = null;
     } catch (e) {
-      _errorMessage = 'Failed to load notifications: $e';
-      debugPrint(_errorMessage);
+      _errorMessage = 'notifications.failedToLoad'.tr();
+      debugPrint('Failed to load notifications: $e');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -159,7 +160,8 @@ class NotificationProvider with ChangeNotifier {
       await _repository.markAsRead(notificationId);
       await loadNotifications();
     } catch (e) {
-      _errorMessage = 'Failed to mark notification as read: $e';
+      _errorMessage = 'notifications.markReadFailed'.tr();
+      debugPrint('Failed to mark notification as read: $e');
       notifyListeners();
     }
   }
@@ -170,7 +172,8 @@ class NotificationProvider with ChangeNotifier {
       await _repository.markAllAsRead();
       await loadNotifications();
     } catch (e) {
-      _errorMessage = 'Failed to mark all as read: $e';
+      _errorMessage = 'notifications.markReadFailed'.tr();
+      debugPrint('Failed to mark all as read: $e');
       notifyListeners();
     }
   }
@@ -191,7 +194,8 @@ class NotificationProvider with ChangeNotifier {
       await _repository.deleteNotification(notificationId);
       await loadNotifications();
     } catch (e) {
-      _errorMessage = 'Failed to delete notification: $e';
+      _errorMessage = 'notifications.deleteFailed'.tr();
+      debugPrint('Failed to delete notification: $e');
       _pendingDeletedNotification = null;
       notifyListeners();
     }
@@ -206,7 +210,8 @@ class NotificationProvider with ChangeNotifier {
       await _repository.addNotification(n);
       await loadNotifications();
     } catch (e) {
-      _errorMessage = 'Failed to restore notification: $e';
+      _errorMessage = 'notifications.restoreFailed'.tr();
+      debugPrint('Failed to restore notification: $e');
       notifyListeners();
     }
   }
@@ -222,7 +227,8 @@ class NotificationProvider with ChangeNotifier {
       await _repository.deleteAllNotifications();
       await loadNotifications();
     } catch (e) {
-      _errorMessage = 'Failed to delete all notifications: $e';
+      _errorMessage = 'notifications.deleteFailed'.tr();
+      debugPrint('Failed to delete all notifications: $e');
       notifyListeners();
     }
   }

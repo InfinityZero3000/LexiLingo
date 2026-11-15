@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode, debugPrint;
 import 'package:easy_localization/easy_localization.dart';
@@ -42,6 +44,8 @@ import 'package:lexilingo_app/features/course/presentation/providers/course_prov
 import 'package:lexilingo_app/features/gamification/presentation/providers/gamification_provider.dart';
 import 'package:lexilingo_app/features/learning/presentation/providers/learning_provider.dart';
 import 'package:lexilingo_app/features/level/presentation/pages/placement_test_page.dart';
+import 'package:lexilingo_app/features/level/presentation/pages/level_exam_page.dart';
+import 'package:lexilingo_app/features/level/presentation/providers/level_exam_provider.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/level_provider.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/placement_test_provider.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/proficiency_provider.dart';
@@ -87,7 +91,6 @@ import 'package:lexilingo_app/features/books/presentation/providers/book_provide
 import 'package:lexilingo_app/features/books/presentation/screens/book_library_screen.dart';
 import 'package:lexilingo_app/features/mistakes/presentation/pages/mistake_notebook_page.dart';
 import 'package:lexilingo_app/features/offline/presentation/pages/offline_sync_center_page.dart';
-import 'package:lexilingo_app/features/practice/presentation/pages/practice_lab_page.dart';
 import 'package:lexilingo_app/features/premium/presentation/screens/paywall_screen.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/providers/lexi_chat_provider.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/pages/lexi_chat_page.dart';
@@ -119,6 +122,7 @@ void _onFlutterError(FlutterErrorDetails details) {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
+  await initializeDateFormatting();
 
   if (kIsWeb) {
     // Avoid sqflite web worker boot failures when sqflite_sw.js is not deployed.
@@ -404,6 +408,7 @@ class _LexiLingoAppState extends State<LexiLingoApp>
           return MaterialApp(
             title: 'LexiLingo',
             navigatorKey: AppNavigationService.navigatorKey,
+            navigatorObservers: [AppNavigationService.routeObserver],
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
@@ -414,7 +419,11 @@ class _LexiLingoAppState extends State<LexiLingoApp>
                 value: AppTheme.systemUiOverlayStyle(
                   Theme.of(context).brightness,
                 ),
-                child: LocaleRefresher(child: child ?? const SizedBox.shrink()),
+                child: _TouchTargets(
+                  child: LocaleRefresher(
+                    child: child ?? const SizedBox.shrink(),
+                  ),
+                ),
               );
             },
             // Localization — easy_localization handles locale state
@@ -455,7 +464,7 @@ class _LexiLingoAppState extends State<LexiLingoApp>
                 (context) => const TodayPlanPage(),
               ),
               '/practice-lab': LearnerRoute.builder(
-                (context) => const PracticeLabPage(),
+                (context) => const MainScreen(initialIndex: 3),
               ),
               '/mistake-notebook': LearnerRoute.builder(
                 (context) => const MistakeNotebookPage(),
@@ -479,6 +488,12 @@ class _LexiLingoAppState extends State<LexiLingoApp>
                 (context) => ChangeNotifierProvider(
                   create: (_) => di.sl<PlacementTestProvider>(),
                   child: const PlacementTestPage(),
+                ),
+              ),
+              '/level-exam': LearnerRoute.builder(
+                (context) => ChangeNotifierProvider(
+                  create: (_) => di.sl<LevelExamProvider>(),
+                  child: const LevelExamPage(),
                 ),
               ),
               '/vocabulary/review': LearnerRoute.builder(
@@ -550,6 +565,30 @@ class _MissingRouteArgs extends StatelessWidget {
           onRetry: () => Navigator.of(context).pop(),
         ),
       ),
+    );
+  }
+}
+
+/// Flutter shrinks tap targets and tightens density on desktop platforms, so a
+/// narrow browser window on a laptop or a touch Chromebook got 40 px buttons
+/// and 32 px chips. Below the rail breakpoint the app is a touch layout
+/// whatever the platform; the desktop layout is left as it was.
+class _TouchTargets extends StatelessWidget {
+  const _TouchTargets({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (MediaQuery.sizeOf(context).width >= ContentWidth.touchLayoutBelow) {
+      return child;
+    }
+    return Theme(
+      data: Theme.of(context).copyWith(
+        materialTapTargetSize: MaterialTapTargetSize.padded,
+        visualDensity: VisualDensity.standard,
+      ),
+      child: child,
     );
   }
 }

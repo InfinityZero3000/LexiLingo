@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:just_audio/just_audio.dart';
@@ -226,12 +227,11 @@ class LexiChatProvider extends ChangeNotifier {
       unawaited(syncSessions(userId));
       notifyListeners();
     } catch (e) {
-      _error = 'Failed to start session: $e';
-      if (_isUnauthorizedError(e)) {
-        _error = 'Your login session expired. Please sign in again.';
-      }
+      _error = _isUnauthorizedError(e)
+          ? 'errors.sessionExpired'.tr()
+          : 'errors.sessionStartFailed'.tr();
       _isLoading = false;
-      logError(_tag, _error!);
+      logError(_tag, 'Failed to start session: $e');
       notifyListeners();
     }
   }
@@ -258,9 +258,9 @@ class LexiChatProvider extends ChangeNotifier {
         await startSession(userId);
       }
     } catch (e) {
-      _error = 'Failed to restore session: $e';
+      _error = 'errors.sessionStartFailed'.tr();
       _isLoading = false;
-      logWarn(_tag, _error!);
+      logWarn(_tag, 'Failed to restore session: $e');
       notifyListeners();
     } finally {
       _isRestoringSession = false;
@@ -325,8 +325,7 @@ class LexiChatProvider extends ChangeNotifier {
 
       if (loaded.isEmpty) {
         if (summary.messageCount > 0) {
-          _error =
-              'Session history is temporarily unavailable. You can continue chatting.';
+          _error = 'lexiChat.historyUnavailable'.tr();
         }
         _messages.add(
           LexiMessage(
@@ -352,7 +351,7 @@ class LexiChatProvider extends ChangeNotifier {
         _sessions.removeWhere((s) => s.sessionId == summary.sessionId);
         await _saveSessions();
         await startSession(summary.userId);
-        _error = 'Session expired on server. Started a new one.';
+        _error = 'errors.sessionExpiredOnServer'.tr();
         return;
       }
 
@@ -364,7 +363,7 @@ class LexiChatProvider extends ChangeNotifier {
         _isLoadingMoreMessages = false;
         _hasMoreMessages = false;
         _nextMessageCursor = null;
-        _error = 'This session belongs to another account. Start a new chat.';
+        _error = 'errors.sessionOtherAccount'.tr();
         _isLoading = false;
         notifyListeners();
         return;
@@ -376,10 +375,10 @@ class LexiChatProvider extends ChangeNotifier {
         return;
       }
 
-      _error = 'Failed to load session: $e';
-      if (_isUnauthorizedError(e)) {
-        _error = 'Your login session expired. Please sign in again.';
-      }
+      _error = _isUnauthorizedError(e)
+          ? 'errors.sessionExpired'.tr()
+          : 'errors.loadFailed'.tr();
+      logWarn(_tag, 'Failed to load session: $e');
       _isLoading = false;
       notifyListeners();
     }
@@ -405,8 +404,8 @@ class LexiChatProvider extends ChangeNotifier {
       _hasMoreMessages = page.hasMore;
       _nextMessageCursor = page.nextCursor;
     } catch (e) {
-      _error = 'Failed to load older messages: $e';
-      logWarn(_tag, _error!);
+      _error = 'errors.loadFailed'.tr();
+      logWarn(_tag, 'Failed to load older messages: $e');
     } finally {
       _isLoadingMoreMessages = false;
       notifyListeners();
@@ -500,13 +499,13 @@ class LexiChatProvider extends ChangeNotifier {
       await _endLexiResponseState();
       _isSending = false;
       if (_isUnauthorizedError(e)) {
-        _error = 'Your login session expired. Please sign in again.';
-        logError(_tag, _error!);
+        _error = 'errors.sessionExpired'.tr();
+        logError(_tag, 'Send rejected as unauthorized: $e');
         notifyListeners();
         return;
       }
-      _error = 'You are offline. Message queued for sync.';
-      logError(_tag, _error!);
+      _error = 'lexiChat.offlineQueued'.tr();
+      logError(_tag, 'Send failed, message queued: $e');
 
       await _enqueuePendingLexiMessage(
         userId: uid,
@@ -872,8 +871,8 @@ class LexiChatProvider extends ChangeNotifier {
     _isSending = false;
 
     if (_isUnauthorizedError(reason)) {
-      _error = 'Your login session expired. Please sign in again.';
-      logError(_tag, _error!);
+      _error = 'errors.sessionExpired'.tr();
+      logError(_tag, 'Stream rejected as unauthorized: $reason');
       notifyListeners();
       return;
     }
@@ -931,14 +930,10 @@ class LexiChatProvider extends ChangeNotifier {
     } catch (e) {
       await _endLexiResponseState();
       _isSending = false;
-      if (_isUnauthorizedError(e)) {
-        _error = 'Your login session expired. Please sign in again.';
-        logError(_tag, _error!);
-        notifyListeners();
-        return;
-      }
-      _error = 'Voice processing failed: $e';
-      logError(_tag, _error!);
+      _error = _isUnauthorizedError(e)
+          ? 'errors.sessionExpired'.tr()
+          : 'lexiChat.voiceProcessingFailed'.tr();
+      logError(_tag, 'Voice processing failed: $e');
       notifyListeners();
     }
   }

@@ -1,4 +1,5 @@
 import pytest
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -13,7 +14,6 @@ from app.models.proficiency import (
 from app.models.user import User
 from app.routes.proficiency import record_exercise_results_for_user
 from app.schemas.proficiency import ExerciseResult, ProficiencyLevel, SkillType
-from app.services.rank_service import calculate_rank
 
 
 @pytest.fixture
@@ -99,21 +99,8 @@ def test_no_award_xp_parameter_remains():
     assert "award_xp" not in params
 
 
-async def test_still_syncs_cefr_level_and_rank(db_session, test_user):
-    # A2 requires >=100 exercises, >=10 lessons, and 60/55 vocab/grammar
-    # scores (LEVEL_THRESHOLDS in app/schemas/proficiency.py). Pre-seed the
-    # lesson count (record_exercise_results_for_user never increments it —
-    # that happens on the lesson-completion route) and supply exercises
-    # across both graded skills so every A2 gate is actually cleared.
-    profile = UserProficiencyProfile(
-        user_id=test_user.id,
-        assessed_level="A1",
-        total_lessons_completed=15,
-    )
-    db_session.add(profile)
-    await db_session.commit()
-
-    results = [
+async def _a2_worthy_batch():
+    return [
         ExerciseResult(
             exercise_type="lesson",
             skill=SkillType.VOCABULARY if i % 2 == 0 else SkillType.GRAMMAR,
@@ -125,16 +112,96 @@ async def test_still_syncs_cefr_level_and_rank(db_session, test_user):
         for i in range(100)
     ]
 
-    await record_exercise_results_for_user(db_session, test_user, results)
 
-    # XP stayed untouched even though the CEFR level moved.
-    assert test_user.total_xp == 0
-    assert test_user.level != "A1"
+async def test_activity_alone_never_promotes_cefr(db_session, test_user):
+    """Every A2 gate cleared by practice still does not move the level.
 
-    # Rank must reflect the new level immediately, not the stale A1 value:
-    # recording skills must not leave rank one step behind current_user.level.
-    expected_rank = calculate_rank(
-        numeric_level=test_user.numeric_level or 1,
-        proficiency_level=test_user.level,
+    CEFR is earned by passing a level test. It used to be re-derived from the
+    skill scores on every batch, so a strong week promoted the learner with no
+    test at all.
+    """
+    db_session.add(
+        UserProficiencyProfile(
+            user_id=test_user.id, assessed_level="A1", total_lessons_completed=15
+        )
     )
-    assert test_user.rank_proficiency_score == expected_rank.proficiency_score
+    await db_session.commit()
+
+    result = await record_exercise_results_for_user(
+        db_session, test_user, await _a2_worthy_batch()
+    )
+
+    assert result["level_changed"] is False
+    assert result["current_level"] == "A1"
+    assert test_user.level == "A1"
+    history = (await db_session.execute(select(UserLevelHistory))).scalars().all()
+    assert history == []
+
+
+async def test_poor_practice_never_demotes_cefr(db_session, test_user):
+    test_user.level = "B1"
+    db_session.add(UserProficiencyProfile(user_id=test_user.id, assessed_level="B1"))
+    await db_session.commit()
+
+    bad = [
+        ExerciseResult(
+            exercise_type="lesson",
+            skill=SkillType.VOCABULARY,
+            difficulty_level=ProficiencyLevel.B1,
+            is_correct=False,
+            score=0.0,
+            time_spent_seconds=30,
+        )
+        for _ in range(30)
+    ]
+    result = await record_exercise_results_for_user(db_session, test_user, bad)
+
+    assert result["level_changed"] is False
+    assert test_user.level == "B1"
+    profile = (
+        await db_session.execute(
+            select(UserProficiencyProfile).where(
+                UserProficiencyProfile.user_id == test_user.id
+            )
+        )
+    ).scalar_one()
+    assert profile.assessed_level == "B1"
+    history = (await db_session.execute(select(UserLevelHistory))).scalars().all()
+    assert history == []
+
+
+async def test_user_level_is_settled_on_the_profile_not_the_scores(
+    db_session, test_user
+):
+    """users.level drifting from the profile is repaired toward the profile, and rank stays put."""
+    test_user.level = "A1"
+    db_session.add(UserProficiencyProfile(user_id=test_user.id, assessed_level="B2"))
+    await db_session.commit()
+
+    rank_before = test_user.rank_proficiency_score
+
+    await record_exercise_results_for_user(db_session, test_user, _one_result())
+
+    assert test_user.level == "B2"
+    # Rank reads the certified level, which practice never moves.
+    assert test_user.certified_level is None
+    assert test_user.rank_proficiency_score == rank_before
+
+
+async def test_a_first_profile_starts_at_the_users_level_not_a1(db_session, test_user):
+    """Creating the profile lazily with a fixed A1 and then settling users.level
+    on it silently demoted anyone who held a level before their first profile."""
+    test_user.level = "B2"
+    await db_session.commit()
+
+    await record_exercise_results_for_user(db_session, test_user, _one_result())
+
+    assert test_user.level == "B2"
+    profile = (
+        await db_session.execute(
+            select(UserProficiencyProfile).where(
+                UserProficiencyProfile.user_id == test_user.id
+            )
+        )
+    ).scalar_one()
+    assert profile.assessed_level == "B2"

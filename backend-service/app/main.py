@@ -68,6 +68,7 @@ from app.routes.course_categories import router as course_categories_router
 from app.routes.banners import router as banners_router
 from app.routes.internal_entitlements import router as internal_entitlements_router
 from app.routes.proficiency import router as proficiency_router
+from app.routes.level_exam import router as level_exam_router
 from app.routes.entitlements import router as entitlements_router
 from app.routes.rbac import router as rbac_router
 from app.routes.admin_ai_proxy import router as admin_ai_proxy_router
@@ -422,6 +423,7 @@ app.include_router(notification_campaign_router, prefix=f"{settings.API_V1_PREFI
 app.include_router(ranking_agent_router, prefix=f"{settings.API_V1_PREFIX}")
 app.include_router(devices_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Devices"])
 app.include_router(proficiency_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Proficiency Assessment"])
+app.include_router(level_exam_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Proficiency Assessment"])
 app.include_router(entitlements_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Entitlements"])
 app.include_router(rbac_router, prefix=f"{settings.API_V1_PREFIX}", tags=["RBAC Management"])
 app.include_router(admin_ai_proxy_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin AI Proxy"])
@@ -488,6 +490,14 @@ try:
     logger.info("Prometheus metrics enabled at /metrics")
 except ImportError:
     logger.warning("prometheus-fastapi-instrumentator not installed; /metrics disabled")
+
+# Images the transactional emails link to (hosted, so Gmail does not list them as attachments)
+from pathlib import Path as _Path
+app.mount(
+    "/email-assets",
+    StaticFiles(directory=_Path(__file__).parent / "templates" / "assets"),
+    name="email-assets",
+)
 
 # Serve uploaded/imported media files
 import os

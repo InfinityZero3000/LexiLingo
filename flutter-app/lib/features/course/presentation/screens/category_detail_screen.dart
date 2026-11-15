@@ -101,7 +101,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
           final categoryIcon = _parseCategoryIcon(category.icon ?? 'book');
 
           // Use the courses loaded for this category
-          final categoryCourses = provider.courses;
+          final categoryCourses = provider.categoryCourses;
 
           return Align(
             alignment: Alignment.topCenter,
@@ -232,18 +232,18 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                   ),
 
                   // Course list
-                  if (provider.isLoadingCourses && categoryCourses.isEmpty)
+                  if (provider.isLoadingCategoryCourses && categoryCourses.isEmpty)
                     SliverFillRemaining(
                       child: SkeletonList(
                         itemCount: 5,
                         padding: const EdgeInsets.all(16),
                       ),
                     )
-                  else if (provider.coursesError != null &&
+                  else if (provider.categoryCoursesError != null &&
                       categoryCourses.isEmpty)
                     SliverFillRemaining(
                       child: ErrorDisplayWidget.fromMessage(
-                        message: provider.coursesError!,
+                        message: provider.categoryCoursesError!,
                         onRetry: () =>
                             provider.loadCoursesByCategory(widget.categoryId),
                       ),

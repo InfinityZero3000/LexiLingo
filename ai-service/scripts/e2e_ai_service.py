@@ -51,8 +51,8 @@ def required_config(env: dict[str, str]) -> dict[str, Any]:
     if any(not item.strip() for item in parts):
         raise ValueError("GROQ_API_KEYS contains a blank entry")
     keys = [item.strip() for item in parts]
-    if len(keys) != 7 or len(set(keys)) != 7:
-        raise ValueError("GROQ_API_KEYS must contain exactly seven unique keys")
+    if not keys or len(set(keys)) != len(keys):
+        raise ValueError("GROQ_API_KEYS must contain at least one key, all unique")
     secret = env.get("SECRET_KEY", "")
     if len(secret) < 32:
         raise ValueError("SECRET_KEY must contain at least 32 characters")

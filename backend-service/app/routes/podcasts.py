@@ -21,11 +21,16 @@ from urllib.parse import quote
 
 import httpx
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, Response, Request, status
+from fastapi.responses import RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.safe_http import safe_get as _safe_get, validate_public_url
+from app.core.safe_http import (
+    safe_get as _safe_get,
+    safe_resolve_final_url,
+    validate_public_url,
+)
 from app.core.dependencies import get_current_user
 from app.models.user import User
 from app.clients.ai_service_client import AIServiceClient
@@ -253,6 +258,62 @@ async def proxy_image(url: str = Query(..., description="The image URL to proxy"
                 detail="Image proxy error",
                 headers=_PROXY_CORS,
             )
+
+
+_AUDIO_RESOLVE_TTL = 600.0
+_AUDIO_RESOLVE_MAX = 256
+_audio_resolved: dict[str, tuple[float, str]] = {}
+
+
+def _prefer_https(url: str) -> str:
+    """https form of a publisher URL, including BBC's `/proto/http/` selector."""
+    upgraded = re.sub(r"^http://", "https://", url)
+    return upgraded.replace("/proto/http/", "/proto/https/")
+
+
+@router.get("/audio", summary="Redirect to an episode's final audio URL")
+async def resolve_audio(url: str = Query(..., max_length=2048)):
+    """Follow the publisher's redirect chain from the server and 302 to the
+    final CDN URL, so players on networks that reset the first hop (BBC's
+    mediaselector from some Vietnamese ISPs) still reach the audio. The body is
+    never proxied: the CDN link is signed but not bound to the caller's IP."""
+    validate_public_url(url)
+    now = time.monotonic()
+    cached = _audio_resolved.get(url)
+    if cached and now - cached[0] < _AUDIO_RESOLVE_TTL:
+        final_url = cached[1]
+    else:
+        # An http final link is blocked as mixed content on the web app, so try
+        # the https form of the chain first and keep the original as fallback.
+        candidates = [c for c in dict.fromkeys([_prefer_https(url), url])]
+        final_url = ""
+        for candidate in candidates:
+            try:
+                async with httpx.AsyncClient(timeout=10.0) as client:
+                    final_url = await safe_resolve_final_url(
+                        client,
+                        candidate,
+                        headers={
+                            "User-Agent": "Mozilla/5.0 (compatible; LexiLingo/1.0)",
+                            "Range": "bytes=0-0",
+                        },
+                    )
+                break
+            except Exception as exc:
+                logger.warning("Podcast audio resolve failed for %s: %s", candidate, exc)
+        if not final_url:
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Audio source unreachable.",
+            )
+        if len(_audio_resolved) >= _AUDIO_RESOLVE_MAX:
+            _audio_resolved.clear()
+        _audio_resolved[url] = (now, final_url)
+    return RedirectResponse(
+        final_url,
+        status_code=status.HTTP_302_FOUND,
+        headers={"Cache-Control": "private, max-age=300"},
+    )
 
 
 # ============================================================================

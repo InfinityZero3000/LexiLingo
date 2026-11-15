@@ -1,71 +1,55 @@
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
 
-/// Skeleton loading state for home page
+/// Skeleton for the Home layout: header, hero, streak strip, chips, grid.
 class HomeSkeletonLoading extends StatelessWidget {
   const HomeSkeletonLoading({super.key});
 
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.only(bottom: 24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header skeleton
-          ShimmerContainer(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  const SkeletonCircle(size: 48),
-                  const SizedBox(width: 12),
-                  Column(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      child: ShimmerContainer(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            Row(
+              children: [
+                SkeletonCircle(size: 48),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      SkeletonText(width: 150, height: 14),
+                      SkeletonText(width: 160, height: 16),
                       SizedBox(height: 6),
                       SkeletonText(width: 100, height: 12),
                       SizedBox(height: 6),
-                      SkeletonText(width: 120, height: 18),
+                      SkeletonText(width: 80, height: 20),
                     ],
                   ),
-                  const Spacer(),
-                  const SkeletonCircle(size: 40),
-                ],
-              ),
+                ),
+                SkeletonCircle(size: 44),
+              ],
             ),
-          ),
-          const SizedBox(height: 16),
-          // Streak card skeleton
-          const SkeletonProgressStats(),
-          const SizedBox(height: 24),
-          // Daily goal skeleton
-          ShimmerContainer(
-            child: Container(
-              margin: EdgeInsets.symmetric(horizontal: 16),
-              height: 120,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(16),
-              ),
+            SizedBox(height: 12),
+            SkeletonBox(height: 236, borderRadius: 24),
+            SizedBox(height: 12),
+            SkeletonBox(height: 104, borderRadius: 20),
+            SizedBox(height: 12),
+            Row(
+              children: [
+                SkeletonBox(width: 104, height: 44, borderRadius: 22),
+                SizedBox(width: 8),
+                SkeletonBox(width: 140, height: 44, borderRadius: 22),
+              ],
             ),
-          ),
-          const SizedBox(height: 24),
-          // Section title skeleton
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: ShimmerContainer(
-              child: SkeletonText(width: 150, height: 20),
-            ),
-          ),
-          const SizedBox(height: 12),
-          // Courses skeleton
-          const SkeletonHomeSection(),
-          const SizedBox(height: 24),
-          // Another section
-          const SkeletonHomeSection(),
-        ],
+            SizedBox(height: 16),
+            SkeletonText(width: 140, height: 20),
+            SizedBox(height: 8),
+            SkeletonBox(height: 196, borderRadius: 24),
+          ],
+        ),
       ),
     );
   }

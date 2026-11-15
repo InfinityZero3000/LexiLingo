@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/features/level/data/datasources/proficiency_data_source.dart';
+import 'package:lexilingo_app/features/level/domain/entities/proficiency_entity.dart';
 import 'package:lexilingo_app/features/level/domain/entities/level_history_entry.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/proficiency_provider.dart';
 import 'package:lexilingo_app/features/level/presentation/widgets/level_history_timeline.dart';
@@ -14,6 +15,11 @@ class _Source extends ProficiencyDataSource {
   Map<String, dynamic> response;
   bool fail;
   int calls = 0;
+  ProficiencyProfile? profile;
+
+  @override
+  Future<ProficiencyProfile> getProfile() async =>
+      profile ?? ProficiencyProfile.empty();
 
   @override
   Future<Map<String, dynamic>> getLevelHistory({int limit = 10}) async {
@@ -84,6 +90,33 @@ void main() {
       },
     );
 
+    test(
+      'skips a row that records no change and flags the first placement',
+      () {
+        final entries = parseLevelHistory({
+          'history': [
+            _row('A1', 'B1', '2026-09-01T00:00:00Z', type: 'initial'),
+            _row('A1', 'A1', '2026-08-01T00:00:00Z'),
+          ],
+        });
+
+        expect(entries, hasLength(1));
+        expect(entries.single.isInitial, isTrue);
+      },
+    );
+
+    test('a self-set reads its direction from the levels and is flagged', () {
+      final entries = parseLevelHistory({
+        'history': [
+          _row('B2', 'A2', '2026-10-01T00:00:00Z', type: 'self_set'),
+          _row('A1', 'B2', '2026-09-01T00:00:00Z', type: 'self_set'),
+        ],
+      });
+
+      expect(entries.map((e) => e.isSelfSet), [true, true]);
+      expect(entries.map((e) => e.isPromotion), [true, false]);
+    });
+
     test('an empty or missing history is an empty list', () {
       expect(parseLevelHistory({'history': []}), isEmpty);
       expect(parseLevelHistory({}), isEmpty);
@@ -136,46 +169,125 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    testWidgets('starts the journey at the level held before the first change', (
-      tester,
-    ) async {
+    List<String?> chips(WidgetTester tester) => tester
+        .widgetList<Text>(find.byType(Text))
+        .map((t) => t.data)
+        .where((l) => const {'A1', 'A2', 'B1', 'B2'}.contains(l))
+        .toList();
+
+    testWidgets(
+      'shows the path as one row of chips and only the latest change',
+      (tester) async {
+        final provider = ProficiencyProvider(
+          dataSource: _Source({
+            'history': [
+              _row('A2', 'B1', '2026-09-01T00:00:00Z'),
+              _row('A1', 'A2', '2026-08-01T00:00:00Z'),
+            ],
+          }),
+        );
+
+        await pump(tester, provider);
+
+        // A1 (start) → A2 → B1, and none shows the server's English reason.
+        expect(chips(tester), ['A1', 'A2', 'B1']);
+        expect(find.textContaining('Level updated based on'), findsNothing);
+        expect(find.textContaining('profile.levelPromoted'), findsOneWidget);
+        expect(find.text('profile.levelStart'), findsNothing);
+        expect(find.text('profile.levelTestRule'), findsOneWidget);
+      },
+    );
+
+    testWidgets('a demotion in old data is marked, not hidden', (tester) async {
       final provider = ProficiencyProvider(
         dataSource: _Source({
           'history': [
-            _row('A2', 'B1', '2026-09-01T00:00:00Z'),
-            _row('A1', 'A2', '2026-08-01T00:00:00Z'),
+            _row('B1', 'A2', '2026-09-01T00:00:00Z', type: 'demotion'),
+            _row('A2', 'B1', '2026-08-01T00:00:00Z'),
           ],
         }),
       );
 
       await pump(tester, provider);
 
-      // Nodes read A1 (start) → A2 → B1, and none shows the server's English reason.
-      final labels = tester
-          .widgetList<Text>(find.byType(Text))
-          .map((t) => t.data)
-          .toList();
-      expect(labels.where((l) => l == 'A1' || l == 'A2' || l == 'B1'), [
-        'A1',
-        'A2',
-        'B1',
-      ]);
-      expect(find.textContaining('Level updated based on'), findsNothing);
-      expect(find.text('profile.levelStart'), findsOneWidget);
-      expect(find.text('profile.levelPromoted'), findsNWidgets(2));
+      expect(chips(tester), ['A2', 'B1', 'A2']);
+      expect(find.textContaining('profile.levelDemoted'), findsOneWidget);
     });
 
-    testWidgets('says so when the learner has not changed level yet', (
+    testWidgets('a self-chosen level reads as chosen, not as moved up', (
       tester,
     ) async {
       final provider = ProficiencyProvider(
-        dataSource: _Source({'history': []}),
+        dataSource: _Source({
+          'history': [
+            _row('B1', 'A2', '2026-09-01T00:00:00Z', type: 'self_set'),
+          ],
+        }),
       );
 
       await pump(tester, provider);
 
-      expect(find.text('profile.levelJourneyEmpty'), findsOneWidget);
-      expect(find.text('profile.levelStart'), findsOneWidget);
+      expect(find.textContaining('profile.levelSelfSet'), findsOneWidget);
+      expect(find.textContaining('profile.levelPromoted'), findsNothing);
+      expect(find.textContaining('profile.levelDemoted'), findsNothing);
+    });
+
+    testWidgets('a long path keeps the newest steps and an ellipsis', (
+      tester,
+    ) async {
+      final levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'A1', 'A2'];
+      final provider = ProficiencyProvider(
+        dataSource: _Source({
+          'history': [
+            for (var i = levels.length - 1; i > 0; i--)
+              _row(levels[i - 1], levels[i], '2026-0${i + 1}-01T00:00:00Z'),
+          ],
+        }),
+      );
+
+      await pump(tester, provider);
+
+      expect(find.text('…'), findsOneWidget);
+      expect(find.byType(Wrap), findsOneWidget);
+    });
+
+    testWidgets(
+      'says the path starts here when the learner has not changed level',
+      (tester) async {
+        final provider = ProficiencyProvider(
+          dataSource: _Source({'history': []}),
+        );
+
+        await pump(tester, provider);
+
+        expect(find.text('profile.levelStart'), findsOneWidget);
+        expect(find.text('profile.levelTestRule'), findsOneWidget);
+      },
+    );
+
+    testWidgets('offers the level test once the requirements are met', (
+      tester,
+    ) async {
+      final source = _Source({'history': []})
+        ..profile = ProficiencyProfile.fromJson({
+          'assessed_level': 'A1',
+          'next_level': {
+            'level': 'A2',
+            'progress': 100.0,
+            'qualifies': true,
+            'requirements': <String, dynamic>{},
+            'blockers': <String>[],
+          },
+        });
+      final provider = ProficiencyProvider(dataSource: source);
+      await provider.loadProfile();
+      expect(provider.nextLevel?.qualifies, isTrue);
+
+      await pump(tester, provider);
+
+      expect(find.text('profile.levelTestReady'), findsOneWidget);
+      expect(find.text('profile.levelTestTake'), findsOneWidget);
+      expect(find.text('profile.levelTestRule'), findsNothing);
     });
 
     testWidgets('offers a retry when loading fails', (tester) async {
@@ -189,7 +301,7 @@ void main() {
       await tester.tap(find.text('common.retry'));
       await tester.pumpAndSettle();
 
-      expect(find.text('profile.levelJourneyEmpty'), findsOneWidget);
+      expect(find.text('profile.levelStart'), findsOneWidget);
     });
   });
 }

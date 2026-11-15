@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import '../../domain/entities/chat_message.dart';
 import '../../domain/entities/chat_session.dart';
@@ -269,7 +270,7 @@ class ChatProvider extends ChangeNotifier {
 
   Future<void> sendMessage(String content, {required String userId}) async {
     if (_currentSession == null) {
-      _error = 'No active session';
+      _error = 'errors.noActiveSession'.tr();
       notifyListeners();
       return;
     }

@@ -158,7 +158,8 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
         }
       });
     } catch (e) {
-      _showError('voice.failedToStartRecording'.tr(namedArgs: {'error': '$e'}));
+      debugPrint('voice.failedToStartRecording: $e');
+      _showError('voice.failedToStartRecording'.tr());
     }
   }
 
@@ -201,7 +202,8 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
         });
         context.read<VoiceProvider>().resetState();
       }
-      _showError('voice.failedToStopRecording'.tr(namedArgs: {'error': '$e'}));
+      debugPrint('voice.failedToStopRecording: $e');
+      _showError('voice.failedToStopRecording'.tr());
     }
   }
 
@@ -276,7 +278,8 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
         if (!mounted) return;
         provider.resetState();
         setState(() => _isPreparingExample = false);
-        _showError('voice.failedToPlayAudio'.tr(namedArgs: {'error': '$e'}));
+        debugPrint('voice.failedToPlayAudio: $e');
+      _showError('voice.failedToPlayAudio'.tr());
       }
     } else {
       provider.resetState();

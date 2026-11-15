@@ -488,6 +488,49 @@ class TestAdminVocabulary:
         assert data["success"] is True
 
     @pytest.mark.asyncio
+    async def test_update_vocabulary_keeps_other_locales_and_drops_stale_definitions(
+        self,
+        async_client: AsyncClient,
+        admin_headers: dict,
+        db_session: AsyncSession,
+    ):
+        item = VocabularyItem(
+            word="drag",
+            definition="to pull something with force",
+            translation={
+                "vi": "kéo",
+                "ja": "引きずる",
+                "examples": ["He dragged it."],
+                "definitions": {"ja": "力を入れて引く"},
+            },
+            part_of_speech="verb",
+            difficulty_level="A1",
+        )
+        db_session.add(item)
+        await db_session.commit()
+
+        response = await async_client.put(
+            f"/api/v1/admin/vocabulary/{item.id}",
+            headers=admin_headers,
+            params={"translation": "lôi"},
+        )
+        assert response.status_code == 200
+        kept = response.json()["data"]["translation"]
+        assert kept["vi"] == "lôi"
+        assert kept["ja"] == "引きずる"
+        assert kept["definitions"] == {"ja": "力を入れて引く"}
+
+        response = await async_client.put(
+            f"/api/v1/admin/vocabulary/{item.id}",
+            headers=admin_headers,
+            params={"definition": "to move something along the ground"},
+        )
+        edited = response.json()["data"]["translation"]
+        assert "definitions" not in edited
+        assert edited["ja"] == "引きずる"
+        assert edited["examples"] == ["He dragged it."]
+
+    @pytest.mark.asyncio
     async def test_bulk_import_vocabulary_from_pdf(
         self,
         async_client: AsyncClient,

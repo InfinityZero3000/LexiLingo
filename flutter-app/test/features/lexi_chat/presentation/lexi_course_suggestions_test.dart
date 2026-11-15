@@ -19,14 +19,17 @@ void main() {
     ),
     LexiCourseSuggestion(
       courseId: 'c-2',
-      title: 'A course title long enough that it has to wrap onto a second line',
+      title:
+          'A course title long enough that it has to wrap onto a second line',
       level: 'B2',
       totalLessons: 12,
     ),
   ];
 
   testWidgets('renders one tappable card per suggested course', (tester) async {
-    await tester.pumpWidget(wrap(const LexiCourseSuggestions(courses: courses)));
+    await tester.pumpWidget(
+      wrap(const LexiCourseSuggestions(courses: courses)),
+    );
 
     expect(find.text('Pre-Intermediate English'), findsOneWidget);
     expect(find.text('B1'), findsOneWidget);
@@ -44,7 +47,9 @@ void main() {
   });
 
   testWidgets('a long title does not overflow the card', (tester) async {
-    await tester.pumpWidget(wrap(const LexiCourseSuggestions(courses: courses)));
+    await tester.pumpWidget(
+      wrap(const LexiCourseSuggestions(courses: courses)),
+    );
     await tester.pumpAndSettle();
 
     // An overflow paints as the yellow-and-black banner and records an
@@ -66,7 +71,9 @@ void main() {
   });
 
   testWidgets('the carousel scrolls horizontally', (tester) async {
-    await tester.pumpWidget(wrap(const LexiCourseSuggestions(courses: courses)));
+    await tester.pumpWidget(
+      wrap(const LexiCourseSuggestions(courses: courses)),
+    );
 
     final list = find.byType(ListView);
     expect(list, findsOneWidget);

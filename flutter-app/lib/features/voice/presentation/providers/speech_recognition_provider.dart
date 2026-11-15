@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:lexilingo_app/features/voice/data/datasources/speech_recognition_service.dart';
 import 'package:lexilingo_app/features/voice/domain/entities/transcription.dart';
@@ -43,15 +44,14 @@ class SpeechRecognitionProvider extends ChangeNotifier {
   /// Start listening with Web Speech API
   Future<void> startListening({String? language}) async {
     if (!kIsWeb) {
-      _errorMessage =
-          'Web Speech Recognition is only available on web platform';
+      _errorMessage = 'voice.recognitionUnsupported'.tr();
       _state = SpeechState.error;
       notifyListeners();
       return;
     }
 
     if (!WebSpeechRecognition.isSupported) {
-      _errorMessage = 'Web Speech Recognition is not supported in this browser';
+      _errorMessage = 'voice.recognitionUnsupported'.tr();
       _state = SpeechState.error;
       notifyListeners();
       return;
@@ -100,7 +100,8 @@ class SpeechRecognitionProvider extends ChangeNotifier {
         },
       );
     } catch (e) {
-      _errorMessage = 'Failed to start speech recognition: $e';
+      _errorMessage = 'voice.recognitionFailed'.tr();
+      debugPrint('Failed to start speech recognition: $e');
       _state = SpeechState.error;
       notifyListeners();
     }

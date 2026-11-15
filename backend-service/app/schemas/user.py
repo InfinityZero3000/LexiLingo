@@ -48,6 +48,10 @@ class UserResponse(UserBase):
     
     # Level & Rank fields
     cefr_level: str = "A1"
+    # What a test confirmed; rank reads it. cefr_level is the working level the
+    # learner may pick, and is unverified while it sits above this one.
+    certified_level: str = "A1"
+    level_verified: bool = True
     goal: Optional[str] = None
     interest: Optional[str] = None
     total_xp: int = 0

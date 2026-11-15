@@ -4,9 +4,9 @@
 
 Create `.env.production.secrets` with mode `0600`. Never commit or paste its values into logs.
 
-Root production requires `POSTGRES_PASSWORD`, `REDIS_PASSWORD`, `SECRET_KEY`, `AI_ADMIN_API_KEY`, and exactly seven unique comma-separated values in `GROQ_API_KEYS`. `SECRET_KEY` must match the backend and contain at least 32 random characters. Set `ALLOWED_ORIGINS` in `.env.production` to the deployed frontend origins. Add `SENTRY_DSN`, Gemini, Firebase, or content-agent secrets only when those features are enabled.
+Root production requires `POSTGRES_PASSWORD`, `REDIS_PASSWORD`, `SECRET_KEY`, `AI_ADMIN_API_KEY`, and one or more unique comma-separated values in `GROQ_API_KEYS`. `SECRET_KEY` must match the backend and contain at least 32 random characters. Set `ALLOWED_ORIGINS` in `.env.production` to the deployed frontend origins. Add `SENTRY_DSN`, Gemini, Firebase, or content-agent secrets only when those features are enabled.
 
-The isolated E2E stack uses `ai-service/.env` and requires `REDIS_PASSWORD`, `SECRET_KEY`, `AI_ADMIN_API_KEY`, and exactly seven unique `GROQ_API_KEYS`. `MONGO_EXPRESS_USER` and `MONGO_EXPRESS_PASSWORD` are needed only for its optional `admin` profile; Mongo Express is not part of root production.
+The isolated E2E stack uses `ai-service/.env` and requires `REDIS_PASSWORD`, `SECRET_KEY`, `AI_ADMIN_API_KEY`, and one or more unique `GROQ_API_KEYS`. `MONGO_EXPRESS_USER` and `MONGO_EXPRESS_PASSWORD` are needed only for its optional `admin` profile; Mongo Express is not part of root production.
 
 Generate secrets on the server without echoing them into shell history, then restrict files:
 

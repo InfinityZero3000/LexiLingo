@@ -8,6 +8,16 @@ import '../../../../core/network/api_config.dart';
 import '../../../../core/services/local_cache_service.dart';
 import '../../domain/entities/podcast_entities.dart';
 
+/// Routes a publisher audio URL through the backend, which resolves the
+/// publisher's redirect chain and 302s to the final CDN link — some ISPs
+/// reset the first hop (BBC mediaselector) when the app calls it directly.
+Uri podcastAudioUri(String audioUrl) {
+  final direct = Uri.parse(audioUrl);
+  if (!direct.hasScheme) return direct;
+  return Uri.parse('${ApiConfig.baseUrl}/podcasts/audio')
+      .replace(queryParameters: {'url': audioUrl});
+}
+
 /// Repository for Podcast feature — handles API calls, local SQLite cache,
 /// and follow state persisted to SharedPreferences.
 ///
@@ -322,7 +332,7 @@ class PodcastRepository {
     final filePath = '${podcastsDir.path}/${episode.guid}.mp3';
 
     // Streaming download to avoid holding the entire file in memory
-    final request = http.Request('GET', Uri.parse(episode.audioUrl));
+    final request = http.Request('GET', podcastAudioUri(episode.audioUrl));
     final streamedResponse = await _client.send(request);
     if (streamedResponse.statusCode >= 400) {
       throw Exception('Download failed: HTTP ${streamedResponse.statusCode}');

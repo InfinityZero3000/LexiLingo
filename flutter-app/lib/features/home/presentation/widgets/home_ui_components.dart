@@ -1,60 +1,91 @@
-import 'dart:math' as math;
-
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
-/// Get personalized greeting based on time of day
-String getTimeBasedGreeting() {
-  final hour = DateTime.now().hour;
-  if (hour < 5) {
-    return 'home.greetingNight'.tr();
-  } else if (hour < 12) {
-    return 'home.greetingMorning'.tr();
-  } else if (hour < 18) {
-    return 'home.greetingAfternoon'.tr();
-  } else if (hour < 22) {
-    return 'home.greetingEvening'.tr();
-  } else {
-    return 'home.greetingNight'.tr();
+/// Zero when the learner asked the OS for reduced motion.
+Duration homeMotion(BuildContext context, int milliseconds) =>
+    MediaQuery.disableAnimationsOf(context)
+    ? Duration.zero
+    : Duration(milliseconds: milliseconds);
+
+enum DayPart {
+  morning('home.greetingPhraseMorning', 'home.greetingMorning'),
+  afternoon('home.greetingPhraseAfternoon', 'home.greetingAfternoon'),
+  evening('home.greetingPhraseEvening', 'home.greetingEvening'),
+  night('home.greetingPhraseNight', 'home.greetingNight');
+
+  const DayPart(this.phraseKey, this.meaningKey);
+
+  /// The English phrase is learning content, so it stays English everywhere;
+  /// [meaningKey] is the learner's own-language gloss.
+  final String phraseKey;
+  final String meaningKey;
+
+  static DayPart of(int hour) {
+    if (hour < 5) return DayPart.night;
+    if (hour < 12) return DayPart.morning;
+    if (hour < 18) return DayPart.afternoon;
+    if (hour < 22) return DayPart.evening;
+    return DayPart.night;
+  }
+
+  static DayPart now() => DayPart.of(DateTime.now().hour);
+
+  IconData get icon => switch (this) {
+    DayPart.morning => Icons.wb_sunny_rounded,
+    DayPart.afternoon => Icons.wb_twilight_rounded,
+    DayPart.evening || DayPart.night => Icons.nightlight_round,
+  };
+
+  Color color(bool isDark) => switch (this) {
+    DayPart.morning => AppColors.warning,
+    DayPart.afternoon => AppColors.orange,
+    DayPart.evening || DayPart.night => AppColorRoles.primary(isDark),
+  };
+}
+
+/// Counts from 0 to [value] on first build and between values after that.
+class CountUpText extends StatelessWidget {
+  const CountUpText({
+    super.key,
+    required this.value,
+    required this.format,
+    this.style,
+    this.duration = const Duration(milliseconds: 600),
+  });
+
+  final int value;
+  final String Function(int value) format;
+  final TextStyle? style;
+  final Duration duration;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<int>(
+      tween: IntTween(begin: 0, end: value),
+      duration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : duration,
+      curve: Curves.easeOutCubic,
+      builder: (context, current, _) => Text(
+        format(current),
+        style: style,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
   }
 }
 
-/// Get icon based on time of day
-IconData getTimeBasedIcon() {
-  final hour = DateTime.now().hour;
-  if (hour < 5) {
-    return Icons.nightlight_round;
-  } else if (hour < 12) {
-    return Icons.wb_sunny_rounded;
-  } else if (hour < 18) {
-    return Icons.wb_twilight_rounded;
-  } else if (hour < 22) {
-    return Icons.nightlight_round;
-  } else {
-    return Icons.nightlight_round;
-  }
+String formatXp(int xp) {
+  if (xp >= 1000000) return '${(xp / 1000000).toStringAsFixed(1)}M';
+  if (xp >= 1000) return '${(xp / 1000).toStringAsFixed(1)}K';
+  return xp.toString();
 }
 
-/// Get icon color based on time of day
-Color getTimeBasedIconColor({required bool isDark}) {
-  final hour = DateTime.now().hour;
-  if (hour < 5) {
-    return AppColorRoles.primary(isDark);
-  } else if (hour < 12) {
-    return AppColors.warning; // Amber for morning
-  } else if (hour < 18) {
-    return AppColors.orange; // Deep orange for afternoon
-  } else if (hour < 22) {
-    return AppColorRoles.primary(isDark); // Primary for evening
-  } else {
-    return AppColorRoles.primary(isDark);
-  }
-}
-
-/// Personalized greeting header with glassmorphism
+/// Greeting, name, XP and the bell — no card, so the hero below owns the eye.
 class PersonalizedGreetingHeader extends StatelessWidget {
   final String userName;
   final int totalXP;
@@ -75,82 +106,86 @@ class PersonalizedGreetingHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final greeting = getTimeBasedGreeting();
-    final timeIcon = getTimeBasedIcon();
-    final iconColor = getTimeBasedIconColor(isDark: isDark);
-    final accent = AppColorRoles.primary(isDark);
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final dayPart = DayPart.now();
+    final phrase = dayPart.phraseKey.tr();
+    final meaning = dayPart.meaningKey.tr();
 
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDarkMuted : AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark
-              ? accent.withValues(alpha: 0.3)
-              : AppColors.primary.withValues(alpha: 0.18),
-          width: 2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.3)
-                : accent.withValues(alpha: 0.1),
-            blurRadius: 0,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Row(
         children: [
-          // Avatar with animated ring
-          GestureDetector(
-            onTap: onAvatarTap,
-            child: _AnimatedAvatarRing(
-              avatarUrl: avatarUrl,
-              size: 56,
-              useDarkAccent: isDark,
+          Semantics(
+            button: true,
+            label: 'home.openProfile'.tr(),
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: onAvatarTap,
+              child: _AvatarRing(avatarUrl: avatarUrl, isDark: isDark),
             ),
           ),
-          const SizedBox(width: 14),
-          // Greeting text
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Text(
-                      greeting,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: isDark ? Colors.grey[400] : Colors.grey[600],
-                        fontWeight: FontWeight.w600,
+                Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: phrase,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: AppColorRoles.textPrimary(isDark),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 6),
-                    Icon(timeIcon, size: 16, color: iconColor),
-                  ],
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  userName,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
+                      WidgetSpan(
+                        alignment: PlaceholderAlignment.middle,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 6),
+                          child: Icon(
+                            dayPart.icon,
+                            size: 18,
+                            color: dayPart.color(isDark),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 4),
-                _AnimatedXPCounter(xp: totalXP),
+                const SizedBox(height: 2),
+                Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: userName,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppColorRoles.textSecondary(isDark),
+                        ),
+                      ),
+                      if (meaning != phrase)
+                        TextSpan(
+                          text: '  ·  $meaning',
+                          style: TextStyle(
+                            color: AppColorRoles.textMuted(isDark),
+                          ),
+                        ),
+                    ],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 6),
+                _XpPill(xp: totalXP),
               ],
             ),
           ),
-          // Notification bell
+          const SizedBox(width: 8),
           _NotificationBell(count: notificationCount, onTap: onNotificationTap),
         ],
       ),
@@ -158,184 +193,87 @@ class PersonalizedGreetingHeader extends StatelessWidget {
   }
 }
 
-/// Animated avatar ring with gradient border
-class _AnimatedAvatarRing extends StatefulWidget {
+class _AvatarRing extends StatelessWidget {
+  const _AvatarRing({required this.avatarUrl, required this.isDark});
+
   final String? avatarUrl;
-  final double size;
-  final bool useDarkAccent;
-
-  const _AnimatedAvatarRing({
-    this.avatarUrl,
-    this.size = 56,
-    this.useDarkAccent = false,
-  });
-
-  @override
-  State<_AnimatedAvatarRing> createState() => _AnimatedAvatarRingState();
-}
-
-class _AnimatedAvatarRingState extends State<_AnimatedAvatarRing>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(seconds: 3),
-      vsync: this,
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+  final bool isDark;
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        final accent = AppColorRoles.primary(widget.useDarkAccent);
-        return Container(
-          width: widget.size,
-          height: widget.size,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: SweepGradient(
-              startAngle: _controller.value * 2 * math.pi,
-              colors: [accent, AppColors.purple, AppColors.purple, accent],
-            ),
-          ),
-          padding: const EdgeInsets.all(3),
-          child: Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Theme.of(context).scaffoldBackgroundColor,
-            ),
-            padding: const EdgeInsets.all(2),
-            child: ClipOval(
-              child: NetworkAvatarImage(
-                imageUrl: widget.avatarUrl,
-                fit: BoxFit.cover,
-                fallback: _buildDefaultAvatar(),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildDefaultAvatar() {
-    final accent = AppColorRoles.primary(widget.useDarkAccent);
+    final accent = AppColorRoles.primary(isDark);
     return Container(
-      color: accent.withValues(alpha: 0.2),
-      child: Icon(Icons.person_rounded, color: accent, size: 28),
+      width: 48,
+      height: 48,
+      padding: const EdgeInsets.all(2.5),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [accent, AppColors.purple],
+        ),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(2),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Theme.of(context).scaffoldBackgroundColor,
+        ),
+        child: ClipOval(
+          child: NetworkAvatarImage(
+            imageUrl: avatarUrl,
+            fit: BoxFit.cover,
+            fallback: ColoredBox(
+              color: accent.withValues(alpha: 0.2),
+              child: Icon(Icons.person_rounded, color: accent, size: 24),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
 
-/// Animated XP counter with sparkle effect
-class _AnimatedXPCounter extends StatefulWidget {
+class _XpPill extends StatelessWidget {
+  const _XpPill({required this.xp});
+
   final int xp;
 
-  const _AnimatedXPCounter({required this.xp});
-
-  @override
-  State<_AnimatedXPCounter> createState() => _AnimatedXPCounterState();
-}
-
-class _AnimatedXPCounterState extends State<_AnimatedXPCounter>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _sparkleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
-    )..repeat(reverse: true);
-
-    _sparkleAnimation = Tween<double>(
-      begin: 0.6,
-      end: 1.0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  String _formatXP(int xp) {
-    if (xp >= 1000000) {
-      return '${(xp / 1000000).toStringAsFixed(1)}M';
-    } else if (xp >= 1000) {
-      return '${(xp / 1000).toStringAsFixed(1)}K';
-    }
-    return xp.toString();
-  }
-
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _sparkleAnimation,
-      builder: (context, child) {
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.accentYellow.withValues(alpha: 0.28),
-                    AppColors.orange.withValues(alpha: 0.2),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(
-                  color: AppColors.orange.withValues(alpha: 0.3),
-                  width: 1.5,
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Transform.scale(
-                    scale: _sparkleAnimation.value,
-                    child: const Icon(
-                      Icons.star_rounded,
-                      size: 16,
-                      color: AppColors.orange,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${_formatXP(widget.xp)} XP',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.orange,
-                    ),
-                  ),
-                ],
-              ),
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final fg = isDark ? AppColors.orange : AppColors.warningDark;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.accentYellow.withValues(alpha: isDark ? 0.18 : 0.28),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: AppColors.orange.withValues(alpha: 0.4),
+          width: 1.5,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.star_rounded, size: 16, color: fg),
+          const SizedBox(width: 4),
+          CountUpText(
+            value: xp,
+            format: (value) => '${formatXp(value)} XP',
+            style: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: fg,
             ),
-          ],
-        );
-      },
+          ),
+        ],
+      ),
     );
   }
 }
 
-/// Notification bell with badge
 class _NotificationBell extends StatefulWidget {
   final int count;
   final VoidCallback? onTap;
@@ -348,8 +286,9 @@ class _NotificationBell extends StatefulWidget {
 
 class _NotificationBellState extends State<_NotificationBell>
     with SingleTickerProviderStateMixin {
-  late AnimationController _shakeController;
-  late Animation<double> _shakeAnimation;
+  late final AnimationController _shakeController;
+  late final Animation<double> _shakeAnimation;
+  bool _shookOnEntry = false;
 
   @override
   void initState() {
@@ -358,7 +297,6 @@ class _NotificationBellState extends State<_NotificationBell>
       duration: const Duration(milliseconds: 500),
       vsync: this,
     );
-
     _shakeAnimation = TweenSequence<double>(
       [
         TweenSequenceItem(tween: Tween(begin: 0, end: 0.1), weight: 1),
@@ -368,9 +306,14 @@ class _NotificationBellState extends State<_NotificationBell>
         TweenSequenceItem(tween: Tween(begin: -0.05, end: 0), weight: 1),
       ],
     ).animate(CurvedAnimation(parent: _shakeController, curve: Curves.easeOut));
+  }
 
-    // Shake if there are notifications
-    if (widget.count > 0) {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_shookOnEntry) return;
+    _shookOnEntry = true;
+    if (widget.count > 0 && !MediaQuery.disableAnimationsOf(context)) {
       Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted) _shakeController.forward();
       });
@@ -380,7 +323,8 @@ class _NotificationBellState extends State<_NotificationBell>
   @override
   void didUpdateWidget(_NotificationBell oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.count > oldWidget.count) {
+    if (widget.count > oldWidget.count &&
+        !MediaQuery.disableAnimationsOf(context)) {
       _shakeController.forward(from: 0);
     }
   }
@@ -393,465 +337,76 @@ class _NotificationBellState extends State<_NotificationBell>
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-    return GestureDetector(
-      onTap: widget.onTap,
-      child: AnimatedBuilder(
-        animation: _shakeAnimation,
-        builder: (context, child) {
-          return Transform.rotate(
-            angle: _shakeAnimation.value,
-            child: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: isDark ? Colors.grey[800] : AppColors.grey100,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.08)
-                      : AppColors.grey300,
-                  width: 1.5,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.12),
-                    blurRadius: 0,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
+    return Semantics(
+      button: true,
+      label: 'home.notificationsSemantics'.tr(
+        namedArgs: {'count': '${widget.count}'},
+      ),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: widget.onTap,
+        child: AnimatedBuilder(
+          animation: _shakeAnimation,
+          builder: (context, child) =>
+              Transform.rotate(angle: _shakeAnimation.value, child: child),
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.surfaceDarkElevated : AppColors.grey100,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isDark ? AppColors.borderDarkSoft : AppColors.grey300,
+                width: 1.5,
               ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Icon(
-                    PhosphorIconsBold.bell,
-                    size: 22,
-                    color: isDark ? Colors.white : Colors.grey[700],
-                  ),
-                  if (widget.count > 0)
-                    Positioned(
-                      top: 3,
-                      right: 3,
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Icon(
+                  PhosphorIconsBold.bell,
+                  size: 22,
+                  color: AppColorRoles.textPrimary(isDark),
+                ),
+                if (widget.count > 0)
+                  Positioned(
+                    top: 2,
+                    right: 2,
+                    child: ExcludeSemantics(
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 2,
-                          vertical: 1,
+                        constraints: const BoxConstraints(
+                          minWidth: 18,
+                          minHeight: 18,
                         ),
+                        padding: const EdgeInsets.symmetric(horizontal: 3),
                         decoration: BoxDecoration(
-                          color: AppColors.dangerGradient[0],
-                          shape: BoxShape.circle,
+                          color: AppColors.errorBright,
+                          borderRadius: BorderRadius.circular(999),
                           border: Border.all(
-                            color: isDark
-                                ? Colors.grey[800]!
-                                : AppColors.grey100,
+                            color: theme.scaffoldBackgroundColor,
                             width: 1.5,
                           ),
                         ),
-                        constraints: const BoxConstraints(
-                          minWidth: 16,
-                          minHeight: 16,
-                        ),
+                        alignment: Alignment.center,
                         child: Text(
-                          widget.count > 9 ? '9+' : widget.count.toString(),
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.surface,
-                            fontSize: 8,
-                            fontWeight: FontWeight.bold,
+                          widget.count > 9 ? '9+' : '${widget.count}',
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                            height: 1,
                           ),
-                          textAlign: TextAlign.center,
                         ),
                       ),
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-/// Animated fire streak card
-class AnimatedStreakCard extends StatefulWidget {
-  final int streakDays;
-  final int longestStreak;
-  final bool isActiveToday;
-  final List<bool>? weeklyActivity;
-  final List<double>? weeklyProgressPercentages;
-  final VoidCallback? onTap;
-
-  const AnimatedStreakCard({
-    super.key,
-    required this.streakDays,
-    this.longestStreak = 0,
-    this.isActiveToday = false,
-    this.weeklyActivity,
-    this.weeklyProgressPercentages,
-    this.onTap,
-  });
-
-  @override
-  State<AnimatedStreakCard> createState() => _AnimatedStreakCardState();
-}
-
-class _AnimatedStreakCardState extends State<AnimatedStreakCard>
-    with TickerProviderStateMixin {
-  late AnimationController _flameController;
-  late Animation<double> _flameAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-
-    // Flame flickering animation
-    _flameController = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    )..repeat(reverse: true);
-
-    _flameAnimation = Tween<double>(begin: 0.9, end: 1.1).animate(
-      CurvedAnimation(parent: _flameController, curve: Curves.easeInOut),
-    );
-  }
-
-  @override
-  void dispose() {
-    _flameController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final weekly = widget.weeklyActivity ?? List.filled(7, false);
-    final completedDays = weekly.where((active) => active).length;
-    final weekProgress = completedDays / 7;
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-      decoration: BoxDecoration(
-        gradient: isDark
-            ? LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [AppColors.surfaceDark, const Color(0xFF1A1F26)],
-              )
-            : null,
-        color: isDark ? null : Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.1)
-              : AppColors.skyBorder,
-          width: 2,
+          ),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.06),
-            blurRadius: isDark ? 0 : 18,
-            offset: Offset(0, isDark ? 5 : 6),
-          ),
-        ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              _buildAnimatedFire(),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'home.dayStreakCount'.tr(
-                        namedArgs: {'count': '${widget.streakDays}'},
-                      ),
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -0.4,
-                        color: isDark ? Colors.white : AppColors.textDark,
-                      ),
-                    ),
-                    Text(
-                      widget.isActiveToday
-                          ? 'home.fireToday'.tr()
-                          : 'home.completeLessonToday'.tr(),
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: isDark
-                            ? Colors.white70
-                            : const Color(0xFF5F6573),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              GestureDetector(
-                onTap: widget.onTap,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? AppColors.accentMintDark.withValues(alpha: 0.45)
-                        : AppColors.accentMint.withValues(alpha: 0.18),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(
-                      color: isDark
-                          ? AppColors.accentMint.withValues(alpha: 0.6)
-                          : AppColors.accentMint.withValues(alpha: 0.45),
-                      width: 1.5,
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.calendar_month_rounded,
-                        size: 14,
-                        color: isDark
-                            ? AppColors.primaryDarkModeSoft
-                            : AppColors.teal,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'home.calendar'.tr(),
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                          color: isDark
-                              ? AppColors.primaryDarkModeSoft
-                              : AppColors.teal,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildWeekCalendar(),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: LinearProgressIndicator(
-              minHeight: 7,
-              value: weekProgress,
-              backgroundColor: isDark
-                  ? Colors.white.withValues(alpha: 0.1)
-                  : const Color(0xFFF3E4D7),
-              valueColor: AlwaysStoppedAnimation<Color>(
-                widget.isActiveToday
-                    ? const Color(0xFFFF6B35)
-                    : const Color(0xFFFF915F),
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'home.activeDaysThisWeek'.tr(
-              namedArgs: {'count': '$completedDays'},
-            ),
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white60 : const Color(0xFF7A6A5F),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAnimatedFire() {
-    final hasStreak = widget.streakDays > 0;
-    return AnimatedBuilder(
-      animation: _flameAnimation,
-      builder: (context, child) {
-        return Transform.scale(
-          scale: hasStreak && widget.isActiveToday
-              ? _flameAnimation.value
-              : 1.0,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              // Glow effect
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: hasStreak
-                        ? [
-                            const Color(0xFFFF6B35).withValues(alpha: 0.42),
-                            const Color(0xFFFF3D00).withValues(alpha: 0.18),
-                            Colors.transparent,
-                          ]
-                        : [
-                            Colors.grey.withValues(alpha: 0.18),
-                            Colors.transparent,
-                          ],
-                  ),
-                ),
-              ),
-              Container(
-                width: 46,
-                height: 46,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: hasStreak
-                      ? Colors.white.withValues(alpha: 0.16)
-                      : Colors.grey.withValues(alpha: 0.12),
-                  border: Border.all(
-                    color: hasStreak
-                        ? const Color(0xFFFF7A45)
-                        : Colors.grey.withValues(alpha: 0.4),
-                    width: 2.5,
-                  ),
-                  boxShadow: hasStreak
-                      ? [
-                          BoxShadow(
-                            color: const Color(
-                              0xFFFF6B35,
-                            ).withValues(alpha: 0.35),
-                            blurRadius: 0,
-                            offset: const Offset(0, 3),
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Center(child: _buildFireContent(hasStreak)),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildFireContent(bool hasStreak) {
-    if (!hasStreak) {
-      return const Icon(
-        Icons.local_fire_department_rounded,
-        size: 34,
-        color: AppColors.grey500,
-      );
-    }
-
-    if (widget.streakDays >= 30) {
-      return const LottieAnimationWidget.fire(width: 40, height: 40);
-    }
-    if (widget.streakDays >= 7) {
-      return const LottieAnimationWidget.flame(width: 40, height: 40);
-    }
-
-    return ShaderMask(
-      shaderCallback: (bounds) => const LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [Color(0xFFFFB74D), Color(0xFFFF7043), Color(0xFFE53935)],
-      ).createShader(bounds),
-      child: const Icon(
-        Icons.local_fire_department_rounded,
-        size: 34,
-        color: Colors.white,
-      ),
-    );
-  }
-
-  Widget _buildWeekCalendar() {
-    final now = DateTime.now();
-    final days = [
-      'home.weekdayMonShort'.tr(),
-      'home.weekdayTueShort'.tr(),
-      'home.weekdayWedShort'.tr(),
-      'home.weekdayThuShort'.tr(),
-      'home.weekdayFriShort'.tr(),
-      'home.weekdaySatShort'.tr(),
-      'home.weekdaySunShort'.tr(),
-    ];
-    final currentWeekday = now.weekday; // 1 = Monday, 7 = Sunday
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    // Use real per-day activity data when available; fall back to no highlights
-    final activity = widget.weeklyActivity ?? List.filled(7, false);
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: List.generate(7, (index) {
-        final dayNumber = index + 1; // 1=Mon … 7=Sun
-        final isToday = dayNumber == currentWeekday;
-        final isActive = activity[index];
-
-        return Expanded(
-          child: Column(
-            children: [
-              Text(
-                days[index],
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: isToday ? FontWeight.w800 : FontWeight.w600,
-                  color: isToday
-                      ? AppColors.deepOrange
-                      : isDark
-                      ? Colors.white54
-                      : const Color(0xFF9A8F86),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Container(
-                width: 26,
-                height: 26,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isActive
-                      ? AppColors.deepOrange
-                      : (isDark
-                            ? Colors.white.withValues(alpha: 0.04)
-                            : const Color(0xFFF8EBDF)),
-                  border: Border.all(
-                    color: isToday
-                        ? AppColors.deepOrange
-                        : isActive
-                        ? AppColors.deepOrange.withValues(alpha: 0.7)
-                        : (isDark
-                              ? Colors.white.withValues(alpha: 0.15)
-                              : const Color(0xFFE8CCB6)),
-                    width: isToday ? 2.5 : (isActive ? 1.5 : 1),
-                  ),
-                  boxShadow: isActive
-                      ? [
-                          BoxShadow(
-                            color: AppColors.deepOrange.withValues(alpha: 0.4),
-                            blurRadius: 0,
-                            offset: const Offset(0, 2),
-                          ),
-                        ]
-                      : null,
-                ),
-                child: isActive
-                    ? Icon(
-                        Icons.local_fire_department_rounded,
-                        size: 15,
-                        color: AppColors.surfaceLight,
-                      )
-                    : null,
-              ),
-            ],
-          ),
-        );
-      }),
     );
   }
 }
@@ -901,8 +456,8 @@ class _SkeletonLoaderState extends State<SkeletonLoader>
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final baseColor = isDark ? Colors.grey[800]! : Colors.grey[200]!;
-    final highlightColor = isDark ? Colors.grey[700]! : Colors.grey[100]!;
+    final baseColor = isDark ? AppColors.grey800 : AppColors.grey200;
+    final highlightColor = isDark ? AppColors.grey700 : AppColors.grey100;
 
     return AnimatedBuilder(
       animation: _animation,

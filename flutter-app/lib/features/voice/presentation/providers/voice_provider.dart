@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/core/services/skill_event_recorder.dart';
@@ -100,7 +101,7 @@ class VoiceProvider extends ChangeNotifier {
   /// Synthesize text to speech and play
   Future<AudioSynthesis?> synthesizeAndPlay({required String text}) async {
     if (text.isEmpty) {
-      _errorMessage = 'Text cannot be empty';
+      _errorMessage = 'voice.textRequired'.tr();
       _state = VoiceState.error;
       notifyListeners();
       return null;
@@ -142,7 +143,7 @@ class VoiceProvider extends ChangeNotifier {
     String? language,
   }) async {
     if (targetText.isEmpty) {
-      _errorMessage = 'Target text cannot be empty';
+      _errorMessage = 'voice.textRequired'.tr();
       _state = VoiceState.error;
       notifyListeners();
       return null;
@@ -244,9 +245,9 @@ class VoiceProvider extends ChangeNotifier {
     if (failure is ServerFailure) {
       return failure.message;
     } else if (failure is NetworkFailure) {
-      return 'Network error. Please check your connection.';
+      return 'errors.networkRetry'.tr();
     } else {
-      return 'An unexpected error occurred.';
+      return 'errors.genericRetry'.tr();
     }
   }
 }

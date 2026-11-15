@@ -129,7 +129,19 @@
     "errAlreadyExists": "Cet e-mail ou nom d'utilisateur est déjà utilisé",
     "errValidation": "Certaines informations sont invalides. Veuillez vérifier.",
     "errNetwork": "Pas de connexion réseau. Veuillez réessayer.",
-    "errRateLimited": "Trop de tentatives. Veuillez patienter un instant."
+    "errRateLimited": "Trop de tentatives. Veuillez patienter un instant.",
+    "googleSignInCancelled": "La connexion Google a été annulée.",
+    "facebookSignInCancelled": "La connexion Facebook a été annulée ou a échoué.",
+    "errServerTimeout": "Le serveur ne répond pas. Veuillez réessayer dans un instant.",
+    "errProfileLoad": "Connexion réussie, mais impossible de charger votre profil. Veuillez réessayer.",
+    "errServer": "Une erreur serveur est survenue. Veuillez réessayer plus tard.",
+    "errGoogleConfig": "La connexion Google n'est pas configurée correctement. Veuillez contacter le support.",
+    "errAccountExists": "Cet e-mail est déjà associé à une autre méthode de connexion. Veuillez d'abord utiliser cette méthode.",
+    "errCors": "La connexion est temporairement bloquée. Veuillez réessayer dans un instant.",
+    "errCancelled": "La connexion a été annulée.",
+    "errInvalidPassword": "Mot de passe invalide.",
+    "errUserNotFound": "Aucun compte trouvé avec cet e-mail.",
+    "errWrongPassword": "Mot de passe incorrect."
   },
   "home": {
     "wordsLeftToReview": "mots à réviser",
@@ -184,7 +196,6 @@
     "navDiscovery": "Explorer",
     "navLearning": "Apprendre",
     "navLexi": "Lexi",
-    "navTopic": "Sujets",
     "navAccount": "Compte",
     "streak": "Série : {count} jours",
     "continueLesson": "Continuer l'apprentissage",
@@ -287,7 +298,20 @@
     "recReasonGap": "Vous ne maîtrisez pas encore ceci",
     "recReasonLevel": "Adapté à votre niveau {level}",
     "recReasonSimilar": "Proche de ce que vous apprenez",
-    "recReasonDefault": "Suggéré pour vous"
+    "recReasonDefault": "Suggéré pour vous",
+    "nextUp": "À suivre",
+    "discover": "Découvrir",
+    "openProfile": "Ouvrir le profil",
+    "activeBoostsChip": "{count} boosts actifs",
+    "streakKeepAlive": "Apprenez aujourd’hui pour garder votre série",
+    "streakSemantics": "Série de {count} jours, {active} jours actifs cette semaine. Ouvrir le calendrier",
+    "dailyGoalSemantics": "Objectif du jour : {earned} sur {goal} XP, {percent} %. Modifier l’objectif",
+    "notificationsSemantics": "Notifications, {count} non lues",
+    "greetingPhraseMorning": "Good morning",
+    "greetingPhraseAfternoon": "Good afternoon",
+    "greetingPhraseEvening": "Good evening",
+    "greetingPhraseNight": "Good night",
+    "navPracticeLab": "Pratique"
   },
   "course": {
     "title": "Cours",
@@ -457,7 +481,17 @@
     "easyDifficulty": "Facile",
     "perfectDifficulty": "Parfait!",
     "blackout": "Panne d'électricité (0)",
-    "perfectFive": "Parfait (5)"
+    "perfectFive": "Parfait (5)",
+    "nothingDueTitle": "Vous êtes à jour !",
+    "nothingDueBody": "Aucun mot à réviser pour le moment. Revenez plus tard ou ajoutez de nouveaux mots à votre collection.",
+    "nothingDueAction": "Retour",
+    "loadFailed": "Impossible de charger votre vocabulaire. Veuillez réessayer.",
+    "unexpectedError": "Une erreur s’est produite. Veuillez réessayer.",
+    "noVocabularyForTopic": "Aucun mot trouvé pour « {topic} ».",
+    "noVocabularyInDeck": "Cette collection ne contient pas encore de mots.",
+    "prepareFailed": "Impossible de préparer les cartes d’étude.",
+    "submitFailed": "Impossible d’enregistrer votre révision. Veuillez réessayer.",
+    "quizNotEnough": "Pas encore assez de mots pour créer un quiz."
   },
   "voice": {
     "practiceTitle": "Pratique vocale",
@@ -473,12 +507,12 @@
     "youSaid": "Vous avez dit:",
     "excellentPronunciation": "Excellente prononciation !",
     "microphonePermissionDenied": "Autorisation du microphone refusée",
-    "failedToStartRecording": "Échec du démarrage de l'enregistrement : {error}",
+    "failedToStartRecording": "Impossible de démarrer l’enregistrement.",
     "recordedAudioUnreadable": "L'audio enregistré n'a pas pu être lu",
     "noRecordedAudioReturned": "Aucun audio enregistré n'a été renvoyé",
-    "failedToStopRecording": "Échec de l'arrêt de l'enregistrement : {error}",
+    "failedToStopRecording": "Impossible d’arrêter l’enregistrement.",
     "enterPhraseFirst": "Entrez d'abord une phrase",
-    "failedToPlayAudio": "Échec de la lecture audio : {error}",
+    "failedToPlayAudio": "Impossible de lire l’audio.",
     "speak": "Parler",
     "listen": "Écouter",
     "recording": "Enregistrement...",
@@ -523,7 +557,18 @@
     "recordingTapToStop": "Enregistrement — touchez pour arrêter",
     "recognizing": "Reconnaissance de la parole...",
     "notMatchedTryAgain": "Pas encore correct — réessayez",
-    "saidCorrectly": "Vous l'avez bien dit"
+    "saidCorrectly": "Vous l'avez bien dit",
+    "noSpeechDetected": "Aucune parole détectée. Veuillez réessayer.",
+    "microphoneUnavailable": "Microphone indisponible. Vérifiez vos autorisations.",
+    "recognitionAborted": "La reconnaissance vocale a été interrompue.",
+    "languageNotSupported": "Cette langue n'est pas prise en charge par la reconnaissance vocale.",
+    "recognitionFailed": "La reconnaissance vocale a échoué. Veuillez réessayer.",
+    "recognitionUnsupported": "La reconnaissance vocale n'est pas prise en charge sur ce navigateur ou cet appareil.",
+    "textRequired": "Veuillez d'abord saisir un texte.",
+    "transcribeFailed": "Impossible de transcrire l'enregistrement. Veuillez réessayer.",
+    "recordingStartFailed": "Impossible de démarrer l'enregistrement. Veuillez réessayer.",
+    "recordingStopFailed": "Impossible d'arrêter l'enregistrement. Veuillez réessayer.",
+    "playbackFailed": "Impossible de lire l'audio. Veuillez réessayer."
   },
   "chat": {
     "loadMore": "Charger plus...",
@@ -682,12 +727,24 @@
     "levelPromoted": "Progression depuis {from}",
     "levelDemoted": "Recul depuis {from}",
     "levelJourneyFailed": "Impossible de charger l'historique de niveau.",
+    "levelPlaced": "Placé en {level}",
+    "levelTestRule": "Votre niveau ne change qu'en réussissant un test de niveau.",
+    "levelTestReady": "Vous êtes prêt pour {level}",
+    "levelTestTake": "Passer le test",
     "proficiencyUnlockHint": "Vos scores s'afficheront après les premières leçons. Commencez à apprendre maintenant !",
     "proficiencyUnlockThreshold": "Vos scores se débloquent après environ les leçons {count}",
     "startLessons": "Commencer les leçons",
     "adminMobile": "Admin mobile",
     "switchToAdmin": "Passer au panneau d'administration",
-    "adminMobileSubtitle": "LexiLingo Admin mobile"
+    "adminMobileSubtitle": "LexiLingo Admin mobile",
+    "levelCertifiedTag": "Certifié par un test",
+    "levelUnverifiedTag": "Affiché comme non vérifié tant que vous n'avez pas réussi l'examen de niveau",
+    "levelUnverifiedValue": "{level} · non vérifié (certifié {certified})",
+    "levelPickerHint": "Choisissez le niveau auquel vous voulez étudier. Seul l'examen de niveau certifie un niveau.",
+    "levelAboveCertifiedTitle": "Étudier au-dessus de votre niveau certifié ?",
+    "levelAboveCertifiedBody": "Les leçons et Lexi utiliseront {level}. Votre niveau certifié reste {certified} tant que vous n'avez pas réussi l'examen, et votre rang continue de l'utiliser.",
+    "levelSaved": "Vous étudiez maintenant au niveau {level}",
+    "levelSelfSet": "Niveau {level} choisi"
   },
   "progress": {
     "streakRestoresLeft": "Restaurations de série restantes ce mois-ci : {count}",
@@ -711,7 +768,8 @@
     "emptyChart": "Commencez à apprendre pour voir votre graphique de progression !",
     "tabLessons": "Leçons",
     "tabActivity": "Activité",
-    "tabContent": "Contenu"
+    "tabContent": "Contenu",
+    "noStreakFreezes": "Aucun gel de série disponible."
   },
   "settings": {
     "title": "Paramètres",
@@ -828,7 +886,10 @@
       "yourTimeBody": "C'est vous qui avez choisi ce moment. Ouvrez l'appli, pointez, puis reprenez votre journée.",
       "fadingTitle": "Les mots d'hier s'estompent",
       "fadingBody": "Réviser juste avant d'oublier, c'est là que la mémoire gagne le plus."
-    }
+    },
+    "markReadFailed": "Impossible de marquer comme lu. Veuillez réessayer.",
+    "deleteFailed": "Impossible de supprimer la notification. Veuillez réessayer.",
+    "restoreFailed": "Impossible de restaurer la notification. Veuillez réessayer."
   },
   "errors": {
     "networkError": "Erreur réseau",
@@ -838,7 +899,17 @@
     "unknown": "Une erreur inconnue s'est produite",
     "timeout": "Délai de requête dépassé",
     "noInternet": "Pas de connexion Internet",
-    "genericRetry": "Une erreur est survenue. Veuillez réessayer."
+    "genericRetry": "Une erreur est survenue. Veuillez réessayer.",
+    "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter.",
+    "sessionExpiredOnServer": "Votre session a expiré sur le serveur. Une nouvelle a été ouverte.",
+    "sessionOtherAccount": "Cette session appartient à un autre compte. Démarrez une nouvelle conversation.",
+    "sessionStartFailed": "Impossible de démarrer la session. Veuillez réessayer.",
+    "noActiveSession": "Aucune session active.",
+    "loadFailed": "Impossible de charger les données. Veuillez réessayer.",
+    "saveFailed": "Impossible d'enregistrer. Veuillez réessayer.",
+    "submitFailed": "Impossible d'envoyer. Veuillez réessayer.",
+    "networkRetry": "Erreur réseau. Vérifiez votre connexion et réessayez.",
+    "localStorage": "Erreur de stockage local. Veuillez réessayer."
   },
   "gamification": {
     "xpEarned": "+{xp} XP",
@@ -917,7 +988,10 @@
     "nearbyReason": "Proche",
     "refreshSuggestions": "Actualiser les suggestions",
     "disableNearby": "Désactiver à proximité",
-    "refreshNearby": "Actualiser à proximité"
+    "refreshNearby": "Actualiser à proximité",
+    "searchFailed": "Impossible de rechercher des utilisateurs. Veuillez réessayer.",
+    "locationPermissionDenied": "Autorisation de localisation refusée.",
+    "locationServicesDisabled": "Les services de localisation sont désactivés."
   },
   "onboarding": {
     "welcome": "Bienvenue sur LexiLingo !",
@@ -953,7 +1027,8 @@
     "interestDailyLife": "Vie quotidienne et sujets sociaux",
     "interestTechnology": "Technologie et innovation",
     "interestCulture": "Culture et divertissement",
-    "interestCareer": "Évolution de carrière et entretiens"
+    "interestCareer": "Évolution de carrière et entretiens",
+    "levelC2": "C2 - Maîtrise"
   },
   "preAuth": {
     "quickSetup": "Configuration rapide",
@@ -1239,8 +1314,13 @@
     "filterIntermediate": "Intermédiaire",
     "filterAdvanced": "Avancé",
     "popularScenariosTitle": "Scénarios populaires",
-    "seeAllLink": "Voir tout",
-    "noTopicsFound": "Aucun sujet trouvé"
+    "noTopicsFound": "Aucun sujet trouvé",
+    "emptyTitle": "Aucun sujet pour l'instant",
+    "emptyBody": "Impossible de charger les sujets de conversation. Réessayez ou discutez librement avec Lexi en attendant.",
+    "retry": "Réessayer",
+    "openFreeChat": "Discuter avec Lexi",
+    "noMatchBody": "Aucun sujet ne correspond à votre recherche ou au filtre de niveau.",
+    "clearFilters": "Effacer les filtres"
   },
   "topicChat": {
     "preparingTopicMessage": "Préparation de votre sujet...",
@@ -1385,7 +1465,13 @@
     "conceptCollocation": "Collocation",
     "conceptPhonology": "Prononciation",
     "conceptSkill": "Compétence",
-    "suggestedCoursesLabel": "Cours pour vous"
+    "suggestedCoursesLabel": "Cours pour vous",
+    "modeFree": "Discussion",
+    "modeTopics": "Sujets",
+    "voiceSpeed": "Vitesse de la voix",
+    "historyUnavailable": "L'historique de la session est temporairement indisponible. Vous pouvez continuer à discuter.",
+    "offlineQueued": "Vous êtes hors ligne. Votre message sera envoyé à la reconnexion.",
+    "voiceProcessingFailed": "Le traitement vocal a échoué. Veuillez réessayer."
   },
   "youtube": {
     "subtitles": "Sous-titres",
@@ -1731,7 +1817,11 @@
     "tagCrawl": "Collectés",
     "tagSociety": "Société",
     "tagSeed": "Base",
-    "tagHistory": "Histoire"
+    "tagHistory": "Histoire",
+    "removeFromDeckFailed": "Impossible de retirer du paquet",
+    "alreadyInVocabulary": "« {} » est déjà dans votre vocabulaire.",
+    "savedNewWord": "Nouveau mot « {} » enregistré dans votre vocabulaire.",
+    "savedWord": "« {} » enregistré dans votre vocabulaire."
   },
   "legal": {
     "privacy_title": "Politique de confidentialité",
@@ -1871,7 +1961,8 @@
         "action": "Review mistakes",
         "estimate": "4-8 min"
       }
-    }
+    },
+    "noFocusHint": "Terminez quelques exercices et vos compétences à travailler apparaîtront ici."
   },
   "mistakeNotebook": {
     "title": "Mistake Notebook",
@@ -1942,7 +2033,9 @@
     "serverErrorDesc": "Problème de connexion. Veuillez réessayer."
   },
   "dailyChallenges": {
-    "rewardClaimed": "Récompense récupérée !"
+    "rewardClaimed": "Récompense récupérée !",
+    "rewardAlreadyClaimed": "Cette récompense a déjà été réclamée.",
+    "challengeNotCompleted": "Terminez d'abord le défi pour réclamer la récompense."
   },
   "contentActivity": {
     "summary": "{days} derniers jours : {minutes} min, {sessions} activités, {xp} XP",
@@ -1970,6 +2063,35 @@
     "skillListening": "Compréhension orale",
     "skillReading": "Compréhension écrite",
     "skillWriting": "Expression écrite",
-    "skillSpeaking": "Expression orale"
+    "skillSpeaking": "Expression orale",
+    "audioUnavailable": "Audio indisponible.",
+    "nothingTranscribed": "Rien n’a été transcrit. Réessayez.",
+    "transcribeFailed": "Impossible de transcrire l’enregistrement.",
+    "micPermissionRequired": "L’autorisation du microphone est requise."
+  },
+  "levelExam": {
+    "title": "Examen de niveau",
+    "introTitle": "Examen de niveau depuis {level}",
+    "introBody": "Une courte section par niveau au-dessus de votre niveau certifié. Réussissez des sections à la suite pour monter — une session peut certifier plusieurs niveaux. En cas d'échec, vous pourrez réessayer dans 24 heures. Le chronomètre démarre quand vous commencez.",
+    "start": "Commencer l'examen",
+    "resume": "Reprendre l'examen",
+    "questionOf": "{current}/{total}",
+    "sectionLevel": "Niveau {level}",
+    "timeLeft": "{time} restantes",
+    "next": "Suivant",
+    "previous": "Retour",
+    "submit": "Envoyer",
+    "passedTitle": "Vous avez atteint {level} !",
+    "failedTitle": "Pas cette fois",
+    "sectionRow": "{level} : {correct}/{total} correctes",
+    "certifiedNow": "Votre niveau certifié est maintenant {level}.",
+    "retryAt": "Vous pourrez réessayer à partir de {time}.",
+    "done": "Terminé",
+    "gateNotReady": "Continuez à vous entraîner pour débloquer l'examen {level} ({progress} % atteints).",
+    "gateCooldown": "Vous pourrez repasser l'examen à partir de {time}.",
+    "gateExpired": "Le temps est écoulé. Vous pourrez réessayer à partir de {time}.",
+    "gateNoQuestions": "L'examen du niveau suivant n'est pas encore disponible.",
+    "gateMaxLevel": "Vous êtes certifié au niveau le plus élevé.",
+    "gateError": "Impossible de charger l'examen. Veuillez réessayer."
   }
 }

@@ -18,7 +18,7 @@ from app.services.level_service import (
     check_numeric_level_up,
     get_numeric_level_progress,
 )
-from app.services.rank_service import apply_rank_info_to_user, calculate_rank
+from app.services.rank_service import apply_rank_info_to_user, calculate_rank, rank_proficiency_level
 
 
 DAILY_XP_CAP = 500
@@ -210,7 +210,7 @@ async def award_xp_transaction(
         old_xp,
         new_xp,
     )
-    rank_info = calculate_rank(new_level, locked_user.level or "A1")
+    rank_info = calculate_rank(new_level, rank_proficiency_level(locked_user))
 
     locked_user.total_xp = new_xp
     locked_user.numeric_level = new_level

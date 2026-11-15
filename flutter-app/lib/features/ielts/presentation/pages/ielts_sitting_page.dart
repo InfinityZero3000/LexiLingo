@@ -2,6 +2,7 @@ import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'dart:async';
 import 'dart:io';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:path_provider/path_provider.dart';
@@ -324,7 +325,7 @@ class _AudioPlayerBarState extends State<_AudioPlayerBar> {
       await _player.setUrl(url);
       if (mounted) setState(() => _ready = true);
     } catch (e) {
-      if (mounted) setState(() => _error = 'Audio unavailable');
+      if (mounted) setState(() => _error = 'ielts.audioUnavailable'.tr());
     }
   }
 
@@ -704,11 +705,11 @@ class _SpeakingPartState extends State<_SpeakingPart> {
           _transcriptController.text = transcript.trim();
           provider.setAnswer(_key, transcript.trim());
         } else {
-          setState(() => _error = 'Nothing was transcribed. Try again.');
+          setState(() => _error = 'ielts.nothingTranscribed'.tr());
         }
       } catch (e) {
         if (mounted) {
-          setState(() => _error = 'Could not transcribe the recording.');
+          setState(() => _error = 'ielts.transcribeFailed'.tr());
         }
       } finally {
         if (mounted) setState(() => _transcribing = false);
@@ -718,7 +719,7 @@ class _SpeakingPartState extends State<_SpeakingPart> {
 
     if (!await _recorder.hasPermission()) {
       if (mounted) {
-        setState(() => _error = 'Microphone permission is required.');
+        setState(() => _error = 'ielts.micPermissionRequired'.tr());
       }
       return;
     }

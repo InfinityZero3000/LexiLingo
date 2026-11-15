@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -274,7 +275,7 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
   }
 
   Widget _navButton(IconData icon, VoidCallback onTap, bool isDark) {
-    return GestureDetector(
+    return TapTarget(
       onTap: onTap,
       child: Icon(
         icon,
@@ -378,7 +379,7 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
               icon: Icons.notifications_outlined,
               label: 'home.checkinReminder'.tr(),
               trailing: Transform.scale(
-                scale: 0.9,
+                scale: TapTargetBox.applies(context) ? 1 : 0.9,
                 child: Switch(
                   value: _reminderEnabled,
                   onChanged: (val) {
@@ -391,7 +392,9 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
                   inactiveTrackColor: AppColors.surfaceLight.withValues(
                     alpha: 0.4,
                   ),
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  materialTapTargetSize: TapTargetBox.applies(context)
+                      ? MaterialTapTargetSize.padded
+                      : MaterialTapTargetSize.shrinkWrap,
                 ),
               ),
             ),
@@ -400,7 +403,7 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
               _reminderRow(
                 icon: Icons.access_time_outlined,
                 label: 'home.setTime'.tr(),
-                trailing: GestureDetector(
+                trailing: TapTarget(
                   onTap: _pickTime,
                   child: Text(
                     _reminderTime.format(context),

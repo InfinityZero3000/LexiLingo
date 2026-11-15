@@ -26,6 +26,7 @@ from collections.abc import AsyncGenerator
 from pathlib import Path
 
 import pytest
+from fastapi import Depends
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -84,15 +85,17 @@ async def auth_client() -> AsyncGenerator[AsyncClient, None]:
         async with _session_factory() as session:
             yield session
 
-    async def override_get_user():
-        async with _session_factory() as session:
-            result = await session.execute(select(User).where(User.email == TARGET_EMAIL))
-            user = result.scalar_one_or_none()
-            if user is None:
-                pytest.fail(
-                    f"User '{TARGET_EMAIL}' not found. Run: python -m tests.seed_proficiency_data"
-                )
-            return user
+    # Same session as the route, like the real get_current_user: a user loaded
+    # in a separate, closed session silently drops every write a route makes
+    # to it (its level, its certified level, its rank).
+    async def override_get_user(session: AsyncSession = Depends(get_db)):
+        result = await session.execute(select(User).where(User.email == TARGET_EMAIL))
+        user = result.scalar_one_or_none()
+        if user is None:
+            pytest.fail(
+                f"User '{TARGET_EMAIL}' not found. Run: python -m tests.seed_proficiency_data"
+            )
+        return user
 
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_current_user] = override_get_user
@@ -435,19 +438,34 @@ class TestPlacementSubmit:
         assert data["score_percentage"] == 100.0
         assert data["assessed_level"] in ("C1", "C2")
 
-    async def test_all_wrong_gives_a1(self, auth_client):
-        """Answering all questions wrong → A1."""
-        wrong_answers = [
-            {"question_id": i, "selected_option": 3}  # All option 3 (wrong for most)
-            for i in range(1, 21)
-        ]
+    async def test_retake_never_lowers_the_level(self, auth_client):
+        """A level is earned by passing a test, so a bad retake cannot take it away."""
+        from app.routes.proficiency import PLACEMENT_QUESTIONS
+
+        good = await auth_client.post(
+            f"{BASE}/placement-test/submit",
+            json={
+                "answers": [
+                    {"question_id": q["id"], "selected_option": q["correct"]}
+                    for q in PLACEMENT_QUESTIONS
+                ]
+            },
+        )
+        held = good.json()["assessed_level"]
+
         resp = await auth_client.post(
             f"{BASE}/placement-test/submit",
-            json={"answers": wrong_answers},
+            json={
+                "answers": [
+                    {"question_id": i, "selected_option": 3} for i in range(1, 21)
+                ]
+            },
         )
         assert resp.status_code == 200
         data = resp.json()
-        assert data["assessed_level"] == "A1"
+        assert data["test_level"] == "A1"
+        assert data["assessed_level"] == held
+        assert data["level_changed"] is False
 
     async def test_submit_response_structure(self, auth_client):
         answers = [{"question_id": i, "selected_option": 0} for i in range(1, 21)]

@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import '../../domain/entities/level_history_entry.dart';
 import '../../domain/entities/proficiency_entity.dart';
@@ -97,11 +98,37 @@ class ProficiencyProvider with ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _isLoading = false;
-      _errorMessage = 'Failed to load proficiency profile: $e';
+      _errorMessage = 'errors.loadFailed'.tr();
       notifyListeners();
       debugPrint('Error loading proficiency: $e');
     }
   }
+
+  /// After anything that moved the level: drop the cached profile, reload it
+  /// and the history.
+  Future<void> refreshAfterLevelChange() async {
+    final dataSource = _dataSource;
+    if (dataSource == null) return;
+    await dataSource.invalidateProfile();
+    await Future.wait([loadProfile(), loadHistory(force: true)]);
+  }
+
+  /// Set the working level (either way); returns false when the call failed.
+  /// The caller runs LevelSync so every other holder of the level catches up.
+  Future<bool> setWorkingLevel(String level) async {
+    final dataSource = _dataSource;
+    if (dataSource == null) return false;
+    try {
+      await dataSource.setWorkingLevel(level);
+      return true;
+    } catch (e) {
+      debugPrint('Error setting working level: $e');
+      return false;
+    }
+  }
+
+  String get certifiedLevel => _profile.certifiedLevel;
+  bool get levelVerified => _profile.levelVerified;
 
   /// Load the CEFR level-change history once; pass [force] to refetch.
   Future<void> loadHistory({bool force = false}) async {
@@ -158,7 +185,7 @@ class ProficiencyProvider with ChangeNotifier {
 
       return result;
     } catch (e) {
-      _errorMessage = 'Failed to record exercises: $e';
+      _errorMessage = 'errors.saveFailed'.tr();
       notifyListeners();
       debugPrint('Error recording exercises: $e');
       return null;

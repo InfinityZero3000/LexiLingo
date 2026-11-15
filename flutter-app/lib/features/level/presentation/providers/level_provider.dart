@@ -23,6 +23,8 @@ class LevelProvider with ChangeNotifier {
   double _levelProgressPercent = 0;
   int _totalXp = 0;
   String _proficiencyLevel = 'A1';
+  String _certifiedLevel = 'A1';
+  bool _levelVerified = true;
   String _proficiencyName = 'Beginner';
   String _rank = 'bronze';
   String _rankName = 'Bronze';
@@ -55,6 +57,10 @@ class LevelProvider with ChangeNotifier {
   double get levelProgressPercent => _levelProgressPercent;
   int get totalXp => _totalXp;
   String get proficiencyLevel => _proficiencyLevel;
+
+  /// What a test confirmed; [proficiencyLevel] is the working level.
+  String get certifiedLevel => _certifiedLevel;
+  bool get levelVerified => _levelVerified;
   String get proficiencyName => _proficiencyName;
   String get rank => _rank;
   String get rankName => _rankName;
@@ -253,19 +259,21 @@ class LevelProvider with ChangeNotifier {
       _totalXp = data['total_xp'] ?? 0;
       _proficiencyLevel =
           data['cefr_level'] ?? data['proficiency_level'] ?? 'A1';
+      _certifiedLevel = data['certified_level'] as String? ?? _proficiencyLevel;
+      _levelVerified = data['level_verified'] as bool? ?? true;
       _proficiencyName =
           data['cefr_name'] ?? data['proficiency_name'] ?? 'Beginner';
 
       final oldRank = _rank;
       final newRank = data['rank'] ?? 'bronze';
-      
+
       // Rank thresholds usually go: bronze -> silver -> gold -> platinum -> diamond -> master -> grandmaster.
       // Easiest is to check just if it's different and oldRank is not initial state (unless we just started).
       // Or we can just trust if oldRank != newRank and we already had a valid rank.
       // But wait: What if oldRank is 'bronze' from reset() but the user was actually 'gold' on first load?
       // If we show rank up, we only want to show it if we PREVIOUSLY fetched their rank successfully and NOW it changed.
       // How do we know it's a "first load"? `_rawLevelFull.isEmpty` tells us if it's the first fetch.
-      
+
       _rank = newRank;
       _rankName = data['rank_name'] ?? 'Bronze';
       _rankScore = (data['rank_score'] ?? 0).toDouble();

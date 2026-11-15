@@ -9,6 +9,14 @@ class ContentWidth extends StatelessWidget {
   static const double reading = 760;
   static const double wide = 1180;
 
+  /// Below this the app is a touch layout with the bottom bar; from here up it
+  /// is the desktop layout with the navigation rail.
+  static const double touchLayoutBelow = 840;
+
+  /// Tablet portrait: wider than a phone, narrower than the rail layout.
+  static bool isTablet(double width) =>
+      width >= 600 && width < touchLayoutBelow;
+
   final Widget child;
   final double maxWidth;
 
@@ -17,7 +25,12 @@ class ContentWidth extends StatelessWidget {
   @override
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
-      final extra = constraints.maxWidth - maxWidth;
+      // A 760 column fills a 768 tablet edge to edge, which is just a
+      // stretched phone, so the reading column is narrower there.
+      final limit = maxWidth == reading && isTablet(constraints.maxWidth)
+          ? 640.0
+          : maxWidth;
+      final extra = constraints.maxWidth - limit;
       if (!extra.isFinite || extra <= 0) return child;
       return Padding(
         padding: EdgeInsets.symmetric(horizontal: extra / 2),

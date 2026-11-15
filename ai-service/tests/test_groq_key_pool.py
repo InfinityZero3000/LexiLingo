@@ -8,16 +8,17 @@ import pytest
 from api.core import groq_key_pool
 
 
-def test_strict_key_parser_requires_seven_unique_nonblank_keys():
-    keys = [f"key-{i}" for i in range(7)]
-    assert groq_key_pool.parse_groq_keys(" , ".join(keys), require_seven=True) == keys
+@pytest.mark.parametrize("count", [1, 7, 34])
+def test_key_parser_accepts_any_number_of_unique_keys(count):
+    keys = [f"key-{i}" for i in range(count)]
+    assert groq_key_pool.parse_groq_keys(" , ".join(keys)) == keys
 
-    with pytest.raises(ValueError, match="exactly seven"):
-        groq_key_pool.parse_groq_keys(",".join(keys[:6]), require_seven=True)
+
+def test_key_parser_rejects_blank_and_duplicate_entries():
     with pytest.raises(ValueError, match="blank"):
-        groq_key_pool.parse_groq_keys("key-1,,key-2", require_seven=True)
+        groq_key_pool.parse_groq_keys("key-1,,key-2")
     with pytest.raises(ValueError, match="duplicate"):
-        groq_key_pool.parse_groq_keys(",".join(keys[:6] + ["key-1"]), require_seven=True)
+        groq_key_pool.parse_groq_keys("key-1,key-2,key-1")
 
 
 @pytest.mark.asyncio

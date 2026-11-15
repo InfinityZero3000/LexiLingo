@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
@@ -9,8 +7,6 @@ import 'package:lexilingo_app/core/services/analytics_service.dart';
 import 'package:lexilingo_app/core/theme/app_tactile_theme.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/card_art_painter.dart';
-import 'package:lexilingo_app/features/home/presentation/widgets/home_page/section_title.dart';
-import 'package:lexilingo_app/features/home/presentation/widgets/home_ui_components.dart';
 import 'package:lexilingo_app/features/course/presentation/screens/course_detail_screen.dart';
 import 'package:lexilingo_app/features/learning/presentation/screens/learning_session_screen.dart';
 
@@ -71,116 +67,59 @@ class RecommendationItem {
   }
 }
 
-/// "Gợi ý cho bạn" — top-K from RecGraph.
+/// Top-K from RecGraph for the Home discover rail.
 ///
-/// ponytail: fetches once in initState instead of joining HomeProvider. The
+/// ponytail: fetched once per Home mount instead of joining HomeProvider. The
 /// list is cached server-side per learner-state epoch, so a per-pull refresh
-/// would mostly re-read the same cache entry. Move it into HomeProvider if
-/// pull-to-refresh ever needs to reset it.
-class RecommendationsSection extends StatefulWidget {
-  const RecommendationsSection({super.key});
-
-  @override
-  State<RecommendationsSection> createState() => _RecommendationsSectionState();
+/// would mostly re-read the same cache entry.
+Future<List<RecommendationItem>> loadHomeRecommendations() async {
+  if (!sl.isRegistered<ApiClient>()) return const [];
+  final response = await sl<ApiClient>().get(
+    '/recommendations?surface=home&limit=8',
+    timeout: const Duration(seconds: 8),
+  );
+  final items = (response['items'] as List?) ?? const [];
+  return items
+      .whereType<Map>()
+      .map((raw) => RecommendationItem.fromJson(raw.cast<String, dynamic>()))
+      .toList();
 }
 
-class _RecommendationsSectionState extends State<RecommendationsSection> {
-  late final Future<List<RecommendationItem>> _future = _load();
+/// Colour follows what the item is, so a vocab card is always the vocab hue.
+Color recommendationAccent(String itemType, {required bool isDark}) =>
+    switch (itemType) {
+      'course' => AppColorRoles.primary(isDark),
+      'lesson' => AppColors.teal,
+      'vocab' => isDark ? AppColors.purpleLight : AppColors.purple,
+      'video' => AppColors.errorBright,
+      'news' => AppColors.greenSuccess,
+      _ => AppColors.deepOrange,
+    };
 
-  // Random start, then cycle: every visit looks different but neighbours never
-  // share a colour.
-  static const _palette = [
-    AppColors.primary,
-    AppColors.greenSuccess,
-    AppColors.purple,
-    AppColors.deepOrange,
-    AppColors.teal,
-  ];
-  final int _paletteOffset = Random().nextInt(_palette.length);
-
-  Future<List<RecommendationItem>> _load() async {
-    if (!sl.isRegistered<ApiClient>()) return const [];
-    final response = await sl<ApiClient>().get(
-      '/recommendations?surface=home&limit=8',
-      timeout: const Duration(seconds: 8),
-    );
-    final items = (response['items'] as List?) ?? const [];
-    return items
-        .whereType<Map>()
-        .map((raw) => RecommendationItem.fromJson(raw.cast<String, dynamic>()))
-        .toList();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<List<RecommendationItem>>(
-      future: _future,
-      builder: (context, snapshot) {
-        final loading = snapshot.connectionState == ConnectionState.waiting;
-        final items = snapshot.data ?? const <RecommendationItem>[];
-        // An empty or failed list renders nothing — heading included — rather
-        // than an error card or an orphan title: recommendations are an
-        // enhancement, never a blocker on Home.
-        if (!loading && items.isEmpty) return const SizedBox.shrink();
-
-        return Padding(
-          padding: const EdgeInsets.only(top: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SectionTitle(title: 'home.recommendedForYou'.tr()),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 132,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: loading ? 3 : items.length,
-                  itemBuilder: (context, index) => loading
-                      ? Container(
-                          width: 220,
-                          margin: const EdgeInsets.only(right: 12),
-                          child: const CardSkeleton(isHorizontal: false),
-                        )
-                      : _RecommendationCard(
-                          item: items[index],
-                          slot: (index + _paletteOffset) % _palette.length,
-                          accent:
-                              _palette[(index + _paletteOffset) %
-                                  _palette.length],
-                        ),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _RecommendationCard extends StatelessWidget {
-  const _RecommendationCard({
+class RecommendationCard extends StatelessWidget {
+  const RecommendationCard({
+    super.key,
     required this.item,
-    required this.accent,
     required this.slot,
+    this.width = 220,
   });
 
   final RecommendationItem item;
-  final Color accent;
   final int slot;
+  final double width;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final accent = recommendationAccent(item.itemType, isDark: isDark);
     final tactile =
         theme.extension<AppTactileTheme>() ?? AppTactileTheme.from(theme);
 
     return GestureDetector(
       onTap: () => _open(context),
       child: Container(
-        width: 220,
+        width: width,
         margin: const EdgeInsets.only(right: 12),
         decoration: tactile.decoration(
           variant: TactileSurfaceVariant.interactive,
@@ -230,7 +169,7 @@ class _RecommendationCard extends StatelessWidget {
                         Expanded(
                           child: Text(
                             _labelFor(item.itemType),
-                            style: theme.textTheme.labelSmall?.copyWith(
+                            style: theme.textTheme.labelMedium?.copyWith(
                               color: AppColorRoles.textPrimary(isDark),
                               fontWeight: FontWeight.w600,
                             ),
@@ -240,7 +179,7 @@ class _RecommendationCard extends StatelessWidget {
                         if (item.level != null)
                           Text(
                             item.level!,
-                            style: theme.textTheme.labelSmall?.copyWith(
+                            style: theme.textTheme.labelMedium?.copyWith(
                               color: accent,
                               fontWeight: FontWeight.bold,
                             ),
@@ -250,7 +189,7 @@ class _RecommendationCard extends StatelessWidget {
                     const SizedBox(height: 8),
                     Text(
                       item.title,
-                      maxLines: 2,
+                      maxLines: 3,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,

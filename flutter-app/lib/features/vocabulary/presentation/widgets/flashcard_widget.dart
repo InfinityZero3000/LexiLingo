@@ -242,6 +242,9 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
   Widget _buildCardBack() {
     final vocabulary = widget.card.vocabularyItem;
     final examples = vocabulary.examples;
+    final locale = context.locale.languageCode;
+    final gloss = vocabulary.getTranslation(locale);
+    final definitionTr = vocabulary.getDefinitionTranslation(locale);
     final hasGeneralTag = vocabulary.tags?.contains('general') ?? false;
 
     return Container(
@@ -342,9 +345,9 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
                     style: const TextStyle(fontSize: 18, height: 1.5),
                   ),
 
-            // Localized translation
-            if (vocabulary.getTranslation(context.locale.languageCode) !=
-                null) ...[
+            // Localized translation: short gloss, then the definition in the
+            // user's language.
+            if (gloss != null || definitionTr != null) ...[
               const SizedBox(height: 24),
               Text(
                 'vocabulary.translationLabel'.tr(),
@@ -355,10 +358,20 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
                 ),
               ),
               const SizedBox(height: 8),
-              Text(
-                vocabulary.getTranslation(context.locale.languageCode)!,
-                style: const TextStyle(fontSize: 18, height: 1.5),
-              ),
+              if (gloss != null)
+                Text(gloss, style: const TextStyle(fontSize: 18, height: 1.5)),
+              if (definitionTr != null)
+                Padding(
+                  padding: EdgeInsets.only(top: gloss != null ? 4 : 0),
+                  child: Text(
+                    definitionTr,
+                    style: TextStyle(
+                      fontSize: 15,
+                      height: 1.5,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
             ],
 
             // Examples

@@ -11,6 +11,8 @@ import 'package:lexilingo_app/features/vocabulary/presentation/providers/flashca
 class _RecordingVocabularyRepository extends Fake
     implements VocabularyRepository {
   int? requestedCollectionLimit;
+  List<UserVocabularyEntity> due = const [];
+  bool failDueLookup = false;
 
   final vocabularyItem = VocabularyItemEntity(
     id: 'vocabulary-1',
@@ -44,6 +46,19 @@ class _RecordingVocabularyRepository extends Fake
   }
 
   @override
+  Future<Either<Failure, VocabularyItemEntity>> getVocabularyItem(
+    String id,
+  ) async => Right(vocabularyItem);
+
+  @override
+  Future<Either<Failure, List<UserVocabularyEntity>>> getDueVocabulary({
+    int limit = 20,
+  }) async {
+    if (failDueLookup) throw StateError('socket closed: 10.0.0.5:8000');
+    return Right(due);
+  }
+
+  @override
   Future<Either<Failure, List<UserVocabularyEntity>>> getUserCollection({
     VocabularyStatus? status,
     int limit = 50,
@@ -74,4 +89,45 @@ void main() {
       provider.dispose();
     },
   );
+
+  test('no words due is an empty state, not an error', () async {
+    final repository = _RecordingVocabularyRepository();
+    final provider = FlashcardProvider(
+      getDueVocabularyUseCase: GetDueVocabularyUseCase(repository),
+      submitReviewUseCase: SubmitReviewUseCase(repository),
+      vocabularyRepository: repository,
+    );
+
+    await provider.startReviewSession();
+
+    expect(provider.nothingDue, isTrue);
+    expect(provider.errorMessage, isNull);
+    expect(provider.hasSession, isFalse);
+    expect(provider.isLoading, isFalse);
+
+    repository.due = [repository.userVocabulary];
+    await provider.startReviewSession();
+
+    expect(provider.nothingDue, isFalse);
+    expect(provider.currentSession?.totalCards, 1);
+
+    provider.dispose();
+  });
+
+  test('an unexpected failure never leaks its details to the learner', () async {
+    final repository = _RecordingVocabularyRepository()..failDueLookup = true;
+    final provider = FlashcardProvider(
+      getDueVocabularyUseCase: GetDueVocabularyUseCase(repository),
+      submitReviewUseCase: SubmitReviewUseCase(repository),
+      vocabularyRepository: repository,
+    );
+
+    await provider.startReviewSession();
+
+    expect(provider.errorMessage, 'flashcard.unexpectedError');
+    expect(provider.errorMessage, isNot(contains('socket')));
+    expect(provider.nothingDue, isFalse);
+
+    provider.dispose();
+  });
 }

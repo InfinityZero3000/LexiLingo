@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
@@ -95,7 +96,7 @@ class _LexiSuggestionBarState extends State<LexiSuggestionBar> {
     ];
 
     return SizedBox(
-      height: 40,
+      height: TapTargetBox.applies(context) ? 48 : 40,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: chips.length,

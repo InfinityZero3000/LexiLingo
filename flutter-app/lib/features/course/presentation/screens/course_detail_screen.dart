@@ -1,5 +1,5 @@
+import 'package:lexilingo_app/core/network/course_network_image.dart';
 import 'package:lexilingo_app/core/widgets/content_width.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
@@ -203,9 +203,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                           // View Full Roadmap Button
                           SizedBox(
                             width: double.infinity,
-                            child: OutlinedButton.icon(
-                              icon: const Icon(Icons.account_tree_outlined),
-                              label: Text('course.viewFullRoadmap'.tr()),
+                            child: OutlinedButton(
+                              child: Text('course.viewFullRoadmap'.tr()),
                               onPressed: () {
                                 Navigator.push(
                                   context,
@@ -334,7 +333,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       ),
     );
 
-    return Container(
+    final card = Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
@@ -348,6 +347,15 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       child: widget.heroTag != null
           ? Hero(tag: widget.heroTag!, child: heroImage)
           : heroImage,
+    );
+    // Full width on a tablet makes the cover 400 px tall and pushes the
+    // roadmap off the first screen.
+    if (!ContentWidth.isTablet(MediaQuery.sizeOf(context).width)) return card;
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: card,
+      ),
     );
   }
 
@@ -425,11 +433,6 @@ List<String> buildCourseThumbnailCandidates({
 class _CourseHeroNetworkImage extends StatelessWidget {
   final List<String> imageUrls;
   final Widget placeholder;
-  // Scopes the cache entry to this Hero instance (heroTag, falling back to
-  // courseId) so it doesn't share a cache key with another still-mounted
-  // CachedNetworkImage for the same URL — e.g. the list card mid Hero
-  // flight — which has been observed to render solid black instead of the
-  // photo (see course_list_screen.dart's heroTag-scoped cacheKey).
   final String cacheScopeKey;
 
   const _CourseHeroNetworkImage({
@@ -448,12 +451,11 @@ class _CourseHeroNetworkImage extends StatelessWidget {
       return placeholder;
     }
 
-    return CachedNetworkImage(
-      imageUrl: imageUrls[index],
-      cacheKey: '$cacheScopeKey|${imageUrls[index]}',
-      fit: BoxFit.cover,
-      placeholder: (_, __) => placeholder,
-      errorWidget: (_, __, ___) => _buildCandidate(index + 1),
+    return CourseNetworkImage(
+      url: imageUrls[index],
+      placeholder: placeholder,
+      onError: () => _buildCandidate(index + 1),
+      memCacheWidth: 960,
     );
   }
 }

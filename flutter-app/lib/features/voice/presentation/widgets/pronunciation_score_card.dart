@@ -124,10 +124,8 @@ class PronunciationScoreCard extends StatelessWidget {
               if (onListenExample != null && onTryAgain != null)
                 const SizedBox(width: 12),
               if (onTryAgain != null)
-                ElevatedButton.icon(
+                ElevatedButton(
                   onPressed: onTryAgain,
-                  icon: const Icon(Icons.refresh, size: 18),
-                  label: Text('voice.tryAgain'.tr()),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
@@ -136,6 +134,7 @@ class PronunciationScoreCard extends StatelessWidget {
                       vertical: 10,
                     ),
                   ),
+                  child: Text('voice.tryAgain'.tr()),
                 ),
             ],
           ),

@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../data/datasources/proficiency_data_source.dart';
@@ -32,7 +33,8 @@ class PlacementTestProvider with ChangeNotifier {
       _questions = List<Map<String, dynamic>>.from(response['questions'] ?? []);
       _errorMessage = null;
     } catch (e) {
-      _errorMessage = 'Failed to load test: ${e.toString()}';
+      _errorMessage = 'errors.loadFailed'.tr();
+      debugPrint('Failed to load placement test: $e');
       _questions = [];
     } finally {
       _isLoading = false;
@@ -60,7 +62,8 @@ class PlacementTestProvider with ChangeNotifier {
       _errorMessage = null;
       return true;
     } catch (e) {
-      _errorMessage = 'Failed to submit test: ${e.toString()}';
+      _errorMessage = 'errors.submitFailed'.tr();
+      debugPrint('Failed to submit placement test: $e');
       return false;
     } finally {
       _isLoading = false;

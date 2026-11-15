@@ -115,6 +115,35 @@ void main() {
       expect(paid.any((item) => item.premiumOnly), isTrue);
     });
 
+    test('a learner with nothing due is not sent to an empty review', () {
+      final items = buildPracticeLabItems(weakestSkills: const []);
+      bool isReview(PracticeLabItem item) =>
+          item.destination == PracticeLabDestination.vocabularyReview;
+
+      expect(
+        recommendedPracticeItems(items: items).any(isReview),
+        isTrue,
+        reason: 'unknown count keeps the starter card',
+      );
+      expect(
+        recommendedPracticeItems(
+          items: items,
+          dueVocabularyCount: 4,
+        ).any(isReview),
+        isTrue,
+      );
+      final none = recommendedPracticeItems(
+        items: items,
+        dueVocabularyCount: 0,
+      );
+      expect(none.any(isReview), isFalse);
+      expect(
+        none,
+        hasLength(2),
+        reason: 'the freed slot goes to another skill',
+      );
+    });
+
     test('two cards of the same skill never fill both slots', () {
       // The mistake notebook is also tagged `reading`, so a reading weakness
       // could return two routes to the same practice and hide the second

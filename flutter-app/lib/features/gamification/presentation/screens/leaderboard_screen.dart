@@ -472,28 +472,10 @@ class _LeaderboardTab extends StatelessWidget {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.emoji_events_outlined, size: 64, color: AppColors.grey400),
-          const SizedBox(height: 16),
-          Text(
-            'leaderboard.noRankingsYet'.tr(),
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColorRoles.textSecondary(isDark),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'leaderboard.firstToCompete'.tr(),
-            style: TextStyle(color: AppColorRoles.textMuted(isDark)),
-          ),
-        ],
-      ),
+    return EmptyStateWidget(
+      icon: Icons.emoji_events_outlined,
+      title: 'leaderboard.noRankingsYet'.tr(),
+      description: 'leaderboard.firstToCompete'.tr(),
     );
   }
 }

@@ -455,13 +455,40 @@
       }
     },
     {
-      "id": "lib/core/widgets/empty_state_widget.dart::EmptyStateWidget::BoxDecoration::0",
+      "id": "lib/core/widgets/empty_state_widget.dart::_EmptyStateWidgetState::BoxDecoration::0",
       "path": "lib/core/widgets/empty_state_widget.dart",
       "entryPoint": "surface",
-      "symbol": "EmptyStateWidget",
+      "symbol": "_EmptyStateWidgetState",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 38,
+      "line": 186,
+      "category": "excluded",
+      "group": 3,
+      "status": "excluded",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      },
+      "reason": "One-shot echo ring behind the empty-state mark: a fading stroke, not a surface."
+    },
+    {
+      "id": "lib/core/widgets/empty_state_widget.dart::_EmptyStateWidgetState::BoxDecoration::1",
+      "path": "lib/core/widgets/empty_state_widget.dart",
+      "entryPoint": "surface",
+      "symbol": "_EmptyStateWidgetState",
+      "callKind": "BoxDecoration",
+      "ordinal": 1,
+      "line": 204,
       "category": "eligible",
       "group": 3,
       "status": "inventoried",
@@ -14308,13 +14335,13 @@
       }
     },
     {
-      "id": "lib/features/level/presentation/pages/placement_test_page.dart::_AnswerOption::BoxDecoration::0",
-      "path": "lib/features/level/presentation/pages/placement_test_page.dart",
+      "id": "lib/features/level/presentation/widgets/test_answer_option.dart::TestAnswerOption::BoxDecoration::0",
+      "path": "lib/features/level/presentation/widgets/test_answer_option.dart",
       "entryPoint": "surface",
-      "symbol": "_AnswerOption",
+      "symbol": "TestAnswerOption",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 385,
+      "line": 43,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -14334,13 +14361,13 @@
       }
     },
     {
-      "id": "lib/features/level/presentation/pages/placement_test_page.dart::_AnswerOption::BoxDecoration::1",
-      "path": "lib/features/level/presentation/pages/placement_test_page.dart",
+      "id": "lib/features/level/presentation/widgets/test_answer_option.dart::TestAnswerOption::BoxDecoration::1",
+      "path": "lib/features/level/presentation/widgets/test_answer_option.dart",
       "entryPoint": "surface",
-      "symbol": "_AnswerOption",
+      "symbol": "TestAnswerOption",
       "callKind": "BoxDecoration",
       "ordinal": 1,
-      "line": 395,
+      "line": 53,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",
@@ -18434,6 +18461,18 @@
       "status": "inventoried"
     },
     {
+      "id": "lib/features/profile/presentation/pages/edit_profile_screen.dart::_EditProfileScreenState::showDialog::1",
+      "path": "lib/features/profile/presentation/pages/edit_profile_screen.dart",
+      "entryPoint": "overlay",
+      "symbol": "_EditProfileScreenState",
+      "callKind": "showDialog",
+      "ordinal": 1,
+      "line": 973,
+      "category": "eligible",
+      "group": 6,
+      "status": "inventoried"
+    },
+    {
       "id": "lib/features/profile/presentation/pages/edit_profile_screen.dart::_EditProfileScreenState::showModalBottomSheet::0",
       "path": "lib/features/profile/presentation/pages/edit_profile_screen.dart",
       "entryPoint": "overlay",
@@ -18441,6 +18480,18 @@
       "callKind": "showModalBottomSheet",
       "ordinal": 0,
       "line": 454,
+      "category": "eligible",
+      "group": 6,
+      "status": "inventoried"
+    },
+    {
+      "id": "lib/features/profile/presentation/pages/edit_profile_screen.dart::_EditProfileScreenState::showModalBottomSheet::1",
+      "path": "lib/features/profile/presentation/pages/edit_profile_screen.dart",
+      "entryPoint": "overlay",
+      "symbol": "_EditProfileScreenState",
+      "callKind": "showModalBottomSheet",
+      "ordinal": 1,
+      "line": 923,
       "category": "eligible",
       "group": 6,
       "status": "inventoried"
@@ -20246,13 +20297,13 @@
       }
     },
     {
-      "id": "lib/features/progress/presentation/widgets/daily_challenges_widget.dart::DailyChallengesSheet::BoxDecoration::0",
+      "id": "lib/features/progress/presentation/widgets/daily_challenges_widget.dart::_DailyChallengesSheetState::BoxDecoration::0",
       "path": "lib/features/progress/presentation/widgets/daily_challenges_widget.dart",
       "entryPoint": "surface",
-      "symbol": "DailyChallengesSheet",
+      "symbol": "_DailyChallengesSheetState",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 356,
+      "line": 383,
       "category": "eligible",
       "group": 3,
       "status": "inventoried",
@@ -20272,13 +20323,13 @@
       }
     },
     {
-      "id": "lib/features/progress/presentation/widgets/daily_challenges_widget.dart::DailyChallengesSheet::BoxDecoration::1",
+      "id": "lib/features/progress/presentation/widgets/daily_challenges_widget.dart::_DailyChallengesSheetState::BoxDecoration::1",
       "path": "lib/features/progress/presentation/widgets/daily_challenges_widget.dart",
       "entryPoint": "surface",
-      "symbol": "DailyChallengesSheet",
+      "symbol": "_DailyChallengesSheetState",
       "callKind": "BoxDecoration",
       "ordinal": 1,
-      "line": 370,
+      "line": 397,
       "category": "eligible",
       "group": 3,
       "status": "inventoried",
@@ -20298,13 +20349,13 @@
       }
     },
     {
-      "id": "lib/features/progress/presentation/widgets/daily_challenges_widget.dart::DailyChallengesSheet::BoxDecoration::2",
+      "id": "lib/features/progress/presentation/widgets/daily_challenges_widget.dart::_DailyChallengesSheetState::BoxDecoration::2",
       "path": "lib/features/progress/presentation/widgets/daily_challenges_widget.dart",
       "entryPoint": "surface",
-      "symbol": "DailyChallengesSheet",
+      "symbol": "_DailyChallengesSheetState",
       "callKind": "BoxDecoration",
       "ordinal": 2,
-      "line": 468,
+      "line": 446,
       "category": "eligible",
       "group": 3,
       "status": "inventoried",
@@ -20324,13 +20375,39 @@
       }
     },
     {
-      "id": "lib/features/progress/presentation/widgets/daily_challenges_widget.dart::DailyChallengesSheet::Card::0",
+      "id": "lib/features/progress/presentation/widgets/daily_challenges_widget.dart::_DailyChallengesSheetState::Card::0",
       "path": "lib/features/progress/presentation/widgets/daily_challenges_widget.dart",
       "entryPoint": "surface",
-      "symbol": "DailyChallengesSheet",
+      "symbol": "_DailyChallengesSheetState",
       "callKind": "Card",
       "ordinal": 0,
-      "line": 454,
+      "line": 504,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/progress/presentation/widgets/daily_challenges_widget.dart::_DailyChallengesSheetState::BoxDecoration::3",
+      "path": "lib/features/progress/presentation/widgets/daily_challenges_widget.dart",
+      "entryPoint": "surface",
+      "symbol": "_DailyChallengesSheetState",
+      "callKind": "BoxDecoration",
+      "ordinal": 3,
+      "line": 518,
       "category": "eligible",
       "group": 3,
       "status": "inventoried",
@@ -20719,6 +20796,32 @@
       "callKind": "Card",
       "ordinal": 1,
       "line": 317,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/progress/presentation/widgets/daily_reward_dialog.dart::_GemBurst::BoxDecoration::0",
+      "path": "lib/features/progress/presentation/widgets/daily_reward_dialog.dart",
+      "entryPoint": "surface",
+      "symbol": "_GemBurst",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 623,
       "category": "eligible",
       "group": 3,
       "status": "inventoried",
@@ -26716,6 +26819,18 @@
       "status": "inventoried"
     },
     {
+      "id": "lib/main.dart::_LexiLingoAppState::namedRoute::24",
+      "path": "lib/main.dart",
+      "entryPoint": "namedRoute",
+      "symbol": "_LexiLingoAppState",
+      "callKind": "namedRoute",
+      "ordinal": 24,
+      "line": 535,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried"
+    },
+    {
       "id": "lib/features/progress/presentation/widgets/streak_widget.dart::_LargeStreakFireWidgetState::BoxDecoration::0",
       "path": "lib/features/progress/presentation/widgets/streak_widget.dart",
       "entryPoint": "surface",
@@ -30516,6 +30631,32 @@
       }
     },
     {
+      "id": "lib/features/profile/presentation/pages/edit_profile_screen.dart::_EditProfileScreenState::BoxDecoration::9",
+      "path": "lib/features/profile/presentation/pages/edit_profile_screen.dart",
+      "entryPoint": "surface",
+      "symbol": "_EditProfileScreenState",
+      "callKind": "BoxDecoration",
+      "ordinal": 9,
+      "line": 1087,
+      "category": "eligible",
+      "group": 6,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
       "id": "lib/features/lexi_chat/presentation/widgets/duplex_voice_panel.dart::_DuplexVoicePanelState::BoxDecoration::0",
       "path": "lib/features/lexi_chat/presentation/widgets/duplex_voice_panel.dart",
       "entryPoint": "surface",
@@ -30606,6 +30747,18 @@
       }
     },
     {
+      "id": "lib/features/level/presentation/widgets/level_history_timeline.dart::_LevelHistoryTimelineState::Navigator.pushNamed::0",
+      "path": "lib/features/level/presentation/widgets/level_history_timeline.dart",
+      "entryPoint": "imperativeRoute",
+      "symbol": "_LevelHistoryTimelineState",
+      "callKind": "Navigator.pushNamed",
+      "ordinal": 0,
+      "line": 33,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried"
+    },
+    {
       "id": "lib/features/level/presentation/widgets/level_history_timeline.dart::_LevelHistoryTimelineState::BoxDecoration::0",
       "path": "lib/features/level/presentation/widgets/level_history_timeline.dart",
       "entryPoint": "surface",
@@ -30632,15 +30785,925 @@
       }
     },
     {
-      "id": "lib/features/level/presentation/widgets/level_history_timeline.dart::_TimelineRow::BoxDecoration::0",
+      "id": "lib/features/level/presentation/widgets/level_history_timeline.dart::_StepChip::BoxDecoration::0",
       "path": "lib/features/level/presentation/widgets/level_history_timeline.dart",
       "entryPoint": "surface",
-      "symbol": "_TimelineRow",
+      "symbol": "_StepChip",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 161,
+      "line": 199,
       "category": "eligible",
       "group": 2,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/level/presentation/widgets/level_history_timeline.dart::_ReadyRow::BoxDecoration::0",
+      "path": "lib/features/level/presentation/widgets/level_history_timeline.dart",
+      "entryPoint": "surface",
+      "symbol": "_ReadyRow",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 226,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/daily_goal_sheet.dart::<top-level>::BoxDecoration::0",
+      "path": "lib/features/home/presentation/widgets/home_page/daily_goal_sheet.dart",
+      "entryPoint": "surface",
+      "symbol": "<top-level>",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 35,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/daily_goal_sheet.dart::<top-level>::BoxDecoration::1",
+      "path": "lib/features/home/presentation/widgets/home_page/daily_goal_sheet.dart",
+      "entryPoint": "surface",
+      "symbol": "<top-level>",
+      "callKind": "BoxDecoration",
+      "ordinal": 1,
+      "line": 51,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/daily_goal_sheet.dart::<top-level>::BoxDecoration::2",
+      "path": "lib/features/home/presentation/widgets/home_page/daily_goal_sheet.dart",
+      "entryPoint": "surface",
+      "symbol": "<top-level>",
+      "callKind": "BoxDecoration",
+      "ordinal": 2,
+      "line": 72,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/daily_goal_sheet.dart::<top-level>::BoxDecoration::3",
+      "path": "lib/features/home/presentation/widgets/home_page/daily_goal_sheet.dart",
+      "entryPoint": "surface",
+      "symbol": "<top-level>",
+      "callKind": "BoxDecoration",
+      "ordinal": 3,
+      "line": 147,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/daily_goal_sheet.dart::<top-level>::BoxDecoration::4",
+      "path": "lib/features/home/presentation/widgets/home_page/daily_goal_sheet.dart",
+      "entryPoint": "surface",
+      "symbol": "<top-level>",
+      "callKind": "BoxDecoration",
+      "ordinal": 4,
+      "line": 164,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/daily_goal_sheet.dart::<top-level>::showModalBottomSheet::0",
+      "path": "lib/features/home/presentation/widgets/home_page/daily_goal_sheet.dart",
+      "entryPoint": "surface",
+      "symbol": "<top-level>",
+      "callKind": "showModalBottomSheet",
+      "ordinal": 0,
+      "line": 22,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/discover_rail.dart::_DiscoverRailState::Card::0",
+      "path": "lib/features/home/presentation/widgets/home_page/discover_rail.dart",
+      "entryPoint": "surface",
+      "symbol": "_DiscoverRailState",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 65,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/discover_rail.dart::_DiscoverRailState::Card::1",
+      "path": "lib/features/home/presentation/widgets/home_page/discover_rail.dart",
+      "entryPoint": "surface",
+      "symbol": "_DiscoverRailState",
+      "callKind": "Card",
+      "ordinal": 1,
+      "line": 69,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/featured_courses_section.dart::FeaturedCourseCard::BoxDecoration::0",
+      "path": "lib/features/home/presentation/widgets/home_page/featured_courses_section.dart",
+      "entryPoint": "surface",
+      "symbol": "FeaturedCourseCard",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 144,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/featured_courses_section.dart::FeaturedCourseCard::BoxDecoration::1",
+      "path": "lib/features/home/presentation/widgets/home_page/featured_courses_section.dart",
+      "entryPoint": "surface",
+      "symbol": "FeaturedCourseCard",
+      "callKind": "BoxDecoration",
+      "ordinal": 1,
+      "line": 253,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/featured_courses_section.dart::FeaturedCourseCard::Card::0",
+      "path": "lib/features/home/presentation/widgets/home_page/featured_courses_section.dart",
+      "entryPoint": "surface",
+      "symbol": "FeaturedCourseCard",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 86,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/featured_courses_section.dart::FeaturedCoursesEmptyState::BoxDecoration::0",
+      "path": "lib/features/home/presentation/widgets/home_page/featured_courses_section.dart",
+      "entryPoint": "surface",
+      "symbol": "FeaturedCoursesEmptyState",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 27,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/featured_courses_section.dart::FeaturedCoursesEmptyState::BoxDecoration::1",
+      "path": "lib/features/home/presentation/widgets/home_page/featured_courses_section.dart",
+      "entryPoint": "surface",
+      "symbol": "FeaturedCoursesEmptyState",
+      "callKind": "BoxDecoration",
+      "ordinal": 1,
+      "line": 40,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/featured_courses_section.dart::_Badge::BoxDecoration::0",
+      "path": "lib/features/home/presentation/widgets/home_page/featured_courses_section.dart",
+      "entryPoint": "surface",
+      "symbol": "_Badge",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 297,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/next_up_hero.dart::_HeroTaskRow::BoxDecoration::0",
+      "path": "lib/features/home/presentation/widgets/home_page/next_up_hero.dart",
+      "entryPoint": "surface",
+      "symbol": "_HeroTaskRow",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 183,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/next_up_hero.dart::_HeroTaskRow::BoxDecoration::1",
+      "path": "lib/features/home/presentation/widgets/home_page/next_up_hero.dart",
+      "entryPoint": "surface",
+      "symbol": "_HeroTaskRow",
+      "callKind": "BoxDecoration",
+      "ordinal": 1,
+      "line": 227,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/next_up_hero.dart::_NextUpHeroState::Card::0",
+      "path": "lib/features/home/presentation/widgets/home_page/next_up_hero.dart",
+      "entryPoint": "surface",
+      "symbol": "_NextUpHeroState",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 69,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/progress_chips_row.dart::ProgressChipsRow::showModalBottomSheet::0",
+      "path": "lib/features/home/presentation/widgets/home_page/progress_chips_row.dart",
+      "entryPoint": "surface",
+      "symbol": "ProgressChipsRow",
+      "callKind": "showModalBottomSheet",
+      "ordinal": 0,
+      "line": 36,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/progress_chips_row.dart::ProgressChipsRow::showModalBottomSheet::1",
+      "path": "lib/features/home/presentation/widgets/home_page/progress_chips_row.dart",
+      "entryPoint": "surface",
+      "symbol": "ProgressChipsRow",
+      "callKind": "showModalBottomSheet",
+      "ordinal": 1,
+      "line": 51,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/progress_chips_row.dart::_ProgressChip::BoxDecoration::0",
+      "path": "lib/features/home/presentation/widgets/home_page/progress_chips_row.dart",
+      "entryPoint": "surface",
+      "symbol": "_ProgressChip",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 113,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart::RecommendationCard::BoxDecoration::0",
+      "path": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart",
+      "entryPoint": "surface",
+      "symbol": "RecommendationCard",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 158,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart::RecommendationCard::Card::0",
+      "path": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart",
+      "entryPoint": "surface",
+      "symbol": "RecommendationCard",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 100,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart::RecommendationCard::Navigator.pushNamed::0",
+      "path": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart",
+      "entryPoint": "surface",
+      "symbol": "RecommendationCard",
+      "callKind": "Navigator.pushNamed",
+      "ordinal": 0,
+      "line": 242,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart::RecommendationCard::Navigator.pushNamed::1",
+      "path": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart",
+      "entryPoint": "surface",
+      "symbol": "RecommendationCard",
+      "callKind": "Navigator.pushNamed",
+      "ordinal": 1,
+      "line": 244,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart::RecommendationCard::Navigator.pushNamed::2",
+      "path": "lib/features/home/presentation/widgets/home_page/recommendations_section.dart",
+      "entryPoint": "surface",
+      "symbol": "RecommendationCard",
+      "callKind": "Navigator.pushNamed",
+      "ordinal": 2,
+      "line": 246,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/streak_goal_strip.dart::_Flame::BoxDecoration::0",
+      "path": "lib/features/home/presentation/widgets/home_page/streak_goal_strip.dart",
+      "entryPoint": "surface",
+      "symbol": "_Flame",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 212,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/streak_goal_strip.dart::_WeekDots::BoxDecoration::0",
+      "path": "lib/features/home/presentation/widgets/home_page/streak_goal_strip.dart",
+      "entryPoint": "surface",
+      "symbol": "_WeekDots",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 273,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/today_plan_section.dart::TodayPlanTaskTile::BoxDecoration::0",
+      "path": "lib/features/home/presentation/widgets/home_page/today_plan_section.dart",
+      "entryPoint": "surface",
+      "symbol": "TodayPlanTaskTile",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 27,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/today_plan_section.dart::TodayPlanTaskTile::BoxDecoration::1",
+      "path": "lib/features/home/presentation/widgets/home_page/today_plan_section.dart",
+      "entryPoint": "surface",
+      "symbol": "TodayPlanTaskTile",
+      "callKind": "BoxDecoration",
+      "ordinal": 1,
+      "line": 43,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_ui_components.dart::_AvatarRing::BoxDecoration::0",
+      "path": "lib/features/home/presentation/widgets/home_ui_components.dart",
+      "entryPoint": "surface",
+      "symbol": "_AvatarRing",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 202,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_ui_components.dart::_AvatarRing::BoxDecoration::1",
+      "path": "lib/features/home/presentation/widgets/home_ui_components.dart",
+      "entryPoint": "surface",
+      "symbol": "_AvatarRing",
+      "callKind": "BoxDecoration",
+      "ordinal": 1,
+      "line": 212,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_ui_components.dart::_XpPill::BoxDecoration::0",
+      "path": "lib/features/home/presentation/widgets/home_ui_components.dart",
+      "entryPoint": "surface",
+      "symbol": "_XpPill",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 243,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/lexi_chat/presentation/widgets/lexi_mode_switch.dart::LexiModeSwitch::BoxDecoration::0",
+      "path": "lib/features/lexi_chat/presentation/widgets/lexi_mode_switch.dart",
+      "entryPoint": "surface",
+      "symbol": "LexiModeSwitch",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 58,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/lexi_chat/presentation/widgets/lexi_mode_switch.dart::LexiModeSwitch::DecoratedBox::0",
+      "path": "lib/features/lexi_chat/presentation/widgets/lexi_mode_switch.dart",
+      "entryPoint": "surface",
+      "symbol": "LexiModeSwitch",
+      "callKind": "DecoratedBox",
+      "ordinal": 0,
+      "line": 57,
+      "category": "eligible",
+      "group": 3,
       "status": "inventoried",
       "colors": {
         "light": {

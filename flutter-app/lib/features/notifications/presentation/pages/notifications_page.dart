@@ -150,36 +150,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
   }
 
   Widget _buildErrorState(BuildContext context, NotificationProvider provider) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
-            const SizedBox(height: 16),
-            Text(
-              'notifications.somethingWentWrong'.tr(),
-              style: Theme.of(
-                context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              provider.errorMessage ?? 'notifications.failedToLoad'.tr(),
-              textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: () => provider.loadNotifications(),
-              child: Text('notifications.retry'.tr()),
-            ),
-          ],
-        ),
-      ),
+    return EmptyStateWidget(
+      title: 'notifications.somethingWentWrong'.tr(),
+      description: provider.errorMessage ?? 'notifications.failedToLoad'.tr(),
+      actionLabel: 'notifications.retry'.tr(),
+      onAction: provider.loadNotifications,
     );
   }
 

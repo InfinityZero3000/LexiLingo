@@ -61,7 +61,8 @@ async def get_auth_token(client: httpx.AsyncClient) -> str:
     # Try register if login fails (401 or 404)
     if response.status_code in [401, 404, 400]:
         import time
-        unique_email = f"test_{int(time.time())}@example.com"
+        # plus-address: unique per run, but lands in one real inbox
+        unique_email = f"nhthang.dev+test_{int(time.time())}@gmail.com"
         unique_username = f"testuser_{int(time.time())}"
         
         reg_response = await client.post(

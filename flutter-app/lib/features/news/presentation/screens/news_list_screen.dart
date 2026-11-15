@@ -55,120 +55,144 @@ class _NewsListScreenState extends State<NewsListScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      body: ContentWidth(child: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: () =>
-              context.read<NewsProvider>().loadArticles(refresh: true),
-          child: CustomScrollView(
-            controller: _scrollController,
-            slivers: [
-              // ── Header (floating: hiện ngay khi scroll lên) ──
-              const SliverPersistentHeader(
-                floating: true,
-                delegate: _NewsFloatingHeader(),
-              ),
+      body: ContentWidth(
+        child: SafeArea(
+          child: RefreshIndicator(
+            onRefresh: () =>
+                context.read<NewsProvider>().loadArticles(refresh: true),
+            child: CustomScrollView(
+              controller: _scrollController,
+              slivers: [
+                // ── Header (floating: hiện ngay khi scroll lên) ──
+                const SliverPersistentHeader(
+                  floating: true,
+                  delegate: _NewsFloatingHeader(),
+                ),
 
-              // ── Category Tabs ──
-              SliverToBoxAdapter(
-                child: Consumer<NewsProvider>(
+                // ── Category Tabs ──
+                SliverToBoxAdapter(
+                  child: Consumer<NewsProvider>(
+                    builder: (context, provider, _) {
+                      return _buildCategoryTabs(provider, isDark);
+                    },
+                  ),
+                ),
+
+                // ── Articles ──
+                Consumer<NewsProvider>(
                   builder: (context, provider, _) {
-                    return _buildCategoryTabs(provider, isDark);
+                    if (provider.isLoading && provider.articles.isEmpty) {
+                      return const SliverFillRemaining(
+                        child: Center(child: LottieLoadingWidget.medium()),
+                      );
+                    }
+
+                    if (provider.error != null && provider.articles.isEmpty) {
+                      return SliverFillRemaining(
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.error_outline_rounded,
+                                size: 48,
+                                color: Colors.red.shade300,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'news.loadError'.tr(),
+                                style: TextStyle(color: AppColors.grey500),
+                              ),
+                              const SizedBox(height: 8),
+                              TextButton(
+                                onPressed: () =>
+                                    provider.loadArticles(refresh: true),
+                                child: Text('common.retry'.tr()),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
+                    if (provider.articles.isEmpty) {
+                      return SliverFillRemaining(
+                        child: Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.article_outlined,
+                                size: 64,
+                                color: AppColors.grey400,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'news.noArticles'.tr(),
+                                style: TextStyle(
+                                  color: AppColors.grey500,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
+                    // One 16:9 card per row is right on a phone; on a tablet
+                    // it makes each article taller than half the screen.
+                    final columns =
+                        ContentWidth.isTablet(MediaQuery.sizeOf(context).width)
+                        ? 2
+                        : 1;
+                    final articles = provider.articles;
+                    final rows = (articles.length / columns).ceil();
+                    return SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
+                      sliver: SliverList(
+                        delegate: SliverChildBuilderDelegate((context, row) {
+                          if (row == rows) {
+                            return provider.isLoading
+                                ? const Padding(
+                                    padding: EdgeInsets.all(16),
+                                    child: Center(
+                                      child: LottieLoadingWidget.tiny(),
+                                    ),
+                                  )
+                                : const SizedBox.shrink();
+                          }
+                          final first = row * columns;
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                for (
+                                  var i = first;
+                                  i < first + columns;
+                                  i++
+                                ) ...[
+                                  if (i > first) const SizedBox(width: 16),
+                                  Expanded(
+                                    child: i < articles.length
+                                        ? _buildArticleCard(articles[i], isDark)
+                                        : const SizedBox.shrink(),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          );
+                        }, childCount: rows + 1),
+                      ),
+                    );
                   },
                 ),
-              ),
-
-              // ── Articles ──
-              Consumer<NewsProvider>(
-                builder: (context, provider, _) {
-                  if (provider.isLoading && provider.articles.isEmpty) {
-                    return const SliverFillRemaining(
-                      child: Center(child: LottieLoadingWidget.medium()),
-                    );
-                  }
-
-                  if (provider.error != null && provider.articles.isEmpty) {
-                    return SliverFillRemaining(
-                      child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.error_outline_rounded,
-                              size: 48,
-                              color: Colors.red.shade300,
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'news.loadError'.tr(),
-                              style: TextStyle(color: AppColors.grey500),
-                            ),
-                            const SizedBox(height: 8),
-                            TextButton(
-                              onPressed: () =>
-                                  provider.loadArticles(refresh: true),
-                              child: Text('common.retry'.tr()),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }
-
-                  if (provider.articles.isEmpty) {
-                    return SliverFillRemaining(
-                      child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.article_outlined,
-                              size: 64,
-                              color: AppColors.grey400,
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'news.noArticles'.tr(),
-                              style: TextStyle(
-                                color: AppColors.grey500,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }
-
-                  return SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate((context, index) {
-                        if (index == provider.articles.length) {
-                          return provider.isLoading
-                              ? const Padding(
-                                  padding: EdgeInsets.all(16),
-                                  child: Center(
-                                    child: LottieLoadingWidget.tiny(),
-                                  ),
-                                )
-                              : const SizedBox.shrink();
-                        }
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: _buildArticleCard(
-                            provider.articles[index],
-                            isDark,
-                          ),
-                        );
-                      }, childCount: provider.articles.length + 1),
-                    ),
-                  );
-                },
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-      ),),
+      ),
     );
   }
 
@@ -354,7 +378,11 @@ class _NewsListScreenState extends State<NewsListScreen> {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                'course.durationMin'.tr(namedArgs: {'count': '${article.readingTimeMin}'}),
+                                'course.durationMin'.tr(
+                                  namedArgs: {
+                                    'count': '${article.readingTimeMin}',
+                                  },
+                                ),
                                 style: const TextStyle(
                                   color: Colors.white70,
                                   fontSize: 11,
@@ -517,8 +545,9 @@ class _NewsFloatingHeader extends SliverPersistentHeaderDelegate {
           Expanded(
             child: Text(
               'news.title'.tr(),
-              style: Theme.of(context).textTheme.headlineSmall
-                  ?.copyWith(fontWeight: FontWeight.w700),
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
             ),
           ),
         ],

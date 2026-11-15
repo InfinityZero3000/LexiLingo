@@ -198,10 +198,8 @@ class ErrorDisplayWidget extends StatelessWidget {
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 24),
-              ElevatedButton.icon(
+              ElevatedButton(
                 onPressed: onRetry,
-                icon: const Icon(Icons.refresh),
-                label: Text('common.tryAgain'.tr()),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _iconColor,
                   foregroundColor: Colors.white,
@@ -210,6 +208,7 @@ class ErrorDisplayWidget extends StatelessWidget {
                     vertical: 12,
                   ),
                 ),
+                child: Text('common.tryAgain'.tr()),
               ),
             ],
             if (errorType == ErrorType.unauthorized) ...[

@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -350,7 +351,7 @@ class StoryProvider extends ChangeNotifier {
     required String message,
   }) async {
     if (_currentSession == null) {
-      _sessionError = 'No active session';
+      _sessionError = 'errors.noActiveSession'.tr();
       notifyListeners();
       return false;
     }
@@ -419,7 +420,7 @@ class StoryProvider extends ChangeNotifier {
     required String message,
   }) async {
     if (_currentSession == null) {
-      _sessionError = 'No active session';
+      _sessionError = 'errors.noActiveSession'.tr();
       notifyListeners();
       return false;
     }
@@ -553,7 +554,7 @@ class StoryProvider extends ChangeNotifier {
     _isSendingMessage = false;
 
     if (_isUnauthorizedError(reason)) {
-      _sessionError = 'Your login session expired. Please sign in again.';
+      _sessionError = 'errors.sessionExpired'.tr();
       notifyListeners();
       return;
     }

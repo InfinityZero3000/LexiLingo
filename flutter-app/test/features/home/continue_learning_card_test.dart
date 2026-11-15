@@ -55,6 +55,8 @@ Future<void> _pumpCard(
   WidgetTester tester,
   List<CourseEntity> enrolledCourses, {
   Duration rotationInterval = const Duration(seconds: 6),
+  bool reduceMotion = false,
+  double textScale = 1,
 }) async {
   final repository = _CourseRepositoryStub(enrolledCourses);
   final provider = HomeProvider(
@@ -68,6 +70,15 @@ Future<void> _pumpCard(
       value: provider,
       child: MaterialApp(
         theme: AppTheme.lightTheme,
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(
+            disableAnimations: reduceMotion,
+            textScaler: TextScaler.linear(textScale),
+          ),
+          child: child!,
+        ),
         home: Scaffold(
           body: ContinueLearningCard(rotationInterval: rotationInterval),
         ),
@@ -76,6 +87,11 @@ Future<void> _pumpCard(
   );
   await tester.pump();
 }
+
+Finder shown(String text) => find.descendant(
+  of: find.byType(AnimatedSwitcher),
+  matching: find.text(text),
+);
 
 void main() {
   test('picks the first started unfinished course', () {
@@ -128,17 +144,58 @@ void main() {
       _course('mid', 42),
     ], rotationInterval: const Duration(seconds: 1));
 
-    expect(find.text('home.continueLearningSection'), findsOneWidget);
-    expect(find.text('42%'), findsOneWidget);
-    expect(find.text('home.completeLessonToday'), findsNothing);
+    expect(shown('home.continueLearningSection'), findsOneWidget);
+    expect(shown('42%'), findsOneWidget);
+    expect(shown('home.completeLessonToday'), findsNothing);
 
     await tester.pump(const Duration(seconds: 1));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.text('home.continueLearningSection'), findsNothing);
-    expect(find.text('home.keepGoing'), findsOneWidget);
-    expect(find.text('home.completeLessonToday'), findsOneWidget);
+    expect(shown('home.continueLearningSection'), findsNothing);
+    expect(shown('home.keepGoing'), findsOneWidget);
+    expect(shown('home.completeLessonToday'), findsOneWidget);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('reduced motion keeps the course card still', (tester) async {
+    await _pumpCard(
+      tester,
+      [_course('mid', 42)],
+      rotationInterval: const Duration(seconds: 1),
+      reduceMotion: true,
+    );
+
+    expect(shown('home.continueLearningSection'), findsOneWidget);
+
+    await tester.pump(const Duration(seconds: 3));
+    await tester.pump();
+
+    expect(shown('home.continueLearningSection'), findsOneWidget);
+    expect(shown('home.keepGoing'), findsNothing);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('200% text: both faces of the card fit on a phone', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(375, 812);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await _pumpCard(
+      tester,
+      [_course('mid', 42)],
+      rotationInterval: const Duration(seconds: 1),
+      textScale: 2,
+    );
+    expect(tester.takeException(), isNull);
+
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(tester.takeException(), isNull);
 
     await tester.pumpWidget(const SizedBox.shrink());
   });

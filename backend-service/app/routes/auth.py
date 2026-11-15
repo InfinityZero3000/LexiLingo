@@ -33,6 +33,8 @@ from app.core.token_blacklist import TokenBlacklist
 from app.services.admin_audit import record_admin_action
 from app.services.starter_reward_service import StarterRewardService
 from app.models.user import User, RefreshToken
+from app.services.cefr_level_service import level_verified
+from app.services.rank_service import rank_proficiency_level
 from app.services.email_service import EmailService
 from app.services.auth_service import (
     register_user,
@@ -146,6 +148,8 @@ def _build_user_response(user: User) -> UserResponse:
             getattr(user, "cefr_level", None) or getattr(user, "level", None),
             "A1",
         ),
+        certified_level=rank_proficiency_level(user),
+        level_verified=level_verified(user),
         total_xp=int(getattr(user, "total_xp", 0) or 0),
         numeric_level=int(getattr(user, "numeric_level", 1) or 1),
         rank=_safe_str(getattr(user, "rank", None), "bronze"),
@@ -716,6 +720,7 @@ async def facebook_login(
 @router.post("/change-password", response_model=MessageResponse)
 async def change_password(
     request: ChangePasswordRequest,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -742,7 +747,12 @@ async def change_password(
     current_user.hashed_password = await get_password_hash_async(request.new_password)
     current_user.updated_at = datetime.now(timezone.utc)
     await db.commit()
-    
+    background_tasks.add_task(
+        EmailService.send_password_changed_email,
+        to_email=current_user.email,
+        display_name=current_user.display_name,
+    )
+
     return MessageResponse(
         message="Password changed successfully",
         detail="Please login again with your new password."
@@ -804,6 +814,7 @@ async def forgot_password(
 @router.post("/reset-password", response_model=MessageResponse)
 async def reset_password(
     request: ResetPasswordRequest,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -835,7 +846,12 @@ async def reset_password(
     user.hashed_password = await get_password_hash_async(request.new_password)
     user.updated_at = datetime.now(timezone.utc)
     await db.commit()
-    
+    background_tasks.add_task(
+        EmailService.send_password_changed_email,
+        to_email=user.email,
+        display_name=user.display_name,
+    )
+
     return MessageResponse(
         message="Password reset successfully",
         detail="You can now login with your new password."
@@ -845,6 +861,7 @@ async def reset_password(
 @router.post("/verify-email", response_model=VerifyEmailResponse)
 async def verify_email(
     request: VerifyEmailRequest,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -882,7 +899,12 @@ async def verify_email(
     user.is_verified = True
     user.updated_at = datetime.now(timezone.utc)
     await db.commit()
-    
+    background_tasks.add_task(
+        EmailService.send_welcome_email,
+        to_email=user.email,
+        display_name=user.display_name,
+    )
+
     return VerifyEmailResponse(
         verified=True,
         message="Email verified successfully"

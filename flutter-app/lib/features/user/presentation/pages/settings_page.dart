@@ -75,7 +75,6 @@ class _SettingsPageState extends State<SettingsPage> {
                     delayPerItem: const Duration(milliseconds: 50),
                     child: _buildSectionHeader(
                       context,
-                      icon: Icons.language,
                       title: 'settings.language'.tr(),
                       subtitle: 'settings.language_subtitle'.tr(),
                     ),
@@ -89,7 +88,6 @@ class _SettingsPageState extends State<SettingsPage> {
                     delayPerItem: const Duration(milliseconds: 50),
                     child: _buildSectionHeader(
                       context,
-                      icon: Icons.notifications,
                       title: 'settings.notifications'.tr(),
                       subtitle: 'settings.notifications_subtitle'.tr(),
                     ),
@@ -103,7 +101,6 @@ class _SettingsPageState extends State<SettingsPage> {
                     delayPerItem: const Duration(milliseconds: 50),
                     child: _buildSectionHeader(
                       context,
-                      icon: Icons.volume_up,
                       title: 'settings.sound'.tr(),
                       subtitle: 'settings.sound_subtitle'.tr(),
                     ),
@@ -117,7 +114,6 @@ class _SettingsPageState extends State<SettingsPage> {
                     delayPerItem: const Duration(milliseconds: 50),
                     child: _buildSectionHeader(
                       context,
-                      icon: Icons.palette,
                       title: 'settings.theme'.tr(),
                       subtitle: 'settings.theme_subtitle'.tr(),
                     ),
@@ -131,7 +127,6 @@ class _SettingsPageState extends State<SettingsPage> {
                     delayPerItem: const Duration(milliseconds: 50),
                     child: _buildSectionHeader(
                       context,
-                      icon: Icons.person_outline,
                       title: 'settings.account'.tr(),
                       subtitle: 'settings.account_subtitle'.tr(),
                     ),
@@ -145,7 +140,6 @@ class _SettingsPageState extends State<SettingsPage> {
                     delayPerItem: const Duration(milliseconds: 50),
                     child: _buildSectionHeader(
                       context,
-                      icon: Icons.cloud_sync_outlined,
                       title: 'offlineSync.settingsTitle'.tr(),
                       subtitle: 'offlineSync.settingsSubtitle'.tr(),
                     ),
@@ -159,7 +153,6 @@ class _SettingsPageState extends State<SettingsPage> {
                     delayPerItem: const Duration(milliseconds: 50),
                     child: _buildSectionHeader(
                       context,
-                      icon: Icons.people_outline_rounded,
                       title: 'settings.referral'.tr(),
                       subtitle: 'settings.referral_subtitle'.tr(),
                     ),
@@ -173,7 +166,6 @@ class _SettingsPageState extends State<SettingsPage> {
                     delayPerItem: const Duration(milliseconds: 50),
                     child: _buildSectionHeader(
                       context,
-                      icon: Icons.info_outline,
                       title: 'settings.about'.tr(),
                       subtitle: 'settings.about_subtitle'.tr(),
                     ),
@@ -189,25 +181,14 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Widget _buildSectionHeader(
     BuildContext context, {
-    required IconData icon,
     required String title,
     required String subtitle,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = AppColorRoles.primary(isDark);
     return Padding(
       padding: const EdgeInsets.only(left: 4),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: primaryColor.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: primaryColor, size: 24),
-          ),
-          const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -973,9 +954,8 @@ class _SettingsPageState extends State<SettingsPage> {
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 12),
-                        OutlinedButton.icon(
-                          icon: const Icon(Icons.refresh_rounded),
-                          label: Text('home.reload'.tr()),
+                        OutlinedButton(
+                          child: Text('home.reload'.tr()),
                           onPressed: () => setSheetState(() {
                             referralFuture = settingsProvider.getReferralCode();
                           }),
