@@ -288,16 +288,6 @@ async def seed(database_url: str | None = None):
         level_transitions = [
             {
                 "previous": "A1",
-                "new": "A1",
-                "type": "initial",
-                "days_ago": 90,
-                "score": 0.0,
-                "exercises": 0,
-                "accuracy": 0.0,
-                "reason": "Initial proficiency profile created at registration.",
-            },
-            {
-                "previous": "A1",
                 "new": "A2",
                 "type": "promotion",
                 "days_ago": 60,
@@ -315,16 +305,6 @@ async def seed(database_url: str | None = None):
                 "exercises": 380,
                 "accuracy": 0.68,
                 "reason": "Met B1 requirements: Vocabulary ≥70, Grammar ≥65, Reading ≥60, 300+ exercises, 65%+ accuracy, 7+ streak days.",
-            },
-            {
-                "previous": "A2",
-                "new": "A1",
-                "type": "demotion",
-                "days_ago": 45,
-                "score": 48.1,
-                "exercises": 200,
-                "accuracy": 0.54,
-                "reason": "Accuracy dropped below A2 threshold after a study break. Demoted to A1.",
             },
         ]
 
@@ -345,7 +325,7 @@ async def seed(database_url: str | None = None):
             session.add(history)
 
         await session.flush()
-        print(f"  Created {len(level_transitions)} level history records (A1→A2→B1 with a demotion episode).")
+        print(f"  Created {len(level_transitions)} level history records (A1→A2→B1; levels only move through tests).")
 
         # ── Create assessment tests ──────────────────────────────
         assessment_tests = [

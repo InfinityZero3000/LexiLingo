@@ -116,6 +116,7 @@ async def auth_client():
         mock_session.scalar = AsyncMock(return_value=None)
         mock_session.add = MagicMock()
         mock_session.commit = AsyncMock()
+        mock_session.flush = AsyncMock()
         mock_session.refresh = AsyncMock(side_effect=fake_refresh)
         yield mock_session
 
@@ -165,6 +166,7 @@ async def auth_client_with_profile():
         mock_session.scalar = AsyncMock(return_value=None)
         mock_session.add = MagicMock()
         mock_session.commit = AsyncMock()
+        mock_session.flush = AsyncMock()
         mock_session.refresh = AsyncMock()
         yield mock_session
 

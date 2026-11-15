@@ -435,19 +435,34 @@ class TestPlacementSubmit:
         assert data["score_percentage"] == 100.0
         assert data["assessed_level"] in ("C1", "C2")
 
-    async def test_all_wrong_gives_a1(self, auth_client):
-        """Answering all questions wrong → A1."""
-        wrong_answers = [
-            {"question_id": i, "selected_option": 3}  # All option 3 (wrong for most)
-            for i in range(1, 21)
-        ]
+    async def test_retake_never_lowers_the_level(self, auth_client):
+        """A level is earned by passing a test, so a bad retake cannot take it away."""
+        from app.routes.proficiency import PLACEMENT_QUESTIONS
+
+        good = await auth_client.post(
+            f"{BASE}/placement-test/submit",
+            json={
+                "answers": [
+                    {"question_id": q["id"], "selected_option": q["correct"]}
+                    for q in PLACEMENT_QUESTIONS
+                ]
+            },
+        )
+        held = good.json()["assessed_level"]
+
         resp = await auth_client.post(
             f"{BASE}/placement-test/submit",
-            json={"answers": wrong_answers},
+            json={
+                "answers": [
+                    {"question_id": i, "selected_option": 3} for i in range(1, 21)
+                ]
+            },
         )
         assert resp.status_code == 200
         data = resp.json()
-        assert data["assessed_level"] == "A1"
+        assert data["test_level"] == "A1"
+        assert data["assessed_level"] == held
+        assert data["level_changed"] is False
 
     async def test_submit_response_structure(self, auth_client):
         answers = [{"question_id": i, "selected_option": 0} for i in range(1, 21)]
