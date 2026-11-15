@@ -147,26 +147,25 @@ class CourseCategoryCRUD:
         skip: int = 0,
         limit: int = 20
     ) -> Tuple[List[Course], int]:
-        """
-        Get all courses in a specific category.
-        Returns (courses, total_count).
-        """
-        query = select(Course).where(
-            Course.category_id == category_id,
-            Course.is_published == True
-        ).order_by(Course.created_at.desc())
-        
-        # Get total count
-        count_query = select(func.count()).select_from(Course).where(
-            Course.category_id == category_id,
-            Course.is_published == True
+        """Published courses filed under the category, by link or by tag."""
+        category = await db.get(CourseCategory, category_id)
+        if category is None:
+            return [], 0
+        result = await db.execute(
+            select(Course)
+            .where(Course.is_published.is_(True))
+            .order_by(Course.created_at.desc())
         )
-        total_result = await db.execute(count_query)
-        total = total_result.scalar()
-        
-        # Get paginated results
-        query = query.offset(skip).limit(limit)
-        result = await db.execute(query)
-        courses = result.scalars().all()
-        
-        return list(courses), total
+        # The course list in the app groups by tag, and most courses carry
+        # tags but no category_id, so a category_id-only query opened an empty
+        # page for a category the list showed five courses under.
+        # ponytail: filtered in Python because tags is portable JSON; move to
+        # SQL (or backfill category_id) if published courses reach thousands.
+        labels = {category.slug, category.name.lower()}
+        courses = [
+            course
+            for course in result.scalars().all()
+            if course.category_id == category_id
+            or labels.intersection(course.tags or [])
+        ]
+        return courses[skip : skip + limit], len(courses)
