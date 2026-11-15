@@ -489,6 +489,14 @@ try:
 except ImportError:
     logger.warning("prometheus-fastapi-instrumentator not installed; /metrics disabled")
 
+# Images the transactional emails link to (hosted, so Gmail does not list them as attachments)
+from pathlib import Path as _Path
+app.mount(
+    "/email-assets",
+    StaticFiles(directory=_Path(__file__).parent / "templates" / "assets"),
+    name="email-assets",
+)
+
 # Serve uploaded/imported media files
 import os
 _media_dir = "/app/data/media"
