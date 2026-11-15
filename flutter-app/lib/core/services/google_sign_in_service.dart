@@ -80,6 +80,11 @@ class GoogleSignInService {
 
       return await _extractGoogleIdTokenAndSignOut(userCredential);
     } on FirebaseAuthException catch (e) {
+      if (_isPopupCancelled(e.code)) {
+        logWarn(_tag, 'Google popup closed by user (${e.code})');
+        _lastError = 'cancelled';
+        return null;
+      }
       if (_shouldFallbackToRedirect(e.code, e.message)) {
         logWarn(
           _tag,
@@ -146,11 +151,14 @@ class GoogleSignInService {
     return googleIdToken;
   }
 
+  // Closing the popup is the user saying no; redirecting would navigate away
+  // and leave the login button spinning.
+  bool _isPopupCancelled(String code) =>
+      code == 'popup-closed-by-user' || code == 'cancelled-popup-request';
+
   bool _shouldFallbackToRedirect(String code, String? message) {
     const fallbackCodes = {
       'popup-blocked',
-      'popup-closed-by-user',
-      'cancelled-popup-request',
       'operation-not-supported-in-this-environment',
       'web-storage-unsupported',
     };
