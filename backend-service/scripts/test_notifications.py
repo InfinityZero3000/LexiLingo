@@ -92,6 +92,9 @@ def check_config() -> dict[str, bool]:
 # 2.  EMAIL TEST
 # ═══════════════════════════════════════════════════════════════════════════
 
+TEST_INBOX = "nhthang.dev@gmail.com"
+
+
 async def test_email(to_email: str) -> bool:
     header("═══  EMAIL TEST  ═══")
     from app.services.email_service import EmailService
@@ -305,10 +308,7 @@ async def main(args: argparse.Namespace) -> None:
     email_ok = push_ok = True
 
     if not args.push_only and not args.reminder_only:
-        to = args.to_email or settings.EMAIL_FROM
-        if not to:
-            print("Error: provide --to-email or set EMAIL_FROM in config")
-            return
+        to = args.to_email or TEST_INBOX
         email_ok = await test_email(to)
 
     if not args.email_only and not args.reminder_only:
@@ -350,7 +350,7 @@ if __name__ == "__main__":
     parser.add_argument("--push-only",     action="store_true", help="Chỉ test push notification")
     parser.add_argument("--reminder-only", action="store_true", help="Chỉ test reminder pipeline")
     parser.add_argument("--config-check",  action="store_true", help="Chỉ kiểm tra cấu hình")
-    parser.add_argument("--to-email",      default=None,        help="Địa chỉ email nhận test (mặc định: EMAIL_FROM)")
+    parser.add_argument("--to-email",      default=None,        help=f"Địa chỉ email nhận test (mặc định: {TEST_INBOX})")
     parser.add_argument("--fcm-token",     default=None,        help="FCM token cụ thể để test push")
     parser.add_argument("--force-user",    default=None,        help="Email user để force gửi reminder ngay")
 

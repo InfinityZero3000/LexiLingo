@@ -1,0 +1,15 @@
+Hi {display_name},
+
+Your email is confirmed and your LexiLingo account is ready.
+
+1. Pick a course that matches your level.
+2. Finish one short lesson. Five minutes is enough.
+3. Come back tomorrow to start a streak.
+
+Start your first lesson: {start_link}
+
+Lexi, our parrot tutor, is waiting in the chat tab whenever you want to practise speaking or ask about a word.
+
+Questions? Write to {support_email}.
+
+LexiLingo Team

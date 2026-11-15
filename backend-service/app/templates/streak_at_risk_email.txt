@@ -1,0 +1,11 @@
+Hi {display_name},
+
+You have not practised yet today. Your {streak_days} {day_noun} streak ends at midnight.
+
+One short lesson or a quick vocabulary review is enough to keep it going.
+
+Keep my streak: {practice_link}
+
+Too many reminders? Turn these off in settings: {settings_link}
+
+LexiLingo Team
