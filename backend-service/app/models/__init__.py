@@ -58,6 +58,7 @@ from app.models.proficiency import (
     ExerciseAttempt,
     SkillDailyStat,
     LevelAssessmentTest,
+    LevelExamAttempt,
 )
 
 # Content lab models (Grammar, Questions, Test Exams)
@@ -183,6 +184,7 @@ __all__ = [
     "ExerciseAttempt",
     "SkillDailyStat",
     "LevelAssessmentTest",
+    "LevelExamAttempt",
     # Content lab
     "GrammarItem",
     "UserGrammarItem",
