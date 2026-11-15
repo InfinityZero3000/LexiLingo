@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'dart:async';
 import 'dart:io';
@@ -1129,7 +1130,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                   );
                 }
                 return SizedBox(
-                  height: 34,
+                  height: TapTargetBox.applies(context) ? 48 : 34,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: _quickReplies.length,

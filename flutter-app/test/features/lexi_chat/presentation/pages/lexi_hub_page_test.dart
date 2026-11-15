@@ -234,6 +234,8 @@ void main() {
         LexiMode.chat => PhosphorIconsRegular.sparkle,
         LexiMode.topics => PhosphorIconsRegular.chatCircleDots,
       }),
+      // The tap zone lies over the icon, so the icon itself is never the hit.
+      warnIfMissed: false,
     );
     await settleModes(tester);
   }

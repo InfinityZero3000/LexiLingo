@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode, debugPrint;
 import 'package:easy_localization/easy_localization.dart';
@@ -416,7 +417,11 @@ class _LexiLingoAppState extends State<LexiLingoApp>
                 value: AppTheme.systemUiOverlayStyle(
                   Theme.of(context).brightness,
                 ),
-                child: LocaleRefresher(child: child ?? const SizedBox.shrink()),
+                child: _TouchTargets(
+                  child: LocaleRefresher(
+                    child: child ?? const SizedBox.shrink(),
+                  ),
+                ),
               );
             },
             // Localization — easy_localization handles locale state
@@ -552,6 +557,30 @@ class _MissingRouteArgs extends StatelessWidget {
           onRetry: () => Navigator.of(context).pop(),
         ),
       ),
+    );
+  }
+}
+
+/// Flutter shrinks tap targets and tightens density on desktop platforms, so a
+/// narrow browser window on a laptop or a touch Chromebook got 40 px buttons
+/// and 32 px chips. Below the rail breakpoint the app is a touch layout
+/// whatever the platform; the desktop layout is left as it was.
+class _TouchTargets extends StatelessWidget {
+  const _TouchTargets({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (MediaQuery.sizeOf(context).width >= ContentWidth.touchLayoutBelow) {
+      return child;
+    }
+    return Theme(
+      data: Theme.of(context).copyWith(
+        materialTapTargetSize: MaterialTapTargetSize.padded,
+        visualDensity: VisualDensity.standard,
+      ),
+      child: child,
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/tap_target.dart';
 // ignore: depend_on_referenced_packages
 import 'package:lexilingo_app/core/network/course_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -1867,7 +1868,7 @@ class _Chip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return TapTarget(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),

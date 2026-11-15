@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -364,7 +365,7 @@ class ProfileHeader extends StatelessWidget {
                                   ),
                                 ),
                                 // League Rank Badge
-                                GestureDetector(
+                                TapTarget(
                                   onTap: () => Navigator.push(
                                     context,
                                     MaterialPageRoute(
@@ -475,7 +476,7 @@ class ProfileHeader extends StatelessWidget {
                         ),
                         const SizedBox(height: 12),
                         // Edit Profile Button
-                        GestureDetector(
+                        TapTarget(
                           onTap: () async {
                             final result = await Navigator.push(
                               context,

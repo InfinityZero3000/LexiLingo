@@ -75,10 +75,18 @@ class _SocialScreenState extends State<SocialScreen>
           labelColor: primaryColor,
           unselectedLabelColor: AppColors.textGrey,
           indicatorColor: primaryColor,
+          // Three tabs share 390 px; the default 16 px label padding clipped
+          // "Người theo dõi" by two pixels.
+          labelPadding: const EdgeInsets.symmetric(horizontal: 6),
           tabs: [
-            Tab(text: 'social.feedTab'.tr()),
-            Tab(text: 'social.followersTab'.tr()),
-            Tab(text: 'social.followingTab'.tr()),
+            for (final key in const [
+              'social.feedTab',
+              'social.followersTab',
+              'social.followingTab',
+            ])
+              Tab(
+                child: FittedBox(fit: BoxFit.scaleDown, child: Text(key.tr())),
+              ),
           ],
         ),
       ),
@@ -391,7 +399,7 @@ class _SuggestedFriendsSection extends StatelessWidget {
                         .take(2)
                         .map(_formatSuggestionReason)
                         .join(' • '),
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   trailing: TextButton(

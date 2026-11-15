@@ -585,7 +585,7 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
                       Flexible(
                         child: Text(
                           name,
-                          maxLines: 1,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 14,

@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/features/admin/admin_app.dart';
@@ -127,7 +128,7 @@ class _ProfilePageState extends State<ProfilePage> {
           // Wallet/Gems Button
           Consumer<GamificationProvider>(
             builder: (context, gamification, _) {
-              return GestureDetector(
+              return TapTarget(
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const WalletScreen()),
