@@ -405,6 +405,7 @@ class _LexiLingoAppState extends State<LexiLingoApp>
           return MaterialApp(
             title: 'LexiLingo',
             navigatorKey: AppNavigationService.navigatorKey,
+            navigatorObservers: [AppNavigationService.routeObserver],
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
