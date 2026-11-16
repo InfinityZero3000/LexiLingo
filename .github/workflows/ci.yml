@@ -444,6 +444,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: auto-deploy decision tests
         run: bash scripts/tests/test_auto_deploy.sh
+      - name: deploy-one-shot never builds on the VPS
+        run: bash scripts/tests/test_deploy_one_shot.sh
       - name: every service declares one product version
         run: bash scripts/check-versions.sh
       - name: release scripts (version bump, release notes)

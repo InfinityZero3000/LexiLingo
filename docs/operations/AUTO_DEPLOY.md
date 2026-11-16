@@ -59,6 +59,11 @@ out of the checkout (a data move, done separately with a fresh backup), then a s
   (`systemctl restart docker`, then `docker rm -f <svc>` + `compose up -d --no-deps <svc>` for any container left without a network).
 - `docker-compose*.yml`, `gateway/` and `.env.production*` changes are not carried by images; the log notes them,
   roll them out with `scripts/deploy-one-shot.sh`.
+- **deploy-one-shot.sh never builds.** It uses the same compose files and `image-tags.env` as this script
+  (`-f docker-compose.yml -f docker-compose.images.yml --env-file image-tags.env`), runs `up -d --no-build`,
+  waits on the same `lock` file so it cannot race the timer, prints an `up --dry-run` plan first, and
+  refuses if `image-tags.env` is missing. `--bootstrap-local-build` (fresh host only, refused once
+  `image-tags.env` exists) is the one path that builds. `scripts/tests/test_deploy_one_shot.sh` enforces this in CI.
 
 ## First switch (once)
 
