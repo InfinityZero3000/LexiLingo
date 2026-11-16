@@ -83,13 +83,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               return Center(child: Text('course.notFound'.tr()));
             }
 
-            final nextLessonId = course.units
-                .expand((u) => u.lessons)
-                .where(
-                  (l) => !(l.isLocked ?? false) && !(l.isCompleted ?? false),
-                )
-                .map((l) => l.id)
-                .firstOrNull;
+            final nextLessonId = course.nextOpenLesson?.id;
 
             return CustomScrollView(
               slivers: [
