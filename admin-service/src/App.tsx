@@ -12,7 +12,7 @@ import {
   PenTool, BarChart3, Languages, Trophy, ShoppingBag,
   Megaphone, ScrollText, Activity, Settings,
   Shield, Database, Bot, ArrowRight, ArrowLeft, MessageSquare, Swords, Bell,
-  ClipboardCheck, Gauge, KeyRound, Radar, Tags, Handshake, Gem
+  ClipboardCheck, Gauge, KeyRound, Radar, Tags, Handshake, Gem, Filter
 } from "lucide-react";
 
 // Lazy-loaded components
@@ -42,6 +42,7 @@ const ContentLabPage = lazy(() => import("./pages/ContentLabPage").then(m => ({ 
 const ContentQaQueuePage = lazy(() => import("./pages/ContentQaQueuePage").then(m => ({ default: m.ContentQaQueuePage })));
 const DatabasePage = lazy(() => import("./pages/DatabasePage").then(m => ({ default: m.DatabasePage })));
 const AiModelsPage = lazy(() => import("./pages/AiModelsPage").then(m => ({ default: m.AiModelsPage })));
+const ActivationFunnelPage = lazy(() => import("./pages/ActivationFunnelPage").then(m => ({ default: m.ActivationFunnelPage })));
 const ContentAnalyticsPage = lazy(() => import("./pages/ContentAnalyticsPage").then(m => ({ default: m.ContentAnalyticsPage })));
 const AiQualityDashboardPage = lazy(() => import("./pages/AiQualityDashboardPage").then(m => ({ default: m.AiQualityDashboardPage })));
 const SystemSettingsPage = lazy(() => import("./pages/SystemSettingsPage").then(m => ({ default: m.SystemSettingsPage })));
@@ -78,6 +79,7 @@ const AppRoutes = () => {
     { to: "/admin/content-lab", permission: "content:read", label: t.nav.grammarTest, icon: <PenTool size={18} />, group: content },
     { to: "/admin/content-qa", permission: "content:read", label: t.nav.contentQaQueue, icon: <ClipboardCheck size={18} />, group: content },
     { to: "/admin/content-analytics", permission: "analytics:read", label: t.nav.contentAnalytics, icon: <BarChart3 size={18} />, group: content },
+    { to: "/admin/activation", permission: "analytics:read", label: t.nav.activationFunnel, icon: <Filter size={18} />, group: growth },
     { to: "/admin/shop", permission: "shop:read", label: t.nav.shop, icon: <ShoppingBag size={18} />, group: growth },
     { to: "/admin/notification-campaign", permission: "notifications:read", label: t.nav.notificationCampaign, icon: <Bell size={18} />, group: growth },
     { to: "/admin/ads", permission: "banners:read", label: t.nav.bannerAds, icon: <Megaphone size={18} />, group: growth },
@@ -127,6 +129,7 @@ const AppRoutes = () => {
               <Route path="/admin/content-lab" element={<ContentLabPage />} />
               <Route path="/admin/content-qa" element={<ContentQaQueuePage />} />
               <Route path="/admin/content-analytics" element={<ContentAnalyticsPage />} />
+              <Route path="/admin/activation" element={<ActivationFunnelPage />} />
               <Route path="/admin/ai-quality" element={<AiQualityDashboardPage />} />
               <Route path="/admin/vocabulary" element={<VocabularyPage />} />
               <Route path="/admin/achievements" element={<AchievementsPage />} />

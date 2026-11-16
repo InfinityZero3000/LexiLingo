@@ -4716,3 +4716,64 @@ textarea:focus {
   border: 1px solid var(--line);
   flex: none;
 }
+
+.funnel-list {
+  display: grid;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.funnel-row {
+  display: grid;
+  gap: 6px;
+}
+
+.funnel-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 16px;
+}
+
+.funnel-track {
+  height: 28px;
+  border-radius: 8px;
+  background: var(--panel-soft-2);
+  overflow: hidden;
+}
+
+.funnel-bar {
+  height: 100%;
+  min-width: 2px;
+  border-radius: 8px;
+  background: var(--accent-2);
+}
+
+.funnel-note {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.cohort-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.cohort-table th,
+.cohort-table td {
+  padding: 10px 12px;
+  text-align: right;
+  border-bottom: 1px solid var(--line);
+}
+
+.cohort-table th:first-child,
+.cohort-table td:first-child {
+  text-align: left;
+}
+
+.cohort-cell-muted {
+  color: var(--muted);
+}

@@ -6,13 +6,19 @@ Endpoints for dashboard charts, user metrics, content performance, and vocabular
 from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import and_, case, func, select
+from sqlalchemy import Date, Text, and_, case, cast, exists, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import require_resource
 from app.models.course import Course
-from app.models.progress import DailyActivity, LessonCompletion, UserCourseProgress
+from app.models.progress import (
+    DailyActivity,
+    LessonAttempt,
+    LessonCompletion,
+    UserCourseProgress,
+    UserProgress,
+)
 from app.models.user import User
 from app.models.vocabulary import UserVocabulary, VocabularyItem
 
@@ -276,6 +282,154 @@ async def get_completion_funnel(
     ]
 
     return {"data": data}
+
+
+# ============================================================================
+# Activation funnel and cohort retention
+# ============================================================================
+
+SEED_EMAIL_DOMAINS = ("lexilingo.test", "lexilingo.dev")
+RETENTION_HORIZONS = (1, 7, 30)
+
+
+def real_user_clause():
+    return and_(*(~User.email.ilike(f"%@{d}") for d in SEED_EMAIL_DOMAINS))
+
+
+def _has(model, *conditions):
+    return exists().where(model.user_id == User.id, *conditions)
+
+
+FUNNEL_STEPS: list[tuple[str, str, str]] = [
+    ("signed_up", "Signed up", "Real account created inside the window; seed and demo emails excluded."),
+    (
+        "email_verified",
+        "Email verified",
+        "users.is_verified is true. Google sign-ins are verified on creation, so the breakdown "
+        "separates accounts that carry a Google provider from the rest.",
+    ),
+    ("onboarding_completed", "Onboarding completed", "users.is_onboarding_completed is true."),
+    ("enrolled", "Enrolled in a course", "At least one user_course_progress row."),
+    (
+        "lesson_started",
+        "Started a lesson",
+        "At least one lesson_attempts row, or a user_progress row that is in_progress or completed.",
+    ),
+    (
+        "lesson_completed",
+        "Completed a lesson",
+        "A passed lesson_completions row, a passed lesson_attempts row, or a user_progress row that is completed.",
+    ),
+]
+
+
+def _funnel_conditions() -> dict[str, object]:
+    google = cast(User.provider, Text).like('%"google"%')
+    return {
+        "signed_up": User.id.is_not(None),
+        "email_verified": User.is_verified.is_(True),
+        "verified_google": and_(User.is_verified.is_(True), google),
+        "onboarding_completed": User.is_onboarding_completed.is_(True),
+        "enrolled": _has(UserCourseProgress),
+        "lesson_started": or_(
+            _has(LessonAttempt),
+            _has(UserProgress, UserProgress.status.in_(("in_progress", "completed"))),
+        ),
+        "lesson_completed": or_(
+            _has(LessonCompletion, LessonCompletion.is_passed.is_(True)),
+            _has(LessonAttempt, LessonAttempt.passed.is_(True)),
+            _has(UserProgress, UserProgress.status == "completed"),
+        ),
+    }
+
+
+def _ratio(num: int, den: int) -> float | None:
+    return round(num / den * 100, 1) if den else None
+
+
+@router.get("/dashboard/activation-funnel")
+async def get_activation_funnel(
+    days: int = Query(90, ge=7, le=365),
+    admin: User = Depends(require_resource("analytics")),
+    db: AsyncSession = Depends(get_db),
+):
+    """Activation funnel and weekly signup-cohort retention for real users."""
+    today = datetime.now(timezone.utc).date()
+    since = datetime.now(timezone.utc) - timedelta(days=days)
+    in_window = and_(real_user_clause(), User.created_at >= since)
+
+    conditions = _funnel_conditions()
+    keys = list(conditions)
+    row = (
+        await db.execute(
+            select(*[func.count().filter(conditions[k]).label(k) for k in keys]).where(in_window)
+        )
+    ).one()
+    counts = {k: int(getattr(row, k) or 0) for k in keys}
+
+    steps = []
+    prev: int | None = None
+    for key, label, definition in FUNNEL_STEPS:
+        count = counts[key]
+        step = {
+            "key": key,
+            "label": label,
+            "definition": definition,
+            "count": count,
+            "pct_of_first": _ratio(count, counts["signed_up"]),
+            "pct_of_previous": None if prev is None else _ratio(count, prev),
+        }
+        if key == "email_verified":
+            step["breakdown"] = {
+                "with_google_provider": counts["verified_google"],
+                "without_google_provider": count - counts["verified_google"],
+            }
+        steps.append(step)
+        prev = count
+
+    signup_day = cast(User.created_at, Date)
+    cohort_cols = [
+        cast(func.date_trunc("week", User.created_at), Date).label("week_start"),
+        func.count().label("size"),
+    ]
+    for n in RETENTION_HORIZONS:
+        eligible = signup_day + n < today
+        retained = exists().where(
+            DailyActivity.user_id == User.id,
+            DailyActivity.activity_date == signup_day + n,
+        )
+        cohort_cols.append(func.count().filter(eligible).label(f"d{n}_eligible"))
+        cohort_cols.append(func.count().filter(and_(eligible, retained)).label(f"d{n}_retained"))
+    rows = (
+        await db.execute(
+            select(*cohort_cols).where(in_window).group_by("week_start").order_by("week_start")
+        )
+    ).all()
+
+    cohorts = []
+    for r in rows:
+        item: dict = {"week_start": r.week_start.isoformat(), "size": int(r.size)}
+        for n in RETENTION_HORIZONS:
+            eligible_n = int(getattr(r, f"d{n}_eligible"))
+            retained_n = int(getattr(r, f"d{n}_retained"))
+            item[f"d{n}"] = {
+                "eligible": eligible_n,
+                "retained": retained_n,
+                "rate": _ratio(retained_n, eligible_n),
+            }
+        cohorts.append(item)
+
+    return {
+        "window_days": days,
+        "steps": steps,
+        "cohorts": cohorts,
+        "retention_definition": (
+            "Cohort = ISO week (Monday start) of signup. Dn is retained when the user has a "
+            "daily_activities row exactly n calendar days (UTC) after signup day. Only users whose "
+            "day n has fully elapsed are eligible; rate = retained / eligible, null when nobody is "
+            "eligible yet."
+        ),
+    }
 
 
 # ============================================================================
