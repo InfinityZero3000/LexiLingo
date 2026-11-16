@@ -184,6 +184,16 @@ async def _audit_admin_login(
         logger.warning("Admin login audit row not written", exc_info=True)
 
 
+def _email_verification_token(user: User) -> str:
+    # One builder for register and resend: register once built its own payload without
+    # "purpose", and /verify-email rejected every link it ever mailed.
+    from app.core.security import create_verification_token
+    return create_verification_token(
+        {"sub": str(user.id), "email": user.email, "purpose": "email_verify"},
+        expires_minutes=1440,
+    )
+
+
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register(
     request: RegisterRequest,
@@ -200,11 +210,7 @@ async def register(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email or username already registered")
 
     try:
-        from app.core.security import create_verification_token
-        token = create_verification_token(
-            {"sub": str(user.id), "email": user.email, "type": "email_verification"},
-            expires_minutes=1440,
-        )
+        token = _email_verification_token(user)
         await EmailService.send_verification_email(
             to_email=user.email, token=token, display_name=user.display_name,
         )
@@ -227,11 +233,7 @@ async def resend_verification_email(
     # Always return 200 to avoid email enumeration
     if can_send and user and not user.is_verified:
         try:
-            from app.core.security import create_verification_token
-            token = create_verification_token(
-                {"sub": str(user.id), "email": user.email, "purpose": "email_verify"},
-                expires_minutes=1440,
-            )
+            token = _email_verification_token(user)
             background_tasks.add_task(
                 EmailService.send_verification_email,
                 user.email,

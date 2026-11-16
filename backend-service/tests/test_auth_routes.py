@@ -813,6 +813,68 @@ class TestVerifyEmail:
         assert "already verified" in data["message"].lower()
 
 
+class TestEmailVerificationEndToEnd:
+    """The link a new user is mailed must verify them; nothing here is mocked but the mail."""
+
+    async def test_registration_link_verifies_and_unlocks_login(self, async_client):
+        from app.services.email_service import EmailService
+
+        with patch.object(
+            EmailService, "send_verification_email", autospec=True, return_value=True
+        ) as sent, patch.object(
+            EmailService, "send_welcome_email", autospec=True, return_value=True
+        ):
+            response = await async_client.post(
+                f"{BASE}/register",
+                json={"email": "fresh@example.com", "username": "fresh", "password": "SecurePass123!"},
+            )
+            assert response.status_code == 201
+
+            login = {"email": "fresh@example.com", "password": "SecurePass123!"}
+            assert (await async_client.post(f"{BASE}/login", json=login)).status_code == 403
+
+            assert sent.call_count == 1
+            token = sent.call_args.kwargs["token"]
+            verified = await async_client.post(f"{BASE}/verify-email", json={"token": token})
+
+        assert verified.status_code == 200
+        assert verified.json()["message"] == "Email verified successfully"
+        assert (await async_client.post(f"{BASE}/login", json=login)).status_code == 200
+
+    async def test_resend_link_verifies_too(self, async_client, monkeypatch):
+        from app.routes import auth
+        from app.services.email_service import EmailService
+
+        auth._verification_resend_cooldowns.clear()
+        auth._verification_resend_history.clear()
+        monkeypatch.setattr(auth.RedisClient, "get_instance", AsyncMock(return_value=None))
+        with patch.object(
+            EmailService, "send_verification_email", autospec=True, return_value=True
+        ) as sent, patch.object(
+            EmailService, "send_welcome_email", autospec=True, return_value=True
+        ):
+            await async_client.post(
+                f"{BASE}/register",
+                json={"email": "again@example.com", "username": "again", "password": "SecurePass123!"},
+            )
+            await async_client.post(f"{BASE}/resend-verification", json={"email": "again@example.com"})
+            assert sent.call_count == 2
+            # Resend schedules the mail as a background task with (email, token, name) positionally.
+            token = sent.call_args.args[1]
+            verified = await async_client.post(f"{BASE}/verify-email", json={"token": token})
+
+        assert verified.status_code == 200
+
+    async def test_a_reset_token_cannot_verify_an_email(self, async_client):
+        from app.core.security import create_verification_token
+
+        token = create_verification_token(
+            {"sub": str(uuid.uuid4()), "purpose": "password_reset"}, expires_minutes=60
+        )
+        response = await async_client.post(f"{BASE}/verify-email", json={"token": token})
+        assert response.status_code == 400
+
+
 # ===========================================================================
 # POST /auth/google
 # ===========================================================================
