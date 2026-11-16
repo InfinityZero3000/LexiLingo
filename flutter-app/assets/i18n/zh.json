@@ -146,7 +146,9 @@
     "verifyEmailDoneTitle": "邮箱已验证",
     "verifyEmailDoneMessage": "现在可以登录并开始学习。",
     "verifyEmailFailedTitle": "此链接已失效",
-    "verifyEmailFailedMessage": "该链接已被使用或已过期。请输入邮箱以获取新链接。"
+    "verifyEmailFailedMessage": "该链接已被使用或已过期。请输入邮箱以获取新链接。",
+    "verifyEmailBanner": "验证邮箱即可解锁商店和邀请奖励。",
+    "verifyEmailBannerAction": "重新发送链接"
   },
   "home": {
     "wordsLeftToReview": "个单词待复习",

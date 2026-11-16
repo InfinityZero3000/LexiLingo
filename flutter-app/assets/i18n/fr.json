@@ -146,7 +146,9 @@
     "verifyEmailDoneTitle": "E-mail vérifié",
     "verifyEmailDoneMessage": "Vous pouvez vous connecter et commencer à apprendre.",
     "verifyEmailFailedTitle": "Ce lien ne fonctionne plus",
-    "verifyEmailFailedMessage": "Il a déjà été utilisé ou a expiré. Saisissez votre e-mail pour en recevoir un nouveau."
+    "verifyEmailFailedMessage": "Il a déjà été utilisé ou a expiré. Saisissez votre e-mail pour en recevoir un nouveau.",
+    "verifyEmailBanner": "Vérifiez votre e-mail pour débloquer la boutique et les récompenses de parrainage.",
+    "verifyEmailBannerAction": "Renvoyer le lien"
   },
   "home": {
     "wordsLeftToReview": "mots à réviser",

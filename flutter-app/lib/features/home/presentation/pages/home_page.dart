@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/features/auth/presentation/widgets/verify_email_banner.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -158,6 +159,7 @@ class _HomePageNewState extends State<HomePageNew> {
                       slideOffset: 22,
                       children: [
                         const HomeHeader(),
+                        const VerifyEmailBanner(),
                         const NextUpHero(),
                         const StreakGoalStrip(),
                         const ProgressChipsRow(),

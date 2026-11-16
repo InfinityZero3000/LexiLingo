@@ -389,9 +389,23 @@ class _RegisterPageState extends State<RegisterPage> {
                                   displayName: _fullNameController.text.trim(),
                                 );
 
-                                // If registration succeeded, navigate to email verification page.
                                 if (authProvider.errorMessage == null &&
                                     mounted) {
+                                  // Sign straight in: an unverified account may learn, and
+                                  // Home keeps asking it to verify. An older backend still
+                                  // refuses, which falls back to the inbox page.
+                                  await authProvider.signInWithEmailPassword(
+                                    _emailController.text.trim(),
+                                    _passwordController.text,
+                                  );
+                                  if (!mounted) return;
+                                  if (authProvider.isAuthenticated) {
+                                    nav.pushNamedAndRemoveUntil(
+                                      '/',
+                                      (_) => false,
+                                    );
+                                    return;
+                                  }
                                   nav.pushReplacement(
                                     MaterialPageRoute(
                                       builder: (_) =>

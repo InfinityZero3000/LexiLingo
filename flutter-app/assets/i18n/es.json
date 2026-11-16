@@ -146,7 +146,9 @@
     "verifyEmailDoneTitle": "Correo verificado",
     "verifyEmailDoneMessage": "Ya puedes iniciar sesión y empezar a aprender.",
     "verifyEmailFailedTitle": "Este enlace ya no funciona",
-    "verifyEmailFailedMessage": "Ya se usó o ha caducado. Escribe tu correo para recibir uno nuevo."
+    "verifyEmailFailedMessage": "Ya se usó o ha caducado. Escribe tu correo para recibir uno nuevo.",
+    "verifyEmailBanner": "Verifica tu correo para desbloquear la tienda y las recompensas por invitación.",
+    "verifyEmailBannerAction": "Reenviar enlace"
   },
   "home": {
     "wordsLeftToReview": "palabras por repasar",

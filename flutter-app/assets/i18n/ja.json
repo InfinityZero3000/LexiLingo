@@ -146,7 +146,9 @@
     "verifyEmailDoneTitle": "メールアドレスを確認しました",
     "verifyEmailDoneMessage": "ログインして学習を始めましょう。",
     "verifyEmailFailedTitle": "このリンクは使用できません",
-    "verifyEmailFailedMessage": "すでに使用済みか、有効期限が切れています。新しいリンクを受け取るにはメールアドレスを入力してください。"
+    "verifyEmailFailedMessage": "すでに使用済みか、有効期限が切れています。新しいリンクを受け取るにはメールアドレスを入力してください。",
+    "verifyEmailBanner": "メールアドレスを確認すると、ショップと紹介特典が使えるようになります。",
+    "verifyEmailBannerAction": "リンクを再送"
   },
   "home": {
     "wordsLeftToReview": "復習する単語",
