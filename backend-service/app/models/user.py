@@ -202,7 +202,10 @@ class RefreshToken(Base):
         index=True
     )
     
-    token: Mapped[str] = mapped_column(String(500), unique=True, nullable=False, index=True)
+    # Legacy raw value: nullable and no longer written; dropped in a follow-up release.
+    token: Mapped[str | None] = mapped_column(String(500), unique=True, nullable=True, index=True)
+    token_hash: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True, index=True)
+    family_id: Mapped[uuid.UUID | None] = mapped_column(GUID(), nullable=True, index=True)
     device_id: Mapped[str] = mapped_column(String(255), nullable=True)
     
     is_revoked: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -213,4 +216,4 @@ class RefreshToken(Base):
     revoked_at: Mapped[datetime] = mapped_column(TZDateTime, nullable=True)
     
     def __repr__(self) -> str:
-        return f"<RefreshToken {self.token[:16]}...>"
+        return f"<RefreshToken {self.id}>"

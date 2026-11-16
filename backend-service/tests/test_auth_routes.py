@@ -22,7 +22,7 @@ import asyncio
 import threading
 import uuid
 import pytest
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 from httpx import AsyncClient, ASGITransport
 
@@ -497,6 +497,12 @@ class TestRefreshToken:
         from app.core.database import get_db
 
         mock_login_user = _make_mock_user()
+        # The one mocked row answers both the token and the user lookup.
+        mock_login_user.is_used = False
+        mock_login_user.is_revoked = False
+        mock_login_user.expires_at = datetime.now(UTC) + timedelta(days=1)
+        mock_login_user.family_id = uuid.uuid4()
+        mock_login_user.token_hash = "h"
         session = _make_mock_session(scalar_one_or_none_value=mock_login_user)
 
         async def mock_get_db():

@@ -40,6 +40,8 @@ from app.services.auth_service import (
     register_user,
     authenticate_user,
     save_refresh_token,
+    find_refresh_token,
+    revoke_refresh_family,
     get_role_id as _get_role_id,
     ensure_unique_username as _ensure_unique_username,
     issue_token_pair,
@@ -315,19 +317,27 @@ async def refresh_token(
             detail="Invalid token type - expected refresh token"
         )
     
-    # FIX: Verify token exists and is valid in DB
-    result = await db.execute(
-        select(RefreshToken).where(
-            RefreshToken.token == request.refresh_token,
-            RefreshToken.is_revoked == False,
-            RefreshToken.is_used == False,
-            RefreshToken.expires_at > datetime.now(timezone.utc)
-        )
-    )
-    db_token = result.scalar_one_or_none()
-    
+    db_token = await find_refresh_token(db, request.refresh_token, for_update=True)
+
     if not db_token:
-        # Potential reuse attack or revoked token
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token"
+        )
+
+    if db_token.is_used or db_token.is_revoked:
+        # A rotated token was presented again: one of its holders is not the owner.
+        await revoke_refresh_family(db, db_token)
+        await db.commit()
+        logger.warning(
+            "Refresh token reuse: family %s revoked for user %s", db_token.family_id, db_token.user_id
+        )
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token"
+        )
+
+    if db_token.expires_at <= datetime.now(timezone.utc):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired refresh token"
@@ -369,8 +379,8 @@ async def refresh_token(
     access_token = create_access_token({"sub": str(user.id)})
     new_refresh_token = create_refresh_token({"sub": str(user.id)})
     
-    # Save new refresh token
-    await save_refresh_token(db,user.id, new_refresh_token)
+    await save_refresh_token(db, user.id, new_refresh_token, db_token.family_id, commit=False)
+    await db.commit()
     
     return TokenResponse(
         access_token=access_token,
@@ -403,13 +413,9 @@ async def logout(
     """
     if request.refresh_token:
         # FIX: Revoke token in DB
-        result = await db.execute(
-            select(RefreshToken).where(RefreshToken.token == request.refresh_token)
-        )
-        db_token = result.scalar_one_or_none()
+        db_token = await find_refresh_token(db, request.refresh_token)
         if db_token:
-            db_token.is_revoked = True
-            db_token.revoked_at = datetime.now(timezone.utc)
+            await revoke_refresh_family(db, db_token)
             await db.commit()
 
     if authorization and authorization.lower().startswith("bearer "):
