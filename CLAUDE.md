@@ -562,6 +562,11 @@ Rules that exist because they were violated:
 - **`OnFailure` goes in `[Unit]`.** In `[Service]` systemd ignores it with only
   a log line, so failures alert nobody. Verify with
   `systemctl show -p OnFailure --value <unit>` — empty means broken.
+- **MongoDB runs with `--auth` (2026-11-16).** Root (`MONGO_ROOT_USER/PASSWORD`) is for
+  backup/restore and the container's own env; ai-service connects as `MONGO_APP_USER`
+  (readWrite on the app database only). All four live in `.env.production.secrets`; compose
+  refuses to start without them. On a fresh host `MONGO_INITDB_ROOT_*` creates root, but the
+  app user must be created by hand (`db.createUser` in the app DB).
 - **The server dumps cover the two databases only.** Uploaded media and
   `ai-service/data` live in the checkout and were never in them.
 - **The off-box copy is the developer's Mac.** `scripts/pull-backups-to-mac.sh --install`
