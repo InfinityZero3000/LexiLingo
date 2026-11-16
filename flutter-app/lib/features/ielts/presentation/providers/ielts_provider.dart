@@ -1,9 +1,29 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
+
+import '../../../../core/error/exceptions.dart';
+import '../../../../core/network/response_models.dart';
 
 import '../../data/datasources/ielts_data_source.dart';
 import '../../domain/entities/ielts_entities.dart';
+
+@visibleForTesting
+String ieltsUserMessage(Object error) {
+  debugPrint('IELTS request failed: $error');
+  if (error is ApiErrorException && error.message.trim().isNotEmpty) {
+    return error.message;
+  }
+  if (error is NetworkException ||
+      error is SocketException ||
+      error is TimeoutException ||
+      (error is ServerException && error.message == 'No network connection')) {
+    return 'ielts.errorNetwork'.tr();
+  }
+  return 'ielts.errorGeneric'.tr();
+}
 
 /// State for one IELTS sitting, plus the test catalogue.
 ///
@@ -52,6 +72,8 @@ class IeltsProvider extends ChangeNotifier {
     super.dispose();
   }
 
+  String _userMessage(Object e) => ieltsUserMessage(e);
+
   Future<void> loadTests({String? testType}) async {
     _loading = true;
     _error = null;
@@ -59,7 +81,7 @@ class IeltsProvider extends ChangeNotifier {
     try {
       _tests = await _dataSource.listTests(testType: testType);
     } catch (e) {
-      _error = e.toString();
+      _error = _userMessage(e);
     } finally {
       _loading = false;
       notifyListeners();
@@ -104,7 +126,7 @@ class IeltsProvider extends ChangeNotifier {
       _beginAutosave();
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = _userMessage(e);
       return false;
     } finally {
       _loading = false;
@@ -160,7 +182,7 @@ class IeltsProvider extends ChangeNotifier {
       _result = result;
       return result;
     } catch (e) {
-      _error = e.toString();
+      _error = _userMessage(e);
       return null;
     } finally {
       _submitting = false;
@@ -177,7 +199,7 @@ class IeltsProvider extends ChangeNotifier {
       _result = await _dataSource.getResult(attemptId);
       notifyListeners();
     } catch (e) {
-      _error = e.toString();
+      _error = _userMessage(e);
       notifyListeners();
     }
   }
@@ -189,7 +211,7 @@ class IeltsProvider extends ChangeNotifier {
       _result = await _dataSource.getResult(attemptId);
       _error = null;
     } catch (e) {
-      _error = e.toString();
+      _error = _userMessage(e);
     } finally {
       _loading = false;
       notifyListeners();

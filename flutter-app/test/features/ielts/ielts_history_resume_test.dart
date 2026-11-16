@@ -67,7 +67,7 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: IeltsTestsPage()));
     await tester.pumpAndSettle();
 
-    expect(find.text('In progress — tap to continue'), findsOneWidget);
+    expect(find.text('ielts.historyInProgress'), findsOneWidget);
 
     await tester.tap(find.text('Academic Paper 1'));
     await tester.pumpAndSettle();

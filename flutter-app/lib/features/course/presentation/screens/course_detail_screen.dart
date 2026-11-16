@@ -91,7 +91,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                 SliverAppBar(
                   pinned: true,
                   backgroundColor: Theme.of(context).primaryColor,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.textInverted,
                   elevation: 0,
                   titleSpacing: 0,
                   title: Text(
@@ -321,7 +321,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
+            color: AppColors.slate900.withValues(alpha: 0.18),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -369,7 +369,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                 end: Alignment.bottomCenter,
                 colors: [
                   Colors.transparent,
-                  Colors.black.withValues(alpha: 0.7),
+                  AppColors.slate900.withValues(alpha: 0.7),
                 ],
               ),
             ),
@@ -544,7 +544,7 @@ class _LessonTile extends StatelessWidget {
       title: Text(
         lesson.title,
         style: TextStyle(
-          color: isLocked ? Colors.grey : null,
+          color: isLocked ? AppColors.grey500 : null,
           decoration: isCompleted ? TextDecoration.lineThrough : null,
           fontWeight: isNext ? FontWeight.bold : null,
         ),
@@ -573,7 +573,7 @@ class _LessonTile extends StatelessWidget {
           if (isCompleted)
             const Icon(Icons.check_circle, color: AppColors.greenSuccessBright)
           else if (isLocked)
-            const Icon(Icons.lock, color: Colors.grey)
+            const Icon(Icons.lock, color: AppColors.grey500)
           else
             Icon(
               Icons.play_circle_outline,
@@ -614,7 +614,7 @@ class _LessonTile extends StatelessWidget {
 
     if (isLocked) {
       iconData = Icons.lock;
-      color = Colors.grey;
+      color = AppColors.grey500;
     } else if (isCompleted) {
       iconData = Icons.check_circle;
       color = AppColors.greenSuccessBright;
@@ -642,7 +642,7 @@ class _LessonTile extends StatelessWidget {
           break;
         case 'writing':
           iconData = Icons.edit;
-          color = Colors.indigo;
+          color = AppColors.primaryDark;
           break;
         case 'quiz':
           iconData = Icons.quiz;
@@ -650,7 +650,7 @@ class _LessonTile extends StatelessWidget {
           break;
         default:
           iconData = Icons.article;
-          color = Colors.grey;
+          color = AppColors.grey500;
       }
     }
 

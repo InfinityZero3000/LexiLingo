@@ -634,13 +634,13 @@ class _LexiChatPageState extends State<LexiChatPage>
 
   // ── Minimalist Header ────────────────────────────────────────────────────
   Widget _buildHeader(bool isDark) {
-    final iconColor = isDark ? Colors.white70 : AppColors.textDark;
+    final iconColor = isDark ? AppColors.textOnDarkSecondary : AppColors.textDark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: isDark
             ? AppColors.surfaceDark.withValues(alpha: 0.95)
-            : Colors.white.withValues(alpha: 0.95),
+            : AppColors.surfaceLight.withValues(alpha: 0.95),
         border: Border(
           bottom: BorderSide(
             color: isDark ? AppColors.surfaceDarkChat : AppColors.chatBgLight,
@@ -653,7 +653,7 @@ class _LexiChatPageState extends State<LexiChatPage>
           // A tab in MainScreen, but also pushed as `/lexi` — only then can it pop.
           if (ModalRoute.of(context)?.canPop ?? false)
             AppBackButton(
-              color: isDark ? Colors.white70 : AppColors.textDark,
+              color: isDark ? AppColors.textOnDarkSecondary : AppColors.textDark,
               onPressed: () => Navigator.of(context).pop(),
             ),
           IconButton(
@@ -675,7 +675,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                       style: TextStyle(
                         fontSize: 19,
                         fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : AppColors.textDark,
+                        color: isDark ? AppColors.textOnDarkPrimary : AppColors.textDark,
                         letterSpacing: -0.3,
                       ),
                     ),
@@ -695,7 +695,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                             color: isActive
                                 ? AppColorRoles.primary(isDark)
                                 : (isDark
-                                      ? Colors.white54
+                                      ? AppColors.textOnDarkMuted
                                       : AppColors.textGrey),
                             fontWeight: isActive
                                 ? FontWeight.w600
@@ -723,7 +723,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                           : Icons.volume_off_rounded,
                       color: provider.ttsEnabled
                           ? AppColorRoles.primary(isDark)
-                          : (isDark ? Colors.white38 : AppColors.textGrey),
+                          : (isDark ? AppColors.textOnDarkMuted : AppColors.textGrey),
                       size: 22,
                     ),
                     onPressed: provider.toggleTts,
@@ -738,7 +738,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                             : Icons.closed_caption_disabled_rounded,
                         color: provider.captionsVisible
                             ? AppColorRoles.primary(isDark)
-                            : (isDark ? Colors.white38 : AppColors.textGrey),
+                            : (isDark ? AppColors.textOnDarkMuted : AppColors.textGrey),
                         size: 22,
                       ),
                       onPressed: () => provider.setCaptionsVisible(
@@ -780,7 +780,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white : AppColors.textDark,
+                            color: isDark ? AppColors.textOnDarkPrimary : AppColors.textDark,
                           ),
                         ),
                       ),
@@ -803,7 +803,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                             'lexiChat.noSessions'.tr(),
                             style: TextStyle(
                               color: isDark
-                                  ? Colors.white54
+                                  ? AppColors.textOnDarkMuted
                                   : AppColors.textGrey,
                             ),
                           ),
@@ -959,7 +959,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                   'lexiChat.startingConversation'.tr(),
                   style: TextStyle(
                     fontSize: 13,
-                    color: isDark ? Colors.white54 : AppColors.textGrey,
+                    color: isDark ? AppColors.textOnDarkMuted : AppColors.textGrey,
                   ),
                 ),
               ],
@@ -1038,7 +1038,7 @@ class _LexiChatPageState extends State<LexiChatPage>
       decoration: BoxDecoration(
         color: isDark
             ? AppColors.surfaceDark.withValues(alpha: 0.95)
-            : Colors.white.withValues(alpha: 0.95),
+            : AppColors.surfaceLight.withValues(alpha: 0.95),
         border: Border(
           top: BorderSide(
             color: isDark ? AppColors.surfaceDarkChat : AppColors.chatBgLight,
@@ -1057,19 +1057,19 @@ class _LexiChatPageState extends State<LexiChatPage>
               decoration: BoxDecoration(
                 color:
                     (_isWebSpeechActive
-                            ? Colors.blue
+                            ? AppColors.primary
                             : _isTranscribing
-                            ? Colors.orange
-                            : Colors.red)
+                            ? AppColors.orange
+                            : AppColors.errorBright)
                         .withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
                   color:
                       (_isWebSpeechActive
-                              ? Colors.blue
+                              ? AppColors.primary
                               : _isTranscribing
-                              ? Colors.orange
-                              : Colors.red)
+                              ? AppColors.orange
+                              : AppColors.errorBright)
                           .withValues(alpha: 0.2),
                 ),
               ),
@@ -1081,7 +1081,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                       height: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.orange,
+                        color: AppColors.orange,
                       ),
                     )
                   else
@@ -1090,7 +1090,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                           ? Icons.graphic_eq
                           : Icons.pause_rounded,
                       color: _isWebSpeechActive
-                          ? Colors.blue
+                          ? AppColors.primary
                           : AppColors.errorBright,
                       size: 16,
                     ),
@@ -1108,9 +1108,9 @@ class _LexiChatPageState extends State<LexiChatPage>
                           ),
                     style: TextStyle(
                       color: _isWebSpeechActive
-                          ? Colors.blue
+                          ? AppColors.primary
                           : _isTranscribing
-                          ? Colors.orange
+                          ? AppColors.orange
                           : AppColors.errorBright,
                       fontWeight: FontWeight.w600,
                     ),
@@ -1144,7 +1144,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                             _sendQuickReply(_quickReplyPrompts[index]),
                         labelStyle: TextStyle(
                           fontSize: 11,
-                          color: isDark ? Colors.white70 : AppColors.textGrey,
+                          color: isDark ? AppColors.textOnDarkSecondary : AppColors.textGrey,
                         ),
                         side: BorderSide(
                           color: isDark
@@ -1193,12 +1193,12 @@ class _LexiChatPageState extends State<LexiChatPage>
                     buildCounter: buildChatInputCounter,
                     style: TextStyle(
                       fontSize: 14,
-                      color: isDark ? Colors.white : AppColors.textDark,
+                      color: isDark ? AppColors.textOnDarkPrimary : AppColors.textDark,
                     ),
                     decoration: InputDecoration(
                       hintText: 'lexiChat.inputHint'.tr(),
                       hintStyle: TextStyle(
-                        color: isDark ? Colors.white38 : AppColors.textGrey,
+                        color: isDark ? AppColors.textOnDarkMuted : AppColors.textGrey,
                         fontSize: 14,
                       ),
                       border: InputBorder.none,
@@ -1258,10 +1258,10 @@ class _LexiChatPageState extends State<LexiChatPage>
 
     // Active color depends on mode
     final activeColor = _isWebSpeechActive
-        ? Colors.blue
+        ? AppColors.primary
         : _isTranscribing
-        ? Colors.orange
-        : Colors.red;
+        ? AppColors.orange
+        : AppColors.errorBright;
 
     Widget button = AnimatedContainer(
       duration: const Duration(milliseconds: 200),
@@ -1286,7 +1286,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                 height: 18,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: Colors.orange,
+                  color: AppColors.orange,
                 ),
               ),
             )
@@ -1298,7 +1298,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                   : Icons.mic_none_rounded,
               color: isActive
                   ? activeColor
-                  : (isDark ? Colors.white54 : AppColors.textGrey),
+                  : (isDark ? AppColors.textOnDarkMuted : AppColors.textGrey),
               size: 20,
             ),
     );

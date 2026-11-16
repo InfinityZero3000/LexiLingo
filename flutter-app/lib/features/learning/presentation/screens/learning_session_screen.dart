@@ -601,7 +601,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
     final primaryColor = AppColorRoles.primary(isDark);
     final disabledColor = theme.colorScheme.surfaceContainerHighest;
     final actionForeground = answered || canCheckDraft
-        ? Colors.white
+        ? AppColors.textInverted
         : AppColorRoles.textMuted(isDark);
 
     // Button colour: correct=green, wrong=orange, not answered=primary blue
@@ -665,7 +665,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                 backgroundColor: checkColor,
                 disabledBackgroundColor: disabledColor,
                 disabledForegroundColor: AppColorRoles.textMuted(isDark),
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.textInverted,
                 elevation: answered ? 2 : 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(999),
@@ -880,12 +880,12 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                     ),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [Colors.amber.shade400, Colors.orange.shade400],
+                        colors: [AppColors.warning, AppColors.orange],
                       ),
                       borderRadius: BorderRadius.circular(30),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.amber.withValues(alpha: 0.4),
+                          color: AppColors.warning.withValues(alpha: 0.4),
                           blurRadius: 15,
                           spreadRadius: 2,
                         ),
@@ -935,7 +935,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       backgroundColor: AppColors.greenSuccessBright,
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColors.textInverted,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
@@ -974,7 +974,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       backgroundColor: AppColors.greenSuccessBright,
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColors.textInverted,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),

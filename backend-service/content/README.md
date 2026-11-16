@@ -70,4 +70,34 @@ Read from production (counts at export time):
 | `game_words` | 10 | Demo-sized. `seed_empty_tables_and_crawl.py` seeds it. |
 | `achievements` / `shop_items` | 48 / 55 | Seed scripts (`seed_demo_data.py`, `seed_shop_items.py`) and migrations create them; production edits are not captured. |
 
-Nothing here is exported yet. `vocabulary_items` is the largest gap.
+`vocabulary_items` and `question_bank` now have an export/import pair (below); the other tables are still not exported.
+
+## Reference content: vocabulary and questions
+
+`vocabulary/vocabulary_items.<A1..C2>.json` (one file per CEFR level, plus `unlabelled` if a row ever has none),
+`vocabulary/manifest.json` (counts only) and `questions/question_bank.json`. Ids are kept, rows are sorted
+(vocabulary by word, part of speech, id; questions by level, type, id) and the format is the same canonical
+JSON as the courses, so re-exporting unchanged data produces no diff. Timestamps are not exported. Per-user
+rows (`user_vocabulary`) never are.
+
+```bash
+# inside the backend-service container (DATABASE_URL is already set there); read-only
+python3 scripts/export_reference_content.py --out-dir content
+python3 scripts/export_reference_content.py --out-dir content --seed-csv /tmp/vocab_seed.csv   # + admin_upload CSV
+```
+
+The export runs in a `READ ONLY` transaction. `--seed-csv` writes `word,part_of_speech,cefr_level,definition,example`,
+the columns `app/services/content_agent_uploads.py` reads for the content-agent `admin_upload` source (it also
+accepts `translation_vi` and `topic`); `--csv-only` skips the JSON files.
+
+```bash
+python3 scripts/import_reference_content.py --dir content                    # dry run, rolled back
+python3 scripts/import_reference_content.py --dir content --write            # insert what is missing
+python3 scripts/import_reference_content.py --dir content --write --update   # also overwrite rows that differ
+```
+
+Default is insert-only. Every row is validated first (`part_of_speech` lowercase, `difficulty_level` uppercase,
+UUIDs, duplicate ids and duplicate word+part of speech); one bad row refuses the whole import. A word whose
+(word, part of speech) already exists under another id is skipped and reported, and a `course_id`, `lesson_id`
+or `grammar_id` pointing at a row the target lacks is left empty (import courses first). Nothing is deleted.
+Tests: `tests/test_reference_content.py`.
