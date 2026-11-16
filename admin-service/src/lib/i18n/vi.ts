@@ -89,6 +89,7 @@ const vi = {
     opsCenter: "Trung tâm vận hành",
     categories: "Danh mục khoá học",
     gemLedger: "Sổ cái quà tặng",
+    activationFunnel: "Kích hoạt & giữ chân",
     partnerKeys: "Khoá đối tác",
     exercises: "Bài tập",
     groups: {
@@ -1148,6 +1149,35 @@ const vi = {
     adminGrantFailed: "Không thể cấp quyền admin",
     adminStatusFailed: "Không thể thay đổi trạng thái người dùng",
     adminsEmpty: "Chưa có admin nào",
+  },
+
+  // ============== Activation funnel ==============
+  activationFunnel: {
+    title: "Kích hoạt & giữ chân",
+    description: "Người dùng thật rời đi ở bước nào và bao nhiêu người quay lại. Không tính tài khoản seed và demo.",
+    window: "Khoảng đăng ký",
+    windowDays: "{days} ngày gần nhất",
+    funnelTitle: "Phễu kích hoạt",
+    funnelHint: "Mỗi thanh đếm số người dùng riêng biệt đã đạt bước đó, không xét thứ tự.",
+    ofFirst: "so với đăng ký",
+    ofPrevious: "so với bước trước",
+    viaGoogle: "{google} có Google (xác minh khi tạo), {other} không",
+    steps: {
+      signed_up: "Đăng ký",
+      email_verified: "Đã xác minh email",
+      onboarding_completed: "Hoàn tất onboarding",
+      enrolled: "Đã vào khóa học",
+      lesson_started: "Đã bắt đầu bài học",
+      lesson_completed: "Đã hoàn thành bài học",
+    },
+    cohortsTitle: "Nhóm theo tuần",
+    cohortWeek: "Tuần bắt đầu",
+    cohortSize: "Đăng ký",
+    notYet: "Chưa đủ ngày",
+    loadFailed: "Không tải được phễu",
+    retry: "Thử lại",
+    emptyTitle: "Chưa có đăng ký nào trong khoảng này",
+    emptyDescription: "Hãy thử khoảng dài hơn.",
   },
 
   // ============== Gem ledger ==============

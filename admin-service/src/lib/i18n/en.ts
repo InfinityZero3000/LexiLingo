@@ -91,6 +91,7 @@ const en: Translations = {
     opsCenter: "Operations Center",
     categories: "Course Categories",
     gemLedger: "Gem Ledger",
+    activationFunnel: "Activation & Retention",
     partnerKeys: "Partner Keys",
     exercises: "Exercises",
     groups: {
@@ -1150,6 +1151,35 @@ const en: Translations = {
     adminGrantFailed: "Could not grant admin access",
     adminStatusFailed: "Could not change the user's status",
     adminsEmpty: "No admins yet",
+  },
+
+  // ============== Activation funnel ==============
+  activationFunnel: {
+    title: "Activation & Retention",
+    description: "Where real signups drop off, and how many come back. Seed and demo accounts are excluded.",
+    window: "Signup window",
+    windowDays: "Last {days} days",
+    funnelTitle: "Activation funnel",
+    funnelHint: "Each bar counts distinct users who reached that step, in any order.",
+    ofFirst: "of signups",
+    ofPrevious: "of previous step",
+    viaGoogle: "{google} with a Google provider (verified on creation), {other} without",
+    steps: {
+      signed_up: "Signed up",
+      email_verified: "Email verified",
+      onboarding_completed: "Onboarding completed",
+      enrolled: "Enrolled in a course",
+      lesson_started: "Started a lesson",
+      lesson_completed: "Completed a lesson",
+    },
+    cohortsTitle: "Weekly cohorts",
+    cohortWeek: "Week of",
+    cohortSize: "Signups",
+    notYet: "Too early",
+    loadFailed: "Failed to load the funnel",
+    retry: "Retry",
+    emptyTitle: "No signups in this window",
+    emptyDescription: "Try a longer window.",
   },
 
   // ============== Gem ledger ==============
