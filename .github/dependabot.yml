@@ -197,6 +197,20 @@ updates:
       # whole pub group failed `flutter pub get` (#747).
       - dependency-name: "build_runner"
         versions: [">=2.15.2"]
+      # These releases need Dart 3.11+ (web 3.13, flutter_local_notifications 3.12) while CI pins
+      # Dart 3.10.8, so `flutter pub get` fails on #756. Drop each once CI moves past Flutter 3.38.9.
+      - dependency-name: "image_picker"
+        versions: [">=1.2.4"]
+      - dependency-name: "url_launcher"
+        versions: [">=6.3.3"]
+      - dependency-name: "shared_preferences"
+        versions: [">=2.5.6"]
+      - dependency-name: "web"
+        versions: [">=1.1.2"]
+      - dependency-name: "mockito"
+        versions: [">=5.8.0"]
+      - dependency-name: "flutter_local_notifications"
+        versions: [">=23.0.0"]
     groups:
       pub:
         patterns:
