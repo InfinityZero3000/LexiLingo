@@ -212,6 +212,8 @@ abstract class  LocaleKeys {
   static const course_progress = 'course.progress';
   static const course_completed = 'course.completed';
   static const course_locked = 'course.locked';
+  static const course_lockedHint = 'course.lockedHint';
+  static const course_nextUp = 'course.nextUp';
   static const course_start = 'course.start';
   static const course_continue = 'course.continue';
   static const course_review = 'course.review';
@@ -246,6 +248,7 @@ abstract class  LocaleKeys {
   static const lesson_exerciseTypeNotImplemented = 'lesson.exerciseTypeNotImplemented';
   static const lesson_checkAnswer = 'lesson.checkAnswer';
   static const lesson_continueButton = 'lesson.continueButton';
+  static const lesson_nextLesson = 'lesson.nextLesson';
   static const lesson_excellent = 'lesson.excellent';
   static const lesson_wellDone = 'lesson.wellDone';
   static const lesson_scoreSummary = 'lesson.scoreSummary';
