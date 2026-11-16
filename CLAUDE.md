@@ -26,6 +26,7 @@ Language learning app (Duolingo-style). Stack:
 | `backend-service/scripts/seed_courses_directly.py` | Courses & exercises seed (calls `app.services.admin_seed_service` directly) |
 | `backend-service/scripts/generate_exercises_ai.py` | Fills lessons whose `content` is empty with AI-generated exercises (Groq) |
 | `backend-service/scripts/audit_course_content.py` | Reports/repairs published courses with unplayable lessons |
+| `backend-service/scripts/generate_ielts_paper.py` | Original IELTS Academic Reading drafts from the pinned open-licence passages in `ielts_passage_manifest.json`; pure rules in `app/services/ielts_paper_builder.py` |
 | `flutter-app/lib/features/learning/presentation/screens/learning_roadmap_screen.dart` | Duolingo-style zigzag roadmap |
 | `ai-service/api/services/trace_cag/` | TRACE-CAG multi-hop reasoning pipeline |
 
@@ -377,6 +378,13 @@ venv/bin/python3 scripts/audit_course_content.py --fix-counters
   Result: 7,780 approved, 2 quarantined. The planner teaches a word once per unit
   even when two parts of speech survive, because the lesson cursor advances a fixed
   number of entries and a skipped duplicate made consecutive lessons overlap.
+- **IELTS papers are generated, never copied.** `generate_ielts_paper.py` fetches only the
+  manifest's pinned passages (Wikipedia by `oldid` through the robots-allowed
+  `/wiki/<title>?oldid=` form, because `/api/` and `/w/` are `Disallow`ed there; Gutenberg
+  by ebook id; `.gov` pages), writes questions with qwen (reasoning on), then a blind second
+  pass must answer each one identically and quote evidence that really occurs in the passage.
+  Below 40 survivors the paper is refused. It lands `is_published=false` with `provenance`
+  for the PR #732 gate. Reading only; Listening is not generated.
 - `flutter-app/data/crawler/` (BBC) — **deleted 2026-08-20**. It was unreferenced
   anywhere, wrote to a `flutter-app/courses/` directory that does not exist, and
   its export format carried no lessons or exercises. Recover from git history if
