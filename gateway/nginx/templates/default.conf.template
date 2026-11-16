@@ -477,12 +477,16 @@ server {
     # AI Service admin routes (super-admin only; X-Admin-Key protected)
     # -------------------------------------------------------------------
 
-    # Backwards-compatible alias used by admin-service
-    location /api/v1/ai-admin/ {
-        limit_req zone=ai_general_per_ip burst=20 nodelay;
-        include /etc/nginx/snippets/proxy-common.conf;
-        rewrite ^/api/v1/ai-admin/(.*)$ /api/v1/admin/$1 break;
-        proxy_pass http://ai_upstream;
+    # The ai-service admin API is not public: admin-service reaches it through the backend's
+    # JWT-gated /admin/ai-proxy. This alias forwarded straight to it and nothing used it.
+    location ^~ /api/v1/ai-admin/ {
+        return 404;
+    }
+
+    # Service-to-service routes. ai-service and backend call each other on the docker
+    # network (http://backend-service:8000/api/v1/internal), never through this gateway.
+    location ^~ /api/v1/internal/ {
+        return 404;
     }
 
     location /ws/ {
