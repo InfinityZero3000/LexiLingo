@@ -23,6 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import require_resource
+from app.core.content_licenses import passage_license_problem
 from app.models.ielts import IeltsAttempt, IeltsTest
 from app.models.user import User
 from app.schemas.response import ApiResponse
@@ -46,6 +47,7 @@ class IeltsTestPayload(BaseModel):
     target_band: Optional[str] = None
     slug: Optional[str] = None
     content: Optional[dict] = None
+    provenance: Optional[dict] = None
     is_published: Optional[bool] = None
 
 
@@ -58,6 +60,7 @@ class IeltsTestDetail(BaseModel):
     target_band: Optional[str] = None
     slug: Optional[str] = None
     content: Optional[dict] = None
+    provenance: Optional[dict] = None
     is_published: bool
     question_count: int = 0
     attempt_count: int = 0
@@ -135,6 +138,36 @@ def validate_test_content(content: dict | None, skill_scope: str = "full") -> li
     return problems
 
 
+def provenance_problems(content: dict | None, provenance: dict | None) -> list[str]:
+    """One line per reading passage whose licence cannot be shown."""
+    entries = []
+    if isinstance(provenance, dict) and isinstance(provenance.get("passages"), list):
+        entries = [e for e in provenance["passages"] if isinstance(e, dict)]
+    problems: list[str] = []
+    for section in (content or {}).get("sections") or []:
+        if not isinstance(section, dict) or (section.get("skill") or "").lower() != "reading":
+            continue
+        for index, part in enumerate(section.get("parts") or [], start=1):
+            if not isinstance(part, dict):
+                continue
+            order = part.get("order") or index
+            title = part.get("passage_title") or part.get("title")
+            entry = next(
+                (
+                    e
+                    for e in entries
+                    if e.get("section") == f"reading:{order}"
+                    or (title and e.get("title") == title)
+                ),
+                None,
+            )
+            problem = passage_license_problem(entry)
+            if problem:
+                label = f"'{title}'" if title else f"{order}"
+                problems.append(f"Reading passage {label} {problem}")
+    return problems
+
+
 def _detail(test: IeltsTest, attempt_count: int = 0) -> IeltsTestDetail:
     return IeltsTestDetail(
         id=str(test.id),
@@ -145,6 +178,7 @@ def _detail(test: IeltsTest, attempt_count: int = 0) -> IeltsTestDetail:
         target_band=test.target_band,
         slug=test.slug,
         content=test.content,
+        provenance=test.provenance,
         is_published=test.is_published,
         question_count=len(list(iter_questions(test.content))),
         attempt_count=attempt_count,
@@ -228,10 +262,18 @@ async def admin_update_test(
             setattr(test, field, value)
     if payload.content is not None:
         test.content = payload.content
+    if payload.provenance is not None:
+        test.provenance = payload.provenance
 
     # Publishing is the gate — an unpublished paper may be half-written.
     if payload.is_published is not None:
         if payload.is_published and not test.is_published:
+            licence_problems = provenance_problems(test.content, test.provenance)
+            if licence_problems:
+                raise HTTPException(
+                    status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    "Test cannot be published: " + "; ".join(licence_problems),
+                )
             problems = validate_test_content(test.content, test.skill_scope)
             if problems:
                 raise HTTPException(
@@ -255,6 +297,7 @@ async def admin_validate_test(
     if not test:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Test not found")
     problems = validate_test_content(test.content, test.skill_scope)
+    problems += provenance_problems(test.content, test.provenance)
     counts = {
         skill: len(list(iter_questions(test.content, skill)))
         for skill in ("listening", "reading")
