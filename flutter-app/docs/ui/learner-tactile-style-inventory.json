@@ -27,6 +27,84 @@
       }
     },
     {
+      "id": "lib/features/notifications/presentation/widgets/push_permission_card.dart::PushPermissionCard::Card::0",
+      "path": "lib/features/notifications/presentation/widgets/push_permission_card.dart",
+      "entryPoint": "surface",
+      "symbol": "PushPermissionCard",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 12,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/notifications/presentation/widgets/push_permission_card.dart::_PushPermissionBody::BoxDecoration::0",
+      "path": "lib/features/notifications/presentation/widgets/push_permission_card.dart",
+      "entryPoint": "surface",
+      "symbol": "_PushPermissionBody",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 38,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/learning/presentation/screens/learning_session_screen.dart::_LearningSessionScreenState::Card::0",
+      "path": "lib/features/learning/presentation/screens/learning_session_screen.dart",
+      "entryPoint": "surface",
+      "symbol": "_LearningSessionScreenState",
+      "callKind": "Card",
+      "ordinal": 0,
+      "line": 802,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
       "id": "lib/core/widgets/animated_components.dart::_BouncingDotsLoaderState::BoxDecoration::0",
       "path": "lib/core/widgets/animated_components.dart",
       "entryPoint": "surface",

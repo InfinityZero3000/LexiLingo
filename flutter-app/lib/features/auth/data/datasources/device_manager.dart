@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:lexilingo_app/core/services/firebase_messaging_service.dart';
 import '../models/auth_models.dart';
 
 /// Service to manage device information and registration
@@ -22,12 +24,12 @@ class DeviceManager {
       // Web platform
       try {
         final webInfo = await _deviceInfo.webBrowserInfo;
-        deviceId = 'web-${DateTime.now().millisecondsSinceEpoch}';
+        deviceId = await _stableWebId();
         deviceType = 'web';
         deviceName = webInfo.browserName.name;
         osVersion = webInfo.platform ?? 'Web';
       } catch (e) {
-        deviceId = 'web-${DateTime.now().millisecondsSinceEpoch}';
+        deviceId = await _stableWebId();
         deviceType = 'web';
         deviceName = 'Web Browser';
         osVersion = 'Web';
@@ -74,6 +76,23 @@ class DeviceManager {
       appVersion: packageInfo.version,
       osVersion: osVersion,
     );
+  }
+
+  /// One id per browser profile, shared with the push service so the token
+  /// lands on the same device row instead of a new one per sign-in.
+  Future<String> _stableWebId() async {
+    final key = FirebaseMessagingService.kDeviceUuidKey;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      var id = prefs.getString(key);
+      if (id == null) {
+        id = 'web-${DateTime.now().millisecondsSinceEpoch}';
+        await prefs.setString(key, id);
+      }
+      return id;
+    } catch (_) {
+      return 'web-${DateTime.now().millisecondsSinceEpoch}';
+    }
   }
 
   /// Request notification permissions

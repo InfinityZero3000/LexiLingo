@@ -371,6 +371,9 @@
     }
   },
   "lesson": {
+    "pushPrompt": "連続学習を続けるために通知を受け取りますか？",
+    "pushPromptAllow": "通知をオンにする",
+    "pushPromptLater": "あとで",
     "sessionTitle": "学習",
     "loadingLesson": "レッスンを読み込み中...",
     "noLessonData": "レッスンデータがありません",

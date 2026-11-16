@@ -2,25 +2,38 @@ import 'dart:async';
 import 'dart:io' show Platform;
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart' show debugPrint, kDebugMode, kIsWeb;
+import 'package:flutter/foundation.dart'
+    show debugPrint, kDebugMode, kIsWeb, visibleForTesting;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/features/notifications/domain/entities/notification_entity.dart';
 import 'package:lexilingo_app/features/notifications/domain/services/notification_navigation_service.dart';
+import 'package:lexilingo_app/features/notifications/domain/services/push_permission_gateway.dart';
 
 /// Firebase Cloud Messaging Service
 /// Handles push notifications from Firebase
-class FirebaseMessagingService {
+class FirebaseMessagingService implements PushPermissionGateway {
   static FirebaseMessagingService? _instance;
-  final FirebaseMessaging _messaging = FirebaseMessaging.instance;
+  final FirebaseMessaging? _injected;
+  final String? _vapidKeyOverride;
+  FirebaseMessaging get _messaging => _injected ?? FirebaseMessaging.instance;
 
   String? _fcmToken;
   ApiClient? _apiClient;
+  static const String kDeviceUuidKey = 'lexilingo_device_uuid';
   static const String _kRegisteredTokenKey = 'registered_fcm_token';
   final StreamController<RemoteMessage> _messageController =
       StreamController<RemoteMessage>.broadcast();
 
-  FirebaseMessagingService._();
+  FirebaseMessagingService._() : _injected = null, _vapidKeyOverride = null;
+
+  @visibleForTesting
+  FirebaseMessagingService.forTesting({
+    required FirebaseMessaging messaging,
+    String? vapidKey,
+  }) : _injected = messaging,
+       _vapidKeyOverride = vapidKey;
 
   static FirebaseMessagingService get instance {
     _instance ??= FirebaseMessagingService._();
@@ -33,54 +46,34 @@ class FirebaseMessagingService {
   /// Get current FCM token
   String? get token => _fcmToken;
 
-  /// Initialize Firebase Messaging
+  /// Web push needs a VAPID key from the Firebase console; without one the
+  /// browser cannot mint a token, so web stays silent instead of failing.
+  String? get _vapidKey {
+    if (_vapidKeyOverride != null) return _vapidKeyOverride;
+    if (!dotenv.isInitialized) return null;
+    final value = dotenv.maybeGet('FCM_VAPID_KEY')?.trim();
+    return (value == null || value.isEmpty) ? null : value;
+  }
+
+  /// Wire listeners and, when permission was already granted, load the token.
+  /// Never shows a permission prompt: that is [requestPermission]'s job.
   Future<void> initialize() async {
     try {
-      // Request permission (required for iOS and web)
-      await _requestPermission();
-
-      // Check if running on iOS simulator avoiding APNS hang
-      bool isSimulator = false;
-      if (!kIsWeb && Platform.isIOS) {
-        try {
-          final iosInfo = await DeviceInfoPlugin().iosInfo;
-          isSimulator = !iosInfo.isPhysicalDevice;
-        } catch (_) {}
+      if (await status() == PushPermission.granted) {
+        await _loadToken();
       }
 
-      // Get FCM token
-      try {
-        if (isSimulator) {
-          debugPrint(
-            ' Running on iOS Simulator: Skipping real FCM token request to avoid APNS errors.',
-          );
-        } else {
-          _fcmToken = await _messaging.getToken().timeout(
-            const Duration(seconds: 5),
-          );
-          if (kDebugMode) {
-            debugPrint('FCM Token: ${_maskToken(_fcmToken)}');
-          }
-        }
-      } catch (e) {
-        debugPrint(
-          'Could not get FCM token (expected if APNS/FCM not fully setup): $e',
-        );
-      }
-
-      // Listen for token refresh
       _messaging.onTokenRefresh.listen((newToken) {
         _fcmToken = newToken;
         if (kDebugMode) {
           debugPrint(' FCM Token refreshed: ${_maskToken(newToken)}');
         }
-        // Re-register the updated token with the backend (fire-and-forget).
-        if (_apiClient != null) {
-          registerTokenWithBackend(_apiClient!, forceUpdate: true);
+        final client = _apiClient;
+        if (client != null) {
+          registerTokenWithBackend(client, forceUpdate: true);
         }
       });
 
-      // Handle foreground messages
       FirebaseMessaging.onMessage.listen((RemoteMessage message) {
         debugPrint(
           ' Foreground message received: ${message.notification?.title}',
@@ -89,13 +82,11 @@ class FirebaseMessagingService {
         _handleMessage(message);
       });
 
-      // Handle background/terminated message tap
       FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
         debugPrint(' Message opened app: ${message.notification?.title}');
         _handleMessageTap(message);
       });
 
-      // Check if app was opened from a notification
       final initialMessage = await _messaging.getInitialMessage();
       if (initialMessage != null) {
         debugPrint(' Initial message: ${initialMessage.notification?.title}');
@@ -108,20 +99,68 @@ class FirebaseMessagingService {
     }
   }
 
-  /// Request notification permissions
-  Future<NotificationSettings> _requestPermission() async {
-    final settings = await _messaging.requestPermission(
-      alert: true,
-      announcement: false,
-      badge: true,
-      carPlay: false,
-      criticalAlert: false,
-      provisional: false,
-      sound: true,
-    );
+  @override
+  Future<PushPermission> status() async {
+    try {
+      final settings = await _messaging.getNotificationSettings();
+      return _mapStatus(settings.authorizationStatus);
+    } catch (e) {
+      debugPrint('Notification settings unavailable: $e');
+      return PushPermission.unsupported;
+    }
+  }
 
-    debugPrint(' Notification permission: ${settings.authorizationStatus}');
-    return settings;
+  /// Show the system permission prompt, then load and register the token.
+  @override
+  Future<PushPermission> requestPermission() async {
+    try {
+      final settings = await _messaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+      debugPrint(' Notification permission: ${settings.authorizationStatus}');
+      final result = _mapStatus(settings.authorizationStatus);
+      if (result == PushPermission.granted) {
+        await _loadToken();
+        final client = _apiClient;
+        if (client != null) await registerTokenWithBackend(client);
+      }
+      return result;
+    } catch (e) {
+      debugPrint('Notification permission request failed: $e');
+      return PushPermission.unsupported;
+    }
+  }
+
+  PushPermission _mapStatus(AuthorizationStatus status) {
+    switch (status) {
+      case AuthorizationStatus.authorized:
+      case AuthorizationStatus.provisional:
+        return PushPermission.granted;
+      case AuthorizationStatus.denied:
+        return PushPermission.denied;
+      case AuthorizationStatus.notDetermined:
+        return PushPermission.notDetermined;
+    }
+  }
+
+  Future<void> _loadToken() async {
+    if (kIsWeb && _vapidKey == null) return;
+    if (!kIsWeb && Platform.isIOS) {
+      try {
+        final iosInfo = await DeviceInfoPlugin().iosInfo;
+        if (!iosInfo.isPhysicalDevice) return;
+      } catch (_) {}
+    }
+    try {
+      _fcmToken = await _messaging
+          .getToken(vapidKey: kIsWeb ? _vapidKey : null)
+          .timeout(const Duration(seconds: 5));
+      if (kDebugMode) debugPrint('FCM Token: ${_maskToken(_fcmToken)}');
+    } catch (e) {
+      debugPrint('Could not get FCM token: $e');
+    }
   }
 
   /// Handle incoming message (show local notification)
@@ -143,16 +182,18 @@ class FirebaseMessagingService {
   /// - Deduplicates: skips the API call if the token has already been sent
   ///   (unless [forceUpdate] is true, e.g. on token refresh).
   /// - Safe to call multiple times; the backend performs an upsert.
-  /// - Should be called after a successful sign-in.
+  /// - Call after sign-in and whenever a stored session is restored.
+  /// - Does nothing until the learner has granted permission.
   Future<void> registerTokenWithBackend(
     ApiClient client, {
     bool forceUpdate = false,
   }) async {
-    if (kIsWeb) return;
+    _apiClient = client;
+    if (_fcmToken == null && await status() == PushPermission.granted) {
+      await _loadToken();
+    }
     final token = _fcmToken;
     if (token == null || token.isEmpty) return;
-
-    _apiClient = client;
 
     // Dedup: skip if token was already registered and force-update is off.
     if (!forceUpdate) {
@@ -190,7 +231,6 @@ class FirebaseMessagingService {
   /// the next account on it is the only one that gets its pushes. Best-effort:
   /// call while the session is still valid, before the sign-out request.
   Future<void> unregisterFromBackend(ApiClient client) async {
-    if (kIsWeb) return;
     try {
       final deviceId = await _getDeviceId();
       await client.delete('/devices/${Uri.encodeComponent(deviceId)}');
@@ -204,6 +244,7 @@ class FirebaseMessagingService {
   Future<void> clearRegisteredToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_kRegisteredTokenKey);
+    _apiClient = null;
     debugPrint(' FCM registered-token cache cleared.');
   }
 
@@ -225,7 +266,7 @@ class FirebaseMessagingService {
   }
 
   Future<String> _generateOrFetchUuid() async {
-    const key = 'lexilingo_device_uuid';
+    const key = kDeviceUuidKey;
     final prefs = await SharedPreferences.getInstance();
     var id = prefs.getString(key);
     if (id == null) {

@@ -236,6 +236,9 @@ abstract class  LocaleKeys {
   static const course_totalLessonsCount = 'course.totalLessonsCount';
   static const course_userProgressPercent = 'course.userProgressPercent';
   static const course = 'course';
+  static const lesson_pushPrompt = 'lesson.pushPrompt';
+  static const lesson_pushPromptAllow = 'lesson.pushPromptAllow';
+  static const lesson_pushPromptLater = 'lesson.pushPromptLater';
   static const lesson_sessionTitle = 'lesson.sessionTitle';
   static const lesson_loadingLesson = 'lesson.loadingLesson';
   static const lesson_noLessonData = 'lesson.noLessonData';

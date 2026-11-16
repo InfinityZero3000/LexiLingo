@@ -6,7 +6,7 @@ Endpoints for device registration and FCM token management
 
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import and_, select
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 
@@ -52,28 +52,26 @@ async def register_device(
     if _session_dialect_name(db) == "postgresql":
         # Atomic upsert avoids duplicate registrations when the app starts
         # and refreshes the same FCM token from multiple requests.
-        stmt = (
-            pg_insert(UserDevice)
-            .values(
-                user_id=current_user.id,
-                device_id=request.device_id,
-                device_type=request.device_type,
-                device_name=request.device_name,
-                fcm_token=request.fcm_token,
-                last_active=now,
-            )
-            .on_conflict_do_update(
-                index_elements=["device_id"],
-                set_=dict(
-                    user_id=current_user.id,
-                    device_type=request.device_type,
-                    fcm_token=request.fcm_token,
-                    device_name=request.device_name,
-                    last_active=now,
-                ),
-            )
-            .returning(UserDevice)
+        insert_stmt = pg_insert(UserDevice).values(
+            user_id=current_user.id,
+            device_id=request.device_id,
+            device_type=request.device_type,
+            device_name=request.device_name,
+            fcm_token=request.fcm_token,
+            last_active=now,
         )
+        stmt = insert_stmt.on_conflict_do_update(
+            index_elements=["device_id"],
+            set_=dict(
+                user_id=current_user.id,
+                device_type=request.device_type,
+                fcm_token=func.coalesce(
+                    insert_stmt.excluded.fcm_token, UserDevice.fcm_token
+                ),
+                device_name=request.device_name,
+                last_active=now,
+            ),
+        ).returning(UserDevice)
         result = await db.execute(stmt)
         device = result.scalar_one()
     else:
@@ -88,7 +86,8 @@ async def register_device(
         device = result.scalar_one_or_none()
 
         if device:
-            device.fcm_token = request.fcm_token
+            if request.fcm_token:
+                device.fcm_token = request.fcm_token
             device.device_name = request.device_name
             device.last_active = now
         else:

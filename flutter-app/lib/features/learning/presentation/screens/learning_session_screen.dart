@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/features/notifications/presentation/widgets/push_permission_card.dart';
 import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -882,7 +883,9 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                   ),
                 ),
 
-              const SizedBox(height: 48),
+              const SizedBox(height: 24),
+              const PushPermissionCard(),
+              const SizedBox(height: 24),
 
               // Action buttons
               SizedBox(

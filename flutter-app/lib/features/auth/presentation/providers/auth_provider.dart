@@ -145,6 +145,13 @@ class AuthProvider extends ChangeNotifier {
         (user) {
           _user = user;
           _errorMessage = null;
+          if (sl.isRegistered<ApiClient>()) {
+            unawaited(
+              FirebaseMessagingService.instance.registerTokenWithBackend(
+                sl<ApiClient>(),
+              ),
+            );
+          }
         },
       );
     } catch (e) {

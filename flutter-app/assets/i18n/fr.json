@@ -371,6 +371,9 @@
     }
   },
   "lesson": {
+    "pushPrompt": "Un rappel pour garder votre série ?",
+    "pushPromptAllow": "Activer les rappels",
+    "pushPromptLater": "Pas maintenant",
     "sessionTitle": "Apprentissage",
     "loadingLesson": "Chargement de la leçon...",
     "noLessonData": "Aucune donnée de leçon disponible",
