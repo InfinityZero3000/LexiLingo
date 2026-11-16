@@ -1,13 +1,14 @@
 import uuid
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.security import (
     create_access_token,
     create_refresh_token,
+    hash_refresh_token,
     get_password_hash_async,
     verify_password_async,
 )
@@ -71,10 +72,56 @@ async def authenticate_user(
     return user
 
 
-async def save_refresh_token(db: AsyncSession, user_id: uuid.UUID, token: str) -> None:
+async def save_refresh_token(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    token: str,
+    family_id: uuid.UUID | None = None,
+    *,
+    commit: bool = True,
+) -> None:
     expires_at = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-    db.add(RefreshToken(user_id=user_id, token=token, expires_at=expires_at))
-    await db.commit()
+    db.add(
+        RefreshToken(
+            user_id=user_id,
+            token_hash=hash_refresh_token(token),
+            family_id=family_id or uuid.uuid4(),
+            expires_at=expires_at,
+        )
+    )
+    if commit:
+        await db.commit()
+
+
+async def find_refresh_token(
+    db: AsyncSession, raw: str, *, for_update: bool = False
+) -> RefreshToken | None:
+    """Look a refresh token up by hash; rows written before the hash existed fall back to the raw value."""
+    digest = hash_refresh_token(raw)
+    for column, value in ((RefreshToken.token_hash, digest), (RefreshToken.token, raw)):
+        query = select(RefreshToken).where(column == value)
+        if for_update:
+            query = query.with_for_update()
+        row = (await db.execute(query)).scalar_one_or_none()
+        if row is not None:
+            if row.token_hash is None:
+                row.token_hash = digest
+            if row.family_id is None:
+                row.family_id = uuid.uuid4()
+            return row
+    return None
+
+
+async def revoke_refresh_family(db: AsyncSession, db_token: RefreshToken) -> None:
+    now = datetime.now(timezone.utc)
+    query = update(RefreshToken).values(is_revoked=True, revoked_at=now)
+    if db_token.family_id is not None:
+        query = query.where(
+            RefreshToken.family_id == db_token.family_id, RefreshToken.is_revoked.is_(False)
+        )
+    else:
+        query = query.where(RefreshToken.id == db_token.id)
+    await db.execute(query)
 
 
 def issue_token_pair(user_id: str) -> tuple[str, str]:

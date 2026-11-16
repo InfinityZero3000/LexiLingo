@@ -114,6 +114,10 @@ def create_refresh_token(data: Dict[str, Any]) -> str:
     return encoded_jwt
 
 
+def hash_refresh_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
 def decode_token(token: str) -> Optional[Dict[str, Any]]:
     """
     Decode and verify JWT token.

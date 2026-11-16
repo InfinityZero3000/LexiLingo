@@ -103,6 +103,7 @@ class Settings(BaseSettings):
     JWT_AUDIENCE: str = "lexilingo-services"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    REFRESH_REUSE_GRACE_SECONDS: int = 30
 
     # CORS
     # ENABLE_APP_CORS: explicit override (takes priority over GATEWAY_HANDLES_CORS).
