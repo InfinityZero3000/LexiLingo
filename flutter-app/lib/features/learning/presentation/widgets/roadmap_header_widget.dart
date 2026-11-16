@@ -200,30 +200,35 @@ class RoadmapHeaderWidget extends StatelessWidget {
     required String label,
     required Color iconColor,
   }) {
-    return Column(
-      children: [
-        Container(
-          padding: EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceLight,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, color: iconColor, size: 24),
+    return Expanded(
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Column(
+          children: [
+            Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceLight,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: iconColor, size: 24),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppColors.surfaceLight,
+              ),
+            ),
+            Text(
+              label,
+              style: TextStyle(fontSize: 12, color: AppColors.surfaceLight),
+            ),
+          ],
         ),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: AppColors.surfaceLight,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(fontSize: 12, color: AppColors.surfaceLight),
-        ),
-      ],
+      ),
     );
   }
 }

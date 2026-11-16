@@ -245,6 +245,10 @@ abstract class  LocaleKeys {
   static const lesson_loadingLesson = 'lesson.loadingLesson';
   static const lesson_noLessonData = 'lesson.noLessonData';
   static const lesson_noExerciseAvailable = 'lesson.noExerciseAvailable';
+  static const lesson_lockedTitle = 'lesson.lockedTitle';
+  static const lesson_lockedMessage = 'lesson.lockedMessage';
+  static const lesson_resultNotSavedTitle = 'lesson.resultNotSavedTitle';
+  static const lesson_resultNotSavedMessage = 'lesson.resultNotSavedMessage';
   static const lesson_exerciseTypeNotImplemented = 'lesson.exerciseTypeNotImplemented';
   static const lesson_checkAnswer = 'lesson.checkAnswer';
   static const lesson_continueButton = 'lesson.continueButton';

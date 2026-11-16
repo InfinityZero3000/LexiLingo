@@ -373,6 +373,10 @@
     }
   },
   "lesson": {
+    "lockedTitle": "Esta lección está bloqueada",
+    "lockedMessage": "Termina la lección anterior de este curso para abrirla.",
+    "resultNotSavedTitle": "No se guardó tu resultado",
+    "resultNotSavedMessage": "Revisa tu conexión e inténtalo de nuevo.",
     "pushPrompt": "¿Quieres un aviso para mantener tu racha?",
     "pushPromptAllow": "Activar recordatorios",
     "pushPromptLater": "Ahora no",

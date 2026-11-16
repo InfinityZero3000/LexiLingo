@@ -963,6 +963,42 @@ def _text_similarity(first: str, second: str) -> float:
     return (longest_length - previous[-1]) / longest_length
 
 
+def _stars_for_score(score: float) -> int:
+    """Stars awarded for a lesson score."""
+    if score >= 90:
+        return 3
+    if score >= 80:
+        return 2
+    if score >= 70:
+        return 1
+    return 0
+
+
+def _lesson_complete_payload(
+    attempt: LessonAttempt, next_lesson_id: UUID | None, achievements: list
+) -> LessonCompleteResponse:
+    """Response body for a finished attempt."""
+    return LessonCompleteResponse(
+        attempt_id=attempt.id,
+        passed=attempt.passed,
+        final_score=attempt.score,
+        total_xp_earned=attempt.xp_earned,
+        time_spent_seconds=attempt.time_spent_ms // 1000,
+        accuracy=(
+            attempt.correct_answers / attempt.total_questions * 100
+            if attempt.total_questions > 0
+            else 0
+        ),
+        stars_earned=_stars_for_score(attempt.score),
+        next_lesson_unlocked=next_lesson_id,
+        achievements_unlocked=achievements,
+        total_questions=attempt.total_questions,
+        correct_answers=attempt.correct_answers,
+        wrong_answers=attempt.total_questions - attempt.correct_answers,
+        hints_used=attempt.hints_used,
+    )
+
+
 @router.post("/attempts/{attempt_id}/complete", response_model=ApiResponse[LessonCompleteResponse])
 async def complete_lesson(
     attempt_id: UUID,
@@ -983,29 +1019,28 @@ async def complete_lesson(
     
     if not attempt:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Attempt not found")
-    if attempt.finished_at is not None:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Already completed")
-    
+
     # Get lesson info for course_id
     result = await db.execute(select(Lesson).where(Lesson.id == attempt.lesson_id))
     lesson = result.scalar_one_or_none()
     if not lesson:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Lesson not found")
+
+    if attempt.finished_at is not None:
+        # A retry after a lost response: replay the stored result, award nothing.
+        next_id = await _find_next_lesson(db, lesson) if attempt.passed else None
+        return ApiResponse(
+            success=True,
+            message="Congratulations!" if attempt.passed else "Keep practicing!",
+            data=_lesson_complete_payload(attempt, next_id, []),
+        )
     
     # Complete
     attempt.finished_at = datetime.now(timezone.utc)
     pass_threshold = lesson.pass_threshold or 80.0
     attempt.passed = attempt.score >= pass_threshold
     
-    # Stars
-    if attempt.score >= 90:
-        stars = 3
-    elif attempt.score >= 80:
-        stars = 2
-    elif attempt.score >= 70:
-        stars = 1
-    else:
-        stars = 0
+    stars = _stars_for_score(attempt.score)
     
     # Update UserProgress
     result = await db.execute(
@@ -1162,9 +1197,6 @@ async def complete_lesson(
     await delete_cached(build_cache_key("progress_xp", user_id=str(current_user.id)))
     await delete_cached(build_cache_key("progress_streak", user_id=str(current_user.id)))
 
-    time_sec = attempt.time_spent_ms // 1000
-    accuracy = (attempt.correct_answers / attempt.total_questions * 100) if attempt.total_questions > 0 else 0
-
     next_lesson_id = None
     if attempt.passed:
         next_lesson_id = await _find_next_lesson(db, lesson)
@@ -1172,25 +1204,11 @@ async def complete_lesson(
     return ApiResponse(
         success=True,
         message="Congratulations!" if attempt.passed else "Keep practicing!",
-        data=LessonCompleteResponse(
-            attempt_id=attempt.id,
-            passed=attempt.passed,
-            final_score=attempt.score,
-            total_xp_earned=attempt.xp_earned,
-            time_spent_seconds=time_sec,
-            accuracy=accuracy,
-            stars_earned=stars,
-            next_lesson_unlocked=next_lesson_id,
-            # check_achievements_for_user returns rich dicts (id, name, badge…)
-            # but both this schema and the Flutter model expect bare ids. Passing
-            # the dicts raised ValidationError, so completing a lesson 500'd for
-            # any learner who actually unlocked something — the reward moment.
-            achievements_unlocked=[a["id"] for a in unlocked_achievements],
-            total_questions=attempt.total_questions,
-            correct_answers=attempt.correct_answers,
-            wrong_answers=attempt.total_questions - attempt.correct_answers,
-            hints_used=attempt.hints_used
-        )
+        # check_achievements_for_user returns rich dicts but the schema and the
+        # Flutter model expect bare ids; passing the dicts 500'd the reward moment.
+        data=_lesson_complete_payload(
+            attempt, next_lesson_id, [a["id"] for a in unlocked_achievements]
+        ),
     )
 
 

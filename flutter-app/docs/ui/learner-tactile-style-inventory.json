@@ -11777,13 +11777,39 @@
       }
     },
     {
+      "id": "lib/features/learning/presentation/screens/learning_roadmap_screen.dart::_LearningRoadmapScreenState::DecoratedBox::0",
+      "path": "lib/features/learning/presentation/screens/learning_roadmap_screen.dart",
+      "entryPoint": "surface",
+      "symbol": "_LearningRoadmapScreenState",
+      "callKind": "DecoratedBox",
+      "ordinal": 0,
+      "line": 176,
+      "category": "eligible",
+      "group": 2,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
       "id": "lib/features/learning/presentation/screens/learning_roadmap_screen.dart::_LearningRoadmapScreenState::BoxDecoration::0",
       "path": "lib/features/learning/presentation/screens/learning_roadmap_screen.dart",
       "entryPoint": "surface",
       "symbol": "_LearningRoadmapScreenState",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 162,
+      "line": 177,
       "category": "eligible",
       "group": 2,
       "status": "inventoried",

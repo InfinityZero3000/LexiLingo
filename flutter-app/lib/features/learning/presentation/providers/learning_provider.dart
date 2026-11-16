@@ -80,6 +80,11 @@ class LearningProvider with ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   bool _isContentUnavailable = false;
+  bool _isLessonLocked = false;
+  String? _courseId;
+  String? _lessonId;
+  bool _completionFailed = false;
+  bool _isCompleting = false;
   int _xpEarned = 0;
   int _livesRemaining = 3;
   int _hintsRemaining = 3;
@@ -96,6 +101,13 @@ class LearningProvider with ChangeNotifier {
   /// Backend rejected the lesson because it has no authored exercises —
   /// a content gap, not something a retry can fix.
   bool get isContentUnavailable => _isContentUnavailable;
+
+  /// Backend refused the lesson because the previous one is not passed yet.
+  bool get isLessonLocked => _isLessonLocked;
+
+  /// The finished lesson's result never reached the server, so no XP is shown.
+  bool get completionFailed => _completionFailed;
+  bool get isCompleting => _isCompleting;
   int get xpEarned => _xpEarned;
   int get livesRemaining => _livesRemaining;
   int get hintsRemaining => _hintsRemaining;
@@ -122,10 +134,27 @@ class LearningProvider with ChangeNotifier {
   double get progress =>
       totalExercises == 0 ? 0 : (_currentExerciseIndex + 1) / totalExercises;
 
+  void _applyBlockingFailure(Failure failure) {
+    _error = failure.message;
+    if (failure is ConflictFailure) {
+      if (failure.message.toLowerCase().contains('locked')) {
+        _isLessonLocked = true;
+      } else {
+        _isContentUnavailable = true;
+      }
+    }
+  }
+
   Future<void> startLesson(String courseId, String lessonId) async {
+    _courseId = courseId;
+    _lessonId = lessonId;
     _isLoading = true;
     _error = null;
     _isContentUnavailable = false;
+    _isLessonLocked = false;
+    _completionFailed = false;
+    _currentLesson = null;
+    _currentAttempt = null;
     _lessonResult = null;
     notifyListeners();
 
@@ -133,31 +162,30 @@ class LearningProvider with ChangeNotifier {
       final attemptResult = await _startLessonUseCase(
         StartLessonParams(lessonId: lessonId),
       );
-      attemptResult.fold(
-        (failure) => debugPrint('Start lesson API failed: ${failure.message}'),
-        (attempt) {
-          _currentAttempt = attempt;
-          _livesRemaining = attempt.livesRemaining;
-          _hintsRemaining = attempt.hintsAvailable;
-          trackContentInteraction(
-            itemType: 'lesson',
-            itemId: lessonId,
-            action: 'start',
-            source: 'learning_session',
-          );
-        },
-      );
+      final attempt = attemptResult.fold<LessonAttempt?>((failure) {
+        _applyBlockingFailure(failure);
+        return null;
+      }, (attempt) => attempt);
 
-      final contentResult = await _getLessonContentUseCase(
-        GetLessonContentParams(lessonId: lessonId),
-      );
-      contentResult.fold(
-        (failure) {
-          _error = failure.message;
-          _isContentUnavailable = failure is ConflictFailure;
-        },
-        (lesson) => _currentLesson = lesson,
-      );
+      if (attempt != null) {
+        _currentAttempt = attempt;
+        _livesRemaining = attempt.livesRemaining;
+        _hintsRemaining = attempt.hintsAvailable;
+        trackContentInteraction(
+          itemType: 'lesson',
+          itemId: lessonId,
+          action: 'start',
+          source: 'learning_session',
+        );
+
+        final contentResult = await _getLessonContentUseCase(
+          GetLessonContentParams(lessonId: lessonId),
+        );
+        contentResult.fold(
+          _applyBlockingFailure,
+          (lesson) => _currentLesson = lesson,
+        );
+      }
 
       _currentExerciseIndex = 0;
       _userAnswers = {};
@@ -216,11 +244,7 @@ class LearningProvider with ChangeNotifier {
     } else {
       final isCorrect = _checkAnswerLocally(exercise, answer);
       _answerResults[index] = isCorrect;
-      if (isCorrect) {
-        _xpEarned += 10;
-      } else {
-        _livesRemaining = (_livesRemaining - 1).clamp(0, 3);
-      }
+      if (!isCorrect) _livesRemaining = (_livesRemaining - 1).clamp(0, 3);
     }
     notifyListeners();
   }
@@ -269,35 +293,30 @@ class LearningProvider with ChangeNotifier {
     }
   }
 
-  void restartLesson() {
-    _currentExerciseIndex = 0;
-    _userAnswers = {};
-    _answerResults = {};
-    _answerResponses = {};
-    _xpEarned = 0;
-    _livesRemaining = 3;
-    _hintsRemaining = 3;
-    _lessonResult = null;
-    _exerciseStartTime = DateTime.now();
-    notifyListeners();
+  Future<void> restartLesson() async {
+    final lessonId = _lessonId;
+    if (lessonId == null) return;
+    await startLesson(_courseId ?? '', lessonId);
   }
 
   Future<void> _completeLesson() async {
-    if (_currentAttempt == null) {
-      final correctAnswers = score;
-      final totalQuestions = totalExercises;
-      final percentage = totalQuestions > 0
-          ? (correctAnswers / totalQuestions * 100)
-          : 0.0;
-      _xpEarned = (correctAnswers * 10) + (percentage >= 80 ? 20 : 0);
-      return;
-    }
+    final attempt = _currentAttempt;
+    if (attempt == null || _isCompleting) return;
 
+    _isCompleting = true;
+    _completionFailed = false;
     final result = await _completeLessonUseCase(
-      CompleteLessonParams(attemptId: _currentAttempt!.attemptId),
+      CompleteLessonParams(attemptId: attempt.attemptId),
     );
+    _isCompleting = false;
     result.fold(
-      (failure) => debugPrint('Complete lesson failed: ${failure.message}'),
+      (failure) {
+        if (failure.message.toLowerCase().contains('already completed')) {
+          return;
+        }
+        debugPrint('Complete lesson failed: ${failure.message}');
+        _completionFailed = true;
+      },
       (lessonComplete) {
         _lessonResult = lessonComplete;
         _xpEarned = lessonComplete.totalXpEarned;
@@ -305,6 +324,14 @@ class LearningProvider with ChangeNotifier {
       },
     );
     notifyListeners();
+  }
+
+  /// Re-sends the completion for the same attempt after a failed save.
+  Future<void> retryCompletion() async {
+    if (!_completionFailed) return;
+    _completionFailed = false;
+    notifyListeners();
+    await _completeLesson();
   }
 
   bool _checkAnswerLocally(Exercise exercise, String answer) {
@@ -422,6 +449,9 @@ class LearningProvider with ChangeNotifier {
     _hintsRemaining = 3;
     _lessonResult = null;
     _error = null;
+    _isContentUnavailable = false;
+    _isLessonLocked = false;
+    _completionFailed = false;
     notifyListeners();
   }
 }

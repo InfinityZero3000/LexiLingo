@@ -373,6 +373,10 @@
     }
   },
   "lesson": {
+    "lockedTitle": "このレッスンはロックされています",
+    "lockedMessage": "このコースの前のレッスンを終えると開きます。",
+    "resultNotSavedTitle": "結果を保存できませんでした",
+    "resultNotSavedMessage": "接続を確認してもう一度お試しください。",
     "pushPrompt": "連続学習を続けるために通知を受け取りますか？",
     "pushPromptAllow": "通知をオンにする",
     "pushPromptLater": "あとで",
