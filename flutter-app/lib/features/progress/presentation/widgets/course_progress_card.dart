@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/l10n/relative_time.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/user_progress_entity.dart';
@@ -127,14 +128,18 @@ class CourseProgressCard extends StatelessWidget {
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                   SizedBox(width: 4),
-                  Text(
-                    'progress.lastActivity'.tr(
-                      namedArgs: {
-                        'date': _formatDate(courseProgress.lastActivityAt),
-                      },
-                    ),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  Flexible(
+                    child: Text(
+                      'progress.lastActivity'.tr(
+                        namedArgs: {
+                          'date': _formatDate(courseProgress.lastActivityAt),
+                        },
+                      ),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -156,21 +161,5 @@ class CourseProgressCard extends StatelessWidget {
     }
   }
 
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
-
-    if (difference.inDays == 0) {
-      if (difference.inHours == 0) {
-        return '${difference.inMinutes} minutes ago';
-      }
-      return '${difference.inHours} hours ago';
-    } else if (difference.inDays == 1) {
-      return 'Yesterday';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays} days ago';
-    } else {
-      return DateFormat('MMM dd, yyyy').format(date);
-    }
-  }
+  String _formatDate(DateTime date) => relativeTime(date);
 }

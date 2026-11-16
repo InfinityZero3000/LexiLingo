@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
@@ -73,7 +74,8 @@ class ChatRepositoryImpl implements ChatRepository {
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
     } catch (e) {
-      return Left(CacheFailure('Failed to create session: $e'));
+      debugPrint('Failed to create session: $e');
+      return const Left(CacheFailure());
     }
   }
 
@@ -96,7 +98,8 @@ class ChatRepositoryImpl implements ChatRepository {
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
     } catch (e) {
-      return Left(CacheFailure('Failed to get sessions: $e'));
+      debugPrint('Failed to get sessions: $e');
+      return const Left(CacheFailure());
     }
   }
 
@@ -108,7 +111,8 @@ class ChatRepositoryImpl implements ChatRepository {
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
     } catch (e) {
-      return Left(CacheFailure('Failed to get session: $e'));
+      debugPrint('Failed to get session: $e');
+      return const Left(CacheFailure());
     }
   }
 
@@ -120,7 +124,8 @@ class ChatRepositoryImpl implements ChatRepository {
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
     } catch (e) {
-      return Left(CacheFailure('Failed to delete session: $e'));
+      debugPrint('Failed to delete session: $e');
+      return const Left(CacheFailure());
     }
   }
 
@@ -135,7 +140,8 @@ class ChatRepositoryImpl implements ChatRepository {
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
     } catch (e) {
-      return Left(CacheFailure('Failed to update session title: $e'));
+      debugPrint('Failed to update session title: $e');
+      return const Left(CacheFailure());
     }
   }
 
@@ -150,7 +156,8 @@ class ChatRepositoryImpl implements ChatRepository {
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
     } catch (e) {
-      return Left(CacheFailure('Failed to save message: $e'));
+      debugPrint('Failed to save message: $e');
+      return const Left(CacheFailure());
     }
   }
 
@@ -169,7 +176,8 @@ class ChatRepositoryImpl implements ChatRepository {
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
     } catch (e) {
-      return Left(CacheFailure('Failed to get messages: $e'));
+      debugPrint('Failed to get messages: $e');
+      return const Left(CacheFailure());
     }
   }
 
@@ -244,7 +252,8 @@ class ChatRepositoryImpl implements ChatRepository {
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
     } catch (e) {
-      return Left(CacheFailure('Failed to get paged messages: $e'));
+      debugPrint('Failed to get paged messages: $e');
+      return const Left(CacheFailure());
     }
   }
 
@@ -260,7 +269,8 @@ class ChatRepositoryImpl implements ChatRepository {
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
     } catch (e) {
-      return Left(CacheFailure('Failed to update message status: $e'));
+      debugPrint('Failed to update message status: $e');
+      return const Left(CacheFailure());
     }
   }
 
@@ -272,7 +282,8 @@ class ChatRepositoryImpl implements ChatRepository {
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
     } catch (e) {
-      return Left(CacheFailure('Failed to delete message: $e'));
+      debugPrint('Failed to delete message: $e');
+      return const Left(CacheFailure());
     }
   }
 
@@ -287,7 +298,7 @@ class ChatRepositoryImpl implements ChatRepository {
     List<ChatMessage>? conversationHistory,
   }) async {
     if (!await networkInfo.isConnected) {
-      return const Left(NetworkFailure('No internet connection'));
+      return const Left(NetworkFailure());
     }
 
     try {
@@ -318,7 +329,8 @@ class ChatRepositoryImpl implements ChatRepository {
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Failed to get AI response: $e'));
+      debugPrint('Failed to get AI response: $e');
+      return const Left(ServerFailure());
     }
   }
 

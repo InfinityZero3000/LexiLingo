@@ -26,7 +26,7 @@ class StreakMilestoneOverlay extends StatefulWidget {
     return showGeneralDialog(
       context: context,
       barrierDismissible: true,
-      barrierLabel: 'Streak Milestone',
+      barrierLabel: 'progress.streakMilestoneMsg.label'.tr(),
       barrierColor: Colors.black.withValues(alpha: 0.75),
       transitionDuration: const Duration(milliseconds: 350),
       transitionBuilder: (ctx, anim, _, child) =>
@@ -243,13 +243,13 @@ class _StreakMilestoneOverlayState extends State<StreakMilestoneOverlay>
   };
 
   String _milestoneMessage(int days) => switch (days) {
-    7 => 'One week strong! You\'re building a habit.',
-    14 => 'Two weeks! Consistency is your superpower.',
-    30 => 'A whole month! You\'re unstoppable.',
-    60 => 'Two months! Your dedication is inspiring.',
-    100 => '100 days! You\'re a LexiLingo legend.',
-    365 => 'One FULL YEAR! You\'ve achieved the impossible.',
-    _ => '$days days! Keep pushing forward!',
+    7 ||
+    14 ||
+    30 ||
+    60 ||
+    100 ||
+    365 => 'progress.streakMilestoneMsg.d$days'.tr(),
+    _ => 'progress.streakMilestoneMsg.other'.tr(namedArgs: {'days': '$days'}),
   };
 }
 

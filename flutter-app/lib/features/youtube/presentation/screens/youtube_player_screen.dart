@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:lexilingo_app/core/widgets/app_back_button.dart';
@@ -757,21 +758,23 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                   const Icon(Icons.subtitles_rounded,
                       size: 15, color: AppColors.primary),
                   const SizedBox(width: 5),
-                  Text(
+                  Flexible(
+                    child: Text(
                     'youtube.segmentCount'.tr(namedArgs: {'count': '${provider.captions.length}'}),
                     style: TextStyle(
                       fontSize: 12,
                       color: isDark ? AppColors.textOnDarkMuted : AppColors.textGrey,
                       fontWeight: FontWeight.w500,
-                    ),
+                    ), maxLines: 1, overflow: TextOverflow.ellipsis),
                   ),
                   const Spacer(),
-                  Text(
+                  Flexible(
+                    child: Text(
                     'youtube.tapWordToLookUp'.tr(),
                     style: TextStyle(
                       fontSize: 11,
                       color: isDark ? AppColors.textInverted.withValues(alpha: 0.3) : AppColors.grey400,
-                    ),
+                    ), maxLines: 1, overflow: TextOverflow.ellipsis),
                   ),
                 ],
               ),
@@ -1166,7 +1169,7 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
   late Future<WordTranslation> _translationFuture;
   bool _isSavingWord = false;
   bool _isSavedWord = false;
-  String? _saveError;
+  UiText? _saveError;
 
   @override
   void initState() {
@@ -1230,7 +1233,7 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
       if (!mounted) return;
       setState(() {
         _isSavingWord = false;
-        _saveError = 'vocabulary.saveWordFailed'.tr();
+        _saveError = UiText.key('vocabulary.saveWordFailed');
       });
     }
   }
@@ -1454,7 +1457,7 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
           if (_saveError != null) ...[
             const SizedBox(height: 10),
             Text(
-              _saveError!,
+              _saveError!.resolve(),
               style: const TextStyle(
                 color: AppColors.errorBright,
                 fontSize: 12,

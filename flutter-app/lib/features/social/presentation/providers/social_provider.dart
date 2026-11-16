@@ -1,5 +1,5 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:lexilingo_app/features/social/data/repositories/social_repository.dart';
 import 'package:lexilingo_app/features/social/domain/entities/social_entities.dart';
@@ -41,7 +41,7 @@ class SocialProvider extends ChangeNotifier {
   List<UserSocialProfileEntity> _searchResults = [];
   bool _isSearching = false;
   String _searchQuery = '';
-  String? _searchError;
+  UiText? _searchError;
 
   // ============== Suggested Friends State ==============
   List<UserSocialProfileEntity> _suggestedUsers = [];
@@ -52,21 +52,21 @@ class SocialProvider extends ChangeNotifier {
   // ============== Nearby Users State (Phase 2) ==============
   List<UserSocialProfileEntity> _nearbyUsers = [];
   bool _isLoadingNearby = false;
-  String? _nearbyError;
+  UiText? _nearbyError;
   bool _isNearbyEnabled = false;
   double _nearbyRadiusKm = 25;
 
   List<UserSocialProfileEntity> get searchResults => _searchResults;
   bool get isSearching => _isSearching;
   String get searchQuery => _searchQuery;
-  String? get searchError => _searchError;
+  String? get searchError => _searchError?.resolve();
   List<UserSocialProfileEntity> get suggestedUsers => _suggestedUsers;
   bool get isLoadingSuggestions => _isLoadingSuggestions;
   String? get suggestionsError => _suggestionsError;
   bool get hasMoreSuggestions => _hasMoreSuggestions;
   List<UserSocialProfileEntity> get nearbyUsers => _nearbyUsers;
   bool get isLoadingNearby => _isLoadingNearby;
-  String? get nearbyError => _nearbyError;
+  String? get nearbyError => _nearbyError?.resolve();
   bool get isNearbyEnabled => _isNearbyEnabled;
   double get nearbyRadiusKm => _nearbyRadiusKm;
 
@@ -249,7 +249,7 @@ class SocialProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error searching users: $e');
       _searchResults = [];
-      _searchError = 'social.searchFailed'.tr();
+      _searchError = UiText.key('social.searchFailed');
     } finally {
       _isSearching = false;
       notifyListeners();
@@ -309,7 +309,7 @@ class SocialProvider extends ChangeNotifier {
       if (!granted) {
         _nearbyUsers = [];
         _isNearbyEnabled = false;
-        _nearbyError ??= 'social.locationPermissionDenied'.tr();
+        _nearbyError ??= UiText.key('social.locationPermissionDenied');
         return;
       }
 
@@ -320,7 +320,7 @@ class SocialProvider extends ChangeNotifier {
       _nearbyUsers = result.users;
       _isNearbyEnabled = result.locationEnabled;
     } catch (e) {
-      _nearbyError = 'errors.genericRetry'.tr();
+      _nearbyError = UiText.key('errors.genericRetry');
       debugPrint('Error loading nearby users: $e');
     } finally {
       _isLoadingNearby = false;
@@ -336,7 +336,7 @@ class SocialProvider extends ChangeNotifier {
       _nearbyError = null;
       notifyListeners();
     } catch (e) {
-      _nearbyError = 'errors.genericRetry'.tr();
+      _nearbyError = UiText.key('errors.genericRetry');
       debugPrint('Error disabling nearby sharing: $e');
       notifyListeners();
     }
@@ -354,7 +354,7 @@ class SocialProvider extends ChangeNotifier {
 
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      _nearbyError = 'social.locationServicesDisabled'.tr();
+      _nearbyError = UiText.key('social.locationServicesDisabled');
       return false;
     }
 

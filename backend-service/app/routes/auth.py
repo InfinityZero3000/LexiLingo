@@ -52,7 +52,7 @@ from app.schemas.auth import (
     ChangePasswordRequest, GoogleLoginRequest, FacebookLoginRequest, ForgotPasswordRequest,
     ResetPasswordRequest, VerifyEmailRequest, VerifyEmailResponse, LogoutRequest
 )
-from app.schemas.user import UserResponse
+from app.schemas.user import UserResponse, lexi_reply_language_of
 from app.schemas.common import MessageResponse, ErrorCodes, ErrorDetail, ErrorResponse
 
 logger = logging.getLogger(__name__)
@@ -138,6 +138,9 @@ def _build_user_response(user: User) -> UserResponse:
         display_name=user.display_name,
         native_language=_safe_str(getattr(user, "native_language", None), "vi"),
         target_language=_safe_str(getattr(user, "target_language", None), "en"),
+        lexi_reply_language=lexi_reply_language_of(
+            getattr(user, "lexi_reply_language", None)
+        ),
         level=_safe_str(getattr(user, "level", None), "A1"),
         avatar_url=getattr(user, "avatar_url", None),
         is_active=bool(getattr(user, "is_active", True)),

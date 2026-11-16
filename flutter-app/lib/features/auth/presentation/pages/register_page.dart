@@ -69,6 +69,10 @@ class _RegisterPageState extends State<RegisterPage> {
     required IconData icon,
     Widget? suffixIcon,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final outline = isDark
+        ? AppColors.textOnDarkMuted
+        : const Color(0xFFD7DEE7);
     return InputDecoration(
       hintText: hint,
       prefixIcon: Icon(icon),
@@ -78,11 +82,11 @@ class _RegisterPageState extends State<RegisterPage> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(24),
-        borderSide: const BorderSide(color: Color(0xFFD7DEE7)),
+        borderSide: BorderSide(color: outline),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(24),
-        borderSide: const BorderSide(color: Color(0xFFD7DEE7)),
+        borderSide: BorderSide(color: outline),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(24),
@@ -96,6 +100,11 @@ class _RegisterPageState extends State<RegisterPage> {
     final authProvider = Provider.of<AuthProvider>(context);
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final strongText = AppColorRoles.textPrimary(isDark);
+    final mutedText = isDark
+        ? AppColors.textOnDarkMuted
+        : const Color(0xFF3E536B);
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -125,6 +134,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             );
                           },
                           icon: Icons.arrow_back,
+                          color: strongText,
                         ),
                         Expanded(
                           child: Text(
@@ -132,7 +142,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             textAlign: TextAlign.center,
                             style: textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF0B132B),
+                              color: strongText,
                             ),
                           ),
                         ),
@@ -144,7 +154,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       'auth.startJourney'.tr(),
                       style: textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF0B132B),
+                        color: strongText,
                         height: 1.1,
                       ),
                     ),
@@ -152,7 +162,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     Text(
                       'auth.joinLearners'.tr(),
                       style: textTheme.titleMedium?.copyWith(
-                        color: const Color(0xFF3E536B),
+                        color: mutedText,
                         height: 1.35,
                       ),
                     ),
@@ -319,7 +329,11 @@ class _RegisterPageState extends State<RegisterPage> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          side: const BorderSide(color: Color(0xFFB8C7D9)),
+                          side: BorderSide(
+                            color: isDark
+                                ? AppColors.textOnDarkMuted
+                                : const Color(0xFFB8C7D9),
+                          ),
                         ),
                         Expanded(
                           child: Padding(
@@ -327,7 +341,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             child: RichText(
                               text: TextSpan(
                                 style: textTheme.bodyLarge?.copyWith(
-                                  color: const Color(0xFF3E536B),
+                                  color: mutedText,
                                 ),
                                 children: [
                                   TextSpan(text: 'auth.termsPrefix'.tr()),
@@ -448,22 +462,32 @@ class _RegisterPageState extends State<RegisterPage> {
                     const SizedBox(height: 28),
                     Row(
                       children: [
-                        const Expanded(
-                          child: Divider(color: Color(0xFFD7DEE7)),
+                        Expanded(
+                          child: Divider(
+                            color: isDark
+                                ? AppColors.textOnDarkMuted
+                                : const Color(0xFFD7DEE7),
+                          ),
                         ),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: Text(
                             'auth.orContinueWith'.tr(),
                             style: textTheme.labelLarge?.copyWith(
-                              color: const Color(0xFF8C9AAF),
+                              color: isDark
+                                  ? AppColors.textOnDarkMuted
+                                  : const Color(0xFF8C9AAF),
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.5,
                             ),
                           ),
                         ),
-                        const Expanded(
-                          child: Divider(color: Color(0xFFD7DEE7)),
+                        Expanded(
+                          child: Divider(
+                            color: isDark
+                                ? AppColors.textOnDarkMuted
+                                : const Color(0xFFD7DEE7),
+                          ),
                         ),
                       ],
                     ),
@@ -534,7 +558,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           Text(
                             'auth.alreadyHaveAccount'.tr(),
                             style: textTheme.titleMedium?.copyWith(
-                              color: const Color(0xFF3E536B),
+                              color: mutedText,
                             ),
                           ),
                           TapTarget(

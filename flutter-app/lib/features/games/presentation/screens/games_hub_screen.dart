@@ -256,13 +256,14 @@ class _GamesHubScreenState extends State<GamesHubScreen>
                 size: 16,
               ),
               const SizedBox(width: 4),
-              Text(
+              Flexible(
+                child: Text(
                 'games.dailyXpToday'.tr(namedArgs: {'current': '$dailyXp', 'cap': '$dailyCap'}),
                 style: const TextStyle(
                   fontSize: 13,
                   color: AppColors.textGrey,
                   fontWeight: FontWeight.w500,
-                ),
+                ), maxLines: 1, overflow: TextOverflow.ellipsis),
               ),
             ],
           ),

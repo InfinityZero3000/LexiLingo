@@ -1,4 +1,4 @@
-import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lexilingo_app/core/network/response_models.dart';
@@ -64,5 +64,7 @@ bool isMessageTooLongError(Object error) {
   return error.toString().contains('status 422');
 }
 
-String messageTooLongText() =>
-    'errors.messageTooLong'.tr(namedArgs: {'max': '$kMaxChatMessageChars'});
+UiText messageTooLongText() => UiText.key(
+  'errors.messageTooLong',
+  namedArgs: {'max': '$kMaxChatMessageChars'},
+);

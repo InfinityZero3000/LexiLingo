@@ -154,12 +154,13 @@ class _XPProgressBarState extends State<XPProgressBar>
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
+            Flexible(
+              child: Text(
               'games.percentToNextLevel'.tr(namedArgs: {'percent': widget.progressPercent.toStringAsFixed(0)}),
               style: TextStyle(
                 fontSize: 11,
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+              ), maxLines: 1, overflow: TextOverflow.ellipsis),
             ),
             Text(
               'games.levelNextShort'.tr(

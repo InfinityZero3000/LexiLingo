@@ -275,8 +275,8 @@ class _WordOfDayScreenState extends State<WordOfDayScreen>
                     ),
                     label: Text(
                       _addedToCollection
-                          ? 'Added to Flashcards!'
-                          : 'Add to Flashcards',
+                          ? 'vocabulary.addedToFlashcardsShort'.tr()
+                          : 'vocabulary.addToFlashcards'.tr(),
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 16,
@@ -319,10 +319,13 @@ class _WordOfDayScreenState extends State<WordOfDayScreen>
   }
 
   void _share(VocabularyItemEntity word) {
-    final text = '📖 Word of the Day: "${word.word}"\n'
-        '${word.pronunciation != null ? '${word.pronunciation}\n' : ''}'
-        '${word.definition}\n\n'
-        'Learn English with LexiLingo!';
+    final details = [
+      if (word.pronunciation != null) word.pronunciation!,
+      word.definition,
+    ].join('\n');
+    final text = 'vocabulary.wordOfDayShare'.tr(
+      namedArgs: {'word': word.word, 'details': details},
+    );
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

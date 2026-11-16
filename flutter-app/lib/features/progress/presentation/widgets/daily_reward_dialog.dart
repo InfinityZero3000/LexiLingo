@@ -345,7 +345,7 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
       builder: (context, child) {
         final pulse = Curves.easeInOut.transform(_pulseController.value);
         return Semantics(
-          label: 'Daily reward gift',
+          label: 'gamification.dailyReward.giftLabel'.tr(),
           image: true,
           child: SizedBox(
             key: const ValueKey('daily-reward-gift-emblem'),
@@ -465,12 +465,14 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
     }
 
     final card = Semantics(
-      label: 'Day $dayNumber, $gems gems',
+      label: 'gamification.dailyReward.dayLabel'.tr(
+        namedArgs: {'day': '$dayNumber', 'gems': '$gems'},
+      ),
       value: isActive
-          ? 'available today'
+          ? 'gamification.dailyReward.availableToday'.tr()
           : isClaimed
-          ? 'claimed'
-          : 'locked',
+          ? 'gamification.dailyReward.claimed'.tr()
+          : 'gamification.dailyReward.locked'.tr(),
       child: Container(
         key: isActive ? _activeCardKey : null,
         width: 60,
@@ -580,7 +582,7 @@ class _GemBurst extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: 'Gems received',
+      label: 'gamification.dailyReward.gemsReceived'.tr(),
       image: true,
       child: SizedBox(
         width: 124,

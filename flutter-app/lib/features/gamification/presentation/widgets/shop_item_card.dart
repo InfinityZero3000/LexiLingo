@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/game_icon.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
@@ -94,12 +95,16 @@ class ShopItemCard extends StatelessWidget {
                         ),
                         child: Text(
                           item.isOutOfStock
-                              ? 'SOLD OUT'
-                              : '${item.stockRemaining} LEFT',
+                              ? 'shop.soldOut'.tr()
+                              : 'shop.stockLeft'.tr(
+                                  namedArgs: {
+                                    'count': '${item.stockRemaining}',
+                                  },
+                                ),
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.surface,
+                            color: AppColors.surfaceLight,
                           ),
                         ),
                       ),

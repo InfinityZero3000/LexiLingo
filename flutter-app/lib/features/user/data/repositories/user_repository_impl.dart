@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:dartz/dartz.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/core/error/exceptions.dart';
@@ -141,7 +142,8 @@ class UserRepositoryImpl implements UserRepository {
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Failed to get user stats: $e'));
+      debugPrint('Failed to get user stats: $e');
+      return const Left(ServerFailure());
     }
   }
 
@@ -158,7 +160,8 @@ class UserRepositoryImpl implements UserRepository {
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Failed to get weekly activity: $e'));
+      debugPrint('Failed to get weekly activity: $e');
+      return const Left(ServerFailure());
     }
   }
 }

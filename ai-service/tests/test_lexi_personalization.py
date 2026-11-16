@@ -45,7 +45,7 @@ def test_card_level_prefers_assessed_and_rejects_non_cefr():
 def test_profile_brief_has_the_person_not_the_stats():
     brief = lc.render_profile_brief(CARD, "Vietnamese")
     assert "First name: Thang" in brief
-    assert "Native language: Vietnamese" in brief
+    assert "Mother tongue: Vietnamese" in brief
     assert "Currently studying: IELTS Foundation (35% done)" in brief
     assert "Weakest skill so far: listening" in brief
     assert "streak: 6 days" in brief

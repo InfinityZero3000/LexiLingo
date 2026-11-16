@@ -540,12 +540,16 @@ class ProfileHeader extends StatelessWidget {
                                   size: 14,
                                 ),
                                 SizedBox(width: 6),
-                                Text(
-                                  'profile.editProfile'.tr(),
-                                  style: TextStyle(
-                                    color: AppColors.surfaceLight,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
+                                Flexible(
+                                  child: Text(
+                                    'profile.editProfile'.tr(),
+                                    style: TextStyle(
+                                      color: AppColors.surfaceLight,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ],

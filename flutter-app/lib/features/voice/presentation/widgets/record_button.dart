@@ -122,12 +122,12 @@ class _RecordButtonState extends State<RecordButton>
                   child: widget.isProcessing
                       ? Icon(
                           Icons.hourglass_top,
-                          color: Theme.of(context).colorScheme.surface,
+                          color: AppColors.surfaceLight,
                           size: 32,
                         )
                       : Icon(
                           widget.isRecording ? Icons.stop : Icons.mic,
-                          color: Theme.of(context).colorScheme.surface,
+                          color: AppColors.surfaceLight,
                           size: 36,
                         ),
                 ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 import 'package:lexilingo_app/core/l10n/app_localizations.dart';
 import 'package:lexilingo_app/core/widgets/language_flag.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -46,7 +47,7 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
 
   int _currentPage = 0;
   String _selectedLanguage = 'vi';
-  String _nameError = '';
+  UiText? _nameError;
 
   late final AnimationController _fadeController;
   late final Animation<double> _fadeAnimation;
@@ -89,10 +90,10 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
     if (_currentPage == 0) {
       final trimmed = _nameController.text.trim();
       if (trimmed.isEmpty) {
-        setState(() => _nameError = 'auth.pleaseEnterName'.tr());
+        setState(() => _nameError = UiText.key('auth.pleaseEnterName'));
         return;
       }
-      setState(() => _nameError = '');
+      setState(() => _nameError = null);
     }
 
     if (_currentPage < _totalPages - 1) {
@@ -317,7 +318,7 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
                 Icons.badge_outlined,
                 color: AppColors.accentMint,
               ),
-              errorText: _nameError.isNotEmpty ? _nameError : null,
+              errorText: _nameError?.resolve(),
               filled: true,
               fillColor: isDark
                   ? AppColors.slate800.withValues(alpha: 0.6)

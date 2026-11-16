@@ -271,10 +271,13 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
     }
 
     final hero = _heroItems(provider);
-    final topics = ['books.filterAll'.tr(), ...BookProvider.kTopics];
+    final topics = [
+      'books.filterAll'.tr(),
+      ...BookProvider.kTopics.map(_topicLabel),
+    ];
     final topicIndex = provider.selectedTopic == null
         ? 0
-        : topics.indexOf(provider.selectedTopic!).clamp(0, topics.length - 1);
+        : BookProvider.kTopics.indexOf(provider.selectedTopic!) + 1;
 
     return [
       if (hero.isNotEmpty)
@@ -482,4 +485,15 @@ class _SearchResultTile extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Genres stay English in the provider: they are the catalogue's query terms.
+String _topicLabel(String topic) {
+  final words = topic.toLowerCase().split(' ');
+  final id =
+      words.first +
+      words.skip(1).map((w) => w[0].toUpperCase() + w.substring(1)).join();
+  final key = 'books.topic.$id';
+  final translated = key.tr();
+  return translated == key ? topic : translated;
 }

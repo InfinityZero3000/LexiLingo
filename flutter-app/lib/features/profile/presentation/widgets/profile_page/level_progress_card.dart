@@ -24,14 +24,18 @@ class ProfileLevelProgressCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'profile.levelRange'.tr(
-                      namedArgs: {
-                        'level': '$level',
-                        'nextLevel': '${level + 1}',
-                      },
+                  Flexible(
+                    child: Text(
+                      'profile.levelRange'.tr(
+                        namedArgs: {
+                          'level': '$level',
+                          'nextLevel': '${level + 1}',
+                        },
+                      ),
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    style: const TextStyle(fontWeight: FontWeight.w500),
                   ),
                   Text(
                     'profile.xpProgress'.tr(
@@ -59,16 +63,20 @@ class ProfileLevelProgressCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'profile.xpToNextLevel'.tr(
-                      namedArgs: {
-                        'xp': '${xpFor - xpIn}',
-                        'level': '${level + 1}',
-                      },
-                    ),
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      fontSize: 12,
+                  Flexible(
+                    child: Text(
+                      'profile.xpToNextLevel'.tr(
+                        namedArgs: {
+                          'xp': '${xpFor - xpIn}',
+                          'level': '${level + 1}',
+                        },
+                      ),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontSize: 12,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   Text(

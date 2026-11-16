@@ -429,7 +429,7 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                                 isPlaying
                                     ? Icons.volume_up
                                     : Icons.play_arrow_rounded,
-                                color: Theme.of(context).colorScheme.surface,
+                                color: AppColors.surfaceLight,
                                 size: 52,
                               ),
                             ),

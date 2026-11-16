@@ -223,13 +223,17 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
                 ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
               ),
               const SizedBox(width: 8),
-              Text(
-                'vocabulary.tapToReveal'.tr(),
-                style: TextStyle(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                  fontSize: 14,
+              Flexible(
+                child: Text(
+                  'vocabulary.tapToReveal'.tr(),
+                  style: TextStyle(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                    fontSize: 14,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],

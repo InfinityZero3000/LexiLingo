@@ -153,8 +153,8 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
             maxLines: widget.exercise.type == ExerciseType.translate ? 3 : 1,
             decoration: InputDecoration(
               hintText: widget.exercise.type == ExerciseType.translate
-                  ? 'Type your translation here...'
-                  : 'Fill in the blank...',
+                  ? 'learning.hintTranslation'.tr()
+                  : 'learning.hintFillBlank'.tr(),
               filled: true,
               fillColor: widget.isAnswered
                   ? (widget.isCorrect!
@@ -332,11 +332,11 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
   String _getExerciseTypeLabel() {
     switch (widget.exercise.type) {
       case ExerciseType.fillInBlank:
-        return 'FILL IN THE BLANK';
+        return 'learning.exerciseType.fillBlank'.tr();
       case ExerciseType.translate:
-        return 'TRANSLATION';
+        return 'learning.exerciseType.translation'.tr();
       default:
-        return 'EXERCISE';
+        return 'learning.exerciseType.exercise'.tr();
     }
   }
 }

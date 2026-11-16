@@ -222,7 +222,7 @@ class LessonsBarChart extends StatelessWidget {
               getTooltipItem: (group, groupIndex, rod, rodIndex) {
                 final count = rod.toY.toInt();
                 return BarTooltipItem(
-                  '$count lesson${count != 1 ? 's' : ''}',
+                  'progress.lessonsCount'.tr(namedArgs: {'count': '$count'}),
                   TextStyle(
                     color: primary,
                     fontWeight: FontWeight.w700,

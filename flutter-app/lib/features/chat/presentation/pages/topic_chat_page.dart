@@ -48,7 +48,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
   bool _taskBannerVisible = false;
   bool _taskBannerDismissedByUser = false;
   _TaskBannerType _taskBannerType = _TaskBannerType.loading;
-  String _taskBannerTitle = 'Preparing chat...';
+  String _taskBannerTitle = 'topicChat.preparingTopicMessage'.tr();
   String _taskBannerDetail = '';
   double? _taskBannerProgress;
   Timer? _autoHideTimer;
@@ -630,11 +630,15 @@ class _TopicChatPageState extends State<TopicChatPage> {
                       ),
                     ),
                   ),
-                  Text(
-                    'topicChat.swipeToCloseHint'.tr(),
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: AppColorRoles.textMuted(isDark),
+                  Flexible(
+                    child: Text(
+                      'topicChat.swipeToCloseHint'.tr(),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColorRoles.textMuted(isDark),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -1015,30 +1019,37 @@ class _StoryContextHeader extends StatelessWidget {
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.green.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.bolt,
-                  size: 12,
-                  color: AppColors.greenSuccessBright,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  'topicChat.contextReadyBadgeLabel'.tr(),
-                  style: TextStyle(
-                    fontSize: 10,
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.green.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.bolt,
+                    size: 12,
                     color: AppColors.greenSuccessBright,
-                    fontWeight: FontWeight.bold,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: Text(
+                      'topicChat.contextReadyBadgeLabel'.tr(),
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: AppColors.greenSuccessBright,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -1291,9 +1302,13 @@ class VocabularyPreviewSheet extends StatelessWidget {
               children: [
                 Icon(Icons.menu_book, color: AppColorRoles.primary(isDark)),
                 const SizedBox(width: 12),
-                Text(
-                  'topicChat.keyVocabularyTitle'.tr(),
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                Flexible(
+                  child: Text(
+                    'topicChat.keyVocabularyTitle'.tr(),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),

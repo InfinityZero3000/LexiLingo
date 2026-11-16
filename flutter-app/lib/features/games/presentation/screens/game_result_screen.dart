@@ -319,7 +319,9 @@ class _GameResultScreenState extends State<GameResultScreen>
           ),
           _xpStatRow(
             'gameResult.streakLabel'.tr(),
-            '${xpResult.streakDays} days',
+            'profile.daysCount'.tr(
+              namedArgs: {'count': '${xpResult.streakDays}'},
+            ),
           ),
         ],
       ),
@@ -392,7 +394,8 @@ class _GameResultScreenState extends State<GameResultScreen>
             size: 16,
           ),
           const SizedBox(width: 6),
-          Text(
+          Flexible(
+            child: Text(
             'gameResult.streakBonusLabel'.tr(
               namedArgs: {'multiplier': multiplier.toStringAsFixed(1)},
             ),
@@ -400,7 +403,7 @@ class _GameResultScreenState extends State<GameResultScreen>
               color: Colors.orange.shade800,
               fontWeight: FontWeight.bold,
               fontSize: 13,
-            ),
+            ), maxLines: 1, overflow: TextOverflow.ellipsis),
           ),
         ],
       ),

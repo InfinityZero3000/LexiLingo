@@ -126,11 +126,15 @@ class TtsSpeedSelector extends StatelessWidget {
               children: [
                 const Icon(Icons.speed, size: 24),
                 const SizedBox(width: 12),
-                Text(
-                  'voice.playbackSpeed'.tr(),
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                Flexible(
+                  child: Text(
+                    'voice.playbackSpeed'.tr(),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),

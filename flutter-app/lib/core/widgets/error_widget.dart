@@ -92,35 +92,34 @@ class ErrorDisplayWidget extends StatelessWidget {
   String get _title {
     switch (errorType) {
       case ErrorType.network:
-        return 'No Internet Connection';
+        return 'errors.noInternet'.tr();
       case ErrorType.server:
-        return 'Server Error';
+        return 'errors.serverError'.tr();
       case ErrorType.timeout:
-        return 'Request Timeout';
+        return 'errors.timeout'.tr();
       case ErrorType.unauthorized:
-        return 'Session Expired';
+        return 'errors.unauthorized'.tr();
       case ErrorType.notFound:
-        return 'Not Found';
+        return 'errors.notFound'.tr();
       case ErrorType.unknown:
-        return 'Something Went Wrong';
+        return 'errors.somethingWrong'.tr();
     }
   }
 
   String get _description {
     switch (errorType) {
       case ErrorType.network:
-        return 'Please check your internet connection and try again.';
+        return 'errors.networkRetry'.tr();
       case ErrorType.server:
-        return 'Our servers are having trouble. Please try again later.';
+        return 'errors.serverRetry'.tr();
       case ErrorType.timeout:
-        return 'The request took too long. Please try again.';
+        return 'errors.timeoutRetry'.tr();
       case ErrorType.unauthorized:
-        return 'Please log in again to continue.';
+        return 'errors.signInAgain'.tr();
       case ErrorType.notFound:
-        return 'The requested content could not be found.';
+        return 'errors.notFoundContent'.tr();
       case ErrorType.unknown:
-        return customMessage ??
-            'An unexpected error occurred. Please try again.';
+        return customMessage ?? 'errors.genericRetry'.tr();
     }
   }
 
@@ -243,15 +242,18 @@ class OfflineBanner extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.wifi_off,
-            color: Theme.of(context).colorScheme.surface,
-            size: 18,
-          ),
+          Icon(Icons.wifi_off, color: AppColors.surfaceLight, size: 18),
           SizedBox(width: 8),
-          Text(
-            'common.offline'.tr(),
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+          Flexible(
+            child: Text(
+              'common.offline'.tr(),
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),

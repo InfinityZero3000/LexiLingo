@@ -1,6 +1,6 @@
 import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/core/utils/chat_input_limit.dart';
-import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -41,7 +41,7 @@ class StoryProvider extends ChangeNotifier {
   bool _hasMoreMessages = true;
   String? _nextMessageCursor;
   final int _messagesPageSize = 20;
-  String? _sessionError;
+  UiText? _sessionError;
   int _mistakesSavedThisSession = 0;
   int _wordsSavedThisSession = 0;
 
@@ -60,7 +60,7 @@ class StoryProvider extends ChangeNotifier {
   bool get isSendingMessage => _isSendingMessage;
   bool get isLoadingMoreMessages => _isLoadingMoreMessages;
   bool get hasMoreMessages => _hasMoreMessages;
-  String? get sessionError => _sessionError;
+  String? get sessionError => _sessionError?.resolve();
   bool get hasActiveSession => _currentSession != null;
   int get mistakesSavedThisSession => _mistakesSavedThisSession;
   int get wordsSavedThisSession => _wordsSavedThisSession;
@@ -238,7 +238,7 @@ class StoryProvider extends ChangeNotifier {
 
     return result.fold(
       (failure) {
-        _sessionError = failure.message;
+        _sessionError = UiText.failure(failure);
         _isLoading = false;
         notifyListeners();
         return false;
@@ -353,7 +353,7 @@ class StoryProvider extends ChangeNotifier {
     required String message,
   }) async {
     if (_currentSession == null) {
-      _sessionError = 'errors.noActiveSession'.tr();
+      _sessionError = UiText.key('errors.noActiveSession');
       notifyListeners();
       return false;
     }
@@ -386,7 +386,7 @@ class StoryProvider extends ChangeNotifier {
           _messages.removeWhere((m) => m.id == userMessage.id);
           _sessionError = messageTooLongText();
         } else {
-          _sessionError = failure.message;
+          _sessionError = UiText.failure(failure);
         }
         _isSendingMessage = false;
         notifyListeners();
@@ -428,7 +428,7 @@ class StoryProvider extends ChangeNotifier {
     required String message,
   }) async {
     if (_currentSession == null) {
-      _sessionError = 'errors.noActiveSession'.tr();
+      _sessionError = UiText.key('errors.noActiveSession');
       notifyListeners();
       return false;
     }
@@ -562,7 +562,7 @@ class StoryProvider extends ChangeNotifier {
     _isSendingMessage = false;
 
     if (_isUnauthorizedError(reason)) {
-      _sessionError = 'errors.sessionExpired'.tr();
+      _sessionError = UiText.key('errors.sessionExpired');
       notifyListeners();
       return;
     }
@@ -594,7 +594,7 @@ class StoryProvider extends ChangeNotifier {
         repository.getTopicMessages(sessionId).then((legacy) {
           legacy.fold(
             (legacyFailure) {
-              _sessionError = legacyFailure.message;
+              _sessionError = UiText.raw(legacyFailure.message);
               _isLoading = false;
               notifyListeners();
             },
@@ -636,7 +636,7 @@ class StoryProvider extends ChangeNotifier {
 
     result.fold(
       (failure) {
-        _sessionError = failure.message;
+        _sessionError = UiText.failure(failure);
         _isLoadingMoreMessages = false;
         notifyListeners();
       },

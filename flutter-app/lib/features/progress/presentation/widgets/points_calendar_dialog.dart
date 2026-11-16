@@ -204,13 +204,17 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
                 ? AppColors.surfaceLight.withValues(alpha: 0.7)
                 : AppColors.textDark,
           ),
-          Text(
-            'home.pointsCalendar'.tr(),
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
-              color: isDark ? AppColors.surfaceLight : AppColors.textDark,
-              letterSpacing: -0.4,
+          Expanded(
+            child: Text(
+              'home.pointsCalendar'.tr(),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: isDark ? AppColors.surfaceLight : AppColors.textDark,
+                letterSpacing: -0.4,
+              ),
             ),
           ),
         ],
@@ -261,12 +265,17 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         _navButton(Icons.chevron_left, _prevMonth, isDark),
-        Text(
-          monthLabel,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: isDark ? AppColors.surfaceLight : AppColors.textDark,
+        Flexible(
+          child: Text(
+            monthLabel,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: isDark ? AppColors.surfaceLight : AppColors.textDark,
+            ),
           ),
         ),
         _navButton(Icons.chevron_right, _nextMonth, isDark),
@@ -288,7 +297,8 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
   }
 
   Widget _buildWeekHeader(bool isDark) {
-    const days = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    // Sunday first, as the grid below; narrow names follow Intl.defaultLocale.
+    final days = DateFormat().dateSymbols.STANDALONENARROWWEEKDAYS;
     return Row(
       children: days
           .asMap()

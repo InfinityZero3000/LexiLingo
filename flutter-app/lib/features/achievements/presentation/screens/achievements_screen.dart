@@ -394,11 +394,15 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 children: [
                   const Icon(Icons.lock, size: 16, color: Colors.grey),
                   const SizedBox(width: 4),
-                  Text(
-                    'achievements.completeToUnlock'.tr(),
-                    style: TextStyle(
-                      color: Colors.grey[500],
-                      fontStyle: FontStyle.italic,
+                  Flexible(
+                    child: Text(
+                      'achievements.completeToUnlock'.tr(),
+                      style: TextStyle(
+                        color: Colors.grey[500],
+                        fontStyle: FontStyle.italic,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -409,11 +413,15 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 children: [
                   Icon(Icons.check_circle, size: 16, color: Colors.green[600]),
                   const SizedBox(width: 4),
-                  Text(
-                    'achievements.achievementUnlocked'.tr(),
-                    style: TextStyle(
-                      color: Colors.green[600],
-                      fontWeight: FontWeight.bold,
+                  Flexible(
+                    child: Text(
+                      'achievements.achievementUnlocked'.tr(),
+                      style: TextStyle(
+                        color: Colors.green[600],
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -433,11 +441,12 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   }
 
   void _shareAchievement(AchievementEntity achievement) {
-    final text =
-        '🏆 I just unlocked "${achievement.name}" on LexiLingo!\n'
-        '${achievement.description}\n\n'
-        'Join me and start learning English today! 🌟\n'
-        '#LexiLingo #LanguageLearning';
+    final text = 'achievements.shareText'.tr(
+      namedArgs: {
+        'name': achievement.name,
+        'description': achievement.description,
+      },
+    );
     Share.share(text);
   }
 

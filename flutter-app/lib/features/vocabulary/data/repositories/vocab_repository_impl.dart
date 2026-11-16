@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import 'package:dartz/dartz.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -47,9 +48,8 @@ class VocabRepositoryImpl implements VocabRepository {
         if (cached != null) {
           return Right(_fromJsonList(cached));
         }
-        return Left(
-          CacheFailure('Failed to get vocabulary words: ${e.toString()}'),
-        );
+        debugPrint('Failed to get vocabulary words: ${e.toString()}');
+        return const Left(CacheFailure());
       }
     }
 
@@ -81,7 +81,8 @@ class VocabRepositoryImpl implements VocabRepository {
       );
       return Right(words.reversed.toList()); // newest first
     } catch (e) {
-      return Left(CacheFailure('Failed to get vocabulary words: $e'));
+      debugPrint('Failed to get vocabulary words: $e');
+      return const Left(CacheFailure());
     }
   }
 
@@ -106,9 +107,8 @@ class VocabRepositoryImpl implements VocabRepository {
         }
         return const Right(null);
       } catch (e) {
-        return Left(
-          CacheFailure('Failed to add vocabulary word: ${e.toString()}'),
-        );
+        debugPrint('Failed to add vocabulary word: ${e.toString()}');
+        return const Left(CacheFailure());
       }
     }
 
@@ -144,7 +144,8 @@ class VocabRepositoryImpl implements VocabRepository {
       }
       return const Right(null);
     } catch (e) {
-      return Left(CacheFailure('Failed to add vocabulary word: $e'));
+      debugPrint('Failed to add vocabulary word: $e');
+      return const Left(CacheFailure());
     }
   }
 

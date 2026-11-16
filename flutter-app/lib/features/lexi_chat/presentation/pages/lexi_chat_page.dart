@@ -19,6 +19,7 @@ import 'package:lexilingo_app/core/voice/duplex_voice_phase.dart';
 import 'package:provider/provider.dart';
 import 'package:record/record.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/features/auth/domain/entities/user_entity.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.dart';
@@ -145,12 +146,11 @@ class _LexiChatPageState extends State<LexiChatPage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Runs after initState and again whenever the active locale changes
-    // (e.g. switched in Settings while this page stays alive under the
-    // bottom-nav IndexedStack), keeping Lexi's native-language hint in
-    // sync with whatever the UI is currently displaying.
+    // Runs after initState and again whenever the locale or the learner's
+    // reply-language choice changes, even while this page stays alive under
+    // the bottom-nav IndexedStack.
     _chat = context.read<LexiChatProvider>();
-    _chat.setNativeLanguage(_nativeLanguage);
+    _chat.setNativeLanguage(_replyLanguage());
   }
 
   @override
@@ -216,8 +216,22 @@ class _LexiChatPageState extends State<LexiChatPage>
     }
   }
 
-  String get _nativeLanguage =>
-      LocaleService.normalizeLanguageCode(context.locale.languageCode);
+  /// Subscribes to the user, so flipping the setting re-runs
+  /// didChangeDependencies.
+  String _replyLanguage() {
+    final appLanguage = LocaleService.normalizeLanguageCode(
+      context.locale.languageCode,
+    );
+    UserEntity? user;
+    try {
+      user = Provider.of<AuthProvider>(context).user;
+    } on ProviderNotFoundException {
+      user = null;
+    }
+    return LocaleService.normalizeLanguageCode(
+      user?.lexiReplyLanguageFor(appLanguage) ?? appLanguage,
+    );
+  }
 
   @override
   void dispose() {
@@ -1095,24 +1109,28 @@ class _LexiChatPageState extends State<LexiChatPage>
                       size: 16,
                     ),
                   const SizedBox(width: 8),
-                  Text(
-                    _isTranscribing
-                        ? 'lexiChat.transcribingStatus'.tr()
-                        : _isWebSpeechActive
-                        ? 'lexiChat.webSpeechRecording'.tr()
-                        : 'lexiChat.recordingStatus'.tr(
-                            namedArgs: {
-                              'seconds': _recordingDuration.inSeconds
-                                  .toString(),
-                            },
-                          ),
-                    style: TextStyle(
-                      color: _isWebSpeechActive
-                          ? AppColors.primary
-                          : _isTranscribing
-                          ? AppColors.orange
-                          : AppColors.errorBright,
-                      fontWeight: FontWeight.w600,
+                  Flexible(
+                    child: Text(
+                      _isTranscribing
+                          ? 'lexiChat.transcribingStatus'.tr()
+                          : _isWebSpeechActive
+                          ? 'lexiChat.webSpeechRecording'.tr()
+                          : 'lexiChat.recordingStatus'.tr(
+                              namedArgs: {
+                                'seconds': _recordingDuration.inSeconds
+                                    .toString(),
+                              },
+                            ),
+                      style: TextStyle(
+                        color: _isWebSpeechActive
+                            ? AppColors.primary
+                            : _isTranscribing
+                            ? AppColors.orange
+                            : AppColors.errorBright,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],

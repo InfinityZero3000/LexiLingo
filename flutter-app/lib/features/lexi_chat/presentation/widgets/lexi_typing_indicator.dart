@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
@@ -75,8 +76,12 @@ class _LexiTypingIndicatorState extends State<LexiTypingIndicator>
               children: [
                 Text(
                   widget.isThinking
-                      ? '${widget.name} is thinking'
-                      : '${widget.name} is typing',
+                      ? 'lexiChat.nameThinking'.tr(
+                          namedArgs: {'name': widget.name},
+                        )
+                      : 'lexiChat.nameTyping'.tr(
+                          namedArgs: {'name': widget.name},
+                        ),
                   style: TextStyle(
                     fontSize: 12,
                     fontStyle: FontStyle.italic,

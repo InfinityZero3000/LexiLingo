@@ -25,7 +25,7 @@ class BoostPurchaseAnimation extends StatefulWidget {
     return showGeneralDialog(
       context: context,
       barrierDismissible: false,
-      barrierLabel: 'Boost',
+      barrierLabel: 'shop.boost'.tr(),
       barrierColor: Colors.black.withValues(alpha: 0.45),
       transitionDuration: const Duration(milliseconds: 250),
       transitionBuilder: (ctx, anim, _, child) =>

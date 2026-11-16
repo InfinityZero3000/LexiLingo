@@ -142,12 +142,16 @@ class GrammarCorrectionBadge extends StatelessWidget {
             children: [
               Icon(Icons.edit_note, size: 16, color: Colors.orange.shade700),
               const SizedBox(width: 4),
-              Text(
-                'chat.grammarCorrection'.tr(),
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.orange.shade700,
+              Flexible(
+                child: Text(
+                  'chat.grammarCorrection'.tr(),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.orange.shade700,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               if (correction.errorType != null)
@@ -394,7 +398,7 @@ class VocabularyHintCard extends StatelessWidget {
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
+                    color: AppColors.surfaceLight,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(

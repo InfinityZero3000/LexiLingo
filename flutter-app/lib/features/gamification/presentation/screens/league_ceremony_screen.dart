@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'dart:math' as math;
 
 import 'package:confetti/confetti.dart';
@@ -367,8 +368,8 @@ class _LeagueCeremonyScreenState extends State<LeagueCeremonyScreen>
                                 child: Center(
                                   child: Text(
                                     isPromotion
-                                        ? 'Claim Your Spot!'
-                                        : 'Fight Back!',
+                                        ? 'gamification.league.claimSpot'.tr()
+                                        : 'gamification.league.fightBack'.tr(),
                                     style: TextStyle(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 16,
@@ -392,16 +393,22 @@ class _LeagueCeremonyScreenState extends State<LeagueCeremonyScreen>
     );
   }
 
-  String _leagueName(String league) =>
-      league[0].toUpperCase() + league.substring(1);
+  String _leagueName(String league) => rankDisplayNameFor(league);
 
-  String _promotionSubtitle(String? previous) {
-    final from = previous != null ? 'from ${_leagueName(previous)} ' : '';
-    return 'You\'ve been promoted ${from}to ${_leagueName(widget.newLeague)} League!\nKeep the momentum going this week.';
-  }
+  String _promotionSubtitle(String? previous) => previous == null
+      ? 'gamification.league.promoted'.tr(
+          namedArgs: {'to': _leagueName(widget.newLeague)},
+        )
+      : 'gamification.league.promotedFrom'.tr(
+          namedArgs: {
+            'from': _leagueName(previous),
+            'to': _leagueName(widget.newLeague),
+          },
+        );
 
-  String _demotionSubtitle(String current) =>
-      'You dropped to ${_leagueName(current)} League.\nBut every champion starts from the bottom — come back stronger!';
+  String _demotionSubtitle(String current) => 'gamification.league.demoted'.tr(
+    namedArgs: {'league': _leagueName(current)},
+  );
 }
 
 class _StatusChip extends StatelessWidget {

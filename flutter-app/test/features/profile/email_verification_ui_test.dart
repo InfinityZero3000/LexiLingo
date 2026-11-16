@@ -322,7 +322,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.text('Network error. Please check your internet connection.'),
+        find.text('errors.networkRetry'),
         findsOneWidget,
       );
       expect(find.text('profile.emailVerificationPending'), findsNothing);

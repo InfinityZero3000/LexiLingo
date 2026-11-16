@@ -11,6 +11,8 @@ import 'package:share_plus/share_plus.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/animated_ui_components.dart';
 import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
+import 'package:lexilingo_app/core/l10n/app_localizations.dart' show AppLocales;
+import 'package:lexilingo_app/features/auth/domain/entities/user_entity.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/user/presentation/pages/legal_page.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
@@ -83,6 +85,16 @@ class _SettingsPageState extends State<SettingsPage> {
                   const SizedBox(height: 12),
                   _buildLanguageSelector(context, settings),
                   const SizedBox(height: 32),
+                  if (context.watch<AuthProvider>().user != null) ...[
+                    _buildSectionHeader(
+                      context,
+                      title: 'settings.lexiReplyLanguage'.tr(),
+                      subtitle: 'settings.lexiReplyLanguage_subtitle'.tr(),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildLexiReplyLanguage(context),
+                    const SizedBox(height: 32),
+                  ],
                   AnimatedListItem(
                     index: 1,
                     duration: const Duration(milliseconds: 300),
@@ -288,6 +300,107 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  Widget _buildLexiReplyLanguage(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    final user = auth.user!;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
+    String nameOf(String code) =>
+        AppLocales.metadata[code]?['name'] ?? code.toUpperCase();
+    final options = [
+      (
+        value: UserEntity.lexiReplyApp,
+        label: 'settings.lexiReplyApp'.tr(
+          namedArgs: {'language': nameOf(context.locale.languageCode)},
+        ),
+        icon: Icons.translate_rounded,
+      ),
+      (
+        value: UserEntity.lexiReplyNative,
+        label: 'settings.lexiReplyNative'.tr(
+          namedArgs: {'language': nameOf(user.nativeLanguage)},
+        ),
+        icon: Icons.record_voice_over_rounded,
+      ),
+    ];
+
+    Future<void> choose(String value) async {
+      final messenger = ScaffoldMessenger.of(context);
+      final saved = await auth.updateLexiReplyLanguage(value);
+      if (!saved) {
+        messenger.showSnackBar(
+          SnackBar(content: Text('errors.saveFailed'.tr())),
+        );
+      }
+    }
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            for (final option in options)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Builder(
+                  builder: (context) {
+                    final isSelected = user.lexiReplyLanguage == option.value;
+                    return InkWell(
+                      key: Key('settings-lexi-reply-${option.value}'),
+                      onTap: isSelected ? null : () => choose(option.value),
+                      borderRadius: BorderRadius.circular(10),
+                      child: Container(
+                        constraints: const BoxConstraints(minHeight: 48),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? primaryColor.withValues(alpha: 0.1)
+                              : null,
+                          borderRadius: BorderRadius.circular(10),
+                          border: isSelected
+                              ? Border.all(color: primaryColor, width: 2)
+                              : null,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              option.icon,
+                              color: isSelected
+                                  ? primaryColor
+                                  : AppColorRoles.textMuted(isDark),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                option.label,
+                                style: TextStyle(
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                  color: isSelected ? primaryColor : null,
+                                ),
+                              ),
+                            ),
+                            if (isSelected)
+                              Icon(Icons.check_circle, color: primaryColor),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildNotificationSettings(
     BuildContext context,
     SettingsProvider settings,
@@ -305,7 +418,13 @@ class _SettingsPageState extends State<SettingsPage> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('settings.dailyReminder'.tr()),
+                Flexible(
+                  child: Text(
+                    'settings.dailyReminder'.tr(),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
                 Switch(
                   value: settings.notificationEnabled,
                   onChanged: (value) =>
@@ -344,7 +463,13 @@ class _SettingsPageState extends State<SettingsPage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('settings.reminderTime'.tr()),
+                      Flexible(
+                        child: Text(
+                          'settings.reminderTime'.tr(),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                       Row(
                         children: [
                           Text(
@@ -529,7 +654,13 @@ class _SettingsPageState extends State<SettingsPage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('settings.sound_effects'.tr()),
+            Flexible(
+              child: Text(
+                'settings.sound_effects'.tr(),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
             Switch(
               value: settings.soundEnabled,
               onChanged: settings.updateSoundEnabled,
@@ -768,12 +899,16 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Text(
-                    'settings.delete_account'.tr(),
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFFB91C1C),
+                  Flexible(
+                    child: Text(
+                      'settings.delete_account'.tr(),
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFFB91C1C),
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const Spacer(),

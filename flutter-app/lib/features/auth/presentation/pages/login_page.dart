@@ -54,7 +54,8 @@ class _LoginPageState extends State<LoginPage> {
   bool _isInvalidCredentialMessage(String? message) {
     if (message == null) return false;
     final normalized = message.toLowerCase();
-    return normalized.contains('incorrect email or password') ||
+    return normalized == 'auth.errInvalidCredentials'.tr().toLowerCase() ||
+        normalized.contains('incorrect email or password') ||
         normalized.contains('invalid email or password') ||
         normalized.contains('auth_invalid');
   }

@@ -38,10 +38,14 @@ class LearningStatsSection extends StatelessWidget {
                 children: [
                   Icon(Icons.insights_rounded, color: primaryColor, size: 20),
                   const SizedBox(width: 8),
-                  Text(
-                    'profile.learningStats'.tr(),
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
+                  Flexible(
+                    child: Text(
+                      'profile.learningStats'.tr(),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],

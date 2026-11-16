@@ -148,7 +148,9 @@
     "verifyEmailFailedTitle": "Liên kết không còn hiệu lực",
     "verifyEmailFailedMessage": "Liên kết đã được dùng hoặc đã hết hạn. Nhập email để nhận liên kết mới.",
     "verifyEmailBanner": "Xác minh email để mở khoá cửa hàng và thưởng giới thiệu.",
-    "verifyEmailBannerAction": "Gửi lại link"
+    "verifyEmailBannerAction": "Gửi lại link",
+    "googleLoginFailed": "Đăng nhập Google thất bại. Vui lòng thử lại.",
+    "facebookLoginFailed": "Đăng nhập Facebook thất bại. Vui lòng thử lại."
   },
   "home": {
     "wordsLeftToReview": "từ cần ôn",
@@ -338,7 +340,8 @@
       "elementary": "Sơ cấp",
       "intermediate": "Trung cấp",
       "upperIntermediate": "Trung cấp cao",
-      "advanced": "Nâng cao"
+      "advanced": "Nâng cao",
+      "preIntermediate": "Tiền trung cấp"
     },
     "notFound": "Không tìm thấy khóa học",
     "yourProgress": "Tiến độ của bạn",
@@ -370,6 +373,30 @@
     "courseCount": {
       "one": "{} khóa học",
       "other": "{} khóa học"
+    },
+    "sort": {
+      "default": "Mặc định",
+      "lessons": "Nhiều bài học nhất",
+      "xp": "XP cao nhất",
+      "az": "A → Z",
+      "newest": "Mới nhất",
+      "popular": "Phổ biến nhất",
+      "level": "Theo trình độ"
+    },
+    "gridView": "Dạng lưới",
+    "listView": "Dạng danh sách",
+    "tag": {
+      "vocabulary": "Từ vựng",
+      "grammar": "Ngữ pháp",
+      "conversation": "Hội thoại",
+      "speaking": "Nói",
+      "listening": "Nghe",
+      "reading": "Đọc",
+      "writing": "Viết",
+      "pronunciation": "Phát âm",
+      "business": "Kinh doanh",
+      "travel": "Du lịch",
+      "exam": "Luyện thi"
     }
   },
   "lesson": {
@@ -586,7 +613,11 @@
     "transcribeFailed": "Không chuyển được bản ghi âm thành văn bản. Vui lòng thử lại.",
     "recordingStartFailed": "Không bắt đầu ghi âm được. Vui lòng thử lại.",
     "recordingStopFailed": "Không dừng ghi âm được. Vui lòng thử lại.",
-    "playbackFailed": "Không phát được âm thanh. Vui lòng thử lại."
+    "playbackFailed": "Không phát được âm thanh. Vui lòng thử lại.",
+    "feedbackExcellent": "Phát âm xuất sắc! Tiếp tục phát huy nhé!",
+    "feedbackGood": "Tốt lắm! Vài từ cần cải thiện thêm.",
+    "feedbackKeepPracticing": "Tiếp tục luyện tập! Tập trung vào các từ được đánh dấu.",
+    "feedbackTryAgain": "Hãy thử lại thật chậm. Nghe mẫu trước nhé."
   },
   "chat": {
     "loadMore": "Tải thêm...",
@@ -645,7 +676,15 @@
     "categoryMilestone": "Cột mốc thành tích",
     "unlockedCount": "{unlocked} / {total} thành tích",
     "awesome": "Tuyệt vời!",
-    "share": "Chia sẻ thành tích"
+    "share": "Chia sẻ thành tích",
+    "shareText": "🏆 Mình vừa mở khóa \"{name}\" trên LexiLingo!\n{description}\n\nHọc tiếng Anh cùng mình ngay hôm nay nhé! 🌟\n#LexiLingo #LanguageLearning",
+    "tapToContinue": "Chạm để tiếp tục",
+    "tapToContinueCount": "Chạm để tiếp tục ({current}/{total})",
+    "rarityCommon": "Phổ biến",
+    "rarityRare": "Hiếm",
+    "rarityEpic": "Sử thi",
+    "rarityLegendary": "Huyền thoại",
+    "gemsReward": "+{gems} đá quý"
   },
   "profile": {
     "title": "Hồ sơ",
@@ -787,7 +826,19 @@
     "tabLessons": "Bài học",
     "tabActivity": "Hoạt động",
     "tabContent": "Nội dung",
-    "noStreakFreezes": "Bạn không còn lượt đóng băng chuỗi."
+    "noStreakFreezes": "Bạn không còn lượt đóng băng chuỗi.",
+    "streakMilestoneMsg": {
+      "label": "Mốc chuỗi ngày",
+      "d7": "Một tuần bền bỉ! Bạn đang xây dựng thói quen.",
+      "d14": "Hai tuần! Sự đều đặn là siêu năng lực của bạn.",
+      "d30": "Tròn một tháng! Không gì cản được bạn.",
+      "d60": "Hai tháng! Sự kiên trì của bạn thật truyền cảm hứng.",
+      "d100": "100 ngày! Bạn là huyền thoại LexiLingo.",
+      "d365": "Trọn MỘT NĂM! Bạn đã làm được điều không tưởng.",
+      "other": "{days} ngày! Tiếp tục tiến lên nhé!"
+    },
+    "lessonsCount": "{count} bài học",
+    "proficiencyA11y": "Trình độ của bạn: {parts}"
   },
   "settings": {
     "title": "Cài đặt",
@@ -795,6 +846,10 @@
     "daily_goal_subtitle": "Đặt mục tiêu XP mỗi ngày",
     "language": "Ngôn ngữ ứng dụng",
     "language_subtitle": "Chọn ngôn ngữ hiển thị",
+    "lexiReplyLanguage": "Ngôn ngữ giải thích của Lexi",
+    "lexiReplyLanguage_subtitle": "Lexi dùng ngôn ngữ này để giải thích và sửa lỗi",
+    "lexiReplyApp": "Ngôn ngữ ứng dụng ({language})",
+    "lexiReplyNative": "Tiếng mẹ đẻ ({language})",
     "notifications": "Thông báo",
     "notifications_subtitle": "Quản lý nhắc nhở",
     "sound": "Âm thanh",
@@ -931,7 +986,17 @@
     "saveFailed": "Không lưu được. Vui lòng thử lại.",
     "submitFailed": "Không gửi được. Vui lòng thử lại.",
     "networkRetry": "Lỗi mạng. Vui lòng kiểm tra kết nối và thử lại.",
-    "localStorage": "Lỗi lưu trữ trên thiết bị. Vui lòng thử lại."
+    "localStorage": "Lỗi lưu trữ trên thiết bị. Vui lòng thử lại.",
+    "serverRetry": "Máy chủ đang gặp sự cố. Vui lòng thử lại sau.",
+    "authFailed": "Xác thực thất bại. Vui lòng đăng nhập lại.",
+    "validation": "Một số thông tin chưa hợp lệ. Vui lòng kiểm tra lại.",
+    "notFoundContent": "Không tìm thấy nội dung yêu cầu.",
+    "alreadyExists": "Mục này đã tồn tại.",
+    "rateLimited": "Bạn thao tác quá nhanh. Vui lòng đợi một chút.",
+    "permissionDenied": "Bạn không có quyền thực hiện thao tác này.",
+    "somethingWrong": "Đã xảy ra lỗi",
+    "timeoutRetry": "Yêu cầu mất quá nhiều thời gian. Vui lòng thử lại.",
+    "signInAgain": "Vui lòng đăng nhập lại để tiếp tục."
   },
   "gamification": {
     "xpEarned": "+{xp}XP",
@@ -975,7 +1040,23 @@
     "lessonsCompletedCount": "Đã hoàn thành {count} bài học",
     "rankLabel": "Hạng",
     "rankUp": "Lên hạng!",
-    "reachedRank": "Bạn đã đạt hạng {rank}"
+    "reachedRank": "Bạn đã đạt hạng {rank}",
+    "rankUpMessage": "Chúc mừng! Bạn đã vượt từ {from} lên {to}. Tiếp tục phát huy nhé!",
+    "league": {
+      "claimSpot": "Giữ vững vị trí!",
+      "fightBack": "Phản công!",
+      "promoted": "Bạn đã được thăng lên giải {to}!\nHãy giữ phong độ trong tuần này.",
+      "promotedFrom": "Bạn đã được thăng từ giải {from} lên giải {to}!\nHãy giữ phong độ trong tuần này.",
+      "demoted": "Bạn đã xuống giải {league}.\nNhà vô địch nào cũng bắt đầu từ dưới đáy — hãy quay lại mạnh mẽ hơn!"
+    },
+    "dailyReward": {
+      "giftLabel": "Quà hằng ngày",
+      "dayLabel": "Ngày {day}, {gems} đá quý",
+      "availableToday": "có thể nhận hôm nay",
+      "claimed": "đã nhận",
+      "locked": "chưa mở",
+      "gemsReceived": "Đã nhận đá quý"
+    }
   },
   "social": {
     "friends": "Bạn bè",
@@ -1109,8 +1190,8 @@
     "pronunciation": "Phát âm"
   },
   "offlineSync": {
-    "title": "Offline & Sync",
-    "settingsTitle": "Offline & Sync",
+    "title": "Ngoại tuyến & Đồng bộ",
+    "settingsTitle": "Ngoại tuyến & Đồng bộ",
     "settingsSubtitle": "Quản lý cache và đồng bộ chờ",
     "entrySubtitle": "Xem dữ liệu offline, cache và thay đổi đang chờ gửi",
     "onlineTitle": "Bạn đang online",
@@ -1282,7 +1363,8 @@
     "success": "Đã mở khóa Premium!",
     "restored": "Khôi phục mua hàng thành công!",
     "no_purchases": "Không tìm thấy giao dịch trước đó.",
-    "unavailable": "Đăng ký không khả dụng ở khu vực của bạn."
+    "unavailable": "Đăng ký không khả dụng ở khu vực của bạn.",
+    "purchaseFailed": "Thanh toán thất bại. Vui lòng thử lại."
   },
   "support": {
     "faq": "Câu hỏi thường gặp",
@@ -1301,7 +1383,12 @@
     "minutesAgo": "{minutes} phút trước",
     "hoursAgo": "{hours} giờ trước",
     "daysAgo": "{days} ngày trước",
-    "earlier": "Trước đó"
+    "earlier": "Trước đó",
+    "weeksAgo": "{weeks} tuần trước",
+    "monthsAgo": "{months} tháng trước",
+    "yearsAgo": "{years} năm trước",
+    "daysLeft": "Còn {count} ngày",
+    "hoursLeft": "Còn {count} giờ"
   },
   "shop": {
     "title": "Cửa hàng",
@@ -1323,7 +1410,10 @@
     "categorySpecial": "Đặc biệt",
     "equipNow": "Trang bị ngay",
     "avatarEquipped": "Đã trang bị avatar!",
-    "avatarEquipFailed": "Không thể trang bị avatar này."
+    "avatarEquipFailed": "Không thể trang bị avatar này.",
+    "soldOut": "HẾT HÀNG",
+    "stockLeft": "CÒN {count}",
+    "boost": "Tăng tốc"
   },
   "leaderboard": {
     "title": "Bảng xếp hạng",
@@ -1340,7 +1430,18 @@
     "sapphireDesc": "Sự chói sáng vượt bậc. Sự kiên trì của bạn đang được đền đáp.",
     "rubyDesc": "Bậc thầy của sự cống hiến. Bạn đã đến rất gần đỉnh cao!",
     "amethystDesc": "Trạng thái huyền thoại. Rất ít người đạt được đến mức này.",
-    "masterDesc": "Đỉnh cao tuyệt đối. Bạn đích thực là một bậc thầy ngôn ngữ!"
+    "masterDesc": "Đỉnh cao tuyệt đối. Bạn đích thực là một bậc thầy ngôn ngữ!",
+    "rank": {
+      "bronze": "Đồng",
+      "silver": "Bạc",
+      "gold": "Vàng",
+      "platinum": "Bạch kim",
+      "sapphire": "Lam ngọc",
+      "ruby": "Hồng ngọc",
+      "amethyst": "Thạch anh tím",
+      "master": "Bậc thầy",
+      "diamond": "Kim cương"
+    }
   },
   "newsQuiz": {
     "title": "Bài kiểm tra đọc hiểu",
@@ -1636,7 +1737,14 @@
     "voiceSpeed": "Tốc độ đọc",
     "historyUnavailable": "Lịch sử phiên tạm thời không khả dụng. Bạn vẫn có thể tiếp tục trò chuyện.",
     "offlineQueued": "Bạn đang ngoại tuyến. Tin nhắn sẽ được gửi khi có kết nối trở lại.",
-    "voiceProcessingFailed": "Xử lý giọng nói thất bại. Vui lòng thử lại."
+    "voiceProcessingFailed": "Xử lý giọng nói thất bại. Vui lòng thử lại.",
+    "nameThinking": "{name} đang suy nghĩ",
+    "nameTyping": "{name} đang nhập",
+    "greetingMessage": "Squawk! Chào nhà thám hiểm! Mình là Lexi, bạn đồng hành tiếng Anh của bạn. Cùng bắt đầu chuyến phiêu lưu học tập nhé!\n\nBạn có thể gõ hoặc nói — mình sẽ giúp bạn luyện tiếng Anh. Bạn muốn nói về chủ đề gì?",
+    "wentQuiet": "Squawk! Mình bị im bặt mất rồi. Bạn hỏi lại được không?",
+    "smallGlitch": "Squawk! Mình gặp chút trục trặc. Bạn hỏi lại được không?",
+    "somethingWrong": "Squawk! Đã có lỗi xảy ra.",
+    "voiceMessagePlaceholder": "Tin nhắn thoại..."
   },
   "youtube": {
     "subtitles": "Phụ đề",
@@ -1812,6 +1920,32 @@
       "next": "Câu tiếp theo",
       "nextWord": "Từ tiếp theo",
       "seeResults": "Xem kết quả"
+    },
+    "type": {
+      "wordScramble": {
+        "name": "Xếp chữ",
+        "description": "Sắp xếp các chữ cái bị xáo trộn thành từ"
+      },
+      "fillBlank": {
+        "name": "Điền vào chỗ trống",
+        "description": "Chọn từ đúng để hoàn thành câu"
+      },
+      "matching": {
+        "name": "Ghép cặp",
+        "description": "Ghép từ với nghĩa của chúng"
+      },
+      "spellingBee": {
+        "name": "Đánh vần",
+        "description": "Nghe và gõ lại từ bạn nghe được"
+      },
+      "grammarQuiz": {
+        "name": "Đố vui ngữ pháp",
+        "description": "Kiểm tra kiến thức ngữ pháp của bạn"
+      },
+      "hangman": {
+        "name": "Đoán chữ",
+        "description": "Đoán từ qua từng chữ cái"
+      }
     }
   },
   "learning": {
@@ -1826,7 +1960,17 @@
     "startLesson": "Bắt đầu bài học",
     "correct": "Đúng rồi!",
     "notQuite": "Chưa đúng",
-    "loadingRoadmap": "Đang tải lộ trình…"
+    "loadingRoadmap": "Đang tải lộ trình…",
+    "exerciseType": {
+      "fillBlank": "ĐIỀN VÀO CHỖ TRỐNG",
+      "translation": "DỊCH",
+      "exercise": "BÀI TẬP",
+      "multipleChoice": "TRẮC NGHIỆM",
+      "trueFalse": "ĐÚNG HAY SAI",
+      "question": "CÂU HỎI"
+    },
+    "hintTranslation": "Nhập bản dịch của bạn...",
+    "hintFillBlank": "Điền vào chỗ trống..."
   },
   "books": {
     "library": "Thư viện sách",
@@ -1869,7 +2013,19 @@
     "seeResults": "Xem kết quả",
     "quizExcellent": "Xuất sắc!",
     "quizGood": "Làm tốt lắm!",
-    "quizKeepReading": "Đọc thêm nhé!"
+    "quizKeepReading": "Đọc thêm nhé!",
+    "topic": {
+      "children": "Thiếu nhi",
+      "fantasy": "Kỳ ảo",
+      "mystery": "Trinh thám",
+      "romance": "Lãng mạn",
+      "adventure": "Phiêu lưu",
+      "fiction": "Hư cấu",
+      "history": "Lịch sử",
+      "scienceFiction": "Khoa học viễn tưởng",
+      "philosophy": "Triết học",
+      "poetry": "Thơ ca"
+    }
   },
   "news": {
     "title": "Tin tức tiếng Anh",
@@ -1989,7 +2145,10 @@
     "removeFromDeckFailed": "Không xóa được khỏi bộ thẻ",
     "alreadyInVocabulary": "\"{}\" đã có trong sổ từ vựng của bạn.",
     "savedNewWord": "Đã lưu từ mới \"{}\" vào sổ từ vựng.",
-    "savedWord": "Đã lưu \"{}\" vào sổ từ vựng."
+    "savedWord": "Đã lưu \"{}\" vào sổ từ vựng.",
+    "addToFlashcards": "Thêm vào thẻ ghi nhớ",
+    "addedToFlashcardsShort": "Đã thêm vào thẻ ghi nhớ!",
+    "wordOfDayShare": "📖 Từ của ngày: \"{word}\"\n{details}\n\nHọc tiếng Anh cùng LexiLingo!"
   },
   "legal": {
     "privacy_title": "Chính sách bảo mật",

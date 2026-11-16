@@ -101,12 +101,16 @@ class _VocabWordDetailSheetState extends State<_VocabWordDetailSheet>
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'vocabulary.flashcard'.tr(),
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color: cs.onSurface,
+                    Flexible(
+                      child: Text(
+                        'vocabulary.flashcard'.tr(),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: cs.onSurface,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     Row(
@@ -461,11 +465,15 @@ class _CardFront extends StatelessWidget {
                 color: cs.onSurfaceVariant.withValues(alpha: 0.5),
               ),
               const SizedBox(width: 6),
-              Text(
-                'vocabulary.tapToRevealDefinition'.tr(),
-                style: TextStyle(
-                  color: cs.onSurfaceVariant.withValues(alpha: 0.6),
-                  fontSize: 13,
+              Flexible(
+                child: Text(
+                  'vocabulary.tapToRevealDefinition'.tr(),
+                  style: TextStyle(
+                    color: cs.onSurfaceVariant.withValues(alpha: 0.6),
+                    fontSize: 13,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],

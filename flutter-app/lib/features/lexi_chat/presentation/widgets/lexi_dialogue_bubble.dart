@@ -273,11 +273,15 @@ class LexiDialogueBubble extends StatelessWidget {
                   color: isDark ? Colors.white60 : AppColors.textGrey,
                 ),
                 const SizedBox(width: 4),
-                Text(
-                  'lexiChat.pendingSync'.tr(),
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: isDark ? Colors.white60 : AppColors.textGrey,
+                Flexible(
+                  child: Text(
+                    'lexiChat.pendingSync'.tr(),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: isDark ? Colors.white60 : AppColors.textGrey,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
@@ -479,14 +483,18 @@ class _PronunciationScoreChip extends StatelessWidget {
           children: [
             Icon(Icons.mic_rounded, size: 12, color: color),
             const SizedBox(width: 4),
-            Text(
-              'lexiChat.pronunciationScoreLabel'.tr(
-                namedArgs: {'score': '${score.overallScore}'},
-              ),
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: color,
+            Flexible(
+              child: Text(
+                'lexiChat.pronunciationScoreLabel'.tr(
+                  namedArgs: {'score': '${score.overallScore}'},
+                ),
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],

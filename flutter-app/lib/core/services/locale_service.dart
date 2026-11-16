@@ -18,6 +18,12 @@ class LocaleService {
     'es',
   };
   static int _latestRequestId = 0;
+  static String? _appliedCode;
+
+  /// Ticks when the app moves from one language to another (not on the first
+  /// apply at startup). Text that left the widget tree in the old language —
+  /// scheduled OS notifications, stored inbox rows — re-renders on this.
+  static final ValueNotifier<int> languageSwitches = ValueNotifier<int>(0);
   static _LocaleRequest? _activeRequest;
   static _LocaleRequest? _pendingRequest;
   static Future<void> Function(String)? _debugApply;
@@ -85,6 +91,7 @@ class LocaleService {
 
     try {
       await request.apply(request.code);
+      if (request.id == _latestRequestId) _markApplied(request.code);
       if (request.id != _latestRequestId) {
         request.complete(false);
       } else {
@@ -99,6 +106,12 @@ class LocaleService {
       _activeRequest = null;
       if (_pendingRequest != null) unawaited(_drain());
     }
+  }
+
+  static void _markApplied(String code) {
+    final previous = _appliedCode;
+    _appliedCode = code;
+    if (previous != null && previous != code) languageSwitches.value++;
   }
 
   @visibleForTesting
@@ -121,6 +134,8 @@ class LocaleService {
   static void debugReset() {
     assert(_activeRequest == null && _pendingRequest == null);
     _latestRequestId = 0;
+    _appliedCode = null;
+    languageSwitches.value = 0;
     _debugApply = null;
     _debugPersist = null;
   }

@@ -462,6 +462,8 @@ class AchievementCard extends StatelessWidget {
                 ),
                 child: Text(
                   achievement.rarityDisplayName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: rarityColor,
                     fontWeight: FontWeight.bold,

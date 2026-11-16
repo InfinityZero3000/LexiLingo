@@ -343,11 +343,15 @@ class _SuggestedFriendsSection extends StatelessWidget {
             children: [
               Icon(Icons.auto_awesome, color: primaryColor, size: 18),
               const SizedBox(width: 8),
-              Text(
-                'social.suggestedFriends'.tr(),
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: AppColorRoles.textPrimary(isDark),
+              Flexible(
+                child: Text(
+                  'social.suggestedFriends'.tr(),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppColorRoles.textPrimary(isDark),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               const Spacer(),
@@ -477,11 +481,15 @@ class _NearbyLearnersSection extends StatelessWidget {
                 size: 18,
               ),
               const SizedBox(width: 8),
-              Text(
-                'social.nearbyLearners'.tr(),
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  color: AppColorRoles.textPrimary(isDark),
+              Flexible(
+                child: Text(
+                  'social.nearbyLearners'.tr(),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppColorRoles.textPrimary(isDark),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               const Spacer(),

@@ -350,7 +350,7 @@ class _StreakFlameState extends State<StreakFlame>
                     child: Text(
                       '${widget.streakCount}',
                       style: TextStyle(
-                        color: Theme.of(context).colorScheme.surface,
+                        color: AppColors.surfaceLight,
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
                       ),

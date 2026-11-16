@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/vocab_provider.dart';
@@ -41,7 +42,7 @@ class _NewDeckComposerState extends State<NewDeckComposer> {
   final _nameController = TextEditingController();
   late String _color = _randomColor();
   bool _isCreating = false;
-  String? _error;
+  UiText? _error;
 
   String _randomColor() => _deckPalette[_random.nextInt(_deckPalette.length)];
 
@@ -67,7 +68,7 @@ class _NewDeckComposerState extends State<NewDeckComposer> {
     if (deck == null) {
       setState(() {
         _isCreating = false;
-        _error = 'vocabulary.createDeckFailed'.tr();
+        _error = UiText.key('vocabulary.createDeckFailed');
       });
       return;
     }
@@ -104,7 +105,7 @@ class _NewDeckComposerState extends State<NewDeckComposer> {
             onSubmitted: (_) => _create(),
             decoration: InputDecoration(
               hintText: 'vocabulary.collectionNameHint'.tr(),
-              errorText: _error,
+              errorText: _error?.resolve(),
               counterText: '',
               isDense: true,
             ),
