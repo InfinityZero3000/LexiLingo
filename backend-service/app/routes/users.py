@@ -28,6 +28,7 @@ from app.schemas.start_learning import StartLearningRequest, StartLearningRespon
 from app.crud.course import CourseCRUD
 from app.services.start_learning_service import find_start_target
 from app.services.learner_state import bump_learner_state_epoch
+from app.services.lessons_completed import count_completed_lessons
 from app.schemas.common import MessageResponse, ApiResponse
 from app.schemas.level import (
     LevelFullResponse,
@@ -61,7 +62,7 @@ def _safe_int(value, default: int) -> int:
         return default
 
 
-def _serialize_user_response(user: User) -> UserResponse:
+def _serialize_user_response(user: User, lessons_completed: int = 0) -> UserResponse:
     normalized_level = _safe_str(getattr(user, "level", None), "A1").upper()
     role_slug = _safe_str(getattr(user, "role_slug", None), "user")
     role_level = _safe_int(getattr(user, "role_level", None), 0)
@@ -88,6 +89,7 @@ def _serialize_user_response(user: User) -> UserResponse:
         goal=getattr(user, "goal", None),
         interest=getattr(user, "interest", None),
         total_xp=_safe_int(getattr(user, "total_xp", None), 0),
+        lessons_completed=lessons_completed,
         numeric_level=_safe_int(getattr(user, "numeric_level", None), 1),
         rank=_safe_str(getattr(user, "rank", None), "bronze"),
         rank_score=float(getattr(user, "rank_score", 0) or 0),
@@ -122,7 +124,9 @@ async def get_current_user_profile(
     apply_rank_info_to_user(current_user, rank_info)
     await db.commit()
     
-    return _serialize_user_response(current_user)
+    return _serialize_user_response(
+        current_user, await count_completed_lessons(db, current_user.id)
+    )
 
 
 @router.put("/me", response_model=UserResponse)
@@ -169,7 +173,9 @@ async def update_current_user_profile(
     await db.refresh(current_user)
     await publish_level_change(level_change)
 
-    return _serialize_user_response(current_user)
+    return _serialize_user_response(
+        current_user, await count_completed_lessons(db, current_user.id)
+    )
 
 
 _AVATAR_MEDIA_DIR = Path("/app/data/media")
@@ -214,7 +220,9 @@ async def upload_current_user_avatar(
     current_user.avatar_url = f"{origin}/media/avatars/{name}"
     await db.commit()
     await db.refresh(current_user)
-    return _serialize_user_response(current_user)
+    return _serialize_user_response(
+        current_user, await count_completed_lessons(db, current_user.id)
+    )
 
 
 @router.delete("/me", response_model=MessageResponse)
