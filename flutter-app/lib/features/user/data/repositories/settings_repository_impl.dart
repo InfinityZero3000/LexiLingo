@@ -39,6 +39,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
               emailCadenceDays: remote.emailCadenceDays,
               reminderMinDueCount: remote.reminderMinDueCount,
               reminderTimezone: remote.reminderTimezone,
+              nurtureEmailsEnabled: remote.nurtureEmailsEnabled,
             ),
           );
           await localDataSource.updateSettings(merged);
@@ -119,5 +120,6 @@ class SettingsRepositoryImpl implements SettingsRepository {
       a.emailReminderEnabled != b.emailReminderEnabled ||
       a.emailCadenceDays != b.emailCadenceDays ||
       a.reminderMinDueCount != b.reminderMinDueCount ||
-      a.reminderTimezone != b.reminderTimezone;
+      a.reminderTimezone != b.reminderTimezone ||
+      a.nurtureEmailsEnabled != b.nurtureEmailsEnabled;
 }

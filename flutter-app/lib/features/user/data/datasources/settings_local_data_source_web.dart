@@ -58,6 +58,7 @@ class SettingsLocalDataSourceWeb implements SettingsLocalDataSource {
       emailCadenceDays: settings.emailCadenceDays,
       reminderMinDueCount: settings.reminderMinDueCount,
       reminderTimezone: settings.reminderTimezone,
+      nurtureEmailsEnabled: settings.nurtureEmailsEnabled,
     );
 
     return await updateSettings(updatedSettings);
@@ -83,6 +84,7 @@ class SettingsLocalDataSourceWeb implements SettingsLocalDataSource {
       emailCadenceDays: settings.emailCadenceDays,
       reminderMinDueCount: settings.reminderMinDueCount,
       reminderTimezone: settings.reminderTimezone,
+      nurtureEmailsEnabled: settings.nurtureEmailsEnabled,
     );
 
     return await updateSettings(updatedSettings);

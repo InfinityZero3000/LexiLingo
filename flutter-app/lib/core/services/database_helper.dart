@@ -41,7 +41,7 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 7,
+      version: 8,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -110,6 +110,12 @@ class DatabaseHelper {
         'ALTER TABLE settings ADD COLUMN reminderTimezone TEXT DEFAULT "Asia/Ho_Chi_Minh"',
       );
     }
+
+    if (oldVersion < 8) {
+      await db.execute(
+        'ALTER TABLE settings ADD COLUMN nurtureEmailsEnabled BOOLEAN DEFAULT 1',
+      );
+    }
   }
 
   Future _createDB(Database db, int version) async {
@@ -172,6 +178,7 @@ CREATE TABLE settings (
   emailCadenceDays INTEGER DEFAULT 7,
   reminderMinDueCount INTEGER DEFAULT 1,
   reminderTimezone TEXT DEFAULT "Asia/Ho_Chi_Minh",
+  nurtureEmailsEnabled BOOLEAN DEFAULT 1,
   FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
 )
 ''');

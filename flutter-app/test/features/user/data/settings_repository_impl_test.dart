@@ -73,4 +73,22 @@ void main() {
       expect(local.writes, 1);
     },
   );
+
+  test(
+    'turning nurture emails off counts as a change the server must hear',
+    () async {
+      final local = _Local(_stored());
+      final repo = SettingsRepositoryImpl(
+        localDataSource: local,
+        remoteDataSource: _FailingRemote(),
+      );
+
+      final result = await repo.updateSettings(
+        _stored().copyWith(nurtureEmailsEnabled: false),
+      );
+
+      expect(result.isLeft(), isTrue);
+      expect(local.stored?.nurtureEmailsEnabled, isTrue);
+    },
+  );
 }

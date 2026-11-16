@@ -14,6 +14,7 @@ import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/user/presentation/pages/legal_page.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
+import 'package:lexilingo_app/features/user/presentation/widgets/nurture_emails_switch.dart';
 
 /// Settings page for user preferences
 class SettingsPage extends StatefulWidget {
@@ -385,6 +386,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 _buildCadenceRow(context, settings, primaryColor),
               _buildMinDueCountRow(context, settings, primaryColor),
             ],
+            const Divider(),
+            NurtureEmailsSwitch(settings: settings, primaryColor: primaryColor),
           ],
         ),
       ),

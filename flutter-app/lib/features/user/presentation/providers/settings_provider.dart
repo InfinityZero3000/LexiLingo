@@ -61,6 +61,7 @@ class SettingsProvider extends ChangeNotifier {
   bool get pushReminderEnabled => _settings?.pushReminderEnabled ?? true;
   bool get emailReminderEnabled => _settings?.emailReminderEnabled ?? false;
   int get emailCadenceDays => _settings?.emailCadenceDays ?? 7;
+  bool get nurtureEmailsEnabled => _settings?.nurtureEmailsEnabled ?? true;
   int get reminderMinDueCount => _settings?.reminderMinDueCount ?? 1;
   String get reminderTimezone =>
       _settings?.reminderTimezone ?? 'Asia/Ho_Chi_Minh';
@@ -404,6 +405,37 @@ class SettingsProvider extends ChangeNotifier {
       );
       _error = e.toString();
       notifyListeners();
+    }
+  }
+
+  /// Reminder and summary emails. Optimistic; false means the server refused and the switch went back.
+  Future<bool> setNurtureEmails(bool enabled) async {
+    final previous = _settings;
+    if (previous == null || previous.nurtureEmailsEnabled == enabled) {
+      return true;
+    }
+
+    _settings = previous.copyWith(nurtureEmailsEnabled: enabled);
+    notifyListeners();
+    try {
+      final result = await _repository.updateSettings(_settings!);
+      return result.fold(
+        (failure) {
+          _settings = previous;
+          _error = failure.message;
+          notifyListeners();
+          return false;
+        },
+        (_) {
+          _error = null;
+          return true;
+        },
+      );
+    } catch (e) {
+      _settings = previous;
+      _error = e.toString();
+      notifyListeners();
+      return false;
     }
   }
 

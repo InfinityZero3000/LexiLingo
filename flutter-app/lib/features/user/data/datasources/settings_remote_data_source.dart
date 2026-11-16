@@ -23,6 +23,7 @@ class SettingsRemoteDataSource {
         'timezone': settings.reminderTimezone,
         'min_due_count': settings.reminderMinDueCount,
         'email_cadence_days': settings.emailCadenceDays,
+        'nurture_emails_enabled': settings.nurtureEmailsEnabled,
       },
       fromJson: (json) => json as Map<String, dynamic>,
     );

@@ -15,6 +15,7 @@ class SettingsModel extends Settings {
     super.emailCadenceDays,
     super.reminderMinDueCount,
     super.reminderTimezone,
+    super.nurtureEmailsEnabled,
   });
 
   factory SettingsModel.fromJson(Map<String, dynamic> json) {
@@ -53,6 +54,10 @@ class SettingsModel extends Settings {
           json['reminderTimezone'] as String? ??
           json['timezone'] as String? ??
           "Asia/Ho_Chi_Minh",
+      nurtureEmailsEnabled: _parseBool(
+        json['nurtureEmailsEnabled'] ?? json['nurture_emails_enabled'],
+        defaultValue: true,
+      ),
     );
   }
 
@@ -79,6 +84,7 @@ class SettingsModel extends Settings {
       'emailCadenceDays': emailCadenceDays,
       'reminderMinDueCount': reminderMinDueCount,
       'reminderTimezone': reminderTimezone,
+      'nurtureEmailsEnabled': nurtureEmailsEnabled ? 1 : 0,
     };
   }
 
@@ -97,6 +103,7 @@ class SettingsModel extends Settings {
       emailCadenceDays: settings.emailCadenceDays,
       reminderMinDueCount: settings.reminderMinDueCount,
       reminderTimezone: settings.reminderTimezone,
+      nurtureEmailsEnabled: settings.nurtureEmailsEnabled,
     );
   }
 }
