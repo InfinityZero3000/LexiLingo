@@ -480,10 +480,19 @@ untouched. Design, first switch and manual rollback: `docs/operations/AUTO_DEPLO
   from it. Never delete or reset it to "go source-free" — move those mounts first.
 - Compose, gateway and env changes are not in an image; roll them out by hand.
 
-**For anything auto-deploy does not cover, use `./scripts/deploy-one-shot.sh`.** It does the safe thing:
-`pull` → `up -d --remove-orphans` → per-service health wait → smoke test.
-Compose then recreates only what actually changed and leaves the old container
-running until the new one is up.
+**For anything auto-deploy does not cover, use `./scripts/deploy-one-shot.sh`.** It runs the
+same compose invocation as `auto-deploy.sh` (`docker-compose.yml` +
+`docker-compose.images.yml` + `/var/lib/lexilingo/auto-deploy/image-tags.env`), so
+backend and ai-service stay on the GHCR `sha-…` images and **it never builds**
+(`up -d --no-build`). Steps: take auto-deploy's `flock` on
+`/var/lib/lexilingo/auto-deploy/lock` → `pull` → pre-flight `up --dry-run` (prints what
+will be recreated) → `up -d --no-build --remove-orphans` → per-service health wait →
+smoke test. Compose recreates only what actually changed and leaves the old container
+running until the new one is up. Without `image-tags.env` it refuses rather than
+building; `--bootstrap-local-build` is the explicit escape for a fresh host and is itself
+refused once `image-tags.env` exists. `scripts/tests/test_deploy_one_shot.sh` (in the
+"Deploy Script Tests" CI job) fails if the script ever builds outside that flag.
+Rollback is putting the saved `image-tags.env.pre-<ts>` (in `.deploy/`) back.
 
 These three mistakes took ai-service down on 2026-08-14 and destroyed the
 rollback image. Each is banned on its own:
@@ -497,8 +506,12 @@ rollback image. Each is banned on its own:
 Also: `| tail -N` on a build hides all progress until it ends — log to a file
 and tail the file instead.
 
-**Before touching a live service**, keep an escape hatch. There is no image
-backup and no registry, so a lost tag is unrecoverable:
+**The rest of this section is the legacy local-build path** (pre-registry, and
+`--bootstrap-local-build`). On a registry host nothing is built on the VPS, and the
+rollback is the previous `sha-…` tag in `image-tags.env.prev`.
+
+**Before touching a live service on a locally built host**, keep an escape hatch.
+There is no image backup there, so a lost tag is unrecoverable:
 
 ```bash
 sudo docker tag lexilingo-ai-service:latest lexilingo-ai-service:rollback
