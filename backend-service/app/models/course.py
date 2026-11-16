@@ -54,6 +54,21 @@ def base_type_for(ui_type) -> str | None:
     return UI_TYPE_TO_BASE_TYPE.get(str(ui_type or ""))
 
 
+def sync_exercise_types(content):
+    """Set every exercise's `type` from its `ui_type`, in place.
+
+    The grader keys off `type`, so a hand-made exercise whose type disagrees
+    with its ui_type is graded by the wrong rule. Anything that writes
+    `content` without going through `Lesson.content` must call this itself.
+    """
+    exercises = content.get("exercises") if isinstance(content, dict) else None
+    for exercise in exercises if isinstance(exercises, list) else []:
+        base_type = base_type_for(exercise.get("ui_type")) if isinstance(exercise, dict) else None
+        if base_type:
+            exercise["type"] = base_type
+    return content
+
+
 def option_text(option) -> str:
     return option.get("text", "") if isinstance(option, dict) else str(option)
 
@@ -340,14 +355,7 @@ class Lesson(Base):
         (admin routes, CRUD, content agent, seeds, scripts) — it used to be
         set by hand in some paths and left at 0 in others."""
         self.total_exercises = count_exercises(content)
-        # The grader keys off `type`, so a hand-made exercise whose type
-        # disagrees with its ui_type is graded by the wrong rule.
-        exercises = content.get("exercises") if isinstance(content, dict) else None
-        for exercise in exercises if isinstance(exercises, list) else []:
-            base_type = base_type_for(exercise.get("ui_type")) if isinstance(exercise, dict) else None
-            if base_type:
-                exercise["type"] = base_type
-        return content
+        return sync_exercise_types(content)
 
     def __repr__(self) -> str:
         return f"<Lesson {self.title}>"

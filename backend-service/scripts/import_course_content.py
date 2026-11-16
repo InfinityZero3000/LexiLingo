@@ -1,14 +1,28 @@
 """
-Import course content produced by export_course_content.py.
+!!! NEVER use admin_seed_service.seed_courses for the real courses. !!!
+It DELETES and RECREATES courses, so every course, unit and lesson gets a NEW
+UUID and every learner's progress, enrolment and attempt rows point at nothing.
+This script is the only supported way to put these courses into a database:
+it keeps the ids stored in backend-service/content/courses/.
 
-Idempotent: rows are keyed by their original UUID and skipped if already
-present, so a partial run can simply be repeated. Only touches
-course_categories / courses / units / lessons — never users, enrolments or
-progress.
+Import course files produced by export_course_content.py.
 
-Run (inside the backend-service container on the target host):
-    python3 scripts/import_course_content.py --file /tmp/course_content.json
-    python3 scripts/import_course_content.py --file ... --apply   # actually write
+  default   insert rows whose id is absent; rows that already exist are left alone,
+            so edits made in production are never overwritten
+  --update  upsert: ON CONFLICT (id) DO UPDATE, for rows whose values differ
+
+Never deletes, and only touches course_categories / courses / units / lessons,
+never users, enrolments or progress. After inserting it fixes what raw SQL
+bypasses: exercise `type` from `ui_type`, lessons.total_exercises, units/courses
+total_lessons and categories.course_count.
+
+Dry run unless --apply: everything executes, then the transaction rolls back.
+
+Run (inside the backend-service container, or with DATABASE_URL set):
+    python3 scripts/import_course_content.py --dir content/courses
+    python3 scripts/import_course_content.py --dir content/courses --apply
+    python3 scripts/import_course_content.py --dir content/courses --apply --update
+    python3 scripts/import_course_content.py --file /tmp/course_content.json --apply   # legacy single file
 """
 
 import argparse
@@ -16,125 +30,58 @@ import asyncio
 import json
 import os
 import sys
-from datetime import datetime
+from pathlib import Path
 
-import asyncpg
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
-# Insert order matters: categories → courses → units → lessons (FK chain).
-ORDER = ["course_categories", "courses", "units", "lessons"]
-JSON_COLUMNS = {"tags", "content"}
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
-
-def _decode(value):
-    if isinstance(value, dict) and "__dt__" in value:
-        return datetime.fromisoformat(value["__dt__"])
-    if isinstance(value, list):
-        return [_decode(v) for v in value]
-    return value
+from app.services.course_content_import import (  # noqa: E402
+    documents_from_monolith,
+    import_documents,
+    load_course_dir,
+)
 
 
-async def import_table(conn, table: str, rows: list, apply: bool) -> tuple[int, int]:
-    if not rows:
-        return 0, 0
-
-    columns = list(rows[0].keys())
-    placeholders = ", ".join(
-        # JSON columns arrive as text and must be cast, or asyncpg rejects them.
-        f"${i + 1}::json" if columns[i] in JSON_COLUMNS else f"${i + 1}"
-        for i in range(len(columns))
-    )
-    sql = (
-        f'insert into {table} ({", ".join(columns)}) values ({placeholders}) '
-        f"on conflict (id) do nothing"
-    )
-
-    inserted = skipped = 0
-    for row in rows:
-        exists = await conn.fetchval(f"select 1 from {table} where id = $1", _decode(row["id"]))
-        if exists:
-            skipped += 1
-            continue
-        # Always execute, even on a dry run — the transaction is rolled back
-        # afterwards. A dry run that skips the INSERT proves nothing about
-        # column types, casts or constraints, which is exactly what can fail.
-        values = []
-        for col in columns:
-            v = _decode(row[col])
-            if col in JSON_COLUMNS and v is not None and not isinstance(v, str):
-                v = json.dumps(v, ensure_ascii=False)
-            values.append(v)
-        await conn.execute(sql, *values)
-        inserted += 1
-    return inserted, skipped
+def _async_dsn(dsn: str) -> str:
+    for prefix in ("postgresql://", "postgres://"):
+        if dsn.startswith(prefix):
+            return "postgresql+asyncpg://" + dsn[len(prefix):]
+    return dsn
 
 
-async def remap_categories(conn, payload: dict) -> int:
-    """Point courses at the target's own categories.
-
-    course_categories.name is UNIQUE, and the target already has categories
-    with the same names under different ids. Inserting ours would violate the
-    constraint, so reuse what is there and rewrite courses.category_id.
-    """
-    remapped = 0
-    mapping: dict[str, str] = {}
-    for cat in payload.get("course_categories", []):
-        existing = await conn.fetchval(
-            "select id from course_categories where name = $1 or slug = $2",
-            cat["name"], cat.get("slug"),
-        )
-        if existing:
-            mapping[cat["id"]] = str(existing)
-
-    if mapping:
-        kept = []
-        for cat in payload["course_categories"]:
-            if cat["id"] not in mapping:
-                kept.append(cat)
-        payload["course_categories"] = kept
-
-        for course in payload.get("courses", []):
-            old = course.get("category_id")
-            if old and old in mapping:
-                course["category_id"] = mapping[old]
-                remapped += 1
-    return remapped
-
-
-async def main(dsn: str, path: str, apply: bool) -> None:
-    payload = json.loads(open(path, encoding="utf-8").read())
-    conn = await asyncpg.connect(dsn)
+async def main(dsn: str, documents: list[dict], apply: bool, overwrite: bool) -> None:
+    engine = create_async_engine(_async_dsn(dsn))
     try:
-        async with conn.transaction():
-            remapped = await remap_categories(conn, payload)
-            print(f"  categories reused from target: {remapped} course(s) remapped")
-
-            total_new = 0
-            for table in ORDER:
-                new, skip = await import_table(conn, table, payload.get(table, []), apply)
-                total_new += new
-                print(f"  {table}: {new} new, {skip} already present")
-
-            if not apply:
-                print(
-                    f"\nDRY RUN — {total_new} rows inserted and verified, "
-                    f"now rolling back. Re-run with --apply to keep them."
-                )
-                raise asyncio.CancelledError  # roll the transaction back
-    except asyncio.CancelledError:
-        pass
+        async with AsyncSession(engine) as session:
+            report = await import_documents(session, documents, overwrite=overwrite)
+            print("\n".join(report.lines()))
+            if apply:
+                await session.commit()
+                print("\nImported. Verify with scripts/audit_course_content.py")
+            else:
+                await session.rollback()
+                print("\nDRY RUN: rows were written and verified, then rolled back. Re-run with --apply to keep them.")
     finally:
-        await conn.close()
-
-    if apply:
-        print(f"\nImported. Verify with scripts/audit_course_content.py")
+        await engine.dispose()
 
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
-    p.add_argument("--file", required=True)
+    source = p.add_mutually_exclusive_group(required=True)
+    source.add_argument("--dir", type=Path, help="directory of per-course files")
+    source.add_argument("--file", type=Path, help="single file from export_course_content.py -o")
     p.add_argument("--apply", action="store_true", help="write (default is dry run)")
-    p.add_argument("--dsn", default=os.getenv("DATABASE_URL", "").replace("+asyncpg", ""))
+    p.add_argument("--update", action="store_true", help="overwrite rows that already exist")
+    p.add_argument("--dsn", default=os.getenv("DATABASE_URL", ""))
     args = p.parse_args()
     if not args.dsn:
         sys.exit("set --dsn or DATABASE_URL")
-    asyncio.run(main(args.dsn, args.file, args.apply))
+    docs = (
+        load_course_dir(args.dir)
+        if args.dir
+        else documents_from_monolith(json.loads(args.file.read_text(encoding="utf-8")))
+    )
+    if not docs:
+        sys.exit("no course files found")
+    asyncio.run(main(args.dsn, docs, args.apply, args.update))
