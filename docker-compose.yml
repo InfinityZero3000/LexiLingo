@@ -3,6 +3,10 @@ services:
     image: nginx:1.27-alpine
     container_name: lexilingo-gateway
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    # Measured ~11 MiB resident; 128m leaves >10x for gzip and proxy buffers.
+    mem_limit: 128m
     depends_on:
       backend-service:
         condition: service_started
@@ -100,6 +104,9 @@ services:
     image: redis:7-alpine
     container_name: lexilingo-redis
     restart: unless-stopped
+    # Must stay above --maxmemory 512mb plus AOF-rewrite overhead, or the kernel
+    # kills redis before allkeys-lru gets to evict. Measured ~9 MiB resident.
+    mem_limit: 768m
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set in .env.production.secrets}
     command: /bin/sh -c 'redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru --requirepass "$$REDIS_PASSWORD"'
@@ -125,6 +132,8 @@ services:
     # across all replicas via Docker's internal DNS round-robin.
     container_name: lexilingo-backend-service
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:
@@ -164,9 +173,13 @@ services:
       # admin dashboard can show backup health; the dumps themselves stay unreachable.
       - /var/lib/lexilingo:/var/lib/lexilingo:ro
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)\""]
+      # Readiness, not liveness: /health/ready also runs SELECT 1 and pings redis, and answers 503
+      # (urlopen raises) when either is down. Probe timeout 8s inside a 12s check timeout, and 5
+      # failures at 30s = 150s of grace, so a slow database does not flap auto-deploy's verify step
+      # (it waits up to HEALTH_TIMEOUT_SEC=300 for "healthy").
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=8)\""]
       interval: 30s
-      timeout: 5s
+      timeout: 12s
       retries: 5
       start_period: 60s
     logging:
@@ -183,6 +196,10 @@ services:
       dockerfile: Dockerfile.prod
     container_name: lexilingo-reminder-worker
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    # Measured ~139 MiB resident (concurrency=1).
+    mem_limit: 512m
     command: celery -A app.core.celery_app:celery_app worker --loglevel=INFO --concurrency=1
     env_file:
       - .env.production
@@ -225,6 +242,10 @@ services:
       dockerfile: Dockerfile.prod
     container_name: lexilingo-reminder-beat
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    # Measured ~113 MiB resident.
+    mem_limit: 384m
     command: celery -A app.core.celery_app:celery_app beat --loglevel=INFO
     env_file:
       - .env.production
@@ -258,6 +279,8 @@ services:
       dockerfile: Dockerfile.prod
     container_name: lexilingo-ai-service
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:
