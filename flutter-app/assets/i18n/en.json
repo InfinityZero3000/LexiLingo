@@ -1641,6 +1641,9 @@
   "youtube": {
     "subtitles": "Subtitles",
     "noSubtitles": "No subtitles available for this video",
+    "noSubtitlesHint": "Try another video, or open this one on YouTube to use its own subtitles.",
+    "subtitlesUnavailable": "Subtitles could not be loaded",
+    "subtitlesUnavailableHint": "This is usually temporary. Check your connection and try again.",
     "saveWord": "Save Word",
     "exploreTitle": "English Videos",
     "channelsTitle": "English Learning Channels",

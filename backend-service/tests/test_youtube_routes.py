@@ -390,7 +390,7 @@ class TestGetCaptions:
 
     @pytest.mark.asyncio
     async def test_permanent_cache_key_includes_video_and_lang(self, no_db_client: AsyncClient):
-        """Verify cache key format is youtube:captions:{video_id}:{lang}"""
+        """Verify cache key format is youtube:captions:v2:{video_id}:{lang}"""
         mock_result = MagicMock()
         mock_result.data = []
         mock_result.source = "db"
@@ -406,7 +406,7 @@ class TestGetCaptions:
             await no_db_client.get("/api/v1/youtube/captions/myVideoId123?lang=en")
 
         call_kwargs = mock_cache_instance.get_or_fetch.call_args.kwargs
-        assert call_kwargs["cache_key"] == "youtube:captions:myVideoId123:en"
+        assert call_kwargs["cache_key"] == "youtube:captions:v2:myVideoId123:en"
         assert call_kwargs["cost"] == 0
 
 
@@ -802,3 +802,116 @@ def test_unescape_text_decodes_html_entities_in_titles():
 
     out = _unescape_text({"title": "I&#39;m scared &amp; won&#39;t", "channel_title": "BBC", "video_id": "x"})
     assert out == {"title": "I'm scared & won't", "channel_title": "BBC"}
+
+
+# ============================================================================
+# Captions: "no captions" vs "YouTube could not be asked"
+# ============================================================================
+
+def _fake_transcript_api(monkeypatch, *, raises):
+    """Swap youtube_transcript_api for a module whose fetch/list raise `raises`."""
+    import sys
+    import types
+
+    names = (
+        "NoTranscriptFound", "TranscriptsDisabled", "VideoUnavailable",
+        "VideoUnplayable", "InvalidVideoId", "AgeRestricted", "RequestBlocked",
+    )
+    module = types.ModuleType("youtube_transcript_api")
+    for name in names:
+        setattr(module, name, type(name, (Exception,), {}))
+    api = MagicMock()
+    api.fetch.side_effect = getattr(module, raises)()
+    api.list.return_value = []
+    module.YouTubeTranscriptApi = MagicMock(return_value=api)
+    monkeypatch.setitem(sys.modules, "youtube_transcript_api", module)
+
+
+@pytest.mark.parametrize("error", ["TranscriptsDisabled", "NoTranscriptFound", "VideoUnavailable"])
+def test_video_without_captions_is_an_empty_answer(monkeypatch, error):
+    from app.routes.youtube import _get_transcript_sync
+
+    _fake_transcript_api(monkeypatch, raises=error)
+
+    assert list(_get_transcript_sync("vid", "en")) == []
+
+
+def test_youtube_blocking_us_is_not_an_empty_answer(monkeypatch):
+    from app.routes.youtube import CaptionsUnavailable, _get_transcript_sync
+
+    _fake_transcript_api(monkeypatch, raises="RequestBlocked")
+
+    with pytest.raises(CaptionsUnavailable):
+        _get_transcript_sync("vid", "en")
+
+
+@pytest.mark.asyncio
+async def test_blocked_captions_fall_back_to_timedtext_then_raise(monkeypatch):
+    from app.routes import youtube
+
+    monkeypatch.setattr(
+        youtube, "_get_transcript_sync",
+        MagicMock(side_effect=youtube.CaptionsUnavailable("RequestBlocked")),
+    )
+    monkeypatch.setattr(youtube, "_fetch_captions_timedtext", AsyncMock(return_value=[]))
+
+    with pytest.raises(youtube.CaptionsUnavailable):
+        await youtube._fetch_captions_transcript_api("vid", "en")
+
+
+class TestCaptionsStatus:
+    async def _get(self, client, *, data=None, raises=None):
+        from app.routes.youtube import CaptionsUnavailable  # noqa: F401
+
+        result = MagicMock(data=data, source="api", is_stale=False)
+        with patch("app.routes.youtube.APICacheService") as MockCache:
+            cache = AsyncMock()
+            if raises:
+                cache.get_or_fetch.side_effect = raises
+            else:
+                cache.get_or_fetch.return_value = result
+            MockCache.return_value = cache
+            resp = await client.get("/api/v1/youtube/captions/vid")
+        return resp, cache
+
+    @pytest.mark.asyncio
+    async def test_segments_are_ok(self, no_db_client):
+        resp, _ = await self._get(no_db_client, data=[{"start_ms": 0, "end_ms": 1, "text": "Hi"}])
+        assert resp.status_code == 200
+        assert resp.json()["status"] == "ok"
+
+    @pytest.mark.asyncio
+    async def test_empty_answer_is_none(self, no_db_client):
+        resp, _ = await self._get(no_db_client, data=[])
+        assert resp.json()["status"] == "none"
+
+    @pytest.mark.asyncio
+    async def test_blocked_is_unavailable_not_an_error(self, no_db_client):
+        from app.routes.youtube import CaptionsUnavailable
+
+        resp, _ = await self._get(no_db_client, raises=CaptionsUnavailable("RequestBlocked"))
+        assert resp.status_code == 200
+        body = resp.json()
+        assert body["status"] == "unavailable"
+        assert body["segments"] == []
+
+    @pytest.mark.asyncio
+    async def test_cache_key_is_versioned_past_the_poisoned_entries(self, no_db_client):
+        _, cache = await self._get(no_db_client, data=[])
+        assert cache.get_or_fetch.call_args.kwargs["cache_key"] == "youtube:captions:v2:vid:en"
+
+
+def test_dead_api_key_is_a_503_not_the_callers_bad_input():
+    import httpx
+    from fastapi import HTTPException
+    from app.routes.youtube import _raise_youtube_api_error
+
+    response = httpx.Response(
+        400,
+        json={"error": {"code": 400, "message": "API key not valid. Please pass a valid API key.",
+                        "details": [{"reason": "API_KEY_INVALID"}]}},
+    )
+    with pytest.raises(HTTPException) as caught:
+        _raise_youtube_api_error(response)
+
+    assert caught.value.status_code == 503

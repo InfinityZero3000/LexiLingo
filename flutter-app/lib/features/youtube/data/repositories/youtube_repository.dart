@@ -25,7 +25,8 @@ class YouTubeRepository {
   /// Get curated English learning YouTube channels.
   Future<List<YouTubeChannel>> getCuratedChannels({String? category}) async {
     // v4: bumped to force re-fetch after thumbnail proxy was fixed server-side.
-    final cacheKey = 'youtube:channels:v5${category != null ? ':$category' : ''}';
+    final cacheKey =
+        'youtube:channels:v5${category != null ? ':$category' : ''}';
 
     final data = await _cache.getOrFetch(
       key: cacheKey,
@@ -85,14 +86,18 @@ class YouTubeRepository {
     return YouTubeSearchResult.fromJson(data);
   }
 
-  // ──── Captions (permanent cache) ────
+  // ──── Captions ────
 
   /// Get captions/subtitles for a video.
-  Future<List<CaptionSegment>> getCaptions(
+  ///
+  /// A lookup the backend could not make ("unavailable") is thrown out of the
+  /// cache's fetch so it is never stored as "no subtitles"; a failed network
+  /// call is the same case and reads back as unavailable too.
+  Future<CaptionsResult> getCaptions(
     String videoId, {
     String lang = 'en',
   }) async {
-    final cacheKey = 'youtube:captions:$videoId:$lang';
+    final cacheKey = 'youtube:captions:v2:$videoId:$lang';
 
     final data = await _cache.getOrFetch(
       key: cacheKey,
@@ -103,15 +108,23 @@ class YouTubeRepository {
         ).replace(queryParameters: {'lang': lang});
         final response = await _client.get(uri);
         _checkResponse(response);
-        return jsonDecode(response.body) as Map<String, dynamic>;
+        final body = jsonDecode(response.body) as Map<String, dynamic>;
+        if (body['status'] == 'unavailable') {
+          throw StateError('captions unavailable');
+        }
+        return body;
       },
     );
 
-    if (data == null) return [];
+    if (data == null) return const CaptionsResult.unavailable();
 
-    return (data['segments'] as List<dynamic>? ?? [])
+    final segments = (data['segments'] as List<dynamic>? ?? [])
         .map((s) => CaptionSegment.fromJson(s as Map<String, dynamic>))
         .toList();
+    return CaptionsResult(
+      segments,
+      segments.isEmpty ? CaptionsStatus.none : CaptionsStatus.ready,
+    );
   }
 
   // ──── Word Translation / Dictionary Lookup ────
@@ -140,7 +153,9 @@ class YouTubeRepository {
             'lang': lang,
             if (context.isNotEmpty) 'context': context,
           };
-          final uri = Uri.parse('$_baseUrl/translate').replace(queryParameters: params);
+          final uri = Uri.parse(
+            '$_baseUrl/translate',
+          ).replace(queryParameters: params);
           final response = await _client.get(uri);
           if (response.statusCode >= 400) {
             return {
