@@ -1749,6 +1749,9 @@
   "youtube": {
     "subtitles": "Phụ đề",
     "noSubtitles": "Video này không có phụ đề",
+    "noSubtitlesHint": "Hãy thử video khác, hoặc mở video này trên YouTube để dùng phụ đề có sẵn.",
+    "subtitlesUnavailable": "Không tải được phụ đề",
+    "subtitlesUnavailableHint": "Thường chỉ là tạm thời. Kiểm tra kết nối rồi thử lại.",
     "saveWord": "Lưu từ",
     "exploreTitle": "Video tiếng Anh",
     "channelsTitle": "Kênh học tiếng Anh",

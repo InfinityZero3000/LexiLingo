@@ -47,7 +47,7 @@ feedparser>=6.0.14
 trafilatura>=2.3.1
 
 # YouTube captions (no OAuth needed — uses public transcript endpoints)
-youtube-transcript-api>=0.6.3
+youtube-transcript-api>=1.0.0
 
 # Redis (async client — used by quota manager and rate limiting)
 redis>=8.1.0,<9.0.0

@@ -94,6 +94,20 @@ class YouTubeChannel {
   }
 }
 
+/// Where a video's subtitles stand. [none] is a real answer (the video has no
+/// captions); [unavailable] means YouTube could not be asked, so retrying can work.
+enum CaptionsStatus { loading, ready, none, unavailable }
+
+class CaptionsResult {
+  final List<CaptionSegment> segments;
+  final CaptionsStatus status;
+
+  const CaptionsResult(this.segments, this.status);
+  const CaptionsResult.unavailable()
+    : segments = const [],
+      status = CaptionsStatus.unavailable;
+}
+
 /// Caption segment — a single subtitle line with timing.
 class CaptionSegment {
   final int startMs;

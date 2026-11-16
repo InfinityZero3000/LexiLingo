@@ -1613,6 +1613,9 @@
   "youtube": {
     "subtitles": "Subtítulos",
     "noSubtitles": "No hay subtítulos disponibles para este vídeo.",
+    "noSubtitlesHint": "Prueba otro vídeo o ábrelo en YouTube para usar sus propios subtítulos.",
+    "subtitlesUnavailable": "No se pudieron cargar los subtítulos",
+    "subtitlesUnavailableHint": "Suele ser temporal. Revisa tu conexión e inténtalo de nuevo.",
     "saveWord": "guardar palabra",
     "exploreTitle": "Vídeos en inglés",
     "channelsTitle": "Canales de aprendizaje de inglés",

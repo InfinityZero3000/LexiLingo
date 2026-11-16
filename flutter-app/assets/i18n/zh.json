@@ -1613,6 +1613,9 @@
   "youtube": {
     "subtitles": "字幕",
     "noSubtitles": "该视频没有可用字幕",
+    "noSubtitlesHint": "请尝试其他视频，或在 YouTube 中打开以使用其自带字幕。",
+    "subtitlesUnavailable": "无法加载字幕",
+    "subtitlesUnavailableHint": "这通常是暂时的。请检查网络后重试。",
     "saveWord": "保存单词",
     "exploreTitle": "英语视频",
     "channelsTitle": "英语学习频道",

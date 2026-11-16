@@ -930,6 +930,9 @@ abstract class  LocaleKeys {
   static const lexiChat = 'lexiChat';
   static const youtube_subtitles = 'youtube.subtitles';
   static const youtube_noSubtitles = 'youtube.noSubtitles';
+  static const youtube_noSubtitlesHint = 'youtube.noSubtitlesHint';
+  static const youtube_subtitlesUnavailable = 'youtube.subtitlesUnavailable';
+  static const youtube_subtitlesUnavailableHint = 'youtube.subtitlesUnavailableHint';
   static const youtube_saveWord = 'youtube.saveWord';
   static const youtube_exploreTitle = 'youtube.exploreTitle';
   static const youtube_channelsTitle = 'youtube.channelsTitle';

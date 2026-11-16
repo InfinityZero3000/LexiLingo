@@ -1613,6 +1613,9 @@
   "youtube": {
     "subtitles": "자막",
     "noSubtitles": "이 동영상에는 자막이 없습니다.",
+    "noSubtitlesHint": "다른 동영상을 시도하거나 YouTube에서 열어 기본 자막을 사용해 보세요.",
+    "subtitlesUnavailable": "자막을 불러오지 못했습니다",
+    "subtitlesUnavailableHint": "대개 일시적인 문제입니다. 연결을 확인하고 다시 시도해 주세요.",
     "saveWord": "단어 저장",
     "exploreTitle": "영어 비디오",
     "channelsTitle": "영어 학습 채널",
