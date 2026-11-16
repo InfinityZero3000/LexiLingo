@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/utils/chat_input_limit.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:easy_localization/easy_localization.dart';
@@ -504,6 +505,10 @@ class LexiChatProvider extends ChangeNotifier {
         notifyListeners();
         return;
       }
+      if (isMessageTooLongError(e)) {
+        _rejectTooLongMessage(requestId, e);
+        return;
+      }
       _error = 'lexiChat.offlineQueued'.tr();
       logError(_tag, 'Send failed, message queued: $e');
 
@@ -877,8 +882,23 @@ class LexiChatProvider extends ChangeNotifier {
       return;
     }
 
+    if (isMessageTooLongError(reason)) {
+      _error = messageTooLongText();
+      logWarn(_tag, 'Stream rejected as too long: $reason');
+      notifyListeners();
+      return;
+    }
+
     notifyListeners();
     await sendMessage(text, userId: userId);
+  }
+
+  // The server will refuse this text every time, so it is neither queued nor retried.
+  void _rejectTooLongMessage(String requestId, Object cause) {
+    _messages.removeWhere((m) => m.id == requestId);
+    _error = messageTooLongText();
+    logWarn(_tag, 'Send rejected as too long: $cause');
+    notifyListeners();
   }
 
   Future<void> sendVoiceMessage(String audioBase64, {String? userId}) async {

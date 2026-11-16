@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/utils/chat_input_limit.dart';
 import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'dart:async';
@@ -1188,6 +1189,8 @@ class _LexiChatPageState extends State<LexiChatPage>
                     onSubmitted: (_) => _sendMessage(),
                     maxLines: 4,
                     minLines: 1,
+                    inputFormatters: chatInputFormatters,
+                    buildCounter: buildChatInputCounter,
                     style: TextStyle(
                       fontSize: 14,
                       color: isDark ? Colors.white : AppColors.textDark,

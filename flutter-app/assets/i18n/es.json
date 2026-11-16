@@ -911,6 +911,7 @@
     "timeout": "Tiempo de espera agotado",
     "noInternet": "Sin conexión a Internet",
     "genericRetry": "Se produjo un error. Inténtalo de nuevo.",
+    "messageTooLong": "Ese mensaje es demasiado largo. Mantenlo por debajo de {max} caracteres.",
     "sessionExpired": "Tu sesión ha caducado. Inicia sesión de nuevo.",
     "sessionExpiredOnServer": "Tu sesión caducó en el servidor. Se ha iniciado una nueva.",
     "sessionOtherAccount": "Esta sesión pertenece a otra cuenta. Inicia un chat nuevo.",

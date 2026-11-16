@@ -1,3 +1,5 @@
+import 'package:lexilingo_app/core/error/failures.dart';
+import 'package:lexilingo_app/core/utils/chat_input_limit.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -379,7 +381,13 @@ class StoryProvider extends ChangeNotifier {
 
     return result.fold(
       (failure) {
-        _sessionError = failure.message;
+        if (failure is ValidationFailure ||
+            isMessageTooLongError(failure.message)) {
+          _messages.removeWhere((m) => m.id == userMessage.id);
+          _sessionError = messageTooLongText();
+        } else {
+          _sessionError = failure.message;
+        }
         _isSendingMessage = false;
         notifyListeners();
         return false;
@@ -555,6 +563,12 @@ class StoryProvider extends ChangeNotifier {
 
     if (_isUnauthorizedError(reason)) {
       _sessionError = 'errors.sessionExpired'.tr();
+      notifyListeners();
+      return;
+    }
+
+    if (isMessageTooLongError(reason)) {
+      _sessionError = messageTooLongText();
       notifyListeners();
       return;
     }

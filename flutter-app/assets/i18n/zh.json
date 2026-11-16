@@ -911,6 +911,7 @@
     "timeout": "请求超时",
     "noInternet": "没有网络连接",
     "genericRetry": "出错了，请重试。",
+    "messageTooLong": "消息太长了，请控制在 {max} 个字符以内。",
     "sessionExpired": "登录会话已过期，请重新登录。",
     "sessionExpiredOnServer": "会话已在服务器上过期，已为你开始新会话。",
     "sessionOtherAccount": "此会话属于其他账号，请开始新的聊天。",

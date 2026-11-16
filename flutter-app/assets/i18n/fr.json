@@ -911,6 +911,7 @@
     "timeout": "Délai de requête dépassé",
     "noInternet": "Pas de connexion Internet",
     "genericRetry": "Une erreur est survenue. Veuillez réessayer.",
+    "messageTooLong": "Ce message est trop long. Gardez-le sous {max} caractères.",
     "sessionExpired": "Votre session a expiré. Veuillez vous reconnecter.",
     "sessionExpiredOnServer": "Votre session a expiré sur le serveur. Une nouvelle a été ouverte.",
     "sessionOtherAccount": "Cette session appartient à un autre compte. Démarrez une nouvelle conversation.",
