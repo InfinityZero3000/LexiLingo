@@ -93,18 +93,20 @@ CURATED_PODCASTS = [
         "language": "en",
     },
     # B1-B2 — normal conversational speed
+    # voanews.com answers 403 to the VPS's datacenter IP range whatever the
+    # User-Agent, so the VOA feeds cannot be served from here.
     {
-        "id": hashlib.md5(b"https://learningenglish.voanews.com/podcast/?zoneId=1689&pod_play_count=20").hexdigest()[:12],
-        "title": "VOA Learning English",
-        "author": "Voice of America",
+        "id": hashlib.md5(b"https://podcasts.files.bbci.co.uk/p02pc9zn.rss").hexdigest()[:12],
+        "title": "The English We Speak",
+        "author": "BBC Learning English",
         "description": (
-            "Clear, slow-paced English news and stories using limited vocabulary."
-            " Formerly VOA Special English — perfect for building fluency."
+            "Everyday expressions and real conversations. Every week a new phrase"
+            " or word you can use right away, explained in short, clear episodes."
         ),
-        "feed_url": "https://learningenglish.voanews.com/podcast/?zoneId=1689&pod_play_count=20",
-        "artwork_url": "https://gdb.voanews.com/0684e143-ca54-4c31-bbc7-c26e19b2fb70.jpg",
-        "episode_count": 250,
-        "categories": ["education", "news"],
+        "feed_url": "https://podcasts.files.bbci.co.uk/p02pc9zn.rss",
+        "artwork_url": "http://ichef.bbci.co.uk/images/ic/3000x3000/p0hxql2c.jpg",
+        "episode_count": 800,
+        "categories": ["education", "conversation"],
         "cefr_level": "B1",
         "language": "en",
     },
