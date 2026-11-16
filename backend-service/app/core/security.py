@@ -13,7 +13,7 @@ import anyio
 import bcrypt
 import hashlib
 
-from jose import JWTError, jwt
+import jwt
 
 from app.core.config import settings
 
@@ -135,9 +135,10 @@ def decode_token(token: str) -> Optional[Dict[str, Any]]:
             algorithms=[settings.ALGORITHM],
             issuer=settings.JWT_ISSUER,
             audience=settings.JWT_AUDIENCE,
+            options={"verify_iat": False},
         )
         return payload
-    except JWTError:
+    except jwt.PyJWTError:
         return None
 
 
@@ -148,8 +149,8 @@ def is_locally_issued_token(token: str) -> bool:
     access — so a forged `iss` costs the attacker a path, not us a check.
     """
     try:
-        claims = jwt.get_unverified_claims(token)
-    except (JWTError, ValueError, AttributeError):
+        claims = jwt.decode(token, options={"verify_signature": False})
+    except (jwt.PyJWTError, ValueError, AttributeError):
         return False
     return claims.get("iss") == settings.JWT_ISSUER
 
@@ -193,7 +194,7 @@ def decode_verification_payload(token: str, purpose: str) -> Optional[Dict[str, 
     """Claims of a verification token of the given purpose, or None."""
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-    except JWTError:
+    except jwt.PyJWTError:
         return None
     if payload.get("type") != "verification" or payload.get("purpose") != purpose:
         return None
@@ -227,7 +228,7 @@ def decode_verification_token(token: str, purpose: str) -> Optional[str]:
             return None
         
         return payload.get("sub")
-    except JWTError:
+    except jwt.PyJWTError:
         return None
 
 

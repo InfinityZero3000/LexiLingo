@@ -7,7 +7,7 @@ import pytest
 import redis.asyncio as redis
 from fastapi import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
-from jose import jwt
+import jwt
 from pydantic import ValidationError
 
 from api.core import auth_revocation

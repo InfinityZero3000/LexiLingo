@@ -23,7 +23,7 @@ tzdata>=2025.2
 email-validator>=2.3.0
 
 # Security
-python-jose[cryptography]>=3.5.0
+PyJWT[crypto]>=2.10
 passlib[bcrypt]>=1.7.4
 bcrypt>=5.0.0
 firebase-admin>=7.7.0

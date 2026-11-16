@@ -11,12 +11,18 @@ from datetime import datetime, timedelta, timezone
 import pytest
 from fastapi import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
-from jose import jwt
+import jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.dependencies import get_current_user
-from app.core.security import create_access_token, create_refresh_token, decode_token
+from app.core.security import (
+    create_access_token,
+    create_refresh_token,
+    decode_token,
+    decode_verification_token,
+    is_locally_issued_token,
+)
 
 
 def _sign(claims: dict) -> str:
@@ -118,3 +124,48 @@ async def test_refresh_endpoint_rejects_wrong_audience_refresh_token(async_clien
     )
 
     assert response.status_code == 401
+
+
+# Minted once by python-jose 3.5.0 (HS256) before the PyJWT switch; they must keep verifying.
+_JOSE_SECRET = "compat-test-secret-0123456789abcdef"
+_JOSE_ACCESS = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDEiLCJ0eXBlIjoiYWNjZXNzIiwiaXNzIjoibGV4aWxpbmdvLWJhY2tlbmQiLCJhdWQiOiJsZXhpbGluZ28tc2VydmljZXMiLCJpYXQiOjE3MDAwMDAwMDAsImp0aSI6IjAxMjM0NTY3ODlhYmNkZWYwMTIzNDU2Nzg5YWJjZGVmIiwiZXhwIjo0MTAyNDQ0ODAwfQ.B-p_QwhWQ09_CWyaFCd_0d2wWETXft6wzg-ZEVzAGA8"
+_JOSE_EXPIRED = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDEiLCJ0eXBlIjoiYWNjZXNzIiwiaXNzIjoibGV4aWxpbmdvLWJhY2tlbmQiLCJhdWQiOiJsZXhpbGluZ28tc2VydmljZXMiLCJpYXQiOjE3MDAwMDAwMDAsImp0aSI6IjAxMjM0NTY3ODlhYmNkZWYwMTIzNDU2Nzg5YWJjZGVmIiwiZXhwIjoxNzAwMDAwMzAwfQ.ZAjLVtoPCXkt76dNTwAB89-PQUt39lJjYC19IsghNJk"
+_JOSE_WRONG_SIGNATURE = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDEiLCJ0eXBlIjoiYWNjZXNzIiwiaXNzIjoibGV4aWxpbmdvLWJhY2tlbmQiLCJhdWQiOiJsZXhpbGluZ28tc2VydmljZXMiLCJpYXQiOjE3MDAwMDAwMDAsImp0aSI6IjAxMjM0NTY3ODlhYmNkZWYwMTIzNDU2Nzg5YWJjZGVmIiwiZXhwIjo0MTAyNDQ0ODAwfQ.1mqU4UcT4LnpYPjhC8YSAR1E1ZQkXsYMvuxlIEdunwk"
+_JOSE_VERIFICATION = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDEiLCJ0eXBlIjoidmVyaWZpY2F0aW9uIiwicHVycG9zZSI6InBhc3N3b3JkX3Jlc2V0IiwiaWF0IjoxNzAwMDAwMDAwLCJleHAiOjQxMDI0NDQ4MDB9.izaVHONHdsHvoCuqzKKJ0R_3ymjgxPFtGbCcaERbJME"
+
+
+@pytest.fixture
+def jose_secret(monkeypatch):
+    monkeypatch.setattr(settings, "SECRET_KEY", _JOSE_SECRET)
+    monkeypatch.setattr(settings, "ALGORITHM", "HS256")
+
+
+def test_token_minted_by_python_jose_still_verifies(jose_secret):
+    payload = decode_token(_JOSE_ACCESS)
+    assert payload is not None
+    assert payload["sub"] == "00000000-0000-0000-0000-000000000001"
+    assert payload["type"] == "access"
+    assert is_locally_issued_token(_JOSE_ACCESS)
+
+
+def test_expired_python_jose_token_is_rejected(jose_secret):
+    assert decode_token(_JOSE_EXPIRED) is None
+
+
+def test_python_jose_token_with_wrong_signature_is_rejected(jose_secret):
+    assert decode_token(_JOSE_WRONG_SIGNATURE) is None
+
+
+def test_python_jose_verification_token_still_verifies(jose_secret):
+    assert decode_verification_token(_JOSE_VERIFICATION, "password_reset") == (
+        "00000000-0000-0000-0000-000000000001"
+    )
+    assert decode_verification_token(_JOSE_VERIFICATION, "email_verify") is None
+    assert decode_token(_JOSE_VERIFICATION) is None
+
+
+def test_unsigned_and_garbage_tokens_are_rejected(jose_secret):
+    unsigned = jwt.encode(_base_claims(), None, algorithm="none")
+    assert decode_token(unsigned) is None
+    assert decode_token("not-a-jwt") is None
+    assert not is_locally_issued_token("not-a-jwt")

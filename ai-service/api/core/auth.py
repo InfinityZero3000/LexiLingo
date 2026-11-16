@@ -7,9 +7,9 @@ import logging
 import os
 from typing import Any, Optional
 
+import jwt
 from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import APIKeyHeader, HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
 from pydantic import BaseModel
 
 from api.core.auth_revocation import revocation_reason
@@ -78,13 +78,10 @@ def _decode_backend_jwt(token: str) -> Optional[dict[str, Any]]:
             algorithms=[_jwt_algorithm()],
             audience=audience,
             issuer=issuer,
-            options={
-                "verify_aud": True,
-                "verify_iss": True,
-                "leeway": _jwt_leeway_seconds(),
-            },
+            leeway=_jwt_leeway_seconds(),
+            options={"verify_iat": False},
         )
-    except JWTError:
+    except jwt.PyJWTError:
         return None
 
     sub = payload.get("sub")
