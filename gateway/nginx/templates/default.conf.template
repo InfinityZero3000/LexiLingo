@@ -71,8 +71,8 @@ geo $block_ip {
 map $http_origin $cors_allow_origin {
     default "";
     ~^https?://([a-zA-Z0-9-]+\.)*lexilingo\.me$ $http_origin;
-    ~^https?://([a-zA-Z0-9-]+\.)*vercel\.app(:\d+)?$ $http_origin;
-    ~^https?://([a-zA-Z0-9-]+\.)*netlify\.app(:\d+)?$ $http_origin;
+    # The project's production Vercel alias; exact match only, never *.vercel.app.
+    https://lexilingo.vercel.app $http_origin;
 }
 
 # Used to detect OPTIONS (CORS preflight) requests at server level
@@ -245,10 +245,9 @@ server {
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_prefer_server_ciphers on;
 
-    add_header X-Frame-Options SAMEORIGIN always;
-    add_header X-Content-Type-Options nosniff always;
-    add_header Referrer-Policy strict-origin-when-cross-origin always;
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    # A location that declares its own add_header drops every inherited one, so
+    # these two snippets are re-included wherever that happens.
+    include /etc/nginx/snippets/security-headers.conf;
     # CORS headers at server level — inherited by `if { return }` blocks
     # (location blocks that define their own add_header must re-include these)
     include /etc/nginx/snippets/cors-headers.conf;
@@ -297,6 +296,7 @@ server {
     error_page 502 503 504 @upstream_error;
     location @upstream_error {
         default_type application/json;
+        include /etc/nginx/snippets/security-headers.conf;
         add_header Access-Control-Allow-Origin $cors_allow_origin always;
         add_header Access-Control-Allow-Credentials "true" always;
         add_header Access-Control-Allow-Methods "GET,POST,PUT,PATCH,DELETE,OPTIONS" always;
@@ -307,6 +307,7 @@ server {
 
     location @rate_limited {
         default_type application/json;
+        include /etc/nginx/snippets/security-headers.conf;
         add_header Retry-After 60 always;
         add_header Access-Control-Allow-Origin $cors_allow_origin always;
         add_header Access-Control-Allow-Credentials "true" always;
@@ -422,6 +423,7 @@ server {
         proxy_buffering off;
         proxy_cache off;
         include /etc/nginx/snippets/cors-headers.conf;
+        include /etc/nginx/snippets/security-headers.conf;
         add_header X-Accel-Buffering no always;
         add_header Cache-Control no-cache always;
         add_header Alt-Svc 'clear' always; # Disable QUIC/HTTP3 for SSE — prevents ERR_QUIC_PROTOCOL_ERROR
