@@ -49,7 +49,7 @@ assert_not_shrunk "${PG_FILE}" "postgres backup"
 
 log "Creating MongoDB backup (${MONGO_DB}) -> ${MONGO_FILE}"
 ${DOCKER_COMPOSE_CMD} exec -T -e MONGO_DB="${MONGO_DB}" mongodb sh -lc \
-  'mongodump --archive --gzip --db "$MONGO_DB"' > "${MONGO_FILE}"
+  'mongodump --uri "mongodb://$MONGO_INITDB_ROOT_USERNAME:$MONGO_INITDB_ROOT_PASSWORD@localhost:27017/?authSource=admin" --archive --gzip --db "$MONGO_DB"' > "${MONGO_FILE}"
 assert_gzip_intact "${MONGO_FILE}" "mongo backup"
 assert_not_shrunk "${MONGO_FILE}" "mongo backup"
 
