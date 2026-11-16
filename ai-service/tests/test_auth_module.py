@@ -1,3 +1,7 @@
+import base64
+import hashlib
+import hmac
+import json
 import os
 
 import pytest
@@ -107,12 +111,39 @@ async def test_legacy_ai_analyze_requires_bearer_token():
     assert response.status_code == 401
 
 
-# Minted once by python-jose 3.5.0 (HS256) before the PyJWT switch; they must keep verifying.
-_JOSE_SECRET = "compat-test-secret-0123456789abcdef"
-_JOSE_ACCESS = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDEiLCJ0eXBlIjoiYWNjZXNzIiwiaXNzIjoibGV4aWxpbmdvLWJhY2tlbmQiLCJhdWQiOiJsZXhpbGluZ28tc2VydmljZXMiLCJpYXQiOjE3MDAwMDAwMDAsImp0aSI6IjAxMjM0NTY3ODlhYmNkZWYwMTIzNDU2Nzg5YWJjZGVmIiwiZXhwIjo0MTAyNDQ0ODAwfQ.B-p_QwhWQ09_CWyaFCd_0d2wWETXft6wzg-ZEVzAGA8"
-_JOSE_EXPIRED = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDEiLCJ0eXBlIjoiYWNjZXNzIiwiaXNzIjoibGV4aWxpbmdvLWJhY2tlbmQiLCJhdWQiOiJsZXhpbGluZ28tc2VydmljZXMiLCJpYXQiOjE3MDAwMDAwMDAsImp0aSI6IjAxMjM0NTY3ODlhYmNkZWYwMTIzNDU2Nzg5YWJjZGVmIiwiZXhwIjoxNzAwMDAwMzAwfQ.ZAjLVtoPCXkt76dNTwAB89-PQUt39lJjYC19IsghNJk"
-_JOSE_WRONG_SIGNATURE = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDEiLCJ0eXBlIjoiYWNjZXNzIiwiaXNzIjoibGV4aWxpbmdvLWJhY2tlbmQiLCJhdWQiOiJsZXhpbGluZ28tc2VydmljZXMiLCJpYXQiOjE3MDAwMDAwMDAsImp0aSI6IjAxMjM0NTY3ODlhYmNkZWYwMTIzNDU2Nzg5YWJjZGVmIiwiZXhwIjo0MTAyNDQ0ODAwfQ.1mqU4UcT4LnpYPjhC8YSAR1E1ZQkXsYMvuxlIEdunwk"
-_JOSE_VERIFICATION = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwMDAwMDAwMC0wMDAwLTAwMDAtMDAwMC0wMDAwMDAwMDAwMDEiLCJ0eXBlIjoidmVyaWZpY2F0aW9uIiwicHVycG9zZSI6InBhc3N3b3JkX3Jlc2V0IiwiaWF0IjoxNzAwMDAwMDAwLCJleHAiOjQxMDI0NDQ4MDB9.izaVHONHdsHvoCuqzKKJ0R_3ymjgxPFtGbCcaERbJME"
+def _jose_hs256(claims: dict, secret: str) -> str:
+    """Byte-for-byte what python-jose 3.5.0 emitted: compact JSON, header alg+typ, HS256."""
+    def b64(raw: bytes) -> str:
+        return base64.urlsafe_b64encode(raw).rstrip(b"=").decode()
+
+    head = b64(json.dumps({"alg": "HS256", "typ": "JWT"}, separators=(",", ":")).encode())
+    body = b64(json.dumps(claims, separators=(",", ":")).encode())
+    sig = hmac.new(secret.encode(), f"{head}.{body}".encode(), hashlib.sha256).digest()
+    return f"{head}.{body}.{b64(sig)}"
+
+
+_JOSE_SECRET = "s" * 32
+_JOSE_CLAIMS = {
+    "sub": "00000000-0000-0000-0000-000000000001",
+    "type": "access",
+    "iss": "lexilingo-backend",
+    "aud": "lexilingo-services",
+    "iat": 1700000000,
+    "jti": "0123456789abcdef0123456789abcdef",
+}
+_JOSE_ACCESS = _jose_hs256({**_JOSE_CLAIMS, "exp": 4102444800}, _JOSE_SECRET)
+_JOSE_EXPIRED = _jose_hs256({**_JOSE_CLAIMS, "exp": 1700000300}, _JOSE_SECRET)
+_JOSE_WRONG_SIGNATURE = _jose_hs256({**_JOSE_CLAIMS, "exp": 4102444800}, "t" * 32)
+_JOSE_VERIFICATION = _jose_hs256(
+    {
+        "sub": _JOSE_CLAIMS["sub"],
+        "type": "verification",
+        "purpose": "password_reset",
+        "iat": 1700000000,
+        "exp": 4102444800,
+    },
+    _JOSE_SECRET,
+)
 
 
 def test_token_minted_by_python_jose_still_verifies(monkeypatch):
