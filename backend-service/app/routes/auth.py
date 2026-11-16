@@ -13,7 +13,7 @@ import anyio
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request, status
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 
 
@@ -707,6 +707,16 @@ async def facebook_login(
     )
 
 
+async def _revoke_all_refresh_tokens(db: AsyncSession, user_id: uuid.UUID) -> None:
+    # A new password must end every other session: a stolen refresh token kept renewing
+    # access for its full 7 days after the owner reset the password.
+    await db.execute(
+        update(RefreshToken)
+        .where(RefreshToken.user_id == user_id, RefreshToken.is_revoked.is_(False))
+        .values(is_revoked=True)
+    )
+
+
 @router.post("/change-password", response_model=MessageResponse)
 async def change_password(
     request: ChangePasswordRequest,
@@ -736,6 +746,7 @@ async def change_password(
     # Update password
     current_user.hashed_password = await get_password_hash_async(request.new_password)
     current_user.updated_at = datetime.now(timezone.utc)
+    await _revoke_all_refresh_tokens(db, current_user.id)
     await db.commit()
     background_tasks.add_task(
         EmailService.send_password_changed_email,
@@ -782,9 +793,10 @@ async def forgot_password(
             detail="Check your email inbox."
         )
     
-    # Create reset token (1 hour expiry)
+    # Create reset token (1 hour expiry), bound to the current password hash so it works once.
+    from app.core.security import password_fingerprint
     reset_token = create_verification_token(
-        {"sub": str(user.id), "purpose": "password_reset"},
+        {"sub": str(user.id), "purpose": "password_reset", "pfp": password_fingerprint(user.hashed_password)},
         expires_minutes=60
     )
     
@@ -810,15 +822,16 @@ async def reset_password(
     """
     Reset password using token from email.
     """
-    from app.core.security import decode_verification_token
-    
-    # Verify token
-    user_id = decode_verification_token(request.token, "password_reset")
+    from app.core.security import decode_verification_payload, password_fingerprint
+
+    invalid = HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Invalid or expired reset token"
+    )
+    payload = decode_verification_payload(request.token, "password_reset")
+    user_id = payload.get("sub") if payload else None
     if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired reset token"
-        )
+        raise invalid
     
     # Find user
     result = await db.execute(
@@ -832,9 +845,15 @@ async def reset_password(
             detail="User not found"
         )
     
+    # The token was issued for the password the account had then; once that changed (this
+    # reset, or any other), the token is spent.
+    if payload.get("pfp") != password_fingerprint(user.hashed_password):
+        raise invalid
+
     # Update password
     user.hashed_password = await get_password_hash_async(request.new_password)
     user.updated_at = datetime.now(timezone.utc)
+    await _revoke_all_refresh_tokens(db, user.id)
     await db.commit()
     background_tasks.add_task(
         EmailService.send_password_changed_email,
