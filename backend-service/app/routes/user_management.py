@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.schemas.response import ApiResponse
 from app.core.dependencies import get_current_super_admin, require_permission
+from app.core.token_blacklist import InactiveUserFlag
 from app.models.user import User
 from app.models.rbac import Role
 from app.models.progress import DailyActivity, LessonCompletion, UserCourseProgress, Streak
@@ -364,6 +365,8 @@ async def update_user(
         _audit(db, admin, "update", user, changes, request)
     await db.commit()
     await db.refresh(user)
+    if data.is_active is not None:
+        await InactiveUserFlag.sync(user.id, user.is_active)
     
     # Get stats for response
     courses_enrolled = await db.scalar(
@@ -542,6 +545,7 @@ async def update_user_status(
         request,
     )
     await db.commit()
+    await InactiveUserFlag.sync(user.id, data.is_active)
 
     return ApiResponse(
         success=True,
@@ -593,8 +597,10 @@ async def permanently_delete_user_account(
         {"email": user.email, "username": user.username, "role": user.role_slug},
         request,
     )
+    deleted_user_id = user.id
     await permanently_delete_user(db, user)
     await db.commit()
+    await InactiveUserFlag.sync(deleted_user_id, False)
 
     return ApiResponse(
         success=True,
@@ -802,6 +808,9 @@ async def bulk_user_action(
         request,
     )
     await db.commit()
+    if data.action in ("activate", "deactivate", "delete"):
+        for u in actionable_users:
+            await InactiveUserFlag.sync(u.id, data.action == "activate")
     
     return ApiResponse(
         success=True,

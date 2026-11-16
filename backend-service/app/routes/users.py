@@ -14,6 +14,7 @@ from datetime import UTC, datetime
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
+from app.core.token_blacklist import InactiveUserFlag
 from app.crud.user import UserCRUD
 from app.models.user import User
 from app.services.cefr_level_service import (
@@ -237,6 +238,7 @@ async def delete_current_user(
     """
     current_user.is_active = False
     await db.commit()
+    await InactiveUserFlag.sync(current_user.id, False)
     
     return MessageResponse(
         message="Account deactivated successfully",
@@ -250,7 +252,9 @@ async def permanently_delete_current_user(
     db: AsyncSession = Depends(get_db),
 ):
     """GDPR hard delete — removes all user data permanently."""
+    user_id = current_user.id
     await delete_user_permanently(db, current_user)
+    await InactiveUserFlag.sync(user_id, False)
     return MessageResponse(
         message="Account permanently deleted",
         detail="All user data has been permanently removed.",

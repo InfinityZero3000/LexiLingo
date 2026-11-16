@@ -135,3 +135,36 @@ class TokenBlacklist:
         # This avoids storing the full token and is collision-resistant
         token_suffix = token[-32:] if len(token) > 32 else token
         return f"{cls.PREFIX}{token_suffix}"
+
+
+class InactiveUserFlag:
+    """Tells ai-service that an account was deactivated.
+
+    ai-service validates access tokens itself and must not read Postgres, so
+    deactivation is published here, in the same Redis DB as the blacklist. The
+    key outlives any access token issued before the change; after that the
+    backend refuses to issue new ones.
+    """
+
+    PREFIX = "user:inactive:"
+
+    @classmethod
+    def _key(cls, user_id) -> str:
+        return f"{cls.PREFIX}{user_id}"
+
+    @classmethod
+    async def sync(cls, user_id, is_active: bool) -> bool:
+        redis_client = await RedisClient.get_instance()
+        if redis_client is None:
+            logger.warning("Redis not available - inactive flag for %s not published", user_id)
+            return False
+        try:
+            if is_active:
+                await redis_client.delete(cls._key(user_id))
+            else:
+                ttl = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60 + 300
+                await redis_client.setex(cls._key(user_id), ttl, "1")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to publish inactive flag for {user_id}: {e}")
+            return False
