@@ -1505,6 +1505,9 @@
   "youtube": {
     "subtitles": "Sous-titres",
     "noSubtitles": "Aucun sous-titre disponible pour cette vidéo",
+    "noSubtitlesHint": "Essayez une autre vidéo ou ouvrez-la sur YouTube pour utiliser ses propres sous-titres.",
+    "subtitlesUnavailable": "Impossible de charger les sous-titres",
+    "subtitlesUnavailableHint": "C'est généralement temporaire. Vérifiez votre connexion et réessayez.",
     "saveWord": "Enregistrer le mot",
     "exploreTitle": "Vidéos en anglais",
     "channelsTitle": "Chaînes d'apprentissage de l'anglais",

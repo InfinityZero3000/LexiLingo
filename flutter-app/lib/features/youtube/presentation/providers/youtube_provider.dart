@@ -17,6 +17,7 @@ class YouTubeProvider extends ChangeNotifier {
   List<YouTubeChannel> _channels = [];
   List<YouTubeVideo> _searchResults = [];
   List<CaptionSegment> _captions = [];
+  CaptionsStatus _captionsStatus = CaptionsStatus.loading;
   String? _nextPageToken;
   bool _isLoading = false;
   bool _isSearching = false;
@@ -52,6 +53,7 @@ class YouTubeProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isSearching => _isSearching;
   bool get isLoadingCaptions => _isLoadingCaptions;
+  CaptionsStatus get captionsStatus => _captionsStatus;
   String? get error => _error;
   String get searchQuery => _searchQuery;
   String get activeChannelName => _activeChannelName;
@@ -95,7 +97,9 @@ class YouTubeProvider extends ChangeNotifier {
         final listHist = jsonDecode(rawHist) as List<dynamic>;
         _watchHistory.clear();
         for (final item in listHist) {
-          _watchHistory.add(YouTubeVideo.fromJson(item as Map<String, dynamic>));
+          _watchHistory.add(
+            YouTubeVideo.fromJson(item as Map<String, dynamic>),
+          );
         }
       }
       notifyListeners();
@@ -223,16 +227,20 @@ class YouTubeProvider extends ChangeNotifier {
     }
   }
 
-  /// Load captions for a video.
+  /// Load captions for a video; call again to retry after [CaptionsStatus.unavailable].
   Future<void> loadCaptions(String videoId, {String lang = 'en'}) async {
     _isLoadingCaptions = true;
+    _captionsStatus = CaptionsStatus.loading;
     _captions = [];
     notifyListeners();
 
     try {
-      _captions = await _repository.getCaptions(videoId, lang: lang);
+      final result = await _repository.getCaptions(videoId, lang: lang);
+      _captions = result.segments;
+      _captionsStatus = result.status;
     } catch (e) {
       debugPrint('Failed to load captions: $e');
+      _captionsStatus = CaptionsStatus.unavailable;
     } finally {
       _isLoadingCaptions = false;
       notifyListeners();

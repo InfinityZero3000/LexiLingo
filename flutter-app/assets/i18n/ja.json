@@ -1505,6 +1505,9 @@
   "youtube": {
     "subtitles": "字幕",
     "noSubtitles": "このビデオには字幕がありません",
+    "noSubtitlesHint": "別の動画を試すか、YouTube で開いて元の字幕をご利用ください。",
+    "subtitlesUnavailable": "字幕を読み込めませんでした",
+    "subtitlesUnavailableHint": "一時的な問題であることが多いです。接続を確認して、もう一度お試しください。",
     "saveWord": "ワードを保存",
     "exploreTitle": "英語のビデオ",
     "channelsTitle": "英語学習チャンネル",

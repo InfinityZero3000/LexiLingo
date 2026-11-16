@@ -461,7 +461,11 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                         }).toList(),
                       )
                     : Text(
-                        'youtube.subtitlePlaceholder'.tr(),
+                        (switch (provider.captionsStatus) {
+                          CaptionsStatus.none => 'youtube.noSubtitles',
+                          CaptionsStatus.unavailable => 'youtube.subtitlesUnavailable',
+                          _ => 'youtube.subtitlePlaceholder',
+                        }).tr(),
                         style: TextStyle(
                           fontSize: 14,
                           fontStyle: FontStyle.italic,
@@ -469,6 +473,13 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                         ),
                       ),
               ),
+              if (provider.captionsStatus == CaptionsStatus.unavailable)
+                IconButton(
+                  tooltip: 'common.retry'.tr(),
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () => provider.loadCaptions(widget.video.videoId),
+                  icon: const Icon(Icons.refresh_rounded, size: 20),
+                ),
             ],
           ),
         );
@@ -677,6 +688,55 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
   //  Captions Tab
   // ─────────────────────────────────────────────
 
+  /// "No subtitles" is final; "could not load" is not, so it gets a retry.
+  Widget _buildNoCaptionsState(YouTubeProvider provider, bool isDark) {
+    final unavailable = provider.captionsStatus == CaptionsStatus.unavailable;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              unavailable ? Icons.cloud_off_rounded : Icons.subtitles_off_rounded,
+              size: 52,
+              color: isDark ? AppColors.textInverted.withValues(alpha: 0.24) : AppColors.grey300,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              (unavailable ? 'youtube.subtitlesUnavailable' : 'youtube.noSubtitles').tr(),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: isDark ? AppColors.textOnDarkSecondary : AppColors.textDark,
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              (unavailable ? 'youtube.subtitlesUnavailableHint' : 'youtube.noSubtitlesHint').tr(),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: isDark ? AppColors.textOnDarkMuted : AppColors.textGrey,
+                fontSize: 13,
+                height: 1.4,
+              ),
+            ),
+            if (unavailable) ...[
+              const SizedBox(height: 16),
+              FilledButton.tonalIcon(
+                style: FilledButton.styleFrom(minimumSize: const Size(44, 44)),
+                onPressed: () => provider.loadCaptions(widget.video.videoId),
+                icon: const Icon(Icons.refresh_rounded, size: 18),
+                label: Text('common.retry'.tr()),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildCaptionsTab(bool isDark) {
     return Consumer<YouTubeProvider>(
       builder: (context, provider, _) {
@@ -685,32 +745,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
         }
 
         if (provider.captions.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.subtitles_off_rounded,
-                    size: 52,
-                    color: isDark ? AppColors.textInverted.withValues(alpha: 0.24) : AppColors.grey300),
-                const SizedBox(height: 10),
-                Text(
-                  'youtube.noSubtitles'.tr(),
-                  style: TextStyle(
-                    color: isDark ? AppColors.textOnDarkMuted : AppColors.textGrey,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'youtube.noSubtitles'.tr(),
-                  style: TextStyle(
-                    color: isDark ? AppColors.textInverted.withValues(alpha: 0.24) : AppColors.grey400,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          );
+          return _buildNoCaptionsState(provider, isDark);
         }
 
         return Column(
