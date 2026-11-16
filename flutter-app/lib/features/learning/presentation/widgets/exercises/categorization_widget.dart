@@ -189,15 +189,19 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
                                     : const Color(0xFF00A86B),
                               ),
                               const SizedBox(width: 6),
-                              Text(
-                                cat.toUpperCase(),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: ci == 0
-                                      ? colors.primary
-                                      : const Color(0xFF00A86B),
-                                  letterSpacing: 1.1,
+                              Flexible(
+                                child: Text(
+                                  cat.toUpperCase(),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: ci == 0
+                                        ? colors.primary
+                                        : const Color(0xFF00A86B),
+                                    letterSpacing: 1.1,
+                                  ),
                                 ),
                               ),
                             ],
