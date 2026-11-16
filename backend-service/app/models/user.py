@@ -214,6 +214,7 @@ class RefreshToken(Base):
     expires_at: Mapped[datetime] = mapped_column(TZDateTime, nullable=False)
     created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
     revoked_at: Mapped[datetime] = mapped_column(TZDateTime, nullable=True)
+    rotated_at: Mapped[datetime | None] = mapped_column(TZDateTime, nullable=True)
     
     def __repr__(self) -> str:
         return f"<RefreshToken {self.id}>"

@@ -325,7 +325,18 @@ async def refresh_token(
             detail="Invalid or expired refresh token"
         )
 
-    if db_token.is_used or db_token.is_revoked:
+    now = datetime.now(timezone.utc)
+    within_grace = (
+        db_token.is_used
+        and not db_token.is_revoked
+        and db_token.rotated_at is not None
+        and db_token.expires_at > now
+        and (now - db_token.rotated_at).total_seconds() <= settings.REFRESH_REUSE_GRACE_SECONDS
+    )
+    if within_grace:
+        # Two tabs, or a retry after a lost response: not an attack, keep the family alive.
+        logger.info("Refresh token reused within grace: family %s", db_token.family_id)
+    elif db_token.is_used or db_token.is_revoked:
         # A rotated token was presented again: one of its holders is not the owner.
         await revoke_refresh_family(db, db_token)
         await db.commit()
@@ -372,8 +383,9 @@ async def refresh_token(
 
     # Unverified accounts may keep their session, as at /login; see the note there.
 
-    # FIX: Implement token rotation
-    db_token.is_used = True
+    if not within_grace:
+        db_token.is_used = True
+        db_token.rotated_at = now
     
     # Create new tokens
     access_token = create_access_token({"sub": str(user.id)})
