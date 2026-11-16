@@ -14,6 +14,7 @@ import '../../../../core/di/service_locator.dart';
 import '../../../voice/data/datasources/voice_remote_datasource.dart';
 import '../../domain/entities/ielts_entities.dart';
 import '../providers/ielts_provider.dart';
+import '../widgets/ielts_passage_attribution.dart';
 import 'ielts_result_page.dart';
 
 /// One sitting, one skill at a time.
@@ -427,6 +428,7 @@ class _ReadingSection extends StatelessWidget {
                 ),
               ),
             ),
+          if (part.hasAttribution) IeltsPassageAttribution(part: part),
           const SizedBox(height: 16),
           ...part.groups.map((group) => _QuestionGroup(group: group)),
           const Divider(height: 32),

@@ -56,3 +56,27 @@ def passage_license_problem(entry: Any) -> str | None:
             if not isinstance(value, str) or not value.strip():
                 return f"is {license_id} and needs a non-empty {field}"
     return None
+
+
+LICENSE_URLS: dict[str, str] = {
+    "CC0-1.0": "https://creativecommons.org/publicdomain/zero/1.0/",
+    "CC-BY-4.0": "https://creativecommons.org/licenses/by/4.0/",
+    "CC-BY-SA-4.0": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "CC-BY-SA-3.0": "https://creativecommons.org/licenses/by-sa/3.0/",
+}
+
+
+def license_url(license_id: object) -> str | None:
+    return LICENSE_URLS.get(license_id) if isinstance(license_id, str) else None
+
+
+def find_passage_entry(entries: list[dict], order: object, title: object) -> dict | None:
+    """The provenance entry for reading passage `order`, matched by section key or title."""
+    return next(
+        (
+            e
+            for e in entries
+            if e.get("section") == f"reading:{order}" or (title and e.get("title") == title)
+        ),
+        None,
+    )

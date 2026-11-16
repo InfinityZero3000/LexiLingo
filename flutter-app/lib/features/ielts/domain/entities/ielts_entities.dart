@@ -135,6 +135,11 @@ class IeltsPart {
   final String? instructions;
   final String? passageTitle;
   final String? passageText;
+  final String? attribution;
+  final String? licenseId;
+  final String? licenseUrl;
+  final String? sourceUrl;
+  final bool adapted;
   final String? partKey;
   final String? prompt;
   final String? cueCard;
@@ -152,6 +157,11 @@ class IeltsPart {
     this.instructions,
     this.passageTitle,
     this.passageText,
+    this.attribution,
+    this.licenseId,
+    this.licenseUrl,
+    this.sourceUrl,
+    this.adapted = false,
     this.partKey,
     this.prompt,
     this.cueCard,
@@ -172,6 +182,11 @@ class IeltsPart {
       instructions: json['instructions']?.toString(),
       passageTitle: json['passage_title']?.toString(),
       passageText: json['passage_text']?.toString(),
+      attribution: json['attribution']?.toString(),
+      licenseId: json['license_id']?.toString(),
+      licenseUrl: json['license_url']?.toString(),
+      sourceUrl: json['source_url']?.toString(),
+      adapted: json['adapted'] == true,
       partKey: json['part_key']?.toString(),
       prompt: json['prompt']?.toString(),
       cueCard: json['cue_card']?.toString(),
@@ -191,6 +206,9 @@ class IeltsPart {
           : const [],
     );
   }
+
+  bool get hasAttribution =>
+      (attribution?.trim().isNotEmpty ?? false) || licenseId != null;
 
   List<IeltsQuestion> get allQuestions =>
       groups.expand((group) => group.questions).toList();
