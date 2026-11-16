@@ -105,7 +105,7 @@ void main() {
       await _settle();
 
       await provider.updateNotificationSettings(enabled: true);
-    await _settle();
+      await _settle();
 
       expect(notifications.permissionRequests, 1);
       expect(notifications.scheduled, 1);
@@ -120,7 +120,7 @@ void main() {
       await _settle();
 
       await provider.updateReminderChannels(pushEnabled: true);
-    await _settle();
+      await _settle();
 
       expect(notifications.scheduled, 0);
       expect(notifications.cancelled, greaterThan(0));
@@ -169,5 +169,53 @@ void main() {
 
     expect(provider.settings?.emailReminderEnabled, isFalse);
     expect(provider.error, 'boom');
+  });
+
+  group('nurture emails', () {
+    test('switching off shows at once and is sent to the server', () async {
+      final (provider, repo, _) = await _build();
+      await provider.loadSettings('u1');
+      await _settle();
+      repo.updates.clear();
+
+      final pending = provider.setNurtureEmails(false);
+      expect(provider.nurtureEmailsEnabled, isFalse);
+
+      expect(await pending, isTrue);
+      expect(repo.updates.single.nurtureEmailsEnabled, isFalse);
+    });
+
+    test('a refused save puts the switch back and reports failure', () async {
+      final (provider, repo, _) = await _build();
+      await provider.loadSettings('u1');
+      await _settle();
+      repo.updateResult = const Left(ServerFailure('offline'));
+
+      final saved = await provider.setNurtureEmails(false);
+
+      expect(saved, isFalse);
+      expect(provider.nurtureEmailsEnabled, isTrue);
+      expect(provider.error, 'offline');
+    });
+
+    test('setting the value it already has writes nothing', () async {
+      final (provider, repo, _) = await _build();
+      await provider.loadSettings('u1');
+      await _settle();
+      repo.updates.clear();
+
+      expect(await provider.setNurtureEmails(true), isTrue);
+      expect(repo.updates, isEmpty);
+    });
+
+    test('it never asks for notification permission', () async {
+      final (provider, _, notifications) = await _build();
+      await provider.loadSettings('u1');
+      await _settle();
+
+      await provider.setNurtureEmails(false);
+
+      expect(notifications.permissionRequests, 0);
+    });
   });
 }

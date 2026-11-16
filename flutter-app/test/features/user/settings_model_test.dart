@@ -38,4 +38,25 @@ void main() {
       expect(model.reminderMinDueCount, 3);
     });
   });
+
+  group('nurture emails flag', () {
+    test('reads the server field and defaults to on', () {
+      expect(
+        SettingsModel.fromJson({
+          'nurture_emails_enabled': false,
+        }).nurtureEmailsEnabled,
+        isFalse,
+      );
+      expect(SettingsModel.fromJson({}).nurtureEmailsEnabled, isTrue);
+    });
+
+    test('survives the local round trip', () {
+      final model = SettingsModel.fromJson({'nurture_emails_enabled': false});
+
+      expect(
+        SettingsModel.fromJson(model.toJson()).nurtureEmailsEnabled,
+        isFalse,
+      );
+    });
+  });
 }
