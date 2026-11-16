@@ -12,7 +12,7 @@ class OnboardingAnswers {
   const OnboardingAnswers({
     required this.goal,
     required this.level,
-    required this.interest,
+    this.interest = 'daily-life',
   });
 
   Map<String, dynamic> toJson() {
@@ -23,7 +23,14 @@ class OnboardingAnswers {
 class OnboardingPage extends StatefulWidget {
   final Future<void> Function(OnboardingAnswers answers) onComplete;
 
-  const OnboardingPage({super.key, required this.onComplete});
+  /// Runs the placement test and returns the level it assigned, if any.
+  final Future<String?> Function()? onTakePlacementTest;
+
+  const OnboardingPage({
+    super.key,
+    required this.onComplete,
+    this.onTakePlacementTest,
+  });
 
   @override
   State<OnboardingPage> createState() => _OnboardingPageState();
@@ -37,7 +44,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   String _selectedGoal = 'career';
   String _selectedLevel = 'A1';
-  String _selectedInterest = 'daily-life';
+  static const int _totalSteps = 2;
 
   @override
   void dispose() {
@@ -45,8 +52,16 @@ class _OnboardingPageState extends State<OnboardingPage> {
     super.dispose();
   }
 
+  Future<void> _takePlacementTest() async {
+    final assigned = await widget.onTakePlacementTest?.call();
+    if (!mounted || assigned == null) return;
+    if (cefrLevelOptions.any((option) => option.code == assigned)) {
+      setState(() => _selectedLevel = assigned);
+    }
+  }
+
   Future<void> _goNext() async {
-    if (_currentPage < 2) {
+    if (_currentPage < _totalSteps - 1) {
       await _pageController.nextPage(
         duration: const Duration(milliseconds: 280),
         curve: Curves.easeOutCubic,
@@ -57,11 +72,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     setState(() => _isSubmitting = true);
     try {
       await widget.onComplete(
-        OnboardingAnswers(
-          goal: _selectedGoal,
-          level: _selectedLevel,
-          interest: _selectedInterest,
-        ),
+        OnboardingAnswers(goal: _selectedGoal, level: _selectedLevel),
       );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -96,7 +107,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       ),
                       const Spacer(),
                       Text(
-                        '${_currentPage + 1}/3',
+                        '${_currentPage + 1}/$_totalSteps',
                         style: theme.textTheme.labelLarge?.copyWith(
                           color: isDark ? Colors.white70 : AppColors.textSlate,
                         ),
@@ -107,7 +118,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(999),
                     child: LinearProgressIndicator(
-                      value: (_currentPage + 1) / 3,
+                      value: (_currentPage + 1) / _totalSteps,
                       minHeight: 8,
                       backgroundColor: isDark
                           ? AppColors.slate800
@@ -152,41 +163,18 @@ class _OnboardingPageState extends State<OnboardingPage> {
                             setState(() => _selectedLevel = value);
                           },
                         ),
-                        _buildChoiceStep(
-                          context: context,
-                          title: 'onboarding.interestQuestion'.tr(),
-                          subtitle: 'onboarding.interestSubtitle'.tr(),
-                          value: _selectedInterest,
-                          options: [
-                            _OnboardingOption(
-                              'daily-life',
-                              'onboarding.interestDailyLife'.tr(),
-                              Icons.coffee_rounded,
-                            ),
-                            _OnboardingOption(
-                              'technology',
-                              'onboarding.interestTechnology'.tr(),
-                              Icons.computer_rounded,
-                            ),
-                            _OnboardingOption(
-                              'culture',
-                              'onboarding.interestCulture'.tr(),
-                              Icons.palette_rounded,
-                            ),
-                            _OnboardingOption(
-                              'career',
-                              'onboarding.interestCareer'.tr(),
-                              Icons.business_center_rounded,
-                            ),
-                          ],
-                          onSelected: (value) {
-                            setState(() => _selectedInterest = value);
-                          },
-                        ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 8),
+                  if (_currentPage == 1 && widget.onTakePlacementTest != null)
+                    TextButton(
+                      onPressed: _isSubmitting ? null : _takePlacementTest,
+                      style: TextButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                      ),
+                      child: Text('onboarding.notSureTakeTest'.tr()),
+                    ),
                   SizedBox(
                     width: double.infinity,
                     height: 54,
@@ -206,9 +194,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
                               child: LottieLoadingWidget.tiny(),
                             )
                           : Text(
-                              _currentPage < 2
+                              _currentPage < _totalSteps - 1
                                   ? 'onboarding.continueBtn'.tr()
-                                  : 'onboarding.createPlan'.tr(),
+                                  : 'onboarding.startLesson'.tr(),
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                               ),
@@ -334,6 +322,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         Image.network(
                           goal['image'] as String,
                           fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: isDark
+                                ? AppColors.slate800
+                                : AppColors.slate200,
+                          ),
                           loadingBuilder: (context, child, loadingProgress) {
                             if (loadingProgress == null) return child;
                             return Container(

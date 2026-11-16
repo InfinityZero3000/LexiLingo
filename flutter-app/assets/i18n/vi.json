@@ -1035,7 +1035,14 @@
     "interestTechnology": "Công nghệ & đổi mới",
     "interestCulture": "Văn hóa & giải trí",
     "interestCareer": "Phát triển sự nghiệp & phỏng vấn",
-    "levelC2": "C2 - Thành thạo"
+    "levelC2": "C2 - Thành thạo",
+    "notSureTakeTest": "Chưa chắc? Làm bài kiểm tra xếp lớp",
+    "startLesson": "Bắt đầu bài học đầu tiên",
+    "startingTitle": "Đang chuẩn bị bài học đầu tiên",
+    "startingSubtitle": "Đang chọn khóa học phù hợp với trình độ của bạn.",
+    "startFailedTitle": "Không thể mở bài học đầu tiên",
+    "startFailedBody": "Hãy kiểm tra kết nối và thử lại, hoặc về trang chủ để tự chọn bài học.",
+    "goHome": "Về trang chủ"
   },
   "preAuth": {
     "quickSetup": "Thiết lập nhanh",

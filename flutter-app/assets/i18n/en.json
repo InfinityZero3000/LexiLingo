@@ -1035,7 +1035,14 @@
     "interestTechnology": "Technology & innovation",
     "interestCulture": "Culture & entertainment",
     "interestCareer": "Career growth & interviews",
-    "levelC2": "C2 - Mastery"
+    "levelC2": "C2 - Mastery",
+    "notSureTakeTest": "Not sure? Take the placement test",
+    "startLesson": "Start my first lesson",
+    "startingTitle": "Getting your first lesson ready",
+    "startingSubtitle": "Picking the course that fits your level.",
+    "startFailedTitle": "We couldn't open your first lesson",
+    "startFailedBody": "Check your connection and try again, or go to home and pick a lesson yourself.",
+    "goHome": "Go to home"
   },
   "preAuth": {
     "quickSetup": "Quick Setup",

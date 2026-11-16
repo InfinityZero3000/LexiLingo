@@ -1035,7 +1035,14 @@
     "interestTechnology": "科技与创新",
     "interestCulture": "文化与娱乐",
     "interestCareer": "职业发展与面试",
-    "levelC2": "C2 - 精通"
+    "levelC2": "C2 - 精通",
+    "notSureTakeTest": "不确定？参加分级测试",
+    "startLesson": "开始第一节课",
+    "startingTitle": "正在准备你的第一节课",
+    "startingSubtitle": "正在挑选适合你水平的课程。",
+    "startFailedTitle": "无法打开第一节课",
+    "startFailedBody": "请检查网络后重试，或回到首页自己选择课程。",
+    "goHome": "回到首页"
   },
   "preAuth": {
     "quickSetup": "快速设置",
