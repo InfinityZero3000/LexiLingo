@@ -9,11 +9,13 @@ from datetime import UTC, datetime
 from email.message import EmailMessage
 from email.utils import formataddr, parseaddr
 from pathlib import Path
+import uuid
 from urllib.parse import quote
 
 from fastapi.concurrency import run_in_threadpool
 
 from app.core.config import settings
+from app.services.email_unsubscribe import unsubscribe_headers, unsubscribe_url
 
 logger = logging.getLogger(__name__)
 
@@ -367,7 +369,7 @@ class EmailService:
 
     @classmethod
     async def send_activation_nudge_email(
-        cls, *, to_email: str, display_name: str | None, day: int, start_link: str
+        cls, *, to_email: str, display_name: str | None, user_id: uuid.UUID, day: int, start_link: str
     ) -> bool:
         """Day-1 / day-3 nudge for a verified learner who has not finished a lesson."""
         settings_link = f"{settings.APP_PUBLIC_URL.rstrip('/')}/settings"
@@ -386,10 +388,11 @@ class EmailService:
                 "lead": lead,
                 "start_link": start_link,
                 "settings_link": settings_link,
+                "unsubscribe_link": unsubscribe_url(user_id),
             },
             title=subject,
             preheader="One tap opens your first lesson.",
-            headers={"List-Unsubscribe": f"<{settings_link}>"},
+            headers=unsubscribe_headers(user_id),
             hero="welcome_email",
         )
 
@@ -412,6 +415,7 @@ class EmailService:
         *,
         to_email: str,
         display_name: str | None,
+        user_id: uuid.UUID,
         xp: int,
         streak_days: int,
         words_learned: int,
@@ -440,17 +444,18 @@ class EmailService:
                 "streak_days": max(0, streak_days),
                 "words_learned": max(0, words_learned),
                 "settings_link": settings_link,
+                "unsubscribe_link": unsubscribe_url(user_id),
             },
             title="Your week in LexiLingo",
             preheader=f"{max(0, xp):,} XP and a {max(0, streak_days)}-day streak this week.",
-            headers={"List-Unsubscribe": f"<{settings_link}>"},
+            headers=unsubscribe_headers(user_id),
             html_extra={"suggestion_block": suggestion_html},
             text_extra={"suggestion_block": suggestion_text},
         )
 
     @classmethod
     async def send_streak_at_risk_email(
-        cls, *, to_email: str, display_name: str | None, streak_days: int
+        cls, *, to_email: str, display_name: str | None, user_id: uuid.UUID, streak_days: int
     ) -> bool:
         """Nudge for learners who have not practised today; the caller checks the nurture opt-out."""
         settings_link = f"{settings.APP_PUBLIC_URL.rstrip('/')}/settings"
@@ -465,10 +470,11 @@ class EmailService:
                 "day_noun": "day" if days == 1 else "days",
                 "practice_link": f"{settings.APP_PUBLIC_URL.rstrip('/')}{settings.REMINDER_REVIEW_ROUTE}",
                 "settings_link": settings_link,
+                "unsubscribe_link": unsubscribe_url(user_id),
             },
             title="Keep your streak alive",
             preheader=f"{days} {'day' if days == 1 else 'days'} in a row. A few minutes is enough.",
-            headers={"List-Unsubscribe": f"<{settings_link}>"},
+            headers=unsubscribe_headers(user_id),
         )
 
     @staticmethod

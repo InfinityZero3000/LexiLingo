@@ -84,6 +84,7 @@ from app.routes.ai_audit import router as ai_audit_router
 from app.routes.monitoring import router as monitoring_router
 from app.routes.notifications import router as notifications_router
 from app.routes.reminders import router as reminders_router
+from app.routes.email_unsubscribe import router as email_unsubscribe_router
 from app.routes.referral import router as referral_router
 from app.routes.learner_card import router as learner_card_router
 from app.routes.learner_state import router as learner_state_router
@@ -430,6 +431,7 @@ app.include_router(admin_ai_proxy_router, prefix=f"{settings.API_V1_PREFIX}", ta
 app.include_router(analytics_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Analytics"])
 app.include_router(user_management_router, prefix=f"{settings.API_V1_PREFIX}", tags=["User Management"])
 app.include_router(reminders_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Reminder Preferences"])
+app.include_router(email_unsubscribe_router, prefix=f"{settings.API_V1_PREFIX}")
 app.include_router(notifications_router, prefix=f"{settings.API_V1_PREFIX}/notifications", tags=["Notifications"])
 app.include_router(mistakes_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Mistakes"])
 

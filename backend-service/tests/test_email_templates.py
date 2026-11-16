@@ -1,4 +1,5 @@
 import re
+import uuid
 from pathlib import Path
 from unittest.mock import patch
 
@@ -9,6 +10,7 @@ from app.services.email_service import EmailService
 
 TEMPLATES = Path(__file__).resolve().parents[1] / "app" / "templates"
 TO = "nhthang.dev@gmail.com"
+UID = uuid.UUID("11111111-2222-3333-4444-555555555555")
 
 SENDERS = {
     "verification_email": lambda: EmailService.send_verification_email(TO, "t", "Minh Anh"),
@@ -25,6 +27,7 @@ SENDERS = {
     "weekly_summary_email": lambda: EmailService.send_weekly_summary_email(
         to_email=TO,
         display_name="Minh Anh",
+        user_id=UID,
         xp=1280,
         streak_days=6,
         words_learned=42,
@@ -32,7 +35,7 @@ SENDERS = {
         suggestion_link="https://lexilingo.me/courses/ielts",
     ),
     "streak_at_risk_email": lambda: EmailService.send_streak_at_risk_email(
-        to_email=TO, display_name="Minh Anh", streak_days=6
+        to_email=TO, display_name="Minh Anh", user_id=UID, streak_days=6
     ),
 }
 
@@ -95,7 +98,7 @@ async def test_display_name_is_escaped_in_the_new_templates(sent):
 @pytest.mark.asyncio
 async def test_weekly_summary_without_a_suggestion_has_no_empty_block(sent):
     await EmailService.send_weekly_summary_email(
-        to_email=TO, display_name=None, xp=0, streak_days=0, words_learned=0
+        to_email=TO, display_name=None, user_id=UID, xp=0, streak_days=0, words_learned=0
     )
 
     message = sent.call_args.args[0]
@@ -110,13 +113,14 @@ async def test_promotional_mails_carry_list_unsubscribe(sent):
     await SENDERS["streak_at_risk_email"]()
     streak = sent.call_args.args[0]
 
-    assert weekly["List-Unsubscribe"].endswith("/settings>")
-    assert streak["List-Unsubscribe"].endswith("/settings>")
+    for message in (weekly, streak):
+        assert "/email/unsubscribe?token=" in message["List-Unsubscribe"]
+        assert message["List-Unsubscribe-Post"] == "List-Unsubscribe=One-Click"
 
 
 @pytest.mark.asyncio
 async def test_streak_subject_uses_singular_for_one_day(sent):
-    await EmailService.send_streak_at_risk_email(to_email=TO, display_name="A", streak_days=1)
+    await EmailService.send_streak_at_risk_email(to_email=TO, display_name="A", user_id=UID, streak_days=1)
 
     assert sent.call_args.args[0]["Subject"] == "Your 1-day streak ends tonight"
     assert "1 day in a row" in _html(sent.call_args.args[0])
@@ -141,13 +145,13 @@ async def test_email_assets_are_served_by_the_backend(async_client):
 @pytest.mark.parametrize("day,subject", [(1, "Your first LexiLingo lesson takes five minutes"), (3, "Still want to start with LexiLingo?")])
 async def test_activation_nudge_links_to_the_start_route_and_borrows_the_welcome_hero(sent, day, subject):
     assert await EmailService.send_activation_nudge_email(
-        to_email=TO, display_name="Minh Anh", day=day, start_link="https://lexilingo.me/courses"
+        to_email=TO, display_name="Minh Anh", user_id=UID, day=day, start_link="https://lexilingo.me/courses"
     ) is True
 
     message = sent.call_args.args[0]
     html = _html(message)
     assert message["Subject"] == subject
-    assert message["List-Unsubscribe"].endswith("/settings>")
+    assert "/email/unsubscribe?token=" in message["List-Unsubscribe"]
     assert 'href="https://lexilingo.me/courses"' in html
     assert f'src="{settings.EMAIL_ASSET_BASE_URL.rstrip("/")}/hero_welcome_email.jpg"' in html
     assert not re.findall(r"\{[a-z_]+\}", html)
