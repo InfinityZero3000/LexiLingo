@@ -27,7 +27,7 @@ from urllib.parse import urljoin, urlparse, urlunparse
 
 import anyio
 import httpx
-from fastapi import HTTPException, status
+from fastapi import HTTPException, Response, status
 
 from app.core.logging_config import get_request_id
 
@@ -208,3 +208,32 @@ async def safe_resolve_final_url(
         finally:
             await response.aclose()
     raise HTTPException(status_code=400, detail="Too many redirects.")
+
+
+# Raster formats only: SVG can carry script, and anything else (text/html) would be served from
+# the API's own origin.
+PROXIED_IMAGE_TYPES = frozenset({"image/jpeg", "image/png", "image/gif", "image/webp", "image/avif"})
+MAX_PROXIED_IMAGE_BYTES = 5 * 1024 * 1024
+
+
+def image_proxy_response(resp: httpx.Response) -> Response:
+    """Pass an upstream image through without letting the API origin serve anything else.
+
+    The image proxies used to echo whatever content-type the upstream sent, so an HTML page or
+    an SVG with a script ran on api.lexilingo.me. A missing type is labelled image/jpeg; with
+    nosniff a browser will not render it as anything else.
+    """
+    media = (resp.headers.get("content-type") or "image/jpeg").split(";")[0].strip().lower()
+    if media not in PROXIED_IMAGE_TYPES:
+        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "Not a supported image")
+    if len(resp.content) > MAX_PROXIED_IMAGE_BYTES:
+        raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "Image too large")
+    return Response(
+        content=resp.content,
+        media_type=media,
+        headers={
+            "Cache-Control": "public, max-age=86400",
+            "X-Content-Type-Options": "nosniff",
+            "Content-Security-Policy": "default-src 'none'; sandbox",
+        },
+    )

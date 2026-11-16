@@ -21,7 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.safe_http import safe_get
+from app.core.safe_http import image_proxy_response, safe_get
 from app.services.api_cache_service import (
     APICacheService,
     QuotaExhaustedError,
@@ -686,13 +686,7 @@ async def proxy_image(url: str = Query(..., description="The image URL to proxy"
                     status_code=resp.status_code,
                     detail=f"Failed to fetch image: HTTP {resp.status_code}"
                 )
-            return Response(
-                content=resp.content,
-                media_type=resp.headers.get("content-type", "image/jpeg"),
-                headers={
-                    "Cache-Control": "public, max-age=86400",  # Cache for 24h
-                }
-            )
+            return image_proxy_response(resp)
         except HTTPException:
             raise
         except httpx.RequestError as e:
