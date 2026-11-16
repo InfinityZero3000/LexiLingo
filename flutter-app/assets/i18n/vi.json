@@ -328,6 +328,7 @@
     "progress": "Tiến độ: {percent}%",
     "completed": "Hoàn thành",
     "locked": "Đã khóa",
+    "lockedHint": "Hoàn thành bài trước để mở khóa bài này",
     "start": "Bắt đầu",
     "continue": "Tiếp tục",
     "review": "Ôn tập",

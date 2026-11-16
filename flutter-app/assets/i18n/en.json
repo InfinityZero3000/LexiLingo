@@ -328,6 +328,7 @@
     "progress": "Progress: {percent}%",
     "completed": "Completed",
     "locked": "Locked",
+    "lockedHint": "Finish the previous lesson to unlock this one",
     "start": "Start",
     "continue": "Continue",
     "review": "Review",

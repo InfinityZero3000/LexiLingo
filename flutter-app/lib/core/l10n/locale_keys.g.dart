@@ -212,6 +212,7 @@ abstract class  LocaleKeys {
   static const course_progress = 'course.progress';
   static const course_completed = 'course.completed';
   static const course_locked = 'course.locked';
+  static const course_lockedHint = 'course.lockedHint';
   static const course_start = 'course.start';
   static const course_continue = 'course.continue';
   static const course_review = 'course.review';

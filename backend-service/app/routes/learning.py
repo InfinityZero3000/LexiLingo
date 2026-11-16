@@ -59,6 +59,12 @@ from app.services.rank_service import (
     calculate_rank as calc_rank
 )
 
+from app.services.lesson_unlock import (
+    LOCKED_DETAIL,
+    is_lesson_locked,
+    sequence_locked_ids,
+)
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/learning", tags=["Learning Sessions"])
@@ -119,6 +125,9 @@ async def start_lesson(
             )
         )
     
+    if await is_lesson_locked(db, current_user.id, lesson):
+        raise HTTPException(status.HTTP_409_CONFLICT, LOCKED_DETAIL)
+
     # Determine total questions dynamically from lesson content or demo fallback
     total_questions = lesson.exercise_count
     if total_questions == 0:
@@ -177,7 +186,9 @@ async def get_lesson_content(
     
     if not lesson:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Lesson not found")
-    
+    if await is_lesson_locked(db, current_user.id, lesson):
+        raise HTTPException(status.HTTP_409_CONFLICT, LOCKED_DETAIL)
+
     # Parse exercises from lesson.content (JSON field)
     exercises = []
     if lesson.content and isinstance(lesson.content, dict):
@@ -1303,6 +1314,10 @@ async def get_course_roadmap(
         for unit in sorted(course.units, key=lambda unit: unit.order_index)
         if playable_lessons[unit.id]
     ]
+    locked_ids = sequence_locked_ids(
+        [lesson for unit in sorted_units for lesson in playable_lessons[unit.id]],
+        passed_ids,
+    )
     for unit_number, unit in enumerate(sorted_units, start=1):
         lessons_items = []
         unit_completed = 0
@@ -1311,15 +1326,7 @@ async def get_course_roadmap(
         for lesson_index, lesson in enumerate(sorted_lessons):
             progress = progress_map.get(lesson.id)
 
-            previous_lesson = (
-                sorted_lessons[lesson_index - 1]
-                if lesson_index > 0
-                else None
-            )
-            is_locked = (
-                previous_lesson is not None
-                and previous_lesson.id not in passed_ids
-            )
+            is_locked = lesson.id in locked_ids
 
             is_completed = lesson.id in passed_ids
             if is_completed:

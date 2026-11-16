@@ -18,6 +18,7 @@ from app.core.cache import build_cache_key, get_cached, set_cached
 from app.models.user import User
 from app.models.progress import UserCourseProgress
 from app.crud.course import CourseCRUD, UnitCRUD, LessonCRUD
+from app.services.lesson_unlock import playable_in_order, sequence_locked_ids
 from app.schemas.course import (
     CourseResponse,
     CourseListItem,
@@ -255,6 +256,12 @@ async def get_course(
             db, current_user.id, list(set(all_lesson_ids))
         )
 
+    sequence_locked = (
+        sequence_locked_ids(playable_in_order(course.units), completed_lesson_ids)
+        if current_user
+        else set()
+    )
+
     units_with_lessons = []
     for unit in sorted(course.units, key=lambda u: u.order_index):
         lessons = []
@@ -265,15 +272,16 @@ async def get_course(
                 continue
             lesson_data = LessonInUnit.model_validate(lesson)
             
-            # Check if lesson is locked (prerequisites not met)
-            if current_user and lesson.prerequisites:
-                prerequisites_met = all(
-                    pid in completed_lesson_ids for pid in lesson.prerequisites
-                )
-                lesson_data.is_locked = not prerequisites_met
-            else:
-                lesson_data.is_locked = bool(lesson.prerequisites)  # Locked if has prerequisites
-            
+            prerequisites_unmet = bool(lesson.prerequisites) and not (
+                current_user
+                and all(pid in completed_lesson_ids for pid in lesson.prerequisites)
+            )
+            lesson_data.is_locked = (
+                lesson.id in sequence_locked
+                if current_user
+                else False
+            ) or prerequisites_unmet
+
             # Check if lesson is completed
             if current_user:
                 lesson_data.is_completed = lesson.id in completed_lesson_ids

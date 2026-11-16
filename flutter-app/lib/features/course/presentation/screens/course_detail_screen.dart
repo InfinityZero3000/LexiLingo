@@ -1,6 +1,7 @@
 import 'package:lexilingo_app/core/network/course_network_image.dart';
 import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/l10n/locale_keys.g.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -556,7 +557,11 @@ class _LessonTile extends StatelessWidget {
         ],
       ),
       onTap: isLocked
-          ? null
+          ? () => ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(
+                SnackBar(content: Text(LocaleKeys.course_lockedHint.tr())),
+              )
           : () async {
               await Navigator.push(
                 context,
