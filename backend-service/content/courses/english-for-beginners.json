@@ -1,0 +1,1870 @@
+{
+  "category": {
+    "color": "#1565C0",
+    "course_count": 0,
+    "created_at": {
+      "__dt__": "2026-03-14T03:20:37.056492"
+    },
+    "description": "Khóa học tiếng Anh tổng quát theo khung CEFR (A1–C2)",
+    "icon": "school",
+    "id": "76c5f700-7134-407e-acb3-cab49d214c96",
+    "is_active": true,
+    "name": "General English",
+    "order_index": 1,
+    "slug": "general-english",
+    "updated_at": {
+      "__dt__": "2026-03-14T03:20:37.056509"
+    }
+  },
+  "course": {
+    "category_id": "76c5f700-7134-407e-acb3-cab49d214c96",
+    "content_version": 1,
+    "created_at": {
+      "__dt__": "2026-03-14T03:20:37.260378"
+    },
+    "description": "Bắt đầu hành trình học tiếng Anh từ con số 0. Khóa học này giúp bạn giao tiếp cơ bản trong cuộc sống hàng ngày thông qua từ vựng, ngữ pháp nền tảng và phát âm chuẩn. Hoàn toàn miễn phí!",
+    "estimated_duration": 420,
+    "id": "7b293cd9-6507-441a-a718-15497cf64f91",
+    "is_published": true,
+    "language": "en",
+    "level": "A1",
+    "skill": "grammar",
+    "tags": [
+      "beginner",
+      "vocabulary",
+      "grammar",
+      "free",
+      "cefr-a1"
+    ],
+    "thumbnail_url": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400",
+    "title": "English for Beginners",
+    "total_lessons": 20,
+    "total_xp": 500,
+    "updated_at": {
+      "__dt__": "2026-08-18T04:17:07.523214"
+    }
+  },
+  "format": 1,
+  "lessons": [
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Chào buổi sáng",
+            "explanation": "\"Good morning\" is used to greet someone in the early part of the day, which translates to \"Chào buổi sáng\" in Vietnamese.",
+            "id": "ex_5f1bf4bd-134f-4ead-a026-de9c62340705_1",
+            "options": [
+              "Chào buổi sáng",
+              "Xin chào",
+              "Tạm biệt",
+              "Cảm ơn"
+            ],
+            "question": "What is the Vietnamese meaning of the greeting \"Good morning\"?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "\"Good morning\" is only appropriate before noon; in the evening you would use \"Good evening\".",
+            "id": "ex_5f1bf4bd-134f-4ead-a026-de9c62340705_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "You can say \"Good morning\" when you meet someone in the evening.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "Good morning",
+            "explanation": "The standard morning greeting in English is \"Good morning\".",
+            "id": "ex_5f1bf4bd-134f-4ead-a026-de9c62340705_3",
+            "options": [],
+            "question": "When you see a friend in the morning, you say \"{blank}\".",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Hello:Xin chào, Good morning:Chào buổi sáng",
+            "explanation": "\"Hello\" corresponds to \"Xin chào\" and \"Good morning\" corresponds to \"Chào buổi sáng\".",
+            "id": "ex_5f1bf4bd-134f-4ead-a026-de9c62340705_4",
+            "options": [
+              "Hello",
+              "Good morning",
+              "Xin chào",
+              "Chào buổi sáng"
+            ],
+            "question": "Match each English greeting with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "Hello, good morning",
+            "explanation": "The Vietnamese phrase translates directly to \"Hello, good morning\" in English.",
+            "id": "ex_5f1bf4bd-134f-4ead-a026-de9c62340705_5",
+            "options": [],
+            "question": "Write in English: \"Xin chào, chào buổi sáng\".",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "7b293cd9-6507-441a-a718-15497cf64f91",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.563635"
+      },
+      "description": null,
+      "estimated_minutes": 10,
+      "id": "5f1bf4bd-134f-4ead-a026-de9c62340705",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Basic Greetings: Hello, Hi, Good Morning",
+      "total_exercises": 5,
+      "unit_id": "64b7dfb4-33c0-44b1-ae8b-b12f4ed61074",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836796"
+      },
+      "xp_reward": 10
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Bye",
+            "explanation": "The Vietnamese word 'Tạm biệt' translates directly to the English goodbye word 'Bye'.",
+            "id": "ex_aa63bfaa-db59-4b12-bbe6-2d68417bf553_1",
+            "options": [
+              "Bye",
+              "Hello",
+              "Please",
+              "Thank you"
+            ],
+            "question": "Which phrase means 'Tạm biệt' in English?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "'See you later' is a common informal way to say goodbye, indicating you will meet again.",
+            "id": "ex_aa63bfaa-db59-4b12-bbe6-2d68417bf553_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The phrase 'See you later' is used when you want to say goodbye.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "bảo trọng",
+            "explanation": "'Take care' is translated as 'bảo trọng' in Vietnamese, a friendly way to wish someone well.",
+            "id": "ex_aa63bfaa-db59-4b12-bbe6-2d68417bf553_3",
+            "options": [],
+            "question": "When leaving, you can say 'Take care' which means '{blank}' in Vietnamese.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Tạm biệt và hẹn gặp lại ngày mai",
+            "explanation": "The English sentence corresponds to the Vietnamese 'Tạm biệt và hẹn gặp lại ngày mai'.",
+            "id": "ex_aa63bfaa-db59-4b12-bbe6-2d68417bf553_4",
+            "options": [],
+            "question": "Write the Vietnamese translation for 'Goodbye and see you tomorrow'.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Bye:Tạm biệt, Take care:Bảo trọng",
+            "explanation": "'Bye' means 'Tạm biệt' and 'Take care' means 'Bảo trọng' in Vietnamese.",
+            "id": "ex_aa63bfaa-db59-4b12-bbe6-2d68417bf553_5",
+            "options": [
+              "Bye",
+              "Take care",
+              "Tạm biệt",
+              "Bảo trọng"
+            ],
+            "question": "Match each English goodbye phrase with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "7b293cd9-6507-441a-a718-15497cf64f91",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.563700"
+      },
+      "description": null,
+      "estimated_minutes": 10,
+      "id": "aa63bfaa-db59-4b12-bbe6-2d68417bf553",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Saying Goodbye: Bye, See You, Take Care",
+      "total_exercises": 5,
+      "unit_id": "64b7dfb4-33c0-44b1-ae8b-b12f4ed61074",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836933"
+      },
+      "xp_reward": 10
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Hello",
+            "explanation": "'Hello' is used to greet someone at the start of a conversation.",
+            "id": "ex_f1da179c-a833-4e5e-843f-05035b051b58_1",
+            "options": [
+              "Hello",
+              "Goodbye",
+              "Thank you",
+              "Please"
+            ],
+            "question": "Which phrase is a common way to greet someone in English?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "The sentence 'My name is John' correctly introduces your name.",
+            "id": "ex_f1da179c-a833-4e5e-843f-05035b051b58_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "In English, you say 'My name is John' to introduce yourself.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "Anna",
+            "explanation": "Insert your name after 'My name is'.",
+            "id": "ex_f1da179c-a833-4e5e-843f-05035b051b58_3",
+            "options": [],
+            "question": "Complete the sentence: My name is {blank}.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "My name is Linh",
+            "explanation": "'Tên tôi là Linh' means 'My name is Linh' in English.",
+            "id": "ex_f1da179c-a833-4e5e-843f-05035b051b58_4",
+            "options": [
+              "My name is Linh",
+              "I am Linh",
+              "My name Linh",
+              "I have a name Linh"
+            ],
+            "question": "Translate to English: 'Tên tôi là Linh'.",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "Hello, I am Nam.",
+            "explanation": "'Xin chào' translates to 'Hello', and 'tôi là Nam' to 'I am Nam'.",
+            "id": "ex_f1da179c-a833-4e5e-843f-05035b051b58_5",
+            "options": [],
+            "question": "Write in English: 'Xin chào, tôi là Nam.'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "7b293cd9-6507-441a-a718-15497cf64f91",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.563738"
+      },
+      "description": null,
+      "estimated_minutes": 15,
+      "id": "f1da179c-a833-4e5e-843f-05035b051b58",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "speaking",
+      "title": "My Name Is… – Introducing Yourself",
+      "total_exercises": 5,
+      "unit_id": "64b7dfb4-33c0-44b1-ae8b-b12f4ed61074",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:16:13.008176"
+      },
+      "xp_reward": 15
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Hello",
+            "explanation": "'Hello' is the standard greeting when meeting someone new.",
+            "id": "ex_940f4461-d395-40c7-8556-434b7de5407e_1",
+            "options": [
+              "Good night",
+              "Hello",
+              "See you later",
+              "Thank you"
+            ],
+            "question": "Which phrase would you use to greet someone you meet for the first time?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "'Nice to meet you' is used the first time you meet someone.",
+            "id": "ex_940f4461-d395-40c7-8556-434b7de5407e_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "You say 'Nice to meet you' after you already know the person well.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "Nice",
+            "explanation": "The common phrase is 'Nice to meet you!' when introducing yourself.",
+            "id": "ex_940f4461-d395-40c7-8556-434b7de5407e_3",
+            "options": [],
+            "question": "{blank} to meet you!",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "My name is An and I am from Vietnam.",
+            "explanation": "A simple introduction includes your name and country. Example in Vietnamese: \"Tên tôi là An và tôi đến từ Việt Nam.\"",
+            "id": "ex_940f4461-d395-40c7-8556-434b7de5407e_4",
+            "options": [],
+            "question": "Write a short self‑introduction in English: \"My name is ___ and I am from ___.\"",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Hello:Xin chào, Thank you:Cảm ơn",
+            "explanation": "'Hello' = 'Xin chào', 'Thank you' = 'Cảm ơn'.",
+            "id": "ex_940f4461-d395-40c7-8556-434b7de5407e_5",
+            "options": [
+              "Hello",
+              "Thank you",
+              "Xin chào",
+              "Cảm ơn"
+            ],
+            "question": "Match each English greeting word with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "7b293cd9-6507-441a-a718-15497cf64f91",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.563769"
+      },
+      "description": null,
+      "estimated_minutes": 15,
+      "id": "940f4461-d395-40c7-8556-434b7de5407e",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Nice to Meet You – Meeting Someone New",
+      "total_exercises": 5,
+      "unit_id": "64b7dfb4-33c0-44b1-ae8b-b12f4ed61074",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836895"
+      },
+      "xp_reward": 15
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Good morning",
+            "explanation": "We say 'Good morning' when greeting someone in the morning.",
+            "id": "ex_d3623661-b2c6-4118-96e8-a7a503ca847a_1",
+            "options": [
+              "Good night",
+              "Good morning",
+              "See you later",
+              "How are you?"
+            ],
+            "question": "Which of the following is a common way to greet someone in the morning?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "'Nice to meet you' is said when you first meet someone, not when leaving.",
+            "id": "ex_d3623661-b2c6-4118-96e8-a7a503ca847a_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The phrase 'Nice to meet you' is used when saying goodbye.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "John",
+            "explanation": "The speaker introduces themselves with their name, e.g., 'John'.",
+            "id": "ex_d3623661-b2c6-4118-96e8-a7a503ca847a_3",
+            "options": [],
+            "question": "Please fill in the missing word: 'Hello, my name is {blank}.'",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "Bạn khỏe không?",
+            "explanation": "'How are you?' translates to 'Bạn khỏe không?' in Vietnamese.",
+            "id": "ex_d3623661-b2c6-4118-96e8-a7a503ca847a_4",
+            "options": [
+              "Bạn khỏe không?",
+              "Bạn có khỏe không?",
+              "Bạn làm gì?",
+              "Bạn tên là gì?"
+            ],
+            "question": "How do you say 'How are you?' in Vietnamese?",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "Hello:Xin chào, Goodbye:Tạm biệt",
+            "explanation": "'Hello' means 'Xin chào' and 'Goodbye' means 'Tạm biệt'.",
+            "id": "ex_d3623661-b2c6-4118-96e8-a7a503ca847a_5",
+            "options": [
+              "Hello",
+              "Goodbye",
+              "Xin chào",
+              "Tạm biệt"
+            ],
+            "question": "Match each greeting word with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "7b293cd9-6507-441a-a718-15497cf64f91",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.563799"
+      },
+      "description": null,
+      "estimated_minutes": 10,
+      "id": "d3623661-b2c6-4118-96e8-a7a503ca847a",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Unit 1 Review Quiz",
+      "total_exercises": 5,
+      "unit_id": "64b7dfb4-33c0-44b1-ae8b-b12f4ed61074",
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:37.563802"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "seven",
+            "explanation": "The cardinal number 7 is written as \"seven\" in English.",
+            "id": "ex_dab30454-5d5d-4534-8513-16dfdc9c7c30_1",
+            "options": [
+              "seven",
+              "seventeen",
+              "nine",
+              "twenty"
+            ],
+            "question": "What is the English word for the number 7?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "\"Twelve\" is the English word for the number 12.",
+            "id": "ex_dab30454-5d5d-4534-8513-16dfdc9c7c30_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The word \"twelve\" represents the number 12.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "nine",
+            "explanation": "Number 9 is expressed as \"nine\" in English.",
+            "id": "ex_dab30454-5d5d-4534-8513-16dfdc9c7c30_3",
+            "options": [],
+            "question": "The English word for the number 9 is {blank}.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "mười bốn",
+            "explanation": "\"Fourteen\" in Vietnamese is \"mười bốn\".",
+            "id": "ex_dab30454-5d5d-4534-8513-16dfdc9c7c30_4",
+            "options": [
+              "mười bốn",
+              "bốn mươi",
+              "mười ba",
+              "mười lăm"
+            ],
+            "question": "Translate the English number \"fourteen\" into Vietnamese.",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "eleven:mười một, thirteen:mười ba",
+            "explanation": "\"Eleven\" translates to \"mười một\" and \"thirteen\" translates to \"mười ba\".",
+            "id": "ex_dab30454-5d5d-4534-8513-16dfdc9c7c30_5",
+            "options": [
+              "eleven",
+              "thirteen",
+              "mười một",
+              "mười ba"
+            ],
+            "question": "Match each English number with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "7b293cd9-6507-441a-a718-15497cf64f91",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.636949"
+      },
+      "description": null,
+      "estimated_minutes": 12,
+      "id": "dab30454-5d5d-4534-8513-16dfdc9c7c30",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Counting 1–20: Cardinal Numbers",
+      "total_exercises": 5,
+      "unit_id": "ef11c215-b507-40e7-84d6-aa888a79024f",
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:37.636967"
+      },
+      "xp_reward": 10
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "58",
+            "explanation": "58 follows 57 in the counting sequence.",
+            "id": "ex_6992787d-e372-4dc5-817f-ebc59eff2b3f_1",
+            "options": [
+              "58",
+              "59",
+              "56",
+              "60"
+            ],
+            "question": "What number comes after 57?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "'One hundred' is the correct English expression for 100.",
+            "id": "ex_6992787d-e372-4dc5-817f-ebc59eff2b3f_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The number 100 is written as 'one hundred' in English.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "eighty-four",
+            "explanation": "84 is expressed as 'eighty-four' in English.",
+            "id": "ex_6992787d-e372-4dc5-817f-ebc59eff2b3f_3",
+            "options": [],
+            "question": "In the sentence 'I have {blank} apples', fill in the missing number word for 84.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "bốn mươi",
+            "explanation": "'Forty' means 'bốn mươi' in Vietnamese.",
+            "id": "ex_6992787d-e372-4dc5-817f-ebc59eff2b3f_4",
+            "options": [
+              "bốn mươi",
+              "ba mươi",
+              "năm mươi",
+              "hai mươi"
+            ],
+            "question": "Translate the English word 'forty' into Vietnamese.",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "eighty:tám mươi, ninety:chín mươi",
+            "explanation": "'Eighty' = 'tám mươi' and 'ninety' = 'chín mươi'.",
+            "id": "ex_6992787d-e372-4dc5-817f-ebc59eff2b3f_5",
+            "options": [
+              "eighty",
+              "ninety",
+              "tám mươi",
+              "chín mươi"
+            ],
+            "question": "Match each English tens word with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "7b293cd9-6507-441a-a718-15497cf64f91",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.637005"
+      },
+      "description": null,
+      "estimated_minutes": 12,
+      "id": "6992787d-e372-4dc5-817f-ebc59eff2b3f",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Counting 20–100 & Large Numbers",
+      "total_exercises": 5,
+      "unit_id": "ef11c215-b507-40e7-84d6-aa888a79024f",
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:37.637009"
+      },
+      "xp_reward": 10
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "three o'clock",
+            "explanation": "The clock shows exactly three o'clock, which is expressed as \"three o'clock\" in English.",
+            "id": "ex_76ce14fb-c406-4629-bb45-bae8cb08acac_1",
+            "options": [
+              "three o'clock",
+              "quarter past three",
+              "half past three",
+              "three fifteen"
+            ],
+            "question": "What time is shown on the clock that reads '3:00'?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "'Quarter to five' means a quarter hour before five, i.e., 4:45.",
+            "id": "ex_76ce14fb-c406-4629-bb45-bae8cb08acac_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The phrase 'quarter to five' means 4:45.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "quarter past",
+            "explanation": "'Quarter past' means fifteen minutes after the hour, so the full sentence is \"It is quarter past two.\"",
+            "id": "ex_76ce14fb-c406-4629-bb45-bae8cb08acac_3",
+            "options": [],
+            "question": "It is {blank} fifteen minutes past two.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Bây giờ là sáu giờ ba mươi phút",
+            "explanation": "'Half past six' is translated as \"Bây giờ là sáu giờ ba mươi phút\" (or \"Bây giờ là sáu giờ rưỡi\").",
+            "id": "ex_76ce14fb-c406-4629-bb45-bae8cb08acac_4",
+            "options": [],
+            "question": "Write in Vietnamese: 'It is half past six.'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "quarter past:15 phút, half past:30 phút",
+            "explanation": "'Quarter past' equals 15 minutes after the hour (15 phút) and 'half past' equals 30 minutes after the hour (30 phút).",
+            "id": "ex_76ce14fb-c406-4629-bb45-bae8cb08acac_5",
+            "options": [
+              "quarter past",
+              "half past",
+              "15 phút",
+              "30 phút"
+            ],
+            "question": "Match each time expression with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "7b293cd9-6507-441a-a718-15497cf64f91",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.637037"
+      },
+      "description": null,
+      "estimated_minutes": 15,
+      "id": "76ce14fb-c406-4629-bb45-bae8cb08acac",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Telling the Time: O'Clock, Half Past, Quarter",
+      "total_exercises": 5,
+      "unit_id": "ef11c215-b507-40e7-84d6-aa888a79024f",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836847"
+      },
+      "xp_reward": 15
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Thursday",
+            "explanation": "Thursday follows Wednesday in the weekly sequence.",
+            "id": "ex_c0dd1e99-95b5-4fb6-a657-69154ebc5a40_1",
+            "options": [
+              "Thursday",
+              "Friday",
+              "Saturday",
+              "Sunday"
+            ],
+            "question": "Which day comes after Wednesday?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "February has 28 days (29 in a leap year), not 30.",
+            "id": "ex_c0dd1e99-95b5-4fb6-a657-69154ebc5a40_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The month of February has 30 days.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "July",
+            "explanation": "The blank is filled with a month name; July is a month.",
+            "id": "ex_c0dd1e99-95b5-4fb6-a657-69154ebc5a40_3",
+            "options": [],
+            "question": "I was born in {blank}.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Monday",
+            "explanation": "'Thứ Hai' means Monday in English.",
+            "id": "ex_c0dd1e99-95b5-4fb6-a657-69154ebc5a40_4",
+            "options": [],
+            "question": "Translate to English: 'Thứ Hai'.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "January:tháng một, February:tháng hai",
+            "explanation": "January is 'tháng một' and February is 'tháng hai' in Vietnamese.",
+            "id": "ex_c0dd1e99-95b5-4fb6-a657-69154ebc5a40_5",
+            "options": [
+              "January",
+              "February",
+              "tháng một",
+              "tháng hai"
+            ],
+            "question": "Match each English month with its Vietnamese translation.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "7b293cd9-6507-441a-a718-15497cf64f91",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.637068"
+      },
+      "description": null,
+      "estimated_minutes": 12,
+      "id": "c0dd1e99-95b5-4fb6-a657-69154ebc5a40",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Days of the Week & Months of the Year",
+      "total_exercises": 5,
+      "unit_id": "ef11c215-b507-40e7-84d6-aa888a79024f",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836976"
+      },
+      "xp_reward": 12
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "7:30 AM",
+            "explanation": "The schedule says the train leaves at 7:30 AM.",
+            "id": "ex_7af90e54-4f91-47a6-a0ab-75276f22d583_1",
+            "options": [
+              "6:00 AM",
+              "7:30 AM",
+              "8:45 AM",
+              "9:15 AM"
+            ],
+            "question": "What time does the train leave?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "The UK uses day-month-year order for dates.",
+            "id": "ex_7af90e54-4f91-47a6-a0ab-75276f22d583_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "In the UK, the date format is day-month-year.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "seven",
+            "explanation": "The sentence says the wake‑up time is seven o'clock.",
+            "id": "ex_7af90e54-4f91-47a6-a0ab-75276f22d583_3",
+            "options": [],
+            "question": "I wake up at {blank} o'clock.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "What is the date today?",
+            "explanation": "'Hôm nay là ngày mấy?' means 'What is the date today?'.",
+            "id": "ex_7af90e54-4f91-47a6-a0ab-75276f22d583_4",
+            "options": [
+              "What is the date today?",
+              "How many days is today?",
+              "Which day is today?",
+              "What day is it?"
+            ],
+            "question": "Translate the Vietnamese sentence 'Hôm nay là ngày mấy?' into English.",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "one:một, two:hai",
+            "explanation": "'one' translates to 'một' and 'two' to 'hai'.",
+            "id": "ex_7af90e54-4f91-47a6-a0ab-75276f22d583_5",
+            "options": [
+              "one",
+              "two",
+              "một",
+              "hai"
+            ],
+            "question": "Match each English number with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "7b293cd9-6507-441a-a718-15497cf64f91",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.637098"
+      },
+      "description": null,
+      "estimated_minutes": 10,
+      "id": "7af90e54-4f91-47a6-a0ab-75276f22d583",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Unit 2 Review Quiz",
+      "total_exercises": 5,
+      "unit_id": "ef11c215-b507-40e7-84d6-aa888a79024f",
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:37.637102"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Red",
+            "explanation": "The English word for the color đỏ is 'Red'.",
+            "id": "ex_64c9d543-0da7-4011-8e3c-45a0783aeecd_1",
+            "options": [
+              "Red",
+              "Blue",
+              "Green",
+              "Yellow"
+            ],
+            "question": "Which word means 'red' in English?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "The sky is commonly described as blue.",
+            "id": "ex_64c9d543-0da7-4011-8e3c-45a0783aeecd_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The word 'blue' can be used to describe the sky.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "green",
+            "explanation": "The sentence needs a color word; 'green' fits.",
+            "id": "ex_64c9d543-0da7-4011-8e3c-45a0783aeecd_3",
+            "options": [],
+            "question": "I have a {blank} ball.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Red:đỏ, Blue:xanh dương",
+            "explanation": "Red means 'đỏ' and Blue means 'xanh dương' in Vietnamese.",
+            "id": "ex_64c9d543-0da7-4011-8e3c-45a0783aeecd_4",
+            "options": [
+              "Red",
+              "Blue",
+              "đỏ",
+              "xanh dương"
+            ],
+            "question": "Match each color word with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "This shirt is green.",
+            "explanation": "The sentence describes a shirt that is green.",
+            "id": "ex_64c9d543-0da7-4011-8e3c-45a0783aeecd_5",
+            "options": [],
+            "question": "Translate the following Vietnamese sentence into English: 'Chiếc áo này màu xanh lá cây.'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "7b293cd9-6507-441a-a718-15497cf64f91",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.743007"
+      },
+      "description": null,
+      "estimated_minutes": 10,
+      "id": "64c9d543-0da7-4011-8e3c-45a0783aeecd",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Colors in English: Red, Blue, Green…",
+      "total_exercises": 5,
+      "unit_id": "cc1ff405-b819-4544-bdca-edaac133cc8e",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836813"
+      },
+      "xp_reward": 10
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "desk",
+            "explanation": "The Vietnamese word \"bàn\" translates to \"desk\" in English.",
+            "id": "ex_1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d_1",
+            "options": [
+              "book",
+              "pen",
+              "desk",
+              "chair"
+            ],
+            "question": "Which word means \"bàn\" in English?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "Pens are used for writing, not for reading.",
+            "id": "ex_2b3c4d5e-6f7a-8b9c-0d1e-2f3a4b5c6d7e_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "A pen is used for reading a book.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "pen",
+            "explanation": "The word that fits the sentence is \"pen\" because it is an object you can have on a desk.",
+            "id": "ex_3c4d5e6f-7a8b-9c0d-1e2f-3a4b5c6d7e8f_3",
+            "options": [],
+            "question": "I have a {blank} on my desk.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "book",
+            "explanation": "\"Quyển sách\" means \"book\" in English.",
+            "id": "ex_4d5e6f7a-8b9c-0d1e-2f3a-4b5c6d7e8f9a_4",
+            "options": [
+              "book",
+              "pen",
+              "desk",
+              "pencil"
+            ],
+            "question": "Translate to English: \"quyển sách\"",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "book:quyển sách, pen:bút",
+            "explanation": "\"book\" corresponds to \"quyển sách\" and \"pen\" corresponds to \"bút\".",
+            "id": "ex_5e6f7a8b-9c0d-1e2f-3a4b-5c6d7e8f9a0b_5",
+            "options": [
+              "book",
+              "pen",
+              "quyển sách",
+              "bút"
+            ],
+            "question": "Match each classroom object with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "7b293cd9-6507-441a-a718-15497cf64f91",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.743064"
+      },
+      "description": null,
+      "estimated_minutes": 12,
+      "id": "ab3c4b49-a54f-4dc0-ae31-761cdbbf1512",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Classroom Objects: Book, Pen, Desk",
+      "total_exercises": 5,
+      "unit_id": "cc1ff405-b819-4544-bdca-edaac133cc8e",
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:37.743069"
+      },
+      "xp_reward": 12
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "cup",
+            "explanation": "A 'cup' is a small container for drinks.",
+            "id": "ex_90dee8fa-45c0-40b4-900b-7b6e58abfdac_1",
+            "options": [
+              "cup",
+              "plate",
+              "spoon",
+              "fork"
+            ],
+            "question": "Which word describes a small container used for drinking tea?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "Chairs are furniture for sitting, often at a table.",
+            "id": "ex_90dee8fa-45c0-40b4-900b-7b6e58abfdac_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "A chair is used for sitting at a table.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "cup",
+            "explanation": "The sentence refers to a cup, a common kitchen item.",
+            "id": "ex_90dee8fa-45c0-40b4-900b-7b6e58abfdac_3",
+            "options": [],
+            "question": "I have a {blank} on the kitchen counter.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "cup:cốc, chair:ghế",
+            "explanation": "'cup' means 'cốc', 'chair' means 'ghế' in Vietnamese.",
+            "id": "ex_90dee8fa-45c0-40b4-900b-7b6e58abfdac_4",
+            "options": [
+              "cup",
+              "chair",
+              "cốc",
+              "ghế"
+            ],
+            "question": "Match each kitchen object with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "Bàn được làm bằng gỗ.",
+            "explanation": "'The table is made of wood.' translates to 'Bàn được làm bằng gỗ.'",
+            "id": "ex_90dee8fa-45c0-40b4-900b-7b6e58abfdac_5",
+            "options": [],
+            "question": "Translate into Vietnamese: 'The table is made of wood.'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "7b293cd9-6507-441a-a718-15497cf64f91",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.743101"
+      },
+      "description": null,
+      "estimated_minutes": 12,
+      "id": "90dee8fa-45c0-40b4-900b-7b6e58abfdac",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Home & Kitchen Items: Cup, Chair, Table",
+      "total_exercises": 5,
+      "unit_id": "cc1ff405-b819-4544-bdca-edaac133cc8e",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836886"
+      },
+      "xp_reward": 12
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "red",
+            "explanation": "Apples are commonly red, so 'red' is the correct color.",
+            "id": "ex_ceb2bcf0-aaf8-4485-93bd-dcc100f3d966_1",
+            "options": [
+              "red",
+              "blue",
+              "green",
+              "yellow"
+            ],
+            "question": "What color is the apple?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "The sentence contradicts itself; a small orange cannot be big.",
+            "id": "ex_ceb2bcf0-aaf8-4485-93bd-dcc100f3d966_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "A small orange is big.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "black",
+            "explanation": "'Black' correctly describes the cat's colour.",
+            "id": "ex_ceb2bcf0-aaf8-4485-93bd-dcc100f3d966_3",
+            "options": [],
+            "question": "The cat is {blank}.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "big blue shirt",
+            "explanation": "'Chiếc áo' = shirt, 'màu xanh' = blue, 'lớn' = big.",
+            "id": "ex_ceb2bcf0-aaf8-4485-93bd-dcc100f3d966_4",
+            "options": [],
+            "question": "Translate to English: \"Chiếc áo màu xanh lớn\".",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "book:sách, pen:bút",
+            "explanation": "'book' means 'sách' and 'pen' means 'bút' in Vietnamese.",
+            "id": "ex_ceb2bcf0-aaf8-4485-93bd-dcc100f3d966_5",
+            "options": [
+              "book",
+              "pen",
+              "sách",
+              "bút"
+            ],
+            "question": "Match each object with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "7b293cd9-6507-441a-a718-15497cf64f91",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.743135"
+      },
+      "description": null,
+      "estimated_minutes": 15,
+      "id": "ceb2bcf0-aaf8-4485-93bd-dcc100f3d966",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Describing Objects with Colors & Size",
+      "total_exercises": 5,
+      "unit_id": "cc1ff405-b819-4544-bdca-edaac133cc8e",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.837002"
+      },
+      "xp_reward": 15
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "red",
+            "explanation": "Apples are commonly red; this matches the lesson vocabulary.",
+            "id": "ex_6825cb14-fb06-4d16-a795-014c2d28fa13_1",
+            "options": [
+              "red",
+              "green",
+              "blue",
+              "yellow"
+            ],
+            "question": "What color is the apple?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "\"Chair\" translates to \"ghế\", not \"bàn\" which means \"table\".",
+            "id": "ex_6825cb14-fb06-4d16-a795-014c2d28fa13_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The word \"chair\" means \"bàn\" in Vietnamese.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "refrigerator",
+            "explanation": "The common kitchen appliance for keeping food cold is a refrigerator.",
+            "id": "ex_6825cb14-fb06-4d16-a795-014c2d28fa13_3",
+            "options": [],
+            "question": "I have a {blank} in my kitchen.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "table:bàn, book:sách",
+            "explanation": "\"Table\" = \"bàn\" and \"book\" = \"sách\" as taught in the unit.",
+            "id": "ex_6825cb14-fb06-4d16-a795-014c2d28fa13_4",
+            "options": [
+              "table",
+              "book",
+              "bàn",
+              "sách"
+            ],
+            "question": "Match each object with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "window",
+            "explanation": "\"Cửa sổ\" translates to \"window\" in English.",
+            "id": "ex_6825cb14-fb06-4d16-a795-014c2d28fa13_5",
+            "options": [],
+            "question": "Write the English word for the Vietnamese word \"cửa sổ\".",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "7b293cd9-6507-441a-a718-15497cf64f91",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.743167"
+      },
+      "description": null,
+      "estimated_minutes": 10,
+      "id": "6825cb14-fb06-4d16-a795-014c2d28fa13",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Unit 3 Review Quiz",
+      "total_exercises": 5,
+      "unit_id": "cc1ff405-b819-4544-bdca-edaac133cc8e",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836819"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "is",
+            "explanation": "The subject 'She' is third‑person singular, so the correct form is 'is'.",
+            "id": "ex_b9b46da9-2699-4b0d-a28d-6b93ebe72754_1",
+            "options": [
+              "am",
+              "is",
+              "are",
+              "be"
+            ],
+            "question": "Which form of the verb 'to be' correctly completes the sentence: 'She ___ a teacher.'",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "With the plural subject 'They', the correct verb is 'are', not 'is'.",
+            "id": "ex_b9b46da9-2699-4b0d-a28d-6b93ebe72754_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The sentence 'They is happy' uses the correct form of 'to be'.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "am",
+            "explanation": "'I' is a singular first‑person pronoun, so the verb form is 'am'.",
+            "id": "ex_b9b46da9-2699-4b0d-a28d-6b93ebe72754_3",
+            "options": [],
+            "question": "Listen and type the missing word: I {blank} a student.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "You are a doctor.",
+            "explanation": "'Bạn' means 'you' (singular), so the correct English sentence is 'You are a doctor.'",
+            "id": "ex_b9b46da9-2699-4b0d-a28d-6b93ebe72754_4",
+            "options": [
+              "You are a doctor.",
+              "I am a doctor.",
+              "He is a doctor.",
+              "She are a doctor."
+            ],
+            "question": "Translate into English: 'Bạn là bác sĩ.'",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "I:tôi, They:họ",
+            "explanation": "'I' translates to 'tôi' and 'They' translates to 'họ' in Vietnamese.",
+            "id": "ex_b9b46da9-2699-4b0d-a28d-6b93ebe72754_5",
+            "options": [
+              "I",
+              "They",
+              "tôi",
+              "họ"
+            ],
+            "question": "Match each pronoun with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "7b293cd9-6507-441a-a718-15497cf64f91",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.831908"
+      },
+      "description": null,
+      "estimated_minutes": 15,
+      "id": "b9b46da9-2699-4b0d-a28d-6b93ebe72754",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Am / Is / Are – The Verb 'To Be'",
+      "total_exercises": 5,
+      "unit_id": "0ea11ab2-e480-4153-813b-8d277fb5267c",
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:37.831930"
+      },
+      "xp_reward": 15
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Is she a teacher?",
+            "explanation": "The correct Yes/No question is formed by moving the verb \"is\" before the subject: \"Is she a teacher?\".",
+            "id": "ex_1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6_1",
+            "options": [
+              "Is she a teacher?",
+              "She is a teacher?",
+              "Are she a teacher?",
+              "Is she teacher?"
+            ],
+            "question": "Which is the correct Yes/No question for the statement \"She is a teacher\"?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "The article \"a\" is required: \"Are you a student?\".",
+            "id": "ex_1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The question \"Are you student?\" is grammatically correct.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "Is he happy?",
+            "explanation": "Place the verb \"is\" before the subject to form the question: \"Is he happy?\".",
+            "id": "ex_1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6_3",
+            "options": [],
+            "question": "Turn the statement into a Yes/No question: He is happy. {blank}",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Are you a student?",
+            "explanation": "The English Yes/No question uses \"Are\" + subject + \"a\" + noun: \"Are you a student?\".",
+            "id": "ex_1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6_4",
+            "options": [],
+            "question": "Write a Yes/No question in English for the Vietnamese sentence: \"Bạn có phải là sinh viên không?\"",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Is he a doctor?:Anh ấy có phải là bác sĩ không?, Are they happy?:Họ có hạnh phúc không?",
+            "explanation": "The first English question corresponds to the first Vietnamese meaning, and the second English question to the second Vietnamese meaning.",
+            "id": "ex_1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6_5",
+            "options": [
+              "Is he a doctor?",
+              "Are they happy?",
+              "Anh ấy có phải là bác sĩ không?",
+              "Họ có hạnh phúc không?"
+            ],
+            "question": "Match each Yes/No question with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "7b293cd9-6507-441a-a718-15497cf64f91",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.831971"
+      },
+      "description": null,
+      "estimated_minutes": 15,
+      "id": "e2da6595-1169-434c-bedb-f1c563135b18",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "reading",
+      "title": "Yes/No Questions with To Be",
+      "total_exercises": 5,
+      "unit_id": "0ea11ab2-e480-4153-813b-8d277fb5267c",
+      "updated_at": {
+        "__dt__": "2026-08-21T05:38:10.061326"
+      },
+      "xp_reward": 15
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "study",
+            "explanation": "With 'I', 'you', 'we', 'they', we use the base form of the verb (study) in the Simple Present tense.",
+            "id": "ex_91957d60-c5d9-40c1-9729-5c1d88d3f73b_1",
+            "options": [
+              "study",
+              "studies",
+              "studying"
+            ],
+            "question": "I ______ English every day.",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "listens",
+            "explanation": "With 'he', 'she', 'it', we add '-s' to the verb in the Simple Present tense. The verb 'listen' becomes 'listens'.",
+            "id": "ex_91957d60-c5d9-40c1-9729-5c1d88d3f73b_2",
+            "options": [],
+            "question": "She {blank} to music in the evening.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "With 'He', the verb needs an '-s' in the Simple Present. The correct sentence is 'He plays soccer'.",
+            "id": "ex_91957d60-c5d9-40c1-9729-5c1d88d3f73b_3",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The sentence 'He play soccer' is correct.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "I:eat, She:eats",
+            "explanation": "Remember to add '-s' to verbs when the subject is 'he', 'she', or 'it' in the Simple Present. For 'I', 'you', 'we', 'they', we use the base form.",
+            "id": "ex_91957d60-c5d9-40c1-9729-5c1d88d3f73b_4",
+            "options": [
+              "I",
+              "She",
+              "eat",
+              "eats"
+            ],
+            "question": "Match the subject pronoun to the correct verb form.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "go",
+            "explanation": "With 'we', 'you', 'I', 'they', we use the base form of the verb (go) in the Simple Present tense.",
+            "id": "ex_91957d60-c5d9-40c1-9729-5c1d88d3f73b_5",
+            "options": [],
+            "question": "We {blank} to school by bus every morning.",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "7b293cd9-6507-441a-a718-15497cf64f91",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.832001"
+      },
+      "description": null,
+      "estimated_minutes": 18,
+      "id": "91957d60-c5d9-40c1-9729-5c1d88d3f73b",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Simple Present: I work, She works",
+      "total_exercises": 5,
+      "unit_id": "0ea11ab2-e480-4153-813b-8d277fb5267c",
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:37.832005"
+      },
+      "xp_reward": 18
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "She doesn't like coffee.",
+            "explanation": "For third‑person singular we use \"doesn't\" + base verb. \"She doesn't like coffee.\" is correct.",
+            "id": "ex_41bb2b8f-6d17-4d79-9820-7059e28c8023_1",
+            "options": [
+              "She don't like coffee.",
+              "She doesn't like coffee.",
+              "She not like coffee.",
+              "She doesn't likes coffee."
+            ],
+            "question": "Which sentence is the correct negative form of \"She likes coffee\"?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "For third‑person singular we use \"does\" (e.g., \"Does he like...?\"), not \"do\".",
+            "id": "ex_41bb2b8f-6d17-4d79-9820-7059e28c8023_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "In the simple present, we use \"do\" for questions with the subject \"he\".",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "doesn't",
+            "explanation": "Negative simple present for third‑person singular uses \"doesn't\" + base verb.",
+            "id": "ex_41bb2b8f-6d17-4d79-9820-7059e28c8023_3",
+            "options": [],
+            "question": "He {blank} play football on weekends.",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Do you like reading books?",
+            "explanation": "The correct question form uses \"Do you\" + base verb for present simple.",
+            "id": "ex_41bb2b8f-6d17-4d79-9820-7059e28c8023_4",
+            "options": [
+              "Do you like reading books?",
+              "Are you like reading books?",
+              "You do like reading books?",
+              "Do you reading books?"
+            ],
+            "question": "Translate to English: \"Bạn có thích đọc sách?\"",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "What:Cái gì, Where:Ở đâu",
+            "explanation": "\"What\" means \"Cái gì\" and \"Where\" means \"Ở đâu\" in Vietnamese.",
+            "id": "ex_41bb2b8f-6d17-4d79-9820-7059e28c8023_5",
+            "options": [
+              "What",
+              "Where",
+              "Cái gì",
+              "Ở đâu"
+            ],
+            "question": "Match each question word with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "7b293cd9-6507-441a-a718-15497cf64f91",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.832046"
+      },
+      "description": null,
+      "estimated_minutes": 18,
+      "id": "41bb2b8f-6d17-4d79-9820-7059e28c8023",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Negatives & Questions in Simple Present",
+      "total_exercises": 5,
+      "unit_id": "0ea11ab2-e480-4153-813b-8d277fb5267c",
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:37.832052"
+      },
+      "xp_reward": 18
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "are",
+            "explanation": "For plural subjects like 'they', the correct form of 'to be' in present simple is 'are'.",
+            "id": "ex_17f30f1c-3c89-474f-96bf-1aa15ad3b84f_1",
+            "options": [
+              "am",
+              "is",
+              "are",
+              "be"
+            ],
+            "question": "Choose the correct form of 'to be' for the subject 'They':",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "With the third‑person singular subject 'He', the verb needs an -s: 'He goes...'.",
+            "id": "ex_17f30f1c-3c89-474f-96bf-1aa15ad3b84f_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "True or False: The sentence 'He go to school every day.' is correct.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "is",
+            "explanation": "Subject 'She' requires 'is' as the present form of 'to be'.",
+            "id": "ex_17f30f1c-3c89-474f-96bf-1aa15ad3b84f_3",
+            "options": [],
+            "question": "Complete the sentence with the correct form of 'to be': She {blank} a teacher.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Tôi là sinh viên.",
+            "explanation": "The verb 'am' translates to 'là' and 'I' to 'Tôi'.",
+            "id": "ex_17f30f1c-3c89-474f-96bf-1aa15ad3b84f_4",
+            "options": [],
+            "question": "Translate to Vietnamese: 'I am a student.'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "am:tôi là, is:anh ấy là",
+            "explanation": "'am' corresponds to 'tôi là' (I am) and 'is' to 'anh ấy là' (he/she/it is).",
+            "id": "ex_17f30f1c-3c89-474f-96bf-1aa15ad3b84f_5",
+            "options": [
+              "am",
+              "is",
+              "tôi là",
+              "anh ấy là"
+            ],
+            "question": "Match each verb form of 'to be' with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "7b293cd9-6507-441a-a718-15497cf64f91",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.832086"
+      },
+      "description": null,
+      "estimated_minutes": 15,
+      "id": "17f30f1c-3c89-474f-96bf-1aa15ad3b84f",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Final Test – A1 Grammar",
+      "total_exercises": 5,
+      "unit_id": "0ea11ab2-e480-4153-813b-8d277fb5267c",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836605"
+      },
+      "xp_reward": 30
+    }
+  ],
+  "units": [
+    {
+      "background_color": "#4CAF50",
+      "course_id": "7b293cd9-6507-441a-a718-15497cf64f91",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.341982"
+      },
+      "description": "Chào hỏi, giới thiệu bản thân và những câu tiếng Anh đầu tiên",
+      "icon_url": null,
+      "id": "64b7dfb4-33c0-44b1-ae8b-b12f4ed61074",
+      "order_index": 1,
+      "title": "Hello World – Greetings & Introductions",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:37.547860"
+      }
+    },
+    {
+      "background_color": "#2196F3",
+      "course_id": "7b293cd9-6507-441a-a718-15497cf64f91",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.552672"
+      },
+      "description": "Số đếm, giờ giấc và ngày tháng trong tiếng Anh",
+      "icon_url": null,
+      "id": "ef11c215-b507-40e7-84d6-aa888a79024f",
+      "order_index": 2,
+      "title": "Numbers, Time & Dates",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:37.628100"
+      }
+    },
+    {
+      "background_color": "#FF9800",
+      "course_id": "7b293cd9-6507-441a-a718-15497cf64f91",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.632495"
+      },
+      "description": "Từ vựng về đồ vật xung quanh và màu sắc",
+      "icon_url": null,
+      "id": "cc1ff405-b819-4544-bdca-edaac133cc8e",
+      "order_index": 3,
+      "title": "Everyday Objects & Colors",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:37.735869"
+      }
+    },
+    {
+      "background_color": "#9C27B0",
+      "course_id": "7b293cd9-6507-441a-a718-15497cf64f91",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.739555"
+      },
+      "description": "Động từ 'to be' và thì Hiện tại đơn – nền tảng ngữ pháp tiếng Anh",
+      "icon_url": null,
+      "id": "0ea11ab2-e480-4153-813b-8d277fb5267c",
+      "order_index": 4,
+      "title": "Grammar Basics: To Be & Simple Present",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:37.826803"
+      }
+    }
+  ]
+}

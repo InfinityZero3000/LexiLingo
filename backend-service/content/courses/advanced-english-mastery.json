@@ -1,0 +1,1409 @@
+{
+  "category": {
+    "color": "#1565C0",
+    "course_count": 0,
+    "created_at": {
+      "__dt__": "2026-03-14T03:20:37.056492"
+    },
+    "description": "Khóa học tiếng Anh tổng quát theo khung CEFR (A1–C2)",
+    "icon": "school",
+    "id": "76c5f700-7134-407e-acb3-cab49d214c96",
+    "is_active": true,
+    "name": "General English",
+    "order_index": 1,
+    "slug": "general-english",
+    "updated_at": {
+      "__dt__": "2026-03-14T03:20:37.056509"
+    }
+  },
+  "course": {
+    "category_id": "76c5f700-7134-407e-acb3-cab49d214c96",
+    "content_version": 1,
+    "created_at": {
+      "__dt__": "2026-03-14T03:20:39.586910"
+    },
+    "description": "Đạt đến trình độ thành thạo tiếng Anh C2 – gần như người bản xứ. Khám phá thành ngữ nâng cao, phong cách viết học thuật, thảo luận về triết học, văn hóa và các chủ đề trừu tượng. Dành cho học viên đã có nền tảng C1 vững chắc.",
+    "estimated_duration": 1200,
+    "id": "96753da4-cafe-4ca7-8473-9e72a914c080",
+    "is_published": true,
+    "language": "en",
+    "level": "C2",
+    "skill": null,
+    "tags": [
+      "advanced",
+      "proficiency",
+      "academic",
+      "idioms",
+      "cefr-c2"
+    ],
+    "thumbnail_url": "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=400",
+    "title": "Advanced English Mastery",
+    "total_lessons": 15,
+    "total_xp": 1800,
+    "updated_at": {
+      "__dt__": "2026-03-14T03:20:39.734810"
+    }
+  },
+  "format": 1,
+  "lessons": [
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "face the music",
+            "explanation": "‘Face the music’ is used when someone must confront the results of their actions.",
+            "id": "ex_4423c580-6791-4108-81bc-ca90a95e1ca4_1",
+            "options": [
+              "face the music",
+              "heart of gold",
+              "foot the bill",
+              "hand in hand"
+            ],
+            "question": "Which idiom means 'to accept the consequences of one's actions'?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "‘Heart of gold’ refers to someone who is very kind and generous, not selfish.",
+            "id": "ex_4423c580-6791-4108-81bc-ca90a95e1ca4_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The idiom 'heart of gold' describes a person who is selfish.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "foot the bill",
+            "explanation": "‘Foot the bill’ means to pay for something, especially an unexpected cost.",
+            "id": "ex_4423c580-6791-4108-81bc-ca90a95e1ca4_3",
+            "options": [],
+            "question": "After the accident, she had to {blank} the expenses herself.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "face the music:đối mặt với hậu quả, hand in hand:song song",
+            "explanation": "‘Face the music’ = đối mặt với hậu quả; ‘hand in hand’ = song song.",
+            "id": "ex_4423c580-6791-4108-81bc-ca90a95e1ca4_4",
+            "options": [
+              "face the music",
+              "hand in hand",
+              "đối mặt với hậu quả",
+              "song song"
+            ],
+            "question": "Match each idiom with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "My grandmother has a heart of gold; she always helps strangers.",
+            "explanation": "The sentence correctly employs ‘heart of gold’ to highlight the person's generosity.",
+            "id": "ex_4423c580-6791-4108-81bc-ca90a95e1ca4_5",
+            "options": [],
+            "question": "Write a short sentence (max 15 words) using the idiom 'heart of gold' to describe a kind person.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "96753da4-cafe-4ca7-8473-9e72a914c080",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.645633"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "4423c580-6791-4108-81bc-ca90a95e1ca4",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Body Idioms: Face, Heart, Foot, Hand",
+      "total_exercises": 5,
+      "unit_id": "edd9802d-f79e-4c69-89d2-359dd4276e4d",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836729"
+      },
+      "xp_reward": 28
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Tiết kiệm chi phí bằng cách làm giảm chất lượng",
+            "explanation": "'Cut corners' means to save money by reducing quality or skipping steps.",
+            "id": "ex_1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6_1",
+            "options": [
+              "Tiết kiệm chi phí bằng cách làm giảm chất lượng",
+              "Làm việc quá cẩn thận",
+              "Tăng lợi nhuận",
+              "Mở rộng kinh doanh"
+            ],
+            "question": "What is the Vietnamese meaning of the idiom 'cut corners' in a business context?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "'Break even' means revenues equal costs, no profit nor loss.",
+            "id": "ex_1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The phrase 'break even' means a company makes a profit.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "cut corners",
+            "explanation": "The idiom fits the gap, meaning to reduce quality to save money.",
+            "id": "ex_1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6_3",
+            "options": [],
+            "question": "When a startup tries to {blank}, it may risk losing customer trust.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "cut corners:cắt giảm chi phí, break even:đạt mức hòa vốn",
+            "explanation": "Both idioms are paired with their correct translations.",
+            "id": "ex_1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6_4",
+            "options": [
+              "cut corners",
+              "break even",
+              "cắt giảm chi phí",
+              "đạt mức hòa vốn"
+            ],
+            "question": "Match each idiom with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "đạt mức hòa vốn",
+            "explanation": "In business, 'break even' means revenue equals costs.",
+            "id": "ex_1a2b3c4d-5e6f-7g8h-9i0j-k1l2m3n4o5p6_5",
+            "options": [],
+            "question": "Translate the idiom 'break even' into Vietnamese.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "96753da4-cafe-4ca7-8473-9e72a914c080",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.645696"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "471755c9-4a32-4327-82cb-a91d58f4062c",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Business & Money Idioms: Cut Corners, Break Even",
+      "total_exercises": 5,
+      "unit_id": "edd9802d-f79e-4c69-89d2-359dd4276e4d",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836738"
+      },
+      "xp_reward": 28
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Mong chờ điều gì đó",
+            "explanation": "‘look forward to’ means to anticipate something with pleasure.",
+            "id": "ex_cac288b8-67c0-4818-a48a-1f0a54432311_1",
+            "options": [
+              "Mong chờ điều gì đó",
+              "Bỏ qua một việc",
+              "Bắt đầu một việc",
+              "Kết thúc một việc"
+            ],
+            "question": "What does the three-part phrasal verb 'look forward to' mean?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "'run out of' expresses the exhaustion of a resource.",
+            "id": "ex_cac288b8-67c0-4818-a48a-1f0a54432311_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The phrasal verb 'run out of' can be used to indicate that you have no more of something left.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "put up with",
+            "explanation": "'put up with' means to tolerate something unpleasant.",
+            "id": "ex_cac288b8-67c0-4818-a48a-1f0a54432311_3",
+            "options": [],
+            "question": "She couldn't {blank} the noise any longer and left the party.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "get away with:trốn tránh hậu quả, take care of:chăm sóc",
+            "explanation": "'get away with' = trốn tránh hậu quả; 'take care of' = chăm sóc.",
+            "id": "ex_cac288b8-67c0-4818-a48a-1f0a54432311_4",
+            "options": [
+              "get away with",
+              "take care of",
+              "trốn tránh hậu quả",
+              "chăm sóc"
+            ],
+            "question": "Match each three-part phrasal verb with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "We ran out of printer ink just before the deadline.",
+            "explanation": "The sentence shows correct use of 'run out of' to indicate depletion of a resource.",
+            "id": "ex_cac288b8-67c0-4818-a48a-1f0a54432311_5",
+            "options": [],
+            "question": "Write a sentence using the three-part phrasal verb 'run out of' to describe a situation at work.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "96753da4-cafe-4ca7-8473-9e72a914c080",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.645731"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "cac288b8-67c0-4818-a48a-1f0a54432311",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Multi-Word Phrasal Verbs: Three-Part Verbs",
+      "total_exercises": 5,
+      "unit_id": "edd9802d-f79e-4c69-89d2-359dd4276e4d",
+      "updated_at": {
+        "__dt__": "2026-08-14T06:39:10.796223"
+      },
+      "xp_reward": 28
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "The thunder whispered through the night.",
+            "explanation": "\"The thunder whispered\" attributes the human action of whispering to thunder, creating a metaphor.",
+            "id": "ex_4a46bf17-90ab-45cc-8906-5fb52fabbf7d_1",
+            "options": [
+              "The thunder whispered through the night.",
+              "She walked to the store.",
+              "The water was cold."
+            ],
+            "question": "Which sentence contains a metaphor?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "Saying you could eat a horse exaggerates the feeling of hunger, which is a classic hyperbole.",
+            "id": "ex_4a46bf17-90ab-45cc-8906-5fb52fabbf7d_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The phrase \"I'm so hungry I could eat a horse\" is an example of hyperbole.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "laughing until they cried",
+            "explanation": "\"Laughing until they cried\" intensifies the reaction beyond literal truth, making it a hyperbolic expression.",
+            "id": "ex_4a46bf17-90ab-45cc-8906-5fb52fabbf7d_3",
+            "options": [],
+            "question": "His jokes were so funny that the audience was {blank}.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "bắt đầu một cuộc trò chuyện",
+            "explanation": "\"Break the ice\" means to start a conversation or ease tension, which is expressed in Vietnamese as \"bắt đầu một cuộc trò chuyện\".",
+            "id": "ex_4a46bf17-90ab-45cc-8906-5fb52fabbf7d_4",
+            "options": [
+              "phá vỡ băng",
+              "đập tan băng",
+              "bắt đầu một cuộc trò chuyện",
+              "đánh tan băng"
+            ],
+            "question": "Choose the correct Vietnamese meaning for the idiom \"break the ice\".",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "a roaring beast",
+            "explanation": "The answer \"a roaring beast\" likens the storm to a fierce animal, illustrating a vivid metaphor appropriate for C2 learners.",
+            "id": "ex_4a46bf17-90ab-45cc-8906-5fb52fabbf7d_5",
+            "options": [],
+            "question": "Create a metaphor for a storm by completing the sentence: The storm is {blank}.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "96753da4-cafe-4ca7-8473-9e72a914c080",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.645764"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "4a46bf17-90ab-45cc-8906-5fb52fabbf7d",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Figurative Language: Metaphor & Hyperbole",
+      "total_exercises": 5,
+      "unit_id": "edd9802d-f79e-4c69-89d2-359dd4276e4d",
+      "updated_at": {
+        "__dt__": "2026-08-14T06:39:10.796140"
+      },
+      "xp_reward": 28
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Phớt lờ vấn đề",
+            "explanation": "The phrase means to deliberately ignore something, i.e., to pretend not to notice.",
+            "id": "ex_87459832-e849-4bf7-addb-9abd54a4f8c2_1",
+            "options": [
+              "Phớt lờ vấn đề",
+              "Nhìn thấy mọi thứ",
+              "Mở rộng tầm nhìn",
+              "Giải quyết vấn đề"
+            ],
+            "question": "What does the idiom 'to turn a blind eye' mean?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "'Look up' is commonly used to describe searching for data in a reference source.",
+            "id": "ex_87459832-e849-4bf7-addb-9abd54a4f8c2_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The phrasal verb 'to look up' can mean to search for information in a book or online.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "bite the bullet",
+            "explanation": "The idiom 'bite the bullet' means to endure an unpleasant situation with courage.",
+            "id": "ex_87459832-e849-4bf7-addb-9abd54a4f8c2_3",
+            "options": [],
+            "question": "She decided to {blank} and accept the job offer despite the low salary.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "để lộ bí mật",
+            "explanation": "The expression means to reveal a secret unintentionally.",
+            "id": "ex_87459832-e849-4bf7-addb-9abd54a4f8c2_4",
+            "options": [],
+            "question": "Translate the idiom 'to let the cat out of the bag' into Vietnamese.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "to give up:bỏ cuộc, to run out of:hết",
+            "explanation": "'Give up' translates to 'bỏ cuộc' (to quit), and 'run out of' translates to 'hết' (to be depleted).",
+            "id": "ex_87459832-e849-4bf7-addb-9abd54a4f8c2_5",
+            "options": [
+              "to give up",
+              "to run out of",
+              "bỏ cuộc",
+              "hết"
+            ],
+            "question": "Match each phrasal verb with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "96753da4-cafe-4ca7-8473-9e72a914c080",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.645798"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "87459832-e849-4bf7-addb-9abd54a4f8c2",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Idioms & Phrasal Verbs Mastery Test",
+      "total_exercises": 5,
+      "unit_id": "edd9802d-f79e-4c69-89d2-359dd4276e4d",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836879"
+      },
+      "xp_reward": 50
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "(Smith et al., 2020)",
+            "explanation": "APA 7th uses “et al.” for works with three or more authors in in‑text citations.",
+            "id": "ex_3ed3e55c-275d-495c-8cf2-7eaa5ffa5dc2_1",
+            "options": [
+              "(Smith, Johnson, & Lee, 2020)",
+              "(Smith et al., 2020)",
+              "(Smith, 2020)",
+              "(Smith, Johnson & Lee, 2020)"
+            ],
+            "question": "Which of the following is the correct in‑text citation for a work by Smith published in 2020 with three authors, using APA 7th edition?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "Literature reviews rely on scholarly sources, not personal anecdotes.",
+            "id": "ex_3ed3e55c-275d-495c-8cf2-7eaa5ffa5dc2_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "In a literature review, it is acceptable to include personal anecdotes as evidence of a claim.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "(Smith, 2020)",
+            "explanation": "The citation provides attribution and allows readers to locate the original source.",
+            "id": "ex_3ed3e55c-275d-495c-8cf2-7eaa5ffa5dc2_3",
+            "options": [],
+            "question": "When paraphrasing a source, you must include the author's name and the year of publication, e.g., {blank}.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Recent research indicates mixed effects of remote work on productivity. Smith and Jones (2022) found a 12% increase in output among knowledge workers, attributing the gain to reduced commuting time and flexible scheduling. Conversely, Lee et al. (2023) reported a 7% decline in collaborative tasks, highlighting challenges in real‑time communication and team cohesion. Together, these studies suggest that remote work can boost individual efficiency while potentially hindering collective performance, underscoring the need for balanced hybrid models (Smith & Jones, 2022; Lee et al., 2023).",
+            "explanation": "The paragraph demonstrates synthesis of scholarly findings and correct use of APA in‑text citations.",
+            "id": "ex_3ed3e55c-275d-495c-8cf2-7eaa5ffa5dc2_4",
+            "options": [],
+            "question": "Write a concise paragraph (≈120 words) summarizing the main findings of two recent studies on the impact of remote work on employee productivity, and include appropriate in‑text citations.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "bibliography:phụ lục, citation:trích dẫn",
+            "explanation": "A bibliography is a list of sources (phụ lục), whereas a citation is the in‑text reference (trích dẫn).",
+            "id": "ex_3ed3e55c-275d-495c-8cf2-7eaa5ffa5dc2_5",
+            "options": [
+              "bibliography",
+              "citation",
+              "phụ lục",
+              "trích dẫn"
+            ],
+            "question": "Match each citation term with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "96753da4-cafe-4ca7-8473-9e72a914c080",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.690302"
+      },
+      "description": null,
+      "estimated_minutes": 30,
+      "id": "3ed3e55c-275d-495c-8cf2-7eaa5ffa5dc2",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Research Paper: Literature Review & Citations",
+      "total_exercises": 5,
+      "unit_id": "f05ecd44-071a-481a-b740-a8db10cb6d0c",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836712"
+      },
+      "xp_reward": 32
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "It appears that",
+            "explanation": "'It appears that' signals uncertainty, making the claim less absolute.",
+            "id": "ex_1a2b3c4d-5e6f-7a8b-9c0d-ef1234567890_1",
+            "options": [
+              "It is evident that",
+              "It is clear that",
+              "It appears that",
+              "It is undeniable that"
+            ],
+            "question": "Which of the following hedging expressions best softens a claim in academic writing?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "'Definitely' expresses certainty, which is the opposite of hedging.",
+            "id": "ex_2b3c4d5e-6f7a-8b9c-0d1e-f234567890ab_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "Using the phrase 'definitely' is considered a hedging strategy.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "acknowledge",
+            "explanation": "'Acknowledge' introduces a cautious stance, typical of hedging language.",
+            "id": "ex_3c4d5e6f-7a8b-9c0d-1e2f-34567890abcd_3",
+            "options": [],
+            "question": "Researchers often {blank} that the results may be influenced by external factors.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "It seems that:có vẻ như, It is likely that:có khả năng",
+            "explanation": "Both pairs link the English hedging phrase with its correct Vietnamese translation.",
+            "id": "ex_4d5e6f7a-8b9c-0d1e-2f3a-4567890abcde_4",
+            "options": [
+              "It seems that",
+              "It is likely that",
+              "có vẻ như",
+              "có khả năng"
+            ],
+            "question": "Match each hedging phrase with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "The findings suggest that climate change may have a modest impact on agricultural yields.",
+            "explanation": "The sentence uses 'suggest' and 'may' to hedge the claim, appropriate for C2 academic writing.",
+            "id": "ex_5e6f7a8b-9c0d-1e2f-3a4b-567890abcdef_5",
+            "options": [],
+            "question": "Write a sentence using a hedging expression to introduce a tentative conclusion about the impact of climate change on agriculture.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "96753da4-cafe-4ca7-8473-9e72a914c080",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.690357"
+      },
+      "description": null,
+      "estimated_minutes": 28,
+      "id": "de9746d9-c790-4e11-8681-7ba3db9d108c",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "Hedging Language in Academic Writing",
+      "total_exercises": 5,
+      "unit_id": "f05ecd44-071a-481a-b740-a8db10cb6d0c",
+      "updated_at": {
+        "__dt__": "2026-08-21T05:38:10.061315"
+      },
+      "xp_reward": 28
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "On the contrary",
+            "explanation": "‘On the contrary’ signals a contrast or counter‑argument, making it the most suitable choice.",
+            "id": "ex_1a313fac-cae1-4e88-abbf-5b8bb2135b48_1",
+            "options": [
+              "On the contrary",
+              "Nevertheless",
+              "Furthermore",
+              "In addition"
+            ],
+            "question": "Which signposting phrase best introduces a counter‑argument in a formal essay?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "‘To sum up’ is a conventional concluding signpost that signals a summary of the preceding discussion.",
+            "id": "ex_1a313fac-cae1-4e88-abbf-5b8bb2135b48_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "In academic writing, the phrase 'to sum up' is appropriate for concluding a paragraph.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "Consequently",
+            "explanation": "‘Consequently’ explicitly marks a cause‑effect relationship, introducing the result.",
+            "id": "ex_1a313fac-cae1-4e88-abbf-5b8bb2135b48_3",
+            "options": [],
+            "question": "To indicate a result, you can use the signpost '{blank}' before presenting the outcome.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Hơn nữa, các phát hiện cho thấy...",
+            "explanation": "‘Moreover’ translates to ‘Hơn nữa’, and the whole phrase conveys an additional supportive statement.",
+            "id": "ex_1a313fac-cae1-4e88-abbf-5b8bb2135b48_4",
+            "options": [],
+            "question": "Translate the following formal signpost into Vietnamese: 'Moreover, the findings suggest...'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Furthermore:Hơn nữa, However:Tuy nhiên",
+            "explanation": "‘Furthermore’ means ‘Hơn nữa’; ‘However’ means ‘Tuy nhiên’, both common in formal discourse.",
+            "id": "ex_1a313fac-cae1-4e88-abbf-5b8bb2135b48_5",
+            "options": [
+              "Furthermore",
+              "However",
+              "Hơn nữa",
+              "Tuy nhiên"
+            ],
+            "question": "Match each academic signpost with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "96753da4-cafe-4ca7-8473-9e72a914c080",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.690387"
+      },
+      "description": null,
+      "estimated_minutes": 28,
+      "id": "1a313fac-cae1-4e88-abbf-5b8bb2135b48",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Formal Discourse Structure & Signposting",
+      "total_exercises": 5,
+      "unit_id": "f05ecd44-071a-481a-b740-a8db10cb6d0c",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836608"
+      },
+      "xp_reward": 28
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "To critically evaluate and integrate sources",
+            "explanation": "A literature review should not just summarize; it must assess and synthesize the sources to support the essay's argument.",
+            "id": "ex_aef2dcf8-8317-4dbd-9550-134ff21ede86_1",
+            "options": [
+              "To provide background information only",
+              "To critically evaluate and integrate sources",
+              "To list all references alphabetically",
+              "To present the author's personal opinion"
+            ],
+            "question": "Which of the following best describes the purpose of a literature review in a critical essay?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "Synthesis requires both summarising the sources and integrating your own critical analysis to show how they relate to your thesis.",
+            "id": "ex_aef2dcf8-8317-4dbd-9550-134ff21ede86_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "In a synthesis paragraph, you should only summarize sources without offering your own analysis.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "credibility",
+            "explanation": "Evaluating a source's credibility (authority, bias, evidence) is essential for critical essay writing.",
+            "id": "ex_aef2dcf8-8317-4dbd-9550-134ff21ede86_3",
+            "options": [],
+            "question": "To demonstrate evaluation, a writer must assess the {blank} of each source.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "độ chặt chẽ phương pháp luận",
+            "explanation": "'Methodological rigor' refers to the strictness and precision of the research methods, which in Vietnamese is 'độ chặt chẽ phương pháp luận'.",
+            "id": "ex_aef2dcf8-8317-4dbd-9550-134ff21ede86_4",
+            "options": [
+              "độ chặt chẽ phương pháp luận",
+              "độ tin cậy của dữ liệu",
+              "độ phức tạp của phương pháp",
+              "độ sâu của nghiên cứu"
+            ],
+            "question": "Translate the academic term 'methodological rigor' into Vietnamese.",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "Thesis statement:Luận điểm chính, Conclusion:Kết luận",
+            "explanation": "The thesis statement outlines the main argument (Luận điểm chính) and the conclusion summarises findings (Kết luận).",
+            "id": "ex_aef2dcf8-8317-4dbd-9550-134ff21ede86_5",
+            "options": [
+              "Thesis statement",
+              "Conclusion",
+              "Luận điểm chính",
+              "Kết luận"
+            ],
+            "question": "Match each critical essay component with its Vietnamese description.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "96753da4-cafe-4ca7-8473-9e72a914c080",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.690411"
+      },
+      "description": null,
+      "estimated_minutes": 30,
+      "id": "aef2dcf8-8317-4dbd-9550-134ff21ede86",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "Critical Essay Writing: Evaluation & Synthesis",
+      "total_exercises": 5,
+      "unit_id": "f05ecd44-071a-481a-b740-a8db10cb6d0c",
+      "updated_at": {
+        "__dt__": "2026-08-21T05:38:10.061278"
+      },
+      "xp_reward": 32
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "The purpose of this paper is to examine the methodological limitations of current research on artificial intelligence.",
+            "explanation": "A strong thesis introduction states the purpose and scope of the paper, as in the selected sentence.",
+            "id": "ex_2520132f-2231-416a-9f48-a22cb7250c63_1",
+            "options": [
+              "This essay will discuss the causes of climate change.",
+              "In recent years, scholars have debated the impact of policy on economic growth.",
+              "The purpose of this paper is to examine the methodological limitations of current research on artificial intelligence.",
+              "There are many reasons why people like to travel."
+            ],
+            "question": "Which of the following sentences best introduces a thesis statement in a C2‑level academic essay?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "C2 academic style prefers impersonal constructions; first‑person is generally avoided unless explicitly allowed.",
+            "id": "ex_2520132f-2231-416a-9f48-a22cb7250c63_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "In academic writing, it is acceptable to use first‑person pronouns such as 'I' and 'we' to present arguments.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "on the other hand",
+            "explanation": "The phrase 'on the other hand' signals contrast between points.",
+            "id": "ex_2520132f-2231-416a-9f48-a22cb7250c63_3",
+            "options": [],
+            "question": "In academic writing, the phrase '{blank}' is commonly used to contrast two arguments.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "coherence:mạch lạc, cohesion:liên kết",
+            "explanation": "Coherence refers to logical flow (mạch lạc); cohesion refers to linguistic linking (liên kết).",
+            "id": "ex_2520132f-2231-416a-9f48-a22cb7250c63_4",
+            "options": [
+              "coherence",
+              "cohesion",
+              "mạch lạc",
+              "liên kết"
+            ],
+            "question": "Match each academic writing term with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "This study examines how socioeconomic status influences access to higher education in Vietnam. Using a mixed‑methods design, the research analyses enrollment statistics to identify patterns of disparity and conducts semi‑structured interviews with university administrators to uncover institutional factors that exacerbate or mitigate these gaps. Findings reveal that students from lower‑income families are significantly under‑represented in tertiary institutions, a trend linked to both financial barriers and limited informational support. The paper discusses policy implications, recommending targeted scholarships and outreach programs to promote equitable access. Results contribute to the broader discourse on educational equity in emerging economies.",
+            "explanation": "The abstract succinctly presents the purpose, methodology, key findings, and implications, meeting C2 academic writing standards.",
+            "id": "ex_2520132f-2231-416a-9f48-a22cb7250c63_5",
+            "options": [],
+            "question": "Write a concise abstract (max 150 words) in English summarizing the following research excerpt.\nExcerpt: 'The study investigates the relationship between socioeconomic status and access to higher education in Vietnam, employing a mixed‑methods approach that combines statistical analysis of enrollment data with interviews of university administrators.'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "96753da4-cafe-4ca7-8473-9e72a914c080",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.690438"
+      },
+      "description": null,
+      "estimated_minutes": 35,
+      "id": "2520132f-2231-416a-9f48-a22cb7250c63",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "Academic Writing C2 Certification Test",
+      "total_exercises": 5,
+      "unit_id": "f05ecd44-071a-481a-b740-a8db10cb6d0c",
+      "updated_at": {
+        "__dt__": "2026-08-21T05:38:10.061177"
+      },
+      "xp_reward": 60
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "I am going to leave.",
+            "explanation": "The formal register avoids contractions and slang; 'I am going to leave.' is fully expanded and appropriate for formal contexts.",
+            "id": "ex_04add267-32fb-4d21-8345-e40ca6cb9007_1",
+            "options": [
+              "I am going to leave.",
+              "I’m about to head out.",
+              "I’ll be off soon.",
+              "I’m gonna go."
+            ],
+            "question": "Which of the following is the most appropriate formal alternative to the informal phrase 'I’m gonna go'?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "Formal business correspondence requires a polite greeting such as 'Dear Mr. Smith' rather than informal salutations like 'Hey there.'",
+            "id": "ex_04add267-32fb-4d21-8345-e40ca6cb9007_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "In a business email, it is acceptable to start with 'Hey there,' when addressing a senior manager.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "Could you please provide the report as soon as possible?",
+            "explanation": "The revised sentence replaces the informal abbreviation 'ASAP' with the formal phrase 'as soon as possible' and uses a polite request structure.",
+            "id": "ex_04add267-32fb-4d21-8345-e40ca6cb9007_3",
+            "options": [],
+            "question": "Please rewrite the sentence in a formal register: 'Can you give me the report ASAP?' → {blank}",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Chúng tôi mong nhận được phản hồi nhanh chóng của bạn.",
+            "explanation": "This translation preserves the polite and formal tone of the English sentence.",
+            "id": "ex_04add267-32fb-4d21-8345-e40ca6cb9007_4",
+            "options": [
+              "Chúng tôi mong nhận được phản hồi nhanh chóng của bạn.",
+              "Bạn có thể trả lời nhanh không?",
+              "Mong bạn trả lời ngay.",
+              "Xin gửi lại trả lời sớm."
+            ],
+            "question": "Select the correct Vietnamese translation for the formal phrase 'We would appreciate your prompt response.'",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "commence:bắt đầu, conclude:kết thúc",
+            "explanation": "In formal contexts, 'commence' means 'bắt đầu' and 'conclude' means 'kết thúc'.",
+            "id": "ex_04add267-32fb-4d21-8345-e40ca6cb9007_5",
+            "options": [
+              "commence",
+              "conclude",
+              "bắt đầu",
+              "kết thúc"
+            ],
+            "question": "Match each formal English term with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "96753da4-cafe-4ca7-8473-9e72a914c080",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.742270"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "04add267-32fb-4d21-8345-e40ca6cb9007",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Formal vs. Informal Register: When & Why",
+      "total_exercises": 5,
+      "unit_id": "6d448b1c-2dec-4dbb-a506-b87e1c36863d",
+      "updated_at": {
+        "__dt__": "2026-08-14T06:39:10.796088"
+      },
+      "xp_reward": 28
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "tiết kiệm (positive)",
+            "explanation": "\"Frugal\" generally implies a positive attitude toward careful spending, so its connotation is positive.",
+            "id": "ex_3468f2e1-c4f3-4467-ab2c-97a8632a1403_1",
+            "options": [
+              "tiết kiệm (positive)",
+              "tiêu xài (negative)",
+              "trung tính",
+              "đắt đỏ (negative)"
+            ],
+            "question": "Which of the following best describes the connotation of the word \"frugal\"?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "In most contexts, \"slim\" is praised for a slender, healthy appearance, giving it a positive nuance.",
+            "id": "ex_3468f2e1-c4f3-4467-ab2c-97a8632a1403_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The word \"slim\" usually has a positive connotation when describing a person.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "glowing",
+            "explanation": "\"Glowing\" conveys a strongly positive tone, indicating an enthusiastic and favorable compliment.",
+            "id": "ex_3468f2e1-c4f3-4467-ab2c-97a8632a1403_3",
+            "options": [],
+            "question": "She gave a {blank} compliment about his presentation.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "candid:thẳng thắn, stern:nghiêm khắc",
+            "explanation": "\"Candid\" is neutral‑to‑positive (honest, straightforward) while \"stern\" is neutral‑to‑negative (strict, severe).",
+            "id": "ex_3468f2e1-c4f3-4467-ab2c-97a8632a1403_4",
+            "options": [
+              "candid",
+              "stern",
+              "thẳng thắn",
+              "nghiêm khắc"
+            ],
+            "question": "Match each English word with its Vietnamese meaning, reflecting its typical connotation.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "The dubious claims made by the salesman raised many doubts.",
+            "explanation": "\"Dubious\" carries a negative nuance, suggesting lack of trustworthiness or credibility.",
+            "id": "ex_3468f2e1-c4f3-4467-ab2c-97a8632a1403_5",
+            "options": [],
+            "question": "Write a sentence using the word \"dubious\" that clearly shows its negative connotation.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "96753da4-cafe-4ca7-8473-9e72a914c080",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.742327"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "3468f2e1-c4f3-4467-ab2c-97a8632a1403",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Word Connotation: Positive, Neutral, Negative",
+      "total_exercises": 5,
+      "unit_id": "6d448b1c-2dec-4dbb-a506-b87e1c36863d",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836678"
+      },
+      "xp_reward": 28
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "I love getting stuck in traffic for hours; it really brightens my day.",
+            "explanation": "The sentence says the opposite of the speaker's true feeling, which is a classic example of irony.",
+            "id": "ex_1a2b3c4d-1111-2222-3333-444455556666_1",
+            "options": [
+              "I love getting stuck in traffic for hours; it really brightens my day.",
+              "The weather is perfect for a beach day.",
+              "She studied hard and passed the exam.",
+              "He enjoys eating healthy salads."
+            ],
+            "question": "Which of the following sentences best demonstrates irony?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "Sarcasm often uses the opposite meaning, but it can also be conveyed through subtle exaggeration without a direct opposite.",
+            "id": "ex_2b3c4d5e-7777-8888-9999-aaaa11112222_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "Sarcasm always involves saying the opposite of what you mean with a mocking tone.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "three",
+            "explanation": "Saying 'only three slices' downplays what is actually a relatively large amount, creating an understatement.",
+            "id": "ex_3c4d5e6f-bbbb-cccc-dddd-eeeeffff0000_3",
+            "options": [
+              "one",
+              "two",
+              "three",
+              "four"
+            ],
+            "question": "Complete the understatement: 'I only ate {blank} slices of pizza.'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Tuyệt vời, lại một buổi họp nữa—đúng là điều tôi cần!",
+            "explanation": "The Vietnamese sentence uses 'tuyệt vời' and 'đúng là điều tôi cần!' in a mocking way, mirroring the sarcasm of the English original.",
+            "id": "ex_4d5e6f7g-1111-2222-3333-4444-555566667777_4",
+            "options": [
+              "Tuyệt vời, lại một buổi họp nữa—đúng là điều tôi cần!",
+              "Thật tuyệt, một buổi họp nữa—đó là điều tôi mong muốn!",
+              "Tuyệt vời, một buổi họp nữa—đó là điều tôi rất thích!",
+              "Thật tốt, một buổi họp nữa—đó là điều tôi muốn."
+            ],
+            "question": "Select the Vietnamese translation that captures the sarcastic tone of: 'Great, another meeting—just what I needed!'",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "That's just great:Thật là tuyệt vời, What a surprise:Thật là bất ngờ",
+            "explanation": "Both English phrases are commonly used sarcastically to express the opposite of the literal meaning; the Vietnamese equivalents convey the same ironic tone.",
+            "id": "ex_5e6f7g8h-9999-aaaa-bbbb-cccc-ddddeeeeffff_5",
+            "options": [
+              "That's just great",
+              "What a surprise",
+              "Thật là tuyệt vời",
+              "Thật là bất ngờ"
+            ],
+            "question": "Match each ironic expression with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "96753da4-cafe-4ca7-8473-9e72a914c080",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.742358"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "ce15dcbd-e69d-4827-b002-e221197f3e59",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Irony, Sarcasm & Understatement in Context",
+      "total_exercises": 5,
+      "unit_id": "6d448b1c-2dec-4dbb-a506-b87e1c36863d",
+      "updated_at": {
+        "__dt__": "2026-08-14T06:39:10.796225"
+      },
+      "xp_reward": 28
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "however",
+            "explanation": "\"However\" explicitly marks a contrast or concession, matching the meaning of \"Although...\".",
+            "id": "ex_925decb6-ddec-4972-a846-5975221077eb_1",
+            "options": [
+              "however",
+              "therefore",
+              "moreover",
+              "consequently"
+            ],
+            "question": "Which discourse marker best signals a concession in the sentence: \"Although the evidence was compelling, ___ the hypothesis remained unproven.\"",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "Cohesion deals with linguistic devices that link sentences; coherence concerns the overall sense and logical flow, not grammar.",
+            "id": "ex_925decb6-ddec-4972-a846-5975221077eb_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "In discourse analysis, the term 'cohesion' refers to the logical relationships between sentences, while 'coherence' refers to the grammatical correctness of each sentence.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "just",
+            "explanation": "The pause suggests the speaker is politely asking for a minimal effort; \"just\" captures that nuance.",
+            "id": "ex_925decb6-ddec-4972-a846-5975221077eb_3",
+            "options": [],
+            "question": "Identify the implicit pragmatic meaning conveyed by the ellipsis in the sentence: \"If you could... (pause), I would appreciate it.\" Fill the blank with the implied word: \"If you could {blank} (pause), I would appreciate it.\"",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Tuy nhiên, tác giả khéo léo chuyển đổi quan điểm kể chuyện để mời gọi sự đồng cảm của người đọc.",
+            "explanation": "The translation keeps the concessive \"Nevertheless\" (Tuy nhiên) and the subtle shift (khéo léo chuyển đổi) while retaining the purpose (mời gọi sự đồng cảm).",
+            "id": "ex_925decb6-ddec-4972-a846-5975221077eb_4",
+            "options": [],
+            "question": "Translate the following sentence into Vietnamese, preserving its discourse nuance:\n\"Nevertheless, the author subtly shifts the narrative perspective to invite the reader's empathy.\"",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "however:nhưng, moreover:hơn nữa",
+            "explanation": "\"However\" translates to \"nhưng\" (contrast) and \"moreover\" to \"hơn nữa\" (addition), reflecting their discourse functions.",
+            "id": "ex_925decb6-ddec-4972-a846-5975221077eb_5",
+            "options": [
+              "however",
+              "moreover",
+              "nhưng",
+              "hơn nữa"
+            ],
+            "question": "Match each discourse connective with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "96753da4-cafe-4ca7-8473-9e72a914c080",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.742389"
+      },
+      "description": null,
+      "estimated_minutes": 28,
+      "id": "925decb6-ddec-4972-a846-5975221077eb",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Discourse Analysis: How Texts Create Meaning",
+      "total_exercises": 5,
+      "unit_id": "6d448b1c-2dec-4dbb-a506-b87e1c36863d",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836892"
+      },
+      "xp_reward": 30
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "I couldn't care less about the outcome.",
+            "explanation": "The idiom \"couldn't care less\" expresses the absolute minimum level of interest, whereas \"could care less\" suggests some lingering interest.",
+            "id": "ex_4fce607b-d52c-400e-9456-8217b1300a80_1",
+            "options": [
+              "I could care less about the outcome.",
+              "I couldn't care less about the outcome.",
+              "I could not care less about the outcome.",
+              "I couldn't care less about the outcome."
+            ],
+            "question": "Which of the following sentences correctly uses the idiom that conveys the strongest lack of interest?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "\"Would you mind...\" is a polite, formal request and is appropriate in professional correspondence.",
+            "id": "ex_4fce607b-d52c-400e-9456-8217b1300a80_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The phrase \"Would you mind...\" is considered informal in business emails.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "allay",
+            "explanation": "\"Allay\" means to lessen or relieve, fitting the context of reducing objections.",
+            "id": "ex_4fce607b-d52c-400e-9456-8217b1300a80_3",
+            "options": [],
+            "question": "She managed to {blank} the committee's objections with a deft turn of phrase.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "ubiquitous:phổ biến rộng rãi, plethora:sự dồi dào",
+            "explanation": "\"Ubiquitous\" means present everywhere (phổ biến rộng rãi); \"plethora\" means an excess or abundance (sự dồi dào).",
+            "id": "ex_4fce607b-d52c-400e-9456-8217b1300a80_4",
+            "options": [
+              "ubiquitous",
+              "plethora",
+              "phổ biến rộng rãi",
+              "sự dồi dào"
+            ],
+            "question": "Match each advanced vocabulary word with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "Mastering register enables speakers to tailor their language to different social contexts, ensuring that tone, formality, and lexical choices align with the audience's expectations; this flexibility is a hallmark of native‑like fluency.",
+            "explanation": "The answer demonstrates awareness of register, its impact on tone and audience, and uses complex structures appropriate for C2 proficiency.",
+            "id": "ex_4fce607b-d52c-400e-9456-8217b1300a80_5",
+            "options": [],
+            "question": "Write a brief (2‑3 sentence) C2‑level reflection on why mastering register is crucial for native‑like fluency.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "96753da4-cafe-4ca7-8473-9e72a914c080",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.742417"
+      },
+      "description": null,
+      "estimated_minutes": 35,
+      "id": "4fce607b-d52c-400e-9456-8217b1300a80",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "C2 Proficiency Capstone Test",
+      "total_exercises": 5,
+      "unit_id": "6d448b1c-2dec-4dbb-a506-b87e1c36863d",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836761"
+      },
+      "xp_reward": 70
+    }
+  ],
+  "units": [
+    {
+      "background_color": "#880E4F",
+      "course_id": "96753da4-cafe-4ca7-8473-9e72a914c080",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.601660"
+      },
+      "description": "Thành ngữ và cụm động từ nâng cao trong tiếng Anh tự nhiên",
+      "icon_url": null,
+      "id": "edd9802d-f79e-4c69-89d2-359dd4276e4d",
+      "order_index": 1,
+      "title": "Mastering Idioms & Phrasal Verbs",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:39.641442"
+      }
+    },
+    {
+      "background_color": "#0D47A1",
+      "course_id": "96753da4-cafe-4ca7-8473-9e72a914c080",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.643315"
+      },
+      "description": "Viết học thuật, báo cáo nghiên cứu và diễn ngôn chuyên nghiệp",
+      "icon_url": null,
+      "id": "f05ecd44-071a-481a-b740-a8db10cb6d0c",
+      "order_index": 2,
+      "title": "Academic & Professional Writing at C2",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:39.686297"
+      }
+    },
+    {
+      "background_color": "#1B5E20",
+      "course_id": "96753da4-cafe-4ca7-8473-9e72a914c080",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.687854"
+      },
+      "description": "Phong cách ngôn ngữ, sắc thái ý nghĩa và diễn đạt như người bản xứ",
+      "icon_url": null,
+      "id": "6d448b1c-2dec-4dbb-a506-b87e1c36863d",
+      "order_index": 3,
+      "title": "Nuance, Register & Native-Like Fluency",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:39.738550"
+      }
+    }
+  ]
+}

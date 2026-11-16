@@ -1,0 +1,1411 @@
+{
+  "category": {
+    "color": "#1565C0",
+    "course_count": 0,
+    "created_at": {
+      "__dt__": "2026-03-14T03:20:37.056492"
+    },
+    "description": "Khóa học tiếng Anh tổng quát theo khung CEFR (A1–C2)",
+    "icon": "school",
+    "id": "76c5f700-7134-407e-acb3-cab49d214c96",
+    "is_active": true,
+    "name": "General English",
+    "order_index": 1,
+    "slug": "general-english",
+    "updated_at": {
+      "__dt__": "2026-03-14T03:20:37.056509"
+    }
+  },
+  "course": {
+    "category_id": "76c5f700-7134-407e-acb3-cab49d214c96",
+    "content_version": 1,
+    "created_at": {
+      "__dt__": "2026-03-14T03:20:38.104733"
+    },
+    "description": "Nâng cao khả năng tiếng Anh từ A2 lên B1. Tập trung vào giao tiếp trong môi trường làm việc nhập môn, kể chuyện, diễn đạt ý kiến và viết đoạn văn ngắn.",
+    "estimated_duration": 600,
+    "id": "e52e12e0-5fe4-4ff4-a62a-c364310f6a4f",
+    "is_published": true,
+    "language": "en",
+    "level": "B1",
+    "skill": "grammar",
+    "tags": [
+      "pre-intermediate",
+      "grammar",
+      "speaking",
+      "cefr-b1"
+    ],
+    "thumbnail_url": "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=400",
+    "title": "Pre-Intermediate English",
+    "total_lessons": 15,
+    "total_xp": 800,
+    "updated_at": {
+      "__dt__": "2026-08-18T04:17:07.523258"
+    }
+  },
+  "format": 1,
+  "lessons": [
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "I write code, test applications, and attend team meetings.",
+            "explanation": "Software developers primarily write code, test their work, and collaborate in meetings.",
+            "id": "ex_ba861cf2-ca40-4c0a-874f-6ddb34e0dcc3_1",
+            "options": [
+              "I write code, test applications, and attend team meetings.",
+              "I cook meals for the office every day.",
+              "I manage the company's finances and approve budgets.",
+              "I clean the office windows weekly."
+            ],
+            "question": "Which of the following sentences correctly describes a typical daily task for a software developer?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "Many modern workplaces have business‑casual dress codes, not formal suits daily.",
+            "id": "ex_ba861cf2-ca40-4c0a-874f-6ddb34e0dcc3_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "In most offices, employees are required to wear formal suits every day.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "start",
+            "explanation": "The verb 'start' fits the infinitive form after 'usually'.",
+            "id": "ex_ba861cf2-ca40-4c0a-874f-6ddb34e0dcc3_3",
+            "options": [],
+            "question": "I usually {blank} (start) work at 9 a.m.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "colleague:đồng nghiệp, deadline:hạn chót",
+            "explanation": "'Colleague' means 'đồng nghiệp' and 'deadline' means 'hạn chót' in Vietnamese.",
+            "id": "ex_ba861cf2-ca40-4c0a-874f-6ddb34e0dcc3_4",
+            "options": [
+              "colleague",
+              "deadline",
+              "đồng nghiệp",
+              "hạn chót"
+            ],
+            "question": "Match each workplace term with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "I work as a marketing assistant. My daily tasks include creating social media posts, analyzing campaign results, and coordinating with the design team. I also attend briefings with my manager to plan upcoming projects.",
+            "explanation": "The answer translates the Vietnamese prompt and uses appropriate B1‑level vocabulary about daily work activities.",
+            "id": "ex_ba861cf2-ca40-4c0a-874f-6ddb34e0dcc3_5",
+            "options": [],
+            "question": "Write a short paragraph (3‑4 sentences) in English describing your job. Use the Vietnamese prompt: \"Bạn làm việc gì và mô tả công việc hàng ngày của mình.\"",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "e52e12e0-5fe4-4ff4-a62a-c364310f6a4f",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.187141"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "ba861cf2-ca40-4c0a-874f-6ddb34e0dcc3",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Talking About Your Job & Workplace",
+      "total_exercises": 5,
+      "unit_id": "3c9e69de-8825-4ffe-b2f4-b2df744444fd",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836963"
+      },
+      "xp_reward": 18
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "often",
+            "explanation": "‘Often’ means frequently, suitable for a regular habit.",
+            "id": "ex_ab16e39d-56dc-476a-9c17-cfce0b76aa6a_1",
+            "options": [
+              "always",
+              "never",
+              "often",
+              "seldom"
+            ],
+            "question": "Which word best completes the sentence? I ___ go to the gym after work.",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "‘Commute’ refers to traveling regularly between home and workplace.",
+            "id": "ex_ab16e39d-56dc-476a-9c17-cfce0b76aa6a_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The verb 'to commute' means to travel to and from work.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "drinks",
+            "explanation": "The verb ‘drinks’ fits the routine of having coffee each morning.",
+            "id": "ex_ab16e39d-56dc-476a-9c17-cfce0b76aa6a_3",
+            "options": [],
+            "question": "Listen and write the missing word: She {blank} her coffee every morning before leaving.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "wake up:dậy, brush teeth:đánh răng",
+            "explanation": "‘Wake up’ translates to ‘dậy’ and ‘brush teeth’ to ‘đánh răng’.",
+            "id": "ex_ab16e39d-56dc-476a-9c17-cfce0b76aa6a_4",
+            "options": [
+              "wake up",
+              "brush teeth",
+              "dậy",
+              "đánh răng"
+            ],
+            "question": "Match each daily activity with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "I usually have breakfast at 7am",
+            "explanation": "The natural order for this daily routine sentence is ‘I usually have breakfast at 7am’.",
+            "id": "ex_ab16e39d-56dc-476a-9c17-cfce0b76aa6a_5",
+            "options": [
+              "breakfast",
+              "I",
+              "usually",
+              "at",
+              "7am",
+              "have"
+            ],
+            "question": "Arrange the sentence in the correct order:",
+            "type": "reorder",
+            "ui_type": "arrange_the_sentence"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "e52e12e0-5fe4-4ff4-a62a-c364310f6a4f",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.187179"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "ab16e39d-56dc-476a-9c17-cfce0b76aa6a",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Daily Routine Vocabulary & Frequency Adverbs",
+      "total_exercises": 5,
+      "unit_id": "3c9e69de-8825-4ffe-b2f4-b2df744444fd",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836935"
+      },
+      "xp_reward": 18
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "I'm going to meet my colleague tomorrow.",
+            "explanation": "'Going to' + base verb is used for plans made before speaking.",
+            "id": "ex_3a7f0866-195a-480d-bb1a-8e760f7b27a6_1",
+            "options": [
+              "I'm going to meet my colleague tomorrow.",
+              "I will meeting my colleague tomorrow.",
+              "I'm meet my colleague tomorrow.",
+              "I will to meet my colleague tomorrow."
+            ],
+            "question": "Which sentence correctly uses 'going to' to express a future plan?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "Present continuous is often used for scheduled personal plans.",
+            "id": "ex_3a7f0866-195a-480d-bb1a-8e760f7b27a6_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The present continuous can be used to talk about a fixed arrangement in the near future.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "are having",
+            "explanation": "Present continuous for a planned future event.",
+            "id": "ex_3a7f0866-195a-480d-bb1a-8e760f7b27a6_3",
+            "options": [],
+            "question": "We {blank} a meeting at 3 p.m. tomorrow.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "will:sẽ, going to:sắp định",
+            "explanation": "'Will' expresses spontaneous decisions, 'going to' expresses prior plans.",
+            "id": "ex_3a7f0866-195a-480d-bb1a-8e760f7b27a6_4",
+            "options": [
+              "will",
+              "going to",
+              "sẽ",
+              "sắp định"
+            ],
+            "question": "Match each future form with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "I will visit my parents on Saturday. I'm going to watch a movie on Sunday night. We're having a barbecue on Sunday afternoon.",
+            "explanation": "The answer demonstrates the three future forms: 'will' for a decision, 'going to' for a prior plan, and present continuous for a scheduled arrangement.",
+            "id": "ex_3a7f0866-195a-480d-bb1a-8e760f7b27a6_5",
+            "options": [],
+            "question": "Write 2-3 sentences about your plan for the weekend using at least one 'will', one 'going to', and one present continuous form.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "e52e12e0-5fe4-4ff4-a62a-c364310f6a4f",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.187197"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "3a7f0866-195a-480d-bb1a-8e760f7b27a6",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Making Plans: Will, Going To, Present Continuous",
+      "total_exercises": 5,
+      "unit_id": "3c9e69de-8825-4ffe-b2f4-b2df744444fd",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836691"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "I could swim",
+            "explanation": "'Could' is the past form of 'can' to talk about abilities in the past.",
+            "id": "ex_e53acad6-328f-448c-812d-71975e0c80ef_1",
+            "options": [
+              "I can swim",
+              "I could swim",
+              "I am able to swim",
+              "I will swim"
+            ],
+            "question": "Which sentence correctly uses the past ability form?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "'Is able to' expresses present ability, and the statement is true.",
+            "id": "ex_e53acad6-328f-448c-812d-71975e0c80ef_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "She is able to speak three languages fluently.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "could",
+            "explanation": "'Could' is used for ability in the past.",
+            "id": "ex_e53acad6-328f-448c-812d-71975e0c80ef_3",
+            "options": [],
+            "question": "When I was a child, I {blank} ride a bike without training wheels.",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "He can do this work on weekends.",
+            "explanation": "'Có thể' in present tense translates to 'can' for ability.",
+            "id": "ex_e53acad6-328f-448c-812d-71975e0c80ef_4",
+            "options": [
+              "He can do this work on weekends.",
+              "He could do this work on weekends.",
+              "He is able to do this work on weekends.",
+              "He will do this work on weekends."
+            ],
+            "question": "Translate to English: 'Anh ấy có thể làm việc này vào cuối tuần.'",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "can:có thể (hiện tại), could:có thể (quá khứ)",
+            "explanation": "'Can' expresses present ability, 'could' expresses past ability.",
+            "id": "ex_e53acad6-328f-448c-812d-71975e0c80ef_5",
+            "options": [
+              "can",
+              "could",
+              "có thể (hiện tại)",
+              "có thể (quá khứ)"
+            ],
+            "question": "Match each modal verb with its Vietnamese meaning about ability.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "e52e12e0-5fe4-4ff4-a62a-c364310f6a4f",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.187215"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "e53acad6-328f-448c-812d-71975e0c80ef",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Talking About Abilities: Can, Could, Be Able To",
+      "total_exercises": 5,
+      "unit_id": "3c9e69de-8825-4ffe-b2f4-b2df744444fd",
+      "updated_at": {
+        "__dt__": "2026-08-14T06:39:10.796251"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "6 pm",
+            "explanation": "Most offices close at 6 pm on Fridays, so this is the correct choice.",
+            "id": "ex_123e4567-e89b-12d3-a456-426614174000_1",
+            "options": [
+              "5 pm",
+              "6 pm",
+              "7 pm",
+              "8 pm"
+            ],
+            "question": "What time does the office usually close on Fridays?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "Company policy states that a short coffee break of up to 30 minutes is permitted each morning.",
+            "id": "ex_123e4567-e89b-12d3-a456-426614174001_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "Employees are allowed to take a 30‑minute coffee break every morning.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "finished",
+            "explanation": "\"Finished\" correctly completes the sentence, showing the action was done before the deadline.",
+            "id": "ex_123e4567-e89b-12d3-a456-426614174002_3",
+            "options": [],
+            "question": "She {blank} the report before the deadline.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "I will go to work by bicycle tomorrow.",
+            "explanation": "The translation keeps the future tense (will) and the means of transport (by bicycle) correctly.",
+            "id": "ex_123e4567-e89b-12d3-a456-426614174003_4",
+            "options": [],
+            "question": "Translate into English: \"Tôi sẽ đi làm bằng xe đạp vào ngày mai.\"",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "deadline:hạn chót, meeting:cuộc họp",
+            "explanation": "\"Deadline\" means \"hạn chót\" and \"meeting\" means \"cuộc họp\" in Vietnamese.",
+            "id": "ex_123e4567-e89b-12d3-a456-426614174004_5",
+            "options": [
+              "deadline",
+              "meeting",
+              "hạn chót",
+              "cuộc họp"
+            ],
+            "question": "Match each workplace term with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "e52e12e0-5fe4-4ff4-a62a-c364310f6a4f",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.187233"
+      },
+      "description": null,
+      "estimated_minutes": 15,
+      "id": "d8e06256-a1aa-4732-ab60-26cba01869d9",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Unit 1 Progress Test",
+      "total_exercises": 5,
+      "unit_id": "3c9e69de-8825-4ffe-b2f4-b2df744444fd",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.837039"
+      },
+      "xp_reward": 30
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Throat",
+            "explanation": "A sore throat refers to pain in the throat.",
+            "id": "ex_f3107497-94c9-4c86-b4af-a563e0ab196c_1",
+            "options": [
+              "Stomach",
+              "Throat",
+              "Leg",
+              "Ear"
+            ],
+            "question": "Which body part is affected when you have a sore throat?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "Rash can have many causes, not only allergies.",
+            "id": "ex_f3107497-94c9-4c86-b4af-a563e0ab196c_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "If you feel a rash on your skin, it always means you have an allergic reaction.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "pain",
+            "explanation": "The common symptom is chest pain.",
+            "id": "ex_f3107497-94c9-4c86-b4af-a563e0ab196c_3",
+            "options": [],
+            "question": "I have a {blank} in my chest.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "head:đầu, stomach:dạ dày",
+            "explanation": "head means đầu, stomach means dạ dày.",
+            "id": "ex_f3107497-94c9-4c86-b4af-a563e0ab196c_4",
+            "options": [
+              "head",
+              "stomach",
+              "đầu",
+              "dạ dày"
+            ],
+            "question": "Match each body part with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "I have a headache.",
+            "explanation": "The correct English translation of \"Tôi bị đau đầu\" is \"I have a headache.\"",
+            "id": "ex_f3107497-94c9-4c86-b4af-a563e0ab196c_5",
+            "options": [],
+            "question": "Translate the following Vietnamese sentence into English: \"Tôi bị đau đầu\".",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "e52e12e0-5fe4-4ff4-a62a-c364310f6a4f",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.234181"
+      },
+      "description": null,
+      "estimated_minutes": 18,
+      "id": "f3107497-94c9-4c86-b4af-a563e0ab196c",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Body Parts & Common Symptoms",
+      "total_exercises": 5,
+      "unit_id": "5c1322a2-e6d4-45f5-91c5-84b2429d8beb",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.837105"
+      },
+      "xp_reward": 16
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "My head is throbbing.",
+            "explanation": "‘Throbbing’ describes a pulsating pain, which is appropriate for a headache.",
+            "id": "ex_a8e3d5eb-3380-4ebd-9685-1f551fb01cfd_1",
+            "options": [
+              "My head is throbbing.",
+              "I have a sore throat.",
+              "I feel dizzy.",
+              "My stomach hurts."
+            ],
+            "question": "Which phrase would you use to tell the doctor that your headache is throbbing?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "38 °C is a typical fever temperature, so the sentence is correct.",
+            "id": "ex_a8e3d5eb-3380-4ebd-9685-1f551fb01cfd_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "True or False: 'I have a fever of 38°C' is a correct way to describe a temperature.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "continuously",
+            "explanation": "‘Continuously’ expresses that the coughing has been happening without stopping.",
+            "id": "ex_a8e3d5eb-3380-4ebd-9685-1f551fb01cfd_3",
+            "options": [],
+            "question": "Complete the sentence with the appropriate word: 'I have been coughing {blank} for three days.'",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Tôi bị đau nhói ở lưng dưới.",
+            "explanation": "The translation conveys the exact meaning of the English sentence.",
+            "id": "ex_a8e3d5eb-3380-4ebd-9685-1f551fb01cfd_4",
+            "options": [],
+            "question": "Translate the following sentence into Vietnamese: 'I have a sharp pain in my lower back.'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "cough:ho, fever:sốt",
+            "explanation": "‘cough’ translates to ‘ho’ and ‘fever’ translates to ‘sốt’.",
+            "id": "ex_a8e3d5eb-3380-4ebd-9685-1f551fb01cfd_5",
+            "options": [
+              "cough",
+              "fever",
+              "ho",
+              "sốt"
+            ],
+            "question": "Match each medical symptom with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "e52e12e0-5fe4-4ff4-a62a-c364310f6a4f",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.234229"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "a8e3d5eb-3380-4ebd-9685-1f551fb01cfd",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "At the Doctor's: Describing Pain & Illness",
+      "total_exercises": 5,
+      "unit_id": "5c1322a2-e6d4-45f5-91c5-84b2429d8beb",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836929"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "You should exercise every day.",
+            "explanation": "Use 'should' + base verb to give advice.",
+            "id": "ex_84e2e2a9-86b4-4bfd-ae0c-5244d7ccc435_1",
+            "options": [
+              "You should to exercise every day.",
+              "You should exercise every day.",
+              "You should exercising every day.",
+              "You should exercised every day."
+            ],
+            "question": "Which sentence correctly uses 'should' to give advice about exercise?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "The statement is false because you should drink at least 8 glasses of water daily.",
+            "id": "ex_84e2e2a9-86b4-4bfd-ae0c-5244d7ccc435_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "You shouldn't drink at least 8 glasses of water a day.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "should",
+            "explanation": "'Should' is used to give advice in this sentence.",
+            "id": "ex_84e2e2a9-86b4-4bfd-ae0c-5244d7ccc435_3",
+            "options": [],
+            "question": "If you want to improve your sleep, you {blank} avoid caffeine before bedtime.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Bạn không nên ăn quá nhiều đồ ăn nhanh.",
+            "explanation": "The translation must include 'không nên' to convey 'shouldn't'.",
+            "id": "ex_84e2e2a9-86b4-4bfd-ae0c-5244d7ccc435_4",
+            "options": [
+              "Bạn không nên ăn quá nhiều đồ ăn nhanh.",
+              "Bạn không ăn quá nhiều đồ ăn nhanh.",
+              "Bạn không nên ăn đồ ăn nhanh.",
+              "Bạn không ăn đồ ăn nhanh."
+            ],
+            "question": "Select the correct Vietnamese translation for the sentence: 'You shouldn't eat too much junk food.'",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "People should walk at least 30 minutes every day. They shouldn't skip breakfast because it gives energy. You should drink plenty of water. You shouldn't stay up late regularly.",
+            "explanation": "The answer uses 'should' and 'shouldn't' to give clear advice about healthy habits.",
+            "id": "ex_84e2e2a9-86b4-4bfd-ae0c-5244d7ccc435_5",
+            "options": [],
+            "question": "Write 3-4 sentences about a healthy habit you think people should adopt, using 'should' or 'shouldn't'.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "e52e12e0-5fe4-4ff4-a62a-c364310f6a4f",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.234250"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "84e2e2a9-86b4-4bfd-ae0c-5244d7ccc435",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Healthy Habits: Should / Shouldn't",
+      "total_exercises": 5,
+      "unit_id": "5c1322a2-e6d4-45f5-91c5-84b2429d8beb",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836872"
+      },
+      "xp_reward": 18
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "swimming",
+            "explanation": "The Vietnamese word \"bơi lội\" translates to the English verb \"swimming\".",
+            "id": "ex_3fc07b37-67d1-4282-ba08-46628b5e62d6_1",
+            "options": [
+              "swimming",
+              "running",
+              "cycling",
+              "jogging"
+            ],
+            "question": "Which word means \"bơi lội\" in English?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "Yoga focuses on flexibility and balance, not high‑intensity cardio.",
+            "id": "ex_3fc07b37-67d1-4282-ba08-46628b5e62d6_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The word \"yoga\" is a type of high‑intensity cardio exercise.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "weightlifting",
+            "explanation": "\"Weightlifting\" fits the context of a gym activity.",
+            "id": "ex_3fc07b37-67d1-4282-ba08-46628b5e62d6_3",
+            "options": [],
+            "question": "I usually go to the gym to do {blank}.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "jog:chạy bộ, stretch:duỗi người",
+            "explanation": "\"Jog\" means \"chạy bộ\" and \"stretch\" means \"duỗi người\".",
+            "id": "ex_3fc07b37-67d1-4282-ba08-46628b5e62d6_4",
+            "options": [
+              "jog",
+              "stretch",
+              "chạy bộ",
+              "duỗi người"
+            ],
+            "question": "Match each exercise with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "I like playing football on weekends.",
+            "explanation": "The Vietnamese sentence means exactly that in English.",
+            "id": "ex_3fc07b37-67d1-4282-ba08-46628b5e62d6_5",
+            "options": [],
+            "question": "Translate the following sentence into English: \"Tôi thích chơi bóng đá vào cuối tuần.\"",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "e52e12e0-5fe4-4ff4-a62a-c364310f6a4f",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.234267"
+      },
+      "description": null,
+      "estimated_minutes": 18,
+      "id": "3fc07b37-67d1-4282-ba08-46628b5e62d6",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Sports & Exercise Vocabulary",
+      "total_exercises": 5,
+      "unit_id": "5c1322a2-e6d4-45f5-91c5-84b2429d8beb",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836717"
+      },
+      "xp_reward": 16
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Running",
+            "explanation": "Running is an aerobic exercise that strengthens the heart.",
+            "id": "ex_f957613b-a1e2-41b8-ae90-b18a530809d2_1",
+            "options": [
+              "Running",
+              "Reading a book",
+              "Watching TV",
+              "Playing video games"
+            ],
+            "question": "Which of the following activities is most likely to improve cardiovascular health?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "High sugar intake contributes to weight gain.",
+            "id": "ex_f957613b-a1e2-41b8-ae90-b18a530809d2_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "Regularly drinking sugary drinks can increase the risk of obesity.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "balanced",
+            "explanation": "A balanced diet means having a variety of nutrients.",
+            "id": "ex_f957613b-a1e2-41b8-ae90-b18a530809d2_3",
+            "options": [],
+            "question": "I try to eat {blank} meals each day to stay healthy.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "dinh dưỡng",
+            "explanation": "'Nutrition' means dinh dưỡng in Vietnamese.",
+            "id": "ex_f957613b-a1e2-41b8-ae90-b18a530809d2_4",
+            "options": [
+              "dinh dưỡng",
+              "sức khỏe",
+              "thể thao",
+              "bệnh tật"
+            ],
+            "question": "Translate the word 'nutrition' into Vietnamese.",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "exercise:tập thể dục, diet:chế độ ăn",
+            "explanation": "Exercise = tập thể dục; diet = chế độ ăn.",
+            "id": "ex_f957613b-a1e2-41b8-ae90-b18a530809d2_5",
+            "options": [
+              "exercise",
+              "diet",
+              "tập thể dục",
+              "chế độ ăn"
+            ],
+            "question": "Match each health-related term with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "e52e12e0-5fe4-4ff4-a62a-c364310f6a4f",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.234286"
+      },
+      "description": null,
+      "estimated_minutes": 15,
+      "id": "f957613b-a1e2-41b8-ae90-b18a530809d2",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Health Unit Test",
+      "total_exercises": 5,
+      "unit_id": "5c1322a2-e6d4-45f5-91c5-84b2429d8beb",
+      "updated_at": {
+        "__dt__": "2026-08-14T06:39:10.796266"
+      },
+      "xp_reward": 30
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "been",
+            "explanation": "\"Been\" is the past participle used with have/has in the present perfect.",
+            "id": "ex_c5ffc1eb-f876-4602-bfe2-01e6315846c9_1",
+            "options": [
+              "been",
+              "go",
+              "went",
+              "going"
+            ],
+            "question": "Which word correctly completes the sentence: \"Have you ever ___ to Japan?\"",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "After \"have\" we need the past participle \"eaten\", not \"ate\".",
+            "id": "ex_c5ffc1eb-f876-4602-bfe2-01e6315846c9_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The sentence \"I have ate breakfast\" is grammatically correct.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "never",
+            "explanation": "\"Never\" is used with present perfect to say something has not happened up to now.",
+            "id": "ex_c5ffc1eb-f876-4602-bfe2-01e6315846c9_3",
+            "options": [],
+            "question": "She has {blank} visited London before.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "ever:đã, yet:vẫn",
+            "explanation": "\"Ever\" means \"đã\" in questions, \"yet\" means \"vẫn\" in negative sentences.",
+            "id": "ex_c5ffc1eb-f876-4602-bfe2-01e6315846c9_4",
+            "options": [
+              "ever",
+              "yet",
+              "đã",
+              "vẫn"
+            ],
+            "question": "Match each English word with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "Yes, I have tried sushi.",
+            "explanation": "The answer uses present perfect to describe a life experience.",
+            "id": "ex_c5ffc1eb-f876-4602-bfe2-01e6315846c9_5",
+            "options": [],
+            "question": "Write a short answer to the question: Have you ever tried sushi?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "e52e12e0-5fe4-4ff4-a62a-c364310f6a4f",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.287799"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "c5ffc1eb-f876-4602-bfe2-01e6315846c9",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Present Perfect: Have You Ever…?",
+      "total_exercises": 5,
+      "unit_id": "b1421193-e703-4690-91b1-d9eec8901cec",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836985"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "I have lived here since 2015.",
+            "explanation": "'Since' is used with a specific point in time, not a duration.",
+            "id": "ex_29398e2d-74de-48b1-9118-86013dd5c114_1",
+            "options": [
+              "I have lived here since 2015.",
+              "I have lived here for 2015.",
+              "I have been living here since five years.",
+              "I have lived here for five years."
+            ],
+            "question": "Which sentence correctly uses 'since' with the present perfect?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "'For' expresses a period of time up to the present in the present perfect.",
+            "id": "ex_29398e2d-74de-48b1-9118-86013dd5c114_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The present perfect can be used with 'for' to talk about a duration that started in the past and continues now.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "has worked",
+            "explanation": "The present perfect form of 'work' with 'since' is 'has worked'.",
+            "id": "ex_29398e2d-74de-48b1-9118-86013dd5c114_3",
+            "options": [],
+            "question": "She {blank} here since March.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "since:từ năm, for:trong vòng",
+            "explanation": "'Since' = 'từ năm' (specific starting point); 'for' = 'trong vòng' (duration).",
+            "id": "ex_29398e2d-74de-48b1-9118-86013dd5c114_4",
+            "options": [
+              "since",
+              "for",
+              "từ năm",
+              "trong vòng"
+            ],
+            "question": "Match each time expression with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "since",
+            "explanation": "When referring to a specific past point, use 'since' (e.g., 'since five years ago'), not 'for'.",
+            "id": "ex_29398e2d-74de-48b1-9118-86013dd5c114_5",
+            "options": [],
+            "question": "Correct the sentence: 'I have known him {blank} five years ago.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "e52e12e0-5fe4-4ff4-a62a-c364310f6a4f",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.287856"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "29398e2d-74de-48b1-9118-86013dd5c114",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "For & Since with Present Perfect",
+      "total_exercises": 5,
+      "unit_id": "b1421193-e703-4690-91b1-d9eec8901cec",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836648"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "bigger",
+            "explanation": "'Bigger' is the correct comparative form of 'big'.",
+            "id": "ex_bda7d8b1-9cfd-47ea-845d-9707a15842d7_1",
+            "options": [
+              "bigger",
+              "biggest",
+              "more big",
+              "big"
+            ],
+            "question": "Choose the correct comparative form: My house is ___ than yours.",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "'More expensive' correctly forms the comparative of 'expensive'.",
+            "id": "ex_bda7d8b1-9cfd-47ea-845d-9707a15842d7_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The sentence 'This car is more expensive than the bike.' uses the correct comparative form.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "more expensive",
+            "explanation": "'More expensive' is the comparative used with adjectives of more than two syllables.",
+            "id": "ex_bda7d8b1-9cfd-47ea-845d-9707a15842d7_3",
+            "options": [],
+            "question": "The new smartphone is {blank} than the old model.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "bigger:to hơn, more expensive:đắt hơn",
+            "explanation": "'Bigger' means 'to hơn' and 'more expensive' means 'đắt hơn' in Vietnamese.",
+            "id": "ex_bda7d8b1-9cfd-47ea-845d-9707a15842d7_4",
+            "options": [
+              "bigger",
+              "more expensive",
+              "to hơn",
+              "đắt hơn"
+            ],
+            "question": "Match each comparative adjective with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "My city is bigger than Hanoi.",
+            "explanation": "The sentence correctly uses the comparative 'bigger' to compare two cities.",
+            "id": "ex_bda7d8b1-9cfd-47ea-845d-9707a15842d7_5",
+            "options": [],
+            "question": "Translate into English: 'Thành phố của tôi lớn hơn Hà Nội.'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "e52e12e0-5fe4-4ff4-a62a-c364310f6a4f",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.287890"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "bda7d8b1-9cfd-47ea-845d-9707a15842d7",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Comparative Adjectives: Bigger, More Expensive",
+      "total_exercises": 5,
+      "unit_id": "b1421193-e703-4690-91b1-d9eec8901cec",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836968"
+      },
+      "xp_reward": 18
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "biggest",
+            "explanation": "The superlative of 'big' is formed by adding -est, giving 'biggest'.",
+            "id": "ex_c929821e-fff3-4a6c-a649-1fea69c3601c_1",
+            "options": [
+              "big",
+              "bigger",
+              "biggest",
+              "more big"
+            ],
+            "question": "Which is the correct superlative form for the adjective 'big'?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "It correctly uses 'most' + adjective to form a superlative.",
+            "id": "ex_c929821e-fff3-4a6c-a649-1fea69c3601c_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The sentence 'This is the most difficult problem I have ever solved.' is a correct use of the superlative.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "the tallest",
+            "explanation": "Superlative of 'tall' is 'the tallest'.",
+            "id": "ex_c929821e-fff3-4a6c-a649-1fea69c3601c_3",
+            "options": [],
+            "question": "Mount Everest is {blank} mountain in the world.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "This picture is the biggest in my collection.",
+            "explanation": "Uses 'the biggest' as the superlative of 'big'.",
+            "id": "ex_c929821e-fff3-4a6c-a649-1fea69c3601c_4",
+            "options": [],
+            "question": "Translate into English using a superlative: 'Bức tranh này là lớn nhất trong bộ sưu tập của tôi.'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "biggest:lớn nhất, most difficult:khó nhất",
+            "explanation": "Correspondence between English superlatives and Vietnamese translations.",
+            "id": "ex_c929821e-fff3-4a6c-a649-1fea69c3601c_5",
+            "options": [
+              "biggest",
+              "most difficult",
+              "lớn nhất",
+              "khó nhất"
+            ],
+            "question": "Match each English superlative word with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "e52e12e0-5fe4-4ff4-a62a-c364310f6a4f",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.287924"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "c929821e-fff3-4a6c-a649-1fea69c3601c",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Superlatives: The Biggest, The Most Difficult",
+      "total_exercises": 5,
+      "unit_id": "b1421193-e703-4690-91b1-d9eec8901cec",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836993"
+      },
+      "xp_reward": 18
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "She has lived here since 2015.",
+            "explanation": "Present perfect is used with 'since' to talk about an action that started in the past and continues.",
+            "id": "ex_abcdef12-3456-7890-abcd-ef1234567890_1",
+            "options": [
+              "I have visited London last year.",
+              "She has lived here since 2015.",
+              "They are going to the market yesterday.",
+              "He will finish the project tomorrow."
+            ],
+            "question": "Which sentence correctly uses the present perfect?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "The comparative of 'good' is 'better', not 'gooder'.",
+            "id": "ex_abcdef12-3456-7890-abcd-ef1234567890_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The comparative form of 'good' is 'gooder'.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "have finished",
+            "explanation": "Present perfect requires 'have' + past participle.",
+            "id": "ex_abcdef12-3456-7890-abcd-ef1234567890_3",
+            "options": [],
+            "question": "I {blank} (finish) my homework already.",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Cô ấy đã học tiếng Anh được ba năm.",
+            "explanation": "Use 'được' to indicate duration with present perfect.",
+            "id": "ex_abcdef12-3456-7890-abcd-ef1234567890_4",
+            "options": [
+              "Cô ấy đã học tiếng Anh được ba năm.",
+              "Cô ấy đã học tiếng Anh trong ba năm.",
+              "Cô ấy đang học tiếng Anh ba năm.",
+              "Cô ấy sẽ học tiếng Anh ba năm."
+            ],
+            "question": "Translate to Vietnamese: 'She has been studying English for three years.'",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "bigger:lớn hơn, smaller:nhỏ hơn",
+            "explanation": "‘bigger’ means ‘lớn hơn’, ‘smaller’ means ‘nhỏ hơn’.",
+            "id": "ex_abcdef12-3456-7890-abcd-ef1234567890_5",
+            "options": [
+              "bigger",
+              "smaller",
+              "lớn hơn",
+              "nhỏ hơn"
+            ],
+            "question": "Match each comparative adjective with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "e52e12e0-5fe4-4ff4-a62a-c364310f6a4f",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.287955"
+      },
+      "description": null,
+      "estimated_minutes": 18,
+      "id": "82dcd5e8-18dd-41e4-bdd7-45eb237b4b31",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "B1 Grammar Final Test",
+      "total_exercises": 5,
+      "unit_id": "b1421193-e703-4690-91b1-d9eec8901cec",
+      "updated_at": {
+        "__dt__": "2026-08-14T06:39:10.796175"
+      },
+      "xp_reward": 40
+    }
+  ],
+  "units": [
+    {
+      "background_color": "#3F51B5",
+      "course_id": "e52e12e0-5fe4-4ff4-a62a-c364310f6a4f",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.139219"
+      },
+      "description": "Tiếng Anh trong môi trường làm việc và sinh hoạt hàng ngày",
+      "icon_url": null,
+      "id": "3c9e69de-8825-4ffe-b2f4-b2df744444fd",
+      "order_index": 1,
+      "title": "Work & Daily Life",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:38.181999"
+      }
+    },
+    {
+      "background_color": "#4CAF50",
+      "course_id": "e52e12e0-5fe4-4ff4-a62a-c364310f6a4f",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.183653"
+      },
+      "description": "Giao tiếp về sức khỏe, thể thao và lối sống lành mạnh",
+      "icon_url": null,
+      "id": "5c1322a2-e6d4-45f5-91c5-84b2429d8beb",
+      "order_index": 2,
+      "title": "Health & Lifestyle",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:38.230582"
+      }
+    },
+    {
+      "background_color": "#FF9800",
+      "course_id": "e52e12e0-5fe4-4ff4-a62a-c364310f6a4f",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.232037"
+      },
+      "description": "Thì Hiện tại hoàn thành và so sánh tính từ",
+      "icon_url": null,
+      "id": "b1421193-e703-4690-91b1-d9eec8901cec",
+      "order_index": 3,
+      "title": "Grammar: Present Perfect & Comparatives",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:38.285208"
+      }
+    }
+  ]
+}

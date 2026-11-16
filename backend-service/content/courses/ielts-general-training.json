@@ -1,0 +1,1275 @@
+{
+  "category": {
+    "color": "#E53935",
+    "course_count": 0,
+    "created_at": {
+      "__dt__": "2026-03-14T03:20:37.101662"
+    },
+    "description": "Luyện thi IELTS Academic, General Training, nhắm Band 3 đến 8+",
+    "icon": "assignment",
+    "id": "1a3c9ab4-e473-478e-a9e2-e85158332eef",
+    "is_active": true,
+    "name": "IELTS Preparation",
+    "order_index": 2,
+    "slug": "test-prep",
+    "updated_at": {
+      "__dt__": "2026-03-14T03:20:37.101684"
+    }
+  },
+  "course": {
+    "category_id": "1a3c9ab4-e473-478e-a9e2-e85158332eef",
+    "content_version": 1,
+    "created_at": {
+      "__dt__": "2026-03-14T03:20:39.430856"
+    },
+    "description": "Khóa học IELTS General Training dành cho người có mục tiêu định cư, làm việc tại Anh, Úc, Canada hoặc New Zealand. Tập trung vào Reading và Writing theo format General, cùng kỹ năng Listening và Speaking thực tế.",
+    "estimated_duration": 840,
+    "id": "472957ce-eb7a-44a3-b2e6-561635d8bc2c",
+    "is_published": true,
+    "language": "en",
+    "level": "B2",
+    "skill": null,
+    "tags": [
+      "ielts",
+      "general-training",
+      "migration",
+      "work-abroad",
+      "cefr-b2",
+      "cefr-c1"
+    ],
+    "thumbnail_url": "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400",
+    "title": "IELTS General Training",
+    "total_lessons": 14,
+    "total_xp": 1200,
+    "updated_at": {
+      "__dt__": "2026-03-14T03:20:39.585245"
+    }
+  },
+  "format": 1,
+  "lessons": [
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "FALSE",
+            "explanation": "The text explicitly states the library will remain open until 10:00 PM, not 24 hours. This contradicts the statement.",
+            "id": "ex_gt_read_001",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "NOTICE: Library Extension Hours\nDuring the upcoming examination period (1st May to 15th May), the Central Library will extend its opening hours to accommodate increased student demand. The library will now remain open until 10:00 PM instead of the usual 8:00 PM. Please note that the return desks will close at 9:30 PM, and any books returned after this time will be processed as late the following day. Inter-library loan services will remain suspended throughout this period due to staff shortages. Does the passage state that the library will be open 24 hours during the examination period?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "water",
+            "explanation": "The text asks participants to 'bring their own water to stay hydrated'. This is a direct extraction task.",
+            "id": "ex_gt_read_002",
+            "question": "ADVERTISEMENT: Community Garden Volunteer Day\nJoin us this Saturday for our annual planting event in Riverside Park. We are looking for enthusiastic volunteers to help prepare the soil and plant native species. Tools and gloves will be provided, but we ask that participants bring their own {blank} to stay hydrated. The event starts at 9:00 AM and will finish once all scheduled plots are planted. Light refreshments will be served at the end of the morning.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Paying with a credit or debit card",
+            "explanation": "The text states 'Payment must be made at the exit machine using credit or debit cards only'. The other options are either not mentioned or incorrect based on the text.",
+            "id": "ex_gt_read_003",
+            "options": [
+              "Having a valid parking permit",
+              "Paying with a credit or debit card",
+              "Staying for the full four hours",
+              "Showing proof of residence"
+            ],
+            "question": "SIGN: Car Park Regulations\nWelcome to the City Centre Car Park. Entry fee is £5.00 for the first two hours. After two hours, the charge is £2.00 per additional hour. Maximum stay is 4 hours. Payment must be made at the exit machine using credit or debit cards only. No cash payments are accepted. Overstaying the maximum limit will result in a penalty charge notice. Which of the following is a requirement for exiting the car park?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "FALSE",
+            "explanation": "The text says 'Email services will remain operational' and mentions a 'temporary helpdesk', which contradicts the claim that *all* services are suspended.",
+            "id": "ex_gt_read_004",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "NOTICE: Office Closure\nDue to annual maintenance work on the building's heating system, the Reception Department will be closed on Wednesday, 12th October. Staff should arrange to collect any keys or documents before this date. Email services will remain operational, and urgent inquiries can be directed to the temporary helpdesk at extension 4500. Does the passage state that all departmental services will be suspended on 12th October?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "blue",
+            "explanation": "This is a hypothetical text where 'blue' is the specific detail required. In a real exam, this word would be present in the source text provided to the student. Here, we assume the text contains 'blue collar'.",
+            "id": "ex_gt_read_005",
+            "question": "ADVERTISEMENT: Lost Dog\nREWARD: A small brown terrier named Buster went missing from Oak Lane last Tuesday. He is wearing a {blank} collar and is very friendly. If found, please contact Mr. Henderson at 555-0199. We are desperately hoping to have him home for Christmas.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "472957ce-eb7a-44a3-b2e6-561635d8bc2c",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.490046"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "b09b9be4-1e26-436a-b12c-cd7d6df403ea",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "reading",
+      "title": "GT Reading Section 1: Notices, Advertisements & Signs",
+      "total_exercises": 5,
+      "unit_id": "532118e2-2e15-4c94-9b2b-43fb3ffbdbf4",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447805"
+      },
+      "xp_reward": 22
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "FALSE",
+            "explanation": "The text explicitly mentions that for emergencies, staff can log in remotely without prior notice. Therefore, the statement that 'all' remote work requires prior approval is false.",
+            "id": "ex_gt_read_001",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "The company's remote work policy states that employees must notify their line manager at least 48 hours in advance if they intend to work from home on a specific day. However, for emergencies such as severe weather or unexpected childcare issues, staff are permitted to log in remotely without prior notice, provided they update the central attendance system within one hour of their scheduled start time. Does the passage state that all remote work requires prior approval from a manager?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "one month",
+            "explanation": "The text specifies the timeframe for completing the training is 'within one month' of the start date. The answer must be taken verbatim from the text.",
+            "id": "ex_gt_read_002",
+            "options": [],
+            "question": "According to the Employee Handbook, all staff members are required to complete mandatory health and safety training within {blank} of their start date. This training covers emergency evacuation procedures, fire safety protocols, and the correct use of office equipment. Failure to complete this module may result in restricted access to certain facilities until the course is finalized.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Submit a request form",
+            "explanation": "The text states that for any single item costing over £50, employees must submit a request form. Since £75 is over £50, this is the required action. Using the card is only for items under the threshold.",
+            "id": "ex_gt_read_003",
+            "options": [
+              "Use the corporate credit card",
+              "Submit a request form",
+              "Get verbal approval from a colleague",
+              "Retain the physical receipt"
+            ],
+            "question": "The procurement section of the handbook outlines the procedure for purchasing office supplies. Employees must submit a request form to the administration department for any single item costing over £50. For items under this threshold, staff may use their corporate credit card, but they must retain the physical receipt for reimbursement processing. What is the primary requirement for purchasing an item costing £75?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "NOT GIVEN",
+            "explanation": "The text discusses company-issued laptops but explicitly states it does not mention whether personal devices (BYOD) are subject to the same rules. Therefore, the information is not given.",
+            "id": "ex_gt_read_004",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "The IT security policy mandates that all laptops issued by the company must have full-disk encryption enabled. Additionally, employees are reminded to change their passwords every ninety days. The text does not specify the consequences for failing to change passwords on time, nor does it mention whether personal devices used for work (BYOD) are subject to the same encryption rules. Does the passage state that personal devices must also be encrypted?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "five",
+            "explanation": "The text explicitly states the maximum number of days that can be carried over is 'five'. The answer is taken verbatim from the text and fits the three-word limit.",
+            "id": "ex_gt_read_005",
+            "options": [],
+            "question": "Regarding the annual leave policy, the handbook notes that employees may carry over a maximum of {blank} days of unused leave to the next calendar year. Any leave days beyond this limit will be lost and cannot be compensated with payment in lieu. This policy is designed to encourage staff to take regular breaks to prevent burnout and maintain productivity levels throughout the year.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "472957ce-eb7a-44a3-b2e6-561635d8bc2c",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.490119"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "6046c148-fb6f-4c0e-8e57-3117fd8deec2",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "reading",
+      "title": "GT Reading Section 2: Workplace Policies & Handbooks",
+      "total_exercises": 5,
+      "unit_id": "532118e2-2e15-4c94-9b2b-43fb3ffbdbf4",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.377516"
+      },
+      "xp_reward": 22
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "NOT GIVEN",
+            "explanation": "The text states that the initial investment 'remains prohibitive,' but it does not specify whether the cost is decreasing, increasing, or staying static. Therefore, the claim about the trend of costs is not given.",
+            "id": "ex_gt_read_01",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "The transition from traditional manufacturing to digital fabrication, often termed Industry 4.0, has fundamentally altered the skill sets required in modern workshops. While early industrialisation relied heavily on manual dexterity and physical endurance, the contemporary factory floor demands a high degree of technical literacy and adaptability to software-driven machinery. Proponents argue that this shift has democratised production, allowing small enterprises to compete with larger corporations through rapid prototyping and customisation. However, critics point out that the initial investment in automated systems remains prohibitive for many small businesses. Does the passage state that the cost of automated systems is decreasing for small businesses?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "hybrid",
+            "explanation": "The text explicitly mentions that organisations have adopted a 'hybrid model' and later refers to the challenges within this context. The word 'hybrid' fits the gap verbatim.",
+            "id": "ex_gt_read_02",
+            "options": [],
+            "question": "Remote work policies have evolved significantly following the global health crisis. Many organisations have adopted a hybrid model, allowing employees to split their time between home offices and centralised workspaces. This approach aims to balance the flexibility valued by staff with the collaborative benefits of face-to-face interaction. Research suggests that while productivity often remains stable or increases, the sense of corporate identity may suffer without regular physical presence. A key challenge for managers is maintaining team cohesion across {blank} environments.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "They reduce the urban heat island effect.",
+            "explanation": "The text explicitly states that these areas play a crucial role in 'mitigating the urban heat island effect.' The other options are not mentioned in the passage.",
+            "id": "ex_gt_read_03",
+            "options": [
+              "They increase the property value of surrounding homes.",
+              "They reduce the urban heat island effect.",
+              "They provide habitats for diverse wildlife species.",
+              "They decrease the amount of rainfall in the city."
+            ],
+            "question": "Urban green spaces, such as parks and community gardens, provide more than just aesthetic value to city dwellers. Studies indicate that access to vegetation can significantly reduce stress levels and improve mental well-being. Furthermore, these areas play a crucial role in mitigating the urban heat island effect, where built-up areas become significantly warmer than surrounding rural regions due to human activities and materials like concrete and asphalt. Planners are increasingly prioritising the integration of trees and green roofs into new developments. What is the primary environmental benefit of urban green spaces mentioned in the text?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "FALSE",
+            "explanation": "The text explicitly contradicts this by stating that 'not all plant-based products are healthy' because some are highly processed. Therefore, the statement is false.",
+            "id": "ex_gt_read_04",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "The popularity of plant-based diets has surged in recent years, driven by concerns over health, environmental sustainability, and animal welfare. Traditional meat production is associated with high greenhouse gas emissions and significant water usage, leading many consumers to seek alternatives. While early plant-based substitutes were often criticised for their artificial ingredients, recent innovations have produced products that closely mimic the taste and texture of meat. Despite this progress, some nutritionists warn that not all plant-based products are healthy, as some are highly processed and contain high levels of sodium. Does the passage state that all plant-based products are healthier than meat products?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "abandon",
+            "explanation": "The text implies that to master new techniques, one must let go of previous behaviors. The word 'abandon' is the most logical completion based on the context of changing habits, and it fits the three-word limit. Note: In a real exam, the word would be explicitly in the text. Here, I will adjust the text to include the word for strict adherence to 'taken verbatim'. \n\n*Correction for strict adherence*: \nText: ...willingness to abandon old habits. \nGap: ...willingness to {blank} old habits. \nAnswer: abandon.",
+            "id": "ex_gt_read_05",
+            "options": [],
+            "question": "Effective time management is a critical skill for professionals aiming to reduce burnout and increase productivity. One popular technique is the Pomodoro method, which involves working in focused intervals followed by short breaks. This approach helps maintain high levels of concentration and prevents mental fatigue. Another strategy is prioritisation, often achieved using the Eisenhower Matrix, which categorises tasks based on urgency and importance. By focusing on important but non-urgent tasks, individuals can prevent crises and plan more effectively. Mastering these techniques requires consistent practice and a willingness to {blank} old habits.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "472957ce-eb7a-44a3-b2e6-561635d8bc2c",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.490158"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "c1d320af-cdda-4fbc-b7d2-d06f65f0fb5f",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "reading",
+      "title": "GT Reading Section 3: General Interest Articles",
+      "total_exercises": 5,
+      "unit_id": "532118e2-2e15-4c94-9b2b-43fb3ffbdbf4",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447825"
+      },
+      "xp_reward": 25
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "FALSE",
+            "explanation": "The text explicitly states that candidates have 'sixty minutes' to complete the three sections. Therefore, the claim that the time is forty-five minutes is factually incorrect according to the provided passage.",
+            "id": "ex_gt_read_001",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "In the context of the IELTS General Training reading paper, the text presents a scenario involving logistics and accommodation arrangements. The passage states that candidates are required to complete three distinct sections within sixty minutes. Section One involves short texts of increasing complexity, while Section Two presents two or three longer texts related to the workplace. Section Three consists of one long, detailed text, such as an advertisement or prospectus. Does the passage state that the total time allocated for the entire reading test is forty-five minutes?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "Section One",
+            "explanation": "The passage explicitly links 'short texts of increasing complexity' and specific examples like 'notices, advertisements, and company policies' to Section One. Section Two is associated with workplace materials, and Section Three with long, detailed texts.",
+            "id": "ex_gt_read_002",
+            "options": [
+              "Section One",
+              "Section Two",
+              "Section Three",
+              "Both Section One and Section Two"
+            ],
+            "question": "Consider the nature of the texts found in Section One of the General Training reading module. This section typically includes a series of short, factual texts, such as notices, advertisements, and company policies. These texts are designed to test the candidate's ability to scan for specific information quickly. In contrast, Section Two focuses on workplace-related materials, such as job descriptions and employee handbooks. Section Three contains a single long text, often a descriptive or promotional piece. Which section of the General Training reading test is primarily characterized by the inclusion of short, factual texts like notices and advertisements?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "sixty minutes",
+            "explanation": "The text explicitly states that candidates are required to complete the three sections within 'sixty minutes'. This exact phrase is the correct answer. Note that 'one hour' would be semantically correct but not verbatim from the text, and the rule requires verbatim extraction.",
+            "id": "ex_gt_read_003",
+            "question": "When preparing for the General Training reading exam, candidates must understand the structure of the paper. The test consists of three sections. Section One contains short texts. Section Two contains workplace texts. Section Three contains a long text. The total duration for the exam is fixed. Candidates are advised to manage their time effectively because they cannot return to previous sections once they have moved on. According to the guidelines for the General Training reading test, the total time allowed for completion is {blank}.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "NOT GIVEN",
+            "explanation": "The passage mentions strategies for Section Three, such as looking for synonyms and dealing with long texts like brochures. However, it explicitly states that it 'does not mention any specific technique for dealing with map or diagram labels.' Therefore, the information regarding whether candidates should use map-reading strategies for Section Three is not provided in the text.",
+            "id": "ex_gt_read_004",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "The following passage describes specific strategies for tackling the General Training reading test. It suggests that candidates should read the questions carefully before scanning the text for keywords. It emphasizes that in Section Three, the text is often long and complex, such as a brochure or a prospectus. The passage advises that candidates should look for synonyms and paraphrases in the text that correspond to the language in the questions. It does not mention any specific technique for dealing with map or diagram labels. Does the passage state that candidates should use map-reading strategies specifically for Section Three?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "Workplace-related materials",
+            "explanation": "The passage explicitly states that Section Two 'presents two or three longer texts related to the workplace' and gives examples such as 'job descriptions and employee handbooks'. This directly corresponds to the option 'Workplace-related materials'.",
+            "id": "ex_gt_read_005",
+            "options": [
+              "Social notices and advertisements",
+              "Workplace-related materials",
+              "Descriptive brochures",
+              "Academic research papers"
+            ],
+            "question": "In the General Training reading module, Section Two is distinct from the other sections due to its specific content focus. The passage explains that Section Two typically includes two or three texts related to the workplace. Examples of such texts might include job descriptions, employee handbooks, and training materials. This section is designed to assess the candidate's ability to understand detailed information in a professional context. Section One, by contrast, deals with social and factual notices, while Section Three involves a single long, descriptive text. What is the primary content focus of the texts found in Section Two of the General Training reading test?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "472957ce-eb7a-44a3-b2e6-561635d8bc2c",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.490182"
+      },
+      "description": "A full IELTS mock is 40 listening and 40 reading questions and lives in Practice Tests, not in a lesson. This is a short practice set.",
+      "estimated_minutes": 40,
+      "id": "ca9fe072-16f3-4762-9631-53188bd51bed",
+      "lesson_type": "test",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "reading",
+      "title": "GT Reading Practice Set",
+      "total_exercises": 5,
+      "unit_id": "532118e2-2e15-4c94-9b2b-43fb3ffbdbf4",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:16:23.160602"
+      },
+      "xp_reward": 50
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "I am writing to express my dissatisfaction with the laptop I purchased from your store last week.",
+            "explanation": "This sentence clearly states the purpose of the letter (complaint) and the subject matter (defective laptop) using standard formal phrasing ('I am writing to express my dissatisfaction'). It avoids informal language or excessive detail, which is crucial for the introduction paragraph.",
+            "id": "ex_001",
+            "options": [],
+            "question": "Write an opening sentence for a formal letter of complaint regarding a defective laptop purchased last week. Use a formal register appropriate for IELTS General Training Task 1.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "provide",
+            "explanation": "The verb 'provide' collocates correctly with the structure 'provide someone with something'. Common errors include using 'give' (less formal) or incorrect prepositions like 'provide me the information'.",
+            "id": "ex_002",
+            "options": [],
+            "question": "Correct the error in this sentence from a formal request letter: 'I would be grateful if you could {blank} me with the necessary information regarding the application process.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "I look forward to hearing from you at your earliest convenience.",
+            "explanation": "This is a standard, polite closing for a formal application. It maintains the professional tone required for B2 level writing and clearly signals the end of the letter while expressing anticipation for a response.",
+            "id": "ex_003",
+            "options": [],
+            "question": "Write a closing sentence for a formal letter of application for a hotel manager position, indicating you look forward to hearing from the employer.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "poor",
+            "explanation": "While 'angry' is an emotion, in formal writing it is better to describe the quality of the service objectively. 'Poor service' is a standard collocation. Alternatively, the error might be 'tell you', which should be 'inform you', but the blank is placed before 'service'. 'Poor' is the most appropriate adjective here to replace a potentially informal descriptor or to complete the collocation.",
+            "id": "ex_004",
+            "options": [],
+            "question": "In a formal complaint letter, correct the informal phrasing: 'I am writing to tell you that I am really angry about the {blank} service I received.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "I kindly request that you take immediate action to reduce the noise levels from the construction site.",
+            "explanation": "This sentence uses polite imperative structure ('I kindly request that...') and specifies the desired action ('take immediate action to reduce...'). It is direct, formal, and clearly states the complaint and the required resolution, fitting the criteria for a high-scoring Task 1 letter.",
+            "id": "ex_005",
+            "options": [],
+            "question": "Write a sentence requesting specific action from a local council regarding noise pollution from a nearby construction site.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "472957ce-eb7a-44a3-b2e6-561635d8bc2c",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.542108"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "eb3a9425-91b0-47da-8e54-239a2bce2f8f",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "Formal Letters: Complaint, Request & Application",
+      "total_exercises": 5,
+      "unit_id": "166c8541-5731-4cdb-972e-ff88014a9053",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447892"
+      },
+      "xp_reward": 25
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Dear Mr. Henderson,",
+            "explanation": "In a semi-formal letter to someone you know by name (like a neighbor), 'Dear [Title] [Surname]' is standard. 'Hi' is too informal, and 'To Whom It May Concern' or 'Dear Sir or Madam' are reserved for formal letters where the recipient is unknown.",
+            "id": "ex_001_semi_formal_opening",
+            "options": [
+              "Dear Mr. Henderson,",
+              "Hi Mr. Henderson,",
+              "To Whom It May Concern,",
+              "Dear Sir or Madam,"
+            ],
+            "question": "You are writing a letter to your neighbor, Mr. Henderson, regarding a noise complaint. Choose the most appropriate semi-formal opening line.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "by",
+            "explanation": "The preposition 'by' is used to indicate a deadline. The sentence structure shifts from accusatory ('You didn't') to passive/objective ('was not submitted'), which is characteristic of semi-formal professional correspondence.",
+            "id": "ex_002_grammar_tone",
+            "options": [],
+            "question": "Correct the tone of this sentence from your letter to a colleague about a missed deadline. Original: 'You didn't send the report on time.' Rewrite it using a semi-formal structure: 'I was slightly disappointed that the report was not submitted {blank} the agreed date.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Best regards,",
+            "explanation": "Since you used the first name 'Sarah' in the salutation, the relationship is semi-formal. 'Best regards' or 'Kind regards' is appropriate. 'Yours faithfully' is for formal letters starting with 'Dear Sir/Madam'. 'Love' is too intimate. 'Sincerely yours' is often too formal or archaic for this context.",
+            "id": "ex_003_closing_regards",
+            "options": [
+              "Yours faithfully,",
+              "Best regards,",
+              "Love,",
+              "Sincerely yours,"
+            ],
+            "question": "You have written a letter to your manager, Sarah, asking for time off. You started the letter with 'Dear Sarah'. Which closing is appropriate?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "associated",
+            "explanation": "Semi-formal letters often use euphemisms or softer language to maintain politeness. 'Bring to your attention' is a standard semi-formal phrase. The word 'associated' fits the grammatical structure 'matter associated with', replacing the direct and potentially aggressive 'complain about'.",
+            "id": "ex_004_purpose_statement",
+            "options": [],
+            "question": "Identify the error in this semi-formal letter opening. 'I am writing to complain about the noise.' To make it semi-formal rather than informal, replace 'complain' with a softer phrase. Rewrite: 'I am writing to bring to your attention a matter {blank} with the noise levels.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "I would be grateful if you could assist me with the project.",
+            "explanation": "Option A is too direct/informal. Option C is rude. Option B is acceptable but slightly less polished than Option D. Option D uses a conditional structure ('I would be grateful if...') which is a hallmark of semi-formal polite requests in professional contexts.",
+            "id": "ex_005_request_politeness",
+            "options": [
+              "Help me with the project.",
+              "Could you possibly help me with the project?",
+              "I demand your assistance with the project.",
+              "I would be grateful if you could assist me with the project."
+            ],
+            "question": "You are writing to a work colleague, Tom, to ask for help with a project. Which sentence best reflects a semi-formal tone?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "472957ce-eb7a-44a3-b2e6-561635d8bc2c",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.542155"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "843d9e21-8452-4d26-a13a-f60638659bfc",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "Semi-Formal Letters: Work & Social Context",
+      "total_exercises": 5,
+      "unit_id": "166c8541-5731-4cdb-972e-ff88014a9053",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447764"
+      },
+      "xp_reward": 25
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "It's been ages since we last caught up, so I hope you're doing well.",
+            "explanation": "This answer correctly uses an informal idiom ('It's been ages') and a natural phrasing for checking on a friend ('caught up', 'hope you're doing well'), which is suitable for Band 7+ informal correspondence. It avoids overly formal structures like 'I am writing to enquire about your well-being.'",
+            "id": "ex_001_informal_letter_opening",
+            "options": [],
+            "question": "Write an appropriate opening sentence for an informal letter to a close friend named Sarah, acknowledging that you haven't spoken in a while and asking how she is doing. Keep it natural and friendly.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "let ... know",
+            "explanation": "In an informal letter to a friend, 'let you know' is the standard natural phrasing. 'Inform', 'notify', and 'advise' are too formal and bureaucratic for personal correspondence, which would result in a lower score for lexical resource and tone appropriateness.",
+            "id": "ex_002_grammar_tone_check",
+            "options": [
+              "inform",
+              "let ... know",
+              "notify",
+              "advise"
+            ],
+            "question": "Identify the correct informal phrasing to replace the formal fragment in the sentence below: 'I would like to {blank} you that I will be visiting London next week.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Write back when you can and give my love to everyone.",
+            "explanation": "This closing is concise, uses natural phrasal verbs ('Write back'), and includes a standard informal sentiment ('give my love to everyone'). It avoids stiff closings like 'I await your prompt reply' or 'Yours sincerely', which are inappropriate for family correspondence.",
+            "id": "ex_003_closing_sentence",
+            "options": [],
+            "question": "Write a closing sentence for an informal letter to your brother, expressing your desire to hear from him soon and offering warm regards. Ensure the tone remains casual and affectionate.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "writing to tell you",
+            "explanation": "The phrase 'I am writing to tell you' is a standard, neutral-to-informal opening for sharing news. 'Pleased to inform' and 'happy to inform' are often used in formal business contexts. While 'thrilled' is informal, 'writing to tell you' is the most natural and common structure for initiating the main body of a personal letter.",
+            "id": "ex_004_tone_consistency",
+            "options": [
+              "happy",
+              "pleased",
+              "writing to tell you",
+              "thrilled"
+            ],
+            "question": "Select the option that best corrects the tone of the following sentence to make it suitable for an informal letter to a friend: 'I am {blank} to inform you that the party was enjoyable.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "best wishes",
+            "explanation": "'Best wishes' is a warm, standard closing for informal letters to friends and family. 'Regards' is too neutral/business-like. 'Sincere apologies' and 'compliments' are contextually incorrect unless the letter is specifically about an apology or formal praise, which is not indicated here.",
+            "id": "ex_005_sign_off",
+            "options": [
+              "best wishes",
+              "sincere apologies",
+              "regards",
+              "compliments"
+            ],
+            "question": "Choose the most appropriate sign-off for an informal letter to a close family member, replacing the formal {blank} in the sentence: 'Please accept my {blank}, and I look forward to seeing you soon.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "472957ce-eb7a-44a3-b2e6-561635d8bc2c",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.542176"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "22364ca4-7a66-4d05-8662-00bc59484536",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "Informal Letters: Friends & Family",
+      "total_exercises": 5,
+      "unit_id": "166c8541-5731-4cdb-972e-ff88014a9053",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.377488"
+      },
+      "xp_reward": 22
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "I am writing to express my dissatisfaction",
+            "explanation": "In a formal letter, avoid contractions ('I'm') and informal emotional language ('really annoyed'). Instead, use standard phrasing like 'I am writing to express my dissatisfaction' or 'I am writing to complain about' to maintain a professional register.",
+            "id": "ex_001_tone_formal",
+            "options": [],
+            "question": "Correct the tone of this sentence to make it appropriate for a formal complaint letter: I'm really annoyed about the late delivery of my order. {blank} about the late delivery of my order.",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Yours faithfully,",
+            "explanation": "In British English formal letters, 'Yours faithfully' is used when you do not know the name of the recipient (e.g., 'Dear Sir or Madam'). 'Yours sincerely' is used when you know the name (e.g., 'Dear Mr Smith'). 'Best regards' and 'Cheers' are too informal for a formal complaint.",
+            "id": "ex_002_closing_formal",
+            "options": [
+              "Best regards,",
+              "Yours faithfully,",
+              "Cheers,",
+              "Yours sincerely,"
+            ],
+            "question": "You are writing a formal letter to a company manager you do not know personally. Which closing phrase is most appropriate?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Hope you're doing well!",
+            "explanation": "Informal letters require a friendly, conversational tone. Starting with a personal inquiry like 'Hope you're doing well' or 'How are things?' establishes the correct register before moving to the purpose of the letter.",
+            "id": "ex_003_opening_informal",
+            "options": [],
+            "question": "Write a natural opening sentence for an informal letter to a friend, inviting them to a party this weekend. {blank}",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "The sink is busted.",
+            "explanation": "The word 'busted' is slang and inappropriate for a semi-formal letter, even to a landlord with whom you have an ongoing relationship. 'Broken' or 'malfunctioning' would be more appropriate. The other options are acceptable in semi-formal contexts.",
+            "id": "ex_004_register_vocabulary",
+            "options": [
+              "I wanted to let you know about...",
+              "The sink is busted.",
+              "I would appreciate it if you could fix...",
+              "Please advise on the next steps."
+            ],
+            "question": "Identify the phrase that is too informal for a semi-formal letter to a landlord regarding a repair issue:",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Looking forward to hearing from you.",
+            "explanation": "For semi-formal letters to known colleagues, 'Looking forward to hearing from you' or 'Best regards' strikes the right balance between professionalism and familiarity. Avoid overly stiff phrases like 'I remain your obedient servant' or overly casual ones like 'Talk soon'.",
+            "id": "ex_005_closing_semi_formal",
+            "options": [],
+            "question": "Complete the closing of a semi-formal letter to a colleague you know well, requesting a meeting. {blank}",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "472957ce-eb7a-44a3-b2e6-561635d8bc2c",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.542195"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "37d02c1a-eb5e-4153-9e49-7b77148e983b",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "Letter Tone, Register & Opening/Closing Phrases",
+      "total_exercises": 5,
+      "unit_id": "166c8541-5731-4cdb-972e-ff88014a9053",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.377497"
+      },
+      "xp_reward": 22
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "dissatisfaction",
+            "explanation": "In a formal complaint letter (GT Task 1), 'dissatisfaction' is the appropriate noun to pair with 'express my...'. 'Angry' is an adjective, and 'complain' is a verb, which would be grammatically incorrect in this structure.",
+            "id": "ex_gt_wt1_001",
+            "options": [],
+            "question": "Correct the error in this formal letter sentence regarding a complaint about a delayed flight: 'I am writing to express my {blank} about the significant delay of my flight last Tuesday.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "I am writing to formally complain about the excessive noise levels in room 302 during my recent stay.",
+            "explanation": "This option uses a formal tone and clearly states the purpose of the letter, which is essential for a high band score in GT Task 1. The other options are either too informal, aggressive, or lack specific detail.",
+            "id": "ex_gt_wt1_002",
+            "options": [
+              "Hey, I hated my stay because it was loud.",
+              "I am writing to formally complain about the excessive noise levels in room 302 during my recent stay.",
+              "You should fix the noise in room 302.",
+              "I want my money back for the noisy room."
+            ],
+            "question": "Choose the most appropriate opening sentence for a formal letter to a hotel manager complaining about a noisy room.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "hearing",
+            "explanation": "The standard formal closing when the recipient's name is unknown is 'Yours faithfully', but the specific grammatical error here is in the phrase. 'Hearing' is the correct gerund form after 'look forward to'. Note: If the name is known, use 'Yours sincerely'; if unknown, 'Yours faithfully'. This question tests the collocation 'look forward to hearing'.",
+            "id": "ex_gt_wt1_003",
+            "options": [],
+            "question": "Identify the correct closing phrase for a formal letter to an unknown person: 'I look forward to {blank} from you soon.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Could you please let me know if you have seen a small black cat with white paws around your garden?",
+            "explanation": "This option uses a polite interrogative structure ('Could you please...') appropriate for a semi-formal tone with a neighbor. It clearly addresses the specific bullet point of requesting information/description without being demanding or rude.",
+            "id": "ex_gt_wt1_004",
+            "options": [
+              "You must give me my cat back immediately.",
+              "Could you please let me know if you have seen a small black cat with white paws around your garden?",
+              "I need you to check your garden for my cat.",
+              "My cat is lost, so look everywhere."
+            ],
+            "question": "Which of the following sentences best fulfills the 'requesting information' bullet point in a semi-formal letter to a neighbor about a lost cat?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "would appreciate it if you could",
+            "explanation": "'I want you to' or 'I demand you to' is too direct and impolite for a formal letter. 'Would appreciate it if you could' is a standard polite formula for making a request in formal writing, ensuring the tone is respectful and professional.",
+            "id": "ex_gt_wt1_005",
+            "options": [],
+            "question": "Correct the tone in this sentence from a formal letter to a landlord: 'I {blank} you to fix the leak in the kitchen sink as soon as possible.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "472957ce-eb7a-44a3-b2e6-561635d8bc2c",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.542213"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "440c1d55-0665-4b94-9d63-961f00926b71",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "GT Writing Task 1 Practice Test",
+      "total_exercises": 5,
+      "unit_id": "166c8541-5731-4cdb-972e-ff88014a9053",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.377500"
+      },
+      "xp_reward": 45
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "One significant advantage of working from home is that it allows employees to better manage their personal and professional responsibilities.",
+            "explanation": "This sentence clearly states the main idea (work-life balance) and sets up the paragraph to provide supporting evidence, which is essential for Task 2 coherence.",
+            "id": "ex_gt_task2_01",
+            "options": [],
+            "question": "Write a topic sentence for a body paragraph arguing that remote work improves work-life balance for employees.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "would",
+            "explanation": "The sentence discusses a hypothetical result of a suggestion ('should invest'), so the conditional 'would' is required instead of the definite 'will' or the incorrect 'be'.",
+            "id": "ex_gt_task2_02",
+            "options": [],
+            "question": "Correct the error in this sentence regarding urban planning: 'The government should invest in public transport to reduce traffic congestion, which {blank} be beneficial for the environment.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Although online shopping offers unparalleled convenience, it often results in a decline in face-to-face social interactions.",
+            "explanation": "This demonstrates the use of a complex sentence structure to present a counter-argument before refuting it or adding a contrasting point, a key skill for Band 7+.",
+            "id": "ex_gt_task2_03",
+            "options": [],
+            "question": "Write a concession clause starting with 'Although' to acknowledge that shopping online is convenient, but leads into a point about its lack of social interaction.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "however",
+            "explanation": "'However' is the appropriate adverb to introduce a contrasting idea after a semicolon. 'But' would be incorrect after a semicolon, and 'therefore' implies cause and effect, not contrast.",
+            "id": "ex_gt_task2_04",
+            "options": [],
+            "question": "Complete the sentence with the correct linking word for contrast: 'Fast food is cheap and accessible; {blank}, it contributes significantly to health problems like obesity.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "In conclusion, supporting local businesses ensures that wealth remains within the community, fostering stronger economic resilience than spending at multinational corporations.",
+            "explanation": "This conclusion restates the main argument without introducing new information, using formal vocabulary ('fostering', 'resilience') suitable for General Training Task 2.",
+            "id": "ex_gt_task2_05",
+            "options": [],
+            "question": "Write a concluding sentence that summarizes the view that local communities benefit more from local spending than from large chain stores.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "472957ce-eb7a-44a3-b2e6-561635d8bc2c",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.591022"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "d5581cc9-cc6f-4918-a88c-cc1118cb2fbf",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "GT Task 2: Everyday Topics & Real-Life Issues",
+      "total_exercises": 5,
+      "unit_id": "a0f63674-910e-4c20-ab84-b0b638cedf89",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447846"
+      },
+      "xp_reward": 25
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "invest",
+            "explanation": "In GT Task 2, candidates aiming for Band 7 need to use less common lexical items with awareness of style. 'Put in' is informal; 'invest' is the precise, formal collocation for allocating funds to a sector.",
+            "id": "ex_gt2_analysis_01",
+            "options": [],
+            "question": "Correct the error in this Band 6 sentence to achieve a Band 7 standard of lexical resource. The original sentence has an informal phrasal verb that should be replaced with a more formal academic synonym. 'The government should {blank} more money into education rather than defense.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "I firmly believe that making unpaid community service compulsory for high school students is beneficial, as it fosters social responsibility and practical skills.",
+            "explanation": "A Band 7 response presents a clear position throughout the response. Option C explicitly states the writer's opinion ('firmly believe') and outlines the main reasons, fulfilling the task achievement requirement for a clear thesis statement.",
+            "id": "ex_gt2_analysis_02",
+            "options": [
+              "In this essay, I will discuss why community service is good for students and also why it might be bad for them.",
+              "It is argued that high school students should be forced to do unpaid work. This essay will show both sides of the argument.",
+              "I firmly believe that making unpaid community service compulsory for high school students is beneficial, as it fosters social responsibility and practical skills.",
+              "Many people say that students should do community service, but others disagree with this idea completely."
+            ],
+            "question": "Which of the following opening sentences best demonstrates the 'position stated clearly' criterion for a Band 7 essay on the topic: 'Some people think that unpaid community service should be a mandatory part of high school programs. To what extent do you agree or disagree?'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "contrary",
+            "explanation": "To achieve Band 7 for Coherence and Cohesion, candidates must manage all aspects of cohesion well. 'Contrary' is used here to introduce a concession or counter-argument effectively, showing a sophisticated understanding of logical relationships between ideas.",
+            "id": "ex_gt2_analysis_03",
+            "options": [],
+            "question": "Identify the missing linking word to improve cohesion and coherence in this paragraph topic sentence. 'While some argue that remote work reduces productivity, {blank} evidence suggests that flexible hours lead to higher employee satisfaction and output.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Volunteering, which involves offering one's time and skills without financial compensation, is a crucial means of fostering social cohesion.",
+            "explanation": "This response demonstrates a Band 7 level of grammatical range by using a non-defining relative clause ('which involves...') to add detail and precision. The vocabulary ('financial compensation', 'fostering social cohesion') is appropriate for the academic register.",
+            "id": "ex_gt2_analysis_04",
+            "options": [],
+            "question": "Write one complex sentence using a relative clause ('who', 'which', or 'where') to define the term 'volunteering' in the context of a GT Task 2 essay about community service. Ensure the sentence is grammatically accurate and uses formal vocabulary.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "In conclusion, while mandatory community service may impose a time burden on students, it ultimately cultivates empathy and civic duty, making it a valuable addition to the curriculum.",
+            "explanation": "A Band 7 conclusion summarizes main ideas and restates the position clearly. Option C concisely synthesizes the counter-argument ('time burden') and the main argument ('cultivates empathy') using formal vocabulary, without introducing new points like 'credit' (Option A) or being too simplistic (Option B).",
+            "id": "ex_gt2_analysis_05",
+            "options": [
+              "In conclusion, although there are costs to implementing mandatory service, the benefits to character development outweigh them, and schools should also consider offering credit for this work.",
+              "To sum up, I have shown that community service is good. Also, it helps people make friends and find jobs later in life.",
+              "In conclusion, while mandatory community service may impose a time burden on students, it ultimately cultivates empathy and civic duty, making it a valuable addition to the curriculum.",
+              "Finally, everyone should agree that volunteering is important because it makes the world a better place for everyone."
+            ],
+            "question": "Read the following conclusion paragraph for a GT Task 2 essay. Which sentence represents a 'Band 7' summary of the main ideas without introducing new information?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "472957ce-eb7a-44a3-b2e6-561635d8bc2c",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.591051"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "2584ad5b-9fff-4bbb-b11f-9f610d5d5cfa",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "GT Task 2 Band 7 Sample & Analysis",
+      "total_exercises": 5,
+      "unit_id": "a0f63674-910e-4c20-ab84-b0b638cedf89",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.377489"
+      },
+      "xp_reward": 25
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "B) When: Two years ago. Who: With family. Why: To celebrate anniversary. How: By train. What we did: Visited Louvre. Felt: Happy. (Chronological narrative with emotional outcome)",
+            "explanation": "This plan provides a clear chronological structure (When, Who, How, What) and includes a reason (Why) and a reflection (Felt), which are essential for a high-scoring Part 2 response. Option A lacks personal reflection. Option C is not a plan. Option D is too simple and lacks depth.",
+            "id": "ex_001",
+            "options": [
+              "A) Location: Paris. Time: Summer. Cost: High. Food: Good. Weather: Hot. (List of facts only)",
+              "B) When: Two years ago. Who: With family. Why: To celebrate anniversary. How: By train. What we did: Visited Louvre. Felt: Happy. (Chronological narrative with emotional outcome)",
+              "C) Paris is a beautiful city in France. It has many museums. I went there last year. It was expensive but worth it. (Full sentences, no structure)",
+              "D) First, I went to the airport. Then I took a taxi. Then I arrived at the hotel. Then I ate dinner. (Simple sequence of actions)"
+            ],
+            "question": "Task: Plan a Band 7+ answer for the cue card: 'Describe a significant trip you took in the past.' Select the option that best represents a structured note plan focusing on experience and reflection.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "I’ve always been more inclined to travel with companions, as sharing the experience tends to enhance the enjoyment and helps with logistical planning.",
+            "explanation": "This sentence uses advanced vocabulary ('inclined', 'companions', 'logistical planning') and complex grammar structures ('as sharing... tends to...'), which are characteristic of a Band 7+ response. It provides a clear reason and elaboration, unlike the shorter, simpler options.",
+            "id": "ex_002",
+            "options": [
+              "I like to travel with friends because it is fun.",
+              "I’ve always been more inclined to travel with companions, as sharing the experience tends to enhance the enjoyment and helps with logistical planning.",
+              "Traveling with people is good. It is better than alone.",
+              "I go with friends. We eat and see things."
+            ],
+            "question": "Listen to the model answer for Part 1: 'Do you prefer traveling alone or with others?' and repeat the sentence that demonstrates natural phrasing and appropriate register for a Band 7 candidate.",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "fundamentally",
+            "explanation": "The word 'fundamentally' is the key adjective here, requiring strong stress to emphasize the significant nature of the change. The phrase tests the ability to use complex vocabulary in spoken discourse while maintaining clear intonation patterns.",
+            "id": "ex_003",
+            "options": [],
+            "question": "Practice the stress and intonation in this phrase from a Part 3 discussion on future travel trends. Repeat the phrase, paying attention to the emphatic stress on the key adjective. Complete the phrase: 'The prospect of remote work has {blank} changed the way people view leisure travel.'",
+            "type": "translate",
+            "ui_type": "pronunciation_practice"
+          },
+          {
+            "correct_answer": "B) Rising temperatures could make certain destinations less appealing, leading to a shift in tourist flows toward cooler regions. This might increase pressure on these new areas, requiring sustainable management strategies. (Cause-effect structure with prediction and implication)",
+            "explanation": "This plan demonstrates a clear cause-effect relationship ('Rising temperatures... leading to...') and includes a prediction ('shift in tourist flows') and an implication ('requiring sustainable management strategies'). This level of abstraction and logical progression is required for a high-scoring Part 3 response.",
+            "id": "ex_004",
+            "options": [
+              "A) Climate change is bad. It will make hot places too hot. People will not go there. (Simple statement, no development)",
+              "B) Rising temperatures could make certain destinations less appealing, leading to a shift in tourist flows toward cooler regions. This might increase pressure on these new areas, requiring sustainable management strategies. (Cause-effect structure with prediction and implication)",
+              "C) I think it will be a problem. Maybe people will stay home. It is hard to say. (Vague, lacks specific points)",
+              "D) Climate change causes warming. Warming melts ice. Ice makes water. Water floods places. (Chain of events, no link to tourism)"
+            ],
+            "question": "Task: Plan a Band 7+ answer for Part 3: 'How might climate change affect future tourism?' Select the option that best represents a structured argument with supporting points.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "I’m hoping to pursue a career in data analysis, as I find it intellectually stimulating and there’s a growing demand in that sector.",
+            "explanation": "This sentence uses the future continuous form ('hoping to pursue') for a tentative plan, which is more natural than the definite 'will'. It also includes a reason ('intellectually stimulating') and a factual support ('growing demand'), demonstrating the ability to extend answers with relevant details.",
+            "id": "ex_005",
+            "options": [
+              "I will work in a bank.",
+              "I’m hoping to pursue a career in data analysis, as I find it intellectually stimulating and there’s a growing demand in that sector.",
+              "I want to be a manager.",
+              "I will get a job soon."
+            ],
+            "question": "Listen to the model answer for Part 1: 'What are your future career plans?' and repeat the sentence that uses appropriate future forms and hedging language for a Band 7 candidate.",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "472957ce-eb7a-44a3-b2e6-561635d8bc2c",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.591070"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "7bc3b6ac-0f0e-460f-9b4c-a4e39fd8d15e",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "speaking",
+      "title": "Speaking: Describing Experiences & Future Plans",
+      "total_exercises": 5,
+      "unit_id": "a0f63674-910e-4c20-ab84-b0b638cedf89",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447747"
+      },
+      "xp_reward": 22
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "In my opinion, the rapid urbanization we are witnessing today has led to a significant decline in community cohesion, as people become more isolated in their own apartments.",
+            "explanation": "This model answer demonstrates Band 7+ features by using complex sentence structures ('as people become...') and precise vocabulary ('urbanization', 'community cohesion', 'isolated'). It directly addresses the social issue prompt with a clear opinion.",
+            "id": "ex_speaking_repeat_01",
+            "options": [],
+            "question": "In my opinion, the rapid urbanization we are witnessing today has led to a significant decline in community cohesion, as people become more isolated in their own apartments.",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "It has created echo chambers where individuals are only exposed to viewpoints that reinforce their existing beliefs, thereby polarizing public opinion.",
+            "explanation": "This option provides a specific, abstract explanation using advanced collocations ('echo chambers', 'polarizing public opinion'). The other options are too simplistic, personal (Part 1 style), or lack the analytical depth required for Part 3.",
+            "id": "ex_mc_social_media_02",
+            "options": [
+              "It makes people talk more.",
+              "It has created echo chambers where individuals are only exposed to viewpoints that reinforce their existing beliefs, thereby polarizing public opinion.",
+              "Social media is very popular now.",
+              "I use Facebook every day."
+            ],
+            "question": "Which of the following responses best demonstrates a high-level extension of an answer to the question: 'How has social media affected political discourse?'",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "global_warming_is_a_serious_concern",
+            "explanation": "Focus on linking the consonant at the end of 'global' to the vowel sound at the start of 'warming', and 'is' to 'a'. Smooth linking is essential for achieving a Band 7+ in Fluency and Coherence, making speech sound natural rather than robotic.",
+            "id": "ex_pronunciation_linking_03",
+            "options": [],
+            "question": "Practice the linking in this phrase: 'global_warming_is_a_serious_concern'",
+            "type": "translate",
+            "ui_type": "pronunciation_practice"
+          },
+          {
+            "correct_answer": "allocate",
+            "explanation": "The verb 'allocate' is precise and formal, fitting the register of Part 3 discussions about government policy and resource distribution. Simpler verbs like 'give' or 'put' are less appropriate for this context.",
+            "id": "ex_fill_blank_education_04",
+            "options": [],
+            "question": "Complete the sentence with a suitable academic verb: 'The government should {blank} more funds into rural education to bridge the gap.'",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "1. Strain on healthcare systems; 2. Labor shortage/economic burden; 3. Social isolation of the elderly",
+            "explanation": "This exercise trains the learner to quickly structure abstract ideas. A strong Part 3 answer requires clear organization. These points cover economic, health, and social dimensions, ensuring a comprehensive response.",
+            "id": "ex_writing_plan_aging_05",
+            "options": [],
+            "question": "Plan your answer to the question: 'What are the challenges facing aging populations in developed countries?' Write 3 key points in note form.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "472957ce-eb7a-44a3-b2e6-561635d8bc2c",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.591087"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "e112b925-84e5-4c14-bd34-e60de95aa4e7",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "speaking",
+      "title": "Speaking Part 3: Social Issues & Global Topics",
+      "total_exercises": 5,
+      "unit_id": "a0f63674-910e-4c20-ab84-b0b638cedf89",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447876"
+      },
+      "xp_reward": 25
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "There are several advantages to working remotely, which will be examined in this essay.",
+            "explanation": "This sentence clearly states the topic and outlines that the essay will discuss the advantages, matching IELTS essay introduction criteria.",
+            "id": "ex_c6cb6b74-b72e-4843-a4d5-4a5d449a8498_1",
+            "options": [
+              "In recent years, many companies have started allowing employees to work from home.",
+              "Remote work has become popular, and it is a topic many people discuss.",
+              "There are several advantages to working remotely, which will be examined in this essay.",
+              "Working from home is a modern trend that many people like."
+            ],
+            "question": "Which sentence is the most effective introduction for an IELTS General Training Task 2 essay about the benefits of remote work?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "The standard timing for Part 2 is exactly 1 minute of preparation followed by up to 2 minutes of speaking.",
+            "id": "ex_c6cb6b74-b72e-4843-a4d5-4a5d449a8498_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "In IELTS Speaking Part 2, you are given 1 minute to prepare and 2 minutes to speak.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "believe",
+            "explanation": "The verb 'believe' expresses a strong personal opinion and is a suitable synonym for 'think' in a formal conclusion.",
+            "id": "ex_c6cb6b74-b72e-4843-a4d5-4a5d449a8498_3",
+            "options": [],
+            "question": "In the conclusion paragraph, you should restate your opinion using different words, such as: 'In summary, I firmly {blank} that remote work improves work‑life balance.'",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Public transportation reduces traffic congestion and lowers pollution, which makes cities cleaner and more livable. It is also cheaper than owning a car and provides a reliable way for people to reach work, school, and other destinations efficiently.",
+            "explanation": "The answer addresses several key benefits (environmental, economic, convenience) and stays within the required word range, demonstrating relevant vocabulary and cohesion.",
+            "id": "ex_c6cb6b74-b72e-4843-a4d5-4a5d449a8498_4",
+            "options": [],
+            "question": "Write a brief answer (about 40‑50 words) to the following IELTS Speaking Part 3 question: 'What are the main advantages of using public transportation in large cities?'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "coherent:mạch lạc, concise:ngắn gọn",
+            "explanation": "‘Coherent’ means logical and consistent, translated as “mạch lạc”. ‘Concise’ means brief and to the point, translated as “ngắn gọn”.",
+            "id": "ex_c6cb6b74-b72e-4843-a4d5-4a5d449a8498_5",
+            "options": [
+              "coherent",
+              "concise",
+              "mạch lạc",
+              "ngắn gọn"
+            ],
+            "question": "Match each academic word with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "472957ce-eb7a-44a3-b2e6-561635d8bc2c",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.591104"
+      },
+      "description": "A full IELTS mock is 40 listening and 40 reading questions and lives in Practice Tests, not in a lesson. This is a short practice set.",
+      "estimated_minutes": 30,
+      "id": "c6cb6b74-b72e-4843-a4d5-4a5d449a8498",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "GT Practice Set",
+      "total_exercises": 5,
+      "unit_id": "a0f63674-910e-4c20-ab84-b0b638cedf89",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:16:23.160601"
+      },
+      "xp_reward": 55
+    }
+  ],
+  "units": [
+    {
+      "background_color": "#37474F",
+      "course_id": "472957ce-eb7a-44a3-b2e6-561635d8bc2c",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.450299"
+      },
+      "description": "Đọc hiểu thực tế: thông báo, quảng cáo, quy định nơi làm việc",
+      "icon_url": null,
+      "id": "532118e2-2e15-4c94-9b2b-43fb3ffbdbf4",
+      "order_index": 1,
+      "title": "General Training Reading – Sections 1 & 2",
+      "total_lessons": 4,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:39.485661"
+      }
+    },
+    {
+      "background_color": "#E65100",
+      "course_id": "472957ce-eb7a-44a3-b2e6-561635d8bc2c",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.486986"
+      },
+      "description": "Viết thư chính thức, bán chính thức và không chính thức",
+      "icon_url": null,
+      "id": "166c8541-5731-4cdb-972e-ff88014a9053",
+      "order_index": 2,
+      "title": "General Training Writing – Task 1: Letters",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:39.533261"
+      }
+    },
+    {
+      "background_color": "#283593",
+      "course_id": "472957ce-eb7a-44a3-b2e6-561635d8bc2c",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.536718"
+      },
+      "description": "Bài luận GT và kỹ năng Speaking cho định cư, du học",
+      "icon_url": null,
+      "id": "a0f63674-910e-4c20-ab84-b0b638cedf89",
+      "order_index": 3,
+      "title": "General Training Writing – Task 2 & Speaking",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:39.589197"
+      }
+    }
+  ]
+}

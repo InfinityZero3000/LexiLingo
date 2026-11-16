@@ -1,0 +1,1772 @@
+{
+  "category": {
+    "color": "#E53935",
+    "course_count": 0,
+    "created_at": {
+      "__dt__": "2026-03-14T03:20:37.101662"
+    },
+    "description": "Luyện thi IELTS Academic, General Training, nhắm Band 3 đến 8+",
+    "icon": "assignment",
+    "id": "1a3c9ab4-e473-478e-a9e2-e85158332eef",
+    "is_active": true,
+    "name": "IELTS Preparation",
+    "order_index": 2,
+    "slug": "test-prep",
+    "updated_at": {
+      "__dt__": "2026-03-14T03:20:37.101684"
+    }
+  },
+  "course": {
+    "category_id": "1a3c9ab4-e473-478e-a9e2-e85158332eef",
+    "content_version": 1,
+    "created_at": {
+      "__dt__": "2026-03-14T03:20:39.980079"
+    },
+    "description": "Khóa học chuyên sâu về kỹ năng Writing IELTS từ Band 5 đến Band 7+. Bao gồm toàn bộ dạng Task 1 (biểu đồ, sơ đồ, bản đồ) và cả 5 loại bài Task 2 (opinion, discussion, problem-solution, direct question, mixed). Mỗi bài học đi kèm mẫu câu trả lời có nhận xét theo tiêu chí band score.",
+    "estimated_duration": 780,
+    "id": "0656039c-adf7-4887-b4d9-c334cb842e84",
+    "is_published": true,
+    "language": "en",
+    "level": "B1",
+    "skill": "writing",
+    "tags": [
+      "ielts",
+      "writing",
+      "task-1",
+      "task-2",
+      "intensive",
+      "band-5",
+      "band-6",
+      "band-7",
+      "cefr-b1",
+      "cefr-b2",
+      "cefr-c1"
+    ],
+    "thumbnail_url": "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=400",
+    "title": "IELTS Writing Mastery: Task 1 & Task 2",
+    "total_lessons": 20,
+    "total_xp": 1100,
+    "updated_at": {
+      "__dt__": "2026-08-18T04:17:07.523168"
+    }
+  },
+  "format": 1,
+  "lessons": [
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Overall, it is clear that while electricity use in France and Italy fluctuated, consumption in Germany rose steadily throughout the period.",
+            "explanation": "This is a correct overview sentence because it summarizes the main trends (fluctuation vs. steady rise) without listing specific data points. It uses the signal word 'Overall' and contrasts the different patterns, which is essential for a high band score in Task 1.",
+            "id": "ex_167fe798-9f18-43db-b8c4-3d205ac90cb3_1",
+            "options": [
+              "The graph illustrates the changes in electricity consumption in France, Germany, and Italy between 1990 and 2010.",
+              "Overall, it is clear that while electricity use in France and Italy fluctuated, consumption in Germany rose steadily throughout the period.",
+              "France had the highest consumption in 1990, but Germany overtook it in 2005.",
+              "The lines show that Germany used more electricity than France and Italy in every year shown."
+            ],
+            "question": "Write a single sentence describing the general trend shown in the line graph, focusing on the overall movement from 1990 to 2010.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "decline",
+            "explanation": "The word 'sharp' is an adjective, so it must modify a noun, not a verb. Therefore, 'declined' (verb) should be changed to 'decline' (noun). Alternatively, one could say 'sharply declined', but 'sharp declined' is grammatically incorrect.",
+            "id": "ex_167fe798-9f18-43db-b8c4-3d205ac90cb3_2",
+            "options": [],
+            "question": "Correct the error in the following sentence describing a sharp increase in the line graph: 'The number of tourists peaked at 50,000 in 2005, followed by a sharp declined in 2006.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Both the import and export figures remained relatively stable throughout the period, hovering around 10 million units.",
+            "explanation": "This option correctly uses comparative language ('Both...') and precise vocabulary for stability ('remained relatively stable', 'hovering around'). It accurately describes a parallel trend without incorrectly implying change or difference where there was none.",
+            "id": "ex_167fe798-9f18-43db-b8c4-3d205ac90cb3_3",
+            "options": [
+              "Both the import and export figures remained relatively stable throughout the period, hovering around 10 million units.",
+              "Imports went up while exports went down.",
+              "There was a huge difference between imports and exports.",
+              "Imports were higher than exports in 2000."
+            ],
+            "question": "Write a sentence comparing two lines that remained stable during the same time period.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "to",
+            "explanation": "Use 'to' when indicating the final figure reached (e.g., rose to 20). Use 'by' when indicating the amount of change (e.g., rose by 20). Since the sentence implies the final temperature was 20 degrees, 'to' is the correct preposition.",
+            "id": "ex_167fe798-9f18-43db-b8c4-3d205ac90cb3_4",
+            "options": [],
+            "question": "Complete the sentence with the correct preposition: 'The temperature rose _____ 20 degrees in just one week.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "While the price of oil increased significantly, the demand for renewable energy decreased slightly.",
+            "explanation": "This sentence effectively uses a concession clause ('While...') to highlight the contrast between the two trends. It also includes adverbs of degree ('significantly', 'slightly') to provide nuance, which is a key feature of Band 7+ writing.",
+            "id": "ex_167fe798-9f18-43db-b8c4-3d205ac90cb3_5",
+            "options": [
+              "While the price of oil increased significantly, the demand for renewable energy decreased slightly.",
+              "The price of oil increased and the demand for renewable energy decreased.",
+              "Oil prices went up and renewable energy demand went down.",
+              "There was an increase in oil prices and a decrease in renewable energy demand."
+            ],
+            "question": "Select the best sentence to describe a period where two trends moved in opposite directions.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "0656039c-adf7-4887-b4d9-c334cb842e84",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:40.037077"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "167fe798-9f18-43db-b8c4-3d205ac90cb3",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "T1 Writing: Line Graph — Tracking Trends Over Time",
+      "total_exercises": 5,
+      "unit_id": "dc54709a-d12e-4bf8-914d-97a3ac46105b",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.377483"
+      },
+      "xp_reward": 25
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Overall, there was a significant increase in car ownership across all categories, with the exception of rural households.",
+            "explanation": "This answer provides a clear overview that highlights the main trend (increase) and notes the key exception (rural areas), which is essential for a high-scoring Task 1 introduction/overview. It avoids listing specific data points, which belongs in the body paragraphs.",
+            "id": "ex_001",
+            "options": [
+              "It is clear that car ownership rose in urban areas but fell in rural areas.",
+              "Overall, there was a significant increase in car ownership across all categories, with the exception of rural households.",
+              "The chart shows numbers for 1990 and 2020 regarding car ownership statistics.",
+              "Car ownership is higher in 2020 than in 1990 for everyone except people living in the countryside."
+            ],
+            "question": "Write a general overview sentence summarizing the main trends in a bar chart comparing the percentage of households owning cars in 1990 versus 2020, where ownership increased significantly in all categories except rural areas.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "than",
+            "explanation": "In comparative structures using 'higher', 'lower', 'more', or 'less', the correct conjunction is 'than', not 'to'. 'Higher than' is the standard grammatical structure for comparisons in IELTS Writing Task 1.",
+            "id": "ex_002",
+            "options": [],
+            "question": "Correct the error in this sentence describing a bar chart: 'The number of students studying Science was five times higher {blank} the number of students studying Arts in 2010.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Twice as many units were sold in February as in January.",
+            "explanation": "This answer effectively uses a multiplier ('twice as many') to compare the two categories, demonstrating a higher level of lexical resource and grammatical range suitable for Band 7+. It clearly states the relationship between the two data points.",
+            "id": "ex_003",
+            "options": [
+              "January had 100 units while February had 200 units.",
+              "Twice as many units were sold in February as in January.",
+              "February sales were double the sales of January.",
+              "There was a big difference between January and February."
+            ],
+            "question": "Write a body paragraph sentence comparing two categories in a bar chart showing monthly sales. Category A (January) had 100 units, and Category B (February) had 200 units.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "was",
+            "explanation": "The subject 'proportion' is singular and uncountable in this context, so it requires the singular verb 'was', not 'were'. Subject-verb agreement is crucial for grammatical accuracy in Task 1.",
+            "id": "ex_004",
+            "options": [],
+            "question": "Correct the error in this sentence: 'The highest proportion of respondents {blank} from the age group 25-34.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Energy consumption in Country Y was three times that of Country X.",
+            "explanation": "This answer uses a comparative structure ('three times that of') to highlight the significant difference between the two categories. This demonstrates the ability to synthesize data effectively, a key skill for achieving a high band score in Task 1.",
+            "id": "ex_005",
+            "options": [
+              "Country X used 50 kWh and Country Y used 150 kWh.",
+              "Energy consumption in Country Y was three times that of Country X.",
+              "Country Y consumed more energy than Country X.",
+              "The lowest value was 50 kWh while the highest was 150 kWh."
+            ],
+            "question": "Write a sentence comparing the lowest and highest values in a bar chart showing energy consumption by country. Country X consumed 50 kWh and Country Y consumed 150 kWh.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "0656039c-adf7-4887-b4d9-c334cb842e84",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:40.037110"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "e17a7a56-70ad-423f-8a79-1b2e94df9dcb",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "T1 Writing: Bar Chart — Comparing Categories Effectively",
+      "total_exercises": 5,
+      "unit_id": "dc54709a-d12e-4bf8-914d-97a3ac46105b",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447880"
+      },
+      "xp_reward": 25
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "constitute",
+            "explanation": "In IELTS Task 1, subject-verb agreement is critical for Band 7+. Since 'figures' is a plural noun, the verb must be 'constitute', not 'constitutes'.",
+            "id": "ex_001_pie_chart_proportions",
+            "options": [],
+            "question": "Correct the error in this sentence describing a pie chart. The word 'constitutes' requires a singular subject, but the subject here is plural. Rewrite the sentence with the correct subject-verb agreement.\n\nSentence: The figures for renewable energy sources {blank} 30% of the total.",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "One quarter of the total is accounted for by this category.",
+            "explanation": "This option uses precise academic vocabulary ('accounted for') and correctly converts the percentage to a fraction ('One quarter') without grammatical errors, fitting the B1-B2 register required.",
+            "id": "ex_002_pie_chart_fractions",
+            "options": [
+              "One quarter of the total is accounted for by this category.",
+              "The chart shows that 25 percent is in this slice.",
+              "A quarter of the data is representing this group.",
+              "This segment represents a fourth of the whole."
+            ],
+            "question": "Which of the following sentences best expresses that 25% of the data is represented in a pie chart segment, using a fraction rather than a percentage?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "twice as high",
+            "explanation": "When comparing proportions in Task 1, using structures like 'twice as high' or 'half as large' demonstrates lexical resource and grammatical range, which are key scoring criteria.",
+            "id": "ex_003_pie_chart_comparison",
+            "options": [],
+            "question": "Complete the sentence to compare two sections of a pie chart. You need a comparative structure to show that one section is larger than another.\n\nSentence: The proportion of students studying science is {blank} than those studying arts.",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Overall, coal was the dominant source of energy, while other sources made up a smaller proportion.",
+            "explanation": "Task 1 requires an overview that highlights the main feature without listing specific numbers. Option B correctly identifies the dominance of coal without citing the exact percentage, adhering to exam conventions.",
+            "id": "ex_004_pie_chart_overview",
+            "options": [
+              "Coal was the most popular source of energy, accounting for 60%.",
+              "Overall, coal was the dominant source of energy, while other sources made up a smaller proportion.",
+              "The chart shows that coal is 60% and others are 40%.",
+              "Most people used coal for energy because it was cheaper."
+            ],
+            "question": "Select the best overview sentence for a pie chart showing that 60% of energy came from coal and 40% from other sources. An overview must summarize the main trend without specific data points.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "account for",
+            "explanation": "'Account for' is a standard collocation in IELTS Task 1 when describing proportions or percentages. It is more academic than 'make' or 'have'.",
+            "id": "ex_005_pie_chart_verbs",
+            "options": [],
+            "question": "Choose the correct verb to describe what a specific section of a pie chart does in relation to the total. The verb must collocate with 'a significant share'.\n\nSentence: Online sales {blank} a significant share of the total revenue.",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "0656039c-adf7-4887-b4d9-c334cb842e84",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:40.037128"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "445dca1c-7405-4b16-8f1a-672f472bf2bc",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "T1 Writing: Pie Chart — Expressing Proportions & Fractions",
+      "total_exercises": 5,
+      "unit_id": "dc54709a-d12e-4bf8-914d-97a3ac46105b",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.377500"
+      },
+      "xp_reward": 22
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Overall, car ownership rose significantly over the period, whereas the use of public transport experienced a corresponding decline.",
+            "explanation": "This answer uses 'Overall' to signal the overview, employs 'whereas' to contrast the two opposing trends, and accurately generalizes the data without listing specific figures, which is key for Band 6+ coherence.",
+            "id": "ex_mixed_graph_01",
+            "options": [],
+            "question": "Write one overview sentence summarizing the main trends in a graph showing a steady increase in car ownership and a simultaneous decline in public transport usage over 20 years.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "rapidly",
+            "explanation": "Adverbs modify verbs. 'Increased' is a verb, so it requires the adverb 'rapidly' rather than the adjective 'rapidly' (if the error was 'rapid'). This demonstrates grammatical accuracy required for Band 7.",
+            "id": "ex_mixed_graph_02",
+            "options": [],
+            "question": "Correct the error in this sentence describing a pie chart and a line graph: 'The pie chart illustrates the percentage of energy sources, and the line graph shows the same data but {blank} over time.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "In 2010, when total sales peaked at 500 units, electronics accounted for the largest share, comprising 40% of the total.",
+            "explanation": "This answer successfully integrates data from two different chart types (line and pie) into a single coherent sentence using a relative clause ('when...') and a participial phrase ('comprising...'), showing high-level syntactic variety.",
+            "id": "ex_mixed_graph_03",
+            "options": [],
+            "question": "Write a detailed sentence comparing the peak value in a line graph (sales reached 500 units in 2010) with the largest segment in a pie chart (40% of total sales were electronics in 2010).",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "While 500 units were sold in total, as shown in the bar chart, half of these items, or 50%, were red, according to the pie chart.",
+            "explanation": "This option uses complex sentence structures ('While...') and precise referencing ('as shown in...', 'according to...') to coherently link the two data sets. It avoids the simplistic listing of options A and D and the informal/unclear phrasing of C.",
+            "id": "ex_mixed_graph_04",
+            "options": [
+              "The bar chart shows 500 units were sold, and the pie chart says 50% were red.",
+              "While 500 units were sold in total, as shown in the bar chart, half of these items, or 50%, were red, according to the pie chart.",
+              "The bar chart is 500 and the pie chart is 50%.",
+              "There were 500 units and 50% were red in the same year."
+            ],
+            "question": "Which of the following sentences best combines information from a bar chart (showing quantity) and a pie chart (showing percentage) for the same year?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "whereas",
+            "explanation": "The conjunction 'whereas' is used to introduce a contrast between two clauses. In mixed graph tasks, linking the static data (pie) with dynamic data (line) requires such contrastive connectors to ensure coherence and cohesion.",
+            "id": "ex_mixed_graph_05",
+            "options": [],
+            "question": "Complete the sentence to show a contrast between the two charts: 'The pie chart indicates that fruit was the most popular category, {blank} the line graph reveals that vegetable sales were growing fastest.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "0656039c-adf7-4887-b4d9-c334cb842e84",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:40.037145"
+      },
+      "description": null,
+      "estimated_minutes": 28,
+      "id": "b2651788-d1dd-49ec-aca0-0413e9740d2a",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "T1 Writing: Mixed Graph — Combining Two Chart Types Coherently",
+      "total_exercises": 5,
+      "unit_id": "dc54709a-d12e-4bf8-914d-97a3ac46105b",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447807"
+      },
+      "xp_reward": 28
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "show",
+            "explanation": "The subject 'figures' is plural, so the verb must be the plural form 'show', not the singular 'shows'. In IELTS Task 1, subject-verb agreement is essential for Band 7+ accuracy.",
+            "id": "ex_378233a9-e180-4bba-9959-d5e2df8946f2_1",
+            "options": [],
+            "question": "Correct the grammatical error in this Task 1 overview sentence. The sentence attempts to describe the general trend in the bar chart but uses incorrect verb tense. \n\nOriginal: 'Overall, the figures shows a steady increase over the period.'\n\nCorrection: 'Overall, the figures {blank} a steady increase over the period.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Overall, the trend indicates a rise in energy consumption in 2010, followed by a decline in 2011.",
+            "explanation": "An effective overview summarizes the main features without citing specific numbers. This answer correctly identifies the two distinct trends (rise then fall) and uses the required phrase 'overall trend' to signal the general pattern.",
+            "id": "ex_378233a9-e180-4bba-9959-d5e2df8946f2_2",
+            "options": [],
+            "question": "Write a single-sentence overview for a line graph showing that energy consumption rose in 2010 but fell in 2011. Use the phrase 'overall trend'.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "in",
+            "explanation": "When referring to years, the preposition 'in' is required (e.g., 'in 2015'). The preposition 'at' is used for specific points in time or values (e.g., 'at 50 units'), not for years.",
+            "id": "ex_378233a9-e180-4bba-9959-d5e2df8946f2_3",
+            "options": [],
+            "question": "Correct the preposition error in this Task 1 body paragraph sentence describing a chart. \n\nOriginal: 'Sales reached their peak at 2015.'\n\nCorrection: 'Sales reached their peak {blank} 2015.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "The percentages for Category A and Category B were 50% and 30%, respectively.",
+            "explanation": "The word 'respectively' is used to clarify that the first number corresponds to the first item mentioned (Category A) and the second number to the second item (Category B). This structure allows for concise data presentation.",
+            "id": "ex_378233a9-e180-4bba-9959-d5e2df8946f2_4",
+            "options": [],
+            "question": "Write a comparative sentence for Task 1 describing two categories. Category A is 50% and Category B is 30%. Use the word 'respectively'.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "the",
+            "explanation": "The definite article 'the' is required before 'types of fruit' because the types are specific to the chart being described. Omitting the article or using 'a' would be grammatically incorrect in this specific context.",
+            "id": "ex_378233a9-e180-4bba-9959-d5e2df8946f2_5",
+            "options": [],
+            "question": "Correct the article usage in this Task 1 introduction. \n\nOriginal: 'The pie chart illustrates information about the types of fruit consumed.'\n\nCorrection: 'The pie chart illustrates information about {blank} types of fruit consumed.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "0656039c-adf7-4887-b4d9-c334cb842e84",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:40.037162"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "378233a9-e180-4bba-9959-d5e2df8946f2",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "T1 Charts Practice Test — Write, Check & Score",
+      "total_exercises": 5,
+      "unit_id": "dc54709a-d12e-4bf8-914d-97a3ac46105b",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:18:16.976224"
+      },
+      "xp_reward": 45
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "The raw materials are collected by workers.",
+            "explanation": "In IELTS Task 1 process diagrams, the passive voice is preferred to maintain an objective tone and focus on the action/object rather than the agent. 'Are collected' correctly uses the present simple passive for a general process.",
+            "id": "ex_001_process_passive",
+            "options": [
+              "The raw materials are collected by workers.",
+              "Workers collect the raw materials.",
+              "The raw materials were collected.",
+              "Collecting the raw materials is done."
+            ],
+            "question": "Identify the correct passive voice structure to describe the first stage of a process diagram where raw materials are collected.",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Subsequently",
+            "explanation": "'Subsequently' is a formal sequence marker suitable for academic writing to indicate the next step in a chronological process, avoiding simple words like 'then' which are less formal.",
+            "id": "ex_002_sequence_markers",
+            "options": [],
+            "question": "Rewrite the sentence to include the correct sequence marker for the second step. Original: 'The mixture is heated. {blank} the water is removed.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Overall, it is clear that electricity is generated through a multi-stage process involving the burning of coal and the rotation of turbines.",
+            "explanation": "This answer provides a high-level summary (overview) as required by IELTS criteria, uses the passive voice ('is generated'), and accurately describes the key stages without listing every single detail.",
+            "id": "ex_003_overview_passive",
+            "options": [],
+            "question": "Write one overview sentence for a process diagram showing how electricity is produced from coal, using the passive voice.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Subsequently",
+            "explanation": "'Subsequently' correctly indicates that pasteurization follows extraction in time. 'Finally' implies the last step, 'Initially' the first, and 'Meanwhile' implies simultaneous action, which is incorrect for sequential steps.",
+            "id": "ex_004_sequence_order",
+            "options": [
+              "Finally",
+              "Initially",
+              "Subsequently",
+              "Meanwhile"
+            ],
+            "question": "Select the most appropriate sequence marker to connect these two sentences in a process description: 'The juice is extracted. _____ it is pasteurized.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "is",
+            "explanation": "The subject 'sand' is singular, so the correct passive auxiliary verb for the present simple tense is 'is'. This maintains the formal, objective register required for IELTS Task 1.",
+            "id": "ex_005_passive_conversion",
+            "options": [],
+            "question": "Convert the active sentence 'Workers filter the sand.' into the passive voice suitable for a formal report. 'The sand {blank} filtered.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "0656039c-adf7-4887-b4d9-c334cb842e84",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:40.082055"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "ef8ee96a-19d7-411c-a44a-4de11f328aed",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "T1 Writing: Process Diagrams — Passive Voice & Sequence Markers",
+      "total_exercises": 5,
+      "unit_id": "8e9ae293-2399-4073-af6c-7591d89ebdd3",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447899"
+      },
+      "xp_reward": 25
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "While wind erodes the sandstone cliffs naturally, machines extract the minerals from the rock face.",
+            "explanation": "This sentence correctly contrasts a passive natural force (wind eroding) with an active human intervention (machines extracting), demonstrating the key vocabulary for this lesson topic.",
+            "id": "ex_001_contrast_verbs",
+            "options": [],
+            "question": "Write a sentence contrasting a natural process with a man-made process using the verbs 'erode' and 'extract'.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "has implemented",
+            "explanation": "The sentence requires a present perfect verb form to show a completed action with present relevance. 'Has implemented' correctly describes the government's past action regarding current regulations.",
+            "id": "ex_002_grammar_mining",
+            "options": [],
+            "question": "Correct the error in this sentence describing a man-made process: 'The factory is responsible for polluting the river, which has led to the degradation of the local ecosystem. The government {blank} strict regulations to mitigate this damage.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "has been shaped",
+            "explanation": "The correct answer is 'has been shaped' because the action started in the past and continues to the present, requiring the present perfect passive voice to emphasize the result of the natural process.",
+            "id": "ex_003_fill_blank_natural",
+            "options": [],
+            "question": "Fill in the blank with the correct passive form: 'Over centuries, the coastline {blank} (shape) by the relentless force of the tides.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Overall, while natural reserves are diminishing due to climate change, human-led reforestation projects are attempting to restore the forest cover.",
+            "explanation": "This answer provides a clear overview comparing two opposing trends: natural depletion versus human restoration, using appropriate linking words ('while') and academic vocabulary.",
+            "id": "ex_004_contrast_structure",
+            "options": [],
+            "question": "Write an overview sentence comparing a natural resource depletion with a man-made conservation effort.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Manufacturers increasingly use synthetic fibers instead of natural cotton to reduce water consumption.",
+            "explanation": "The sentence correctly uses 'synthetic' to denote a man-made alternative to a natural resource, highlighting the contrast in production methods and environmental impact.",
+            "id": "ex_005_vocabulary_precision",
+            "options": [],
+            "question": "Write a sentence using the word 'synthetic' to describe a man-made material replacing a natural one.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "0656039c-adf7-4887-b4d9-c334cb842e84",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:40.082111"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "e021e317-894f-4924-bb9a-986d2fe49672",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "T1 Writing: Natural vs. Man-Made Processes — Language Contrast",
+      "total_exercises": 5,
+      "unit_id": "8e9ae293-2399-4073-af6c-7591d89ebdd3",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447871"
+      },
+      "xp_reward": 22
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "demolished",
+            "explanation": "In map tasks, 'demolished' is the precise lexical item for removing a building. Other verbs like 'removed' are less specific to structures, and 'destroyed' implies accidental damage rather than planned urban development.",
+            "id": "ex_001",
+            "options": [],
+            "question": "In the 1990 map, the old library was {blank} to make space for a new sports center.",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "relocated",
+            "explanation": "When an object moves but remains intact, 'relocated' is the correct verb. 'Moved' is acceptable but less formal; 'displaced' often implies force or negative consequence, which is not suitable for neutral map descriptions.",
+            "id": "ex_002",
+            "options": [],
+            "question": "The park in the north-east corner was {blank} from its original position to the south-west.",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "The most significant change is the replacement of the residential houses with a large shopping center.",
+            "explanation": "This answer provides a clear overview of the main shift. It uses 'replacement of X with Y' to accurately describe the spatial change, which is a high-band structure for map tasks.",
+            "id": "ex_003",
+            "options": [],
+            "question": "Write one sentence describing the most significant change shown in the maps, focusing on the transformation of the residential area.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "alongside",
+            "explanation": "'Alongside' indicates parallel movement next to the river. 'Throughout' implies covering the whole area, 'inside' is impossible for a road and river, and 'across' would imply crossing the river, which contradicts the linear 'east to west' description relative to the river's bank.",
+            "id": "ex_004",
+            "options": [
+              "alongside",
+              "throughout",
+              "inside",
+              "across"
+            ],
+            "question": "Which preposition correctly completes the sentence: 'The new road runs {blank} the river from east to west.'?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "been converted into",
+            "explanation": "The passive structure 'been converted into' is essential for describing purposeful changes in land use. It accurately reflects that the land was changed by developers, not by natural processes.",
+            "id": "ex_005",
+            "options": [],
+            "question": "The area to the west of the lake, which was previously farmland, has {blank} a residential estate.",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "0656039c-adf7-4887-b4d9-c334cb842e84",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:40.082145"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "ff460bff-87c7-44f2-8ac6-86fb21881093",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "T1 Writing: Map Tasks — Describing Spatial Change Accurately",
+      "total_exercises": 5,
+      "unit_id": "8e9ae293-2399-4073-af6c-7591d89ebdd3",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447915"
+      },
+      "xp_reward": 25
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "The old cinema was demolished to make way for a new shopping centre.",
+            "explanation": "This answer correctly uses the passive voice and the specific vocabulary 'demolished' to indicate removal, which is a key feature of map descriptions.",
+            "id": "ex_map_vocab_01",
+            "options": [],
+            "question": "Write a sentence using the verb 'demolished' to describe a building that no longer exists in the second map.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "to",
+            "explanation": "When describing movement from one specific point to another in map tasks, 'to' is the standard preposition used with 'moved' or 'relocated'.",
+            "id": "ex_map_vocab_02",
+            "options": [],
+            "question": "Identify the correct preposition to complete the sentence describing a change in location: 'The library was moved {blank} the north-east corner of the campus.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Overall, the most significant change is the transformation of the residential zone into an industrial area.",
+            "explanation": "An effective overview sentence must highlight the main trend or change without listing specific details. Using 'transformation' and 'industrial area' demonstrates precise vocabulary.",
+            "id": "ex_map_vocab_03",
+            "options": [],
+            "question": "Write an overview sentence summarizing the main change in a map where a residential area became industrial.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "established",
+            "explanation": "Since a specific past date (2010) is mentioned, the past passive 'was established' is required. The prompt asks for the participle to fit the structure 'was {blank}', but the error in the prompt implies a tense mismatch. To fit the 'grammar_correction' ui_type with a 3-word limit answer, we assume the gap is for the past participle in a corrected past passive structure: 'was established'. Note: The prompt asks for the correction of the error. The error is 'has been'. The correct form is 'was established'. The blank is {blank}. The answer is 'was established' (3 words).",
+            "id": "ex_map_vocab_04",
+            "options": [],
+            "question": "Correct the verb tense in this sentence about a past change: 'The park has been {blank} in 2010.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "The former warehouse has been converted into luxury apartments.",
+            "explanation": "This sentence correctly uses 'converted into' to show a change of function, which is essential for high-band map descriptions. It also correctly uses the present perfect passive to describe a completed change with present relevance.",
+            "id": "ex_map_vocab_05",
+            "options": [],
+            "question": "Write a sentence using the phrasal verb 'converted into' to describe a change in building function.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "0656039c-adf7-4887-b4d9-c334cb842e84",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:40.082175"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "48da40ef-729b-455b-bb80-8ba64363bb9f",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "T1 Writing: Before & After Maps — Key Vocabulary & Structure",
+      "total_exercises": 5,
+      "unit_id": "8e9ae293-2399-4073-af6c-7591d89ebdd3",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.377504"
+      },
+      "xp_reward": 22
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Overall, the area underwent significant development, characterized by the replacement of residential housing with commercial facilities and the expansion of recreational areas.",
+            "explanation": "This answer provides a clear overview without specific details or data, summarizing the main trend of change. It uses appropriate academic vocabulary ('underwent significant development', 'characterized by') and avoids listing every single change, which is essential for a high band score in Task Achievement and Coherence & Cohesion.",
+            "id": "ex_8895caa0-0352-471e-935f-f4c21290795a_1",
+            "options": [
+              "The map illustrates that the population increased significantly and new buildings were constructed.",
+              "Overall, the area underwent significant development, characterized by the replacement of residential housing with commercial facilities and the expansion of recreational areas.",
+              "It is obvious that the village changed a lot because houses were moved and a park was built in the north.",
+              "The most important change is that the school became a hospital, which shows the growth of the town."
+            ],
+            "question": "When writing the overview for a map showing the transformation of a village into a town over 20 years, which sentence best fulfills the Band 7 requirement for a clear, general statement of change?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "was",
+            "explanation": "Maps describe static locations or changes that happen to objects; therefore, the passive voice is required. 'The park was located' correctly describes the position of the park. Using the active verb 'is' or 'was' without the auxiliary 'be' is grammatically incorrect for describing location in this context.",
+            "id": "ex_8895caa0-0352-471e-935f-f4c21290795a_2",
+            "options": [],
+            "question": "Correct the error in the following sentence describing a map: 'The park {blank} located in the southern part of the village in 1990.' (Error: Incorrect voice/agent)",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Although most of the village was developed with new amenities, the old library was demolished.",
+            "explanation": "This sentence correctly places the main idea (positive development) in the concession clause ('Although...') and the contrasting detail (demolition) in the main clause. This structure highlights the overall trend while acknowledging the exception, demonstrating good grammatical range and accuracy suitable for Band 7+.",
+            "id": "ex_8895caa0-0352-471e-935f-f4c21290795a_3",
+            "options": [
+              "Although most of the village was developed with new amenities, the old library was demolished.",
+              "Most of the village was developed with new amenities, but the old library was demolished.",
+              "The old library was demolished, although most of the village was developed with new amenities.",
+              "While the old library was demolished, most of the village was developed with new amenities."
+            ],
+            "question": "Which of the following sentences best demonstrates the use of a concession clause to describe a map where most changes were positive, but one area was demolished?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "on",
+            "explanation": "When a new building is constructed in the exact location of a previous one, the preposition 'on' is used (e.g., 'on the site of'). 'In' is used for enclosed spaces, and 'at' is used for specific points, but 'on' is the correct preposition for indicating that a new structure occupies the ground previously used by another.",
+            "id": "ex_8895caa0-0352-471e-935f-f4c21290795a_4",
+            "options": [],
+            "question": "Correct the preposition error in the following sentence describing a map: 'The new hospital was built {blank} the site of the former school.' (Error: Incorrect preposition for location replacement)",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "The diagram illustrates the life cycle of a fish, highlighting the progression from egg to fry, juvenile, and adult stages.",
+            "explanation": "This answer provides a clear, concise overview of the process without listing every minor detail. It uses appropriate academic vocabulary ('illustrates', 'highlighting', 'progression') and summarizes the main stages, fulfilling the requirement for a clear overview in Task 1 diagrams.",
+            "id": "ex_8895caa0-0352-471e-935f-f4c21290795a_5",
+            "options": [
+              "The fish grows from an egg to a fry, then to a juvenile, and finally to an adult.",
+              "The diagram illustrates the life cycle of a fish, highlighting the progression from egg to fry, juvenile, and adult stages.",
+              "The fish starts as an egg, becomes a fry, then a juvenile, and ends up as an adult.",
+              "The most important stages are egg, fry, juvenile, and adult."
+            ],
+            "question": "Which sentence best summarizes the key changes in a diagram showing the life cycle of a fish, focusing on the main stages?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "0656039c-adf7-4887-b4d9-c334cb842e84",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:40.082205"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "8895caa0-0352-471e-935f-f4c21290795a",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "T1 Diagrams & Maps Practice Test — Marked Against Band Criteria",
+      "total_exercises": 5,
+      "unit_id": "8e9ae293-2399-4073-af6c-7591d89ebdd3",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:16:52.522473"
+      },
+      "xp_reward": 45
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "I firmly believe that mandatory community service fosters essential life skills and social responsibility in teenagers.",
+            "explanation": "This answer directly answers the 'agree or disagree' prompt with a clear stance ('firmly believe') and provides a preview of the main arguments ('life skills' and 'social responsibility'), which is required for a Band 7+ Task Response.",
+            "id": "ex_7337953b-b8dd-4fcc-b8b2-eab317c7fe0d_1",
+            "options": [],
+            "question": "Write a clear thesis statement for an opinion essay on the prompt: 'Some people believe that unpaid community service should be a mandatory part of high school programs. Do you agree or disagree?' State your position clearly.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "recent",
+            "explanation": "The original sentence lacked a clear adjective to modify 'evidence,' making the argument vague. Adding 'recent' or 'substantial' strengthens the claim and improves lexical resource by providing specific context to the counter-argument.",
+            "id": "ex_7337953b-b8dd-4fcc-b8b2-eab317c7fe0d_2",
+            "options": [],
+            "question": "Correct the error in this sentence from an opinion essay body paragraph: 'Although many argue that remote work reduces productivity, {blank} evidence suggests that employees are more efficient when working from home.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Providing free medical treatment to all citizens ensures that economic status does not determine an individual's survival and well-being.",
+            "explanation": "Option B is the only sentence that actively supports the opinion with a logical reason (equity and survival). Options A and D are neutral facts, and Option C is a generic introduction that does not take a stand.",
+            "id": "ex_7337953b-b8dd-4fcc-b8b2-eab317c7fe0d_3",
+            "options": [
+              "Healthcare systems vary significantly across different countries around the world.",
+              "Providing free medical treatment to all citizens ensures that economic status does not determine an individual's survival and well-being.",
+              "Some people think healthcare is expensive, while others think it is necessary.",
+              "The government spends a lot of money on hospitals every year."
+            ],
+            "question": "Which of the following sentences best sustains a clear opinion in the body paragraph of an essay arguing that 'universal healthcare is a human right'?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "it",
+            "explanation": "The clause 'Despite the fact that social media connects people' is a dependent clause. The main clause requires a subject pronoun ('it') to refer back to 'social media.' Without 'it,' the sentence is a fragment or lacks a clear subject for the verb 'leads.'",
+            "id": "ex_7337953b-b8dd-4fcc-b8b2-eab317c7fe0d_4",
+            "options": [],
+            "question": "Identify the grammatical error in this concession clause used to sustain an opinion: 'Despite the fact that social media connects people, {blank} often leads to feelings of isolation and anxiety among young adults.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "In conclusion, making university free is the only way to ensure equal opportunity for all students, regardless of their financial background.",
+            "explanation": "Option B restates the core argument (free university) and reinforces the main reason (equal opportunity) without introducing new solutions (Option A) or irrelevant examples (Option C). Option D contradicts the original opinion.",
+            "id": "ex_7337953b-b8dd-4fcc-b8b2-eab317c7fe0d_5",
+            "options": [
+              "In conclusion, although it is expensive, the government should consider raising taxes to fund this program.",
+              "In conclusion, making university free is the only way to ensure equal opportunity for all students, regardless of their financial background.",
+              "In conclusion, many countries like Germany and Norway already offer free tuition, which is interesting to note.",
+              "In conclusion, students should work hard to get scholarships if they cannot afford tuition fees."
+            ],
+            "question": "You are writing an opinion essay arguing that 'university education should be free for all.' Which conclusion best sustains your position without introducing new ideas?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "0656039c-adf7-4887-b4d9-c334cb842e84",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:40.147028"
+      },
+      "description": null,
+      "estimated_minutes": 28,
+      "id": "7337953b-b8dd-4fcc-b8b2-eab317c7fe0d",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "T2 Writing: Opinion Essays — Stating & Sustaining a Clear Position",
+      "total_exercises": 5,
+      "unit_id": "15176e4f-3598-43b3-b5ca-31e8a4d99c0c",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447737"
+      },
+      "xp_reward": 28
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "While critics argue that public funding for the arts is an unnecessary expense, others contend that it is essential for cultural preservation.",
+            "explanation": "This answer correctly uses a concession clause ('While...') to present the opposing view fairly before asserting the main argument, demonstrating the balance required in a Discussion Essay.",
+            "id": "ex_t2_disc_001",
+            "options": [
+              "Some people think art is useless, so the government should not pay for it.",
+              "While critics argue that public funding for the arts is an unnecessary expense, others contend that it is essential for cultural preservation.",
+              "The government spends too much money on art, which is bad for the economy.",
+              "Art is important, but some people hate it."
+            ],
+            "question": "Write a topic sentence for a paragraph discussing the view that governments should fund arts programs, acknowledging that some people believe this is a waste of money.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "However,",
+            "explanation": "The word 'However' is a standard discourse marker used to introduce a contrasting point in an essay, ensuring the transition between opposing arguments is logical and formal.",
+            "id": "ex_t2_disc_002",
+            "options": [],
+            "question": "Correct the error in the following sentence regarding the presentation of both sides. The sentence currently lacks a proper linking word to show contrast between the two viewpoints: 'Some argue that remote work reduces productivity. {blank}, it offers greater flexibility and work-life balance.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "In conclusion, while banning phones minimizes distractions, allowing them can provide educational resources, so schools must decide which benefit outweighs the drawback.",
+            "explanation": "This answer effectively synthesizes the two main arguments (distraction vs. educational resource) and provides a balanced summary without introducing a new opinion or external solution, adhering to Task 2 conventions.",
+            "id": "ex_t2_disc_003",
+            "options": [
+              "In conclusion, while banning phones minimizes distractions, allowing them can provide educational resources, so schools must decide which benefit outweighs the drawback.",
+              "I think phones are bad and everyone should agree with me because they are distracting.",
+              "To sum up, phones are useful for calling parents but bad for gaming, and also many students have them.",
+              "Therefore, the government should buy new computers for all students immediately."
+            ],
+            "question": "Write a concluding sentence that summarizes the discussion on whether schools should ban mobile phones, without introducing new information.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "beneficial",
+            "explanation": "'Folks' is informal; 'people' or 'individuals' is preferred. 'Good' is a basic adjective; 'beneficial' is a more precise, academic term suitable for Band 6+ writing.",
+            "id": "ex_t2_disc_004",
+            "options": [],
+            "question": "Identify the error in the vocabulary used to describe the opposing viewpoint. The sentence is too informal for an academic essay: 'On the other hand, some folks think that technology is {blank} for society.' Replace the informal word with a more formal synonym.",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Conversely, the adverse environmental impacts of mass tourism, such as congestion and waste, cannot be overlooked.",
+            "explanation": "This option uses formal vocabulary ('adverse environmental impacts', 'cannot be overlooked') and a strong cohesive device ('Conversely') to clearly signal the shift to the opposing argument, maintaining the formal register required for IELTS Task 2.",
+            "id": "ex_t2_disc_005",
+            "options": [
+              "But tourism also brings traffic and pollution to local areas.",
+              "Conversely, the adverse environmental impacts of mass tourism, such as congestion and waste, cannot be overlooked.",
+              "Also, tourists make a lot of trash and cars get stuck in traffic.",
+              "On the other hand, tourism is bad for the environment."
+            ],
+            "question": "Write a sentence introducing the second viewpoint in a discussion essay about tourism, using a phrase that indicates an alternative perspective to the previously mentioned economic benefits.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "0656039c-adf7-4887-b4d9-c334cb842e84",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:40.147079"
+      },
+      "description": null,
+      "estimated_minutes": 28,
+      "id": "eca749b0-6071-47c8-8ed8-5e46f937094d",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "T2 Writing: Discussion Essays — Presenting Both Sides Fairly",
+      "total_exercises": 5,
+      "unit_id": "15176e4f-3598-43b3-b5ca-31e8a4d99c0c",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447895"
+      },
+      "xp_reward": 28
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Parents should limit the amount of time their children spend on digital devices.",
+            "explanation": "This answer uses the action-focused modal verb 'should limit' to propose a clear solution, which is required for a Problem-Solution essay. The other options describe the problem or state a fact, rather than proposing an action.",
+            "id": "ex_76ff8063-aba4-46f3-a7fe-9e2948c953cc_1",
+            "options": [
+              "Teenagers spend too much time on screens.",
+              "Parents should limit the amount of time their children spend on digital devices.",
+              "Screen time is a big problem for teenagers today.",
+              "Digital devices are popular among young people."
+            ],
+            "question": "Write a topic sentence for a solution paragraph addressing the problem of 'excessive screen time among teenagers'. Use an action-focused verb to introduce the primary solution.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "construct",
+            "explanation": "The verb 'construct' is the appropriate action-focused verb for building infrastructure. 'Plans to' must be followed by a base verb. Common errors include using a noun ('construction') or a past participle ('constructed') here.",
+            "id": "ex_8a1b2c3d-4e5f-6789-abc0-123456789012",
+            "options": [],
+            "question": "Correct the error in this sentence regarding a proposed solution for traffic congestion. The government plans to {blank} a new subway system to reduce the number of cars on the road.",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "The air quality will deteriorate significantly if emissions are not regulated.",
+            "explanation": "This sentence uses the passive voice ('are not regulated') to focus on the action required (regulation) rather than the agent. It also uses formal vocabulary ('deteriorate', 'emissions') suitable for Band 6-8 writing.",
+            "id": "ex_9d8c7b6a-5e4f-3210-9876-543210987654",
+            "options": [
+              "People breathe dirty air if we do nothing.",
+              "The air quality will deteriorate significantly if emissions are not regulated.",
+              "We must stop pollution or people will get sick.",
+              "Urban pollution is bad for health."
+            ],
+            "question": "Write a sentence explaining the consequence of *not* implementing a solution to urban pollution. Use a passive voice structure to emphasize the action.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "implement",
+            "explanation": "'Implement' is a precise, academic action verb meaning to put a plan or system into effect. 'Have', 'do', and 'make' are too generic and informal for high-scoring IELTS Task 2 essays.",
+            "id": "ex_1f2e3d4c-5b6a-7980-1234-567890abcdef",
+            "options": [
+              "have",
+              "implement",
+              "do",
+              "make"
+            ],
+            "question": "Select the best action-focused verb to complete this solution for 'rising obesity rates': Schools should {blank} mandatory physical education classes to improve students' health.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "allocate",
+            "explanation": "'Allocate' is the correct collocation with 'funds' in an academic context, meaning to distribute resources for a specific purpose. Other verbs like 'give' or 'send' are less precise and lower in register.",
+            "id": "ex_5a6b7c8d-9e0f-1234-5678-90abcdef1234",
+            "options": [],
+            "question": "Correct the error in this sentence about a solution to 'high unemployment'. The state must {blank} funds for job training programs.",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "0656039c-adf7-4887-b4d9-c334cb842e84",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:40.147112"
+      },
+      "description": null,
+      "estimated_minutes": 28,
+      "id": "76ff8063-aba4-46f3-a7fe-9e2948c953cc",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "T2 Writing: Problem–Solution Essays — Action-Focused Language",
+      "total_exercises": 5,
+      "unit_id": "15176e4f-3598-43b3-b5ca-31e8a4d99c0c",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447741"
+      },
+      "xp_reward": 28
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "To what extent do you agree or disagree?",
+            "explanation": "The phrase 'To what extent do you agree or disagree?' is the specific instruction asking for the writer's position. The first sentence provides the topic context, but does not ask for an opinion.",
+            "id": "ex_001",
+            "options": [
+              "Some people believe that unpaid community service should be a mandatory part of high school programs.",
+              "To what extent do you agree or disagree?",
+              "high school programs",
+              "unpaid community service"
+            ],
+            "question": "Read the essay question: 'Some people believe that unpaid community service should be a mandatory part of high school programs. To what extent do you agree or disagree?' Identify which part of the question requires you to state your level of agreement.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "better job opportunities",
+            "explanation": "The prompt asks for 'main advantages'. 'Better job opportunities' is a valid, specific advantage relevant to city life, directly answering the 'What' part of the question.",
+            "id": "ex_002",
+            "options": [],
+            "question": "Complete the topic sentence for a body paragraph addressing the question: 'What are the main advantages of living in a city compared to the countryside?' Use the format: 'One primary benefit of urban living is {blank}.' (Provide a noun phrase representing an advantage, max 3 words)",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "however",
+            "explanation": "The first clause states arts are important (positive), while the second suggests not spending money (negative/contradictory action). This requires a contrast connector like 'however' or 'but'. 'Therefore' and 'so' indicate result, which is illogical here.",
+            "id": "ex_003",
+            "options": [
+              "therefore",
+              "however",
+              "and",
+              "so"
+            ],
+            "question": "Identify the error in the following sentence from an essay response to 'Should governments fund arts?': 'Because the arts are important, {blank} the government should not spend money on them.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "Task Response criteria require addressing all parts of the prompt. For 'Discuss both views', you must present arguments for both sides, even if you only support one, to fully answer the question.",
+            "id": "ex_004",
+            "options": [],
+            "question": "True or False: In a 'Discuss both views and give your opinion' essay, you only need to discuss the view you agree with to achieve a Band 7 for Task Response.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "List Advantages, List Disadvantages, Conclude which is stronger",
+            "explanation": "An 'outweigh' essay requires an evaluation of both sides. The writer must present both advantages and disadvantages and explicitly judge which side is more significant, rather than just listing them neutrally.",
+            "id": "ex_005",
+            "options": [
+              "Discuss View A, Discuss View B, Give Opinion",
+              "List Advantages, List Disadvantages, Conclude which is stronger",
+              "State Problem, Suggest Solution",
+              "State Opinion, Justify Opinion"
+            ],
+            "question": "Match the essay question type to the required response structure. Question: 'Do the advantages outweigh the disadvantages?'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "0656039c-adf7-4887-b4d9-c334cb842e84",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:40.147141"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "ac117455-7aa9-4a2a-9c09-241f285bad1c",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "T2 Writing: Direct Question Essays — Answering All Parts",
+      "total_exercises": 5,
+      "unit_id": "15176e4f-3598-43b3-b5ca-31e8a4d99c0c",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447800"
+      },
+      "xp_reward": 25
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Ban fast food?",
+            "explanation": "The central node must capture the core debate or question directly from the prompt to maintain task achievement. 'Ban fast food?' is concise and directs all branching ideas.",
+            "id": "ex_001_t2_mindmap_central",
+            "options": [],
+            "question": "In the center of your Task 2 mind map, write the core question to ensure focus. For the prompt 'Should governments ban fast food?', the central node should be {blank}?",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Fewer office distractions lead to focused work",
+            "explanation": "This option directly supports the claim about productivity. The other options are tangential (costs, environment) or too specific/minor (coffee) to serve as a main paragraph topic in a Task 2 essay.",
+            "id": "ex_002_t2_branching_ideas",
+            "options": [
+              "Employees save money on coffee",
+              "Fewer office distractions lead to focused work",
+              "Computers are expensive to buy",
+              "Traffic jams are bad for the environment"
+            ],
+            "question": "When brainstorming arguments for 'Remote work increases productivity', which of the following is a valid main idea branch for your mind map?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Overcrowding and traffic congestion",
+            "explanation": "Grouping ideas logically is crucial for coherence. Overcrowding often leads directly to traffic congestion, making them a cohesive unit for one body paragraph. Crime and pollution are distinct issues requiring separate analysis.",
+            "id": "ex_003_t2_grouping_themes",
+            "options": [
+              "Overcrowding and traffic congestion",
+              "Pollution and higher crime rates",
+              "Overcrowding and pollution",
+              "Traffic congestion and higher crime rates"
+            ],
+            "question": "You have generated these ideas for 'Urbanization': overcrowding, higher crime rates, pollution, and traffic congestion. Which two ideas best group together under one mind map branch?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "It is argued",
+            "explanation": "Academic writing requires formal hedging and paraphrasing. 'It is argued' or 'Some individuals contend' are appropriate formal alternatives to 'Some people think', demonstrating lexical resource.",
+            "id": "ex_004_t2_drafting_intro",
+            "options": [],
+            "question": "When converting your mind map into the first draft introduction, you must paraphrase the prompt. If the prompt is 'Some people think...', your introduction should start with {blank} believe...",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "Effective planning requires a structured approach. Spending time writing without referencing the mind map risks losing coherence and task response alignment. The mind map serves as a checklist to ensure all planned points are covered logically.",
+            "id": "ex_005_t2_time_management",
+            "options": [],
+            "question": "In a 40-minute planning and drafting session for Task 2, is it advisable to spend the entire first 15 minutes writing the body paragraphs before checking the mind map?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "0656039c-adf7-4887-b4d9-c334cb842e84",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:40.147168"
+      },
+      "description": null,
+      "estimated_minutes": 30,
+      "id": "72bb29e8-4eab-4bf8-96e2-948f5424bc96",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "T2 Essay Planning Workshop — Mind Map to First Draft in 40 Min",
+      "total_exercises": 5,
+      "unit_id": "15176e4f-3598-43b3-b5ca-31e8a4d99c0c",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447728"
+      },
+      "xp_reward": 40
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "The growing prevalence of digital platforms has negatively impacted interpersonal communication.",
+            "explanation": "This answer demonstrates lexical resource by replacing 'social media' with 'digital platforms' and 'people communicate' with 'interpersonal communication'. It clearly states the writer's position (negative impact) required for Task 2.",
+            "id": "ex_lex_paraphrase_001",
+            "options": [],
+            "question": "Task 2 Topic: The increasing use of social media has changed how people communicate. Write a thesis statement for an essay arguing that this is a negative development. You must paraphrase the word 'people' and the concept 'communicate' to avoid repetition.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "they",
+            "explanation": "Using the pronoun 'they' avoids the repetitive and clumsy use of the noun 'children' twice in close proximity, improving coherence and lexical variety.",
+            "id": "ex_lex_paraphrase_002",
+            "options": [],
+            "question": "Correct the sentence below to improve lexical resource by replacing the repeated noun 'children' with an appropriate pronoun or synonym. Original: 'Many children struggle with homework. Children often lack discipline.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "A few individuals think that tertiary education ought to be provided at no cost to every learner.",
+            "explanation": "Option A effectively paraphrases 'university education' as 'tertiary education', 'free' as 'at no cost', and 'students' as 'learners', while maintaining the original meaning and formal register suitable for IELTS Task 2.",
+            "id": "ex_lex_paraphrase_003",
+            "options": [
+              "A few individuals think that tertiary education ought to be provided at no cost to every learner.",
+              "Many argue that schools should be free.",
+              "It is believed that universities are expensive.",
+              "Students pay for their education."
+            ],
+            "question": "Which of the following is the best paraphrase of the prompt: 'Some people believe that university education should be free for all students.'?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "leads to",
+            "explanation": "Replacing the second 'causes' with 'leads to' or 'results in' demonstrates a wider range of vocabulary and avoids monotonous repetition, which is crucial for a higher Band score in Lexical Resource.",
+            "id": "ex_lex_paraphrase_004",
+            "options": [],
+            "question": "The following sentence repeats the verb 'cause'. Rewrite the second clause to use a synonym for 'cause' to improve lexical resource. Original: 'Pollution causes environmental damage. It also causes health problems.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "A large number of jobless individuals",
+            "explanation": "This option uses precise academic vocabulary ('jobless individuals') to paraphrase 'unemployment' and 'high levels' to 'a large number', maintaining the formal tone required for IELTS Task 2. The other options are too informal or grammatically incomplete.",
+            "id": "ex_lex_paraphrase_005",
+            "options": [
+              "A large number of jobless individuals",
+              "Not having a job",
+              "When people are out of work",
+              "The situation where workers lose their positions"
+            ],
+            "question": "Identify the best way to paraphrase the phrase 'high levels of unemployment' in the context of a Task 2 essay about economic problems.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "0656039c-adf7-4887-b4d9-c334cb842e84",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:40.199780"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "5f855282-0cd5-4441-9e35-6f712abc3802",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "T2 Writing: Lexical Resource — Paraphrase & Avoid Repetition",
+      "total_exercises": 5,
+      "unit_id": "eaeb6af4-b51f-4a6c-ac01-ba1a37c5ee76",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.377515"
+      },
+      "xp_reward": 25
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "which",
+            "explanation": "Using a relative pronoun like 'which' allows you to combine two simple sentences into a complex sentence, demonstrating the grammatical range required for Band 7.",
+            "id": "ex_001",
+            "options": [],
+            "question": "Correct the sentence to improve grammatical range by using a complex structure with a relative clause. The government spends billions on healthcare, {blank} is essential for public well-being.",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Although",
+            "explanation": "Starting with 'Although' creates a concessive complex sentence, showing the ability to acknowledge a contrasting point within a single grammatical structure.",
+            "id": "ex_002",
+            "options": [],
+            "question": "Improve the following simple sentence by adding a concessive clause. People drive cars. {blank} this causes pollution.",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Governments should fund public transport because it significantly reduces traffic congestion and carbon emissions.",
+            "explanation": "This answer uses a subordinate clause starting with 'because' to provide a reason, creating a complex sentence structure that enhances the argument's clarity and grammatical range.",
+            "id": "ex_003",
+            "options": [],
+            "question": "Write one complex sentence arguing why governments should fund public transport, using a causal connector (e.g., because, since, as).",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "As the literacy rate increased, the workforce became more skilled and productive.",
+            "explanation": "The use of 'As' introduces a time clause, allowing the writer to show correlation or sequence between two events in a single complex sentence, which is a key feature of Band 7 writing.",
+            "id": "ex_004",
+            "options": [],
+            "question": "Write one complex sentence describing a trend where education levels rose, using a time clause (e.g., as, when, while).",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "so that",
+            "explanation": "Using 'so that' or 'therefore' (if restructured) helps link cause and effect. Here, 'so that' introduces the result, creating a complex sentence that demonstrates logical cohesion and grammatical variety.",
+            "id": "ex_005",
+            "options": [],
+            "question": "Combine these ideas into a complex sentence using a result clause. The internet is widely available. {blank} this has changed how we communicate.",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "0656039c-adf7-4887-b4d9-c334cb842e84",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:40.199844"
+      },
+      "description": null,
+      "estimated_minutes": 28,
+      "id": "d4ad2bdf-3f36-467c-8535-a5ed910668b8",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "T2 Writing: Grammatical Range — Complex Sentences for Band 7",
+      "total_exercises": 5,
+      "unit_id": "eaeb6af4-b51f-4a6c-ac01-ba1a37c5ee76",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447844"
+      },
+      "xp_reward": 28
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "On the other hand, the lack of face-to-face interaction in remote settings can lead to feelings of professional isolation.",
+            "explanation": "The correct answer uses the signpost 'On the other hand' to signal a contrast or concession, which is necessary when moving from a positive argument (saving time) to a negative counter-argument (isolation). This ensures logical flow and coherence between paragraphs.",
+            "id": "ex_2fe5bc20-89b4-4bae-91a9-7f5548efe76d_1",
+            "options": [
+              "On the other hand, the lack of face-to-face interaction in remote settings can lead to feelings of professional isolation.",
+              "Furthermore, remote work allows employees to save money on fuel and public transport costs.",
+              "In addition to saving time, remote work improves the overall quality of life for many professionals.",
+              "Therefore, companies should invest in better home office equipment for their staff."
+            ],
+            "question": "You are writing a Task 2 essay about the benefits of remote work. You have just finished a paragraph arguing that remote work saves employees time on commuting. You now want to introduce a paragraph discussing how remote work can lead to feelings of isolation. Which sentence best provides a cohesive transition between these two ideas?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "them",
+            "explanation": "The noun 'Universities' is plural. The pronoun referring back to it must also be plural. 'It' is singular and creates a cohesion error. 'They' correctly refers back to 'Universities', ensuring grammatical and logical coherence.",
+            "id": "ex_2fe5bc20-89b4-4bae-91a9-7f5548efe76d_2",
+            "options": [],
+            "question": "Correct the cohesion error in the following Task 2 sentence. The original sentence uses an incorrect pronoun reference that creates ambiguity about who is responsible for the action. Replace the underlined part with the correct pronoun.\n\nOriginal: 'Governments should invest more in renewable energy; this will help {blank} reduce carbon emissions significantly.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "However, from 2010 onwards, the figure remained stable at approximately 80%.",
+            "explanation": "The word 'However' signals a change in trend, which is appropriate when moving from a period of increase to a period of stability (plateau). The other options misrepresent the data trend or use incorrect cohesive devices for the context.",
+            "id": "ex_2fe5bc20-89b4-4bae-91a9-7f5548efe76d_3",
+            "options": [
+              "However, from 2010 onwards, the figure remained stable at approximately 80%.",
+              "In addition, internet usage continued to rise sharply until 2020.",
+              "Similarly, the number of users dropped significantly after 2010.",
+              "Consequently, the graph shows a decline in usage during the second decade."
+            ],
+            "question": "You are writing a Task 1 Academic essay describing a line graph showing a steady increase in internet usage from 2000 to 2010, followed by a plateau from 2010 to 2020. You have written the sentence: 'Internet usage rose steadily between 2000 and 2010.' Which sentence best coheres with this statement to describe the subsequent period?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Moreover",
+            "explanation": "The second sentence adds a supporting point to the first, both highlighting benefits of public libraries. The conjunction 'Moreover' (or 'Furthermore') is appropriate for adding information. The error in the original (implied by the need for correction) is likely a contrasting conjunction like 'However' or 'But', which would incorrectly suggest opposition between the two ideas.",
+            "id": "ex_2fe5bc20-89b4-4bae-91a9-7f5548efe76d_4",
+            "options": [],
+            "question": "Identify and correct the cohesion error in the following Task 2 sentence. The sentence attempts to add a supporting point but uses a conjunction that implies contrast. Replace the underlined word with the correct cohesive device.\n\nOriginal: 'Public libraries provide free access to books. {blank} they offer a quiet space for study.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Beyond these cognitive advantages, there are significant economic benefits to early language acquisition.",
+            "explanation": "This sentence uses the phrase 'Beyond these cognitive advantages' to explicitly link back to the previous paragraph's topic (cognitive benefits) and introduces the new topic (economic benefits). This creates a clear and logical flow between paragraphs, which is essential for a high band score in Coherence and Cohesion.",
+            "id": "ex_2fe5bc20-89b4-4bae-91a9-7f5548efe76d_5",
+            "options": [
+              "Beyond these cognitive advantages, there are significant economic benefits to early language acquisition.",
+              "Therefore, schools should not focus on teaching mathematics before language arts.",
+              "In contrast, some parents believe that learning a second language is too difficult for young children.",
+              "As a result, children who speak two languages often have higher self-esteem."
+            ],
+            "question": "You are writing a Task 2 essay arguing that children should learn a second language at primary school. You have just finished a paragraph discussing the cognitive benefits of bilingualism. You now want to write a paragraph about the economic benefits. Which sentence best introduces this new paragraph while maintaining coherence?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "0656039c-adf7-4887-b4d9-c334cb842e84",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:40.199878"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "2fe5bc20-89b4-4bae-91a9-7f5548efe76d",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "T2 Writing: Cohesion & Coherence — Paragraph Flow & Signposting",
+      "total_exercises": 5,
+      "unit_id": "eaeb6af4-b51f-4a6c-ac01-ba1a37c5ee76",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.377496"
+      },
+      "xp_reward": 25
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Presenting a clear position on whether high school students should be required to do unpaid work, with relevant supporting arguments.",
+            "explanation": "Task Achievement requires fully answering all parts of the prompt. The question specifically asks about 'high school programs' and 'mandatory' service. Option C addresses the specific topic and provides a clear position (agree/disagree), which is required for a high band score. The other options go off-topic or fail to address the 'extent' of agreement.",
+            "id": "ex_65806bdd-1545-4cd4-9a72-78dd12b12ac5_1",
+            "options": [
+              "Discussing the general benefits of volunteering for adults in the workplace.",
+              "Exploring the reasons why some schools have funding issues for extracurricular activities.",
+              "Presenting a clear position on whether high school students should be required to do unpaid work, with relevant supporting arguments.",
+              "Describing a specific personal experience of volunteering at a local charity last summer."
+            ],
+            "question": "Read the Task 2 prompt: 'Some people believe that unpaid community service should be a mandatory part of high school programs. To what extent do you agree or disagree?' Which of the following approaches best demonstrates 'Task Achievement' regarding the scope of the essay?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "highly beneficial",
+            "explanation": "The original word 'good' is too vague and informal for Band 6+ writing. 'Highly beneficial' is more precise and academic. Furthermore, simply saying it is 'good' does not fully address the prompt's implication of *why* or *how* it is beneficial, whereas a stronger adjective sets up a more robust argument.",
+            "id": "ex_65806bdd-1545-4cd4-9a72-78dd12b12ac5_2",
+            "options": [],
+            "question": "Identify the error in this Task 2 sentence which fails to fully answer the prompt by being too vague. Correct the adjective to make the argument specific and relevant to the prompt 'Is it beneficial for children to learn a second language at primary school?'. Original: 'Learning a second language is {blank} for children.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "While some argue for the flexibility of remote work, others prefer the social interaction of offices; I will discuss both perspectives before stating my preference.",
+            "explanation": "Task Achievement for a 'Discuss both views' essay requires acknowledging both sides and providing a clear opinion. Option C explicitly signals that both views will be discussed and that an opinion will be given, ensuring the writer stays on track to answer all parts of the question. Option A and D are one-sided; Option C is just an introduction.",
+            "id": "ex_65806bdd-1545-4cd4-9a72-78dd12b12ac5_3",
+            "options": [
+              "I believe that remote work is better than office work because it saves time.",
+              "While some argue for the flexibility of remote work, others prefer the social interaction of offices; I will discuss both perspectives before stating my preference.",
+              "Remote work has become very popular in recent years among many companies.",
+              "This essay will explain why offices are bad for productivity."
+            ],
+            "question": "The prompt is: 'Discuss both views and give your own opinion.' The first paragraph introduces the topic. Which of the following thesis statements best ensures the writer fully answers the prompt?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "space exploration",
+            "explanation": "The original noun 'automotive' changes the topic entirely, leading to a Task Achievement penalty for being off-topic. Changing it to 'space exploration' ensures the sentence directly addresses the specific subject of the prompt, allowing the writer to develop a relevant argument about government spending priorities.",
+            "id": "ex_65806bdd-1545-4cd4-9a72-78dd12b12ac5_4",
+            "options": [],
+            "question": "This sentence from a Task 2 essay is irrelevant to the prompt 'Should governments spend money on space exploration?'. It focuses on the wrong subject. Correct the noun to align with the prompt: 'The {blank} industry should focus on renewable energy instead.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Therefore, I completely agree that universities should be free, as this promotes equality and reduces debt.",
+            "explanation": "Task Achievement requires a clear position throughout the essay, including the conclusion. Option B restates the clear position ('completely agree') and summarizes the main reasons (equality, debt reduction). Option A is too general, Option C is irrelevant, and Option D is meta-commentary, none of which answer the prompt.",
+            "id": "ex_65806bdd-1545-4cd4-9a72-78dd12b12ac5_5",
+            "options": [
+              "In conclusion, education is important for everyone in society.",
+              "Therefore, I completely agree that universities should be free, as this promotes equality and reduces debt.",
+              "Many countries have different policies regarding tuition fees.",
+              "This was a difficult topic to write about in just two days."
+            ],
+            "question": "Which of the following concluding sentences best demonstrates 'Task Achievement' for the prompt: 'To what extent do you agree or disagree that university education should be free for all students?'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "0656039c-adf7-4887-b4d9-c334cb842e84",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:40.199913"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "65806bdd-1545-4cd4-9a72-78dd12b12ac5",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "T2 Writing: Task Achievement — Fully Answering the Prompt",
+      "total_exercises": 5,
+      "unit_id": "eaeb6af4-b51f-4a6c-ac01-ba1a37c5ee76",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.377518"
+      },
+      "xp_reward": 22
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "at",
+            "explanation": "In IELTS Task 1, when describing a specific value reached by a trend, the preposition 'at' is required (e.g., 'peaked at', 'reached a peak at'). 'To' indicates movement towards a value, but 'at' indicates the specific point.",
+            "id": "ex_1a665627-4abb-4e20-b611-5139ce759d07_1",
+            "options": [],
+            "question": "Correct the error in this Task 1 sentence regarding data description: 'The number of students has increased steadily from 2010 to 2020, reaching a peak {blank} 5,000.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "While funding arts is culturally beneficial, I believe public money should be prioritized for essential services like healthcare and education.",
+            "explanation": "A strong Task 2 overview or thesis statement must clearly state the writer's position and briefly outline the main reason. Option C provides a concession ('While...') and a clear opinion, demonstrating the complex sentence structure expected at Band 7+.",
+            "id": "ex_1a665627-4abb-4e20-b611-5139ce759d07_2",
+            "options": [
+              "I think art is important.",
+              "This essay will discuss both views.",
+              "While funding arts is culturally beneficial, I believe public money should be prioritized for essential services like healthcare and education.",
+              "Many people disagree about art funding."
+            ],
+            "question": "In a Task 2 essay discussing whether governments should fund arts, which sentence serves as the most effective overview of the main argument?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "is",
+            "explanation": "The subject 'percentage' is singular, so it requires the singular verb 'is'. Using 'are' is a common error when writers focus on the plural noun 'users' following the preposition 'of'.",
+            "id": "ex_1a665627-4abb-4e20-b611-5139ce759d07_3",
+            "options": [],
+            "question": "Correct the error in this Task 1 sentence: 'The percentage of users {blank} higher in urban areas compared to rural ones.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Overall, Country A consistently consumed more energy than Country B throughout the period, despite a slight dip in 2005.",
+            "explanation": "An effective Task 1 overview summarizes the main trends or differences. Option B includes the key comparison ('consistently consumed more'), the time frame ('throughout the period'), and a notable exception ('despite a slight dip'), which demonstrates the 'selecting key features' skill required for a high band score.",
+            "id": "ex_1a665627-4abb-4e20-b611-5139ce759d07_4",
+            "options": [
+              "Country A used more energy than Country B.",
+              "Overall, Country A consistently consumed more energy than Country B throughout the period, despite a slight dip in 2005.",
+              "The graph shows the energy usage of two countries.",
+              "Both countries used a lot of energy."
+            ],
+            "question": "Which of the following is the best overview sentence for a Task 1 report comparing energy consumption in two countries?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "was",
+            "explanation": "The relative clause 'which ... caused' is a passive construction. It requires the auxiliary verb 'was' (past simple passive) to link 'which' to the participle 'caused'. Without 'was', the sentence is grammatically incomplete.",
+            "id": "ex_1a665627-4abb-4e20-b611-5139ce759d07_5",
+            "options": [],
+            "question": "Correct the error in this Task 1 sentence: 'The number of cars has risen sharply, which {blank} caused by increased population.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "0656039c-adf7-4887-b4d9-c334cb842e84",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:40.199945"
+      },
+      "description": "A full IELTS mock is 40 listening and 40 reading questions and lives in Practice Tests, not in a lesson. This is a short practice set.",
+      "estimated_minutes": 60,
+      "id": "1a665627-4abb-4e20-b611-5139ce759d07",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "T2 Writing Practice Set: Task 1 + Task 2 Under Real Conditions",
+      "total_exercises": 5,
+      "unit_id": "eaeb6af4-b51f-4a6c-ac01-ba1a37c5ee76",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:16:23.160587"
+      },
+      "xp_reward": 70
+    }
+  ],
+  "units": [
+    {
+      "background_color": "#1565C0",
+      "course_id": "0656039c-adf7-4887-b4d9-c334cb842e84",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.992758"
+      },
+      "description": "Mô tả biểu đồ dạng line, bar và pie với ngôn ngữ chính xác theo từng band",
+      "icon_url": null,
+      "id": "dc54709a-d12e-4bf8-914d-97a3ac46105b",
+      "order_index": 1,
+      "title": "Task 1 – Charts & Graphs (Line, Bar, Pie)",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:40.032853"
+      }
+    },
+    {
+      "background_color": "#2E7D32",
+      "course_id": "0656039c-adf7-4887-b4d9-c334cb842e84",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:40.034595"
+      },
+      "description": "Mô tả quy trình, sơ đồ và bản đồ thay đổi theo thời gian",
+      "icon_url": null,
+      "id": "8e9ae293-2399-4073-af6c-7591d89ebdd3",
+      "order_index": 2,
+      "title": "Task 1 – Diagrams, Processes & Maps",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:40.076060"
+      }
+    },
+    {
+      "background_color": "#6A1B9A",
+      "course_id": "0656039c-adf7-4887-b4d9-c334cb842e84",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:40.078820"
+      },
+      "description": "5 dạng bài Task 2 với chiến lược lên ý tưởng và cấu trúc bài viết",
+      "icon_url": null,
+      "id": "15176e4f-3598-43b3-b5ca-31e8a4d99c0c",
+      "order_index": 3,
+      "title": "Task 2 – Essay Types & Planning Strategies",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:40.142849"
+      }
+    },
+    {
+      "background_color": "#BF360C",
+      "course_id": "0656039c-adf7-4887-b4d9-c334cb842e84",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:40.144444"
+      },
+      "description": "Nâng điểm Task 2 từ Band 5 lên Band 7 với trọng tâm vào 4 tiêu chí chấm điểm",
+      "icon_url": null,
+      "id": "eaeb6af4-b51f-4a6c-ac01-ba1a37c5ee76",
+      "order_index": 4,
+      "title": "Task 2 – Language, Scoring & Band 7 Upgrade",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:40.196588"
+      }
+    }
+  ]
+}
