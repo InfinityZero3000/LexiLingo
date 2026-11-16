@@ -18,10 +18,14 @@ jobs:
   pr_agent_job:
     runs-on: ubuntu-latest
     name: AI Code Review
-    # Only run for non-bot users and on PRs
+    # Only on PRs, never for bots, and comment triggers only from people with write access:
+    # this job holds a model API key and write permissions, and a public repo lets anyone
+    # comment on a PR.
     if: |
       github.event.sender.type != 'Bot' &&
-      (github.event.pull_request != null || github.event.issue.pull_request != null)
+      (github.event.pull_request != null || github.event.issue.pull_request != null) &&
+      (github.event_name == 'pull_request' ||
+       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association))
     # Don't block PRs if API key is missing or Gemini is unavailable
     continue-on-error: true
 
@@ -42,7 +46,8 @@ jobs:
       - name: PR Agent action step
         id: pragent
         if: steps.key.outputs.enabled == 'true'
-        uses: Codium-ai/pr-agent@main
+        # Pinned: a third-party action that receives secrets must not follow a moving branch.
+        uses: The-PR-Agent/pr-agent@e673a02076ce09a4726c3d0c3cc85780e59ca52b # v0.50.0
         env:
           GOOGLE_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
