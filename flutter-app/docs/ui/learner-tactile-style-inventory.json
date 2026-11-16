@@ -27115,6 +27115,18 @@
       }
     },
     {
+      "id": "lib/features/learning/presentation/screens/learning_session_screen.dart::_LearningSessionScreenState::MaterialPageRoute::0",
+      "path": "lib/features/learning/presentation/screens/learning_session_screen.dart",
+      "entryPoint": "imperativeRoute",
+      "symbol": "_LearningSessionScreenState",
+      "callKind": "MaterialPageRoute",
+      "ordinal": 0,
+      "line": 898,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried"
+    },
+    {
       "id": "lib/features/learning/presentation/screens/learning_roadmap_screen.dart::_LessonNodeState::BoxDecoration::2",
       "path": "lib/features/learning/presentation/screens/learning_roadmap_screen.dart",
       "entryPoint": "surface",
