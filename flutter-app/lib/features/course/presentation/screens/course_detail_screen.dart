@@ -83,6 +83,14 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               return Center(child: Text('course.notFound'.tr()));
             }
 
+            final nextLessonId = course.units
+                .expand((u) => u.lessons)
+                .where(
+                  (l) => !(l.isLocked ?? false) && !(l.isCompleted ?? false),
+                )
+                .map((l) => l.id)
+                .firstOrNull;
+
             return CustomScrollView(
               slivers: [
                 // Compact App Bar with smaller title
@@ -277,6 +285,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                       unit: unit,
                       unitNumber: index + 1,
                       courseId: course.id,
+                      nextLessonId: nextLessonId,
                     );
                   }, childCount: course.units.length),
                 ),
@@ -458,11 +467,13 @@ class _UnitCard extends StatelessWidget {
   final UnitWithLessonsEntity unit;
   final int unitNumber;
   final String courseId;
+  final String? nextLessonId;
 
   const _UnitCard({
     required this.unit,
     required this.unitNumber,
     required this.courseId,
+    this.nextLessonId,
   });
 
   @override
@@ -471,6 +482,7 @@ class _UnitCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: ExpansionTile(
+        initiallyExpanded: unit.lessons.any((l) => l.id == nextLessonId),
         leading: CircleAvatar(
           backgroundColor: _parseColor(unit.backgroundColor, isDark),
           child: Text(
@@ -493,7 +505,11 @@ class _UnitCard extends StatelessWidget {
               )
             : null,
         children: unit.lessons.map((lesson) {
-          return _LessonTile(lesson: lesson, courseId: courseId);
+          return _LessonTile(
+            lesson: lesson,
+            courseId: courseId,
+            isNext: lesson.id == nextLessonId,
+          );
         }).toList(),
       ),
     );
@@ -515,8 +531,13 @@ class _UnitCard extends StatelessWidget {
 class _LessonTile extends StatelessWidget {
   final LessonInRoadmapEntity lesson;
   final String courseId;
+  final bool isNext;
 
-  const _LessonTile({required this.lesson, required this.courseId});
+  const _LessonTile({
+    required this.lesson,
+    required this.courseId,
+    this.isNext = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -531,8 +552,18 @@ class _LessonTile extends StatelessWidget {
         style: TextStyle(
           color: isLocked ? Colors.grey : null,
           decoration: isCompleted ? TextDecoration.lineThrough : null,
+          fontWeight: isNext ? FontWeight.bold : null,
         ),
       ),
+      subtitle: isNext
+          ? Text(
+              LocaleKeys.course_nextUp.tr(),
+              style: TextStyle(
+                color: AppColorRoles.primary(isDark),
+                fontWeight: FontWeight.w600,
+              ),
+            )
+          : null,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

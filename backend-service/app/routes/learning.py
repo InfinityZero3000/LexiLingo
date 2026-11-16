@@ -62,6 +62,7 @@ from app.services.rank_service import (
 from app.services.lesson_unlock import (
     LOCKED_DETAIL,
     is_lesson_locked,
+    next_playable_lesson_id,
     sequence_locked_ids,
 )
 
@@ -753,54 +754,8 @@ async def _validate_answer(
 
 
 async def _find_next_lesson(db: AsyncSession, current_lesson: Lesson) -> Optional[UUID]:
-    """Return the UUID of the next lesson after current_lesson.
-
-    Checks same-unit lessons by order_index first, then falls back to the
-    first lesson of the next unit (ordered by order_index).
-    """
-    unit_result = await db.execute(select(Unit).where(Unit.id == current_lesson.unit_id))
-    unit = unit_result.scalar_one_or_none()
-    if not unit:
-        return None
-
-    next_in_unit = await db.execute(
-        select(Lesson)
-        .where(
-            and_(
-                Lesson.unit_id == unit.id,
-                Lesson.order_index > current_lesson.order_index,
-            )
-        )
-        .order_by(Lesson.order_index)
-        .limit(1)
-    )
-    nxt = next_in_unit.scalar_one_or_none()
-    if nxt:
-        return nxt.id
-
-    next_unit = await db.execute(
-        select(Unit)
-        .where(
-            and_(
-                Unit.course_id == unit.course_id,
-                Unit.order_index > unit.order_index,
-            )
-        )
-        .order_by(Unit.order_index)
-        .limit(1)
-    )
-    nu = next_unit.scalar_one_or_none()
-    if not nu:
-        return None
-
-    first_in_next = await db.execute(
-        select(Lesson)
-        .where(Lesson.unit_id == nu.id)
-        .order_by(Lesson.order_index)
-        .limit(1)
-    )
-    first = first_in_next.scalar_one_or_none()
-    return first.id if first else None
+    """The next playable lesson in the course, across units, or None."""
+    return await next_playable_lesson_id(db, current_lesson)
 
 
 async def _skill_results_for_attempt(

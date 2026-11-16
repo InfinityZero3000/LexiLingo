@@ -132,3 +132,18 @@ class TestLockedEndpoints:
             for l in u["lessons"]
         ]
         assert d == r == [False, True, True, True, True, True]
+
+
+@pytest.mark.asyncio
+async def test_next_lesson_crosses_units_and_skips_unplayable(
+    db_session: AsyncSession, test_course_with_units: Course
+):
+    from app.services.lesson_unlock import next_playable_lesson_id
+
+    ls = await _ordered(db_session, test_course_with_units)
+    assert await next_playable_lesson_id(db_session, ls[0]) == ls[1].id
+    assert await next_playable_lesson_id(db_session, ls[1]) == ls[2].id
+    ls[2].content = {"exercises": []}
+    await db_session.commit()
+    assert await next_playable_lesson_id(db_session, ls[1]) == ls[3].id
+    assert await next_playable_lesson_id(db_session, ls[5]) is None

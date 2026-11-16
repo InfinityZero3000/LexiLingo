@@ -58,3 +58,22 @@ async def is_lesson_locked(
         return False
     passed = await LessonCRUD.get_completed_lesson_ids(db, user_id, ids)
     return lesson.id in sequence_locked_ids(ordered, passed)
+
+
+async def next_playable_lesson_id(
+    db: AsyncSession, lesson: Lesson
+) -> uuid.UUID | None:
+    """The playable lesson after this one, across units."""
+    unit = await db.get(Unit, lesson.unit_id)
+    if unit is None:
+        return None
+    rows = await db.execute(
+        select(Unit)
+        .options(selectinload(Unit.lessons))
+        .where(Unit.course_id == unit.course_id)
+    )
+    ids = [l.id for l in playable_in_order(rows.scalars().all())]
+    if lesson.id not in ids:
+        return None
+    position = ids.index(lesson.id) + 1
+    return ids[position] if position < len(ids) else None
