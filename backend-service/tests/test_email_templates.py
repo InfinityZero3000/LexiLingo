@@ -135,3 +135,20 @@ async def test_email_assets_are_served_by_the_backend(async_client):
 
     assert response.status_code == 200
     assert response.headers["content-type"] == "image/jpeg"
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("day,subject", [(1, "Your first LexiLingo lesson takes five minutes"), (3, "Still want to start with LexiLingo?")])
+async def test_activation_nudge_links_to_the_start_route_and_borrows_the_welcome_hero(sent, day, subject):
+    assert await EmailService.send_activation_nudge_email(
+        to_email=TO, display_name="Minh Anh", day=day, start_link="https://lexilingo.me/courses"
+    ) is True
+
+    message = sent.call_args.args[0]
+    html = _html(message)
+    assert message["Subject"] == subject
+    assert message["List-Unsubscribe"].endswith("/settings>")
+    assert 'href="https://lexilingo.me/courses"' in html
+    assert f'src="{settings.EMAIL_ASSET_BASE_URL.rstrip("/")}/hero_welcome_email.jpg"' in html
+    assert not re.findall(r"\{[a-z_]+\}", html)
+    assert "https://lexilingo.me/courses" in message.get_body(("plain",)).get_content()

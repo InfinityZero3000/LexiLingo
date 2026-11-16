@@ -1,0 +1,9 @@
+Hi {display_name},
+
+{lead}
+
+Start my first lesson: {start_link}
+
+Too many reminders? Turn these off in settings: {settings_link}
+
+LexiLingo Team
