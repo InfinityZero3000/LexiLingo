@@ -20,6 +20,7 @@ from sqlalchemy.exc import IntegrityError
 from app.core.database import get_db
 from app.core.config import settings
 from app.core.dependencies import get_current_user
+from app.core import login_lockout
 from app.core.redis import RedisClient
 from app.core.security import (
     get_password_hash,
@@ -250,13 +251,18 @@ async def login(
     request: LoginRequest,
     db: AsyncSession = Depends(get_db),
 ):
+    await login_lockout.ensure_not_locked(request.email)
     user = await authenticate_user(db, request.email, request.password, _DUMMY_HASH)
     if not user:
+        retry_after = await login_lockout.record_failure(request.email)
+        if retry_after:
+            raise login_lockout.locked_response(retry_after)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    await login_lockout.reset(request.email)
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User account is inactive")
     # An unverified account may sign in and learn: blocking login until the link was opened
@@ -955,6 +961,8 @@ async def admin_login(
     if not email or not password:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email and password are required")
 
+    await login_lockout.ensure_not_locked(email)
+
     result = await db.execute(select(User).where(User.email == email))
     user = result.scalar_one_or_none()
 
@@ -963,10 +971,14 @@ async def admin_login(
 
     if not user or not password_ok:
         await _audit_admin_login(db, http_request, "failed", None, email=email)
+        retry_after = await login_lockout.record_failure(email)
+        if retry_after:
+            raise login_lockout.locked_response(retry_after)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
         )
+    await login_lockout.reset(email)
 
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User account is inactive")
