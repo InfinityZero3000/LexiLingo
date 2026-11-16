@@ -27,6 +27,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.safe_http import (
+    PROXIED_IMAGE_TYPES,
     safe_get as _safe_get,
     safe_resolve_final_url,
     validate_public_url,
@@ -222,8 +223,9 @@ async def proxy_image(url: str = Query(..., description="The image URL to proxy"
                         headers=_PROXY_CORS,
                     )
 
-                content_type = resp.headers.get("content-type", "")
-                if content_type and not content_type.startswith("image/"):
+                content_type = (resp.headers.get("content-type") or "image/jpeg").split(";")[0].strip().lower()
+                # Raster only: image/svg+xml passed the old startswith("image/") check and can carry script.
+                if content_type not in PROXIED_IMAGE_TYPES:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail="URL did not return an image content type.",
@@ -241,10 +243,12 @@ async def proxy_image(url: str = Query(..., description="The image URL to proxy"
                         )
                 return Response(
                     content=bytes(image),
-                    media_type=content_type or "image/jpeg",
+                    media_type=content_type,
                     headers={
                         **_PROXY_CORS,
                         "Cache-Control": "public, max-age=86400",
+                        "X-Content-Type-Options": "nosniff",
+                        "Content-Security-Policy": "default-src 'none'; sandbox",
                     },
                 )
             finally:
