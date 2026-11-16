@@ -9,6 +9,7 @@ import 'package:lexilingo_app/features/course/domain/entities/course_detail_enti
 import 'package:lexilingo_app/features/learning/presentation/screens/learning_session_screen.dart';
 import 'package:lexilingo_app/features/learning/presentation/screens/learning_roadmap_screen.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/features/onboarding/presentation/start_learning_launcher.dart';
 
 /// Course Detail Screen
 /// Shows course roadmap with units and lessons
@@ -293,31 +294,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     BuildContext context,
     CourseProvider provider,
   ) async {
+    await StartLearningLauncher.open(context, courseId: widget.courseId);
     if (!mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    provider.clearEnrollmentMessages();
-
-    final success = await provider.enrollInCourse(widget.courseId);
-
-    if (!mounted) return;
-
-    if (success) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            provider.enrollmentSuccess ?? 'course.enrolledSuccess'.tr(),
-          ),
-          backgroundColor: AppColors.greenSuccessBright,
-        ),
-      );
-    } else {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(provider.enrollmentError ?? 'course.enrollFailed'.tr()),
-          backgroundColor: AppColors.errorBright,
-        ),
-      );
-    }
+    provider.loadCourseDetail(widget.courseId);
   }
 
   Widget _buildCourseHeroCard(BuildContext context, CourseDetailEntity course) {

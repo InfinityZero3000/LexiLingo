@@ -12,7 +12,10 @@ import 'email_verification_pending_page.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 class RegisterPage extends StatefulWidget {
-  const RegisterPage({super.key});
+  /// The name the pre-sign-up questions already asked for.
+  final String? initialName;
+
+  const RegisterPage({super.key, this.initialName});
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
@@ -20,7 +23,9 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
-  final _fullNameController = TextEditingController();
+  late final _fullNameController = TextEditingController(
+    text: widget.initialName,
+  );
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();

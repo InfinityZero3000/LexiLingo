@@ -10,6 +10,7 @@ import 'package:lexilingo_app/features/course/presentation/screens/course_detail
 import 'package:lexilingo_app/features/course/presentation/screens/course_list_screen.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_ui_components.dart';
+import 'package:lexilingo_app/features/onboarding/presentation/start_learning_launcher.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 
@@ -179,6 +180,10 @@ class _RotatingLearningCardState extends State<_RotatingLearningCard> {
         topic: promptCourse.tags.isNotEmpty ? promptCourse.tags.first : null,
         source: _showReminder ? 'home_learning_reminder' : 'home_continue',
       );
+      if (activeCourse == null) {
+        StartLearningLauncher.open(context, courseId: promptCourse.id);
+        return;
+      }
       LearnerRoute.push(
         context,
         (_) => CourseDetailScreen(courseId: promptCourse.id),

@@ -1035,7 +1035,14 @@
     "interestTechnology": "기술과 혁신",
     "interestCulture": "문화와 엔터테인먼트",
     "interestCareer": "커리어 성장과 면접",
-    "levelC2": "C2 - 숙달"
+    "levelC2": "C2 - 숙달",
+    "notSureTakeTest": "잘 모르겠나요? 레벨 테스트 보기",
+    "startLesson": "첫 레슨 시작하기",
+    "startingTitle": "첫 레슨을 준비하고 있어요",
+    "startingSubtitle": "수준에 맞는 코스를 고르는 중이에요.",
+    "startFailedTitle": "첫 레슨을 열 수 없었어요",
+    "startFailedBody": "연결을 확인하고 다시 시도하거나, 홈에서 직접 레슨을 골라 주세요.",
+    "goHome": "홈으로 가기"
   },
   "preAuth": {
     "quickSetup": "빠른 설정",

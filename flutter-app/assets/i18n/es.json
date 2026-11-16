@@ -1035,7 +1035,14 @@
     "interestTechnology": "Tecnología e innovación",
     "interestCulture": "Cultura y entretenimiento",
     "interestCareer": "Crecimiento profesional y entrevistas",
-    "levelC2": "C2 - Maestría"
+    "levelC2": "C2 - Maestría",
+    "notSureTakeTest": "¿No estás seguro? Haz la prueba de nivel",
+    "startLesson": "Empezar mi primera lección",
+    "startingTitle": "Preparando tu primera lección",
+    "startingSubtitle": "Estamos eligiendo el curso que encaja con tu nivel.",
+    "startFailedTitle": "No pudimos abrir tu primera lección",
+    "startFailedBody": "Revisa tu conexión e inténtalo de nuevo, o ve al inicio y elige una lección.",
+    "goHome": "Ir al inicio"
   },
   "preAuth": {
     "quickSetup": "Configuración rápida",

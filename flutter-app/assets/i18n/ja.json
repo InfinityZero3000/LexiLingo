@@ -1035,7 +1035,14 @@
     "interestTechnology": "テクノロジーとイノベーション",
     "interestCulture": "文化とエンタメ",
     "interestCareer": "キャリアアップと面接",
-    "levelC2": "C2 - 熟達"
+    "levelC2": "C2 - 熟達",
+    "notSureTakeTest": "わからない場合はレベルチェックを受ける",
+    "startLesson": "最初のレッスンを始める",
+    "startingTitle": "最初のレッスンを準備しています",
+    "startingSubtitle": "あなたのレベルに合うコースを選んでいます。",
+    "startFailedTitle": "最初のレッスンを開けませんでした",
+    "startFailedBody": "接続を確認してもう一度お試しいただくか、ホームでレッスンを選んでください。",
+    "goHome": "ホームへ"
   },
   "preAuth": {
     "quickSetup": "クイックセットアップ",

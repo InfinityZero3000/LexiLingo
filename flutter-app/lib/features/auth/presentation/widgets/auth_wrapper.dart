@@ -20,6 +20,11 @@ import '../pages/welcome_page.dart';
 import '../pages/onboarding_page.dart';
 import '../pages/pre_auth_questions_page.dart';
 import 'package:lexilingo_app/features/level/presentation/level_sync.dart';
+import 'package:lexilingo_app/core/navigation/learner_route.dart';
+import 'package:lexilingo_app/features/onboarding/domain/entities/start_learning_target.dart';
+import 'package:lexilingo_app/features/onboarding/presentation/pages/start_learning_page.dart';
+import 'package:lexilingo_app/features/onboarding/presentation/providers/start_learning_provider.dart';
+import 'package:lexilingo_app/features/onboarding/presentation/start_learning_launcher.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/providers/lexi_chat_provider.dart';
 
 class AuthWrapper extends StatefulWidget {
@@ -31,6 +36,7 @@ class AuthWrapper extends StatefulWidget {
 
 class _AuthWrapperState extends State<AuthWrapper> {
   bool _showOnboarding = false;
+  bool _startingLearning = false;
   bool _showPreAuthWelcome = false;
   bool _showPreAuthQuestions = false;
   bool _wasAuthenticated = false;
@@ -66,6 +72,14 @@ class _AuthWrapperState extends State<AuthWrapper> {
     final prefs = await SharedPreferences.getInstance();
     final shouldShowWelcome =
         prefs.getBool(AppConstants.firstTimeUserKey) ?? true;
+    final savedAnswers = prefs.getString(_preAuthAnswersKey);
+    if (_pendingPreAuthAnswers == null && savedAnswers != null) {
+      try {
+        _pendingPreAuthAnswers = PreAuthAnswers.fromJson(
+          jsonDecode(savedAnswers) as Map<String, dynamic>,
+        );
+      } catch (_) {}
+    }
 
     if (!mounted) return;
     setState(() {
@@ -224,8 +238,29 @@ class _AuthWrapperState extends State<AuthWrapper> {
     if (!mounted) return;
     setState(() {
       _showOnboarding = false;
+      _startingLearning = true;
     });
     authProvider.clearJustLoggedIn();
+  }
+
+  void _finishStartLearning(StartLearningTarget? target) {
+    if (!mounted) return;
+    setState(() => _startingLearning = false);
+    if (target == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      LearnerRoute.push<void>(
+        context,
+        (_) => StartLearningLauncher.sessionFor(target),
+      );
+    });
+  }
+
+  Future<String?> _takePlacementTest(AuthProvider authProvider) async {
+    await Navigator.of(context).pushNamed('/placement-test');
+    if (!mounted) return null;
+    await authProvider.refreshCurrentUser();
+    return authProvider.currentUser?.cefrLevel;
   }
 
   String _themeColorForGoal(String goal) {
@@ -280,6 +315,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
     if (!authProvider.isAuthenticated && _wasAuthenticated) {
       _wasAuthenticated = false;
       _showOnboarding = false;
+      _startingLearning = false;
       _flowResolvedForUserId = null;
       _entitlementSyncedForUserId = null;
       _preAuthFlowResolved = false;
@@ -313,6 +349,15 @@ class _AuthWrapperState extends State<AuthWrapper> {
       } else if (_showOnboarding) {
         currentPage = OnboardingPage(
           onComplete: (answers) => _completeOnboarding(authProvider, answers),
+          onTakePlacementTest: () => _takePlacementTest(authProvider),
+        );
+      } else if (_startingLearning) {
+        currentPage = ChangeNotifierProvider<StartLearningProvider>(
+          create: (_) => di.sl<StartLearningProvider>(),
+          child: StartLearningPage(
+            onStarted: _finishStartLearning,
+            onSkip: () => _finishStartLearning(null),
+          ),
         );
       } else {
         currentPage = const LearnerTheme(child: MainScreen());
@@ -350,7 +395,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
         );
       } else {
         currentPage = _isShowingRegister
-            ? const RegisterPage()
+            ? RegisterPage(initialName: _pendingPreAuthAnswers?.name)
             : const LoginPage();
       }
     }
@@ -390,7 +435,9 @@ class _AuthWrapperState extends State<AuthWrapper> {
       child: KeyedSubtree(
         key: ValueKey<String>(
           authProvider.isAuthenticated
-              ? (_showOnboarding ? 'onboarding' : 'main')
+              ? (_showOnboarding
+                    ? 'onboarding'
+                    : (_startingLearning ? 'start-learning' : 'main'))
               : (_showPreAuthWelcome
                     ? 'welcome'
                     : (_isShowingRegister ? 'register' : 'login')),
