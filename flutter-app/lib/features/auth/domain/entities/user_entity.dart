@@ -20,6 +20,9 @@ class UserEntity {
   final int totalXp;
   final int numericLevel;
   final int currentStreak;
+
+  /// Null when the backend did not say, which is not the same as zero.
+  final int? lessonsCompleted;
   final DateTime? lastLogin;
   final String? lastLoginIp;
   final DateTime createdAt;
@@ -42,6 +45,7 @@ class UserEntity {
     this.totalXp = 0,
     this.numericLevel = 1,
     this.currentStreak = 0,
+    this.lessonsCompleted,
     this.lastLogin,
     this.lastLoginIp,
     required this.createdAt,
@@ -65,6 +69,7 @@ class UserEntity {
     int? totalXp,
     int? numericLevel,
     int? currentStreak,
+    int? lessonsCompleted,
     DateTime? lastLogin,
     String? lastLoginIp,
     DateTime? createdAt,
@@ -88,6 +93,7 @@ class UserEntity {
       totalXp: totalXp ?? this.totalXp,
       numericLevel: numericLevel ?? this.numericLevel,
       currentStreak: currentStreak ?? this.currentStreak,
+      lessonsCompleted: lessonsCompleted ?? this.lessonsCompleted,
       lastLogin: lastLogin ?? this.lastLogin,
       lastLoginIp: lastLoginIp ?? this.lastLoginIp,
       createdAt: createdAt ?? this.createdAt,

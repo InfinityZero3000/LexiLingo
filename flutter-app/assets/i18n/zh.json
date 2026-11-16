@@ -176,6 +176,7 @@
     "keepGoing": "继续前进！",
     "dashboardLoadFailed": "加载首页数据失败：{error}",
     "quickActions": "快速行动",
+    "unlockHint": "完成第一节课即可解锁更多功能",
     "continueLearningSection": "继续学习",
     "featuredCourses": "特色课程",
     "noEnrolledCoursesYet": "还没有报名课程",

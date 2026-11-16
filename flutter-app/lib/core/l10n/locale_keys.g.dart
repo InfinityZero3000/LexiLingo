@@ -134,6 +134,7 @@ abstract class  LocaleKeys {
   static const home_keepGoing = 'home.keepGoing';
   static const home_dashboardLoadFailed = 'home.dashboardLoadFailed';
   static const home_quickActions = 'home.quickActions';
+  static const home_unlockHint = 'home.unlockHint';
   static const home_continueLearningSection = 'home.continueLearningSection';
   static const home_featuredCourses = 'home.featuredCourses';
   static const home_noEnrolledCoursesYet = 'home.noEnrolledCoursesYet';

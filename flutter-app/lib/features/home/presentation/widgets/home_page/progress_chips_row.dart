@@ -12,7 +12,10 @@ import 'package:lexilingo_app/features/progress/presentation/widgets/daily_chall
 /// Level, daily challenges and boosts as one row of chips. Each opens the
 /// surface that used to be a full card on Home; nothing was removed.
 class ProgressChipsRow extends StatelessWidget {
-  const ProgressChipsRow({super.key});
+  const ProgressChipsRow({super.key, this.showShopEntry = true});
+
+  /// The boosts chip opens the shop, which is one of the locked features.
+  final bool showShopEntry;
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +58,7 @@ class ProgressChipsRow extends StatelessWidget {
                 builder: (_) => DailyChallengesSheet(provider: challenges),
               ),
             ),
-          if (boosts.isNotEmpty)
+          if (showShopEntry && boosts.isNotEmpty)
             _ProgressChip(
               icon: Icons.bolt_rounded,
               label: 'home.activeBoostsChip'.tr(

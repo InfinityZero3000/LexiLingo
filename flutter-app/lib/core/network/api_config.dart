@@ -36,6 +36,16 @@ class ApiConfig {
     return !isProd;
   }
 
+  /// Hides the secondary feature tiles on Home until a learner has finished a
+  /// first lesson. Testers pass --dart-define=PROGRESSIVE_UNLOCK=false.
+  static bool get progressiveUnlock {
+    final configured = _readEnv('PROGRESSIVE_UNLOCK')?.trim().toLowerCase();
+    if (configured != null && configured.isNotEmpty) {
+      return configured == 'true' || configured == '1' || configured == 'yes';
+    }
+    return isProd;
+  }
+
   // ── Backend URL ─────────────────────────────────────────────────────────────
 
   /// URL chính — local (dev) hoặc Render.com (prod).
@@ -165,6 +175,7 @@ class ApiConfig {
   static const _definedEnv = {
     'API_BASE_URL': String.fromEnvironment('API_BASE_URL'),
     'AI_SERVICE_URL': String.fromEnvironment('AI_SERVICE_URL'),
+    'PROGRESSIVE_UNLOCK': String.fromEnvironment('PROGRESSIVE_UNLOCK'),
   };
 
   static String? _readEnv(String key) {

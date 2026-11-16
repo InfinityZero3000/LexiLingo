@@ -176,6 +176,7 @@
     "keepGoing": "続けて！",
     "dashboardLoadFailed": "ダッシュボードを読み込めませんでした: {error}",
     "quickActions": "クイックアクション",
+    "unlockHint": "最初のレッスンを終えると、さらに多くの機能が開放されます",
     "continueLearningSection": "学び続ける",
     "featuredCourses": "注目のコース",
     "noEnrolledCoursesYet": "まだ登録済みのコースはありません",
