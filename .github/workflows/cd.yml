@@ -3,6 +3,14 @@ name: CD
 on:
   push:
     branches: [dev]
+  # Redeploy by hand, e.g. after Vercel's daily deployment limit held back earlier pushes.
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "What to deploy"
+        type: choice
+        options: [both, web, admin]
+        default: both
 
 # Deploys go out through the Vercel CLI with repository secrets; the GITHUB_TOKEN only checks out.
 permissions:
@@ -13,11 +21,46 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # The Hobby plan allows 100 deployments a day. Deploying both apps on every push to dev,
+  # backend-only pushes included, used that up by mid-morning on 2026-11-16 and froze the web
+  # app for the rest of the day. Each app now deploys only when its own files changed.
+  changes:
+    name: What changed
+    runs-on: ubuntu-latest
+    outputs:
+      web: ${{ steps.diff.outputs.web }}
+      admin: ${{ steps.diff.outputs.admin }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - id: diff
+        env:
+          BEFORE: ${{ github.event.before }}
+          TARGET: ${{ inputs.target }}
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            [ "$TARGET" != admin ] && echo "web=true" >> "$GITHUB_OUTPUT"
+            [ "$TARGET" != web ] && echo "admin=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ -z "$BEFORE" ] || ! git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+            # Unknown base (new branch, force-push): deploy both rather than guess.
+            echo "web=true" >> "$GITHUB_OUTPUT"; echo "admin=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          changed="$(git diff --name-only "$BEFORE" "$GITHUB_SHA")"
+          printf '%s\n' "$changed"
+          grep -qE '^flutter-app/' <<<"$changed" && echo "web=true" >> "$GITHUB_OUTPUT"
+          grep -qE '^admin-service/' <<<"$changed" && echo "admin=true" >> "$GITHUB_OUTPUT"
+          true
+
   # ──────────────────────────────────────────────
   # Flutter Web → Vercel
   # ──────────────────────────────────────────────
   deploy-flutter-web:
     name: Deploy Flutter Web → Vercel
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
 
     defaults:
@@ -128,6 +171,8 @@ jobs:
   # ──────────────────────────────────────────────
   deploy-admin:
     name: Deploy Admin Dashboard → Vercel
+    needs: changes
+    if: needs.changes.outputs.admin == 'true'
     runs-on: ubuntu-latest
 
     defaults:

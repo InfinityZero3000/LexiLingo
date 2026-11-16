@@ -193,6 +193,10 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+      # build_runner 2.15.2+ needs Dart 3.11; CI and CD pin Flutter 3.38.9 (see cd.yml), so the
+      # whole pub group failed `flutter pub get` (#747).
+      - dependency-name: "build_runner"
+        versions: [">=2.15.2"]
     groups:
       pub:
         patterns:
