@@ -20,7 +20,7 @@ typer>=0.28.0,<1
 google-generativeai>=0.8.6
 
 # CORS and Security
-python-jose[cryptography]>=3.5.0
+PyJWT[crypto]>=2.10
 passlib[bcrypt]>=1.7.4
 
 # Environment

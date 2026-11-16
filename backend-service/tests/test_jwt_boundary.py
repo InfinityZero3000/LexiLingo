@@ -6,17 +6,27 @@ ALGORITHM as the app) but a wrong audience, issuer, or type, to prove
 signature. No mocking of the verification path itself.
 """
 
+import base64
+import hashlib
+import hmac
+import json
 from datetime import datetime, timedelta, timezone
 
 import pytest
 from fastapi import HTTPException
 from fastapi.security import HTTPAuthorizationCredentials
-from jose import jwt
+import jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.dependencies import get_current_user
-from app.core.security import create_access_token, create_refresh_token, decode_token
+from app.core.security import (
+    create_access_token,
+    create_refresh_token,
+    decode_token,
+    decode_verification_token,
+    is_locally_issued_token,
+)
 
 
 def _sign(claims: dict) -> str:
@@ -118,3 +128,75 @@ async def test_refresh_endpoint_rejects_wrong_audience_refresh_token(async_clien
     )
 
     assert response.status_code == 401
+
+
+def _jose_hs256(claims: dict, secret: str) -> str:
+    """Byte-for-byte what python-jose 3.5.0 emitted: compact JSON, header alg+typ, HS256."""
+    def b64(raw: bytes) -> str:
+        return base64.urlsafe_b64encode(raw).rstrip(b"=").decode()
+
+    head = b64(json.dumps({"alg": "HS256", "typ": "JWT"}, separators=(",", ":")).encode())
+    body = b64(json.dumps(claims, separators=(",", ":")).encode())
+    sig = hmac.new(secret.encode(), f"{head}.{body}".encode(), hashlib.sha256).digest()
+    return f"{head}.{body}.{b64(sig)}"
+
+
+_JOSE_SECRET = "s" * 32
+_JOSE_CLAIMS = {
+    "sub": "00000000-0000-0000-0000-000000000001",
+    "type": "access",
+    "iss": "lexilingo-backend",
+    "aud": "lexilingo-services",
+    "iat": 1700000000,
+    "jti": "0123456789abcdef0123456789abcdef",
+}
+_JOSE_ACCESS = _jose_hs256({**_JOSE_CLAIMS, "exp": 4102444800}, _JOSE_SECRET)
+_JOSE_EXPIRED = _jose_hs256({**_JOSE_CLAIMS, "exp": 1700000300}, _JOSE_SECRET)
+_JOSE_WRONG_SIGNATURE = _jose_hs256({**_JOSE_CLAIMS, "exp": 4102444800}, "t" * 32)
+_JOSE_VERIFICATION = _jose_hs256(
+    {
+        "sub": _JOSE_CLAIMS["sub"],
+        "type": "verification",
+        "purpose": "password_reset",
+        "iat": 1700000000,
+        "exp": 4102444800,
+    },
+    _JOSE_SECRET,
+)
+
+
+@pytest.fixture
+def jose_secret(monkeypatch):
+    monkeypatch.setattr(settings, "SECRET_KEY", _JOSE_SECRET)
+    monkeypatch.setattr(settings, "ALGORITHM", "HS256")
+
+
+def test_token_minted_by_python_jose_still_verifies(jose_secret):
+    payload = decode_token(_JOSE_ACCESS)
+    assert payload is not None
+    assert payload["sub"] == "00000000-0000-0000-0000-000000000001"
+    assert payload["type"] == "access"
+    assert is_locally_issued_token(_JOSE_ACCESS)
+
+
+def test_expired_python_jose_token_is_rejected(jose_secret):
+    assert decode_token(_JOSE_EXPIRED) is None
+
+
+def test_python_jose_token_with_wrong_signature_is_rejected(jose_secret):
+    assert decode_token(_JOSE_WRONG_SIGNATURE) is None
+
+
+def test_python_jose_verification_token_still_verifies(jose_secret):
+    assert decode_verification_token(_JOSE_VERIFICATION, "password_reset") == (
+        "00000000-0000-0000-0000-000000000001"
+    )
+    assert decode_verification_token(_JOSE_VERIFICATION, "email_verify") is None
+    assert decode_token(_JOSE_VERIFICATION) is None
+
+
+def test_unsigned_and_garbage_tokens_are_rejected(jose_secret):
+    unsigned = jwt.encode(_base_claims(), None, algorithm="none")
+    assert decode_token(unsigned) is None
+    assert decode_token("not-a-jwt") is None
+    assert not is_locally_issued_token("not-a-jwt")
