@@ -71,6 +71,8 @@ geo $block_ip {
 map $http_origin $cors_allow_origin {
     default "";
     ~^https?://([a-zA-Z0-9-]+\.)*lexilingo\.me$ $http_origin;
+    # The project's production Vercel alias; exact match only, never *.vercel.app.
+    https://lexilingo.vercel.app $http_origin;
 }
 
 # Used to detect OPTIONS (CORS preflight) requests at server level
