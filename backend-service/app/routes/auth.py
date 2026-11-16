@@ -907,9 +907,24 @@ async def verify_email(
         display_name=user.display_name,
     )
 
+    # Opening the link is proof of the inbox, the same proof a password reset relies on, so it
+    # signs the learner in instead of sending them back to a login form. Only on this first
+    # transition: the "already verified" branch above returns no session, so a link is a
+    # one-time login.
+    user_id = str(user.id)
+    access_token, refresh_token = issue_token_pair(user_id)
+    await save_refresh_token(db, user.id, refresh_token)
+
     return VerifyEmailResponse(
         verified=True,
-        message="Email verified successfully"
+        message="Email verified successfully",
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+        user_id=user_id,
+        username=user.username,
+        email=user.email,
+        role=user.role_slug if hasattr(user, "role_slug") else "user",
     )
 
 

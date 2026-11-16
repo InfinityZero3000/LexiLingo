@@ -141,7 +141,12 @@
     "errCancelled": "サインインがキャンセルされました。",
     "errInvalidPassword": "パスワードが無効です。",
     "errUserNotFound": "このメールアドレスのアカウントが見つかりません。",
-    "errWrongPassword": "パスワードが間違っています。"
+    "errWrongPassword": "パスワードが間違っています。",
+    "verifyEmailChecking": "メールアドレスを確認しています…",
+    "verifyEmailDoneTitle": "メールアドレスを確認しました",
+    "verifyEmailDoneMessage": "ログインして学習を始めましょう。",
+    "verifyEmailFailedTitle": "このリンクは使用できません",
+    "verifyEmailFailedMessage": "すでに使用済みか、有効期限が切れています。新しいリンクを受け取るにはメールアドレスを入力してください。"
   },
   "home": {
     "wordsLeftToReview": "復習する単語",

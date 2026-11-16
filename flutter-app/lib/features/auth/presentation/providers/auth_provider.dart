@@ -25,6 +25,9 @@ import 'package:lexilingo_app/features/auth/domain/usecases/sign_in_with_faceboo
 import 'package:lexilingo_app/core/services/facebook_sign_in_service.dart';
 import 'package:easy_localization/easy_localization.dart';
 
+/// What opening an email verification link did.
+enum VerifyEmailOutcome { signedIn, verified, failed }
+
 class AuthProvider extends ChangeNotifier {
   final SignInWithGoogleUseCase signInWithGoogleUseCase;
   final SignInWithFacebookUseCase signInWithFacebookUseCase;
@@ -360,6 +363,39 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       _errorMessage = _parseErrorMessage(e.toString());
       return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Verify the mailed link. Signed in when it is the first verification.
+  Future<VerifyEmailOutcome> verifyEmailLink(String token) async {
+    try {
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+
+      final result = await authRepository.verifyEmailAndSignIn(token);
+      return result.fold(
+        (failure) {
+          _errorMessage = _getFailureMessage(failure);
+          return VerifyEmailOutcome.failed;
+        },
+        (user) {
+          if (user == null) return VerifyEmailOutcome.verified;
+          _user = user;
+          _isJustLoggedIn = true;
+          FirebaseMessagingService.instance.registerTokenWithBackend(
+            sl<ApiClient>(),
+          );
+          unawaited(_claimPendingReferral());
+          return VerifyEmailOutcome.signedIn;
+        },
+      );
+    } catch (e) {
+      _errorMessage = _parseErrorMessage(e.toString());
+      return VerifyEmailOutcome.failed;
     } finally {
       _isLoading = false;
       notifyListeners();

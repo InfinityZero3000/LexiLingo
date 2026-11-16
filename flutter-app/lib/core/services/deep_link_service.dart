@@ -28,6 +28,9 @@ class DeepLinkService {
   /// Password-reset token received before the reset page is built.
   String? pendingResetToken;
 
+  /// Email-verification token received before the verify page is built.
+  String? pendingVerifyToken;
+
   Future<void> init() async {
     // Handle cold-start link (app launched from a link)
     try {
@@ -79,6 +82,12 @@ class DeepLinkService {
         if (token != null && token.isNotEmpty) {
           pendingResetToken = token;
           AppNavigationService.openRoute('/reset-password?token=$token');
+        }
+      case 'verify-email':
+        final token = uri.queryParameters['token'];
+        if (token != null && token.isNotEmpty) {
+          pendingVerifyToken = token;
+          AppNavigationService.openRoute('/verify-email?token=$token');
         }
       default:
         debugPrint('DeepLink: unhandled path ${uri.path}');

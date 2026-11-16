@@ -141,7 +141,12 @@
     "errCancelled": "Sign-in was cancelled.",
     "errInvalidPassword": "Invalid password.",
     "errUserNotFound": "No account found with this email.",
-    "errWrongPassword": "Incorrect password."
+    "errWrongPassword": "Incorrect password.",
+    "verifyEmailChecking": "Verifying your email…",
+    "verifyEmailDoneTitle": "Email verified",
+    "verifyEmailDoneMessage": "You can sign in and start learning.",
+    "verifyEmailFailedTitle": "This link no longer works",
+    "verifyEmailFailedMessage": "It was already used or has expired. Enter your email to get a new one."
   },
   "home": {
     "wordsLeftToReview": "words to review",

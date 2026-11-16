@@ -141,7 +141,12 @@
     "errCancelled": "Đăng nhập đã bị hủy.",
     "errInvalidPassword": "Mật khẩu không hợp lệ.",
     "errUserNotFound": "Không tìm thấy tài khoản với email này.",
-    "errWrongPassword": "Mật khẩu không đúng."
+    "errWrongPassword": "Mật khẩu không đúng.",
+    "verifyEmailChecking": "Đang xác minh email…",
+    "verifyEmailDoneTitle": "Email đã được xác minh",
+    "verifyEmailDoneMessage": "Bạn có thể đăng nhập để bắt đầu học.",
+    "verifyEmailFailedTitle": "Liên kết không còn hiệu lực",
+    "verifyEmailFailedMessage": "Liên kết đã được dùng hoặc đã hết hạn. Nhập email để nhận liên kết mới."
   },
   "home": {
     "wordsLeftToReview": "từ cần ôn",

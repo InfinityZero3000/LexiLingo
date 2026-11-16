@@ -141,7 +141,12 @@
     "errCancelled": "登录已取消。",
     "errInvalidPassword": "密码无效。",
     "errUserNotFound": "未找到使用此邮箱的账号。",
-    "errWrongPassword": "密码错误。"
+    "errWrongPassword": "密码错误。",
+    "verifyEmailChecking": "正在验证邮箱…",
+    "verifyEmailDoneTitle": "邮箱已验证",
+    "verifyEmailDoneMessage": "现在可以登录并开始学习。",
+    "verifyEmailFailedTitle": "此链接已失效",
+    "verifyEmailFailedMessage": "该链接已被使用或已过期。请输入邮箱以获取新链接。"
   },
   "home": {
     "wordsLeftToReview": "个单词待复习",
