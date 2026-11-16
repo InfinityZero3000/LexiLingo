@@ -53,6 +53,16 @@ def disable_rate_limiting(monkeypatch):
     monkeypatch.setattr(RateLimitMiddleware, "_testing", True)
 
 
+@pytest.fixture(autouse=True)
+def clean_login_lockout():
+    """Failure counts live in process memory without Redis; one test's must not lock the next."""
+    from app.core import login_lockout
+
+    login_lockout._memory_failures.clear()
+    login_lockout._memory_locks.clear()
+    yield
+
+
 # Test database URL (use separate test database, configurable via environment)
 TEST_DATABASE_URL = os.getenv(
     "TEST_DATABASE_URL",
