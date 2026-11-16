@@ -373,6 +373,10 @@
     }
   },
   "lesson": {
+    "lockedTitle": "Cette leçon est verrouillée",
+    "lockedMessage": "Termine la leçon précédente de ce cours pour l'ouvrir.",
+    "resultNotSavedTitle": "Ton résultat n'a pas été enregistré",
+    "resultNotSavedMessage": "Vérifie ta connexion et réessaie.",
     "pushPrompt": "Un rappel pour garder votre série ?",
     "pushPromptAllow": "Activer les rappels",
     "pushPromptLater": "Pas maintenant",

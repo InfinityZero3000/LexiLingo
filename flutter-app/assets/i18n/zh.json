@@ -373,6 +373,10 @@
     }
   },
   "lesson": {
+    "lockedTitle": "本课尚未解锁",
+    "lockedMessage": "完成本课程的上一课即可解锁。",
+    "resultNotSavedTitle": "结果未能保存",
+    "resultNotSavedMessage": "请检查网络连接后重试。",
     "pushPrompt": "开启提醒，保持连续学习？",
     "pushPromptAllow": "开启提醒",
     "pushPromptLater": "暂不",

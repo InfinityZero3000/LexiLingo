@@ -373,6 +373,10 @@
     }
   },
   "lesson": {
+    "lockedTitle": "이 레슨은 잠겨 있어요",
+    "lockedMessage": "이 코스의 이전 레슨을 마치면 열려요.",
+    "resultNotSavedTitle": "결과를 저장하지 못했어요",
+    "resultNotSavedMessage": "연결을 확인하고 다시 시도해 주세요.",
     "pushPrompt": "연속 학습을 이어가도록 알림을 받을까요?",
     "pushPromptAllow": "알림 켜기",
     "pushPromptLater": "나중에",
