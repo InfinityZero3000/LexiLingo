@@ -322,7 +322,11 @@ async def run_activation(db: AsyncSession, kind: str, now: datetime | None = Non
 
     async def send(r: Recipient, title: str, body: str) -> bool:
         emailed = await EmailService.send_activation_nudge_email(
-            to_email=r.email, display_name=r.display_name, day=day, start_link=_link(route)
+            to_email=r.email,
+            display_name=r.display_name,
+            user_id=r.user_id,
+            day=day,
+            start_link=_link(route),
         )
         tokens = await _tokens(db, r.user_id)
         pushed = bool(tokens) and await push.send_nurture(
@@ -346,7 +350,7 @@ async def run_streak_risk(db: AsyncSession, now: datetime | None = None) -> dict
 
     async def send(r: Recipient, _title: str, _body: str) -> bool:
         return await EmailService.send_streak_at_risk_email(
-            to_email=r.email, display_name=r.display_name, streak_days=r.streak_days
+            to_email=r.email, display_name=r.display_name, user_id=r.user_id, streak_days=r.streak_days
         )
 
     return {"kind": STREAK_RISK, "mode": "live", **await _deliver(db, recipients, STREAK_RISK, copy, route, send)}
@@ -367,6 +371,7 @@ async def run_weekly(db: AsyncSession, now: datetime | None = None) -> dict:
         return await EmailService.send_weekly_summary_email(
             to_email=r.email,
             display_name=r.display_name,
+            user_id=r.user_id,
             xp=r.xp,
             streak_days=r.streak_days,
             words_learned=r.words,

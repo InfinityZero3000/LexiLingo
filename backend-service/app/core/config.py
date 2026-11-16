@@ -356,6 +356,10 @@ class Settings(BaseSettings):
     # Where scripts/backup-prod.sh and verify-backup.sh leave their status files (mounted read-only).
     BACKUP_STATE_DIR: str = "/var/lib/lexilingo"
     APP_PUBLIC_URL: str = "https://lexilingo.me"
+    # Origin of this API as a mail client reaches it; the one-click unsubscribe link is built on it.
+    API_PUBLIC_URL: str = "https://api.lexilingo.me"
+    # Signs unsubscribe links. Empty derives a key from SECRET_KEY; changing it revokes every link already sent.
+    EMAIL_UNSUBSCRIBE_SECRET: str = ""
     # Origin that serves /media (e.g. https://api.lexilingo.me); empty falls back to the request's own origin.
     MEDIA_PUBLIC_BASE_URL: str = ""
 
