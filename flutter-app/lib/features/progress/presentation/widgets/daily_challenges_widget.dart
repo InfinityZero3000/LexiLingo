@@ -44,7 +44,7 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
                 color: isDark
-                    ? Colors.white.withValues(alpha: 0.08)
+                    ? AppColors.textInverted.withValues(alpha: 0.08)
                     : AppColors.grey200,
                 width: 2,
               ),
@@ -91,7 +91,7 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                 boxShadow: [
                   BoxShadow(
                     color: isDark
-                        ? Colors.black.withValues(alpha: 0.3)
+                        ? AppColors.slate900.withValues(alpha: 0.3)
                         : accent.withValues(alpha: 0.12),
                     blurRadius: 0,
                     offset: const Offset(0, 4),
@@ -192,7 +192,7 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
                     child: LinearProgressIndicator(
                       value: provider.progress,
                       backgroundColor: isDark
-                          ? Colors.white.withValues(alpha: 0.1)
+                          ? AppColors.textInverted.withValues(alpha: 0.1)
                           : AppColors.grey200,
                       valueColor: AlwaysStoppedAnimation<Color>(
                         provider.allCompleted
@@ -314,7 +314,7 @@ class _DailyChallengesCardState extends State<DailyChallengesCard> {
       case 'xp':
         return isDark ? AppColors.warning : AppColors.warningDark;
       case 'voice':
-        return Colors.pink;
+        return AppColors.purpleLight;
       case 'social':
         return AppColors.teal;
       default:
@@ -396,7 +396,7 @@ class _DailyChallengesSheetState extends State<DailyChallengesSheet> {
               height: 4,
               decoration: BoxDecoration(
                 color: isDark
-                    ? Colors.white.withValues(alpha: 0.2)
+                    ? AppColors.textInverted.withValues(alpha: 0.2)
                     : AppColors.grey300,
                 borderRadius: BorderRadius.circular(2),
               ),
@@ -470,7 +470,7 @@ class _DailyChallengesSheetState extends State<DailyChallengesSheet> {
                   child: LinearProgressIndicator(
                     value: provider.progress,
                     backgroundColor: isDark
-                        ? Colors.white.withValues(alpha: 0.1)
+                        ? AppColors.textInverted.withValues(alpha: 0.1)
                         : AppColors.grey200,
                     valueColor: AlwaysStoppedAnimation<Color>(
                       provider.allCompleted
@@ -680,7 +680,7 @@ class _ChallengeCard extends StatelessWidget {
         ? AppColors.surfaceDarkMuted
         : AppColors.surfaceLight;
     final defaultBorder = isDark
-        ? Colors.white.withValues(alpha: 0.1)
+        ? AppColors.textInverted.withValues(alpha: 0.1)
         : AppColors.grey200;
 
     return Container(
@@ -695,8 +695,8 @@ class _ChallengeCard extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: isDark
-                ? Colors.black.withValues(alpha: 0.25)
-                : Colors.black.withValues(alpha: 0.04),
+                ? AppColors.slate900.withValues(alpha: 0.25)
+                : AppColors.slate900.withValues(alpha: 0.04),
             blurRadius: 0,
             offset: const Offset(0, 3),
           ),
@@ -753,7 +753,7 @@ class _ChallengeCard extends StatelessWidget {
                         child: LinearProgressIndicator(
                           value: challenge.progress,
                           backgroundColor: isDark
-                              ? Colors.white.withValues(alpha: 0.1)
+                              ? AppColors.textInverted.withValues(alpha: 0.1)
                               : AppColors.grey200,
                           valueColor: AlwaysStoppedAnimation<Color>(
                             challenge.isCompleted
@@ -866,7 +866,7 @@ class _ChallengeCard extends StatelessWidget {
       case 'xp':
         return isDark ? AppColors.warning : AppColors.warningDark;
       case 'voice':
-        return Colors.pink;
+        return AppColors.purpleLight;
       case 'social':
         return AppColors.teal;
       default:

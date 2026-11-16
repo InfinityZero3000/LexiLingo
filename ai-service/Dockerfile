@@ -38,7 +38,11 @@ RUN python -c "import defusedxml, typer; from api.services.content_etl.cli impor
 RUN mkdir -p /app/models
 
 # Create non-root user
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+# /data/content-etl is a named volume; Docker seeds an empty volume's ownership
+# from this directory, so without it the ETL cannot write as appuser.
+RUN useradd -m -u 1000 appuser \
+    && mkdir -p /data/content-etl \
+    && chown -R appuser:appuser /app /data/content-etl
 USER appuser
 
 # Expose port

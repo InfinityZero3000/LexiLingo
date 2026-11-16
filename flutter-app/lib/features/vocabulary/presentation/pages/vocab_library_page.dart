@@ -90,7 +90,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
           bottom: TabBar(
             indicatorColor: AppColors.primary,
             labelColor: AppColors.primary,
-            unselectedLabelColor: Colors.grey,
+            unselectedLabelColor: AppColors.grey500,
             labelStyle: const TextStyle(fontWeight: FontWeight.bold),
             tabs: [
               Tab(
@@ -143,7 +143,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
+                          color: AppColors.slate900.withValues(alpha: 0.05),
                           blurRadius: 2,
                         ),
                       ],
@@ -351,7 +351,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                   height: 90,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.1),
+                    color: AppColors.textInverted.withValues(alpha: 0.1),
                   ),
                 ),
               ),
@@ -363,7 +363,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                   child: Icon(
                     Icons.collections_bookmark_rounded,
                     size: 90,
-                    color: Colors.white.withValues(alpha: 0.08),
+                    color: AppColors.textInverted.withValues(alpha: 0.08),
                   ),
                 ),
               ),
@@ -378,17 +378,17 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.2),
+                            color: AppColors.textInverted.withValues(alpha: 0.2),
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
                             Icons.collections_bookmark_rounded,
-                            color: Colors.white,
+                            color: AppColors.textInverted,
                             size: 24,
                           ),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.delete_outline, color: Colors.white70, size: 20),
+                          icon: const Icon(Icons.delete_outline, color: AppColors.textOnDarkSecondary, size: 20),
                           onPressed: () => _showDeleteDeckConfirmation(context, deck, vocabProvider),
                           constraints: TapTargetBox.applies(context)
                               ? const BoxConstraints(minWidth: 44, minHeight: 44)
@@ -403,7 +403,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: AppColors.textInverted,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -412,7 +412,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                     Text(
                       '${deck.itemCount} ${'vocabulary.wordsCount'.tr(args: [deck.itemCount.toString()])}',
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.8),
+                        color: AppColors.textInverted.withValues(alpha: 0.8),
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),
@@ -421,7 +421,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.textInverted,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -460,7 +460,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: isDark ? Colors.white24 : Colors.black12,
+          color: isDark ? AppColors.borderDarkSoft : AppColors.grey300,
           width: 2,
           style: BorderStyle.solid,
         ),
@@ -478,7 +478,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                 Icon(
                   Icons.add_rounded,
                   size: 40,
-                  color: isDark ? Colors.white54 : Colors.black54,
+                  color: isDark ? AppColors.textOnDarkMuted : AppColors.textGrey,
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -486,7 +486,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white70 : Colors.black87,
+                    color: isDark ? AppColors.textOnDarkSecondary : AppColors.textDark,
                   ),
                 ),
               ],
@@ -558,11 +558,11 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                                 color: Color(int.parse('FF${colorHex.replaceAll('#', '')}', radix: 16)),
                                 shape: BoxShape.circle,
                                 border: selectedColor == colorHex
-                                    ? Border.all(color: Colors.black, width: 3)
+                                    ? Border.all(color: AppColors.slate900, width: 3)
                                     : null,
                               ),
                               child: selectedColor == colorHex
-                                  ? const Icon(Icons.check, color: Colors.white, size: 18)
+                                  ? const Icon(Icons.check, color: AppColors.textInverted, size: 18)
                                   : null,
                             ),
                           ),
@@ -627,7 +627,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.errorBright,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.textInverted,
               ),
               onPressed: () async {
                 final success = await vocabProvider.deleteDeck(deck.id);
@@ -800,7 +800,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                   height: 90,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.1),
+                    color: AppColors.textInverted.withValues(alpha: 0.1),
                   ),
                 ),
               ),
@@ -812,7 +812,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                   child: Icon(
                     topic.icon,
                     size: 90,
-                    color: Colors.white.withValues(alpha: 0.16),
+                    color: AppColors.textInverted.withValues(alpha: 0.16),
                   ),
                 ),
               ),
@@ -825,7 +825,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                     Text(
                       topic.titleKey.tr(),
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: AppColors.textInverted,
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
@@ -834,7 +834,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                     Text(
                       topic.subtitleKey.tr(),
                       style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.8),
+                        color: AppColors.textInverted.withValues(alpha: 0.8),
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                       ),
@@ -843,7 +843,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.textInverted,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -985,15 +985,15 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
         decoration: BoxDecoration(
           color: isSelected
               ? AppColors.primary
-              : (isDark ? Colors.white.withValues(alpha: 0.06) : AppColors.grey100),
+              : (isDark ? AppColors.textInverted.withValues(alpha: 0.06) : AppColors.grey100),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
           label,
           style: TextStyle(
             color: isSelected
-                ? Colors.white
-                : (isDark ? Colors.white70 : AppColors.textDark),
+                ? AppColors.textInverted
+                : (isDark ? AppColors.textOnDarkSecondary : AppColors.textDark),
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
             fontSize: 12,
           ),
@@ -1014,7 +1014,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: AppColors.slate900.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -1322,7 +1322,7 @@ class _AddWordSheetState extends State<_AddWordSheet> {
                   _InfoChip(
                     icon: Icons.label_outline,
                     label: _partOfSpeech!,
-                    color: isDark ? Colors.teal : Colors.teal.shade700,
+                    color: isDark ? AppColors.teal : AppColors.teal,
                   ),
               ],
             ),
@@ -1386,7 +1386,7 @@ class _AddWordSheetState extends State<_AddWordSheet> {
                   onPressed: _saving ? null : _save,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.textInverted,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
@@ -1398,7 +1398,7 @@ class _AddWordSheetState extends State<_AddWordSheet> {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white,
+                            color: AppColors.textInverted,
                           ),
                         )
                       : Text(
@@ -1429,12 +1429,12 @@ class _AddWordSheetState extends State<_AddWordSheet> {
       );
     }
     if (_wordFound == true) {
-      return const Icon(Icons.check_circle_rounded, color: Colors.green);
+      return const Icon(Icons.check_circle_rounded, color: AppColors.greenSuccessBright);
     }
     if (_wordFound == false) {
       return Tooltip(
         message: 'vocabulary.wordNotFound'.tr(),
-        child: Icon(Icons.warning_amber_rounded, color: Colors.orange.shade700),
+        child: Icon(Icons.warning_amber_rounded, color: AppColors.goldDark),
       );
     }
     return null;

@@ -195,7 +195,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
       builder: (_) => Container(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark : Colors.white,
+          color: isDark ? AppColors.surfaceDark : AppColors.textInverted,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Column(
@@ -207,7 +207,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: isDark ? Colors.white24 : AppColors.grey300,
+                  color: isDark ? AppColors.textInverted.withValues(alpha: 0.24) : AppColors.grey300,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -239,14 +239,14 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                       color: isSelected
                           ? AppColors.primary
                           : (isDark
-                              ? Colors.white.withValues(alpha: 0.08)
+                              ? AppColors.textInverted.withValues(alpha: 0.08)
                               : AppColors.grey100),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
                         color: isSelected
                             ? AppColors.primary
                             : (isDark
-                                ? Colors.white.withValues(alpha: 0.1)
+                                ? AppColors.textInverted.withValues(alpha: 0.1)
                                 : AppColors.grey200),
                       ),
                     ),
@@ -254,8 +254,8 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                       speed == 1.0 ? 'voice.speedNormal'.tr() : '${speed}x',
                       style: TextStyle(
                         color: isSelected
-                            ? Colors.white
-                            : (isDark ? Colors.white70 : AppColors.textDark),
+                            ? AppColors.textInverted
+                            : (isDark ? AppColors.textOnDarkSecondary : AppColors.textDark),
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
                       ),
@@ -366,13 +366,13 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
 
   Widget _buildTopHeader(bool isDark) {
     return Container(
-      color: isDark ? AppColors.backgroundDark : Colors.white,
+      color: isDark ? AppColors.backgroundDark : AppColors.textInverted,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       child: Row(
         children: [
           AppBackButton(
             onPressed: () => Navigator.pop(context),
-            color: isDark ? Colors.white : AppColors.textDark,
+            color: isDark ? AppColors.textInverted : AppColors.textDark,
             iconSize: 18,
           ),
           const SizedBox(width: 12),
@@ -398,6 +398,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
     return AspectRatio(
       aspectRatio: 16 / 9,
       child: Container(
+        // Letterbox behind the video must be pure black in both themes.
         color: Colors.black,
         child: YoutubePlayer(controller: _ytController),
       ),
@@ -419,12 +420,12 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             color: isDark
-                ? Colors.white.withValues(alpha: 0.05)
+                ? AppColors.textInverted.withValues(alpha: 0.05)
                 : AppColors.primary.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isDark
-                  ? Colors.white.withValues(alpha: 0.1)
+                  ? AppColors.textInverted.withValues(alpha: 0.1)
                   : AppColors.primary.withValues(alpha: 0.1),
             ),
           ),
@@ -433,7 +434,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
             children: [
               Icon(
                 Icons.subtitles_rounded,
-                color: hasActive ? AppColors.primary : (isDark ? Colors.white30 : AppColors.grey400),
+                color: hasActive ? AppColors.primary : (isDark ? AppColors.textInverted.withValues(alpha: 0.3) : AppColors.grey400),
                 size: 20,
               ),
               const SizedBox(width: 12),
@@ -450,7 +451,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
-                                color: isDark ? Colors.white : AppColors.textDark,
+                                color: isDark ? AppColors.textInverted : AppColors.textDark,
                                 decoration: TextDecoration.underline,
                                 decorationColor: AppColors.primary.withValues(alpha: 0.4),
                                 decorationStyle: TextDecorationStyle.dashed,
@@ -468,7 +469,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                         style: TextStyle(
                           fontSize: 14,
                           fontStyle: FontStyle.italic,
-                          color: isDark ? Colors.white30 : AppColors.textGrey,
+                          color: isDark ? AppColors.textInverted.withValues(alpha: 0.3) : AppColors.textGrey,
                         ),
                       ),
               ),
@@ -492,7 +493,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
 
   Widget _buildInfoBar(bool isDark) {
     return Container(
-      color: isDark ? AppColors.backgroundDark : Colors.white,
+      color: isDark ? AppColors.backgroundDark : AppColors.textInverted,
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -518,7 +519,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : AppColors.textDark,
+                    color: isDark ? AppColors.textInverted : AppColors.textDark,
                     height: 1.3,
                   ),
                   maxLines: 2,
@@ -531,7 +532,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                       widget.video.channelTitle,
                       style: TextStyle(
                         fontSize: 12,
-                        color: isDark ? Colors.white54 : AppColors.textGrey,
+                        color: isDark ? AppColors.textOnDarkMuted : AppColors.textGrey,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -547,7 +548,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                         child: Text(
                           widget.video.cefrLevel,
                           style: const TextStyle(
-                            color: Colors.white,
+                            color: AppColors.textInverted,
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
                           ),
@@ -574,7 +575,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
         final isSaved = provider.isVideoSaved(widget.video.videoId);
 
         return Container(
-          color: isDark ? AppColors.backgroundDark : Colors.white,
+          color: isDark ? AppColors.backgroundDark : AppColors.textInverted,
           padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
           child: Row(
             children: [
@@ -643,7 +644,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
 
   Widget _buildTabBar(bool isDark) {
     return Container(
-      color: isDark ? AppColors.backgroundDark : Colors.white,
+      color: isDark ? AppColors.backgroundDark : AppColors.textInverted,
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
       child: Column(
         children: [
@@ -651,7 +652,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
             height: 38,
             decoration: BoxDecoration(
               color: isDark
-                  ? Colors.white.withValues(alpha: 0.07)
+                  ? AppColors.textInverted.withValues(alpha: 0.07)
                   : const Color(0xFFF3F4F6),
               borderRadius: BorderRadius.circular(10),
             ),
@@ -663,9 +664,9 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
               ),
               indicatorSize: TabBarIndicatorSize.tab,
               indicatorPadding: const EdgeInsets.all(3),
-              labelColor: Colors.white,
+              labelColor: AppColors.textInverted,
               unselectedLabelColor:
-                  isDark ? Colors.white54 : AppColors.textGrey,
+                  isDark ? AppColors.textOnDarkMuted : AppColors.textGrey,
               labelStyle: const TextStyle(
                   fontSize: 13, fontWeight: FontWeight.w600),
               unselectedLabelStyle: const TextStyle(
@@ -699,14 +700,14 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
             Icon(
               unavailable ? Icons.cloud_off_rounded : Icons.subtitles_off_rounded,
               size: 52,
-              color: isDark ? Colors.white24 : AppColors.grey300,
+              color: isDark ? AppColors.textInverted.withValues(alpha: 0.24) : AppColors.grey300,
             ),
             const SizedBox(height: 12),
             Text(
               (unavailable ? 'youtube.subtitlesUnavailable' : 'youtube.noSubtitles').tr(),
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: isDark ? Colors.white70 : AppColors.textDark,
+                color: isDark ? AppColors.textOnDarkSecondary : AppColors.textDark,
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
               ),
@@ -716,7 +717,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
               (unavailable ? 'youtube.subtitlesUnavailableHint' : 'youtube.noSubtitlesHint').tr(),
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: isDark ? Colors.white38 : AppColors.textGrey,
+                color: isDark ? AppColors.textOnDarkMuted : AppColors.textGrey,
                 fontSize: 13,
                 height: 1.4,
               ),
@@ -760,7 +761,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                     'youtube.segmentCount'.tr(namedArgs: {'count': '${provider.captions.length}'}),
                     style: TextStyle(
                       fontSize: 12,
-                      color: isDark ? Colors.white38 : AppColors.textGrey,
+                      color: isDark ? AppColors.textOnDarkMuted : AppColors.textGrey,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -769,7 +770,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                     'youtube.tapWordToLookUp'.tr(),
                     style: TextStyle(
                       fontSize: 11,
-                      color: isDark ? Colors.white30 : AppColors.grey400,
+                      color: isDark ? AppColors.textInverted.withValues(alpha: 0.3) : AppColors.grey400,
                     ),
                   ),
                 ],
@@ -826,7 +827,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                 color: isActive
                     ? AppColors.primary.withValues(alpha: 0.15)
                     : (isDark
-                        ? Colors.white.withValues(alpha: 0.06)
+                        ? AppColors.textInverted.withValues(alpha: 0.06)
                         : AppColors.grey100),
                 borderRadius: BorderRadius.circular(5),
               ),
@@ -835,7 +836,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                 style: TextStyle(
                   color: isActive
                       ? AppColors.primary
-                      : (isDark ? Colors.white38 : AppColors.textGrey),
+                      : (isDark ? AppColors.textOnDarkMuted : AppColors.textGrey),
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                   fontFamily: 'monospace',
@@ -861,7 +862,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : AppColors.textDark,
+                      color: isDark ? AppColors.textInverted : AppColors.textDark,
                       decoration: TextDecoration.underline,
                       decorationColor:
                           AppColors.primary.withValues(alpha: 0.25),
@@ -895,12 +896,12 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
               children: [
                 Icon(Icons.translate_rounded,
                     size: 52,
-                    color: isDark ? Colors.white24 : AppColors.grey300),
+                    color: isDark ? AppColors.textInverted.withValues(alpha: 0.24) : AppColors.grey300),
                 const SizedBox(height: 10),
                 Text(
                   'youtube.noLookupsYet'.tr(),
                   style: TextStyle(
-                    color: isDark ? Colors.white38 : AppColors.textGrey,
+                    color: isDark ? AppColors.textOnDarkMuted : AppColors.textGrey,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
@@ -909,7 +910,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                 Text(
                   'youtube.tapWordInSubtitle'.tr(),
                   style: TextStyle(
-                    color: isDark ? Colors.white24 : AppColors.grey400,
+                    color: isDark ? AppColors.textInverted.withValues(alpha: 0.24) : AppColors.grey400,
                     fontSize: 12,
                   ),
                 ),
@@ -926,7 +927,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
             indent: 14,
             endIndent: 14,
             color: isDark
-                ? Colors.white.withValues(alpha: 0.05)
+                ? AppColors.textInverted.withValues(alpha: 0.05)
                 : AppColors.grey200,
           ),
           itemBuilder: (context, i) =>
@@ -956,7 +957,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : AppColors.textDark,
+                          color: isDark ? AppColors.textInverted : AppColors.textDark,
                         ),
                       ),
                       if (item.phonetic.isNotEmpty) ...[
@@ -966,7 +967,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                           style: TextStyle(
                             fontSize: 11,
                             color: isDark
-                                ? Colors.white38
+                                ? AppColors.textOnDarkMuted
                                 : AppColors.textGrey,
                           ),
                         ),
@@ -1015,7 +1016,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                       style: TextStyle(
                         fontSize: 11,
                         fontStyle: FontStyle.italic,
-                        color: isDark ? Colors.white30 : AppColors.textGrey,
+                        color: isDark ? AppColors.textInverted.withValues(alpha: 0.3) : AppColors.textGrey,
                       ),
                     ),
                   ],
@@ -1026,7 +1027,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
             Icon(
               Icons.chevron_right_rounded,
               size: 18,
-              color: isDark ? Colors.white.withValues(alpha: 0.20) : AppColors.grey300,
+              color: isDark ? AppColors.textInverted.withValues(alpha: 0.20) : AppColors.grey300,
             ),
           ],
         ),
@@ -1097,7 +1098,7 @@ class _ActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final effectiveColor =
-        color ?? (isDark ? Colors.white60 : AppColors.textGrey);
+        color ?? (isDark ? AppColors.textOnDarkMuted : AppColors.textGrey);
 
     return Expanded(
       child: GestureDetector(
@@ -1107,7 +1108,7 @@ class _ActionButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
             color: isDark
-                ? Colors.white.withValues(alpha: 0.07)
+                ? AppColors.textInverted.withValues(alpha: 0.07)
                 : const Color(0xFFF3F4F6),
             borderRadius: BorderRadius.circular(10),
             border: color != null
@@ -1245,7 +1246,7 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
       padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
+        color: isDark ? AppColors.surfaceDark : AppColors.textInverted,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: FutureBuilder<WordTranslation>(
@@ -1282,7 +1283,7 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
           Text(
             'youtube.lookingUp'.tr(),
             style: TextStyle(
-                color: isDark ? Colors.white54 : AppColors.textGrey,
+                color: isDark ? AppColors.textOnDarkMuted : AppColors.textGrey,
                 fontSize: 13),
           ),
           const SizedBox(height: 24),
@@ -1320,7 +1321,7 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
                     t.phonetic,
                     style: TextStyle(
                         fontSize: 14,
-                        color: isDark ? Colors.white54 : AppColors.textGrey),
+                        color: isDark ? AppColors.textOnDarkMuted : AppColors.textGrey),
                   ),
                 ),
               ],
@@ -1365,7 +1366,7 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
                     'vocabulary.translationLabel'.tr(),
                     style: TextStyle(
                         fontSize: 11,
-                        color: isDark ? Colors.white38 : AppColors.textGrey,
+                        color: isDark ? AppColors.textOnDarkMuted : AppColors.textGrey,
                         fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 4),
@@ -1374,7 +1375,7 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
                     style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : AppColors.textDark),
+                        color: isDark ? AppColors.textInverted : AppColors.textDark),
                   ),
                 ],
               ),
@@ -1391,7 +1392,7 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
               style: TextStyle(
                   fontSize: 14,
                   color: isDark
-                      ? Colors.white.withValues(alpha: 0.87)
+                      ? AppColors.textInverted.withValues(alpha: 0.87)
                       : AppColors.textDark,
                   height: 1.5),
             ),
@@ -1417,7 +1418,7 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
                             fontSize: 13,
                             fontStyle: FontStyle.italic,
                             color: isDark
-                                ? Colors.white70
+                                ? AppColors.textOnDarkSecondary
                                 : AppColors.textDark,
                             height: 1.45),
                       ),
@@ -1437,7 +1438,7 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: isDark
-                    ? Colors.white.withValues(alpha: 0.05)
+                    ? AppColors.textInverted.withValues(alpha: 0.05)
                     : AppColors.grey100,
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -1470,7 +1471,7 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
                   onPressed: () => Navigator.pop(context),
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(
-                        color: isDark ? Colors.white24 : AppColors.grey300),
+                        color: isDark ? AppColors.textInverted.withValues(alpha: 0.24) : AppColors.grey300),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
                     padding: const EdgeInsets.symmetric(vertical: 13),
@@ -1488,7 +1489,7 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
                           height: 16,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white,
+                            color: AppColors.textInverted,
                           ),
                         )
                       : Icon(
@@ -1520,7 +1521,7 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
         width: 36,
         height: 4,
         decoration: BoxDecoration(
-          color: isDark ? Colors.white24 : AppColors.grey300,
+          color: isDark ? AppColors.textInverted.withValues(alpha: 0.24) : AppColors.grey300,
           borderRadius: BorderRadius.circular(2),
         ),
       );
@@ -1530,7 +1531,7 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
         style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w700,
-          color: isDark ? Colors.white38 : AppColors.textGrey,
+          color: isDark ? AppColors.textOnDarkMuted : AppColors.textGrey,
           letterSpacing: 0.5,
         ),
       );
@@ -1563,7 +1564,7 @@ class _HighlightedSentence extends StatelessWidget {
         style: TextStyle(
             fontSize: 13,
             height: 1.45,
-            color: isDark ? Colors.white70 : AppColors.textDark),
+            color: isDark ? AppColors.textOnDarkSecondary : AppColors.textDark),
       );
     }
 
@@ -1572,7 +1573,7 @@ class _HighlightedSentence extends StatelessWidget {
         style: TextStyle(
             fontSize: 13,
             height: 1.45,
-            color: isDark ? Colors.white70 : AppColors.textDark),
+            color: isDark ? AppColors.textOnDarkSecondary : AppColors.textDark),
         children: [
           TextSpan(text: sentence.substring(0, idx)),
           TextSpan(
