@@ -371,6 +371,9 @@
     }
   },
   "lesson": {
+    "pushPrompt": "연속 학습을 이어가도록 알림을 받을까요?",
+    "pushPromptAllow": "알림 켜기",
+    "pushPromptLater": "나중에",
     "sessionTitle": "학습",
     "loadingLesson": "레슨을 불러오는 중...",
     "noLessonData": "레슨 데이터가 없습니다",

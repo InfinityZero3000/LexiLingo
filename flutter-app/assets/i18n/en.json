@@ -371,6 +371,9 @@
     }
   },
   "lesson": {
+    "pushPrompt": "Get a nudge to keep your streak?",
+    "pushPromptAllow": "Turn on reminders",
+    "pushPromptLater": "Not now",
     "sessionTitle": "Learning",
     "loadingLesson": "Loading lesson...",
     "noLessonData": "No lesson data",

@@ -371,6 +371,9 @@
     }
   },
   "lesson": {
+    "pushPrompt": "开启提醒，保持连续学习？",
+    "pushPromptAllow": "开启提醒",
+    "pushPromptLater": "暂不",
     "sessionTitle": "学习",
     "loadingLesson": "正在加载课程...",
     "noLessonData": "暂无课程数据",

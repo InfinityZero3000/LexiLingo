@@ -371,6 +371,9 @@
     }
   },
   "lesson": {
+    "pushPrompt": "Nhận nhắc nhở để giữ chuỗi ngày học?",
+    "pushPromptAllow": "Bật nhắc nhở",
+    "pushPromptLater": "Để sau",
     "sessionTitle": "Học tập",
     "loadingLesson": "Đang tải bài học...",
     "noLessonData": "Không có dữ liệu bài học",

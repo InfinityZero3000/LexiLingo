@@ -67,6 +67,7 @@ jobs:
       - name: Create public env config for build
         env:
           GOOGLE_SERVER_CLIENT_ID: ${{ vars.GOOGLE_SERVER_CLIENT_ID }}
+          FCM_VAPID_KEY: ${{ vars.FCM_VAPID_KEY }}
         run: |
           : "${GOOGLE_SERVER_CLIENT_ID:?Set GOOGLE_SERVER_CLIENT_ID repository variable}"
           cat > assets/env/prod_config <<'EOF'
@@ -81,6 +82,7 @@ jobs:
           DEBUG_MODE=false
           EOF
           printf 'GOOGLE_SERVER_CLIENT_ID=%s\n' "$GOOGLE_SERVER_CLIENT_ID" >> assets/env/prod_config
+          if [ -n "$FCM_VAPID_KEY" ]; then printf 'FCM_VAPID_KEY=%s\n' "$FCM_VAPID_KEY" >> assets/env/prod_config; fi
 
       - name: Build Flutter web (release)
         run: flutter build web --release --no-pub

@@ -371,6 +371,9 @@
     }
   },
   "lesson": {
+    "pushPrompt": "¿Quieres un aviso para mantener tu racha?",
+    "pushPromptAllow": "Activar recordatorios",
+    "pushPromptLater": "Ahora no",
     "sessionTitle": "Aprendizaje",
     "loadingLesson": "Cargando lección...",
     "noLessonData": "No hay datos de la lección",

@@ -3,6 +3,7 @@ import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/services/database_helper.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:lexilingo_app/core/services/firebase_messaging_service.dart';
+import 'package:lexilingo_app/features/notifications/domain/services/push_permission_gateway.dart';
 import 'package:lexilingo_app/core/services/firestore_service.dart';
 import 'package:lexilingo_app/core/services/progress_firestore_data_source.dart';
 import 'package:lexilingo_app/core/services/progress_sync_service.dart';
@@ -158,6 +159,12 @@ void registerUserModule({required bool skipDatabase}) {
       deviceTimezone: _readDeviceTimezone,
     ),
   );
+
+  if (!sl.isRegistered<PushPermissionGateway>()) {
+    sl.registerLazySingleton<PushPermissionGateway>(
+      () => FirebaseMessagingService.instance,
+    );
+  }
 
   // Only register ProgressSyncService if Firestore data sources are available
   if (sl.isRegistered<UserFirestoreDataSource>() &&
