@@ -2067,6 +2067,11 @@
     }
   },
   "ielts": {
+    "sourceLine": "出典:",
+    "licensedUnder": "ライセンス:",
+    "adaptedNotice": "原文を改変しています。",
+    "viewSource": "出典を見る",
+    "publicDomain": "パブリックドメイン",
     "previewTitle": "このテストの内容",
     "previewFailed": "テストの内容を読み込めませんでした。",
     "previewStart": "テストを開始",

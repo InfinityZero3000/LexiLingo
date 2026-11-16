@@ -2067,6 +2067,11 @@
     }
   },
   "ielts": {
+    "sourceLine": "출처:",
+    "licensedUnder": "라이선스:",
+    "adaptedNotice": "원문을 수정했습니다.",
+    "viewSource": "출처 보기",
+    "publicDomain": "퍼블릭 도메인",
     "previewTitle": "이 시험의 구성",
     "previewFailed": "시험 내용을 불러오지 못했습니다.",
     "previewStart": "시험 시작",

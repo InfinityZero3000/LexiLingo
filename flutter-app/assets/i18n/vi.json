@@ -2067,6 +2067,11 @@
     }
   },
   "ielts": {
+    "sourceLine": "Nguồn:",
+    "licensedUnder": "Cấp phép theo",
+    "adaptedNotice": "Đã được chuyển thể từ văn bản gốc.",
+    "viewSource": "Xem nguồn",
+    "publicDomain": "Phạm vi công cộng",
     "previewTitle": "Bài thi gồm những gì",
     "previewFailed": "Không tải được nội dung bài thi.",
     "previewStart": "Bắt đầu làm bài",

@@ -2067,6 +2067,11 @@
     }
   },
   "ielts": {
+    "sourceLine": "Source :",
+    "licensedUnder": "Sous licence",
+    "adaptedNotice": "Adapté du texte original.",
+    "viewSource": "Voir la source",
+    "publicDomain": "Domaine public",
     "previewTitle": "Contenu de ce test",
     "previewFailed": "Impossible de charger le contenu du test.",
     "previewStart": "Commencer le test",

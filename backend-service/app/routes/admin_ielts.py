@@ -23,7 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import require_resource
-from app.core.content_licenses import passage_license_problem
+from app.core.content_licenses import find_passage_entry, passage_license_problem
 from app.models.ielts import IeltsAttempt, IeltsTest
 from app.models.user import User
 from app.schemas.response import ApiResponse
@@ -152,15 +152,7 @@ def provenance_problems(content: dict | None, provenance: dict | None) -> list[s
                 continue
             order = part.get("order") or index
             title = part.get("passage_title") or part.get("title")
-            entry = next(
-                (
-                    e
-                    for e in entries
-                    if e.get("section") == f"reading:{order}"
-                    or (title and e.get("title") == title)
-                ),
-                None,
-            )
+            entry = find_passage_entry(entries, order, title)
             problem = passage_license_problem(entry)
             if problem:
                 label = f"'{title}'" if title else f"{order}"

@@ -2067,6 +2067,11 @@
     }
   },
   "ielts": {
+    "sourceLine": "来源：",
+    "licensedUnder": "许可协议：",
+    "adaptedNotice": "已对原文进行改编。",
+    "viewSource": "查看来源",
+    "publicDomain": "公有领域",
     "previewTitle": "本套试题的内容",
     "previewFailed": "无法加载试题内容。",
     "previewStart": "开始测试",

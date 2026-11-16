@@ -148,3 +148,45 @@ def test_license_list_matches_ai_service():
     ai_ids = set(re.findall(r'= "([^"]+)"', block))
     assert ai_ids == set(AI_SERVICE_LICENSE_IDS)
     assert AI_SERVICE_LICENSE_IDS <= ALLOWED_LICENSE_IDS
+
+
+async def test_learner_paper_carries_each_passages_attribution(
+    async_client: AsyncClient, auth_headers: dict, db_session: AsyncSession
+):
+    entries = _entries(
+        license_id="CC-BY-SA-4.0",
+        attribution="From Wikipedia article 'Bee' (rev 1), CC BY-SA 4.0",
+        source_url="https://en.wikipedia.org/wiki/Bee",
+        adapted=True,
+    )
+    entries["passages"][1].update(license_id="LicenseRef-Public-Domain", adapted=False)
+    test = await _make(db_session, entries, published=True)
+    for path, method in ((f"/api/v1/ielts/tests/{test.id}", "get"), (f"/api/v1/ielts/tests/{test.id}/start", "post")):
+        kwargs = {"json": {}} if method == "post" else {}
+        response = await getattr(async_client, method)(path, headers=auth_headers, **kwargs)
+        assert response.status_code == 200, response.text
+        reading = next(s for s in response.json()["data"]["content"]["sections"] if s["skill"] == "reading")
+        first, second = reading["parts"][0], reading["parts"][1]
+        assert first["license_id"] == "CC-BY-SA-4.0"
+        assert first["license_url"] == "https://creativecommons.org/licenses/by-sa/4.0/"
+        assert first["attribution"].startswith("From Wikipedia")
+        assert first["source_url"] == "https://en.wikipedia.org/wiki/Bee"
+        assert first["adapted"] is True
+        assert second["license_url"] is None and second["adapted"] is False
+
+
+async def test_learner_paper_without_provenance_gains_no_fields(
+    async_client: AsyncClient, auth_headers: dict, db_session: AsyncSession
+):
+    test = await _make(db_session, None, published=True)
+    response = await async_client.get(f"/api/v1/ielts/tests/{test.id}", headers=auth_headers)
+    reading = next(s for s in response.json()["data"]["content"]["sections"] if s["skill"] == "reading")
+    assert all("license_id" not in p and "attribution" not in p for p in reading["parts"])
+
+
+def test_license_url_is_derived_in_one_place():
+    from app.core.content_licenses import license_url
+
+    assert license_url("CC-BY-SA-3.0") == "https://creativecommons.org/licenses/by-sa/3.0/"
+    assert license_url("LicenseRef-US-Gov-Public-Domain") is None
+    assert license_url(None) is None
