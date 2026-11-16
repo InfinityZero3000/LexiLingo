@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Boolean, ForeignKey, Index, Integer, String, UniqueConstraint
+from sqlalchemy import Boolean, ForeignKey, Index, Integer, String, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -32,6 +32,13 @@ class UserReminderPreference(Base):
         String(64),
         default="Asia/Ho_Chi_Minh",
         nullable=False,
+    )
+    # Activation, streak-at-risk and weekly-summary mail. Separate from
+    # email_enabled: that one is the review-reminder opt-in, defaults off, and
+    # the row is auto-created on first read, so it cannot tell "never chose"
+    # from "said no".
+    nurture_emails_enabled: Mapped[bool] = mapped_column(
+        Boolean, default=True, server_default=text("true"), nullable=False
     )
     min_due_count: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     email_cadence_days: Mapped[int] = mapped_column(Integer, default=7, nullable=False)

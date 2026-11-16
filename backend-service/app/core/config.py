@@ -330,6 +330,15 @@ class Settings(BaseSettings):
     REMINDER_MAX_LATENESS_MINUTES: int = 180
     REMINDER_DEFAULT_TIMEZONE: str = "Asia/Ho_Chi_Minh"
 
+    # Activation / streak-at-risk / weekly-summary mail. Off: the tasks run and
+    # log how many they would have sent, and send nothing.
+    NURTURE_EMAILS_ENABLED: bool = False
+    NURTURE_START_ROUTE: str = "/courses"
+    NURTURE_STREAK_LOCAL_HOUR: int = 20
+    NURTURE_MAX_PER_RUN: int = 200
+    # Resend allows 2 requests a second by default.
+    NURTURE_SEND_DELAY_SECONDS: float = 0.6
+
     # Event Worker — drains the content_interaction Redis Stream and
     # recomputes recommender insights off the request path.
     EVENT_WORKER_DRAIN_INTERVAL_SECONDS: int = 10

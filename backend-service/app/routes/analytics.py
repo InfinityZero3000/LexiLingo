@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.dependencies import require_resource
+from app.core.real_users import real_user_clause
 from app.models.course import Course
 from app.models.progress import (
     DailyActivity,
@@ -288,12 +289,7 @@ async def get_completion_funnel(
 # Activation funnel and cohort retention
 # ============================================================================
 
-SEED_EMAIL_DOMAINS = ("lexilingo.test", "lexilingo.dev")
 RETENTION_HORIZONS = (1, 7, 30)
-
-
-def real_user_clause():
-    return and_(*(~User.email.ilike(f"%@{d}") for d in SEED_EMAIL_DOMAINS))
 
 
 def _has(model, *conditions):
