@@ -24,6 +24,9 @@ from app.services.cefr_level_service import (
     publish_level_change,
 )
 from app.schemas.user import UserResponse, UserUpdate
+from app.schemas.start_learning import StartLearningRequest, StartLearningResponse
+from app.crud.course import CourseCRUD
+from app.services.start_learning_service import find_start_target
 from app.services.learner_state import bump_learner_state_epoch
 from app.schemas.common import MessageResponse, ApiResponse
 from app.schemas.level import (
@@ -358,3 +361,33 @@ async def get_weekly_activity_route(
 ):
     activity = await get_weekly_activity(db, current_user)
     return ApiResponse(success=True, data=activity, message="Weekly activity retrieved successfully")
+
+
+@router.post("/me/start-learning", response_model=ApiResponse[StartLearningResponse])
+async def start_learning(
+    payload: StartLearningRequest | None = None,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Enroll in the best-fitting course and return the first lesson to play."""
+    from app.routes.courses import enroll_in_course
+
+    target = await find_start_target(
+        db, current_user, payload.course_id if payload else None
+    )
+    if target is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No playable lesson is available yet",
+        )
+    already = await CourseCRUD.is_user_enrolled(db, current_user.id, target.course.id)
+    if not already:
+        await enroll_in_course(target.course.id, db=db, current_user=current_user)
+    return ApiResponse(
+        data=StartLearningResponse(
+            course_id=target.course.id,
+            course_title=target.course.title,
+            first_lesson_id=target.lesson_id,
+            already_enrolled=already,
+        )
+    )
