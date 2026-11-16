@@ -24,4 +24,28 @@ void main() {
       {'source': '/(.*)', 'key': 'Cache-Control', 'value': 'no-cache'},
     ]);
   });
+
+  test('every page carries the anti-framing and no-sniff headers', () async {
+    final config =
+        jsonDecode(await File('vercel.json').readAsString())
+            as Map<String, dynamic>;
+    final rule = (config['headers'] as List<dynamic>)
+        .cast<Map<String, dynamic>>()
+        .firstWhere((r) => r['source'] == '/(.*)');
+    final byKey = {
+      for (final h
+          in (rule['headers'] as List<dynamic>).cast<Map<String, dynamic>>())
+        h['key']: h['value'],
+    };
+
+    // Tokens live in localStorage on the web, so the page must not be framed.
+    expect(byKey['X-Frame-Options'], 'DENY');
+    expect(byKey['X-Content-Type-Options'], 'nosniff');
+    // Speaking practice needs the microphone.
+    expect(byKey['Permissions-Policy'], contains('microphone=(self)'));
+    expect(
+      byKey['Content-Security-Policy-Report-Only'],
+      contains("frame-ancestors 'none'"),
+    );
+  });
 }
