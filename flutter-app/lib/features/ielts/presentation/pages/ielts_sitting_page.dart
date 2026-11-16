@@ -17,6 +17,22 @@ import '../providers/ielts_provider.dart';
 import '../widgets/ielts_passage_attribution.dart';
 import 'ielts_result_page.dart';
 
+String _skillLabel(IeltsSkill skill) => switch (skill) {
+  IeltsSkill.listening => 'ielts.skillListening'.tr(),
+  IeltsSkill.reading => 'ielts.skillReading'.tr(),
+  IeltsSkill.writing => 'ielts.skillWriting'.tr(),
+  IeltsSkill.speaking => 'ielts.skillSpeaking'.tr(),
+};
+
+String _partLabel(String key) {
+  final match = RegExp(r'^(writing_task|speaking_part)_(\d+)$').firstMatch(key);
+  if (match == null) return key.replaceAll('_', ' ');
+  final n = {'n': match.group(2)!};
+  return match.group(1) == 'writing_task'
+      ? 'ielts.writingTask'.tr(namedArgs: n)
+      : 'ielts.speakingPart'.tr(namedArgs: n);
+}
+
 /// One sitting, one skill at a time.
 ///
 /// The four skills are genuinely different surfaces — Listening is an audio
@@ -67,7 +83,7 @@ class _SittingViewState extends State<_SittingView> {
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              provider.error ?? 'This test has no sections yet.',
+              provider.error ?? 'ielts.noSections'.tr(),
               textAlign: TextAlign.center,
             ),
           ),
@@ -87,7 +103,7 @@ class _SittingViewState extends State<_SittingView> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(ieltsSkillLabel(section.skill)),
+          title: Text(_skillLabel(section.skill)),
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(48),
             child: SingleChildScrollView(
@@ -99,7 +115,7 @@ class _SittingViewState extends State<_SittingView> {
                     Padding(
                       padding: const EdgeInsets.only(right: 8, bottom: 8),
                       child: ChoiceChip(
-                        label: Text(ieltsSkillLabel(sections[i].skill)),
+                        label: Text(_skillLabel(sections[i].skill)),
                         selected: i == index,
                         onSelected: (_) => setState(() => _sectionIndex = i),
                       ),
@@ -126,7 +142,11 @@ class _SittingViewState extends State<_SittingView> {
                       onPressed: () =>
                           setState(() => _sectionIndex = index + 1),
                       child: Text(
-                        'Next: ${ieltsSkillLabel(sections[index + 1].skill)}',
+                        'ielts.nextSkill'.tr(
+                          namedArgs: {
+                            'skill': _skillLabel(sections[index + 1].skill),
+                          },
+                        ),
                       ),
                     )
                   else
@@ -144,18 +164,16 @@ class _SittingViewState extends State<_SittingView> {
     return showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Leave the test?'),
-        content: const Text(
-          'Your answers are saved and you can resume this test later.',
-        ),
+        title: Text('ielts.leaveTitle'.tr()),
+        content: Text('ielts.leaveBody'.tr()),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Stay'),
+            child: Text('ielts.stay'.tr()),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Leave'),
+            child: Text('ielts.leave'.tr()),
           ),
         ],
       ),
@@ -166,20 +184,20 @@ class _SittingViewState extends State<_SittingView> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Submit test?'),
+        title: Text('ielts.submitTitle'.tr()),
         content: Text(
-          'You have answered ${provider.answeredCount} items. '
-          'Listening and Reading are scored immediately; Writing and Speaking '
-          'are graded by AI and take a moment longer.',
+          'ielts.submitBody'.tr(
+            namedArgs: {'count': '${provider.answeredCount}'},
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Keep working'),
+            child: Text('ielts.keepWorking'.tr()),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Submit'),
+            child: Text('ielts.submit'.tr()),
           ),
         ],
       ),
@@ -190,7 +208,7 @@ class _SittingViewState extends State<_SittingView> {
     if (!context.mounted) return;
     if (result == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(provider.error ?? 'Submission failed')),
+        SnackBar(content: Text(provider.error ?? 'ielts.submitFailed'.tr())),
       );
       return;
     }
@@ -213,7 +231,7 @@ class _AnsweredCount extends StatelessWidget {
     final theme = Theme.of(context);
     final count = context.select<IeltsProvider, int>((p) => p.answeredCount);
     return Text(
-      '$count answered',
+      'ielts.answeredCount'.tr(namedArgs: {'count': '$count'}),
       style: theme.textTheme.bodySmall?.copyWith(
         color: theme.colorScheme.onSurfaceVariant,
       ),
@@ -238,7 +256,7 @@ class _SubmitButton extends StatelessWidget {
               height: 18,
               child: CircularProgressIndicator(strokeWidth: 2),
             )
-          : const Text('Submit test'),
+          : Text('ielts.submitTest'.tr()),
     );
   }
 }
@@ -277,7 +295,8 @@ class _ListeningSection extends StatelessWidget {
       children: [
         for (final part in section.parts) ...[
           Text(
-            part.title ?? 'Part ${part.order}',
+            part.title ??
+                'ielts.partNumber'.tr(namedArgs: {'order': '${part.order}'}),
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 8),
@@ -517,10 +536,10 @@ class _QuestionTile extends StatelessWidget {
           else
             TextFormField(
               initialValue: current,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
                 isDense: true,
-                hintText: 'Your answer',
+                hintText: 'ielts.answerHint'.tr(),
               ),
               onChanged: (value) => provider.setAnswer(question.key, value),
             ),
@@ -579,10 +598,7 @@ class _WritingTask extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          key.replaceAll('_', ' ').toUpperCase(),
-          style: theme.textTheme.labelLarge,
-        ),
+        Text(_partLabel(key).toUpperCase(), style: theme.textTheme.labelLarge),
         const SizedBox(height: 8),
         Card(
           child: Padding(
@@ -608,8 +624,10 @@ class _WritingTask extends StatelessWidget {
           maxLines: 12,
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
-            hintText: 'Write your response here…',
-            helperText: '$words / $minimum words minimum',
+            hintText: 'ielts.writeHint'.tr(),
+            helperText: 'ielts.wordsMinimum'.tr(
+              namedArgs: {'words': '$words', 'minimum': '$minimum'},
+            ),
             helperStyle: TextStyle(
               color: words >= minimum
                   ? theme.colorScheme.primary
@@ -621,7 +639,9 @@ class _WritingTask extends StatelessWidget {
         const SizedBox(height: 8),
         if (part.suggestedMinutes != null)
           Text(
-            'Aim for about ${part.suggestedMinutes} minutes.',
+            'ielts.aimMinutes'.tr(
+              namedArgs: {'minutes': '${part.suggestedMinutes}'},
+            ),
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -743,10 +763,7 @@ class _SpeakingPartState extends State<_SpeakingPart> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          _key.replaceAll('_', ' ').toUpperCase(),
-          style: theme.textTheme.labelLarge,
-        ),
+        Text(_partLabel(_key).toUpperCase(), style: theme.textTheme.labelLarge),
         const SizedBox(height: 8),
         Card(
           child: Padding(
@@ -761,8 +778,12 @@ class _SpeakingPartState extends State<_SpeakingPart> {
                 if (widget.part.prepSeconds != null) ...[
                   const SizedBox(height: 8),
                   Text(
-                    'You have ${widget.part.prepSeconds}s to prepare and '
-                    '${widget.part.speakSeconds ?? 120}s to speak.',
+                    'ielts.prepAndSpeak'.tr(
+                      namedArgs: {
+                        'prep': '${widget.part.prepSeconds}',
+                        'speak': '${widget.part.speakSeconds ?? 120}',
+                      },
+                    ),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -778,7 +799,9 @@ class _SpeakingPartState extends State<_SpeakingPart> {
             FilledButton.icon(
               onPressed: _transcribing ? null : _toggle,
               icon: Icon(_recording ? Icons.stop : Icons.mic),
-              label: Text(_recording ? 'Stop' : 'Record answer'),
+              label: Text(
+                _recording ? 'ielts.stop'.tr() : 'ielts.recordAnswer'.tr(),
+              ),
             ),
             const SizedBox(width: 12),
             if (_transcribing)
@@ -797,9 +820,9 @@ class _SpeakingPartState extends State<_SpeakingPart> {
         TextFormField(
           controller: _transcriptController,
           maxLines: 6,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            labelText: 'Transcript (edit if the recording was misheard)',
+          decoration: InputDecoration(
+            border: const OutlineInputBorder(),
+            labelText: 'ielts.transcriptLabel'.tr(),
           ),
           onChanged: (value) => provider.setAnswer(_key, value),
         ),

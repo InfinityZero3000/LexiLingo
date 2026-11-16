@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -5,6 +6,30 @@ import 'package:provider/provider.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../domain/entities/ielts_entities.dart';
 import '../providers/ielts_provider.dart';
+
+String _titleCase(String key) => key
+    .split('_')
+    .map((p) => p.isEmpty ? p : p[0].toUpperCase() + p.substring(1))
+    .join(' ');
+
+String _skillName(String skill) => switch (skill) {
+  'listening' => 'ielts.skillListening'.tr(),
+  'reading' => 'ielts.skillReading'.tr(),
+  'writing' => 'ielts.skillWriting'.tr(),
+  'speaking' => 'ielts.skillSpeaking'.tr(),
+  _ => _titleCase(skill),
+};
+
+String _criterionLabel(String key) => switch (key) {
+  'task_achievement' => 'ielts.criteriaTaskAchievement'.tr(),
+  'task_response' => 'ielts.criteriaTaskResponse'.tr(),
+  'coherence_cohesion' => 'ielts.criteriaCoherenceCohesion'.tr(),
+  'lexical_resource' => 'ielts.criteriaLexicalResource'.tr(),
+  'grammatical_range_accuracy' => 'ielts.criteriaGrammar'.tr(),
+  'fluency_coherence' => 'ielts.criteriaFluencyCoherence'.tr(),
+  'pronunciation' => 'ielts.criteriaPronunciation'.tr(),
+  _ => _titleCase(key),
+};
 
 /// Results. Writing and Speaking arrive later than Listening and Reading —
 /// the objective skills are an answer key, the productive ones are a model
@@ -45,12 +70,12 @@ class _ResultView extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Test result'),
+        title: Text('ielts.resultTitle'.tr()),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () => provider.refreshResult(),
-            tooltip: 'Refresh',
+            tooltip: 'ielts.refresh'.tr(),
           ),
         ],
       ),
@@ -78,7 +103,7 @@ class _ResultView extends StatelessWidget {
                             const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                'Writing and Speaking are being graded. Pull refresh in a moment.',
+                                'ielts.awaitingGrading'.tr(),
                                 style: TextStyle(
                                   color: theme.colorScheme.onSecondaryContainer,
                                 ),
@@ -119,7 +144,7 @@ class _OverallCard extends StatelessWidget {
         child: Column(
           children: [
             Text(
-              result.testTitle ?? 'IELTS mock test',
+              result.testTitle ?? 'ielts.defaultTestTitle'.tr(),
               style: theme.textTheme.titleMedium,
               textAlign: TextAlign.center,
             ),
@@ -133,8 +158,8 @@ class _OverallCard extends StatelessWidget {
             ),
             Text(
               result.overallBand != null
-                  ? 'Overall band'
-                  : 'Overall band needs all four skills',
+                  ? 'ielts.overallBand'.tr()
+                  : 'ielts.overallBandNeedsAll'.tr(),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -156,7 +181,7 @@ class _OverallCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      skill[0].toUpperCase() + skill.substring(1, 4),
+                      _skillName(skill),
                       style: theme.textTheme.labelSmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -177,10 +202,16 @@ class _GradingCard extends StatelessWidget {
   const _GradingCard({required this.grading});
 
   String get _label {
-    final parts = grading.partKey.split('_');
-    return parts
-        .map((p) => p.isEmpty ? p : p[0].toUpperCase() + p.substring(1))
-        .join(' ');
+    final match = RegExp(
+      r'^(writing_task|speaking_part)_(\d+)$',
+    ).firstMatch(grading.partKey);
+    if (match != null) {
+      final n = {'n': match.group(2)!};
+      return match.group(1) == 'writing_task'
+          ? 'ielts.writingTask'.tr(namedArgs: n)
+          : 'ielts.speakingPart'.tr(namedArgs: n);
+    }
+    return _titleCase(grading.partKey);
   }
 
   @override
@@ -197,7 +228,7 @@ class _GradingCard extends StatelessWidget {
             child: CircularProgressIndicator(strokeWidth: 2),
           ),
           title: Text(_label),
-          subtitle: const Text('Being graded…'),
+          subtitle: Text('ielts.beingGraded'.tr()),
         ),
       );
     }
@@ -209,9 +240,7 @@ class _GradingCard extends StatelessWidget {
         child: ListTile(
           leading: const Icon(Icons.error_outline),
           title: Text(_label),
-          subtitle: const Text(
-            'Grading failed — your answer is saved and can be re-graded.',
-          ),
+          subtitle: Text('ielts.gradingFailed'.tr()),
         ),
       );
     }
@@ -230,14 +259,13 @@ class _GradingCard extends StatelessWidget {
             ),
           ],
         ),
-        subtitle: Text('${grading.wordCount} words'),
+        subtitle: Text(
+          'ielts.wordCount'.tr(namedArgs: {'count': '${grading.wordCount}'}),
+        ),
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         children: [
           ...grading.criteria.entries.map((entry) {
-            final label = entry.key
-                .split('_')
-                .map((p) => p.isEmpty ? p : p[0].toUpperCase() + p.substring(1))
-                .join(' ');
+            final label = _criterionLabel(entry.key);
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Row(
@@ -271,7 +299,7 @@ class _GradingCard extends StatelessWidget {
           ],
           if (grading.improvements.isNotEmpty) ...[
             const SizedBox(height: 12),
-            Text('To raise your band', style: theme.textTheme.labelLarge),
+            Text('ielts.raiseBand'.tr(), style: theme.textTheme.labelLarge),
             const SizedBox(height: 4),
             ...grading.improvements.map(
               (item) => Padding(
@@ -282,7 +310,7 @@ class _GradingCard extends StatelessWidget {
           ],
           if (grading.corrections.isNotEmpty) ...[
             const SizedBox(height: 12),
-            Text('Corrections', style: theme.textTheme.labelLarge),
+            Text('ielts.corrections'.tr(), style: theme.textTheme.labelLarge),
             const SizedBox(height: 4),
             ...grading.corrections.map(
               (c) => Padding(
@@ -329,12 +357,16 @@ class _ReviewSection extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ExpansionTile(
-        title: Text(
-          skill[0].toUpperCase() + skill.substring(1),
-          style: theme.textTheme.titleSmall,
-        ),
+        title: Text(_skillName(skill), style: theme.textTheme.titleSmall),
         subtitle: raw != null
-            ? Text('${raw!['raw']} / ${raw!['total']} correct')
+            ? Text(
+                'ielts.correctCount'.tr(
+                  namedArgs: {
+                    'raw': '${raw!['raw']}',
+                    'total': '${raw!['total']}',
+                  },
+                ),
+              )
             : null,
         childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         children: items.map((item) {
@@ -361,14 +393,22 @@ class _ReviewSection extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Your answer: ${item.userAnswer?.isNotEmpty == true ? item.userAnswer : "(blank)"}',
+                        'ielts.yourAnswer'.tr(
+                          namedArgs: {
+                            'answer': item.userAnswer?.isNotEmpty == true
+                                ? item.userAnswer!
+                                : 'ielts.blankAnswer'.tr(),
+                          },
+                        ),
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
                       if (!item.isCorrect)
                         Text(
-                          'Correct: ${item.correctAnswer ?? ""}',
+                          'ielts.correctAnswer'.tr(
+                            namedArgs: {'answer': item.correctAnswer ?? ''},
+                          ),
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.primary,
                           ),
