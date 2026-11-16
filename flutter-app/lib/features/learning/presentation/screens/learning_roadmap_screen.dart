@@ -23,6 +23,13 @@ const double _kBannerH = 92.0; // height of unit chapter banner
 const double _kBannerTopMargin = 28.0; // gap above each banner
 const double _kTopPad = 12.0;
 const double _kBotPad = 120.0;
+const double _kLabelW = 144.0;
+const double _kEdgeMargin = 8.0;
+
+/// The art is a 2:3 portrait and the zigzag swings across 72% of the width,
+/// so past a phone-sized column the nodes drift off the art. 520 keeps a
+/// ~375px phone unchanged and ~380px of swing on wider screens.
+const double kRoadmapColumnMaxWidth = 520.0;
 
 /// Sine-wave x positions (normalized 0..1).
 /// 8-step cycle gives a smooth winding road from edge to edge.
@@ -137,8 +144,8 @@ class _LearningRoadmapScreenState extends State<LearningRoadmapScreen> {
       for (final lesson in unit.lessons) {
         final xNorm = _kXCycle[gi % _kXCycle.length];
         final cx = (xNorm * width).clamp(
-          _kNodeRadius + 8,
-          width - _kNodeRadius - 8,
+          _kNodeRadius + _kEdgeMargin,
+          width - _kNodeRadius - _kEdgeMargin,
         );
         final cy = y + _kNodeRadius;
         nodes.add(
@@ -162,38 +169,44 @@ class _LearningRoadmapScreenState extends State<LearningRoadmapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage(
-              'assets/background-roadmap/background-roadmap.png',
+      body: Center(
+        child: ConstrainedBox(
+          key: const Key('roadmapColumn'),
+          constraints: const BoxConstraints(maxWidth: kRoadmapColumnMaxWidth),
+          child: DecoratedBox(
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage(
+                  'assets/background-roadmap/background-roadmap.png',
+                ),
+                fit: BoxFit.cover,
+                alignment: Alignment.center,
+              ),
             ),
-            fit: BoxFit.fitHeight,
-            alignment: Alignment.center,
+            child: Consumer<LearningProvider>(
+              builder: (context, provider, _) {
+                if (provider.isLoadingRoadmap) {
+                  return LoadingScreen(message: 'learning.loadingRoadmap'.tr());
+                }
+                if (provider.roadmapError != null) {
+                  return _ErrorView(
+                    error: provider.roadmapError!,
+                    onRetry: () => provider.loadRoadmap(widget.courseId),
+                  );
+                }
+                final roadmap = provider.courseRoadmap;
+                if (roadmap == null || roadmap.units.isEmpty) {
+                  return const _EmptyView();
+                }
+                return _ZigzagRoadmap(
+                  roadmap: roadmap,
+                  courseId: widget.courseId,
+                  buildLayouts: _buildLayouts,
+                  totalH: _totalH,
+                );
+              },
+            ),
           ),
-        ),
-        child: Consumer<LearningProvider>(
-          builder: (context, provider, _) {
-            if (provider.isLoadingRoadmap) {
-              return LoadingScreen(message: 'learning.loadingRoadmap'.tr());
-            }
-            if (provider.roadmapError != null) {
-              return _ErrorView(
-                error: provider.roadmapError!,
-                onRetry: () => provider.loadRoadmap(widget.courseId),
-              );
-            }
-            final roadmap = provider.courseRoadmap;
-            if (roadmap == null || roadmap.units.isEmpty) {
-              return const _EmptyView();
-            }
-            return _ZigzagRoadmap(
-              roadmap: roadmap,
-              courseId: widget.courseId,
-              buildLayouts: _buildLayouts,
-              totalH: _totalH,
-            );
-          },
         ),
       ),
     );
@@ -240,6 +253,7 @@ class _ZigzagRoadmap extends StatelessWidget {
                       });
 
               return SizedBox(
+                key: const Key('roadmapZigzag'),
                 height: contentH,
                 child: Stack(
                   clipBehavior: Clip.none,
@@ -282,20 +296,21 @@ class _ZigzagRoadmap extends StatelessWidget {
                         top: n.center.dy - _kNodeRadius,
                         width: _kNodeDiameter,
                         height: _kNodeDiameter,
+                        key: ValueKey('roadmapNode-${n.globalIndex}'),
                         child: _EntranceFade(
                           index: n.globalIndex,
                           child: _LessonNode(
                             layout: n,
                             onTap: n.lesson.isLocked
                                 ? () => ScaffoldMessenger.of(context)
-                                  ..hideCurrentSnackBar()
-                                  ..showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        LocaleKeys.course_lockedHint.tr(),
+                                    ..hideCurrentSnackBar()
+                                    ..showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          LocaleKeys.course_lockedHint.tr(),
+                                        ),
                                       ),
-                                    ),
-                                  )
+                                    )
                                 : () async {
                                     await Navigator.push(
                                       context,
@@ -307,13 +322,12 @@ class _ZigzagRoadmap extends StatelessWidget {
                                       ),
                                     );
                                     if (!context.mounted) return;
-                                    context.read<LearningProvider>().loadRoadmap(
-                                      courseId,
-                                      refresh: true,
-                                    );
-                                    context.read<CourseProvider>().loadCourseDetail(
-                                      courseId,
-                                    );
+                                    context
+                                        .read<LearningProvider>()
+                                        .loadRoadmap(courseId, refresh: true);
+                                    context
+                                        .read<CourseProvider>()
+                                        .loadCourseDetail(courseId);
                                   },
                           ),
                         ),
@@ -323,9 +337,13 @@ class _ZigzagRoadmap extends StatelessWidget {
                       (n) => n.lesson.isCurrent,
                     ))
                       Positioned(
-                        left: n.center.dx - 72,
-                        top: n.center.dy - _kNodeRadius - 48,
-                        width: 144,
+                        key: const Key('roadmapCurrentLabel'),
+                        left: (n.center.dx - _kLabelW / 2).clamp(
+                          _kEdgeMargin,
+                          width - _kLabelW - _kEdgeMargin,
+                        ),
+                        top: max(0.0, n.center.dy - _kNodeRadius - 48),
+                        width: _kLabelW,
                         child: _CurrentLessonLabel(
                           lesson: n.lesson,
                           color: n.baseColor,

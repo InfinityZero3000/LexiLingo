@@ -14,13 +14,15 @@ from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.redis import get_redis
 from app.crud.vocabulary import _vocab_concept_id
-from app.models.course import Course, Lesson
+from app.crud.course import LessonCRUD
+from app.models.course import Course, Lesson, Unit
 from app.models.learner_state import LearnerConceptState, LearnerStateProfile
 from app.models.proficiency import UserProficiencyProfile, UserSkillScore
-from app.models.progress import LessonCompletion, UserCourseProgress
+from app.models.progress import UserCourseProgress
 from app.models.vocabulary import UserVocabulary, VocabularyItem
 from app.routes.youtube import CURATED_CHANNELS
 from app.services.feature_processor import (
@@ -29,6 +31,7 @@ from app.services.feature_processor import (
     compute_insights,
 )
 from app.services.learner_state import get_due_concepts_for_user
+from app.services.lesson_unlock import playable_in_order, sequence_locked_ids
 
 logger = logging.getLogger(__name__)
 
@@ -219,13 +222,6 @@ async def _course_candidates(
 async def _lesson_candidates(
     db: AsyncSession, user_id: uuid.UUID
 ) -> list[dict[str, Any]]:
-    completed = set(
-        await db.scalars(
-            select(LessonCompletion.lesson_id).where(
-                LessonCompletion.user_id == user_id
-            )
-        )
-    )
     enrolled = list(
         await db.scalars(
             select(UserCourseProgress.course_id).where(
@@ -236,15 +232,34 @@ async def _lesson_candidates(
     if not enrolled:
         return []
 
-    lessons = list(
+    units = list(
         await db.scalars(
-            select(Lesson)
-            .join(Course, Course.id == Lesson.course_id)
-            .where(Lesson.course_id.in_(enrolled), Course.is_published.is_(True))
-            .order_by(Lesson.order_index.asc())
-            .limit(CANDIDATES_PER_TYPE * 3)
+            select(Unit)
+            .join(Course, Course.id == Unit.course_id)
+            .options(selectinload(Unit.lessons))
+            .where(Unit.course_id.in_(enrolled), Course.is_published.is_(True))
         )
     )
+    by_course: dict[uuid.UUID, list[Unit]] = {}
+    for unit in units:
+        by_course.setdefault(unit.course_id, []).append(unit)
+    ordered_by_course = {
+        course_id: playable_in_order(course_units)
+        for course_id, course_units in by_course.items()
+    }
+    passed = await LessonCRUD.get_completed_lesson_ids(
+        db,
+        user_id,
+        [l.id for ordered in ordered_by_course.values() for l in ordered],
+    )
+
+    open_lessons: list[Lesson] = []
+    for ordered in ordered_by_course.values():
+        locked = sequence_locked_ids(ordered, passed)
+        open_lessons.extend(
+            l for l in ordered if l.id not in passed and l.id not in locked
+        )
+    open_lessons.sort(key=lambda l: l.order_index)
     return [
         {
             "item_id": str(lesson.id),
@@ -258,11 +273,8 @@ async def _lesson_candidates(
             "concept_ids": [],
             "payload": {"course_id": str(lesson.course_id)},
         }
-        for lesson in lessons
-        # A lesson without exercises is unplayable — recommending one is a
-        # dead end the learner cannot act on.
-        if lesson.id not in completed and lesson.exercise_count > 0
-    ][:CANDIDATES_PER_TYPE]
+        for lesson in open_lessons[:CANDIDATES_PER_TYPE]
+    ]
 
 
 async def _vocab_candidates(

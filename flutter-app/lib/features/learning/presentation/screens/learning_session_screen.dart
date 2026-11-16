@@ -207,7 +207,9 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
 
   Widget _buildErrorState(BuildContext context, LearningProvider provider) {
     final theme = Theme.of(context);
+    final locked = provider.isLessonLocked;
     final contentGap = provider.isContentUnavailable;
+    final terminal = locked || contentGap;
 
     return Center(
       child: SingleChildScrollView(
@@ -220,23 +222,27 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
               height: 96,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: contentGap
+                color: terminal
                     ? theme.colorScheme.secondaryContainer
                     : theme.colorScheme.errorContainer,
               ),
               child: Icon(
-                contentGap
+                locked
+                    ? Icons.lock_outline_rounded
+                    : contentGap
                     ? Icons.hourglass_empty_rounded
                     : Icons.error_outline_rounded,
                 size: 44,
-                color: contentGap
+                color: terminal
                     ? theme.colorScheme.onSecondaryContainer
                     : theme.colorScheme.onErrorContainer,
               ),
             ),
             const SizedBox(height: 24),
             Text(
-              contentGap
+              locked
+                  ? 'lesson.lockedTitle'.tr()
+                  : contentGap
                   ? 'lesson.contentUnavailableTitle'.tr()
                   : 'common.error'.tr(),
               textAlign: TextAlign.center,
@@ -246,7 +252,9 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              contentGap
+              locked
+                  ? 'lesson.lockedMessage'.tr()
+                  : contentGap
                   ? 'lesson.contentUnavailableMessage'.tr()
                   : provider.error!,
               textAlign: TextAlign.center,
@@ -256,7 +264,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
               ),
             ),
             const SizedBox(height: 28),
-            if (contentGap)
+            if (terminal)
               FilledButton(
                 onPressed: () => Navigator.of(context).pop(),
                 child: Text('common.back'.tr()),
@@ -835,8 +843,29 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
 
               const SizedBox(height: 32),
 
-              // XP earned with animation
-              if (provider.xpEarned > 0)
+              if (provider.completionFailed) ...[
+                Text(
+                  'lesson.resultNotSavedTitle'.tr(),
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'lesson.resultNotSavedMessage'.tr(),
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: provider.retryCompletion,
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: Text('common.retry'.tr()),
+                ),
+              ] else if ((provider.lessonResult?.totalXpEarned ?? 0) > 0)
                 TweenAnimationBuilder<double>(
                   tween: Tween(begin: 0.0, end: 1.0),
                   duration: const Duration(milliseconds: 800),
@@ -872,7 +901,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          '+${provider.xpEarned} XP',
+                          '+${provider.lessonResult!.totalXpEarned} XP',
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,

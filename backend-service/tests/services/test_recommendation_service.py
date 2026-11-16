@@ -9,7 +9,7 @@ import pytest
 from app.core.redis import RedisClient
 from app.models.course import Course, Lesson, Unit
 from app.models.learner_state import LearnerConceptState
-from app.models.progress import UserCourseProgress
+from app.models.progress import LessonCompletion, UserCourseProgress
 from app.services.feature_processor import INSIGHTS_CACHE_PREFIX
 from app.services.recommendation_service import (
     _lesson_candidates,
@@ -163,3 +163,54 @@ async def test_lesson_candidates_come_only_from_published_enrolled_courses(
     candidates = await _lesson_candidates(db_session, test_user.id)
 
     assert [c["title"] for c in candidates] == [titles[True]]
+
+
+async def _course_with_units(db_session, user, unit_sizes: list[int]):
+    course = Course(title="seq", language="en", level="A1", is_published=True)
+    db_session.add(course)
+    await db_session.flush()
+    lessons = []
+    for u_index, size in enumerate(unit_sizes):
+        unit = Unit(course_id=course.id, title=f"u{u_index}", order_index=u_index)
+        db_session.add(unit)
+        await db_session.flush()
+        for l_index in range(size):
+            lesson = Lesson(
+                course_id=course.id,
+                unit_id=unit.id,
+                title=f"u{u_index}l{l_index}",
+                order_index=l_index,
+                content={"exercises": [{"id": "e1", "type": "multiple_choice"}]},
+            )
+            db_session.add(lesson)
+            lessons.append(lesson)
+    db_session.add(UserCourseProgress(user_id=user.id, course_id=course.id))
+    await db_session.flush()
+    return lessons
+
+
+async def test_lesson_candidates_exclude_locked_lessons(db_session, test_user):
+    await _course_with_units(db_session, test_user, [2, 2])
+
+    candidates = await _lesson_candidates(db_session, test_user.id)
+
+    assert [c["title"] for c in candidates] == ["u0l0"]
+
+
+async def test_lesson_candidates_advance_across_units_after_passing(
+    db_session, test_user
+):
+    lessons = await _course_with_units(db_session, test_user, [1, 2])
+    db_session.add(
+        LessonCompletion(
+            user_id=test_user.id,
+            lesson_id=lessons[0].id,
+            is_passed=True,
+            best_score=100,
+        )
+    )
+    await db_session.flush()
+
+    candidates = await _lesson_candidates(db_session, test_user.id)
+
+    assert [c["title"] for c in candidates] == ["u1l0"]
