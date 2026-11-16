@@ -176,6 +176,7 @@
     "keepGoing": "¡Sigue adelante!",
     "dashboardLoadFailed": "No se pudo cargar el panel: {error}",
     "quickActions": "Acciones rápidas",
+    "unlockHint": "Termina tu primera lección para desbloquear más funciones",
     "continueLearningSection": "Continuar aprendiendo",
     "featuredCourses": "Cursos destacados",
     "noEnrolledCoursesYet": "Aún no hay cursos inscritos",

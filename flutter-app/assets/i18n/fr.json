@@ -176,6 +176,7 @@
     "keepGoing": "Continue!",
     "dashboardLoadFailed": "Impossible de charger le tableau de bord : {error}",
     "quickActions": "Actions rapides",
+    "unlockHint": "Terminez votre première leçon pour débloquer plus de fonctionnalités",
     "continueLearningSection": "Continuer l'apprentissage",
     "featuredCourses": "Cours en vedette",
     "noEnrolledCoursesYet": "Aucun cours inscrit pour l'instant",

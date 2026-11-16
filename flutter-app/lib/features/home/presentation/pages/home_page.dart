@@ -2,8 +2,10 @@ import 'package:lexilingo_app/features/auth/presentation/widgets/verify_email_ba
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/network/api_config.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
+import 'package:lexilingo_app/features/home/domain/progressive_unlock.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/promo_banner_provider.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/discover_rail.dart';
@@ -140,6 +142,11 @@ class _HomePageNewState extends State<HomePageNew> {
               );
             }
 
+            final locked = secondaryFeaturesLocked(
+              flagEnabled: ApiConfig.progressiveUnlock,
+              lessonsCompleted: authProvider.currentUser?.lessonsCompleted,
+            );
+
             return RefreshIndicator(
               onRefresh: () => Future.wait([
                 homeProvider.refreshData(),
@@ -162,7 +169,7 @@ class _HomePageNewState extends State<HomePageNew> {
                         const VerifyEmailBanner(),
                         const NextUpHero(),
                         const StreakGoalStrip(),
-                        const ProgressChipsRow(),
+                        ProgressChipsRow(showShopEntry: !locked),
                         Padding(
                           padding: const EdgeInsets.only(top: 16),
                           child: Column(
@@ -170,7 +177,7 @@ class _HomePageNewState extends State<HomePageNew> {
                             children: [
                               SectionTitle(title: 'home.quickActions'.tr()),
                               const SizedBox(height: 8),
-                              const QuickActionsGrid(),
+                              QuickActionsGrid(lockSecondary: locked),
                             ],
                           ),
                         ),

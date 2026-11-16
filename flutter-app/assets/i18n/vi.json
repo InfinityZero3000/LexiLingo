@@ -176,6 +176,7 @@
     "keepGoing": "Tiếp tục nhé!",
     "dashboardLoadFailed": "Không tải được bảng điều khiển: {error}",
     "quickActions": "Truy cập nhanh",
+    "unlockHint": "Hoàn thành bài học đầu tiên để mở khóa thêm tính năng",
     "continueLearningSection": "Tiếp tục học",
     "featuredCourses": "Khóa học nổi bật",
     "noEnrolledCoursesYet": "Bạn chưa tham gia khóa học nào",

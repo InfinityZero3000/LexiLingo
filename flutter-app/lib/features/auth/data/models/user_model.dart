@@ -20,6 +20,7 @@ class UserModel extends UserEntity {
     super.totalXp,
     super.numericLevel,
     super.currentStreak,
+    super.lessonsCompleted,
     super.lastLogin,
     super.lastLoginIp,
     required super.createdAt,
@@ -78,6 +79,7 @@ class UserModel extends UserEntity {
       totalXp: json['total_xp'] as int? ?? 0,
       numericLevel: json['numeric_level'] as int? ?? 1,
       currentStreak: json['current_streak'] as int? ?? 0,
+      lessonsCompleted: json['lessons_completed'] as int?,
       lastLogin: parsedLastLogin != null
           ? DateTime.tryParse(parsedLastLogin)
           : null,
@@ -111,6 +113,7 @@ class UserModel extends UserEntity {
       'total_xp': totalXp,
       'numeric_level': numericLevel,
       'current_streak': currentStreak,
+      'lessons_completed': lessonsCompleted,
       'last_login': lastLogin?.toIso8601String(),
       'last_login_ip': lastLoginIp,
       'created_at': createdAt.toIso8601String(),
@@ -137,6 +140,7 @@ class UserModel extends UserEntity {
       totalXp: entity.totalXp,
       numericLevel: entity.numericLevel,
       currentStreak: entity.currentStreak,
+      lessonsCompleted: entity.lessonsCompleted,
       lastLogin: entity.lastLogin,
       lastLoginIp: entity.lastLoginIp,
       createdAt: entity.createdAt,

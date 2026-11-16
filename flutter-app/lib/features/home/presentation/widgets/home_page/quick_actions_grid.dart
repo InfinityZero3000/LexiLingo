@@ -8,7 +8,11 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 /// Quick Actions - one card holding a grid of icon discs
 class QuickActionsGrid extends StatelessWidget {
-  const QuickActionsGrid({super.key});
+  const QuickActionsGrid({super.key, this.lockSecondary = false});
+
+  /// Only Vocabulary stays until the learner finishes a first lesson; the
+  /// other routes remain registered, so deep links still open them.
+  final bool lockSecondary;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +37,7 @@ class QuickActionsGrid extends StatelessWidget {
       Color(0xFFFF369E), // Vocabulary
     ];
 
-    final quickActions = [
+    final allActions = [
       (
         icon: PhosphorIconsBold.youtubeLogo,
         label: 'home.youtube',
@@ -71,6 +75,9 @@ class QuickActionsGrid extends StatelessWidget {
         route: '/vocab',
       ),
     ];
+    final quickActions = lockSecondary
+        ? allActions.where((action) => action.route == '/vocab').toList()
+        : allActions;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -98,7 +105,7 @@ class QuickActionsGrid extends StatelessWidget {
             // Tiles size to their text, so a larger font scale grows the row
             // instead of overflowing a fixed extent.
             final tileWidth = constraints.maxWidth / columns;
-            return Wrap(
+            final grid = Wrap(
               runSpacing: 12,
               children: [
                 for (final action in quickActions)
@@ -120,6 +127,23 @@ class QuickActionsGrid extends StatelessWidget {
                       },
                     ),
                   ),
+              ],
+            );
+            if (!lockSecondary) return grid;
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                grid,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 12, 8, 0),
+                  child: Text(
+                    'home.unlockHint'.tr(),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      height: 1.5,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
               ],
             );
           },

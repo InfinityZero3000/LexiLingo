@@ -17,6 +17,7 @@ import '../../../gamification/presentation/widgets/starter_reward_dialog.dart';
 import '../../../level/presentation/providers/level_provider.dart';
 import '../../../progress/presentation/providers/streak_provider.dart';
 import 'package:lexilingo_app/core/services/app_navigation_service.dart';
+import '../../domain/progressive_unlock.dart';
 import '../providers/home_provider.dart';
 
 class MainScreen extends StatefulWidget {
@@ -94,6 +95,13 @@ class _MainScreenState extends State<MainScreen> with RouteAware {
     context.read<HomeProvider>().refreshWeeklyProgressSilently();
     context.read<LevelProvider>().fetchLevelFull();
     context.read<StreakProvider>().loadStreak();
+    final auth = context.read<AuthProvider>();
+    if (secondaryFeaturesLocked(
+      flagEnabled: ApiConfig.progressiveUnlock,
+      lessonsCompleted: auth.currentUser?.lessonsCompleted,
+    )) {
+      auth.refreshCurrentUser();
+    }
   }
 
   Widget _buildPage(int index) {

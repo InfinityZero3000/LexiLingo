@@ -176,6 +176,7 @@
     "keepGoing": "Keep going!",
     "dashboardLoadFailed": "Failed to load dashboard: {error}",
     "quickActions": "Quick Actions",
+    "unlockHint": "Finish your first lesson to unlock more",
     "continueLearningSection": "Continue Learning",
     "featuredCourses": "Featured Courses",
     "noEnrolledCoursesYet": "No enrolled courses yet",

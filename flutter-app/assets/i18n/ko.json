@@ -176,6 +176,7 @@
     "keepGoing": "계속하세요!",
     "dashboardLoadFailed": "대시보드를 불러오지 못했습니다: {error}",
     "quickActions": "빠른 작업",
+    "unlockHint": "첫 레슨을 마치면 더 많은 기능이 열립니다",
     "continueLearningSection": "계속 학습",
     "featuredCourses": "주요 강좌",
     "noEnrolledCoursesYet": "아직 등록된 강좌가 없습니다.",
