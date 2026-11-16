@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
@@ -395,6 +397,35 @@ class PairAnswerChips extends StatelessWidget {
             ),
           )
           .toList(),
+    );
+  }
+}
+
+/// Body of an exercise that must stay usable on a small screen: scrolls when
+/// the content is taller than the space, and centres it vertically when there
+/// is room to spare (a fixed Column with Spacers overflowed instead).
+class ExerciseScrollBody extends StatelessWidget {
+  final List<Widget> children;
+  const ExerciseScrollBody({super.key, required this.children});
+
+  static const _padding = EdgeInsets.fromLTRB(20, 24, 20, 16);
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, box) => SingleChildScrollView(
+        padding: _padding,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: max(0, box.maxHeight - _padding.vertical),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: children,
+          ),
+        ),
+      ),
     );
   }
 }
