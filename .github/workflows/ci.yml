@@ -212,6 +212,11 @@ jobs:
       - name: alembic upgrade head (from empty database)
         run: alembic upgrade head
 
+      - name: restore drill (import every committed course file, then again)
+        run: |
+          RESTORE_DRILL_DATABASE_URL="$DATABASE_URL" pytest \
+            tests/test_course_content_import.py::test_restore_drill_on_migrated_schema -q
+
       - name: alembic downgrade one revision, then upgrade head again
         run: |
           alembic downgrade -1

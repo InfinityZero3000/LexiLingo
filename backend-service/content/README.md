@@ -37,9 +37,25 @@ ssh ovh-vps 'sudo lxc exec lexilingo -- bash -lc "cd /opt/lexilingo && docker co
 
 ## Restore
 
-`scripts/import_course_content.py --dir content/courses` (added in the follow-up PR) restores these
-files into an empty or existing database. Never use `admin_seed_service.seed_courses` for these courses:
-it deletes and recreates, which gives them new UUIDs and orphans learner progress.
+```bash
+cd backend-service
+python3 scripts/import_course_content.py --dir content/courses            # dry run, rolled back
+python3 scripts/import_course_content.py --dir content/courses --apply    # insert what is missing
+python3 scripts/import_course_content.py --dir content/courses --apply --update   # also overwrite rows that differ
+```
+
+Default is insert-only: a row whose id already exists is left alone, so edits made in production are
+never overwritten. `--update` is `ON CONFLICT (id) DO UPDATE` and does overwrite them. Nothing is ever
+deleted, and only categories, courses, units and lessons are touched. The importer then recomputes
+what raw SQL bypasses: exercise `type` from `ui_type`, `lessons.total_exercises`, `total_lessons` on
+units and courses, and `course_categories.course_count`.
+
+Never use `admin_seed_service.seed_courses` for these courses: it deletes and recreates, which gives
+them new UUIDs and orphans learner progress.
+
+CI proves the path on every PR: `backend-migrations` builds an empty database with
+`alembic upgrade head`, restores every file with the script, then imports twice more and asserts
+nothing changed (`tests/test_course_content_import.py`).
 
 ## What is still not reproducible from the repo
 

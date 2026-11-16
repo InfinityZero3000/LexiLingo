@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime, timezone
 from sqlalchemy import String, Integer, Boolean, Text, ForeignKey, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
-from typing import List
+from typing import Any, List
 
 from app.core.database import Base
 from app.core.db_types import GUID, GUIDArray, TZDateTime, PortableJSON
@@ -52,6 +52,17 @@ def base_type_for(ui_type) -> str | None:
     trusted.
     """
     return UI_TYPE_TO_BASE_TYPE.get(str(ui_type or ""))
+
+
+def sync_exercise_types(content: Any) -> Any:
+    """Set each exercise's `type` from its `ui_type` in place; writers bypassing `Lesson.content` must call it."""
+    # The grader keys off `type`, so a type that disagrees with ui_type is graded by the wrong rule.
+    exercises = content.get("exercises") if isinstance(content, dict) else None
+    for exercise in exercises if isinstance(exercises, list) else []:
+        base_type = base_type_for(exercise.get("ui_type")) if isinstance(exercise, dict) else None
+        if base_type:
+            exercise["type"] = base_type
+    return content
 
 
 def option_text(option) -> str:
@@ -340,14 +351,7 @@ class Lesson(Base):
         (admin routes, CRUD, content agent, seeds, scripts) — it used to be
         set by hand in some paths and left at 0 in others."""
         self.total_exercises = count_exercises(content)
-        # The grader keys off `type`, so a hand-made exercise whose type
-        # disagrees with its ui_type is graded by the wrong rule.
-        exercises = content.get("exercises") if isinstance(content, dict) else None
-        for exercise in exercises if isinstance(exercises, list) else []:
-            base_type = base_type_for(exercise.get("ui_type")) if isinstance(exercise, dict) else None
-            if base_type:
-                exercise["type"] = base_type
-        return content
+        return sync_exercise_types(content)
 
     def __repr__(self) -> str:
         return f"<Lesson {self.title}>"
