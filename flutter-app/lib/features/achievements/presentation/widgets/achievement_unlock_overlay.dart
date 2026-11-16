@@ -37,7 +37,7 @@ class AchievementUnlockOverlay extends StatefulWidget {
     return showGeneralDialog<void>(
       context: context,
       barrierDismissible: true,
-      barrierLabel: 'Achievement',
+      barrierLabel: 'achievements.achievementUnlocked'.tr(),
       barrierColor: Colors.black.withValues(alpha: 0.7),
       transitionDuration: const Duration(milliseconds: 300),
       transitionBuilder: (ctx, anim, _, child) => FadeTransition(
@@ -262,7 +262,9 @@ class _AchievementUnlockOverlayState extends State<AchievementUnlockOverlay>
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '+${achievement.gemsReward} gems',
+                              'achievements.gemsReward'.tr(
+                                namedArgs: {'gems': '${achievement.gemsReward}'},
+                              ),
                               style: const TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w700,
@@ -277,8 +279,13 @@ class _AchievementUnlockOverlayState extends State<AchievementUnlockOverlay>
                     // Tap to continue hint
                     Text(
                       widget.achievements.length > 1
-                          ? 'Tap to continue (${_current + 1}/${widget.achievements.length})'
-                          : 'Tap to continue',
+                          ? 'achievements.tapToContinueCount'.tr(
+                              namedArgs: {
+                                'current': '${_current + 1}',
+                                'total': '${widget.achievements.length}',
+                              },
+                            )
+                          : 'achievements.tapToContinue'.tr(),
                       style: TextStyle(
                         fontSize: 11,
                         color: AppColorRoles.textMuted(isDark).withValues(

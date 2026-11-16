@@ -262,11 +262,15 @@ class FeaturedCourseCard extends StatelessWidget {
                             color: AppColors.surfaceLight,
                           ),
                           const SizedBox(width: 8),
-                          Text(
-                            'home.startLearning'.tr(),
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              color: AppColors.surfaceLight,
-                              fontWeight: FontWeight.bold,
+                          Flexible(
+                            child: Text(
+                              'home.startLearning'.tr(),
+                              style: theme.textTheme.labelLarge?.copyWith(
+                                color: AppColors.surfaceLight,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],

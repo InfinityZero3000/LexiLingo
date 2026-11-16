@@ -62,7 +62,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                       ),
                       child: Icon(
                         Icons.notifications_rounded,
-                        color: Theme.of(context).colorScheme.surface,
+                        color: AppColors.surfaceLight,
                         size: 22,
                       ),
                     ),
@@ -272,14 +272,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
           children: [
             Icon(
               Icons.delete_outline_rounded,
-              color: Theme.of(context).colorScheme.surface,
+              color: AppColors.surfaceLight,
               size: 24,
             ),
             SizedBox(height: 4),
             Text(
               'notifications.deleteAction'.tr(),
               style: TextStyle(
-                color: Theme.of(context).colorScheme.surface,
+                color: AppColors.surfaceLight,
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
               ),

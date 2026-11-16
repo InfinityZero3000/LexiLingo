@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/l10n/relative_time.dart';
 import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -211,12 +212,13 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                               color: Colors.white70,
                             ),
                             const SizedBox(width: 4),
-                            Text(
+                            Flexible(
+                              child: Text(
                               'news.minRead'.tr(namedArgs: {'count': '${widget.article.readingTimeMin}'}),
                               style: const TextStyle(
                                 color: Colors.white70,
                                 fontSize: 12,
-                              ),
+                              ), maxLines: 1, overflow: TextOverflow.ellipsis),
                             ),
                             const Spacer(),
                             Text(
@@ -317,13 +319,14 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                                     color: cefrColor,
                                   ),
                                   const SizedBox(width: 6),
-                                  Text(
+                                  Flexible(
+                                    child: Text(
                                     'news.vocabularyToLearn'.tr(),
                                     style: TextStyle(
                                       color: cefrColor,
                                       fontWeight: FontWeight.w700,
                                       fontSize: 13,
-                                    ),
+                                    ), maxLines: 1, overflow: TextOverflow.ellipsis),
                                   ),
                                 ],
                               ),
@@ -758,11 +761,8 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
       final date = DateTime.parse(isoDate);
       final now = DateTime.now();
       final diff = now.difference(date);
-      if (diff.inDays == 0) return 'Today';
-      if (diff.inDays == 1) return 'Yesterday';
-      if (diff.inDays < 7) return '${diff.inDays}d ago';
-      if (diff.inDays < 30) return '${diff.inDays ~/ 7}w ago';
-      return '${diff.inDays ~/ 30}mo ago';
+      if (diff.inDays == 0) return 'datetime.today'.tr();
+      return relativeTime(date, now: now, coarse: true);
     } catch (_) {
       return '';
     }

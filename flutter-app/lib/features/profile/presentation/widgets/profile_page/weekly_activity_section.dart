@@ -41,9 +41,16 @@ class WeeklyActivitySection extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'profile.weeklyActivity'.tr(),
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Flexible(
+                    child: Text(
+                      'profile.weeklyActivity'.tr(),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                   GestureDetector(
                     onTap: activities.isNotEmpty

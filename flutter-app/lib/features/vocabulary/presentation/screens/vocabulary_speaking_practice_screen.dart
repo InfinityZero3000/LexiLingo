@@ -78,7 +78,7 @@ class _VocabularySpeakingPracticeScreenState
   Future<void> _startRecording() async {
     final hasPermission = await _recorder.hasPermission();
     if (!hasPermission) {
-      _showError('Microphone permission is required.');
+      _showError('voice.micPermissionRetry'.tr());
       return;
     }
 
@@ -110,7 +110,8 @@ class _VocabularySpeakingPracticeScreenState
         setState(() => _recordingDuration += const Duration(seconds: 1));
       });
     } catch (e) {
-      _showError('Failed to start recording: $e');
+      debugPrint('Failed to start recording: $e');
+      _showError('voice.recordingStartFailed'.tr());
     }
   }
 
@@ -124,20 +125,21 @@ class _VocabularySpeakingPracticeScreenState
       setState(() => _isRecording = false);
 
       if (path == null) {
-        _showError('No recorded audio was returned.');
+        _showError('voice.recordingMissing'.tr());
         return;
       }
 
       final audioData = await _readRecordedAudio(path);
       if (audioData == null || audioData.isEmpty) {
-        _showError('Recorded audio is empty.');
+        _showError('voice.recordingUnreadable'.tr());
         return;
       }
 
       setState(() => _recordedAudio = audioData);
       await _evaluateCurrentRecording(audioData);
     } catch (e) {
-      _showError('Failed to stop recording: $e');
+      debugPrint('Failed to stop recording: $e');
+      _showError('voice.recordingStopFailed'.tr());
     }
   }
 
@@ -209,7 +211,8 @@ class _VocabularySpeakingPracticeScreenState
       await _player.play();
       if (mounted) setState(() => _isPlayingRecording = true);
     } catch (e) {
-      _showError('Failed to play recording: $e');
+      debugPrint('Failed to play recording: $e');
+      _showError('voice.playbackFailed'.tr());
     }
   }
 
@@ -495,7 +498,9 @@ class _VocabularySpeakingPracticeScreenState
         ),
         const SizedBox(height: 14),
         Text(
-          _isRecording ? _formatDuration(_recordingDuration) : 'Tap to record',
+          _isRecording
+              ? _formatDuration(_recordingDuration)
+              : 'voice.tapToRecord'.tr(),
           style: const TextStyle(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 16),

@@ -1,5 +1,5 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 import '../../domain/entities/level_history_entry.dart';
 import '../../domain/entities/proficiency_entity.dart';
 import '../../data/datasources/proficiency_data_source.dart';
@@ -21,7 +21,7 @@ class ProficiencyProvider with ChangeNotifier {
 
   ProficiencyProfile _profile = ProficiencyProfile.empty();
   bool _isLoading = false;
-  String? _errorMessage;
+  UiText? _errorMessage;
   bool _showLevelUpDialog = false;
   String? _previousLevel;
 
@@ -36,7 +36,7 @@ class ProficiencyProvider with ChangeNotifier {
   // Getters
   ProficiencyProfile get profile => _profile;
   bool get isLoading => _isLoading;
-  String? get errorMessage => _errorMessage;
+  String? get errorMessage => _errorMessage?.resolve();
   bool get showLevelUpDialog => _showLevelUpDialog;
   String? get previousLevel => _previousLevel;
 
@@ -98,7 +98,7 @@ class ProficiencyProvider with ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _isLoading = false;
-      _errorMessage = 'errors.loadFailed'.tr();
+      _errorMessage = UiText.key('errors.loadFailed');
       notifyListeners();
       debugPrint('Error loading proficiency: $e');
     }
@@ -185,7 +185,7 @@ class ProficiencyProvider with ChangeNotifier {
 
       return result;
     } catch (e) {
-      _errorMessage = 'errors.saveFailed'.tr();
+      _errorMessage = UiText.key('errors.saveFailed');
       notifyListeners();
       debugPrint('Error recording exercises: $e');
       return null;

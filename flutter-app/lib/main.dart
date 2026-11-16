@@ -6,6 +6,8 @@ import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode, debugPrint;
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/l10n/app_localizations.dart' show AppLocales;
+import 'package:lexilingo_app/core/l10n/cached_translation_loader.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:provider/provider.dart';
@@ -207,47 +209,23 @@ void main() async {
   // Crashlytics. In release mode only — dev keeps the default red-screen behavior.
   if (!kIsWeb && kReleaseMode) {
     runZonedGuarded(
-      () => runApp(
-        EasyLocalization(
-          supportedLocales: const [
-            Locale('vi'),
-            Locale('en'),
-            Locale('ja'),
-            Locale('ko'),
-            Locale('zh'),
-            Locale('fr'),
-            Locale('es'),
-          ],
-          path: 'assets/i18n',
-          fallbackLocale: const Locale('vi'),
-          startLocale: const Locale('vi'),
-          useOnlyLangCode: true,
-          child: const LexiLingoApp(),
-        ),
-      ),
+      () => runApp(_localizedApp()),
       (error, stack) =>
           FirebaseCrashlytics.instance.recordError(error, stack, fatal: true),
     );
   } else {
-    runApp(
-      EasyLocalization(
-        supportedLocales: const [
-          Locale('vi'),
-          Locale('en'),
-          Locale('ja'),
-          Locale('ko'),
-          Locale('zh'),
-          Locale('fr'),
-          Locale('es'),
-        ],
-        path: 'assets/i18n',
-        fallbackLocale: const Locale('vi'),
-        startLocale: const Locale('vi'),
-        useOnlyLangCode: true,
-        child: const LexiLingoApp(),
+    runApp(_localizedApp());
+  }
+
+  // Warm the remaining translation tables so a language switch is instant.
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    unawaited(
+      CachedTranslationLoader.preload(
+        _translationsPath,
+        AppLocales.supportedLocales,
       ),
     );
-  }
+  });
 
   // Initialize Firebase Messaging and Deep Links after UI starts rendering
   WidgetsBinding.instance.addPostFrameCallback((_) async {
@@ -275,6 +253,18 @@ void main() async {
     }
   });
 }
+
+const _translationsPath = 'assets/i18n';
+
+Widget _localizedApp() => EasyLocalization(
+  supportedLocales: AppLocales.supportedLocales,
+  path: _translationsPath,
+  assetLoader: const CachedTranslationLoader(),
+  fallbackLocale: const Locale('vi'),
+  startLocale: const Locale('vi'),
+  useOnlyLangCode: true,
+  child: const LexiLingoApp(),
+);
 
 class LexiLingoApp extends StatefulWidget {
   const LexiLingoApp({super.key});

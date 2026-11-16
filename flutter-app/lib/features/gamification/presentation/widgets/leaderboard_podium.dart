@@ -485,14 +485,18 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
             ],
           ),
         ),
-        Text(
-          'leaderboard.participants'.tr(
-            namedArgs: {'count': widget.totalParticipants.toString()},
-          ),
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: AppColorRoles.textMuted(isDark),
+        Flexible(
+          child: Text(
+            'leaderboard.participants'.tr(
+              namedArgs: {'count': widget.totalParticipants.toString()},
+            ),
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: AppColorRoles.textMuted(isDark),
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],

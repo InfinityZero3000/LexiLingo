@@ -1,5 +1,6 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
+import 'package:lexilingo_app/core/services/locale_service.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 import 'package:lexilingo_app/core/services/notification_service.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/streak_entity.dart';
 import 'package:lexilingo_app/features/progress/domain/repositories/progress_repository.dart';
@@ -15,7 +16,15 @@ class StreakProvider extends ChangeNotifier {
     required ProgressRepository repository,
     NotificationService? notificationService,
   }) : _repository = repository,
-       _notifications = notificationService;
+       _notifications = notificationService {
+    LocaleService.languageSwitches.addListener(_refreshCheckinReminders);
+  }
+
+  @override
+  void dispose() {
+    LocaleService.languageSwitches.removeListener(_refreshCheckinReminders);
+    super.dispose();
+  }
 
   void _refreshCheckinReminders() {
     final streak = _streak;
@@ -32,14 +41,14 @@ class StreakProvider extends ChangeNotifier {
   // State
   StreakEntity? _streak;
   bool _isLoading = false;
-  String? _errorMessage;
+  UiText? _errorMessage;
   StreakUpdateResult? _lastUpdateResult;
   bool _milestoneJustReached = false;
 
   // Getters
   StreakEntity? get streak => _streak;
   bool get isLoading => _isLoading;
-  String? get errorMessage => _errorMessage;
+  String? get errorMessage => _errorMessage?.resolve();
   StreakUpdateResult? get lastUpdateResult => _lastUpdateResult;
   bool get milestoneJustReached => _milestoneJustReached;
 
@@ -68,7 +77,7 @@ class StreakProvider extends ChangeNotifier {
 
     result.fold(
       (failure) {
-        _errorMessage = failure.message;
+        _errorMessage = UiText.failure(failure);
         _streak = StreakEntity.empty();
       },
       (streakData) {
@@ -93,7 +102,7 @@ class StreakProvider extends ChangeNotifier {
     bool success = false;
     result.fold(
       (failure) {
-        _errorMessage = failure.message;
+        _errorMessage = UiText.failure(failure);
       },
       (updateResult) {
         _lastUpdateResult = updateResult;
@@ -136,7 +145,7 @@ class StreakProvider extends ChangeNotifier {
   /// Use a streak freeze to protect current streak
   Future<bool> useFreeze() async {
     if (_streak == null || _streak!.freezeCount <= 0) {
-      _errorMessage = 'progress.noStreakFreezes'.tr();
+      _errorMessage = UiText.key('progress.noStreakFreezes');
       notifyListeners();
       return false;
     }
@@ -150,7 +159,7 @@ class StreakProvider extends ChangeNotifier {
     bool success = false;
     result.fold(
       (failure) {
-        _errorMessage = failure.message;
+        _errorMessage = UiText.failure(failure);
       },
       (data) {
         // Update local streak
@@ -191,7 +200,7 @@ class StreakProvider extends ChangeNotifier {
     bool success = false;
     result.fold(
       (failure) {
-        _errorMessage = failure.message;
+        _errorMessage = UiText.failure(failure);
       },
       (streakData) {
         _streak = streakData;
@@ -215,7 +224,7 @@ class StreakProvider extends ChangeNotifier {
     Map<String, dynamic>? successData;
     result.fold(
       (failure) {
-        _errorMessage = failure.message;
+        _errorMessage = UiText.failure(failure);
       },
       (data) {
         successData = data;

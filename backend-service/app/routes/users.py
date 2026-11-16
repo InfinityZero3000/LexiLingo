@@ -24,7 +24,7 @@ from app.services.cefr_level_service import (
     normalise_level,
     publish_level_change,
 )
-from app.schemas.user import UserResponse, UserUpdate
+from app.schemas.user import UserResponse, UserUpdate, lexi_reply_language_of
 from app.schemas.start_learning import StartLearningRequest, StartLearningResponse
 from app.crud.course import CourseCRUD
 from app.services.start_learning_service import find_start_target
@@ -75,6 +75,9 @@ def _serialize_user_response(user: User, lessons_completed: int = 0) -> UserResp
         display_name=getattr(user, "display_name", None),
         native_language=_safe_str(getattr(user, "native_language", None), "vi"),
         target_language=_safe_str(getattr(user, "target_language", None), "en"),
+        lexi_reply_language=lexi_reply_language_of(
+            getattr(user, "lexi_reply_language", None)
+        ),
         level=normalized_level,
         avatar_url=getattr(user, "avatar_url", None),
         is_active=bool(getattr(user, "is_active", True)),

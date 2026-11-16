@@ -72,7 +72,9 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
           leading: AppBackButton(
             onPressed: () => Navigator.pop(context),
             icon: Icons.arrow_back_ios,
-            color: AppColors.primary,
+            color: AppColorRoles.primary(
+              Theme.of(context).brightness == Brightness.dark,
+            ),
           ),
           actions: [
             TapTarget(
@@ -183,7 +185,8 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
+                      Flexible(
+                        child: Text(
                         vocabProvider.selectedTag == null
                             ? 'vocabulary.recentWordsHeader'.tr()
                             : _tagLabel(
@@ -193,7 +196,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1.2,
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
+                        ), maxLines: 1, overflow: TextOverflow.ellipsis),
                       ),
                       if (!vocabProvider.isLoading)
                         Text(
@@ -277,11 +280,12 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
+              Flexible(
+                child: Text(
                 'vocabulary.customDecksHeader'.tr(),
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                    ),
+                    ), maxLines: 1, overflow: TextOverflow.ellipsis),
               ),
               IconButton(
                 icon: const Icon(Icons.add, color: AppColors.primary),

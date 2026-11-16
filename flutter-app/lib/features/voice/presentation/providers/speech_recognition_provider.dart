@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:lexilingo_app/features/voice/data/datasources/speech_recognition_service.dart';
 import 'package:lexilingo_app/features/voice/domain/entities/transcription.dart';
@@ -15,7 +15,7 @@ class SpeechRecognitionProvider extends ChangeNotifier {
   String _transcript = '';
   String _interimTranscript = '';
   double _confidence = 0.0;
-  String? _errorMessage;
+  UiText? _errorMessage;
   String _language = 'en-US';
 
   // Getters
@@ -24,7 +24,7 @@ class SpeechRecognitionProvider extends ChangeNotifier {
   String get interimTranscript => _interimTranscript;
   String get fullTranscript => _transcript + _interimTranscript;
   double get confidence => _confidence;
-  String? get errorMessage => _errorMessage;
+  String? get errorMessage => _errorMessage?.resolve();
   String get language => _language;
 
   bool get isIdle => _state == SpeechState.idle;
@@ -44,14 +44,14 @@ class SpeechRecognitionProvider extends ChangeNotifier {
   /// Start listening with Web Speech API
   Future<void> startListening({String? language}) async {
     if (!kIsWeb) {
-      _errorMessage = 'voice.recognitionUnsupported'.tr();
+      _errorMessage = UiText.key('voice.recognitionUnsupported');
       _state = SpeechState.error;
       notifyListeners();
       return;
     }
 
     if (!WebSpeechRecognition.isSupported) {
-      _errorMessage = 'voice.recognitionUnsupported'.tr();
+      _errorMessage = UiText.key('voice.recognitionUnsupported');
       _state = SpeechState.error;
       notifyListeners();
       return;
@@ -88,7 +88,7 @@ class SpeechRecognitionProvider extends ChangeNotifier {
           notifyListeners();
         },
         onError: (error) {
-          _errorMessage = error.toString();
+          _errorMessage = UiText.raw(error.toString());
           _state = SpeechState.error;
           notifyListeners();
         },
@@ -100,7 +100,7 @@ class SpeechRecognitionProvider extends ChangeNotifier {
         },
       );
     } catch (e) {
-      _errorMessage = 'voice.recognitionFailed'.tr();
+      _errorMessage = UiText.key('voice.recognitionFailed');
       debugPrint('Failed to start speech recognition: $e');
       _state = SpeechState.error;
       notifyListeners();

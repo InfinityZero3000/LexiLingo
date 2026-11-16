@@ -1,5 +1,5 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 import '../../domain/entities/chat_message.dart';
 import '../../domain/entities/chat_session.dart';
 import '../../domain/repositories/chat_repository.dart';
@@ -30,7 +30,7 @@ class ChatProvider extends ChangeNotifier {
   List<ChatMessage> _messages = [];
   bool _isLoading = false;
   bool _isSending = false;
-  String? _error;
+  UiText? _error;
   AIModel _selectedModel = AIModel.gemini;
 
   // Pagination for messages
@@ -49,7 +49,7 @@ class ChatProvider extends ChangeNotifier {
   List<ChatMessage> get messages => _messages;
   bool get isLoading => _isLoading;
   bool get isSending => _isSending;
-  String? get error => _error;
+  String? get error => _error?.resolve();
   AIModel get selectedModel => _selectedModel;
   bool get hasCurrentSession => _currentSession != null;
   bool get hasMoreMessages => _hasMoreMessages;
@@ -66,7 +66,7 @@ class ChatProvider extends ChangeNotifier {
       final result = await createSessionUseCase(userId);
       result.fold(
         (failure) {
-          _error = failure.message;
+          _error = UiText.failure(failure);
         },
         (session) {
           _currentSession = session;
@@ -75,7 +75,7 @@ class ChatProvider extends ChangeNotifier {
         },
       );
     } catch (e) {
-      _error = e.toString();
+      _error = UiText.raw(e.toString());
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -91,7 +91,7 @@ class ChatProvider extends ChangeNotifier {
       final result = await getSessionsUseCase(userId);
       result.fold(
         (failure) {
-          _error = failure.message;
+          _error = UiText.failure(failure);
         },
         (sessions) {
           _sessions = sessions.take(_sessionsPageSize).toList();
@@ -99,7 +99,7 @@ class ChatProvider extends ChangeNotifier {
         },
       );
     } catch (e) {
-      _error = e.toString();
+      _error = UiText.raw(e.toString());
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -116,7 +116,7 @@ class ChatProvider extends ChangeNotifier {
       final result = await getSessionsUseCase(userId);
       result.fold(
         (failure) {
-          _error = failure.message;
+          _error = UiText.failure(failure);
         },
         (sessions) {
           final startIndex = _sessions.length;
@@ -130,7 +130,7 @@ class ChatProvider extends ChangeNotifier {
         },
       );
     } catch (e) {
-      _error = e.toString();
+      _error = UiText.raw(e.toString());
     } finally {
       _isLoadingMoreSessions = false;
       notifyListeners();
@@ -173,7 +173,7 @@ class ChatProvider extends ChangeNotifier {
       final result = await getChatHistoryUseCase(sessionId);
       result.fold(
         (failure) {
-          _error = failure.message;
+          _error = UiText.failure(failure);
         },
         (messages) {
           // Load only the last N messages initially (most recent)
@@ -186,7 +186,7 @@ class ChatProvider extends ChangeNotifier {
         },
       );
     } catch (e) {
-      _error = e.toString();
+      _error = UiText.raw(e.toString());
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -228,7 +228,7 @@ class ChatProvider extends ChangeNotifier {
       final result = await getChatHistoryUseCase(_currentSession!.id);
       result.fold(
         (failure) {
-          _error = failure.message;
+          _error = UiText.failure(failure);
         },
         (allMessages) {
           // Calculate how many messages to load
@@ -261,7 +261,7 @@ class ChatProvider extends ChangeNotifier {
         },
       );
     } catch (e) {
-      _error = e.toString();
+      _error = UiText.raw(e.toString());
     } finally {
       _isLoadingMoreMessages = false;
       notifyListeners();
@@ -270,7 +270,7 @@ class ChatProvider extends ChangeNotifier {
 
   Future<void> sendMessage(String content, {required String userId}) async {
     if (_currentSession == null) {
-      _error = 'errors.noActiveSession'.tr();
+      _error = UiText.key('errors.noActiveSession');
       notifyListeners();
       return;
     }
@@ -315,7 +315,7 @@ class ChatProvider extends ChangeNotifier {
               error: failure.message,
             );
           }
-          _error = failure.message;
+          _error = UiText.failure(failure);
           _isSending = false;
           notifyListeners();
         },
@@ -333,7 +333,7 @@ class ChatProvider extends ChangeNotifier {
           error: e.toString(),
         );
       }
-      _error = e.toString();
+      _error = UiText.raw(e.toString());
       _isSending = false;
       notifyListeners();
     }

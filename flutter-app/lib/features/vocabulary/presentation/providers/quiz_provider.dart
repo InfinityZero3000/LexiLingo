@@ -1,5 +1,5 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'dart:math';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 
 import 'package:flutter/foundation.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/quiz_question_entity.dart';
@@ -46,7 +46,7 @@ class QuizProvider extends ChangeNotifier {
   final Random _random = Random();
 
   bool _isLoading = false;
-  String? _errorMessage;
+  UiText? _errorMessage;
 
   List<QuizQuestionEntity> _questions = [];
   int _currentIndex = 0;
@@ -62,7 +62,7 @@ class QuizProvider extends ChangeNotifier {
 
   // Getters
   bool get isLoading => _isLoading;
-  String? get errorMessage => _errorMessage;
+  String? get errorMessage => _errorMessage?.resolve();
   bool get hasSession => _questions.isNotEmpty;
   int get totalQuestions => _questions.length;
   int get currentQuestionNumber => _currentIndex + 1;
@@ -96,13 +96,13 @@ class QuizProvider extends ChangeNotifier {
 
       await dueResult.fold(
         (failure) async {
-          _errorMessage = failure.message;
+          _errorMessage = UiText.failure(failure);
           _isLoading = false;
           notifyListeners();
         },
         (dueList) async {
           if (dueList.isEmpty) {
-            _errorMessage = 'flashcard.nothingDueBody'.tr();
+            _errorMessage = UiText.key('flashcard.nothingDueBody');
             _isLoading = false;
             notifyListeners();
             return;
@@ -115,7 +115,7 @@ class QuizProvider extends ChangeNotifier {
       );
     } catch (e) {
       debugPrint('Unexpected vocabulary error: $e');
-      _errorMessage = 'flashcard.unexpectedError'.tr();
+      _errorMessage = UiText.key('flashcard.unexpectedError');
       _isLoading = false;
       notifyListeners();
     }
@@ -135,13 +135,13 @@ class QuizProvider extends ChangeNotifier {
       final result = await vocabularyRepository.getDeckItems(deckId);
       await result.fold(
         (failure) async {
-          _errorMessage = failure.message;
+          _errorMessage = UiText.failure(failure);
           _isLoading = false;
           notifyListeners();
         },
         (deckItems) async {
           if (deckItems.isEmpty) {
-            _errorMessage = 'flashcard.noVocabularyInDeck'.tr();
+            _errorMessage = UiText.key('flashcard.noVocabularyInDeck');
             _isLoading = false;
             notifyListeners();
             return;
@@ -152,7 +152,7 @@ class QuizProvider extends ChangeNotifier {
       );
     } catch (e) {
       debugPrint('Unexpected vocabulary error: $e');
-      _errorMessage = 'flashcard.unexpectedError'.tr();
+      _errorMessage = UiText.key('flashcard.unexpectedError');
       _isLoading = false;
       notifyListeners();
     }
@@ -176,13 +176,13 @@ class QuizProvider extends ChangeNotifier {
       );
       await itemsResult.fold(
         (failure) async {
-          _errorMessage = failure.message;
+          _errorMessage = UiText.failure(failure);
           _isLoading = false;
           notifyListeners();
         },
         (vocabItems) async {
           if (vocabItems.isEmpty) {
-            _errorMessage = 'flashcard.noVocabularyForTopic'.tr(
+            _errorMessage = UiText.key('flashcard.noVocabularyForTopic', 
               namedArgs: {'topic': tag},
             );
             _isLoading = false;
@@ -216,7 +216,7 @@ class QuizProvider extends ChangeNotifier {
       );
     } catch (e) {
       debugPrint('Unexpected vocabulary error: $e');
-      _errorMessage = 'flashcard.unexpectedError'.tr();
+      _errorMessage = UiText.key('flashcard.unexpectedError');
       _isLoading = false;
       notifyListeners();
     }
@@ -226,7 +226,7 @@ class QuizProvider extends ChangeNotifier {
   /// publish the session (or an error when nothing usable was produced).
   Future<void> _finalizeWithCards(List<ReviewCardEntity> cards) async {
     if (cards.isEmpty) {
-      _errorMessage = 'flashcard.loadFailed'.tr();
+      _errorMessage = UiText.key('flashcard.loadFailed');
       _isLoading = false;
       notifyListeners();
       return;
@@ -236,7 +236,7 @@ class QuizProvider extends ChangeNotifier {
     _buildQuestions(cards, pool);
 
     if (_questions.isEmpty) {
-      _errorMessage = 'flashcard.quizNotEnough'.tr();
+      _errorMessage = UiText.key('flashcard.quizNotEnough');
       _isLoading = false;
       notifyListeners();
       return;

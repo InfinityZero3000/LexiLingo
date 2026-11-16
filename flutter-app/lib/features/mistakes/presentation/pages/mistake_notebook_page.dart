@@ -517,7 +517,7 @@ class _MistakeCard extends StatelessWidget {
           Row(
             children: [
               if (entry.isReviewed) ...[
-                _ReviewedPill(reviewCount: entry.reviewCount),
+                Flexible(child: _ReviewedPill(reviewCount: entry.reviewCount)),
                 const SizedBox(width: 8),
                 TextButton(
                   onPressed: onReopen,
@@ -623,16 +623,20 @@ class _ReviewedPill extends StatelessWidget {
             size: 16,
           ),
           const SizedBox(width: 6),
-          Text(
-            reviewCount > 1
-                ? 'mistakeNotebook.reviewedTimes'.tr(
-                    namedArgs: {'count': '$reviewCount'},
-                  )
-                : 'mistakeNotebook.reviewed'.tr(),
-            style: const TextStyle(
-              color: AppColors.greenSuccessBright,
-              fontWeight: FontWeight.w800,
-              fontSize: 12,
+          Flexible(
+            child: Text(
+              reviewCount > 1
+                  ? 'mistakeNotebook.reviewedTimes'.tr(
+                      namedArgs: {'count': '$reviewCount'},
+                    )
+                  : 'mistakeNotebook.reviewed'.tr(),
+              style: const TextStyle(
+                color: AppColors.greenSuccessBright,
+                fontWeight: FontWeight.w800,
+                fontSize: 12,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

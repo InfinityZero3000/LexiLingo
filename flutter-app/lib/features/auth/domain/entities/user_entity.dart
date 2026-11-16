@@ -17,6 +17,12 @@ class UserEntity {
   final String certifiedLevel;
   final bool levelVerified;
   final String nativeLanguage; // ISO code: vi, en, ja, ko, zh, fr, es
+
+  /// Which language Lexi explains in: [lexiReplyApp] follows the UI language,
+  /// [lexiReplyNative] uses [nativeLanguage].
+  final String lexiReplyLanguage;
+  static const lexiReplyApp = 'app';
+  static const lexiReplyNative = 'native';
   final int totalXp;
   final int numericLevel;
   final int currentStreak;
@@ -42,6 +48,7 @@ class UserEntity {
     this.certifiedLevel = 'A1',
     this.levelVerified = true,
     this.nativeLanguage = 'vi',
+    this.lexiReplyLanguage = lexiReplyApp,
     this.totalXp = 0,
     this.numericLevel = 1,
     this.currentStreak = 0,
@@ -66,6 +73,7 @@ class UserEntity {
     String? certifiedLevel,
     bool? levelVerified,
     String? nativeLanguage,
+    String? lexiReplyLanguage,
     int? totalXp,
     int? numericLevel,
     int? currentStreak,
@@ -90,6 +98,7 @@ class UserEntity {
       certifiedLevel: certifiedLevel ?? this.certifiedLevel,
       levelVerified: levelVerified ?? this.levelVerified,
       nativeLanguage: nativeLanguage ?? this.nativeLanguage,
+      lexiReplyLanguage: lexiReplyLanguage ?? this.lexiReplyLanguage,
       totalXp: totalXp ?? this.totalXp,
       numericLevel: numericLevel ?? this.numericLevel,
       currentStreak: currentStreak ?? this.currentStreak,
@@ -100,6 +109,10 @@ class UserEntity {
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
+
+  /// The language Lexi should explain in, given the one the UI shows.
+  String lexiReplyLanguageFor(String appLanguage) =>
+      lexiReplyLanguage == lexiReplyNative ? nativeLanguage : appLanguage;
 
   bool get canAccessAdminPanel {
     final normalizedRole = roleSlug.trim().toLowerCase();

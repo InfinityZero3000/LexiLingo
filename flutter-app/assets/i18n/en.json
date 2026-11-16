@@ -148,7 +148,9 @@
     "verifyEmailFailedTitle": "This link no longer works",
     "verifyEmailFailedMessage": "It was already used or has expired. Enter your email to get a new one.",
     "verifyEmailBanner": "Verify your email to unlock the shop and referral rewards.",
-    "verifyEmailBannerAction": "Resend link"
+    "verifyEmailBannerAction": "Resend link",
+    "googleLoginFailed": "Google sign-in failed. Please try again.",
+    "facebookLoginFailed": "Facebook sign-in failed. Please try again."
   },
   "home": {
     "wordsLeftToReview": "words to review",
@@ -338,7 +340,8 @@
       "elementary": "Elementary",
       "intermediate": "Intermediate",
       "upperIntermediate": "Upper Intermediate",
-      "advanced": "Advanced"
+      "advanced": "Advanced",
+      "preIntermediate": "Pre-Intermediate"
     },
     "notFound": "Course not found",
     "yourProgress": "Your Progress",
@@ -370,6 +373,30 @@
     "courseCount": {
       "one": "{} course",
       "other": "{} courses"
+    },
+    "sort": {
+      "default": "Default",
+      "lessons": "Most Lessons",
+      "xp": "Highest XP",
+      "az": "A → Z",
+      "newest": "Newest First",
+      "popular": "Most Popular",
+      "level": "By Level"
+    },
+    "gridView": "Grid view",
+    "listView": "List view",
+    "tag": {
+      "vocabulary": "Vocabulary",
+      "grammar": "Grammar",
+      "conversation": "Conversation",
+      "speaking": "Speaking",
+      "listening": "Listening",
+      "reading": "Reading",
+      "writing": "Writing",
+      "pronunciation": "Pronunciation",
+      "business": "Business",
+      "travel": "Travel",
+      "exam": "Exam Prep"
     }
   },
   "lesson": {
@@ -586,7 +613,11 @@
     "transcribeFailed": "Could not transcribe the recording. Please try again.",
     "recordingStartFailed": "Could not start recording. Please try again.",
     "recordingStopFailed": "Could not stop recording. Please try again.",
-    "playbackFailed": "Could not play the audio. Please try again."
+    "playbackFailed": "Could not play the audio. Please try again.",
+    "feedbackExcellent": "Excellent pronunciation! Keep up the great work!",
+    "feedbackGood": "Good job! A few words need improvement.",
+    "feedbackKeepPracticing": "Keep practicing! Focus on the highlighted words.",
+    "feedbackTryAgain": "Try again slowly. Listen to the example first."
   },
   "chat": {
     "loadMore": "Load more...",
@@ -645,7 +676,15 @@
     "categoryMilestone": "Achievement Milestones",
     "unlockedCount": "{unlocked} / {total} Achievements",
     "awesome": "Awesome!",
-    "share": "Share Achievement"
+    "share": "Share Achievement",
+    "shareText": "🏆 I just unlocked \"{name}\" on LexiLingo!\n{description}\n\nJoin me and start learning English today! 🌟\n#LexiLingo #LanguageLearning",
+    "tapToContinue": "Tap to continue",
+    "tapToContinueCount": "Tap to continue ({current}/{total})",
+    "rarityCommon": "Common",
+    "rarityRare": "Rare",
+    "rarityEpic": "Epic",
+    "rarityLegendary": "Legendary",
+    "gemsReward": "+{gems} gems"
   },
   "profile": {
     "title": "Profile",
@@ -787,7 +826,19 @@
     "tabLessons": "Lessons",
     "tabActivity": "Activity",
     "tabContent": "Content",
-    "noStreakFreezes": "No streak freezes available."
+    "noStreakFreezes": "No streak freezes available.",
+    "streakMilestoneMsg": {
+      "label": "Streak Milestone",
+      "d7": "One week strong! You're building a habit.",
+      "d14": "Two weeks! Consistency is your superpower.",
+      "d30": "A whole month! You're unstoppable.",
+      "d60": "Two months! Your dedication is inspiring.",
+      "d100": "100 days! You're a LexiLingo legend.",
+      "d365": "One FULL YEAR! You've achieved the impossible.",
+      "other": "{days} days! Keep pushing forward!"
+    },
+    "lessonsCount": "{count} lessons",
+    "proficiencyA11y": "Your proficiency: {parts}"
   },
   "settings": {
     "title": "Settings",
@@ -795,6 +846,10 @@
     "daily_goal_subtitle": "Set your daily XP target",
     "language": "App Language",
     "language_subtitle": "Choose your preferred language",
+    "lexiReplyLanguage": "Lexi's explanation language",
+    "lexiReplyLanguage_subtitle": "The language Lexi uses to explain and correct",
+    "lexiReplyApp": "App language ({language})",
+    "lexiReplyNative": "Mother tongue ({language})",
     "notifications": "Notifications",
     "notifications_subtitle": "Manage your reminders",
     "sound": "Sound",
@@ -931,7 +986,17 @@
     "saveFailed": "Could not save. Please try again.",
     "submitFailed": "Could not submit. Please try again.",
     "networkRetry": "Network error. Please check your connection and try again.",
-    "localStorage": "Local storage error. Please try again."
+    "localStorage": "Local storage error. Please try again.",
+    "serverRetry": "The server ran into a problem. Please try again later.",
+    "authFailed": "Authentication failed. Please sign in again.",
+    "validation": "Some details are invalid. Please check and try again.",
+    "notFoundContent": "The requested content could not be found.",
+    "alreadyExists": "This already exists.",
+    "rateLimited": "Too many requests. Please wait a moment.",
+    "permissionDenied": "You don't have permission to do that.",
+    "somethingWrong": "Something went wrong",
+    "timeoutRetry": "The request took too long. Please try again.",
+    "signInAgain": "Please sign in again to continue."
   },
   "gamification": {
     "xpEarned": "+{xp} XP",
@@ -975,7 +1040,23 @@
     "lessonsCompletedCount": "{count} lessons completed",
     "rankLabel": "Rank",
     "rankUp": "Rank Up!",
-    "reachedRank": "You have reached {rank}"
+    "reachedRank": "You have reached {rank}",
+    "rankUpMessage": "Congratulations! You leaped from {from} to {to}. Keep up the great work!",
+    "league": {
+      "claimSpot": "Claim Your Spot!",
+      "fightBack": "Fight Back!",
+      "promoted": "You've been promoted to the {to} League!\nKeep the momentum going this week.",
+      "promotedFrom": "You've been promoted from {from} to the {to} League!\nKeep the momentum going this week.",
+      "demoted": "You dropped to the {league} League.\nBut every champion starts from the bottom — come back stronger!"
+    },
+    "dailyReward": {
+      "giftLabel": "Daily reward gift",
+      "dayLabel": "Day {day}, {gems} gems",
+      "availableToday": "available today",
+      "claimed": "claimed",
+      "locked": "locked",
+      "gemsReceived": "Gems received"
+    }
   },
   "social": {
     "friends": "Friends",
@@ -1282,7 +1363,8 @@
     "success": "Premium unlocked! Enjoy LexiLingo Pro.",
     "restored": "Purchases restored successfully!",
     "no_purchases": "No previous purchases found.",
-    "unavailable": "Subscription not available in your region."
+    "unavailable": "Subscription not available in your region.",
+    "purchaseFailed": "Purchase failed. Please try again."
   },
   "support": {
     "faq": "FAQ",
@@ -1301,7 +1383,12 @@
     "minutesAgo": "{minutes} m ago",
     "hoursAgo": "{hours} h ago",
     "daysAgo": "{days} d ago",
-    "earlier": "Earlier"
+    "earlier": "Earlier",
+    "weeksAgo": "{weeks} w ago",
+    "monthsAgo": "{months} mo ago",
+    "yearsAgo": "{years} y ago",
+    "daysLeft": "{count} days left",
+    "hoursLeft": "{count} hours left"
   },
   "shop": {
     "title": "Shop",
@@ -1323,7 +1410,10 @@
     "categorySpecial": "Special",
     "equipNow": "Equip now",
     "avatarEquipped": "Avatar equipped successfully!",
-    "avatarEquipFailed": "Could not equip this avatar."
+    "avatarEquipFailed": "Could not equip this avatar.",
+    "soldOut": "SOLD OUT",
+    "stockLeft": "{count} LEFT",
+    "boost": "Boost"
   },
   "leaderboard": {
     "title": "Leaderboard",
@@ -1340,7 +1430,18 @@
     "sapphireDesc": "Outstanding brilliance. Your persistence is paying off.",
     "rubyDesc": "The masters of dedication. Almost at the peak!",
     "amethystDesc": "Legendary status. Very few make it this far.",
-    "masterDesc": "The absolute pinnacle. You are a true language master!"
+    "masterDesc": "The absolute pinnacle. You are a true language master!",
+    "rank": {
+      "bronze": "Bronze",
+      "silver": "Silver",
+      "gold": "Gold",
+      "platinum": "Platinum",
+      "sapphire": "Sapphire",
+      "ruby": "Ruby",
+      "amethyst": "Amethyst",
+      "master": "Master",
+      "diamond": "Diamond"
+    }
   },
   "newsQuiz": {
     "title": "Comprehension Quiz",
@@ -1636,7 +1737,14 @@
     "voiceSpeed": "Voice speed",
     "historyUnavailable": "Session history is temporarily unavailable. You can continue chatting.",
     "offlineQueued": "You are offline. Your message will be sent when you reconnect.",
-    "voiceProcessingFailed": "Voice processing failed. Please try again."
+    "voiceProcessingFailed": "Voice processing failed. Please try again.",
+    "nameThinking": "{name} is thinking",
+    "nameTyping": "{name} is typing",
+    "greetingMessage": "Squawk! Hey there, adventurer! I'm Lexi, your English buddy. Let's go on a learning adventure together!\n\nYou can type or speak — I'll help you practice English. What would you like to talk about?",
+    "wentQuiet": "Squawk! Something went quiet. Can you ask that again?",
+    "smallGlitch": "Squawk! I had a small glitch. Can you ask that again?",
+    "somethingWrong": "Squawk! Something went wrong.",
+    "voiceMessagePlaceholder": "Voice message..."
   },
   "youtube": {
     "subtitles": "Subtitles",
@@ -1809,6 +1917,32 @@
       "next": "Next question",
       "nextWord": "Next word",
       "seeResults": "See results"
+    },
+    "type": {
+      "wordScramble": {
+        "name": "Word Scramble",
+        "description": "Arrange scrambled letters to form words"
+      },
+      "fillBlank": {
+        "name": "Fill in the Blank",
+        "description": "Choose the correct word to complete the sentence"
+      },
+      "matching": {
+        "name": "Matching Game",
+        "description": "Match words with their definitions"
+      },
+      "spellingBee": {
+        "name": "Spelling Bee",
+        "description": "Listen and type the word you hear"
+      },
+      "grammarQuiz": {
+        "name": "Grammar Quiz",
+        "description": "Test your grammar knowledge"
+      },
+      "hangman": {
+        "name": "Hangman",
+        "description": "Guess the word letter by letter"
+      }
     }
   },
   "learning": {
@@ -1823,7 +1957,17 @@
     "startLesson": "Start Lesson",
     "correct": "Correct!",
     "notQuite": "Not quite",
-    "loadingRoadmap": "Loading roadmap…"
+    "loadingRoadmap": "Loading roadmap…",
+    "exerciseType": {
+      "fillBlank": "FILL IN THE BLANK",
+      "translation": "TRANSLATION",
+      "exercise": "EXERCISE",
+      "multipleChoice": "MULTIPLE CHOICE",
+      "trueFalse": "TRUE OR FALSE",
+      "question": "QUESTION"
+    },
+    "hintTranslation": "Type your translation here...",
+    "hintFillBlank": "Fill in the blank..."
   },
   "books": {
     "library": "Book Library",
@@ -1866,7 +2010,19 @@
     "seeResults": "See results",
     "quizExcellent": "Excellent!",
     "quizGood": "Good job!",
-    "quizKeepReading": "Keep reading!"
+    "quizKeepReading": "Keep reading!",
+    "topic": {
+      "children": "Children",
+      "fantasy": "Fantasy",
+      "mystery": "Mystery",
+      "romance": "Romance",
+      "adventure": "Adventure",
+      "fiction": "Fiction",
+      "history": "History",
+      "scienceFiction": "Science Fiction",
+      "philosophy": "Philosophy",
+      "poetry": "Poetry"
+    }
   },
   "news": {
     "title": "English News",
@@ -1986,7 +2142,10 @@
     "removeFromDeckFailed": "Failed to remove from deck",
     "alreadyInVocabulary": "\"{}\" is already in your vocabulary.",
     "savedNewWord": "Saved new word \"{}\" to your vocabulary.",
-    "savedWord": "Saved \"{}\" to your vocabulary."
+    "savedWord": "Saved \"{}\" to your vocabulary.",
+    "addToFlashcards": "Add to Flashcards",
+    "addedToFlashcardsShort": "Added to Flashcards!",
+    "wordOfDayShare": "📖 Word of the Day: \"{word}\"\n{details}\n\nLearn English with LexiLingo!"
   },
   "legal": {
     "privacy_title": "Privacy Policy",

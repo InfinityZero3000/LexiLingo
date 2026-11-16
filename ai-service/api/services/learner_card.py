@@ -180,7 +180,7 @@ def render_card_facts(card: dict[str, Any], intents: set[str]) -> str:
         if name:
             lines.append(f"Name: {name}")
         if card.get("native_language"):
-            lines.append(f"Native language: {card['native_language']}")
+            lines.append(f"Mother tongue: {card['native_language']}")
         if card.get("member_since"):
             lines.append(f"Joined: {card['member_since']}")
         if card.get("goal"):
@@ -329,8 +329,11 @@ def render_profile_brief(card: dict[str, Any] | None, native_language_name: str)
     name = _first_name(card)
     if name:
         lines.append(f"First name: {name}")
+    # Background only. The reply language is the request's native_language,
+    # which the learner may point at the app language instead of this one;
+    # labelling both "native language" left the model two answers to follow.
     if native_language_name:
-        lines.append(f"Native language: {native_language_name}")
+        lines.append(f"Mother tongue: {native_language_name}")
 
     enrolled = card.get("enrolled_courses") or []
     if enrolled and isinstance(enrolled[0], dict) and enrolled[0].get("title"):

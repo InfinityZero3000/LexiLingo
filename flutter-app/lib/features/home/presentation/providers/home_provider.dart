@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
 import 'package:lexilingo_app/features/course/domain/usecases/get_courses_usecase.dart';
 import 'package:lexilingo_app/features/course/domain/usecases/get_enrolled_courses_usecase.dart';
@@ -42,7 +43,7 @@ class HomeProvider with ChangeNotifier {
   User? _currentUser;
   DailyGoal? _todayGoal;
   bool _isLoadingDashboard = false;
-  String? _dashboardError;
+  UiText? _dashboardError;
 
   // State: Weekly Progress (Task 1.3)
   WeeklyProgressEntity _weeklyProgress = WeeklyProgressEntity.empty();
@@ -60,7 +61,7 @@ class HomeProvider with ChangeNotifier {
   String? get coursesError => _coursesError;
   String? get enrolledError => _enrolledError;
   // Only show critical errors (courses/dashboard), not enrolled error which is secondary
-  String? get errorMessage => _coursesError ?? _dashboardError;
+  String? get errorMessage => _coursesError ?? _dashboardError?.resolve();
 
   User? get currentUser => _currentUser;
   String get userName =>
@@ -92,7 +93,7 @@ class HomeProvider with ChangeNotifier {
   }
 
   bool get isLoadingDashboard => _isLoadingDashboard;
-  String? get dashboardError => _dashboardError;
+  String? get dashboardError => _dashboardError?.resolve();
 
   bool get isLoading =>
       _isLoadingCourses || _isLoadingDashboard || _isLoadingWeekly;
@@ -229,7 +230,8 @@ class HomeProvider with ChangeNotifier {
 
       _dashboardError = null;
     } catch (e) {
-      _dashboardError = 'home.dashboardLoadFailed'.tr(
+      _dashboardError = UiText.key(
+        'home.dashboardLoadFailed',
         namedArgs: {'error': e.toString()},
       );
     } finally {

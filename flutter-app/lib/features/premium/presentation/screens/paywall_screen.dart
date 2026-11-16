@@ -45,7 +45,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
       }
     } on PlatformException catch (e) {
       if (!mounted) return;
-      final msg = (e.message?.isNotEmpty == true) ? e.message! : 'Purchase failed. Please try again.';
+      final msg = (e.message?.isNotEmpty == true) ? e.message! : 'premium.purchaseFailed'.tr();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     } finally {
       if (mounted) setState(() => _purchasing = false);

@@ -1,5 +1,6 @@
 import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'package:lexilingo_app/core/widgets/content_width.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 import 'dart:async';
 import 'dart:typed_data';
 
@@ -42,7 +43,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
   bool _isCheckingVerification = false;
   int _verificationCooldownSeconds = 0;
   Timer? _verificationCooldownTimer;
-  String? _errorMessage;
+  UiText? _errorMessage;
   String? _selectedAvatarUrl;
   Uint8List? _pickedAvatarBytes;
   String _pickedAvatarName = 'avatar.jpg';
@@ -116,7 +117,9 @@ class _EditProfileScreenState extends State<EditProfileScreen>
           await authProvider.uploadAvatar(picked, _pickedAvatarName);
         } catch (_) {
           if (mounted) {
-            setState(() => _errorMessage = 'profile.avatarUploadFailed'.tr());
+            setState(
+              () => _errorMessage = UiText.key('profile.avatarUploadFailed'),
+            );
           }
           return;
         }
@@ -136,7 +139,13 @@ class _EditProfileScreenState extends State<EditProfileScreen>
               children: [
                 Icon(Icons.check_circle, color: AppColors.surfaceLight),
                 SizedBox(width: 8),
-                Text('profile.profileUpdatedSuccess'.tr()),
+                Flexible(
+                  child: Text(
+                    'profile.profileUpdatedSuccess'.tr(),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
               ],
             ),
             backgroundColor: AppColors.greenSuccess,
@@ -151,7 +160,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = 'profile.profileUpdatedFailed'.tr();
+          _errorMessage = UiText.key('profile.profileUpdatedFailed');
         });
       }
     } finally {
@@ -310,7 +319,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              _errorMessage!,
+                              _errorMessage!.resolve(),
                               style: const TextStyle(
                                 color: AppColors.errorBright,
                                 fontSize: 13,
@@ -409,11 +418,15 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                               children: [
                                 const Icon(Icons.save_outlined, size: 20),
                                 const SizedBox(width: 8),
-                                Text(
-                                  'profile.saveChanges'.tr(),
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
+                                Flexible(
+                                  child: Text(
+                                    'profile.saveChanges'.tr(),
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ],
@@ -727,7 +740,9 @@ class _EditProfileScreenState extends State<EditProfileScreen>
       final bytes = await file.readAsBytes();
       if (!mounted) return;
       if (bytes.length > _maxAvatarBytes) {
-        setState(() => _errorMessage = 'profile.avatarUploadFailed'.tr());
+        setState(
+          () => _errorMessage = UiText.key('profile.avatarUploadFailed'),
+        );
         return;
       }
       setState(() {
@@ -737,7 +752,9 @@ class _EditProfileScreenState extends State<EditProfileScreen>
       });
     } catch (_) {
       if (mounted) {
-        setState(() => _errorMessage = 'profile.avatarUploadFailed'.tr());
+        setState(
+          () => _errorMessage = UiText.key('profile.avatarUploadFailed'),
+        );
       }
     }
   }

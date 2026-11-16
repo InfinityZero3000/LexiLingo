@@ -2,10 +2,17 @@
 User Schemas
 """
 
-from typing import Optional
+from typing import Literal, Optional
 from uuid import UUID
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, UUID4
+
+
+LexiReplyLanguage = Literal["app", "native"]
+
+
+def lexi_reply_language_of(value: object) -> LexiReplyLanguage:
+    return "native" if value == "native" else "app"
 
 
 class UserBase(BaseModel):
@@ -29,6 +36,7 @@ class UserUpdate(BaseModel):
     avatar_url: Optional[str] = None
     native_language: Optional[str] = None
     target_language: Optional[str] = None
+    lexi_reply_language: Optional[LexiReplyLanguage] = None
     level: Optional[str] = None
     cefr_level: Optional[str] = None
     goal: Optional[str] = None
@@ -43,6 +51,7 @@ class UserResponse(UserBase):
     is_active: bool
     is_verified: bool
     is_onboarding_completed: bool = False
+    lexi_reply_language: LexiReplyLanguage = "app"
     created_at: datetime
     last_login: Optional[datetime] = None
     

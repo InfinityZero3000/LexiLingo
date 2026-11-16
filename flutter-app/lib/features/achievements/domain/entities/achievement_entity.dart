@@ -2,6 +2,9 @@
 /// Represents an achievement/badge that users can unlock
 library;
 
+import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/l10n/relative_time.dart';
+
 class AchievementEntity {
   final String id;
   final String? slug; // Stable identifier for badge asset mapping
@@ -53,13 +56,13 @@ class AchievementEntity {
   String get rarityDisplayName {
     switch (rarity) {
       case 'common':
-        return 'Common';
+        return 'achievements.rarityCommon'.tr();
       case 'rare':
-        return 'Rare';
+        return 'achievements.rarityRare'.tr();
       case 'epic':
-        return 'Epic';
+        return 'achievements.rarityEpic'.tr();
       case 'legendary':
-        return 'Legendary';
+        return 'achievements.rarityLegendary'.tr();
       default:
         return rarity;
     }
@@ -113,24 +116,7 @@ class UserAchievementEntity {
   });
 
   /// Human readable time since unlock
-  String get unlockedTimeAgo {
-    final now = DateTime.now();
-    final diff = now.difference(unlockedAt);
-
-    if (diff.inDays > 365) {
-      return '${(diff.inDays / 365).floor()} year(s) ago';
-    } else if (diff.inDays > 30) {
-      return '${(diff.inDays / 30).floor()} month(s) ago';
-    } else if (diff.inDays > 0) {
-      return '${diff.inDays} day(s) ago';
-    } else if (diff.inHours > 0) {
-      return '${diff.inHours} hour(s) ago';
-    } else if (diff.inMinutes > 0) {
-      return '${diff.inMinutes} minute(s) ago';
-    } else {
-      return 'Just now';
-    }
-  }
+  String get unlockedTimeAgo => relativeTime(unlockedAt, coarse: true);
 }
 
 /// Achievement Progress - for tracking progress towards locked achievements

@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/l10n/relative_time.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/leaderboard_entry.dart';
@@ -277,13 +278,7 @@ class LeagueCard extends StatelessWidget {
     );
   }
 
-  String _formatTimeRemaining(int hours) {
-    if (hours >= 24) {
-      final days = hours ~/ 24;
-      return '$days day${days > 1 ? 's' : ''} left';
-    }
-    return '$hours hour${hours > 1 ? 's' : ''} left';
-  }
+  String _formatTimeRemaining(int hours) => timeLeft(hours);
 
   _LeagueData _getLeagueData(String league) {
     final data = rankVisualDataFor(league);

@@ -38,6 +38,7 @@ abstract class AuthRepository {
     String? displayName,
     String? avatarUrl,
     String? nativeLanguage,
+    String? lexiReplyLanguage,
     String? targetLanguage,
     String? level,
     String? goal,

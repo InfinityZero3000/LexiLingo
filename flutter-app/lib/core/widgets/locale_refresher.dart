@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 
 /// Rebuilds the whole subtree once a locale change has finished loading.
@@ -24,6 +25,9 @@ class _LocaleRefresherState extends State<LocaleRefresher> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final locale = Localizations.localeOf(context);
+    // DateFormat without an explicit locale reads this; nothing else set it, so
+    // every date rendered in English whatever the app language.
+    Intl.defaultLocale = locale.languageCode;
     final changed = _locale != null && _locale != locale;
     _locale = locale;
     if (changed) {

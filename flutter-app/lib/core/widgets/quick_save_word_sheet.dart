@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/vocab_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/widgets/new_deck_composer.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
@@ -64,7 +65,7 @@ class _QuickSaveWordSheetState extends State<_QuickSaveWordSheet> {
   final _selectedDeckIds = <String>{};
   bool _isSaving = false;
   bool _isCreating = false;
-  String? _error;
+  UiText? _error;
 
   Future<void> _saveWord() async {
     if (_isSaving) return;
@@ -106,10 +107,10 @@ class _QuickSaveWordSheetState extends State<_QuickSaveWordSheet> {
               args: [result.normalizedWord, '$addedToDecks'],
             )
           : result.alreadyInCollection
-          ? '"${result.normalizedWord}" is already in your vocabulary.'
+          ? 'vocabulary.alreadyInVocabulary'.tr(args: [result.normalizedWord])
           : result.createdNewItem
-          ? 'Saved new word "${result.normalizedWord}" to vocabulary.'
-          : 'Saved "${result.normalizedWord}" to vocabulary.';
+          ? 'vocabulary.savedNewWord'.tr(args: [result.normalizedWord])
+          : 'vocabulary.savedWord'.tr(args: [result.normalizedWord]);
 
       if (!widget.hostContext.mounted) return;
       final messenger = ScaffoldMessenger.maybeOf(widget.hostContext);
@@ -126,7 +127,7 @@ class _QuickSaveWordSheetState extends State<_QuickSaveWordSheet> {
       if (!mounted) return;
       setState(() {
         _isSaving = false;
-        _error = 'errors.saveFailed'.tr();
+        _error = UiText.key('errors.saveFailed');
       });
 
       if (!widget.hostContext.mounted) return;
@@ -260,7 +261,7 @@ class _QuickSaveWordSheetState extends State<_QuickSaveWordSheet> {
               if (_error != null) ...[
                 const SizedBox(height: 10),
                 Text(
-                  _error!,
+                  _error!.resolve(),
                   style: const TextStyle(
                     color: AppColors.errorBright,
                     fontSize: 12,

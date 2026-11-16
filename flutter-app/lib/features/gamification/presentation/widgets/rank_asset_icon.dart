@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
@@ -85,10 +86,9 @@ RankVisualData rankVisualDataFor(String rank) {
 }
 
 String rankDisplayNameFor(String rank) {
-  if (rank.toLowerCase().trim() == 'diamond') {
-    return 'Diamond';
-  }
-  return rankVisualDataFor(rank).name;
+  final key = 'leaderboard.rank.${rank.toLowerCase().trim()}';
+  final translated = key.tr();
+  return translated != key ? translated : rankVisualDataFor(rank).name;
 }
 
 class RankAssetIcon extends StatelessWidget {

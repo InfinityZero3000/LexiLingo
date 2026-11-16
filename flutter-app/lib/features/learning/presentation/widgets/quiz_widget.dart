@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import '../../domain/entities/lesson_entity.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
@@ -273,7 +274,9 @@ class _QuizWidgetState extends State<QuizWidget>
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            widget.isCorrect! ? 'Correct!' : 'Not quite',
+                            widget.isCorrect!
+                                ? 'learning.correct'.tr()
+                                : 'vocabQuiz.incorrect'.tr(),
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -308,11 +311,11 @@ class _QuizWidgetState extends State<QuizWidget>
   String _getQuestionTypeLabel() {
     switch (widget.exercise.type) {
       case ExerciseType.multipleChoice:
-        return 'MULTIPLE CHOICE';
+        return 'learning.exerciseType.multipleChoice'.tr();
       case ExerciseType.trueFalse:
-        return 'TRUE OR FALSE';
+        return 'learning.exerciseType.trueFalse'.tr();
       default:
-        return 'QUESTION';
+        return 'learning.exerciseType.question'.tr();
     }
   }
 }

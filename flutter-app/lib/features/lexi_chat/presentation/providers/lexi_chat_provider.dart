@@ -1,7 +1,8 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/utils/chat_input_limit.dart';
 import 'dart:async';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 import 'dart:convert';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:just_audio/just_audio.dart';
@@ -82,7 +83,7 @@ class LexiChatProvider extends ChangeNotifier {
   bool _isLexiThinking = false;
   bool _isLexiTyping = false;
   bool _isRestoringSession = false;
-  String? _error;
+  UiText? _error;
   bool _ttsEnabled = true;
   bool _ttsExplicitlySet = false;
   double _ttsSpeed = 1.0;
@@ -115,7 +116,7 @@ class LexiChatProvider extends ChangeNotifier {
   bool get isLexiThinking => _isLexiThinking;
   bool get isLexiTyping => _isLexiTyping;
   bool get isLexiResponding => _isLexiThinking || _isLexiTyping;
-  String? get error => _error;
+  String? get error => _error?.resolve();
   bool get hasSession => _session != null;
   bool get ttsEnabled => _ttsEnabled;
   double get ttsSpeed => _ttsSpeed;
@@ -215,11 +216,7 @@ class LexiChatProvider extends ChangeNotifier {
         LexiMessage(
           id: 'greeting',
           role: 'assistant',
-          content:
-              "Squawk! Hey there, adventurer! I'm Lexi, your English buddy. "
-              "Let's go on a learning adventure together!\n\n"
-              "You can type or speak — I'll help you practice English. "
-              "What would you like to talk about?",
+          content: 'lexiChat.greetingMessage'.tr(),
           timestamp: DateTime.now(),
         ),
       );
@@ -229,8 +226,8 @@ class LexiChatProvider extends ChangeNotifier {
       notifyListeners();
     } catch (e) {
       _error = _isUnauthorizedError(e)
-          ? 'errors.sessionExpired'.tr()
-          : 'errors.sessionStartFailed'.tr();
+          ? UiText.key('errors.sessionExpired')
+          : UiText.key('errors.sessionStartFailed');
       _isLoading = false;
       logError(_tag, 'Failed to start session: $e');
       notifyListeners();
@@ -259,7 +256,7 @@ class LexiChatProvider extends ChangeNotifier {
         await startSession(userId);
       }
     } catch (e) {
-      _error = 'errors.sessionStartFailed'.tr();
+      _error = UiText.key('errors.sessionStartFailed');
       _isLoading = false;
       logWarn(_tag, 'Failed to restore session: $e');
       notifyListeners();
@@ -326,17 +323,13 @@ class LexiChatProvider extends ChangeNotifier {
 
       if (loaded.isEmpty) {
         if (summary.messageCount > 0) {
-          _error = 'lexiChat.historyUnavailable'.tr();
+          _error = UiText.key('lexiChat.historyUnavailable');
         }
         _messages.add(
           LexiMessage(
             id: 'greeting',
             role: 'assistant',
-            content:
-                "Squawk! Hey there, adventurer! I'm Lexi, your English buddy. "
-                "Let's go on a learning adventure together!\n\n"
-                "You can type or speak — I'll help you practice English. "
-                "What would you like to talk about?",
+            content: 'lexiChat.greetingMessage'.tr(),
             timestamp: DateTime.now(),
           ),
         );
@@ -352,7 +345,7 @@ class LexiChatProvider extends ChangeNotifier {
         _sessions.removeWhere((s) => s.sessionId == summary.sessionId);
         await _saveSessions();
         await startSession(summary.userId);
-        _error = 'errors.sessionExpiredOnServer'.tr();
+        _error = UiText.key('errors.sessionExpiredOnServer');
         return;
       }
 
@@ -364,7 +357,7 @@ class LexiChatProvider extends ChangeNotifier {
         _isLoadingMoreMessages = false;
         _hasMoreMessages = false;
         _nextMessageCursor = null;
-        _error = 'errors.sessionOtherAccount'.tr();
+        _error = UiText.key('errors.sessionOtherAccount');
         _isLoading = false;
         notifyListeners();
         return;
@@ -377,8 +370,8 @@ class LexiChatProvider extends ChangeNotifier {
       }
 
       _error = _isUnauthorizedError(e)
-          ? 'errors.sessionExpired'.tr()
-          : 'errors.loadFailed'.tr();
+          ? UiText.key('errors.sessionExpired')
+          : UiText.key('errors.loadFailed');
       logWarn(_tag, 'Failed to load session: $e');
       _isLoading = false;
       notifyListeners();
@@ -405,7 +398,7 @@ class LexiChatProvider extends ChangeNotifier {
       _hasMoreMessages = page.hasMore;
       _nextMessageCursor = page.nextCursor;
     } catch (e) {
-      _error = 'errors.loadFailed'.tr();
+      _error = UiText.key('errors.loadFailed');
       logWarn(_tag, 'Failed to load older messages: $e');
     } finally {
       _isLoadingMoreMessages = false;
@@ -500,7 +493,7 @@ class LexiChatProvider extends ChangeNotifier {
       await _endLexiResponseState();
       _isSending = false;
       if (_isUnauthorizedError(e)) {
-        _error = 'errors.sessionExpired'.tr();
+        _error = UiText.key('errors.sessionExpired');
         logError(_tag, 'Send rejected as unauthorized: $e');
         notifyListeners();
         return;
@@ -509,7 +502,7 @@ class LexiChatProvider extends ChangeNotifier {
         _rejectTooLongMessage(requestId, e);
         return;
       }
-      _error = 'lexiChat.offlineQueued'.tr();
+      _error = UiText.key('lexiChat.offlineQueued');
       logError(_tag, 'Send failed, message queued: $e');
 
       await _enqueuePendingLexiMessage(
@@ -592,7 +585,7 @@ class LexiChatProvider extends ChangeNotifier {
         (message) => message.id == assistantId && message.content.isEmpty,
       );
       _error = type == 'voice.error'
-          ? 'Voice service is temporarily unavailable.'
+          ? const UiText.raw('Voice service is temporarily unavailable.')
           : null;
       notifyListeners();
     }
@@ -748,7 +741,7 @@ class LexiChatProvider extends ChangeNotifier {
                   ? serverText
                   : (accumulated.isNotEmpty
                         ? accumulated
-                        : 'Squawk! Something went quiet. Can you ask that again?');
+                        : 'lexiChat.wentQuiet'.tr());
               _messages[idx] = LexiMessage(
                 id: messageId.isNotEmpty ? messageId : placeholderId,
                 role: 'assistant',
@@ -876,7 +869,7 @@ class LexiChatProvider extends ChangeNotifier {
     _isSending = false;
 
     if (_isUnauthorizedError(reason)) {
-      _error = 'errors.sessionExpired'.tr();
+      _error = UiText.key('errors.sessionExpired');
       logError(_tag, 'Stream rejected as unauthorized: $reason');
       notifyListeners();
       return;
@@ -919,7 +912,7 @@ class LexiChatProvider extends ChangeNotifier {
       LexiMessage(
         id: 'voice_${DateTime.now().millisecondsSinceEpoch}',
         role: 'user',
-        content: 'Voice message...',
+        content: 'lexiChat.voiceMessagePlaceholder'.tr(),
         timestamp: DateTime.now(),
       ),
     );
@@ -951,8 +944,8 @@ class LexiChatProvider extends ChangeNotifier {
       await _endLexiResponseState();
       _isSending = false;
       _error = _isUnauthorizedError(e)
-          ? 'errors.sessionExpired'.tr()
-          : 'lexiChat.voiceProcessingFailed'.tr();
+          ? UiText.key('errors.sessionExpired')
+          : UiText.key('lexiChat.voiceProcessingFailed');
       logError(_tag, 'Voice processing failed: $e');
       notifyListeners();
     }

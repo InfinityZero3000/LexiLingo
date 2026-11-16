@@ -99,13 +99,17 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 children: [
                   Row(
                     children: [
-                      Text(
-                        'onboarding.personalizeTitle'.tr(),
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
+                      Expanded(
+                        child: Text(
+                          'onboarding.personalizeTitle'.tr(),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
-                      const Spacer(),
+                      const SizedBox(width: 12),
                       Text(
                         '${_currentPage + 1}/$_totalSteps',
                         style: theme.textTheme.labelLarge?.copyWith(

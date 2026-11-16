@@ -1219,21 +1219,21 @@ class _HorizontalCourseCard extends StatelessWidget {
   String _formatCourseTag(String tag) {
     final key = _normalizeTagKey(tag);
     const aliases = {
-      'vocab': 'Vocabulary',
-      'vocabulary': 'Vocabulary',
-      'grammar': 'Grammar',
-      'conversation': 'Conversation',
-      'speaking': 'Speaking',
-      'listening': 'Listening',
-      'reading': 'Reading',
-      'writing': 'Writing',
-      'pronunciation': 'Pronunciation',
-      'business': 'Business',
-      'travel': 'Travel',
-      'exam': 'Exam Prep',
+      'vocab': 'vocabulary',
+      'vocabulary': 'vocabulary',
+      'grammar': 'grammar',
+      'conversation': 'conversation',
+      'speaking': 'speaking',
+      'listening': 'listening',
+      'reading': 'reading',
+      'writing': 'writing',
+      'pronunciation': 'pronunciation',
+      'business': 'business',
+      'travel': 'travel',
+      'exam': 'exam',
     };
     final alias = aliases[key];
-    if (alias != null) return alias;
+    if (alias != null) return 'course.tag.$alias'.tr();
 
     return key
         .split('_')
@@ -1437,20 +1437,20 @@ class _FilterSheetState extends State<_FilterSheet> {
   late String _sortOrder;
 
   static const List<(String, String?, Color)> _levels = [
-    ('All', null, AppColors.grey500),
-    ('Beginner', 'Beginner', AppColors.greenSuccessBright),
-    ('Elementary', 'Elementary', AppColors.greenSuccessSoft),
-    ('Pre-Intermediate', 'Pre-Intermediate', AppColors.teal),
-    ('Intermediate', 'Intermediate', AppColors.orange),
-    ('Upper-Intermediate', 'Upper-Intermediate', AppColors.deepOrange),
-    ('Advanced', 'Advanced', AppColors.errorBright),
+    ('course.langAll', null, AppColors.grey500),
+    ('course.difficulty.beginner', 'Beginner', AppColors.greenSuccessBright),
+    ('course.difficulty.elementary', 'Elementary', AppColors.greenSuccessSoft),
+    ('course.difficulty.preIntermediate', 'Pre-Intermediate', AppColors.teal),
+    ('course.difficulty.intermediate', 'Intermediate', AppColors.orange),
+    ('course.difficulty.upperIntermediate', 'Upper-Intermediate', AppColors.deepOrange),
+    ('course.difficulty.advanced', 'Advanced', AppColors.errorBright),
   ];
 
   static const _sortOptions = [
-    ('Default', 'default', Icons.sort),
-    ('Most Lessons', 'lessons', Icons.book_outlined),
-    ('Highest XP', 'xp', Icons.star_outline),
-    ('A → Z', 'az', Icons.sort_by_alpha),
+    ('course.sort.default', 'default', Icons.sort),
+    ('course.sort.lessons', 'lessons', Icons.book_outlined),
+    ('course.sort.xp', 'xp', Icons.star_outline),
+    ('course.sort.az', 'az', Icons.sort_by_alpha),
   ];
 
   @override
@@ -1553,12 +1553,13 @@ class _FilterSheetState extends State<_FilterSheet> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Text(
+                        Flexible(
+                          child: Text(
                           'course.filterCourses'.tr(),
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                          ),
+                          ), maxLines: 1, overflow: TextOverflow.ellipsis),
                         ),
                         const Spacer(),
                         if (_hasAnyFilter)
@@ -1643,7 +1644,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                       children: _levels
                           .map(
                             (e) => _Chip(
-                              label: e.$1,
+                              label: e.$1.tr(),
                               isSelected: _level == e.$2,
                               color: e.$3,
                               onTap: () => setState(() => _level = e.$2),
@@ -1721,7 +1722,8 @@ class _FilterSheetState extends State<_FilterSheet> {
                                   : AppColors.grey500,
                             ),
                             const SizedBox(width: 10),
-                            Text(
+                            Flexible(
+                              child: Text(
                               'course.showEnrolledOnly'.tr(),
                               style: TextStyle(
                                 fontWeight: FontWeight.w600,
@@ -1731,7 +1733,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                                     : (isDark
                                           ? AppColors.textOnDarkSecondary
                                           : AppColors.textDark),
-                              ),
+                              ), maxLines: 2, overflow: TextOverflow.ellipsis),
                             ),
                             const Spacer(),
                             Switch.adaptive(
@@ -1759,7 +1761,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                       children: _sortOptions
                           .map(
                             (s) => _Chip(
-                              label: s.$1,
+                              label: s.$1.tr(),
                               isSelected: _sortOrder == s.$2,
                               color: AppColors.primary,
                               prefix: Icon(

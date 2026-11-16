@@ -1,7 +1,7 @@
 /// Achievement Provider - State management for achievements
 library;
 
-import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:lexilingo_app/features/achievements/data/models/achievement_model.dart';
 import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
@@ -19,7 +19,7 @@ class AchievementProvider with ChangeNotifier {
   List<UserAchievementEntity> _myAchievements = [];
   List<UnlockedAchievement> _recentlyUnlocked = [];
   bool _isLoading = false;
-  String? _error;
+  UiText? _error;
   bool _usingSampleData = false;
 
   // Getters
@@ -27,7 +27,7 @@ class AchievementProvider with ChangeNotifier {
   List<UserAchievementEntity> get myAchievements => _myAchievements;
   List<UnlockedAchievement> get recentlyUnlocked => _recentlyUnlocked;
   bool get isLoading => _isLoading;
-  String? get error => _error;
+  String? get error => _error?.resolve();
   bool get usingSampleData => _usingSampleData;
 
   List<AchievementEntity> _removeXpAchievements(
@@ -96,7 +96,7 @@ class AchievementProvider with ChangeNotifier {
         _usingSampleData = false;
       }
     } catch (e) {
-      _error = 'errors.loadFailed'.tr();
+      _error = UiText.key('errors.loadFailed');
       debugPrint('Failed to load achievements: $e');
       // Fallback to sample data on error
       _allAchievements = _removeXpAchievements(SampleAchievements.getAll());
@@ -119,7 +119,7 @@ class AchievementProvider with ChangeNotifier {
         await repository.getMyAchievements(),
       );
     } catch (e) {
-      _error = 'errors.loadFailed'.tr();
+      _error = UiText.key('errors.loadFailed');
       debugPrint('Failed to load my achievements: $e');
     } finally {
       _isLoading = false;
@@ -155,7 +155,7 @@ class AchievementProvider with ChangeNotifier {
         _usingSampleData = false;
       }
     } catch (e) {
-      _error = 'errors.loadFailed'.tr();
+      _error = UiText.key('errors.loadFailed');
       debugPrint('Failed to load achievements: $e');
       // Fallback to sample data on error
       _allAchievements = _removeXpAchievements(SampleAchievements.getAll());

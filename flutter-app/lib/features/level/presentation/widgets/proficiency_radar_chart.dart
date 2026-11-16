@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -98,7 +99,7 @@ class _ProficiencyRadarChartState extends State<ProficiencyRadarChart>
     final parts = widget.scores.entries
         .map((e) => '${e.key} ${(e.value * 100).toInt()}%')
         .join(', ');
-    return 'Your proficiency: $parts';
+    return 'progress.proficiencyA11y'.tr(namedArgs: {'parts': parts});
   }
 }
 

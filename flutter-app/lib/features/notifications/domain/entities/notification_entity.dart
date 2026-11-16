@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/l10n/relative_time.dart';
 import 'package:equatable/equatable.dart';
 
 /// Notification types supported by the app
@@ -120,24 +121,7 @@ class NotificationEntity extends Equatable {
   }
 
   /// Get relative time string (e.g., "2m ago", "1h ago", "Yesterday")
-  String get relativeTimeString {
-    final now = DateTime.now();
-    final difference = now.difference(timestamp);
-
-    if (difference.inMinutes < 1) {
-      return 'Just now';
-    } else if (difference.inMinutes < 60) {
-      return '${difference.inMinutes}m ago';
-    } else if (difference.inHours < 24) {
-      return '${difference.inHours}h ago';
-    } else if (isYesterday) {
-      return 'Yesterday';
-    } else if (difference.inDays < 7) {
-      return '${difference.inDays}d ago';
-    } else {
-      return '${timestamp.day}/${timestamp.month}/${timestamp.year}';
-    }
-  }
+  String get relativeTimeString => relativeTime(timestamp);
 
   /// Get target ID from data if available
   String? get targetId => _readString(data?['target_id']);

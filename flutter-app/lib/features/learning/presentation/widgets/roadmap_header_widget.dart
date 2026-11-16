@@ -44,7 +44,7 @@ class RoadmapHeaderWidget extends StatelessWidget {
                 children: [
                   AppBackButton(
                     icon: Icons.arrow_back,
-                    color: Theme.of(context).colorScheme.surface,
+                    color: AppColors.surfaceLight,
                     onPressed: onBack,
                   ),
                   Expanded(
@@ -53,7 +53,7 @@ class RoadmapHeaderWidget extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.surface,
+                        color: AppColors.surfaceLight,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -108,11 +108,15 @@ class RoadmapHeaderWidget extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'learning.courseProgress'.tr(),
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12,
+                      Flexible(
+                        child: Text(
+                          'learning.courseProgress'.tr(),
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       Text(

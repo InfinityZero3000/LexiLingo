@@ -4,6 +4,7 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'dart:async' as _i4;
+import 'dart:typed_data' as _i7;
 
 import 'package:dartz/dartz.dart' as _i2;
 import 'package:lexilingo_app/core/error/failures.dart' as _i5;
@@ -154,6 +155,7 @@ class MockAuthRepository extends _i1.Mock implements _i3.AuthRepository {
     String? displayName,
     String? avatarUrl,
     String? nativeLanguage,
+    String? lexiReplyLanguage,
     String? targetLanguage,
     String? level,
     String? goal,
@@ -165,6 +167,7 @@ class MockAuthRepository extends _i1.Mock implements _i3.AuthRepository {
               #displayName: displayName,
               #avatarUrl: avatarUrl,
               #nativeLanguage: nativeLanguage,
+              #lexiReplyLanguage: lexiReplyLanguage,
               #targetLanguage: targetLanguage,
               #level: level,
               #goal: goal,
@@ -179,11 +182,35 @@ class MockAuthRepository extends _i1.Mock implements _i3.AuthRepository {
                       #displayName: displayName,
                       #avatarUrl: avatarUrl,
                       #nativeLanguage: nativeLanguage,
+                      #lexiReplyLanguage: lexiReplyLanguage,
                       #targetLanguage: targetLanguage,
                       #level: level,
                       #goal: goal,
                       #interest: interest,
                       #isOnboardingCompleted: isOnboardingCompleted,
+                    }),
+                  ),
+                ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, _i6.UserEntity>>);
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, _i6.UserEntity>> uploadAvatar({
+    required _i7.Uint8List? bytes,
+    required String? filename,
+  }) =>
+      (super.noSuchMethod(
+            Invocation.method(#uploadAvatar, [], {
+              #bytes: bytes,
+              #filename: filename,
+            }),
+            returnValue:
+                _i4.Future<_i2.Either<_i5.Failure, _i6.UserEntity>>.value(
+                  _FakeEither_0<_i5.Failure, _i6.UserEntity>(
+                    this,
+                    Invocation.method(#uploadAvatar, [], {
+                      #bytes: bytes,
+                      #filename: filename,
                     }),
                   ),
                 ),
@@ -210,6 +237,22 @@ class MockAuthRepository extends _i1.Mock implements _i3.AuthRepository {
             ),
           )
           as _i4.Future<_i2.Either<_i5.Failure, void>>);
+
+  @override
+  _i4.Future<_i2.Either<_i5.Failure, _i6.UserEntity?>> verifyEmailAndSignIn(
+    String? token,
+  ) =>
+      (super.noSuchMethod(
+            Invocation.method(#verifyEmailAndSignIn, [token]),
+            returnValue:
+                _i4.Future<_i2.Either<_i5.Failure, _i6.UserEntity?>>.value(
+                  _FakeEither_0<_i5.Failure, _i6.UserEntity?>(
+                    this,
+                    Invocation.method(#verifyEmailAndSignIn, [token]),
+                  ),
+                ),
+          )
+          as _i4.Future<_i2.Either<_i5.Failure, _i6.UserEntity?>>);
 
   @override
   _i4.Future<_i2.Either<_i5.Failure, void>> resendVerificationEmail(

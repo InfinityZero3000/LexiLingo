@@ -150,14 +150,14 @@ class _ProfilePageState extends State<ProfilePage> {
                     children: [
                       Icon(
                         Icons.diamond,
-                        color: Theme.of(context).colorScheme.surface,
+                        color: AppColors.surfaceLight,
                         size: 16,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         '${gamification.wallet?.gems ?? 0}',
                         style: TextStyle(
-                          color: Theme.of(context).colorScheme.surface,
+                          color: AppColors.surfaceLight,
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
                         ),

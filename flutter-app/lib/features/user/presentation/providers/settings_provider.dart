@@ -41,6 +41,21 @@ class SettingsProvider extends ChangeNotifier {
        _hasServerPush = hasServerPush,
        _deviceTimezone = deviceTimezone {
     _theme = _themePreferenceStore.readTheme();
+    LocaleService.languageSwitches.addListener(_onLanguageSwitched);
+  }
+
+  /// The daily reminder is rendered when it is scheduled, so it keeps the old
+  /// language until rescheduled.
+  void _onLanguageSwitched() {
+    final settings = _settings;
+    if (settings == null) return;
+    _syncReminderWithSettings(settings).catchError((_) {});
+  }
+
+  @override
+  void dispose() {
+    LocaleService.languageSwitches.removeListener(_onLanguageSwitched);
+    super.dispose();
   }
 
   Future<Map<String, dynamic>> getReferralCode() {

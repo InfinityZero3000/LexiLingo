@@ -10,10 +10,10 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Sort options for courses
 enum CourseSortOption {
-  newest('Newest First', Icons.access_time),
-  popular('Most Popular', Icons.trending_up),
-  alphabetical('A-Z', Icons.sort_by_alpha),
-  level('By Level', Icons.signal_cellular_alt);
+  newest('course.sort.newest', Icons.access_time),
+  popular('course.sort.popular', Icons.trending_up),
+  alphabetical('course.sort.az', Icons.sort_by_alpha),
+  level('course.sort.level', Icons.signal_cellular_alt);
 
   const CourseSortOption(this.label, this.icon);
   final String label;
@@ -200,7 +200,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                                       children: [
                                         Icon(option.icon, size: 18),
                                         const SizedBox(width: 8),
-                                        Text(option.label),
+                                        Text(option.label.tr()),
                                         if (option == _sortOption) ...[
                                           const Spacer(),
                                           const Icon(
@@ -224,7 +224,9 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                             onPressed: () {
                               setState(() => _isGridView = !_isGridView);
                             },
-                            tooltip: _isGridView ? 'List view' : 'Grid view',
+                            tooltip: _isGridView
+                                ? 'course.listView'.tr()
+                                : 'course.gridView'.tr(),
                           ),
                         ],
                       ),

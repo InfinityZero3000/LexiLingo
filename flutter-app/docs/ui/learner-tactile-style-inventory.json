@@ -22123,6 +22123,32 @@
       }
     },
     {
+      "id": "lib/features/user/presentation/pages/settings_page.dart::_SettingsPageState::BoxDecoration::15",
+      "path": "lib/features/user/presentation/pages/settings_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_SettingsPageState",
+      "callKind": "BoxDecoration",
+      "ordinal": 15,
+      "line": 360,
+      "category": "eligible",
+      "group": 6,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
       "id": "lib/features/user/presentation/pages/settings_page.dart::_SettingsPageState::BoxDecoration::2",
       "path": "lib/features/user/presentation/pages/settings_page.dart",
       "entryPoint": "surface",
@@ -22416,6 +22442,32 @@
       "callKind": "Card",
       "ordinal": 3,
       "line": 579,
+      "category": "eligible",
+      "group": 6,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/user/presentation/pages/settings_page.dart::_SettingsPageState::Card::4",
+      "path": "lib/features/user/presentation/pages/settings_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_SettingsPageState",
+      "callKind": "Card",
+      "ordinal": 4,
+      "line": 337,
       "category": "eligible",
       "group": 6,
       "status": "inventoried",

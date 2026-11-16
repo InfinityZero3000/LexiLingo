@@ -216,12 +216,16 @@ class _WelcomePageState extends State<WelcomePage>
                                   'https://lh3.googleusercontent.com/aida-public/AB6AXuDh8w9mHRMsKUobp8aWGqHZ6LXaOhoFOEUKCtsCii3VAtwJ1dru5bV3TQmgY2th7h3XUiqCgytuEmX0QpvJuw7SGDjbFRMYnrIhUJGoPGjveUPiBOtBsJb_EzeFHClWbFIeLtFDAyIQAiYAYTGyu4qy3j9Pm7Vc9LUpvzFWn5Evm_DrjsioVgYlxaZFwso-vTgvsdnPYB2vreATNgeOVQPxS1DFpbXSUSFQ7RuF5oO20KOeONIEz5PEDrxZ09B_mm7RNbGAy_HdUHE',
                                 ),
                               ),
-                              Text(
-                                'onboarding.globalCommunity'.tr(),
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: isDark
-                                      ? AppColors.textMuted
-                                      : AppColors.textSlateLight,
+                              Flexible(
+                                child: Text(
+                                  'onboarding.globalCommunity'.tr(),
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: isDark
+                                        ? AppColors.textMuted
+                                        : AppColors.textSlateLight,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],

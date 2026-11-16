@@ -23,7 +23,7 @@ class RankUpDialog extends StatefulWidget {
     return showGeneralDialog(
       context: context,
       barrierDismissible: false,
-      barrierLabel: 'Rank Up',
+      barrierLabel: 'gamification.rankUp'.tr(),
       transitionDuration: const Duration(milliseconds: 320),
       pageBuilder: (_, __, ___) =>
           RankUpDialog(newRank: newRank, oldRank: oldRank),
@@ -410,6 +410,39 @@ class _RankUpMessage extends StatelessWidget {
   final String oldRankName;
   final String newRankName;
 
+  /// Translated as one sentence; the rank names are then styled wherever the
+  /// language put them.
+  List<TextSpan> _rankUpSpans(Color accent) {
+    const fromMark = '\u{E000}';
+    const toMark = '\u{E001}';
+    final sentence = 'gamification.rankUpMessage'.tr(
+      namedArgs: {'from': fromMark, 'to': toMark},
+    );
+    final spans = <TextSpan>[];
+    var last = 0;
+    for (final match in RegExp('[$fromMark$toMark]').allMatches(sentence)) {
+      if (match.start > last) {
+        spans.add(TextSpan(text: sentence.substring(last, match.start)));
+      }
+      spans.add(
+        match.group(0) == fromMark
+            ? TextSpan(
+                text: oldRankName,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              )
+            : TextSpan(
+                text: newRankName,
+                style: TextStyle(fontWeight: FontWeight.w900, color: accent),
+              ),
+      );
+      last = match.end;
+    }
+    if (last < sentence.length) {
+      spans.add(TextSpan(text: sentence.substring(last)));
+    }
+    return spans;
+  }
+
   const _RankUpMessage({
     required this.palette,
     required this.oldRankName,
@@ -447,22 +480,7 @@ class _RankUpMessage extends StatelessWidget {
                 color: palette.onSurfaceVariant,
                 height: 1.4,
               ),
-              children: [
-                const TextSpan(text: 'Congratulations! You leaped from '),
-                TextSpan(
-                  text: oldRankName,
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-                const TextSpan(text: ' to '),
-                TextSpan(
-                  text: newRankName,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    color: palette.primary,
-                  ),
-                ),
-                const TextSpan(text: '. Keep up the great work!'),
-              ],
+              children: _rankUpSpans(palette.primary),
             ),
           ),
         ],

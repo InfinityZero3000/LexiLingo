@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:lexilingo_app/core/network/api_client.dart';
@@ -156,7 +157,7 @@ class LexiChatDataSource {
     text = text.replaceAll(RegExp(r'\n{3,}'), '\n\n').trim();
 
     if (text.isEmpty) {
-      return 'Squawk! I had a small glitch. Can you ask that again?';
+      return 'lexiChat.smallGlitch'.tr();
     }
 
     return text;
@@ -268,7 +269,7 @@ class LexiChatDataSource {
       content: _sanitizeAssistantContent(
         data['lexi_response'] ??
             data['response'] ??
-            'Squawk! Something went wrong.',
+            'lexiChat.somethingWrong'.tr(),
       ),
       timestamp: DateTime.now(),
       audioBase64: data['audio_base64'],

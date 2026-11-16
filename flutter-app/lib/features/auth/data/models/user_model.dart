@@ -17,6 +17,7 @@ class UserModel extends UserEntity {
     super.certifiedLevel,
     super.levelVerified,
     super.nativeLanguage,
+    super.lexiReplyLanguage,
     super.totalXp,
     super.numericLevel,
     super.currentStreak,
@@ -76,6 +77,10 @@ class UserModel extends UserEntity {
       certifiedLevel: _optionalString(json['certified_level']) ?? 'A1',
       levelVerified: json['level_verified'] as bool? ?? true,
       nativeLanguage: _optionalString(json['native_language']) ?? 'vi',
+      lexiReplyLanguage:
+          json['lexi_reply_language'] == UserEntity.lexiReplyNative
+          ? UserEntity.lexiReplyNative
+          : UserEntity.lexiReplyApp,
       totalXp: json['total_xp'] as int? ?? 0,
       numericLevel: json['numeric_level'] as int? ?? 1,
       currentStreak: json['current_streak'] as int? ?? 0,
@@ -110,6 +115,7 @@ class UserModel extends UserEntity {
       'certified_level': certifiedLevel,
       'level_verified': levelVerified,
       'native_language': nativeLanguage,
+      'lexi_reply_language': lexiReplyLanguage,
       'total_xp': totalXp,
       'numeric_level': numericLevel,
       'current_streak': currentStreak,
@@ -137,6 +143,7 @@ class UserModel extends UserEntity {
       certifiedLevel: entity.certifiedLevel,
       levelVerified: entity.levelVerified,
       nativeLanguage: entity.nativeLanguage,
+      lexiReplyLanguage: entity.lexiReplyLanguage,
       totalXp: entity.totalXp,
       numericLevel: entity.numericLevel,
       currentStreak: entity.currentStreak,

@@ -1,5 +1,5 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 import 'package:lexilingo_app/core/services/analytics_service.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/review_session_entity.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/user_vocabulary_entity.dart';
@@ -30,7 +30,7 @@ class FlashcardProvider extends ChangeNotifier {
   // Session state
   ReviewSessionEntity? _currentSession;
   bool _isLoading = false;
-  String? _errorMessage;
+  UiText? _errorMessage;
   bool _nothingDue = false;
   bool _isCardFlipped = false;
   DateTime? _cardStartTime;
@@ -43,7 +43,7 @@ class FlashcardProvider extends ChangeNotifier {
   // Getters
   ReviewSessionEntity? get currentSession => _currentSession;
   bool get isLoading => _isLoading;
-  String? get errorMessage => _errorMessage;
+  String? get errorMessage => _errorMessage?.resolve();
   bool get nothingDue => _nothingDue;
   bool get isCardFlipped => _isCardFlipped;
   bool get hasSession => _currentSession != null;
@@ -123,7 +123,7 @@ class FlashcardProvider extends ChangeNotifier {
 
       await result.fold(
         (failure) async {
-          _errorMessage = _getFailureMessage(failure);
+          _errorMessage = (_getFailureMessage(failure));
           _isLoading = false;
           notifyListeners();
         },
@@ -144,7 +144,7 @@ class FlashcardProvider extends ChangeNotifier {
           _loadedVocabCount = firstBatch.length;
 
           if (cards.isEmpty) {
-            _errorMessage = 'flashcard.loadFailed'.tr();
+            _errorMessage = UiText.key('flashcard.loadFailed');
             _isLoading = false;
             notifyListeners();
             return;
@@ -163,7 +163,7 @@ class FlashcardProvider extends ChangeNotifier {
       );
     } catch (e) {
       debugPrint('Unexpected vocabulary error: $e');
-      _errorMessage = 'flashcard.unexpectedError'.tr();
+      _errorMessage = UiText.key('flashcard.unexpectedError');
       _isLoading = false;
       notifyListeners();
     }
@@ -185,13 +185,13 @@ class FlashcardProvider extends ChangeNotifier {
 
       await itemsResult.fold(
         (failure) async {
-          _errorMessage = _getFailureMessage(failure);
+          _errorMessage = (_getFailureMessage(failure));
           _isLoading = false;
           notifyListeners();
         },
         (vocabItems) async {
           if (vocabItems.isEmpty) {
-            _errorMessage = 'flashcard.noVocabularyForTopic'.tr(
+            _errorMessage = UiText.key('flashcard.noVocabularyForTopic', 
               namedArgs: {'topic': tag},
             );
             _isLoading = false;
@@ -205,7 +205,7 @@ class FlashcardProvider extends ChangeNotifier {
 
           await collectionResult.fold(
             (failure) async {
-              _errorMessage = _getFailureMessage(failure);
+              _errorMessage = (_getFailureMessage(failure));
               _isLoading = false;
               notifyListeners();
             },
@@ -239,7 +239,7 @@ class FlashcardProvider extends ChangeNotifier {
               final cards = results.whereType<ReviewCardEntity>().toList();
 
               if (cards.isEmpty) {
-                _errorMessage = 'flashcard.prepareFailed'.tr();
+                _errorMessage = UiText.key('flashcard.prepareFailed');
                 _isLoading = false;
                 notifyListeners();
                 return;
@@ -261,7 +261,7 @@ class FlashcardProvider extends ChangeNotifier {
       );
     } catch (e) {
       debugPrint('Unexpected vocabulary error: $e');
-      _errorMessage = 'flashcard.unexpectedError'.tr();
+      _errorMessage = UiText.key('flashcard.unexpectedError');
       _isLoading = false;
       notifyListeners();
     }
@@ -283,13 +283,13 @@ class FlashcardProvider extends ChangeNotifier {
 
       await result.fold(
         (failure) async {
-          _errorMessage = _getFailureMessage(failure);
+          _errorMessage = (_getFailureMessage(failure));
           _isLoading = false;
           notifyListeners();
         },
         (deckItems) async {
           if (deckItems.isEmpty) {
-            _errorMessage = 'flashcard.noVocabularyInDeck'.tr();
+            _errorMessage = UiText.key('flashcard.noVocabularyInDeck');
             _isLoading = false;
             notifyListeners();
             return;
@@ -303,7 +303,7 @@ class FlashcardProvider extends ChangeNotifier {
           _loadedVocabCount = firstBatch.length;
 
           if (cards.isEmpty) {
-            _errorMessage = 'flashcard.loadFailed'.tr();
+            _errorMessage = UiText.key('flashcard.loadFailed');
             _isLoading = false;
             notifyListeners();
             return;
@@ -323,7 +323,7 @@ class FlashcardProvider extends ChangeNotifier {
       );
     } catch (e) {
       debugPrint('Unexpected vocabulary error: $e');
-      _errorMessage = 'flashcard.unexpectedError'.tr();
+      _errorMessage = UiText.key('flashcard.unexpectedError');
       _isLoading = false;
       notifyListeners();
     }
@@ -370,7 +370,7 @@ class FlashcardProvider extends ChangeNotifier {
 
       result.fold(
         (failure) {
-          _errorMessage = _getFailureMessage(failure);
+          _errorMessage = (_getFailureMessage(failure));
           _isLoading = false;
           notifyListeners();
         },
@@ -407,7 +407,7 @@ class FlashcardProvider extends ChangeNotifier {
       );
     } catch (e) {
       debugPrint('Failed to submit review: $e');
-      _errorMessage = 'flashcard.submitFailed'.tr();
+      _errorMessage = UiText.key('flashcard.submitFailed');
       _isLoading = false;
       notifyListeners();
     }
@@ -429,8 +429,11 @@ class FlashcardProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  String _getFailureMessage(failure) {
-    return failure.message ?? 'flashcard.unexpectedError'.tr();
+  UiText _getFailureMessage(failure) {
+    final message = failure.message as String?;
+    return message != null
+        ? UiText.raw(message)
+        : const UiText.key('flashcard.unexpectedError');
   }
 
   @override
