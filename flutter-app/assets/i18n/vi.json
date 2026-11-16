@@ -146,7 +146,9 @@
     "verifyEmailDoneTitle": "Email đã được xác minh",
     "verifyEmailDoneMessage": "Bạn có thể đăng nhập để bắt đầu học.",
     "verifyEmailFailedTitle": "Liên kết không còn hiệu lực",
-    "verifyEmailFailedMessage": "Liên kết đã được dùng hoặc đã hết hạn. Nhập email để nhận liên kết mới."
+    "verifyEmailFailedMessage": "Liên kết đã được dùng hoặc đã hết hạn. Nhập email để nhận liên kết mới.",
+    "verifyEmailBanner": "Xác minh email để mở khoá cửa hàng và thưởng giới thiệu.",
+    "verifyEmailBannerAction": "Gửi lại link"
   },
   "home": {
     "wordsLeftToReview": "từ cần ôn",

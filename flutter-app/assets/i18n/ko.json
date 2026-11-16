@@ -146,7 +146,9 @@
     "verifyEmailDoneTitle": "이메일 인증 완료",
     "verifyEmailDoneMessage": "로그인하고 학습을 시작하세요.",
     "verifyEmailFailedTitle": "이 링크는 더 이상 유효하지 않습니다",
-    "verifyEmailFailedMessage": "이미 사용되었거나 만료되었습니다. 새 링크를 받으려면 이메일을 입력하세요."
+    "verifyEmailFailedMessage": "이미 사용되었거나 만료되었습니다. 새 링크를 받으려면 이메일을 입력하세요.",
+    "verifyEmailBanner": "이메일을 인증하면 상점과 추천 보상을 이용할 수 있습니다.",
+    "verifyEmailBannerAction": "링크 다시 보내기"
   },
   "home": {
     "wordsLeftToReview": "복습할 단어",

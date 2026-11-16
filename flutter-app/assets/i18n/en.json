@@ -146,7 +146,9 @@
     "verifyEmailDoneTitle": "Email verified",
     "verifyEmailDoneMessage": "You can sign in and start learning.",
     "verifyEmailFailedTitle": "This link no longer works",
-    "verifyEmailFailedMessage": "It was already used or has expired. Enter your email to get a new one."
+    "verifyEmailFailedMessage": "It was already used or has expired. Enter your email to get a new one.",
+    "verifyEmailBanner": "Verify your email to unlock the shop and referral rewards.",
+    "verifyEmailBannerAction": "Resend link"
   },
   "home": {
     "wordsLeftToReview": "words to review",
