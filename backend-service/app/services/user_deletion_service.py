@@ -10,16 +10,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User, UserDevice, RefreshToken
 from app.models.progress import (
     UserProgress, LessonAttempt, Streak, UserCourseProgress, LessonCompletion,
-    QuestionAttempt, UserVocabKnowledge, DailyReviewSession, DailyActivity,
+    UserVocabKnowledge, DailyReviewSession, DailyActivity,
 )
 from app.models.gamification import (
     UserAchievement, UserWallet, WalletTransaction, LeaderboardEntry,
     UserFollowing, ActivityFeed, UserInventory, ChallengeRewardClaim,
 )
-from app.models.vocabulary import UserVocabulary, VocabularyReview, VocabularyDeck
+from app.models.vocabulary import UserVocabulary, VocabularyDeck
 from app.models.notification import Notification
 from app.models.proficiency import (
-    UserProficiencyProfile, UserSkillScore, UserLevelHistory,
+    UserProficiencyProfile,
     ExerciseAttempt, LevelAssessmentTest,
 )
 from app.models.reminder import UserReminderPreference, ReminderDelivery
@@ -33,8 +33,6 @@ _USER_ID_SCOPED_MODELS = (
     Notification,
     ExerciseAttempt,
     LevelAssessmentTest,
-    UserSkillScore,
-    UserLevelHistory,
     UserProficiencyProfile,
     ChallengeRewardClaim,
     UserRewardGrant,
@@ -46,12 +44,10 @@ _USER_ID_SCOPED_MODELS = (
     UserAchievement,
     XPTransaction,
     GameSession,
-    VocabularyReview,
     VocabularyDeck,
     UserVocabulary,
     DailyReviewSession,
     UserVocabKnowledge,
-    QuestionAttempt,
     DailyActivity,
     LessonAttempt,
     LessonCompletion,
