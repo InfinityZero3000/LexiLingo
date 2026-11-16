@@ -126,3 +126,72 @@ updates:
     labels:
       - "dependencies"
       - "flutter-app"
+
+  - package-ecosystem: "docker"
+    directory: "/backend-service"
+    target-branch: "dev"
+    schedule:
+      interval: "monthly"
+      time: "05:00"
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 3
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    groups:
+      docker-backend:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "backend"
+
+  - package-ecosystem: "docker"
+    directory: "/ai-service"
+    target-branch: "dev"
+    schedule:
+      interval: "monthly"
+      time: "05:30"
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 3
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    groups:
+      docker-ai:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "ai-service"
+
+  - package-ecosystem: "pub"
+    directory: "/flutter-app"
+    target-branch: "dev"
+    schedule:
+      interval: "monthly"
+      time: "06:00"
+    cooldown:
+      default-days: 7
+    open-pull-requests-limit: 3
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    groups:
+      pub:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "flutter-app"

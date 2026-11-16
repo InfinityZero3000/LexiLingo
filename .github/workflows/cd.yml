@@ -4,6 +4,10 @@ on:
   push:
     branches: [dev]
 
+# Deploys go out through the Vercel CLI with repository secrets; the GITHUB_TOKEN only checks out.
+permissions:
+  contents: read
+
 concurrency:
   group: cd-${{ github.ref }}
   cancel-in-progress: true
@@ -21,10 +25,10 @@ jobs:
         working-directory: flutter-app
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           # Pinned: phosphor_flutter 2.1.0 extends IconData, which is final from Flutter 3.47 on.
           flutter-version: 3.38.9
@@ -32,7 +36,7 @@ jobs:
           cache: true
 
       - name: Set up Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 20
 
@@ -131,15 +135,15 @@ jobs:
         working-directory: admin-service
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v6
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
         with:
           package_json_file: admin-service/package.json
 
       - name: Set up Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "24"
           cache: pnpm
