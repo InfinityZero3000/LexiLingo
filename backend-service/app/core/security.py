@@ -11,6 +11,8 @@ from typing import Optional, Dict, Any
 
 import anyio
 import bcrypt
+import hashlib
+
 from jose import JWTError, jwt
 
 from app.core.config import settings
@@ -175,6 +177,23 @@ def create_verification_token(data: Dict[str, Any], expires_minutes: int = 60) -
     )
     
     return encoded_jwt
+
+
+def password_fingerprint(hashed_password: Optional[str]) -> str:
+    """Short digest of the stored hash. A reset token carries it, so the token dies with the
+    password it was issued for: one use, no table to keep."""
+    return hashlib.sha256((hashed_password or "").encode("utf-8")).hexdigest()[:16]
+
+
+def decode_verification_payload(token: str, purpose: str) -> Optional[Dict[str, Any]]:
+    """Claims of a verification token of the given purpose, or None."""
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+    except JWTError:
+        return None
+    if payload.get("type") != "verification" or payload.get("purpose") != purpose:
+        return None
+    return payload
 
 
 def decode_verification_token(token: str, purpose: str) -> Optional[str]:

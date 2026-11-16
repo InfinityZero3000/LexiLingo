@@ -664,7 +664,7 @@ class TestResetPassword:
 
     async def test_reset_password_invalid_token_returns_400(self, client):
         """An invalid/expired reset token returns 400."""
-        with patch("app.core.security.decode_verification_token", return_value=None):
+        with patch("app.core.security.decode_verification_payload", return_value=None):
             response = await client.post(
                 f"{BASE}/reset-password",
                 json={"token": "bad-token", "new_password": "newpassword123"},
@@ -672,32 +672,52 @@ class TestResetPassword:
         assert response.status_code == 400
         assert "Invalid or expired reset token" in response.json()["error"]["message"]
 
-    async def test_reset_password_valid_token_returns_200(self):
-        """Valid reset token + new password returns 200."""
-        from app.main import app
-        from app.core.database import get_db
+    async def test_reset_link_works_once_and_ends_other_sessions(self, async_client):
+        """The mailed token resets the password once; a second use and old sessions are dead."""
+        from app.services.email_service import EmailService
 
-        user = _make_mock_user()
-        session = _make_mock_session(scalar_one_or_none_value=user)
+        with patch.object(EmailService, "send_verification_email", autospec=True, return_value=True), \
+                patch.object(EmailService, "send_welcome_email", autospec=True, return_value=True), \
+                patch.object(EmailService, "send_password_changed_email", autospec=True, return_value=True), \
+                patch.object(EmailService, "send_password_reset_email", autospec=True, return_value=True) as mailed:
+            await async_client.post(
+                f"{BASE}/register",
+                json={"email": "reset@example.com", "username": "resetter", "password": "SecurePass123!"},
+            )
+            session = (await async_client.post(
+                f"{BASE}/login", json={"email": "reset@example.com", "password": "SecurePass123!"}
+            )).json()
 
-        async def mock_get_db():
-            yield session
+            await async_client.post(f"{BASE}/forgot-password", json={"email": "reset@example.com"})
+            token = mailed.call_args.kwargs["reset_token"]
+            body = {"token": token, "new_password": "NewSecure456!"}
 
-        app.dependency_overrides[get_db] = mock_get_db
-        transport = ASGITransport(app=app)
+            first = await async_client.post(f"{BASE}/reset-password", json=body)
+            again = await async_client.post(f"{BASE}/reset-password", json={**body, "new_password": "Third789!x"})
+            old_refresh = await async_client.post(
+                f"{BASE}/refresh", json={"refresh_token": session["refresh_token"]}
+            )
+            relogin = await async_client.post(
+                f"{BASE}/login", json={"email": "reset@example.com", "password": "NewSecure456!"}
+            )
 
-        user_id = str(user.id)
-        with patch("app.core.security.decode_verification_token", return_value=user_id):
-            async with AsyncClient(transport=transport, base_url="http://test") as c:
-                response = await c.post(
-                    f"{BASE}/reset-password",
-                    json={"token": "valid-token", "new_password": "newpassword123"},
-                )
-        app.dependency_overrides.clear()
+        assert first.status_code == 200
+        assert again.status_code == 400
+        assert old_refresh.status_code == 401
+        assert relogin.status_code == 200
 
-        assert response.status_code == 200
-        data = response.json()
-        assert "Password reset successfully" in data["message"]
+    async def test_password_over_72_bytes_is_a_422_not_a_500(self, client):
+        long_password = "Aa1!" + "é" * 40  # 84 bytes, 44 characters
+        response = await client.post(
+            f"{BASE}/reset-password",
+            json={"token": "t", "new_password": long_password},
+        )
+        assert response.status_code == 422
+        response = await client.post(
+            f"{BASE}/register",
+            json={"email": "long@example.com", "username": "longpw", "password": long_password},
+        )
+        assert response.status_code == 422
 
     async def test_reset_password_too_short_returns_422(self, client):
         """New password shorter than 8 chars triggers 422."""
