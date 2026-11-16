@@ -1,5 +1,6 @@
 import { apiFetch } from "./api";
 import { ENV } from "./env";
+import type { IeltsPassageProvenance } from "./ieltsProvenance";
 import exerciseTypesContract from "../../../contracts/content-agent/exercise-types-v1.json";
 
 export type AdminResponse<T> = {
@@ -784,6 +785,7 @@ export type IeltsTest = {
   target_band?: string | null;
   slug?: string | null;
   content?: Record<string, unknown> | null;
+  provenance?: { passages?: IeltsPassageProvenance[] } | null;
   is_published: boolean;
   question_count: number;
   attempt_count: number;

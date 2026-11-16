@@ -1234,6 +1234,27 @@ const en: Translations = {
     copied: "Copied",
     done: "Done",
   },
+  // ============== IELTS passage provenance ==============
+  ieltsProvenance: {
+    title: "Passage sources and licences",
+    description: "Learners see this credit under each reading passage. CC BY and CC BY-SA text cannot be published without it.",
+    noPassages: "This paper has no reading passages.",
+    passage: "Passage {n}",
+    license: "Licence",
+    attribution: "Attribution",
+    source: "Source",
+    openSource: "Open source",
+    adapted: "Adapted",
+    notAdapted: "Not adapted",
+    retrieved: "Retrieved",
+    none: "Not recorded",
+    blockedSummary: "{count} passage(s) would block publishing",
+    okSummary: "Every reading passage has a publishable licence.",
+    problemMissing: "No provenance entry. Publishing is refused until one is added.",
+    problemInvalid: "Unknown licence id ({got}). Publishing is refused.",
+    problemForbidden: "{license} does not cover passage text. Publishing is refused.",
+    problemField: "{license} needs a non-empty {field}. Publishing is refused.",
+  },
 };
 
 export default en;

@@ -1232,6 +1232,27 @@ const vi = {
     copied: "Đã sao chép",
     done: "Xong",
   },
+  // ============== IELTS passage provenance ==============
+  ieltsProvenance: {
+    title: "Nguồn và giấy phép của bài đọc",
+    description: "Người học thấy phần ghi nguồn này dưới mỗi bài đọc. Văn bản CC BY và CC BY-SA không thể xuất bản nếu thiếu.",
+    noPassages: "Đề này không có bài đọc.",
+    passage: "Bài đọc {n}",
+    license: "Giấy phép",
+    attribution: "Ghi nguồn",
+    source: "Nguồn",
+    openSource: "Mở nguồn",
+    adapted: "Đã chuyển thể",
+    notAdapted: "Không chuyển thể",
+    retrieved: "Ngày lấy",
+    none: "Chưa ghi",
+    blockedSummary: "{count} bài đọc sẽ chặn việc xuất bản",
+    okSummary: "Mọi bài đọc đều có giấy phép đủ điều kiện xuất bản.",
+    problemMissing: "Chưa có thông tin nguồn. Không thể xuất bản cho đến khi bổ sung.",
+    problemInvalid: "Mã giấy phép không hợp lệ ({got}). Không thể xuất bản.",
+    problemForbidden: "{license} không áp dụng cho văn bản bài đọc. Không thể xuất bản.",
+    problemField: "{license} cần {field} không rỗng. Không thể xuất bản.",
+  },
 };
 
 export default vi;
