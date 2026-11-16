@@ -1,6 +1,7 @@
-/// Brand-new learners see the start button and Vocabulary; the rest of Home
-/// opens after their first completed lesson.
+/// Only a brand-new learner is locked: no completed lesson and no XP earned
+/// anywhere. Someone who earned XP from news, podcasts or games keeps every tile.
 bool secondaryFeaturesLocked({
   required bool flagEnabled,
   required int? lessonsCompleted,
-}) => flagEnabled && lessonsCompleted == 0;
+  required int? totalXp,
+}) => flagEnabled && lessonsCompleted == 0 && totalXp == 0;

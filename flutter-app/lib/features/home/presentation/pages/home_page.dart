@@ -145,6 +145,7 @@ class _HomePageNewState extends State<HomePageNew> {
             final locked = secondaryFeaturesLocked(
               flagEnabled: ApiConfig.progressiveUnlock,
               lessonsCompleted: authProvider.currentUser?.lessonsCompleted,
+              totalXp: authProvider.currentUser?.totalXp,
             );
 
             return RefreshIndicator(

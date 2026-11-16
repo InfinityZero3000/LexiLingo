@@ -99,6 +99,7 @@ class _MainScreenState extends State<MainScreen> with RouteAware {
     if (secondaryFeaturesLocked(
       flagEnabled: ApiConfig.progressiveUnlock,
       lessonsCompleted: auth.currentUser?.lessonsCompleted,
+      totalXp: auth.currentUser?.totalXp,
     )) {
       auth.refreshCurrentUser();
     }

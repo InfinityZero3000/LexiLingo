@@ -21,32 +21,32 @@ void main() {
   });
 
   group('secondaryFeaturesLocked', () {
-    test('flag on and no lessons locks', () {
-      expect(
-        secondaryFeaturesLocked(flagEnabled: true, lessonsCompleted: 0),
-        isTrue,
-      );
+    bool locked({bool flag = true, int? lessons = 0, int? xp = 0}) =>
+        secondaryFeaturesLocked(
+          flagEnabled: flag,
+          lessonsCompleted: lessons,
+          totalXp: xp,
+        );
+
+    test('flag on, no lessons and no XP locks', () {
+      expect(locked(), isTrue);
     });
 
     test('flag on and one lesson unlocks', () {
-      expect(
-        secondaryFeaturesLocked(flagEnabled: true, lessonsCompleted: 1),
-        isFalse,
-      );
+      expect(locked(lessons: 1), isFalse);
+    });
+
+    test('no lessons but XP from elsewhere unlocks', () {
+      expect(locked(xp: 15), isFalse);
     });
 
     test('flag off never locks', () {
-      expect(
-        secondaryFeaturesLocked(flagEnabled: false, lessonsCompleted: 0),
-        isFalse,
-      );
+      expect(locked(flag: false), isFalse);
     });
 
-    test('an unknown count never locks', () {
-      expect(
-        secondaryFeaturesLocked(flagEnabled: true, lessonsCompleted: null),
-        isFalse,
-      );
+    test('an unknown lesson count or XP never locks', () {
+      expect(locked(lessons: null), isFalse);
+      expect(locked(xp: null), isFalse);
     });
   });
 
