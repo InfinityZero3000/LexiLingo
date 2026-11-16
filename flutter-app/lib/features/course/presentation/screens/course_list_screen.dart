@@ -286,8 +286,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
           return _CategorySection(
             categoryId: levelKey,
             title: levelKey,
-            description:
-                'course.courseCount'.plural(courses.length),
+            description: 'course.courseCount'.plural(courses.length),
             icon: _getLevelIcon(levelKey),
             color: _getLevelColor(levelKey, isDark: isDark),
             courses: courses,
@@ -323,8 +322,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
           return _CategorySection(
             categoryId: category.id,
             title: category.name,
-            description:
-                'course.courseCount'.plural(categoryCourses.length),
+            description: 'course.courseCount'.plural(categoryCourses.length),
             icon: _parseCategoryIcon(category.icon ?? 'book'),
             color: _parseCategoryColor(category.color, isDark: isDark),
             courses: categoryCourses,
@@ -541,7 +539,11 @@ class _CategorySection extends StatelessWidget {
   final IconData icon;
   final Color color;
   final List<CourseEntity> courses;
-  final void Function(CourseEntity course, String heroTag, String fallbackThumbnailUrl)
+  final void Function(
+    CourseEntity course,
+    String heroTag,
+    String fallbackThumbnailUrl,
+  )
   onCourseTap;
   final VoidCallback? onSeeAll;
 
@@ -819,102 +821,102 @@ class _HorizontalCourseCard extends StatelessWidget {
                           scrollDirection: Axis.horizontal,
                           child: Row(
                             children: [
-                            // Language chip (INT + en)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 7,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Theme.of(context)
-                                        .colorScheme
-                                        .primaryContainer
-                                        .withValues(alpha: 0.7),
-                                    Theme.of(context)
-                                        .colorScheme
-                                        .primaryContainer
-                                        .withValues(alpha: 0.5),
-                                  ],
+                              // Language chip (INT + en)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 7,
+                                  vertical: 3,
                                 ),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 4,
-                                      vertical: 1,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Theme.of(context)
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Theme.of(context)
                                           .colorScheme
-                                          .primary
-                                          .withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(4),
+                                          .primaryContainer
+                                          .withValues(alpha: 0.7),
+                                      Theme.of(context)
+                                          .colorScheme
+                                          .primaryContainer
+                                          .withValues(alpha: 0.5),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 4,
+                                        vertical: 1,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary
+                                            .withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        _getLanguageCode(course.language),
+                                        style: TextStyle(
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.bold,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primary,
+                                        ),
+                                      ),
                                     ),
-                                    child: Text(
-                                      _getLanguageCode(course.language),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      _getLanguageLabel(course.language),
                                       style: TextStyle(
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.bold,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
                                         color: Theme.of(
                                           context,
-                                        ).colorScheme.primary,
+                                        ).colorScheme.onPrimaryContainer,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              // Learner-facing tags only. Internal seed/crawl
+                              // metadata stays in data for filtering/imports.
+                              ...displayTags.map(
+                                (tag) => Padding(
+                                  padding: const EdgeInsets.only(left: 5),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 7,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isDark
+                                          ? Colors.white.withValues(alpha: 0.08)
+                                          : AppColors.grey100,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: isDark
+                                            ? Colors.white24
+                                            : AppColors.grey300,
+                                        width: 0.8,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      tag,
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w600,
+                                        color: isDark
+                                            ? Colors.white70
+                                            : AppColors.grey700,
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    _getLanguageLabel(course.language),
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onPrimaryContainer,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            // Learner-facing tags only. Internal seed/crawl
-                            // metadata stays in data for filtering/imports.
-                            ...displayTags.map(
-                              (tag) => Padding(
-                                padding: const EdgeInsets.only(left: 5),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 7,
-                                    vertical: 3,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isDark
-                                        ? Colors.white.withValues(alpha: 0.08)
-                                        : AppColors.grey100,
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color: isDark
-                                          ? Colors.white24
-                                          : AppColors.grey300,
-                                      width: 0.8,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    tag,
-                                    style: TextStyle(
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w600,
-                                      color: isDark
-                                          ? Colors.white70
-                                          : AppColors.grey700,
-                                    ),
-                                  ),
                                 ),
                               ),
-                            ),
                             ],
                           ),
                         ),

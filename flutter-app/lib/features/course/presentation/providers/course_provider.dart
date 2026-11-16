@@ -245,12 +245,22 @@ class CourseProvider with ChangeNotifier {
 
   /// Filter courses by language
   Future<void> filterByLanguage(String? language) async {
-    await loadCourses(page: 1, language: language, level: _selectedLevel, force: true);
+    await loadCourses(
+      page: 1,
+      language: language,
+      level: _selectedLevel,
+      force: true,
+    );
   }
 
   /// Filter courses by level
   Future<void> filterByLevel(String? level) async {
-    await loadCourses(page: 1, language: _selectedLanguage, level: level, force: true);
+    await loadCourses(
+      page: 1,
+      language: _selectedLanguage,
+      level: level,
+      force: true,
+    );
   }
 
   /// Apply client-side filters (category, enrolled, sort)
@@ -264,8 +274,9 @@ class CourseProvider with ChangeNotifier {
     if (clearCategory) {
       _selectedCategorySlug = null;
     } else if (categorySlug != null) {
-      _selectedCategorySlug =
-          _selectedCategorySlug == categorySlug ? null : categorySlug;
+      _selectedCategorySlug = _selectedCategorySlug == categorySlug
+          ? null
+          : categorySlug;
     }
     if (enrolledOnly != null) _showEnrolledOnly = enrolledOnly;
     if (sortOrder != null) _sortOrder = sortOrder;

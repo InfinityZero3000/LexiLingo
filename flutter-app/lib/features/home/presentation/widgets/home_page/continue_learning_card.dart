@@ -6,7 +6,7 @@ import 'package:lexilingo_app/core/navigation/learner_route.dart';
 import 'package:lexilingo_app/core/services/analytics_service.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
-import 'package:lexilingo_app/features/course/presentation/screens/course_detail_screen.dart';
+import 'package:lexilingo_app/features/course/presentation/continue_lesson_launcher.dart';
 import 'package:lexilingo_app/features/course/presentation/screens/course_list_screen.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_ui_components.dart';
@@ -184,10 +184,7 @@ class _RotatingLearningCardState extends State<_RotatingLearningCard> {
         StartLearningLauncher.open(context, courseId: promptCourse.id);
         return;
       }
-      LearnerRoute.push(
-        context,
-        (_) => CourseDetailScreen(courseId: promptCourse.id),
-      );
+      ContinueLessonLauncher.open(context, promptCourse.id);
     }
 
     Widget courseContent(CourseEntity course) => _ContinueCourseContent(

@@ -232,7 +232,8 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                   ),
 
                   // Course list
-                  if (provider.isLoadingCategoryCourses && categoryCourses.isEmpty)
+                  if (provider.isLoadingCategoryCourses &&
+                      categoryCourses.isEmpty)
                     SliverFillRemaining(
                       child: SkeletonList(
                         itemCount: 5,
