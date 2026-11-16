@@ -914,6 +914,7 @@
     "timeout": "요청 시간 초과",
     "noInternet": "인터넷에 연결되어 있지 않음",
     "genericRetry": "오류가 발생했습니다. 다시 시도해 주세요.",
+    "messageTooLong": "메시지가 너무 깁니다. {max}자 이내로 입력해 주세요.",
     "sessionExpired": "로그인 세션이 만료되었습니다. 다시 로그인해 주세요.",
     "sessionExpiredOnServer": "서버에서 세션이 만료되어 새 세션을 시작했습니다.",
     "sessionOtherAccount": "이 세션은 다른 계정의 것입니다. 새 채팅을 시작해 주세요.",

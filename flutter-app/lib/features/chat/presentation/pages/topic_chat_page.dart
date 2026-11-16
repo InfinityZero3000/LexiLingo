@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/utils/chat_input_limit.dart';
 import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -700,6 +701,8 @@ class _TopicChatPageState extends State<TopicChatPage> {
                 controller: _controller,
                 focusNode: _focusNode,
                 enabled: isEnabled,
+                inputFormatters: chatInputFormatters,
+                buildCounter: buildChatInputCounter,
                 style: TextStyle(color: AppColorRoles.textPrimary(isDark)),
                 decoration: InputDecoration(
                   hintText: 'topicChat.inputHint'.tr(),

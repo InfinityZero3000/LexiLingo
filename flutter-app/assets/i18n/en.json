@@ -914,6 +914,7 @@
     "timeout": "Request timeout",
     "noInternet": "No internet connection",
     "genericRetry": "An error occurred. Please try again.",
+    "messageTooLong": "That message is too long. Please keep it under {max} characters.",
     "sessionExpired": "Your login session expired. Please sign in again.",
     "sessionExpiredOnServer": "Your session expired on the server. A new one was started.",
     "sessionOtherAccount": "This session belongs to another account. Start a new chat.",

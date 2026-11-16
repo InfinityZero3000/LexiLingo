@@ -914,6 +914,7 @@
     "timeout": "Hết thời gian chờ",
     "noInternet": "Không có kết nối internet",
     "genericRetry": "Đã xảy ra lỗi. Vui lòng thử lại.",
+    "messageTooLong": "Tin nhắn quá dài. Vui lòng giữ dưới {max} ký tự.",
     "sessionExpired": "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
     "sessionExpiredOnServer": "Phiên trò chuyện đã hết hạn trên máy chủ. Đã mở phiên mới.",
     "sessionOtherAccount": "Phiên này thuộc về tài khoản khác. Hãy bắt đầu cuộc trò chuyện mới.",

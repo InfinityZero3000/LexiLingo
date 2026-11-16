@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lexilingo_app/core/error/exceptions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexilingo_app/core/di/core_di.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.dart';
@@ -19,6 +20,7 @@ class _FakeLexiChatRepository implements LexiChatRepository {
   String? lastNativeLanguage;
   String? lastStreamNativeLanguage;
   Object? pagedError;
+  Object? sendError;
   Stream<LexiStreamEvent> Function()? streamFactory;
   LexiSuggestedPractice? nextSuggestedPractice;
 
@@ -92,6 +94,7 @@ class _FakeLexiChatRepository implements LexiChatRepository {
     String? idempotencyKey,
   }) async {
     sendCalls += 1;
+    if (sendError != null) throw sendError!;
     lastIdempotencyKey = idempotencyKey;
     lastNativeLanguage = nativeLanguage;
     return LexiMessage(
@@ -194,6 +197,52 @@ void main() {
       expect(provider.messages.where((m) => m.role == 'user').length, 1);
       expect(provider.messages.last.content, 'ok');
     });
+
+    test(
+      'a 422 from the stream shows "too long" and is neither retried nor queued',
+      () async {
+        final repo = _FakeLexiChatRepository()
+          ..streamFactory = () => Stream<LexiStreamEvent>.error(
+            const ServerException(
+              'POST stream /lexi/stream failed with status 422: string_too_long',
+            ),
+          );
+        final provider = LexiChatProvider(
+          repository: repo,
+          aiClient: AiApiClient(),
+        );
+        addTearDown(provider.dispose);
+
+        await provider.sendMessageStreaming('hello', userId: 'user-1');
+
+        expect(repo.streamCalls, 1);
+        expect(repo.sendCalls, 0);
+        expect(provider.error, 'errors.messageTooLong');
+        expect(provider.isSending, isFalse);
+        expect(provider.messages.where((m) => m.role == 'user'), isEmpty);
+      },
+    );
+
+    test(
+      'a 422 from the non-streaming send is not queued for replay',
+      () async {
+        final repo = _FakeLexiChatRepository()
+          ..sendError = const ServerException(
+            'Request /lexi/chat failed with status 422',
+          );
+        final provider = LexiChatProvider(
+          repository: repo,
+          aiClient: AiApiClient(),
+        );
+        addTearDown(provider.dispose);
+
+        await provider.sendMessage('hello', userId: 'user-1');
+
+        expect(repo.sendCalls, 1);
+        expect(provider.error, 'errors.messageTooLong');
+        expect(provider.messages.where((m) => m.role == 'user'), isEmpty);
+      },
+    );
 
     test('falls back to non-streaming send when SSE closes empty', () async {
       final repo = _FakeLexiChatRepository()
