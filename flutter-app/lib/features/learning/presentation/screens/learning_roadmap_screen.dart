@@ -31,6 +31,10 @@ const double _kEdgeMargin = 8.0;
 /// ~375px phone unchanged and ~380px of swing on wider screens.
 const double kRoadmapColumnMaxWidth = 520.0;
 
+const String _kBgPortrait = 'assets/background-roadmap/background-roadmap.png';
+const String _kBgLandscape =
+    'assets/background-roadmap/background-roadmap-2.png';
+
 /// Sine-wave x positions (normalized 0..1).
 /// 8-step cycle gives a smooth winding road from edge to edge.
 const List<double> _kXCycle = [0.14, 0.32, 0.50, 0.68, 0.86, 0.68, 0.50, 0.32];
@@ -169,42 +173,52 @@ class _LearningRoadmapScreenState extends State<LearningRoadmapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: ConstrainedBox(
-          key: const Key('roadmapColumn'),
-          constraints: const BoxConstraints(maxWidth: kRoadmapColumnMaxWidth),
-          child: DecoratedBox(
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage(
-                  'assets/background-roadmap/background-roadmap.png',
-                ),
-                fit: BoxFit.cover,
-                alignment: Alignment.center,
+      // The art fills the whole window (cover, never fitHeight: that leaves bars
+      // on the side the picture does not span). Wide windows get the landscape
+      // picture, phones and tall windows the portrait one; the road stays a
+      // phone-width column on top of it.
+      body: LayoutBuilder(
+        builder: (context, box) => DecoratedBox(
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage(
+                box.maxWidth > box.maxHeight ? _kBgLandscape : _kBgPortrait,
               ),
+              fit: BoxFit.cover,
+              alignment: Alignment.center,
             ),
-            child: Consumer<LearningProvider>(
-              builder: (context, provider, _) {
-                if (provider.isLoadingRoadmap) {
-                  return LoadingScreen(message: 'learning.loadingRoadmap'.tr());
-                }
-                if (provider.roadmapError != null) {
-                  return _ErrorView(
-                    error: provider.roadmapError!,
-                    onRetry: () => provider.loadRoadmap(widget.courseId),
+          ),
+          child: Center(
+            child: ConstrainedBox(
+              key: const Key('roadmapColumn'),
+              constraints: const BoxConstraints(
+                maxWidth: kRoadmapColumnMaxWidth,
+              ),
+              child: Consumer<LearningProvider>(
+                builder: (context, provider, _) {
+                  if (provider.isLoadingRoadmap) {
+                    return LoadingScreen(
+                      message: 'learning.loadingRoadmap'.tr(),
+                    );
+                  }
+                  if (provider.roadmapError != null) {
+                    return _ErrorView(
+                      error: provider.roadmapError!,
+                      onRetry: () => provider.loadRoadmap(widget.courseId),
+                    );
+                  }
+                  final roadmap = provider.courseRoadmap;
+                  if (roadmap == null || roadmap.units.isEmpty) {
+                    return const _EmptyView();
+                  }
+                  return _ZigzagRoadmap(
+                    roadmap: roadmap,
+                    courseId: widget.courseId,
+                    buildLayouts: _buildLayouts,
+                    totalH: _totalH,
                   );
-                }
-                final roadmap = provider.courseRoadmap;
-                if (roadmap == null || roadmap.units.isEmpty) {
-                  return const _EmptyView();
-                }
-                return _ZigzagRoadmap(
-                  roadmap: roadmap,
-                  courseId: widget.courseId,
-                  buildLayouts: _buildLayouts,
-                  totalH: _totalH,
-                );
-              },
+                },
+              ),
             ),
           ),
         ),
