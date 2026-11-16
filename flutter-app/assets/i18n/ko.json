@@ -141,7 +141,12 @@
     "errCancelled": "로그인이 취소되었습니다.",
     "errInvalidPassword": "비밀번호가 올바르지 않습니다.",
     "errUserNotFound": "이 이메일로 등록된 계정이 없습니다.",
-    "errWrongPassword": "비밀번호가 틀렸습니다."
+    "errWrongPassword": "비밀번호가 틀렸습니다.",
+    "verifyEmailChecking": "이메일을 인증하는 중…",
+    "verifyEmailDoneTitle": "이메일 인증 완료",
+    "verifyEmailDoneMessage": "로그인하고 학습을 시작하세요.",
+    "verifyEmailFailedTitle": "이 링크는 더 이상 유효하지 않습니다",
+    "verifyEmailFailedMessage": "이미 사용되었거나 만료되었습니다. 새 링크를 받으려면 이메일을 입력하세요."
   },
   "home": {
     "wordsLeftToReview": "복습할 단어",

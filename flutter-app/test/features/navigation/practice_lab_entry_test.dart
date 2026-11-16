@@ -24,12 +24,13 @@ void main() {
     expect(mainScreen, contains("label: 'home.navPracticeLab'"));
     expect(mainScreen, contains('return const PracticeLabPage();'));
     expect(mainScreen, isNot(contains('StorySelectionPage')));
-    // The named route still resolves, but to the tab, not a pushed page.
+    // The named route still resolves, but to the tab, not a pushed page. Whitespace is
+    // collapsed so re-indenting main.dart does not break this.
+    final flat = app.replaceAll(RegExp(r'\s+'), ' ');
     expect(
-      app,
+      flat,
       contains(
-        "'/practice-lab': LearnerRoute.builder(\n"
-        '                (context) => const MainScreen(initialIndex: 3),',
+        "'/practice-lab': LearnerRoute.builder( (context) => const MainScreen(initialIndex: 3),",
       ),
     );
   });

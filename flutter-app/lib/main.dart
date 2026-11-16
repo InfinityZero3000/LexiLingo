@@ -37,6 +37,8 @@ import 'package:lexilingo_app/features/achievements/presentation/screens/achieve
 import 'package:lexilingo_app/features/achievements/presentation/providers/achievement_provider.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/auth/presentation/pages/reset_password_page.dart';
+import 'package:lexilingo_app/features/auth/presentation/pages/verify_email_page.dart';
+import 'package:lexilingo_app/core/navigation/token_routes.dart';
 import 'package:lexilingo_app/features/auth/presentation/widgets/auth_wrapper.dart';
 import 'package:lexilingo_app/features/chat/presentation/providers/chat_provider.dart';
 import 'package:lexilingo_app/features/chat/presentation/providers/story_provider.dart';
@@ -320,7 +322,21 @@ class _LexiLingoAppState extends State<LexiLingoApp>
       DeepLinkService.instance.pendingResetToken = null;
       return pending;
     }
+    return _tokenFromPageUrl();
+  }
 
+  String? _extractVerifyTokenFromDeepLink() {
+    final pending = DeepLinkService.instance.pendingVerifyToken;
+    if (pending != null && pending.isNotEmpty) {
+      DeepLinkService.instance.pendingVerifyToken = null;
+      return pending;
+    }
+    return _tokenFromPageUrl();
+  }
+
+  // Flutter web uses hash URLs, so a mailed link like /verify-email?token=… opens "/" and the
+  // token is only in the page URL (query or fragment).
+  String? _tokenFromPageUrl() {
     final queryToken = Uri.base.queryParameters['token'];
     if (queryToken != null && queryToken.isNotEmpty) {
       return queryToken;
@@ -405,6 +421,124 @@ class _LexiLingoAppState extends State<LexiLingoApp>
       ],
       child: Consumer<SettingsProvider>(
         builder: (context, settings, child) {
+          final routes = <String, WidgetBuilder>{
+            '/youtube': LearnerRoute.builder(
+              (context) => const YouTubeExploreScreen(),
+            ),
+            '/youtube/player': LearnerRoute.builder((context) {
+              final video =
+                  ModalRoute.of(context)!.settings.arguments as YouTubeVideo;
+              return YouTubePlayerScreen(video: video);
+            }),
+            '/news': LearnerRoute.builder((context) => const NewsListScreen()),
+            '/news/detail': LearnerRoute.builder((context) {
+              final article =
+                  ModalRoute.of(context)!.settings.arguments as NewsArticle;
+              return NewsDetailScreen(article: article);
+            }),
+            '/news/quiz': LearnerRoute.builder((context) {
+              final article =
+                  ModalRoute.of(context)!.settings.arguments as NewsArticle;
+              return NewsQuizScreen(article: article);
+            }),
+            // Phase 3: English Games
+            '/games': LearnerRoute.builder((context) => const GamesHubScreen()),
+            '/courses': LearnerRoute.builder(
+              (context) => const MainScreen(initialIndex: 1),
+            ),
+            '/today-plan': LearnerRoute.builder(
+              (context) => const TodayPlanPage(),
+            ),
+            '/practice-lab': LearnerRoute.builder(
+              (context) => const MainScreen(initialIndex: 3),
+            ),
+            '/mistake-notebook': LearnerRoute.builder(
+              (context) => const MistakeNotebookPage(),
+            ),
+            '/profile': LearnerRoute.builder(
+              (context) => const MainScreen(initialIndex: 4),
+            ),
+            '/achievements': LearnerRoute.builder(
+              (context) => const AchievementsScreen(),
+            ),
+            '/social': LearnerRoute.builder((context) => const SocialScreen()),
+            '/premium': LearnerRoute.builder(
+              (context) => const PaywallScreen(),
+            ),
+            '/offline-sync': LearnerRoute.builder(
+              (context) => const OfflineSyncCenterPage(),
+            ),
+            '/placement-test': LearnerRoute.builder(
+              (context) => ChangeNotifierProvider(
+                create: (_) => di.sl<PlacementTestProvider>(),
+                child: const PlacementTestPage(),
+              ),
+            ),
+            '/level-exam': LearnerRoute.builder(
+              (context) => ChangeNotifierProvider(
+                create: (_) => di.sl<LevelExamProvider>(),
+                child: const LevelExamPage(),
+              ),
+            ),
+            '/vocabulary/review': LearnerRoute.builder(
+              (context) => ChangeNotifierProvider(
+                create: (_) => vocab_di.getIt<FlashcardProvider>(),
+                child: const FlashcardReviewScreen(),
+              ),
+            ),
+            '/vocabulary/word-of-day': LearnerRoute.builder(
+              (context) => const WordOfDayScreen(),
+            ),
+            // Phase 4: Podcast
+            '/podcast': LearnerRoute.builder(
+              (context) => const PodcastExploreScreen(),
+            ),
+            '/podcast/detail': LearnerRoute.builder((context) {
+              final args = ModalRoute.of(context)?.settings.arguments;
+              if (args is! Podcast) return const _MissingRouteArgs();
+              return PodcastDetailScreen(podcast: args);
+            }),
+            '/podcast/player': LearnerRoute.builder((context) {
+              final args = ModalRoute.of(context)?.settings.arguments;
+              if (args is! Map<String, dynamic> ||
+                  args['episode'] is! PodcastEpisode ||
+                  args['artworkUrl'] is! String) {
+                return const _MissingRouteArgs();
+              }
+              return PodcastPlayerScreen(
+                episode: args['episode'] as PodcastEpisode,
+                artworkUrl: args['artworkUrl'] as String,
+              );
+            }),
+            // Phase 5: Books
+            '/books': LearnerRoute.builder(
+              (context) => const BookLibraryScreen(),
+            ),
+            // Phase 6: Lexi Chat
+            '/lexi': LearnerRoute.builder((context) => const LexiChatPage()),
+            '/reset-password': (context) {
+              final args = ModalRoute.of(context)?.settings.arguments;
+              String? token;
+              if (args is String) {
+                token = args;
+              } else if (args is Map<String, dynamic>) {
+                token = args['token'] as String?;
+              }
+              token ??= _extractResetTokenFromDeepLink();
+              return ResetPasswordPage(initialToken: token);
+            },
+            '/verify-email': (context) {
+              final args = ModalRoute.of(context)?.settings.arguments;
+              String? token;
+              if (args is String) {
+                token = args;
+              } else if (args is Map<String, dynamic>) {
+                token = args['token'] as String?;
+              }
+              token ??= _extractVerifyTokenFromDeepLink();
+              return VerifyEmailPage(token: token);
+            },
+          };
           return MaterialApp(
             title: 'LexiLingo',
             navigatorKey: AppNavigationService.navigatorKey,
@@ -431,119 +565,8 @@ class _LexiLingoAppState extends State<LexiLingoApp>
             supportedLocales: context.supportedLocales,
             localizationsDelegates: context.localizationDelegates,
             home: const AuthWrapper(),
-            routes: {
-              '/youtube': LearnerRoute.builder(
-                (context) => const YouTubeExploreScreen(),
-              ),
-              '/youtube/player': LearnerRoute.builder((context) {
-                final video =
-                    ModalRoute.of(context)!.settings.arguments as YouTubeVideo;
-                return YouTubePlayerScreen(video: video);
-              }),
-              '/news': LearnerRoute.builder(
-                (context) => const NewsListScreen(),
-              ),
-              '/news/detail': LearnerRoute.builder((context) {
-                final article =
-                    ModalRoute.of(context)!.settings.arguments as NewsArticle;
-                return NewsDetailScreen(article: article);
-              }),
-              '/news/quiz': LearnerRoute.builder((context) {
-                final article =
-                    ModalRoute.of(context)!.settings.arguments as NewsArticle;
-                return NewsQuizScreen(article: article);
-              }),
-              // Phase 3: English Games
-              '/games': LearnerRoute.builder(
-                (context) => const GamesHubScreen(),
-              ),
-              '/courses': LearnerRoute.builder(
-                (context) => const MainScreen(initialIndex: 1),
-              ),
-              '/today-plan': LearnerRoute.builder(
-                (context) => const TodayPlanPage(),
-              ),
-              '/practice-lab': LearnerRoute.builder(
-                (context) => const MainScreen(initialIndex: 3),
-              ),
-              '/mistake-notebook': LearnerRoute.builder(
-                (context) => const MistakeNotebookPage(),
-              ),
-              '/profile': LearnerRoute.builder(
-                (context) => const MainScreen(initialIndex: 4),
-              ),
-              '/achievements': LearnerRoute.builder(
-                (context) => const AchievementsScreen(),
-              ),
-              '/social': LearnerRoute.builder(
-                (context) => const SocialScreen(),
-              ),
-              '/premium': LearnerRoute.builder(
-                (context) => const PaywallScreen(),
-              ),
-              '/offline-sync': LearnerRoute.builder(
-                (context) => const OfflineSyncCenterPage(),
-              ),
-              '/placement-test': LearnerRoute.builder(
-                (context) => ChangeNotifierProvider(
-                  create: (_) => di.sl<PlacementTestProvider>(),
-                  child: const PlacementTestPage(),
-                ),
-              ),
-              '/level-exam': LearnerRoute.builder(
-                (context) => ChangeNotifierProvider(
-                  create: (_) => di.sl<LevelExamProvider>(),
-                  child: const LevelExamPage(),
-                ),
-              ),
-              '/vocabulary/review': LearnerRoute.builder(
-                (context) => ChangeNotifierProvider(
-                  create: (_) => vocab_di.getIt<FlashcardProvider>(),
-                  child: const FlashcardReviewScreen(),
-                ),
-              ),
-              '/vocabulary/word-of-day': LearnerRoute.builder(
-                (context) => const WordOfDayScreen(),
-              ),
-              // Phase 4: Podcast
-              '/podcast': LearnerRoute.builder(
-                (context) => const PodcastExploreScreen(),
-              ),
-              '/podcast/detail': LearnerRoute.builder((context) {
-                final args = ModalRoute.of(context)?.settings.arguments;
-                if (args is! Podcast) return const _MissingRouteArgs();
-                return PodcastDetailScreen(podcast: args);
-              }),
-              '/podcast/player': LearnerRoute.builder((context) {
-                final args = ModalRoute.of(context)?.settings.arguments;
-                if (args is! Map<String, dynamic> ||
-                    args['episode'] is! PodcastEpisode ||
-                    args['artworkUrl'] is! String) {
-                  return const _MissingRouteArgs();
-                }
-                return PodcastPlayerScreen(
-                  episode: args['episode'] as PodcastEpisode,
-                  artworkUrl: args['artworkUrl'] as String,
-                );
-              }),
-              // Phase 5: Books
-              '/books': LearnerRoute.builder(
-                (context) => const BookLibraryScreen(),
-              ),
-              // Phase 6: Lexi Chat
-              '/lexi': LearnerRoute.builder((context) => const LexiChatPage()),
-              '/reset-password': (context) {
-                final args = ModalRoute.of(context)?.settings.arguments;
-                String? token;
-                if (args is String) {
-                  token = args;
-                } else if (args is Map<String, dynamic>) {
-                  token = args['token'] as String?;
-                }
-                token ??= _extractResetTokenFromDeepLink();
-                return ResetPasswordPage(initialToken: token);
-              },
-            },
+            routes: routes,
+            onGenerateRoute: (settings) => queryRoute(settings, routes),
           );
         },
       ),

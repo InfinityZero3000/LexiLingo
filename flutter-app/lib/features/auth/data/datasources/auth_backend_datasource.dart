@@ -246,8 +246,22 @@ class AuthBackendDataSource {
 
   /// Verify email with token
   /// POST /auth/verify-email
-  Future<void> verifyEmail(String token) async {
-    await apiClient.post('/auth/verify-email', body: {'token': token});
+  Future<LoginResponse?> verifyEmail(String token) async {
+    final envelope = await apiClient.postEnvelope<Map<String, dynamic>>(
+      '/auth/verify-email',
+      body: {'token': token},
+      fromJson: (data) => data as Map<String, dynamic>,
+    );
+    // The first verification also returns a session shaped like /auth/login; a link that was
+    // already used returns none. Saved exactly as a login would be.
+    final data = envelope.data;
+    final accessToken = data['access_token'];
+    if (accessToken is! String || accessToken.isEmpty) return null;
+    final session = LoginResponse.fromJson(data);
+    await tokenStorage.saveTokens(session.tokens);
+    await UserScopeService.setActiveUserId(session.userId);
+    await _registerDevice();
+    return session;
   }
 
   /// Resend verification email

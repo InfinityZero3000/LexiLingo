@@ -26831,6 +26831,18 @@
       "status": "inventoried"
     },
     {
+      "id": "lib/main.dart::_LexiLingoAppState::namedRoute::25",
+      "path": "lib/main.dart",
+      "entryPoint": "namedRoute",
+      "symbol": "_LexiLingoAppState",
+      "callKind": "namedRoute",
+      "ordinal": 25,
+      "line": 530,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried"
+    },
+    {
       "id": "lib/features/progress/presentation/widgets/streak_widget.dart::_LargeStreakFireWidgetState::BoxDecoration::0",
       "path": "lib/features/progress/presentation/widgets/streak_widget.dart",
       "entryPoint": "surface",

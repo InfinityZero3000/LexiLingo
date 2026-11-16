@@ -141,7 +141,12 @@
     "errCancelled": "La connexion a été annulée.",
     "errInvalidPassword": "Mot de passe invalide.",
     "errUserNotFound": "Aucun compte trouvé avec cet e-mail.",
-    "errWrongPassword": "Mot de passe incorrect."
+    "errWrongPassword": "Mot de passe incorrect.",
+    "verifyEmailChecking": "Vérification de votre e-mail…",
+    "verifyEmailDoneTitle": "E-mail vérifié",
+    "verifyEmailDoneMessage": "Vous pouvez vous connecter et commencer à apprendre.",
+    "verifyEmailFailedTitle": "Ce lien ne fonctionne plus",
+    "verifyEmailFailedMessage": "Il a déjà été utilisé ou a expiré. Saisissez votre e-mail pour en recevoir un nouveau."
   },
   "home": {
     "wordsLeftToReview": "mots à réviser",

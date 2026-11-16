@@ -141,7 +141,12 @@
     "errCancelled": "Se canceló el inicio de sesión.",
     "errInvalidPassword": "Contraseña no válida.",
     "errUserNotFound": "No se encontró ninguna cuenta con este correo.",
-    "errWrongPassword": "Contraseña incorrecta."
+    "errWrongPassword": "Contraseña incorrecta.",
+    "verifyEmailChecking": "Verificando tu correo…",
+    "verifyEmailDoneTitle": "Correo verificado",
+    "verifyEmailDoneMessage": "Ya puedes iniciar sesión y empezar a aprender.",
+    "verifyEmailFailedTitle": "Este enlace ya no funciona",
+    "verifyEmailFailedMessage": "Ya se usó o ha caducado. Escribe tu correo para recibir uno nuevo."
   },
   "home": {
     "wordsLeftToReview": "palabras por repasar",
