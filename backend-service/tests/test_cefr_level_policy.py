@@ -12,6 +12,7 @@ from app.models.proficiency import (
     UserProficiencyProfile,
 )
 from app.models.learner_state import LearnerStateProfile
+from app.models.progress import LessonAttempt, LessonCompletion, UserProgress
 from app.models.user import User
 from app.routes.proficiency import (
     PLACEMENT_QUESTIONS,
@@ -32,6 +33,9 @@ async def db_session():
         UserLevelHistory.__table__,
         LevelAssessmentTest.__table__,
         LearnerStateProfile.__table__,
+        LessonCompletion.__table__,
+        LessonAttempt.__table__,
+        UserProgress.__table__,
     ]
     async with engine.begin() as connection:
         await connection.run_sync(

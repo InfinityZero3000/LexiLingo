@@ -55,6 +55,7 @@ class UserResponse(UserBase):
     goal: Optional[str] = None
     interest: Optional[str] = None
     total_xp: int = 0
+    lessons_completed: int = 0
     numeric_level: int = 1
     rank: str = "bronze"
     rank_score: float = 0.0
