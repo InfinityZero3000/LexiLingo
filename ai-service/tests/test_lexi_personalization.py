@@ -53,6 +53,16 @@ def test_profile_brief_has_the_person_not_the_stats():
     assert "XP" not in brief
 
 
+def test_profile_brief_nudges_a_first_lesson_only_when_zero_is_known():
+    for card in ({**CARD, "lessons_completed": 0}, {"lessons_completed": 0}):
+        brief = lc.render_profile_brief(card, "")
+        assert "first lesson" in brief and "Learn" in brief
+        assert "not already" in brief
+    for card in (CARD, {**CARD, "lessons_completed": 3}, {"lessons_completed": None}):
+        assert "first lesson" not in lc.render_profile_brief(card, "Vietnamese")
+    assert lc.render_profile_brief(None, "") == ""
+
+
 def test_profile_brief_skips_email_names_and_is_empty_without_a_card():
     assert "First name" not in lc.render_profile_brief(
         {"display_name": "a.b@mail.com"}, ""
