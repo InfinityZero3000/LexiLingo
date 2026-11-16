@@ -23,6 +23,9 @@ on:
           - download
           - both
 
+permissions:
+  contents: read
+
 jobs:
   # Upload source strings to Crowdin when vi.json changes
   upload-sources:
@@ -32,10 +35,10 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       
       - name: Upload to Crowdin
-        uses: crowdin/github-action@v3
+        uses: crowdin/github-action@d651c77756acbe11a31d77a6fb79d8a239e1e05a # v3.6.0
         with:
           upload_sources: true
           upload_translations: false
@@ -54,14 +57,18 @@ jobs:
   download-translations:
     name: Download Translations from Crowdin
     runs-on: ubuntu-latest
+    # opens a branch and a pull request with the GITHUB_TOKEN
+    permissions:
+      contents: write
+      pull-requests: write
     if: github.event.inputs.action == 'download' || github.event.inputs.action == 'both'
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       
       - name: Download from Crowdin
-        uses: crowdin/github-action@v3
+        uses: crowdin/github-action@d651c77756acbe11a31d77a6fb79d8a239e1e05a # v3.6.0
         with:
           upload_sources: false
           upload_translations: false
@@ -105,10 +112,10 @@ jobs:
   #   
   #   steps:
   #     - name: Checkout repository
-  #       uses: actions/checkout@v7
+  #       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
   #     
   #     - name: Download from Crowdin
-  #       uses: crowdin/github-action@v3
+  #       uses: crowdin/github-action@d651c77756acbe11a31d77a6fb79d8a239e1e05a # v3.6.0
   #       with:
   #         upload_sources: false
   #         download_translations: true
