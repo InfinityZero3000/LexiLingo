@@ -22,7 +22,7 @@ from typing import Any
 from urllib.parse import urlsplit
 
 import httpx
-from jose import jwt
+import jwt
 
 
 SAFE_FALLBACK = "I'm sorry, I'm temporarily unavailable right now. Please try again in a moment."

@@ -5,7 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import httpx
 import pytest
-from jose import jwt
+import jwt
 
 from scripts import e2e_ai_service as e2e
 

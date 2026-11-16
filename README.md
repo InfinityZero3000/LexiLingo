@@ -126,7 +126,7 @@ The system is organized into 8 architectural layers:
 | **Primary DB** | PostgreSQL 14+ (asyncpg) |
 | **Cache / Sessions** | Redis 7 |
 | **AI Logs / History** | MongoDB (Motor async driver) |
-| **Auth** | JWT (RS256, python-jose), Firebase Admin SDK, Google OAuth 2.0 |
+| **Auth** | JWT (PyJWT), Firebase Admin SDK, Google OAuth 2.0 |
 | **API Gateway** | Kong (rate limiting, auth, routing) |
 | **Container** | Docker Compose (production multi-service stack) |
 | **CI/CD** | GitHub Actions (ci.yml, cd.yml, crowdin-sync.yml) |

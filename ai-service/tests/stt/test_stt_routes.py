@@ -6,7 +6,7 @@ import pytest
 from fastapi import FastAPI, HTTPException
 from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
-from jose import jwt
+import jwt
 
 # api.routes eagerly imports analytics routes that require optional KuzuDB.
 # Stub only when it is missing: a session-wide MagicMock leaks into the KG tests,
