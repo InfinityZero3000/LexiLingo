@@ -18,6 +18,7 @@ from api.models.schemas import (
     LogInteractionRequest,
     LogInteractionResponse
 )
+from api.models.schemas import MAX_CHAT_MESSAGE_CHARS
 from api.models.v3_schemas import TutorResponseV3
 from api.models.ai_repository import AIRepository
 from api.services.trace_cag import get_trace_cag
@@ -33,7 +34,7 @@ router = APIRouter()
 
 class AnalyzeRequest(BaseModel):
     """Request for AI analysis via Orchestrator."""
-    text: str = Field(..., description="User input text to analyze")
+    text: str = Field(..., max_length=MAX_CHAT_MESSAGE_CHARS, description="User input text to analyze")
     user_id: Optional[str] = Field(None, description="User ID for tracking")
     session_id: str = Field(..., description="Conversation session ID")
     input_type: str = Field("text", description="Input type: 'text' or 'voice'")

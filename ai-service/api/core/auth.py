@@ -12,6 +12,8 @@ from fastapi.security import APIKeyHeader, HTTPAuthorizationCredentials, HTTPBea
 from jose import JWTError, jwt
 from pydantic import BaseModel
 
+from api.core.auth_revocation import revocation_reason
+
 logger = logging.getLogger(__name__)
 
 _bearer = HTTPBearer(auto_error=False)
@@ -108,6 +110,14 @@ async def get_current_user(
     token = credentials.credentials.strip()
     payload = _decode_backend_jwt(token)
     if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired authentication token",
+        )
+
+    reason = await revocation_reason(token, str(payload.get("sub")))
+    if reason:
+        logger.info("Rejected %s token for user %s", reason, payload.get("sub"))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired authentication token",

@@ -23,6 +23,7 @@ from motor.motor_asyncio import AsyncIOMotorDatabase
 from pydantic import BaseModel, Field
 
 from api.core.auth import AuthenticatedUser
+from api.models.schemas import MAX_CHAT_MESSAGE_CHARS
 from api.utils.cursor import to_iso_timestamp
 from api.services.lexi_memory import load_memory_block, save_facts
 from api.services.lexi_session_store import LexiSessionStore, get_lexi_store
@@ -67,13 +68,13 @@ class LexiChatRequest(BaseModel):
     """Request to chat with Lexi."""
     user_id: str = Field(default="demo_user", description="User identifier")
     session_id: Optional[str] = Field(default=None, description="Existing session ID")
-    message: str = Field(..., min_length=1, description="User message text")
+    message: str = Field(..., min_length=1, max_length=MAX_CHAT_MESSAGE_CHARS, description="User message text")
     input_type: str = Field(default="text", description="'text' or 'voice'")
     audio_base64: Optional[str] = Field(default=None, description="Base64 audio for STT")
     enable_tts: bool = Field(default=True, description="Generate TTS audio response")
     learner_level: str = Field(default="B1", description="CEFR level: A1-C2")
     native_language: str = Field(default="vi", description="ISO 639-1 code, e.g. vi/en/ja")
-    story_context: Optional[str] = Field(default=None, description="Story/adventure context")
+    story_context: Optional[str] = Field(default=None, max_length=4000, description="Story/adventure context")
 
 
 class LexiCorrection(BaseModel):
