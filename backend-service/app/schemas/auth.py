@@ -104,7 +104,18 @@ class VerifyEmailRequest(BaseModel):
 
 
 class VerifyEmailResponse(BaseModel):
-    """Verify email response."""
+    """Verify email response.
+
+    The first time an address is verified the response also carries a session, shaped like
+    LoginResponse, so the link signs the learner in. Already-verified links carry none.
+    """
     verified: bool
     message: str
+    access_token: Optional[str] = None
+    refresh_token: Optional[str] = None
+    token_type: Optional[str] = None
+    user_id: Optional[str] = None
+    username: Optional[str] = None
+    email: Optional[str] = None
+    role: Optional[str] = None
 

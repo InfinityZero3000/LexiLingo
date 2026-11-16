@@ -838,8 +838,22 @@ class TestEmailVerificationEndToEnd:
             verified = await async_client.post(f"{BASE}/verify-email", json={"token": token})
 
         assert verified.status_code == 200
-        assert verified.json()["message"] == "Email verified successfully"
+        body = verified.json()
+        assert body["message"] == "Email verified successfully"
         assert (await async_client.post(f"{BASE}/login", json=login)).status_code == 200
+
+        # The link signs the learner in: its session works straight away.
+        me = await async_client.get(
+            f"{BASE}/me", headers={"Authorization": f"Bearer {body['access_token']}"}
+        )
+        assert me.status_code == 200
+        assert body["email"] == "fresh@example.com" and body["refresh_token"]
+
+        # A second click verifies nothing new and hands out no session.
+        with patch.object(EmailService, "send_welcome_email", autospec=True, return_value=True):
+            again = await async_client.post(f"{BASE}/verify-email", json={"token": token})
+        assert again.status_code == 200
+        assert again.json()["access_token"] is None
 
     async def test_resend_link_verifies_too(self, async_client, monkeypatch):
         from app.routes import auth
