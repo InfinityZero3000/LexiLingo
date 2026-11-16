@@ -139,6 +139,10 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+      # A Python minor (3.11 -> 3.15) is an interpreter upgrade, not a patch: wheels for scipy
+      # and friends lag behind, and #728 broke the ai-service image build. Upgrade by hand.
+      - dependency-name: "python"
+        update-types: ["version-update:semver-minor"]
     groups:
       docker-backend:
         patterns:
@@ -162,6 +166,10 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+      # A Python minor (3.11 -> 3.15) is an interpreter upgrade, not a patch: wheels for scipy
+      # and friends lag behind, and #728 broke the ai-service image build. Upgrade by hand.
+      - dependency-name: "python"
+        update-types: ["version-update:semver-minor"]
     groups:
       docker-ai:
         patterns:
