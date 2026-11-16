@@ -6,6 +6,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from api.models.schemas import MAX_CHAT_MESSAGE_CHARS
+
 
 class DifficultyLevel(str, Enum):
     A1 = "A1"
@@ -120,7 +122,7 @@ class StartTopicSessionResponse(BaseModel):
 
 class TopicChatRequest(BaseModel):
     user_id: str
-    message: str
+    message: str = Field(..., max_length=MAX_CHAT_MESSAGE_CHARS)
 
 
 class TopicChatResponse(BaseModel):
