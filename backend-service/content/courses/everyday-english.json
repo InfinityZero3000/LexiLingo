@@ -1,0 +1,1871 @@
+{
+  "category": {
+    "color": "#1565C0",
+    "course_count": 0,
+    "created_at": {
+      "__dt__": "2026-03-14T03:20:37.056492"
+    },
+    "description": "Khóa học tiếng Anh tổng quát theo khung CEFR (A1–C2)",
+    "icon": "school",
+    "id": "76c5f700-7134-407e-acb3-cab49d214c96",
+    "is_active": true,
+    "name": "General English",
+    "order_index": 1,
+    "slug": "general-english",
+    "updated_at": {
+      "__dt__": "2026-03-14T03:20:37.056509"
+    }
+  },
+  "course": {
+    "category_id": "76c5f700-7134-407e-acb3-cab49d214c96",
+    "content_version": 1,
+    "created_at": {
+      "__dt__": "2026-03-14T03:20:37.800635"
+    },
+    "description": "Tiếng Anh giao tiếp thực tế cho cuộc sống hàng ngày. Học cách mua sắm, gọi món ăn, hỏi đường và nói chuyện về sở thích cá nhân. Phù hợp với người đã biết những kiến thức A1 cơ bản. Miễn phí!",
+    "estimated_duration": 480,
+    "id": "b1c04778-5a5f-4a0c-bfd6-77156c0d9883",
+    "is_published": true,
+    "language": "en",
+    "level": "A2",
+    "skill": "speaking",
+    "tags": [
+      "elementary",
+      "conversation",
+      "practical",
+      "free",
+      "cefr-a2"
+    ],
+    "thumbnail_url": "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=400",
+    "title": "Everyday English",
+    "total_lessons": 20,
+    "total_xp": 650,
+    "updated_at": {
+      "__dt__": "2026-08-18T04:17:07.523235"
+    }
+  },
+  "format": 1,
+  "lessons": [
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "$20",
+            "explanation": "The price of the shirt is $20, which matches the correct option.",
+            "id": "ex_587e2be0-a752-463e-8d1f-0fe9e6ffdfae_1",
+            "options": [
+              "$20",
+              "$30",
+              "$15",
+              "$25"
+            ],
+            "question": "How much is this shirt?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "When asking price we use 'How much is it?', not 'How many is it?'.",
+            "id": "ex_587e2be0-a752-463e-8d1f-0fe9e6ffdfae_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "You can say 'How many is it?' when asking the price of an item.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "much",
+            "explanation": "The correct phrase for asking price is 'How much is it?'.",
+            "id": "ex_587e2be0-a752-463e-8d1f-0fe9e6ffdfae_3",
+            "options": [],
+            "question": "How ___ it?",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "How much is this?",
+            "explanation": "The Vietnamese sentence asks for the price, which in English is 'How much is this?'.",
+            "id": "ex_587e2be0-a752-463e-8d1f-0fe9e6ffdfae_4",
+            "options": [
+              "How much is this?",
+              "What is the price of this?",
+              "How many is this?",
+              "How long is this?"
+            ],
+            "question": "Translate to English: 'Cái này bao nhiêu?'",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "expensive:đắt, cheap:rẻ",
+            "explanation": "'Expensive' means 'đắt' and 'cheap' means 'rẻ' in Vietnamese.",
+            "id": "ex_587e2be0-a752-463e-8d1f-0fe9e6ffdfae_5",
+            "options": [
+              "expensive",
+              "cheap",
+              "đắt",
+              "rẻ"
+            ],
+            "question": "Match each price-related adjective with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "b1c04778-5a5f-4a0c-bfd6-77156c0d9883",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.888899"
+      },
+      "description": null,
+      "estimated_minutes": 15,
+      "id": "587e2be0-a752-463e-8d1f-0fe9e6ffdfae",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Asking for Price: How Much Is It?",
+      "total_exercises": 5,
+      "unit_id": "728e6542-ea2c-49ef-b55d-88f05684345d",
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:37.888926"
+      },
+      "xp_reward": 12
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "size",
+            "explanation": "'Size' refers to how big or small a garment is.",
+            "id": "ex_c748f9db-6b26-4f6a-8b2a-507950c7b751_1",
+            "options": [
+              "size",
+              "color",
+              "price",
+              "material"
+            ],
+            "question": "Which word means 'size' in a clothing store?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "'Medium' is a middle size, not smaller.",
+            "id": "ex_c748f9db-6b26-4f6a-8b2a-507950c7b751_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The phrase 'I'd like this in medium' is used to ask for a smaller size.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "in",
+            "explanation": "The correct preposition is 'in' when specifying a size.",
+            "id": "ex_c748f9db-6b26-4f6a-8b2a-507950c7b751_3",
+            "options": [],
+            "question": "I would like the shirt {blank} medium, please.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "shirt:áo, pants:quần",
+            "explanation": "'Shirt' = 'áo', 'pants' = 'quần'.",
+            "id": "ex_c748f9db-6b26-4f6a-8b2a-507950c7b751_4",
+            "options": [
+              "shirt",
+              "pants",
+              "áo",
+              "quần"
+            ],
+            "question": "Match each clothing item with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "I would like a medium-sized jacket, please.",
+            "explanation": "The sentence asks for a jacket in a medium size politely.",
+            "id": "ex_c748f9db-6b26-4f6a-8b2a-507950c7b751_5",
+            "options": [],
+            "question": "Translate into English: 'Tôi muốn áo khoác cỡ vừa, làm ơn'.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "b1c04778-5a5f-4a0c-bfd6-77156c0d9883",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.888980"
+      },
+      "description": null,
+      "estimated_minutes": 15,
+      "id": "c748f9db-6b26-4f6a-8b2a-507950c7b751",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Clothing & Sizes: I'd Like This in Medium",
+      "total_exercises": 5,
+      "unit_id": "728e6542-ea2c-49ef-b55d-88f05684345d",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836990"
+      },
+      "xp_reward": 12
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "In the dairy aisle",
+            "explanation": "Dairy products such as milk and cheese are typically stocked in the dairy aisle.",
+            "id": "ex_db1a4bc4-0bd8-45bd-953e-00843723783b_1",
+            "options": [
+              "In the frozen section",
+              "In the bakery aisle",
+              "In the dairy aisle",
+              "In the produce area"
+            ],
+            "question": "Where would you usually find the dairy products in a supermarket?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "Credit cards are accepted at most supermarkets for payment.",
+            "id": "ex_db1a4bc4-0bd8-45bd-953e-00843723783b_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "You can use a credit card to pay for items at the checkout.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "bread",
+            "explanation": "The common item bought in a supermarket is a loaf of bread.",
+            "id": "ex_db1a4bc4-0bd8-45bd-953e-00843723783b_3",
+            "options": [],
+            "question": "I would like to buy a loaf of {blank}.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Cái này giá bao nhiêu?",
+            "explanation": "This is the most natural translation for asking the price.",
+            "id": "ex_db1a4bc4-0bd8-45bd-953e-00843723783b_4",
+            "options": [
+              "Cái này giá bao nhiêu?",
+              "Cái này bao nhiêu tiền?",
+              "Giá của cái này là bao nhiêu?",
+              "Cái này có giá bao nhiêu?"
+            ],
+            "question": "Translate to Vietnamese: 'How much does this cost?'",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "I would like to pay with cash, please.",
+            "explanation": "The sentence clearly states the payment method.",
+            "id": "ex_db1a4bc4-0bd8-45bd-953e-00843723783b_5",
+            "options": [],
+            "question": "Write a short sentence you could say to the cashier when you want to pay in cash.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "b1c04778-5a5f-4a0c-bfd6-77156c0d9883",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.889021"
+      },
+      "description": null,
+      "estimated_minutes": 18,
+      "id": "db1a4bc4-0bd8-45bd-953e-00843723783b",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "At the Supermarket: Finding Items & Paying",
+      "total_exercises": 5,
+      "unit_id": "728e6542-ea2c-49ef-b55d-88f05684345d",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.837048"
+      },
+      "xp_reward": 15
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "How much is it?",
+            "explanation": "The phrase 'How much is it?' is the standard way to ask for the price in a shop.",
+            "id": "ex_87cf04c1-3813-4227-82bf-d3998beb0ba3_1",
+            "options": [
+              "How much is it?",
+              "What is your name?",
+              "Can I help you?",
+              "Do you have this in a larger size?"
+            ],
+            "question": "What does the shop assistant say when you ask for the price of an item?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "Saying thank you shows appreciation for the service.",
+            "id": "ex_87cf04c1-3813-4227-82bf-d3998beb0ba3_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "In a shop, it's polite to say 'Thank you' after the cashier gives you your receipt.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "loaf",
+            "explanation": "'Loaf' is the word for a whole piece of bread.",
+            "id": "ex_87cf04c1-3813-4227-82bf-d3998beb0ba3_3",
+            "options": [],
+            "question": "I need a {blank} of bread, please.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "cashier:thu ngân, receipt:biên lai",
+            "explanation": "'Cashier' means 'thu ngân' and 'receipt' means 'biên lai' in Vietnamese.",
+            "id": "ex_87cf04c1-3813-4227-82bf-d3998beb0ba3_4",
+            "options": [
+              "cashier",
+              "receipt",
+              "thu ngân",
+              "biên lai"
+            ],
+            "question": "Match each shop term with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "Tôi muốn mua một chiếc váy xanh.",
+            "explanation": "This is the correct Vietnamese translation of the given English sentence.",
+            "id": "ex_87cf04c1-3813-4227-82bf-d3998beb0ba3_5",
+            "options": [],
+            "question": "Translate the following English sentence into Vietnamese: 'I would like to buy a blue dress.'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "b1c04778-5a5f-4a0c-bfd6-77156c0d9883",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.889054"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "87cf04c1-3813-4227-82bf-d3998beb0ba3",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Shopping Dialogue Practice",
+      "total_exercises": 5,
+      "unit_id": "728e6542-ea2c-49ef-b55d-88f05684345d",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836880"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "discount",
+            "explanation": "'Discount' is the English term for the Vietnamese word 'giảm giá'.",
+            "id": "ex_eb7b8259-4160-40a1-b6c6-637a82d0051a_1",
+            "options": [
+              "discount",
+              "sale",
+              "price",
+              "receipt"
+            ],
+            "question": "Which English word means 'giảm giá'?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "Most supermarkets accept credit cards as a payment method.",
+            "id": "ex_eb7b8259-4160-40a1-b6c6-637a82d0051a_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "In a supermarket, you can always pay with a credit card.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "shopping bag",
+            "explanation": "A 'shopping bag' is used to carry items bought in a store.",
+            "id": "ex_eb7b8259-4160-40a1-b6c6-637a82d0051a_3",
+            "options": [],
+            "question": "I need a {blank} to carry my groceries.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "How much is this T‑shirt?",
+            "explanation": "This sentence directly asks for the price of the item.",
+            "id": "ex_eb7b8259-4160-40a1-b6c6-637a82d0051a_4",
+            "options": [],
+            "question": "Write an English sentence to ask the price of a T‑shirt.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "cash:tiền mặt, receipt:biên lai",
+            "explanation": "'Cash' translates to 'tiền mặt' and 'receipt' to 'biên lai'.",
+            "id": "ex_eb7b8259-4160-40a1-b6c6-637a82d0051a_5",
+            "options": [
+              "cash",
+              "receipt",
+              "tiền mặt",
+              "biên lai"
+            ],
+            "question": "Match each shopping term with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "b1c04778-5a5f-4a0c-bfd6-77156c0d9883",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.889083"
+      },
+      "description": null,
+      "estimated_minutes": 12,
+      "id": "eb7b8259-4160-40a1-b6c6-637a82d0051a",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Shopping Unit Test",
+      "total_exercises": 5,
+      "unit_id": "728e6542-ea2c-49ef-b55d-88f05684345d",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.837092"
+      },
+      "xp_reward": 25
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Apple",
+            "explanation": "Apple is a fruit, while the others are vegetables.",
+            "id": "ex_f3b66c7a-6145-4004-91fc-3e43ecc1bb2c_1",
+            "options": [
+              "Apple",
+              "Carrot",
+              "Broccoli",
+              "Potato"
+            ],
+            "question": "Which of the following is a fruit?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "In English, tomatoes are botanically fruits, though often used as vegetables.",
+            "id": "ex_f3b66c7a-6145-4004-91fc-3e43ecc1bb2c_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "Tomatoes are classified as vegetables in English.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "orange juice",
+            "explanation": "A common drink at meals is orange juice.",
+            "id": "ex_f3b66c7a-6145-4004-91fc-3e43ecc1bb2c_3",
+            "options": [],
+            "question": "I would like a glass of {blank}.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Cô ấy thích ăn cà rốt vào buổi tối.",
+            "explanation": "The sentence translates directly with 'cà rốt' for carrots and 'buổi tối' for dinner.",
+            "id": "ex_f3b66c7a-6145-4004-91fc-3e43ecc1bb2c_4",
+            "options": [],
+            "question": "Write the Vietnamese translation for: 'She likes to eat carrots for dinner.'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Apple:Táo, Carrot:Cà rốt",
+            "explanation": "Apple = Táo, Carrot = Cà rốt.",
+            "id": "ex_f3b66c7a-6145-4004-91fc-3e43ecc1bb2c_5",
+            "options": [
+              "Apple",
+              "Carrot",
+              "Táo",
+              "Cà rốt"
+            ],
+            "question": "Match each food item with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "b1c04778-5a5f-4a0c-bfd6-77156c0d9883",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.989246"
+      },
+      "description": null,
+      "estimated_minutes": 15,
+      "id": "f3b66c7a-6145-4004-91fc-3e43ecc1bb2c",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Food Vocabulary: Fruits, Vegetables & Meals",
+      "total_exercises": 5,
+      "unit_id": "918787cc-895d-495d-a9ae-ea3546bdb3bf",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.837106"
+      },
+      "xp_reward": 12
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Can I have a table for two at 7 pm?",
+            "explanation": "Using \"Can I have...\" is polite and appropriate when making a reservation.",
+            "id": "ex_7a2c9f1e-3b4d-4f8a-9c2e-1d5b6a7c8e9f_1",
+            "options": [
+              "I want a table for two.",
+              "Can I have a table for two at 7 pm?",
+              "Give me a table.",
+              "Reserve a table now."
+            ],
+            "question": "Which of the following sentences is the most polite way to ask for a reservation?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "Providing your full name and the exact time helps the restaurant confirm the booking.",
+            "id": "ex_7a2c9f1e-3b4d-4f8a-9c2e-1d5b6a7c8e9f_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "When calling a restaurant, you should always give your full name and the exact time you want the reservation.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "two",
+            "explanation": "The blank is for the number of people; \"two\" completes the sentence.",
+            "id": "ex_7a2c9f1e-3b4d-4f8a-9c2e-1d5b6a7c8e9f_3",
+            "options": [],
+            "question": "Please say: \"I would like to book a table for {blank} at 8 pm.\"",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Bạn có món ăn chay không?",
+            "explanation": "The Vietnamese translation conveys the same request for vegetarian dishes.",
+            "id": "ex_7a2c9f1e-3b4d-4f8a-9c2e-1d5b6a7c8e9f_4",
+            "options": [],
+            "question": "Translate into Vietnamese: \"Do you have any vegetarian options?\"",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "reservation:đặt chỗ, table:bàn",
+            "explanation": "\"Reservation\" means \"đặt chỗ\" and \"table\" means \"bàn\" in Vietnamese.",
+            "id": "ex_7a2c9f1e-3b4d-4f8a-9c2e-1d5b6a7c8e9f_5",
+            "options": [
+              "reservation",
+              "table",
+              "đặt chỗ",
+              "bàn"
+            ],
+            "question": "Match each reservation‑related English word with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "b1c04778-5a5f-4a0c-bfd6-77156c0d9883",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.989387"
+      },
+      "description": null,
+      "estimated_minutes": 18,
+      "id": "015f0e9b-1c9d-4b7a-ae47-e2363bdf4f07",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Making a Restaurant Reservation",
+      "total_exercises": 5,
+      "unit_id": "918787cc-895d-495d-a9ae-ea3546bdb3bf",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836555"
+      },
+      "xp_reward": 15
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Could I have the bill, please?",
+            "explanation": "'Could I have the bill, please?' uses a polite request form suitable for a restaurant.",
+            "id": "ex_ec54f955-d428-4720-a1a9-b9576ac76568_1",
+            "options": [
+              "Could I have the bill, please?",
+              "Give me the bill.",
+              "I want the bill.",
+              "Bill now!"
+            ],
+            "question": "Which phrase would you use to politely ask for the bill?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "Directly saying 'I want' sounds demanding; polite phrasing uses 'I would like' or 'Could I have'.",
+            "id": "ex_ec54f955-d428-4720-a1a9-b9576ac76568_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "In a restaurant, saying 'I want a steak' is considered polite.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "a salad",
+            "explanation": "'I would like a salad' is a common, polite way to order a specific item.",
+            "id": "ex_ec54f955-d428-4720-a1a9-b9576ac76568_3",
+            "options": [
+              "a salad",
+              "the soup",
+              "some water",
+              "an apple"
+            ],
+            "question": "When you want to order a dish, you can say: 'I would like {blank}'.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "I would like a cheeseburger with fries, please.",
+            "explanation": "The sentence uses the polite structure 'I would like ... please' appropriate for ordering.",
+            "id": "ex_ec54f955-d428-4720-a1a9-b9576ac76568_4",
+            "options": [],
+            "question": "Write a short sentence to order a cheeseburger with fries.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "burger:bánh mì, salad:súp",
+            "explanation": "'burger' corresponds to 'bánh mì' (a type of sandwich) and 'salad' corresponds to 'súp' (soup) in this matching exercise.",
+            "id": "ex_ec54f955-d428-4720-a1a9-b9576ac76568_5",
+            "options": [
+              "burger",
+              "salad",
+              "bánh mì",
+              "súp"
+            ],
+            "question": "Match each menu item with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "b1c04778-5a5f-4a0c-bfd6-77156c0d9883",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.989438"
+      },
+      "description": null,
+      "estimated_minutes": 18,
+      "id": "ec54f955-d428-4720-a1a9-b9576ac76568",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Ordering from a Menu",
+      "total_exercises": 5,
+      "unit_id": "918787cc-895d-495d-a9ae-ea3546bdb3bf",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.837096"
+      },
+      "xp_reward": 15
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "I don't like broccoli.",
+            "explanation": "The phrase \"I don't like\" is used to show a dislike.",
+            "id": "ex_3ab61b04-1bb1-46e7-afa4-b13269e9a6d0_1",
+            "options": [
+              "I like broccoli.",
+              "I don't like broccoli.",
+              "I love broccoli.",
+              "I hate broccoli."
+            ],
+            "question": "Which sentence expresses a dislike for broccoli?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "\"I like\" indicates a positive feeling toward the mentioned food.",
+            "id": "ex_3ab61b04-1bb1-46e7-afa4-b13269e9a6d0_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "True or False: The sentence \"I like pizza\" means you enjoy eating pizza.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "tofu",
+            "explanation": "\"tofu\" is a common food that some learners might not like, fitting the pattern \"I don't like ___\".",
+            "id": "ex_3ab61b04-1bb1-46e7-afa4-b13269e9a6d0_3",
+            "options": [],
+            "question": "Complete the sentence with a food you dislike: I don't like {blank}.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "I like to eat pho.",
+            "explanation": "\"Tôi thích\" means \"I like\", and \"ăn phở\" means \"to eat pho\".",
+            "id": "ex_3ab61b04-1bb1-46e7-afa4-b13269e9a6d0_4",
+            "options": [
+              "I like to eat pho.",
+              "I don't like pho.",
+              "I love to drink tea.",
+              "I hate noodles."
+            ],
+            "question": "Translate to English: \"Tôi thích ăn phở\".",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "pizza:bánh pizza, salad:gỏi",
+            "explanation": "\"pizza\" translates to \"bánh pizza\" and \"salad\" translates to \"gỏi\" in Vietnamese.",
+            "id": "ex_3ab61b04-1bb1-46e7-afa4-b13269e9a6d0_5",
+            "options": [
+              "pizza",
+              "salad",
+              "bánh pizza",
+              "gỏi"
+            ],
+            "question": "Match each English food word with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "b1c04778-5a5f-4a0c-bfd6-77156c0d9883",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.989474"
+      },
+      "description": null,
+      "estimated_minutes": 15,
+      "id": "3ab61b04-1bb1-46e7-afa4-b13269e9a6d0",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Talking About Food: I Like / I Don't Like",
+      "total_exercises": 5,
+      "unit_id": "918787cc-895d-495d-a9ae-ea3546bdb3bf",
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:37.989478"
+      },
+      "xp_reward": 12
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "sandwich",
+            "explanation": "A sandwich is a typical breakfast choice in many cafés, while soup and salad are less common for breakfast.",
+            "id": "ex_1a2b3c4d-5e6f-7g8h-9i0j-abcdef123456_1",
+            "options": [
+              "coffee",
+              "soup",
+              "sandwich",
+              "salad"
+            ],
+            "question": "Which of the following is a common breakfast item you can order at a café?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "Saying thank you shows appreciation for the service.",
+            "id": "ex_9z8y7x6w-5v4u-3t2s-1r0q-pqrstuv98765_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "When you finish your meal, it is polite to say \"Thank you\" to the waiter.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "pizza",
+            "explanation": "\"Pizza\" fits the sentence as a common food item you can order.",
+            "id": "ex_a1b2c3d4-e5f6-7g8h-9i0j-klmnopqrstuv_3",
+            "options": [],
+            "question": "I would like to order a {blank}.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "menu:thực đơn, bill:hóa đơn",
+            "explanation": "\"Menu\" means \"thực đơn\" and \"bill\" means \"hóa đơn\" in Vietnamese.",
+            "id": "ex_fedcba98-7654-3210-zyxw-vutsrqponmlk_4",
+            "options": [
+              "menu",
+              "bill",
+              "thực đơn",
+              "hóa đơn"
+            ],
+            "question": "Match each English restaurant word with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "Tôi muốn thanh toán, làm ơn.",
+            "explanation": "The correct Vietnamese translation for the request is \"Tôi muốn thanh toán, làm ơn.\"",
+            "id": "ex_11223344-5566-7788-99aa-bbccddeeff00_5",
+            "options": [
+              "Bạn có muốn món gì?",
+              "Tôi muốn thanh toán, làm ơn.",
+              "Bạn có muốn nước không?",
+              "Xin chào"
+            ],
+            "question": "Translate into Vietnamese: \"Can I have the check, please?\"",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "b1c04778-5a5f-4a0c-bfd6-77156c0d9883",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.989504"
+      },
+      "description": null,
+      "estimated_minutes": 12,
+      "id": "173ed338-0d89-43e1-8a58-7407a77a1dfe",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Food Unit Test",
+      "total_exercises": 5,
+      "unit_id": "918787cc-895d-495d-a9ae-ea3546bdb3bf",
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:37.989507"
+      },
+      "xp_reward": 25
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "in",
+            "explanation": "\"In\" is used for something inside an enclosed space like a box.",
+            "id": "ex_8fb3f825-7185-44a5-b9ae-a27a13783e7d_1",
+            "options": [
+              "in",
+              "on",
+              "next to",
+              "behind"
+            ],
+            "question": "Which preposition correctly completes the sentence: 'The cat is ___ the box.'",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "The sentence correctly uses the preposition \"behind\" to indicate position at the back of the sofa.",
+            "id": "ex_8fb3f825-7185-44a5-b9ae-a27a13783e7d_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "True or false: 'The picture is behind the sofa.'",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "next to",
+            "explanation": "\"Next to\" describes something situated beside another object, which fits the location of the school relative to the park.",
+            "id": "ex_8fb3f825-7185-44a5-b9ae-a27a13783e7d_3",
+            "options": [],
+            "question": "Write the correct preposition: 'My school is ___ the park.' Use {blank} to indicate the missing word.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "phía sau",
+            "explanation": "\"Phía sau\" is the Vietnamese equivalent of the English preposition \"behind\".",
+            "id": "ex_8fb3f825-7185-44a5-b9ae-a27a13783e7d_4",
+            "options": [
+              "phía sau",
+              "bên cạnh",
+              "trên",
+              "dưới"
+            ],
+            "question": "Select the Vietnamese translation for the preposition 'behind'.",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "in:ở trong, on:ở trên",
+            "explanation": "\"In\" translates to \"ở trong\" and \"on\" translates to \"ở trên\".",
+            "id": "ex_8fb3f825-7185-44a5-b9ae-a27a13783e7d_5",
+            "options": [
+              "in",
+              "on",
+              "ở trong",
+              "ở trên"
+            ],
+            "question": "Match each preposition with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "b1c04778-5a5f-4a0c-bfd6-77156c0d9883",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.058109"
+      },
+      "description": null,
+      "estimated_minutes": 15,
+      "id": "8fb3f825-7185-44a5-b9ae-a27a13783e7d",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Prepositions of Place: In, On, Next To, Behind",
+      "total_exercises": 5,
+      "unit_id": "eac25049-0cc4-4db3-b167-ef922571c783",
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:38.058125"
+      },
+      "xp_reward": 12
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Excuse me, could you tell me how to get to the supermarket?",
+            "explanation": "This phrase uses polite language ('Excuse me') and a clear request for directions, appropriate for A2 learners.",
+            "id": "ex_7834058b-a6ab-4415-b5b9-40d45c8fa349_1",
+            "options": [
+              "Excuse me, could you tell me how to get to the supermarket?",
+              "Hey, where is the supermarket?",
+              "I need the supermarket now!",
+              "Can you point me to the nearest supermarket?"
+            ],
+            "question": "Which phrase would you use to politely ask for directions to the supermarket?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "The sentence is a correct and common way to ask for a location.",
+            "id": "ex_7834058b-a6ab-4415-b5b9-40d45c8fa349_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "In English, you can say 'Where is the nearest bus stop?' to ask for directions.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "post office",
+            "explanation": "'Post office' fits the context of asking for a specific place.",
+            "id": "ex_7834058b-a6ab-4415-b5b9-40d45c8fa349_3",
+            "options": [],
+            "question": "Excuse me, how do I get to the {blank}?",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Excuse me:Xin lỗi, Turn left:Rẽ trái",
+            "explanation": "'Excuse me' translates to 'Xin lỗi' and 'Turn left' translates to 'Rẽ trái'.",
+            "id": "ex_7834058b-a6ab-4415-b5b9-40d45c8fa349_4",
+            "options": [
+              "Excuse me",
+              "Turn left",
+              "Xin lỗi",
+              "Rẽ trái"
+            ],
+            "question": "Match each English phrase with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "Excuse me, how do I get to the train station?",
+            "explanation": "The sentence uses the polite opening and the structure 'how do I get to...' which matches the lesson focus.",
+            "id": "ex_7834058b-a6ab-4415-b5b9-40d45c8fa349_5",
+            "options": [],
+            "question": "Write a short sentence in English asking how to get to the train station.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "b1c04778-5a5f-4a0c-bfd6-77156c0d9883",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.058162"
+      },
+      "description": null,
+      "estimated_minutes": 18,
+      "id": "7834058b-a6ab-4415-b5b9-40d45c8fa349",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Asking for Directions: Excuse Me, How Do I Get To…",
+      "total_exercises": 5,
+      "unit_id": "eac25049-0cc4-4db3-b167-ef922571c783",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836851"
+      },
+      "xp_reward": 15
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Bus",
+            "explanation": "\"Bus\" is the English word for \"xe buýt\".",
+            "id": "ex_6e800b11-eb43-45f1-9abc-e6d2980e9764_1",
+            "options": [
+              "Bus",
+              "Train",
+              "Taxi",
+              "Metro"
+            ],
+            "question": "Which word means \"xe buýt\"?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "Metros typically operate in underground tunnels.",
+            "id": "ex_6e800b11-eb43-45f1-9abc-e6d2980e9764_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "A metro runs on underground tracks.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "metro",
+            "explanation": "\"Metro\" is the appropriate word for an underground rapid‑transit system.",
+            "id": "ex_6e800b11-eb43-45f1-9abc-e6d2980e9764_3",
+            "options": [],
+            "question": "I usually take the {blank} to work because it's faster than the bus.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "bus:xe buýt, train:tàu hỏa",
+            "explanation": "\"bus\" = \"xe buýt\" and \"train\" = \"tàu hỏa\".",
+            "id": "ex_6e800b11-eb43-45f1-9abc-e6d2980e9764_4",
+            "options": [
+              "bus",
+              "train",
+              "xe buýt",
+              "tàu hỏa"
+            ],
+            "question": "Match each transport word with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "I take a taxi to the city centre.",
+            "explanation": "The Vietnamese sentence means you travel by taxi to the city centre.",
+            "id": "ex_6e800b11-eb43-45f1-9abc-e6d2980e9764_5",
+            "options": [],
+            "question": "Translate into English: \"Tôi đi taxi đến trung tâm thành phố\".",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "b1c04778-5a5f-4a0c-bfd6-77156c0d9883",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.058195"
+      },
+      "description": null,
+      "estimated_minutes": 15,
+      "id": "6e800b11-eb43-45f1-9abc-e6d2980e9764",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Transport Vocabulary: Bus, Train, Taxi, Metro",
+      "total_exercises": 5,
+      "unit_id": "eac25049-0cc4-4db3-b167-ef922571c783",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836829"
+      },
+      "xp_reward": 12
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Standard seat",
+            "explanation": "Standard seats are the most economical option for a one-way train journey.",
+            "id": "ex_1e62fa4b-9147-4df9-a43d-ca4ceb80e50e_1",
+            "options": [
+              "Standard seat",
+              "First class seat",
+              "Sleeper cabin",
+              "Business class"
+            ],
+            "question": "You want to travel from Hanoi to Ho Chi Minh City by train. Which ticket type is the cheapest for a one-way trip?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "For domestic bus travel in Vietnam, a passport is not required; a simple ID or none is enough.",
+            "id": "ex_1e62fa4b-9147-4df9-a43d-ca4ceb80e50e_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "When buying a bus ticket, you must show your passport at the ticket counter.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "name",
+            "explanation": "The conductor needs your name to print on the ticket.",
+            "id": "ex_1e62fa4b-9147-4df9-a43d-ca4ceb80e50e_3",
+            "options": [],
+            "question": "The conductor will ask you for your {blank} before issuing the ticket.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Tôi muốn mua vé khứ hồi đến Đà Nẵng, làm ơn.",
+            "explanation": "The sentence asks for a return ticket to Da Nang; the correct Vietnamese translation reflects that.",
+            "id": "ex_1e62fa4b-9147-4df9-a43d-ca4ceb80e50e_4",
+            "options": [
+              "Tôi muốn mua vé khứ hồi đến Đà Nẵng, làm ơn.",
+              "Tôi muốn mua vé một chiều đến Đà Nẵng, cảm ơn.",
+              "Tôi muốn mua vé khứ hồi đến Hà Nội, làm ơn.",
+              "Tôi muốn mua vé đi lại đến Đà Nẵng, cảm ơn."
+            ],
+            "question": "Translate the following sentence into Vietnamese: \"I would like a return ticket to Da Nang, please.\"",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "to buy",
+            "explanation": "The infinitive 'to buy' is needed after 'need'.",
+            "id": "ex_1e62fa4b-9147-4df9-a43d-ca4ceb80e50e_5",
+            "options": [],
+            "question": "Correct the sentence: \"I need buy a ticket for tomorrow's train.\" Write the missing word(s) in the blank: \"I need {blank} a ticket for tomorrow's train.\"",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "b1c04778-5a5f-4a0c-bfd6-77156c0d9883",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.058224"
+      },
+      "description": null,
+      "estimated_minutes": 18,
+      "id": "1e62fa4b-9147-4df9-a43d-ca4ceb80e50e",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Buying a Train or Bus Ticket",
+      "total_exercises": 5,
+      "unit_id": "eac25049-0cc4-4db3-b167-ef922571c783",
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:38.058227"
+      },
+      "xp_reward": 15
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Turn left",
+            "explanation": "A left‑pointing arrow indicates you should turn left.",
+            "id": "ex_aeb72cdc-e8f7-4e7d-b518-36ec509802b6_1",
+            "options": [
+              "Turn left",
+              "Turn right",
+              "No entry",
+              "One way"
+            ],
+            "question": "What does the road sign that shows a white arrow pointing left mean?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "That is the natural polite way to ask for directions.",
+            "id": "ex_aeb72cdc-e8f7-4e7d-b518-36ec509802b6_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "In English, you would say 'Excuse me, how can I get to the train station?' when you need directions to the train station.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "the hotel",
+            "explanation": "You insert the place you have reached, e.g., 'the hotel'.",
+            "id": "ex_aeb72cdc-e8f7-4e7d-b518-36ec509802b6_3",
+            "options": [],
+            "question": "When you arrive at a destination, you can say 'I have arrived at {blank}.'",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Bạn có thể chỉ cho tôi đường tới trạm xe buýt gần nhất không?",
+            "explanation": "The translation conveys the request for directions in Vietnamese.",
+            "id": "ex_aeb72cdc-e8f7-4e7d-b518-36ec509802b6_4",
+            "options": [],
+            "question": "Translate the following sentence into Vietnamese: 'Can you show me the way to the nearest bus stop?'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "left:trái, right:phải",
+            "explanation": "‘left’ = ‘trái’, ‘right’ = ‘phải’.",
+            "id": "ex_aeb72cdc-e8f7-4e7d-b518-36ec509802b6_5",
+            "options": [
+              "left",
+              "right",
+              "trái",
+              "phải"
+            ],
+            "question": "Match each English direction word with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "b1c04778-5a5f-4a0c-bfd6-77156c0d9883",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.058253"
+      },
+      "description": null,
+      "estimated_minutes": 12,
+      "id": "aeb72cdc-e8f7-4e7d-b518-36ec509802b6",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Navigation Unit Test",
+      "total_exercises": 5,
+      "unit_id": "eac25049-0cc4-4db3-b167-ef922571c783",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836940"
+      },
+      "xp_reward": 25
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "There is a big lake in the park.",
+            "explanation": "Singular 'lake' needs 'is' and the article 'a'.",
+            "id": "ex_0e6b1c70-eeb6-4afb-aaad-55e82830198c_1",
+            "options": [
+              "There is a big lake in the park.",
+              "There are a big lake in the park.",
+              "There is a big lakes in the park.",
+              "There are big lakes in the park."
+            ],
+            "question": "Which sentence correctly describes the park?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "The sentence is correct: plural 'trees' uses 'are'.",
+            "id": "ex_0e6b1c70-eeb6-4afb-aaad-55e82830198c_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "There are many trees in the garden.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "there is",
+            "explanation": "Use 'there is' for singular items (museum) and also for 'a theater' as part of the same list.",
+            "id": "ex_0e6b1c70-eeb6-4afb-aaad-55e82830198c_3",
+            "options": [],
+            "question": "In the city center, {blank} a museum and a theater.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "library:thư viện, café:quán cà phê",
+            "explanation": "Library translates to 'thư viện', café to 'quán cà phê'.",
+            "id": "ex_0e6b1c70-eeb6-4afb-aaad-55e82830198c_4",
+            "options": [
+              "library",
+              "café",
+              "thư viện",
+              "quán cà phê"
+            ],
+            "question": "Match each place word with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "There is a beautiful river in my hometown. There are many parks and museums.",
+            "explanation": "Uses 'there is' for singular river and 'there are' for plural parks and museums.",
+            "id": "ex_0e6b1c70-eeb6-4afb-aaad-55e82830198c_5",
+            "options": [],
+            "question": "Write two sentences describing your hometown, using 'there is' or 'there are' to talk about places.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "b1c04778-5a5f-4a0c-bfd6-77156c0d9883",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.130404"
+      },
+      "description": null,
+      "estimated_minutes": 15,
+      "id": "0e6b1c70-eeb6-4afb-aaad-55e82830198c",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "There Is / There Are: Describing Places",
+      "total_exercises": 5,
+      "unit_id": "fccf849e-533e-4f8d-85a2-a79e8449db4e",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836593"
+      },
+      "xp_reward": 15
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "started",
+            "explanation": "For most regular verbs, we add '-ed' to the base form to make the Past Simple. 'Start' becomes 'started'.",
+            "id": "ex_c605e717-2535-474e-bb6a-d84a07fb2783_1",
+            "options": [
+              "start",
+              "starting",
+              "started",
+              "starts"
+            ],
+            "question": "Choose the correct Past Simple form of 'start'.",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "listened",
+            "explanation": "The Past Simple form of 'listen' is 'listened'. We add '-ed' because it's a regular verb.",
+            "id": "ex_c605e717-2535-474e-bb6a-d84a07fb2783_2",
+            "options": [],
+            "question": "Yesterday, I {blank} to music for an hour. (listen)",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "The correct Past Simple form of 'play' is 'played', not 'playd'. We add '-ed' to form the past tense of this regular verb.",
+            "id": "ex_c605e717-2535-474e-bb6a-d84a07fb2783_3",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The Past Simple form of 'play' is 'playd'.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "work:worked, clean:cleaned",
+            "explanation": "'Work' becomes 'worked' and 'clean' becomes 'cleaned' in the Past Simple. Both are regular verbs where you add '-ed'.",
+            "id": "ex_c605e717-2535-474e-bb6a-d84a07fb2783_4",
+            "options": [
+              "work",
+              "clean",
+              "worked",
+              "cleaned"
+            ],
+            "question": "Match the base form with its Past Simple form.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "cleaned",
+            "explanation": "The sentence refers to 'last week', which indicates a past action. Therefore, the verb 'clean' must be in the Past Simple form, 'cleaned'.",
+            "id": "ex_c605e717-2535-474e-bb6a-d84a07fb2783_5",
+            "options": [],
+            "question": "The sentence 'She clean her room every day last week.' has a mistake. Correct the verb 'clean': 'She {blank} her room every day last week.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "b1c04778-5a5f-4a0c-bfd6-77156c0d9883",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.130584"
+      },
+      "description": null,
+      "estimated_minutes": 18,
+      "id": "c605e717-2535-474e-bb6a-d84a07fb2783",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Past Simple – Regular Verbs: Work → Worked",
+      "total_exercises": 5,
+      "unit_id": "fccf849e-533e-4f8d-85a2-a79e8449db4e",
+      "updated_at": {
+        "__dt__": "2026-08-14T08:05:15.722582"
+      },
+      "xp_reward": 15
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "went",
+            "explanation": "The irregular past simple of 'go' is 'went'.",
+            "id": "ex_a7633949-3e8b-4603-af3f-c524bd4ba43e_1",
+            "options": [
+              "goed",
+              "went",
+              "goes",
+              "going"
+            ],
+            "question": "Which is the correct past simple form of the verb 'go'?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "The verb should be in past simple: 'She went to the market yesterday.'",
+            "id": "ex_a7633949-3e8b-4603-af3f-c524bd4ba43e_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "True or False: 'She go to the market yesterday.' is a correct sentence.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "went",
+            "explanation": "The past simple of 'go' is 'went', so the sentence becomes 'Yesterday, I went to the park.'",
+            "id": "ex_a7633949-3e8b-4603-af3f-c524bd4ba43e_3",
+            "options": [],
+            "question": "Complete the sentence with the correct past simple form: 'Yesterday, I {blank} to the park.'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Chúng tôi đã về nhà sau bộ phim.",
+            "explanation": "In Vietnamese, past actions are expressed with 'đã', and 'went' translates to 'đã về' (or 'đã đi về'). The natural translation is 'Chúng tôi đã về nhà sau bộ phim.'",
+            "id": "ex_a7633949-3e8b-4603-af3f-c524bd4ba43e_4",
+            "options": [
+              "Chúng tôi đã đi về nhà sau bộ phim.",
+              "Chúng tôi đã về nhà sau bộ phim.",
+              "Chúng tôi đã đi nhà sau bộ phim.",
+              "Chúng tôi đã đi về nhà sau khi xem phim."
+            ],
+            "question": "Translate the following sentence into Vietnamese: 'We went home after the movie.'",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "I went to school.:Tôi đã đi đến trường., She went to the market.:Cô ấy đã đi chợ.",
+            "explanation": "Each English sentence uses the past simple 'went', which corresponds to the Vietnamese past form 'đã đi'.",
+            "id": "ex_a7633949-3e8b-4603-af3f-c524bd4ba43e_5",
+            "options": [
+              "I went to school.",
+              "She went to the market.",
+              "Tôi đã đi đến trường.",
+              "Cô ấy đã đi chợ."
+            ],
+            "question": "Match each English sentence with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "b1c04778-5a5f-4a0c-bfd6-77156c0d9883",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.130614"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "a7633949-3e8b-4603-af3f-c524bd4ba43e",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Past Simple – Irregular Verbs: Go → Went",
+      "total_exercises": 5,
+      "unit_id": "fccf849e-533e-4f8d-85a2-a79e8449db4e",
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:38.130616"
+      },
+      "xp_reward": 18
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Did",
+            "explanation": "In Past Simple questions we use 'Did' + base verb.",
+            "id": "ex_3fe29a1b-5fbe-4550-a682-cde896c36196_1",
+            "options": [
+              "Did",
+              "Do",
+              "Does",
+              "Will"
+            ],
+            "question": "Which word correctly completes the question in Past Simple? '___ you visit your grandparents last weekend?'",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "Negative Past Simple uses 'didn't' + base verb, so it should be 'didn't go'.",
+            "id": "ex_3fe29a1b-5fbe-4550-a682-cde896c36196_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The sentence 'She didn't went to school yesterday.' is correct.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "were",
+            "explanation": "'There were many people' is the correct Past Simple form.",
+            "id": "ex_3fe29a1b-5fbe-4550-a682-cde896c36196_3",
+            "options": [],
+            "question": "Correct the sentence: 'There {blank} many people at the party last night.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Bạn đã xem bộ phim chưa?",
+            "explanation": "The Past Simple question uses 'Did' + base verb, translated as 'Bạn đã ... chưa?'.",
+            "id": "ex_3fe29a1b-5fbe-4550-a682-cde896c36196_4",
+            "options": [
+              "Bạn đã xem bộ phim chưa?",
+              "Bạn có xem bộ phim không?",
+              "Bạn sẽ xem bộ phim?",
+              "Bạn đã xem bộ phim rồi?"
+            ],
+            "question": "Translate into Vietnamese: 'Did you see the movie?'",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "went:đi, saw:đã thấy",
+            "explanation": "‘went’ means ‘đi’, and ‘saw’ means ‘đã thấy’ in Vietnamese.",
+            "id": "ex_3fe29a1b-5fbe-4550-a682-cde896c36196_5",
+            "options": [
+              "went",
+              "saw",
+              "đi",
+              "đã thấy"
+            ],
+            "question": "Match each Past Simple verb with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "b1c04778-5a5f-4a0c-bfd6-77156c0d9883",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.130634"
+      },
+      "description": null,
+      "estimated_minutes": 18,
+      "id": "3fe29a1b-5fbe-4550-a682-cde896c36196",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Past Simple Questions & Negatives",
+      "total_exercises": 5,
+      "unit_id": "fccf849e-533e-4f8d-85a2-a79e8449db4e",
+      "updated_at": {
+        "__dt__": "2026-08-19T02:31:23.631001"
+      },
+      "xp_reward": 18
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "I went to the market yesterday.",
+            "explanation": "Past Simple is formed with the verb's past form (went) for a completed action in the past.",
+            "id": "ex_0f317ece-60d2-43f2-8539-25f1eb31d1c3_1",
+            "options": [
+              "I go to the market yesterday.",
+              "I went to the market yesterday.",
+              "I was going to the market yesterday.",
+              "I have gone to the market yesterday."
+            ],
+            "question": "Which sentence correctly uses the Past Simple to talk about a finished action yesterday?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "With plural nouns we use 'there are', not 'there is'.",
+            "id": "ex_0f317ece-60d2-43f2-8539-25f1eb31d1c3_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "There is many books on the shelf.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "baked",
+            "explanation": "'Baked' is the Past Simple form of 'bake' indicating a completed action.",
+            "id": "ex_0f317ece-60d2-43f2-8539-25f1eb31d1c3_3",
+            "options": [],
+            "question": "She {blank} a delicious cake last weekend.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "there is:có một, there are:có nhiều",
+            "explanation": "'There is' is used for singular items, 'there are' for plural.",
+            "id": "ex_0f317ece-60d2-43f2-8539-25f1eb31d1c3_4",
+            "options": [
+              "there is",
+              "there are",
+              "có một",
+              "có nhiều"
+            ],
+            "question": "Match each structure with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "I visited my grandparents. I watched a movie.",
+            "explanation": "Both sentences use the Past Simple (visited, watched) to describe completed past actions.",
+            "id": "ex_0f317ece-60d2-43f2-8539-25f1eb31d1c3_5",
+            "options": [],
+            "question": "Write two sentences about what you did last Saturday using the Past Simple.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "b1c04778-5a5f-4a0c-bfd6-77156c0d9883",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.130653"
+      },
+      "description": null,
+      "estimated_minutes": 15,
+      "id": "0f317ece-60d2-43f2-8539-25f1eb31d1c3",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "A2 Final Grammar Test",
+      "total_exercises": 5,
+      "unit_id": "fccf849e-533e-4f8d-85a2-a79e8449db4e",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836595"
+      },
+      "xp_reward": 35
+    }
+  ],
+  "units": [
+    {
+      "background_color": "#E91E63",
+      "course_id": "b1c04778-5a5f-4a0c-bfd6-77156c0d9883",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.844324"
+      },
+      "description": "Mua sắm, hỏi giá và trả tiền bằng tiếng Anh",
+      "icon_url": null,
+      "id": "728e6542-ea2c-49ef-b55d-88f05684345d",
+      "order_index": 1,
+      "title": "Going Shopping",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:37.883654"
+      }
+    },
+    {
+      "background_color": "#FF5722",
+      "course_id": "b1c04778-5a5f-4a0c-bfd6-77156c0d9883",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.885717"
+      },
+      "description": "Gọi món, đặt bàn và nói về ẩm thực",
+      "icon_url": null,
+      "id": "918787cc-895d-495d-a9ae-ea3546bdb3bf",
+      "order_index": 2,
+      "title": "Food & Restaurants",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:37.953086"
+      }
+    },
+    {
+      "background_color": "#00BCD4",
+      "course_id": "b1c04778-5a5f-4a0c-bfd6-77156c0d9883",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:37.955938"
+      },
+      "description": "Hỏi đường, phương tiện di chuyển và điểm đến",
+      "icon_url": null,
+      "id": "eac25049-0cc4-4db3-b167-ef922571c783",
+      "order_index": 3,
+      "title": "Getting Around",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:38.045883"
+      }
+    },
+    {
+      "background_color": "#607D8B",
+      "course_id": "b1c04778-5a5f-4a0c-bfd6-77156c0d9883",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.054234"
+      },
+      "description": "Thì Quá khứ đơn và cấu trúc There is/are",
+      "icon_url": null,
+      "id": "fccf849e-533e-4f8d-85a2-a79e8449db4e",
+      "order_index": 4,
+      "title": "Grammar: Past Simple & There Is/Are",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:38.125579"
+      }
+    }
+  ]
+}

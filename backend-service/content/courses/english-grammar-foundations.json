@@ -1,0 +1,456 @@
+{
+  "category": {
+    "color": null,
+    "course_count": 4,
+    "created_at": {
+      "__dt__": "2026-06-30T15:13:15.217738"
+    },
+    "description": "Grammar rules and usage",
+    "icon": null,
+    "id": "71e10da3-1cbe-48b7-a869-9f67bb726f41",
+    "is_active": true,
+    "name": "Grammar",
+    "order_index": 0,
+    "slug": "grammar",
+    "updated_at": {
+      "__dt__": "2026-06-30T15:13:32.819049"
+    }
+  },
+  "course": {
+    "category_id": "71e10da3-1cbe-48b7-a869-9f67bb726f41",
+    "content_version": 1,
+    "created_at": {
+      "__dt__": "2026-08-14T08:06:02.936411"
+    },
+    "description": "Start with core grammar patterns for everyday communication.",
+    "estimated_duration": 90,
+    "id": "764d9a6f-85a5-4c7f-8b95-82831ef27ae2",
+    "is_published": true,
+    "language": "en",
+    "level": "A1",
+    "skill": "grammar",
+    "tags": [
+      "grammar",
+      "beginner",
+      "fundamentals"
+    ],
+    "thumbnail_url": "https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8",
+    "title": "English Grammar Foundations",
+    "total_lessons": 2,
+    "total_xp": 120,
+    "updated_at": {
+      "__dt__": "2026-08-18T04:17:07.523212"
+    }
+  },
+  "format": 1,
+  "lessons": [
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "drink",
+            "explanation": "With I/You/We/They, use the base verb form.",
+            "id": "ex_g1_1",
+            "options": [
+              {
+                "id": "0",
+                "is_correct": true,
+                "text": "drink"
+              },
+              {
+                "id": "1",
+                "is_correct": false,
+                "text": "drinks"
+              },
+              {
+                "id": "2",
+                "is_correct": false,
+                "text": "drinking"
+              },
+              {
+                "id": "3",
+                "is_correct": false,
+                "text": "drunk"
+              }
+            ],
+            "question": "Choose the correct form: 'I ___ coffee every morning.'",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "'They' is plural and takes the base verb 'play', not 'plays'.",
+            "id": "ex_g1_2",
+            "options": [
+              {
+                "id": "0",
+                "is_correct": false,
+                "text": "True"
+              },
+              {
+                "id": "1",
+                "is_correct": true,
+                "text": "False"
+              }
+            ],
+            "question": "True or False: 'They plays football' is grammatically correct.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "live",
+            "explanation": "'We' takes the base verb 'live'.",
+            "id": "ex_g1_3",
+            "question": "Complete the sentence: 'We {blank} in a big city.'",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "they study every day",
+            "explanation": "Subject + Verb + Time expression is the standard structure.",
+            "id": "ex_g1_4",
+            "options": [
+              {
+                "id": "0",
+                "text": "they"
+              },
+              {
+                "id": "1",
+                "text": "study"
+              },
+              {
+                "id": "2",
+                "text": "every"
+              },
+              {
+                "id": "3",
+                "text": "day"
+              }
+            ],
+            "question": "Arrange: 'day / every / study / they'",
+            "type": "reorder",
+            "ui_type": "arrange_the_sentence"
+          },
+          {
+            "correct_answer": "We want to learn.",
+            "explanation": "'Chúng tôi' translates to 'We', which takes the base verb 'want'.",
+            "id": "ex_g1_5",
+            "options": [
+              {
+                "id": "0",
+                "is_correct": true,
+                "text": "We want to learn."
+              },
+              {
+                "id": "1",
+                "is_correct": false,
+                "text": "We wants to learn."
+              },
+              {
+                "id": "2",
+                "is_correct": false,
+                "text": "We learning."
+              }
+            ],
+            "question": "Choose the translation for: 'Chúng tôi muốn học.'",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "do",
+            "explanation": "Short answer to 'Do you...' is 'I do'.",
+            "id": "ex_g1_6",
+            "question": "A: Do you speak English? B: Yes, I {blank}.",
+            "type": "fill_blank",
+            "ui_type": "dialogue_completion"
+          },
+          {
+            "correct_answer": "do",
+            "explanation": "The collocation is 'do homework'.",
+            "id": "ex_g1_7",
+            "options": [
+              {
+                "id": "0",
+                "is_correct": true,
+                "text": "do"
+              },
+              {
+                "id": "1",
+                "is_correct": false,
+                "text": "make"
+              }
+            ],
+            "question": "Complete the phrase: 'They ___ homework together.'",
+            "type": "multiple_choice",
+            "ui_type": "collocation_choice"
+          },
+          {
+            "correct_answer": "We go home",
+            "explanation": "Type the exact words heard in the audio.",
+            "id": "ex_g1_8",
+            "question": "Listen and write what you hear: '{blank}'",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "I listen to music",
+            "explanation": "Record yourself repeating this sentence.",
+            "id": "ex_g1_9",
+            "question": "Repeat: 'I listen to music.'",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "Việc làm hằng ngày",
+            "explanation": "Routine is a sequence of actions regularly followed.",
+            "id": "ex_g1_10",
+            "options": [
+              {
+                "id": "0",
+                "is_correct": true,
+                "text": "Việc làm hằng ngày"
+              },
+              {
+                "id": "1",
+                "is_correct": false,
+                "text": "Chuyến đi xa"
+              },
+              {
+                "id": "2",
+                "is_correct": false,
+                "text": "Bữa tiệc bất ngờ"
+              },
+              {
+                "id": "3",
+                "is_correct": false,
+                "text": "Kỳ nghỉ dài"
+              }
+            ],
+            "question": "Learn the card: 'Routine'",
+            "type": "multiple_choice",
+            "ui_type": "vocabulary_flashcard"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "764d9a6f-85a5-4c7f-8b95-82831ef27ae2",
+      "created_at": {
+        "__dt__": "2026-08-14T08:06:02.965569"
+      },
+      "description": "Form positive present simple sentences.",
+      "estimated_minutes": 12,
+      "id": "0abc7160-9306-4910-9d1f-e583dc099496",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 70,
+      "prerequisites": [],
+      "skill": null,
+      "title": "I/You/We/They + Verb",
+      "total_exercises": 10,
+      "unit_id": "54183a71-e96c-4a44-b57e-0c1ea6774d15",
+      "updated_at": {
+        "__dt__": "2026-08-19T02:32:24.997048"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "goes",
+            "explanation": "He/she/it takes verb+s/es.",
+            "id": "ex_g2_1",
+            "options": [
+              {
+                "id": "0",
+                "is_correct": false,
+                "text": "go"
+              },
+              {
+                "id": "1",
+                "is_correct": true,
+                "text": "goes"
+              },
+              {
+                "id": "2",
+                "is_correct": false,
+                "text": "going"
+              }
+            ],
+            "question": "Choose correct: 'He ___ to school by bus.'",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "It should be 'It rains a lot'.",
+            "id": "ex_g2_2",
+            "options": [
+              {
+                "id": "0",
+                "is_correct": false,
+                "text": "True"
+              },
+              {
+                "id": "1",
+                "is_correct": true,
+                "text": "False"
+              }
+            ],
+            "question": "True or False: 'It rain a lot' is correct.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "plays",
+            "explanation": "She requires plays.",
+            "id": "ex_g2_3",
+            "question": "Complete: 'She {blank} the piano well.'",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "He plays tennis",
+            "explanation": "Add 's' to play.",
+            "id": "ex_g2_4",
+            "question": "Correct the error: 'He play tennis.' -> '{blank}'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Running",
+            "explanation": "Select the correct action card.",
+            "id": "ex_g2_5",
+            "options": [
+              {
+                "id": "0",
+                "is_correct": true,
+                "text": "Running"
+              },
+              {
+                "id": "1",
+                "is_correct": false,
+                "text": "Sleeping"
+              }
+            ],
+            "question": "Choose the image that represents: 'She runs.'",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "He eats breakfast",
+            "explanation": "Audio matches breakfast.",
+            "id": "ex_g2_6",
+            "options": [
+              {
+                "id": "0",
+                "is_correct": true,
+                "text": "He eats breakfast"
+              },
+              {
+                "id": "1",
+                "is_correct": false,
+                "text": "He plays games"
+              }
+            ],
+            "question": "Listen and select what he does.",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          },
+          {
+            "correct_answer": "He plays tennis",
+            "explanation": "Evaluate pronunciation of He plays tennis.",
+            "id": "ex_g2_7",
+            "question": "Practice speaking: 'He plays tennis.'",
+            "type": "translate",
+            "ui_type": "pronunciation_practice"
+          },
+          {
+            "correct_answer": "restaurant",
+            "explanation": "The text states he works in a restaurant.",
+            "id": "ex_g2_8",
+            "options": [
+              {
+                "id": "0",
+                "is_correct": true,
+                "text": "restaurant"
+              },
+              {
+                "id": "1",
+                "is_correct": false,
+                "text": "office"
+              }
+            ],
+            "question": "Read and answer: 'Tom is a chef. He works in a restaurant.' Where does Tom work?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "She speaks English",
+            "explanation": "Translate exactly.",
+            "id": "ex_g2_9",
+            "question": "Write in English: 'Cô ấy nói tiếng Anh.'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "he:Singular, they:Plural",
+            "explanation": "He is singular, they is plural.",
+            "id": "ex_g2_10",
+            "options": [
+              "he",
+              "they",
+              "Singular",
+              "Plural"
+            ],
+            "question": "Categorize the pronouns: Singular vs Plural",
+            "type": "matching",
+            "ui_type": "categorization"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "764d9a6f-85a5-4c7f-8b95-82831ef27ae2",
+      "created_at": {
+        "__dt__": "2026-08-14T08:06:02.965590"
+      },
+      "description": "Use third-person singular correctly.",
+      "estimated_minutes": 12,
+      "id": "65d85dd7-1089-49bc-9feb-428d95bf55a7",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 70,
+      "prerequisites": [],
+      "skill": null,
+      "title": "He/She/It + Verb-s",
+      "total_exercises": 10,
+      "unit_id": "54183a71-e96c-4a44-b57e-0c1ea6774d15",
+      "updated_at": {
+        "__dt__": "2026-08-19T02:31:23.631002"
+      },
+      "xp_reward": 20
+    }
+  ],
+  "units": [
+    {
+      "background_color": "#1E3A8A",
+      "course_id": "764d9a6f-85a5-4c7f-8b95-82831ef27ae2",
+      "created_at": {
+        "__dt__": "2026-08-14T08:06:02.940158"
+      },
+      "description": "Build confidence with daily routine sentences.",
+      "icon_url": null,
+      "id": "54183a71-e96c-4a44-b57e-0c1ea6774d15",
+      "order_index": 1,
+      "title": "Present Simple Basics",
+      "total_lessons": 2,
+      "updated_at": {
+        "__dt__": "2026-08-14T08:06:02.940163"
+      }
+    }
+  ]
+}

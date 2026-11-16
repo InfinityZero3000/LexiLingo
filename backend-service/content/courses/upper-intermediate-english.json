@@ -1,0 +1,1405 @@
+{
+  "category": {
+    "color": "#1565C0",
+    "course_count": 0,
+    "created_at": {
+      "__dt__": "2026-03-14T03:20:37.056492"
+    },
+    "description": "Khóa học tiếng Anh tổng quát theo khung CEFR (A1–C2)",
+    "icon": "school",
+    "id": "76c5f700-7134-407e-acb3-cab49d214c96",
+    "is_active": true,
+    "name": "General English",
+    "order_index": 1,
+    "slug": "general-english",
+    "updated_at": {
+      "__dt__": "2026-03-14T03:20:37.056509"
+    }
+  },
+  "course": {
+    "category_id": "76c5f700-7134-407e-acb3-cab49d214c96",
+    "content_version": 1,
+    "created_at": {
+      "__dt__": "2026-03-14T03:20:38.945725"
+    },
+    "description": "Nâng cao kỹ năng tiếng Anh lên trình độ B2. Phát triển kỹ năng viết luận, lập luận, thảo luận về các chủ đề xã hội và nắm vững các cấu trúc ngữ pháp phức tạp như conditionals, passive voice.",
+    "estimated_duration": 660,
+    "id": "c6ec756c-f021-4695-8225-3d134f54d4b8",
+    "is_published": true,
+    "language": "en",
+    "level": "B2",
+    "skill": "grammar",
+    "tags": [
+      "upper-intermediate",
+      "grammar",
+      "writing",
+      "cefr-b2"
+    ],
+    "thumbnail_url": "https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400",
+    "title": "Upper-Intermediate English",
+    "total_lessons": 15,
+    "total_xp": 900,
+    "updated_at": {
+      "__dt__": "2026-08-18T04:17:07.523246"
+    }
+  },
+  "format": 1,
+  "lessons": [
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "If you heat ice, it melts.",
+            "explanation": "Zero conditional uses present simple in both clauses to express general truths.",
+            "id": "ex_af3b8b33-b793-4dc4-9b78-0b58a055b32e_1",
+            "options": [
+              "If you heat ice, it melts.",
+              "If I will go to the party, I will be happy.",
+              "If she studies, she will pass the exam.",
+              "If it rains tomorrow, the ground gets wet."
+            ],
+            "question": "Which sentence correctly uses the zero conditional to talk about a general truth?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "First conditional expresses real possible future situations, not unreal present.",
+            "id": "ex_af3b8b33-b793-4dc4-9b78-0b58a055b32e_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The first conditional can be used for unreal situations in the present.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "rains, stay",
+            "explanation": "In zero conditional we use present simple 'rains' in the if‑clause and present simple 'stay' in the main clause.",
+            "id": "ex_af3b8b33-b793-4dc4-9b78-0b58a055b32e_3",
+            "options": [],
+            "question": "Complete the sentence with the correct verb form: If it {blank} (rain) today, we {blank} (stay) indoors.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "If it rains, I will stay at home.",
+            "explanation": "First conditional uses present simple in the if‑clause and will + verb in the main clause.",
+            "id": "ex_af3b8b33-b793-4dc4-9b78-0b58a055b32e_4",
+            "options": [],
+            "question": "Translate into English: Nếu trời mưa, tôi sẽ ở nhà.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "if:nếu, unless:trừ khi",
+            "explanation": "'if' means 'nếu' and 'unless' means 'trừ khi' in conditional sentences.",
+            "id": "ex_af3b8b33-b793-4dc4-9b78-0b58a055b32e_5",
+            "options": [
+              "if",
+              "unless",
+              "nếu",
+              "trừ khi"
+            ],
+            "question": "Match each conditional keyword with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "c6ec756c-f021-4695-8225-3d134f54d4b8",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.003103"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "af3b8b33-b793-4dc4-9b78-0b58a055b32e",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Zero & First Conditional: Real Possibilities",
+      "total_exercises": 5,
+      "unit_id": "54c3aacc-243f-461d-9a7e-8e3a9aed6289",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836942"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "If she studied harder, she would pass the exam.",
+            "explanation": "Second conditional uses 'if + past simple' + 'would + base verb' for unreal present situations.",
+            "id": "ex_f00257d0-8024-48ea-b0fe-074b53fa03e5_1",
+            "options": [
+              "If I won the lottery, I will buy a house.",
+              "If she studied harder, she would pass the exam.",
+              "If they are late, we would start without them.",
+              "If he has enough money, he would travel."
+            ],
+            "question": "Which sentence correctly uses the second conditional to talk about an unlikely present situation?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "The if‑clause uses the past simple, not the simple present.",
+            "id": "ex_f00257d0-8024-48ea-b0fe-074b53fa03e5_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "In a second conditional sentence, we use the simple present tense in the if‑clause.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "had",
+            "explanation": "The if‑clause requires past simple 'had' for hypothetical situations.",
+            "id": "ex_f00257d0-8024-48ea-b0fe-074b53fa03e5_3",
+            "options": [],
+            "question": "If I {blank} more free time, I would learn to play the piano.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "If I had enough money, I would buy a new car.",
+            "explanation": "Second conditional: past simple 'had' + would + base verb.",
+            "id": "ex_f00257d0-8024-48ea-b0fe-074b53fa03e5_4",
+            "options": [],
+            "question": "Dịch câu sau sang tiếng Anh, sử dụng câu điều kiện loại 2: Nếu tôi có đủ tiền, tôi sẽ mua một chiếc ô tô mới.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "if:nếu, would:sẽ",
+            "explanation": "In second conditional, 'if' introduces the condition and 'would' expresses the result.",
+            "id": "ex_f00257d0-8024-48ea-b0fe-074b53fa03e5_5",
+            "options": [
+              "if",
+              "would",
+              "nếu",
+              "sẽ"
+            ],
+            "question": "Match each English conditional word with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "c6ec756c-f021-4695-8225-3d134f54d4b8",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.003155"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "f00257d0-8024-48ea-b0fe-074b53fa03e5",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Second Conditional: Hypothetical Situations",
+      "total_exercises": 5,
+      "unit_id": "54c3aacc-243f-461d-9a7e-8e3a9aed6289",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.837101"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "If I had saved more money, I would have bought a car.",
+            "explanation": "The third conditional uses 'if + past perfect' + 'would have + past participle' to talk about unreal past situations.",
+            "id": "ex_1a2b3c4d-5e6f-7g8h-9i0j-1234567890ab_1",
+            "options": [
+              "If I had saved more money, I would have bought a car.",
+              "If I would have saved more money, I would have bought a car.",
+              "If I had saved more money, I would bought a car.",
+              "If I saved more money, I would have bought a car."
+            ],
+            "question": "Which sentence correctly uses the third conditional to express a past regret?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "The correct form is \"If she hadn't taken the train, she would have arrived earlier.\" The past perfect negative is \"hadn't taken\".",
+            "id": "ex_1a2b3c4d-5e6f-7g8h-9i0j-1234567890ab_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The sentence \"If she didn't have taken the train, she would have arrived earlier.\" is grammatically correct.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "would have attended",
+            "explanation": "Third conditional: 'would have' + past participle completes the clause.",
+            "id": "ex_1a2b3c4d-5e6f-7g8h-9i0j-1234567890ab_3",
+            "options": [],
+            "question": "I {blank} the party if I had known it was a surprise.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "If I had studied harder, I would have gotten a higher grade.",
+            "explanation": "Use the third conditional pattern 'If + past perfect, would have + past participle' to express a past regret.",
+            "id": "ex_1a2b3c4d-5e6f-7g8h-9i0j-1234567890ab_4",
+            "options": [],
+            "question": "Viết câu tiếng Anh diễn tả sự hối tiếc: \"Nếu tôi đã học chăm chỉ hơn, tôi đã đạt điểm cao hơn.\"",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Nếu tôi đã biết:I would have called you, Nếu anh ấy đã đến:She would have helped us",
+            "explanation": "Both pairs follow the third conditional structure, linking the Vietnamese condition with its English equivalent.",
+            "id": "ex_1a2b3c4d-5e6f-7g8h-9i0j-1234567890ab_5",
+            "options": [
+              "Nếu tôi đã biết",
+              "Nếu anh ấy đã đến",
+              "I would have called you",
+              "She would have helped us"
+            ],
+            "question": "Match each Vietnamese phrase with its correct English third‑conditional clause.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "c6ec756c-f021-4695-8225-3d134f54d4b8",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.003184"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "26d5c8d4-9d3c-486c-b1f9-05fbf962397f",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Third Conditional: Past Regrets & Wishes",
+      "total_exercises": 5,
+      "unit_id": "54c3aacc-243f-461d-9a7e-8e3a9aed6289",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836642"
+      },
+      "xp_reward": 22
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "The meal is prepared by the chef every day.",
+            "explanation": "The present simple passive of \"prepares\" is \"is prepared\".",
+            "id": "ex_9e927b99-dd87-4827-b682-490bbc7cb39f_1",
+            "options": [
+              "The meal is prepared by the chef every day.",
+              "The meal was prepared by the chef every day.",
+              "The meal has been prepared by the chef every day.",
+              "The meal will be prepared by the chef every day."
+            ],
+            "question": "Choose the correct passive form of the sentence: \"The chef prepares the meal every day.\"",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "\"Was built\" is past simple passive, not present perfect.",
+            "id": "ex_9e927b99-dd87-4827-b682-490bbc7cb39f_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The sentence \"The bridge was built in 1990\" is in the present perfect passive.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "will have been completed",
+            "explanation": "Future perfect passive is formed with \"will have been\" + past participle.",
+            "id": "ex_9e927b99-dd87-4827-b682-490bbc7cb39f_3",
+            "options": [],
+            "question": "Complete the sentence with the correct passive perfect form: \"By next year, the new library {blank} for the community.\"",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "The road had already been repaired before the storm arrived.",
+            "explanation": "Past perfect passive uses \"had been\" + past participle.",
+            "id": "ex_9e927b99-dd87-4827-b682-490bbc7cb39f_4",
+            "options": [],
+            "question": "Write a sentence in past perfect passive about the following: \"They had already repaired the road before the storm arrived.\" (Viết một câu ở thì quá khứ hoàn thành bị động)",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "The letter was sent:bức thư đã được gửi, The cake was baked:bánh đã được nướng",
+            "explanation": "Both English sentences are in the simple past passive; the Vietnamese translations reflect the same meaning.",
+            "id": "ex_9e927b99-dd87-4827-b682-490bbc7cb39f_5",
+            "options": [
+              "The letter was sent",
+              "The cake was baked",
+              "bức thư đã được gửi",
+              "bánh đã được nướng"
+            ],
+            "question": "Match each passive sentence with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "c6ec756c-f021-4695-8225-3d134f54d4b8",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.003214"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "9e927b99-dd87-4827-b682-490bbc7cb39f",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Passive Voice: Present, Past & Perfect",
+      "total_exercises": 5,
+      "unit_id": "54c3aacc-243f-461d-9a7e-8e3a9aed6289",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836912"
+      },
+      "xp_reward": 22
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "If I had studied harder, I would pass the exam now.",
+            "explanation": "The mixed conditional combines a past perfect in the if‑clause with would + base verb to express a present result of a past unreal condition.",
+            "id": "ex_123e4567-e89b-12d3-a456-426614174000_1",
+            "options": [
+              "If I had studied harder, I would have passed the exam.",
+              "If I had studied harder, I would pass the exam now.",
+              "If I study harder, I would have passed the exam.",
+              "If I study harder, I will pass the exam."
+            ],
+            "question": "Which sentence correctly uses a mixed conditional to talk about a present result of a past condition?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "The subject \"The new policy\" receives the action and the verb phrase \"was announced\" is a passive construction.",
+            "id": "ex_223e4567-e89b-12d3-a456-426614174001_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The sentence \"The new policy was announced by the manager yesterday\" is in the passive voice.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "had finished",
+            "explanation": "Past perfect (had finished) is required because the action was completed before another past event.",
+            "id": "ex_323e4567-e89b-12d3-a456-426614174002_3",
+            "options": [],
+            "question": "She {blank} the report by the time the meeting started.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "If I had caught the train, I wouldn't have been late.",
+            "explanation": "Third conditional uses \"if + past perfect\" + \"would have + past participle\" to talk about unreal past situations and their imagined results.",
+            "id": "ex_423e4567-e89b-12d3-a456-426614174003_4",
+            "options": [],
+            "question": "Viết một câu tiếng Anh sử dụng câu điều kiện loại 3 để diễn tả sự hối tiếc vì đã bỏ lỡ chuyến tàu.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Passive voice:Thể bị động, Conditional:Câu điều kiện",
+            "explanation": "The term \"Passive voice\" corresponds to \"Thể bị động\" and \"Conditional\" corresponds to \"Câu điều kiện\".",
+            "id": "ex_523e4567-e89b-12d3-a456-426614174004_5",
+            "options": [
+              "Passive voice",
+              "Conditional",
+              "Thể bị động",
+              "Câu điều kiện"
+            ],
+            "question": "Match each grammatical term with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "c6ec756c-f021-4695-8225-3d134f54d4b8",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.003243"
+      },
+      "description": null,
+      "estimated_minutes": 18,
+      "id": "575523c7-b08c-465b-8b66-310ea4af9e59",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Grammar B2 – Unit 1 Test",
+      "total_exercises": 5,
+      "unit_id": "54c3aacc-243f-461d-9a7e-8e3a9aed6289",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836780"
+      },
+      "xp_reward": 40
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Renewable energy is becoming cheaper and more reliable.",
+            "explanation": "The paragraph emphasizes the growing affordability and reliability of renewable energy and its role in reducing fossil‑fuel use and fighting climate change, which is the central point.",
+            "id": "ex_438e4fcc-89a8-4cc1-881c-b22f0642bb52_1",
+            "options": [
+              "Renewable energy is becoming cheaper and more reliable.",
+              "Solar and wind power are the only sources of energy.",
+              "Fossil fuels are the best option for the future.",
+              "Climate change is not a concern."
+            ],
+            "question": "Read the short paragraph: \"Renewable energy sources, such as solar and wind, are becoming more affordable and reliable. This shift reduces dependence on fossil fuels and helps combat climate change.\" What is the main idea of the paragraph?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "The text says renewable energy reduces dependence on fossil fuels, not increases it.",
+            "id": "ex_438e4fcc-89a8-4cc1-881c-b22f0642bb52_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The paragraph states that renewable energy increases dependence on fossil fuels.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "mitigate",
+            "explanation": "The appropriate verb is \"mitigate,\" meaning to lessen the impact of climate change.",
+            "id": "ex_438e4fcc-89a8-4cc1-881c-b22f0642bb52_3",
+            "options": [],
+            "question": "Renewable energy helps {blank} climate change.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "main idea:ý chính, supporting argument:lập luận hỗ trợ",
+            "explanation": "\"Main idea\" translates to \"ý chính\" and \"supporting argument\" to \"lập luận hỗ trợ\".",
+            "id": "ex_438e4fcc-89a8-4cc1-881c-b22f0642bb52_4",
+            "options": [
+              "main idea",
+              "supporting argument",
+              "ý chính",
+              "lập luận hỗ trợ"
+            ],
+            "question": "Match each English term with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "Governments are investing in renewable energy to cut carbon emissions and create sustainable jobs.",
+            "explanation": "The sentence captures the two key points: investment in renewable energy and the goals of lowering emissions and generating sustainable employment.",
+            "id": "ex_438e4fcc-89a8-4cc1-881c-b22f0642bb52_5",
+            "options": [],
+            "question": "In one sentence, write the main idea of the following paragraph: \"Governments worldwide are investing in renewable energy projects to reduce carbon emissions and create sustainable jobs.\"",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "c6ec756c-f021-4695-8225-3d134f54d4b8",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.046887"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "438e4fcc-89a8-4cc1-881c-b22f0642bb52",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Identifying Main Ideas & Supporting Arguments",
+      "total_exercises": 5,
+      "unit_id": "46ada53d-f733-48fc-baf6-6a546f54873a",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836726"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "The study found that 60% of participants preferred online learning.",
+            "explanation": "This sentence can be checked against the study data, so it is a fact.",
+            "id": "ex_eb234446-4cf5-4a65-8001-05379bb8cec6_1",
+            "options": [
+              "The study found that 60% of participants preferred online learning.",
+              "I believe online learning is more effective than classroom teaching.",
+              "Many students think that online classes are convenient.",
+              "In my opinion, digital resources improve comprehension."
+            ],
+            "question": "Which of the following sentences states a verifiable fact?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "The sentence reports a research finding that can be tested, so it is a fact, not an opinion.",
+            "id": "ex_eb234446-4cf5-4a65-8001-05379bb8cec6_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The sentence \"Researchers concluded that the new method reduces errors\" is an opinion.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "fact",
+            "explanation": "A fact can be proven; an opinion cannot.",
+            "id": "ex_eb234446-4cf5-4a65-8001-05379bb8cec6_3",
+            "options": [],
+            "question": "In academic writing, a {blank} presents evidence that can be verified, while an opinion reflects personal judgment.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Distinguishing opinion from fact helps readers evaluate the credibility of the arguments. When you know which statements are supported by evidence, you can trust the conclusions more and avoid being misled by personal bias.",
+            "explanation": "The answer highlights the relevance of critical evaluation in academic reading.",
+            "id": "ex_eb234446-4cf5-4a65-8001-05379bb8cec6_4",
+            "options": [],
+            "question": "Write 2-3 sentences explaining why distinguishing opinion from fact is important when reading a research article.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "opinion:ý kiến, fact:sự thật",
+            "explanation": "\"opinion\" translates to \"ý kiến\" and \"fact\" translates to \"sự thật\".",
+            "id": "ex_eb234446-4cf5-4a65-8001-05379bb8cec6_5",
+            "options": [
+              "opinion",
+              "fact",
+              "ý kiến",
+              "sự thật"
+            ],
+            "question": "Match each English term with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "c6ec756c-f021-4695-8225-3d134f54d4b8",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.046945"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "eb234446-4cf5-4a65-8001-05379bb8cec6",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "reading",
+      "title": "Opinion vs. Fact in Academic Texts",
+      "total_exercises": 5,
+      "unit_id": "46ada53d-f733-48fc-baf6-6a546f54873a",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:05:16.128277"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "She was scared",
+            "explanation": "Leaving quickly and without comment suggests she felt fear or anxiety.",
+            "id": "ex_ee95152f-ba88-4039-9297-320a9a32bfff_1",
+            "options": [
+              "She was angry",
+              "She was scared",
+              "She was indifferent",
+              "She was excited"
+            ],
+            "question": "When Sarah saw the broken window, she quickly grabbed her coat and left the house without a word. What can be inferred about Sarah's feelings?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "A fading smile indicates disappointment, not pleasure.",
+            "id": "ex_ee95152f-ba88-4039-9297-320a9a32bfff_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The manager's smile faded as he read the report. True or false: The manager was pleased with the report.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "reluctant to speak",
+            "explanation": "Nodding without speaking suggests hesitation or unwillingness to speak.",
+            "id": "ex_ee95152f-ba88-4039-9297-320a9a32bfff_3",
+            "options": [],
+            "question": "The phrase 'He nodded, but said nothing' implies that he was {blank}.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Cô ấy phớt lờ đề xuất của anh ấy.",
+            "explanation": "'Turned a deaf ear' means to ignore or disregard.",
+            "id": "ex_ee95152f-ba88-4039-9297-320a9a32bfff_4",
+            "options": [
+              "Cô ấy không quan tâm đến đề xuất của anh ấy.",
+              "Cô ấy lắng nghe đề xuất của anh ấy.",
+              "Cô ấy phớt lờ đề xuất của anh ấy."
+            ],
+            "question": "Translate the sentence into Vietnamese: 'She turned a deaf ear to his suggestion.'",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "sober:trầm lặng, cheerful:vui vẻ",
+            "explanation": "In this context, 'sober' conveys a serious, quiet demeanor (trầm lặng) and 'cheerful' conveys a happy, lively feeling (vui vẻ).",
+            "id": "ex_ee95152f-ba88-4039-9297-320a9a32bfff_5",
+            "options": [
+              "sober",
+              "cheerful",
+              "trầm lặng",
+              "vui vẻ"
+            ],
+            "question": "Match each adjective with its implied Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "c6ec756c-f021-4695-8225-3d134f54d4b8",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.046981"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "ee95152f-ba88-4039-9297-320a9a32bfff",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Inferences & Implied Meaning",
+      "total_exercises": 5,
+      "unit_id": "46ada53d-f733-48fc-baf6-6a546f54873a",
+      "updated_at": {
+        "__dt__": "2026-08-14T06:39:10.796259"
+      },
+      "xp_reward": 22
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "đầy suy đoán",
+            "explanation": "Speculative refers to something based on conjecture rather than solid evidence.",
+            "id": "ex_d2bdc635-050d-4451-98e4-6185e1ee3091_1",
+            "options": [
+              "đầy suy đoán",
+              "đúng chắc",
+              "đầy đủ",
+              "đúng đắn"
+            ],
+            "question": "In the sentence \"The scientist's hypothesis was *speculative*, meaning it was based on limited evidence.\", what does the word *speculative* most likely mean?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "decipher",
+            "explanation": "Decipher means to interpret or make sense of something difficult to understand.",
+            "id": "ex_d2bdc635-050d-4451-98e4-6185e1ee3091_2",
+            "options": [],
+            "question": "She managed to *{blank}* the complex instructions and completed the task successfully.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "bền bỉ",
+            "explanation": "\"Resilient\" means able to recover quickly from difficulties; in Vietnamese it is \"bền bỉ\".",
+            "id": "ex_d2bdc635-050d-4451-98e4-6185e1ee3091_3",
+            "options": [
+              "bền bỉ",
+              "đáng sợ",
+              "nhẹ nhàng",
+              "có tính cách"
+            ],
+            "question": "Choose the correct Vietnamese translation for the word \"resilient\" as used in the sentence: \"After the flood, the community proved to be resilient.\"",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "elusive:khó nắm bắt, meticulous:tỉ mỉ",
+            "explanation": "\"Elusive\" = \"khó nắm bắt\" and \"meticulous\" = \"tỉ mỉ\".",
+            "id": "ex_d2bdc635-050d-4451-98e4-6185e1ee3091_4",
+            "options": [
+              "elusive",
+              "meticulous",
+              "khó nắm bắt",
+              "tỉ mỉ"
+            ],
+            "question": "Match each vocabulary word with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "The instructions were ambiguous, so I wasn't sure what to do. Because the wording could be interpreted in several ways, I asked my colleague for clarification. In the end, we realized that ambiguous means unclear or having multiple possible meanings.",
+            "explanation": "\"Ambiguous\" describes something that is unclear or can be understood in more than one way.",
+            "id": "ex_d2bdc635-050d-4451-98e4-6185e1ee3091_5",
+            "options": [],
+            "question": "Write a short paragraph (3‑4 sentences) using the word \"ambiguous\" and infer its meaning from context.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "c6ec756c-f021-4695-8225-3d134f54d4b8",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.047014"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "d2bdc635-050d-4451-98e4-6185e1ee3091",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Vocabulary in Context: Guessing Meaning",
+      "total_exercises": 5,
+      "unit_id": "46ada53d-f733-48fc-baf6-6a546f54873a",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.837028"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "To reduce carbon emissions",
+            "explanation": "The passage states that sustainable development requires reducing carbon emissions, making this the main objective.",
+            "id": "ex_42158be7-341e-440e-be8c-10eadf60f21b_1",
+            "options": [
+              "To increase economic growth",
+              "To reduce carbon emissions",
+              "To expand urban areas",
+              "To promote tourism"
+            ],
+            "question": "According to the passage, what is the primary goal of sustainable development?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "The passage mentions that many countries have pledged to cut emissions by 2030, not that they have already met the targets.",
+            "id": "ex_42158be7-341e-440e-be8c-10eadf60f21b_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The report states that all countries have already met their 2030 emission targets.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "have promised",
+            "explanation": "The correct present perfect form is \"have promised\" to indicate an action that started in the past and continues to the present.",
+            "id": "ex_42158be7-341e-440e-be8c-10eadf60f21b_3",
+            "options": [],
+            "question": "Many countries ____ (promise) to cut their greenhouse gas output by 2030.",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Báo cáo nhấn mạnh tầm quan trọng của các thực hành bền vững.",
+            "explanation": "This translation accurately reflects the meaning of the English sentence.",
+            "id": "ex_42158be7-341e-440e-be8c-10eadf60f21b_4",
+            "options": [
+              "Báo cáo nhấn mạnh tầm quan trọng của các thực hành bền vững.",
+              "Báo cáo nhấn mạnh tầm quan trọng của các thực hành không bền vững.",
+              "Báo cáo đề cập đến việc giảm khí thải.",
+              "Báo cáo tập trung vào tăng trưởng kinh tế."
+            ],
+            "question": "Select the correct Vietnamese translation for the sentence: \"The report emphasizes the importance of sustainable practices.\"",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "sustainable:bền vững, emission:khí thải",
+            "explanation": "\"Sustainable\" means \"bền vững\" and \"emission\" translates to \"khí thải\" in Vietnamese.",
+            "id": "ex_42158be7-341e-440e-be8c-10eadf60f21b_5",
+            "options": [
+              "sustainable",
+              "emission",
+              "bền vững",
+              "khí thải"
+            ],
+            "question": "Match each English word from the passage with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "c6ec756c-f021-4695-8225-3d134f54d4b8",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.047043"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "42158be7-341e-440e-be8c-10eadf60f21b",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "reading",
+      "title": "Reading Comprehension Test – B2",
+      "total_exercises": 5,
+      "unit_id": "46ada53d-f733-48fc-baf6-6a546f54873a",
+      "updated_at": {
+        "__dt__": "2026-08-21T05:38:10.061195"
+      },
+      "xp_reward": 40
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Renewable energy sources such as wind and solar are becoming increasingly affordable.",
+            "explanation": "The topic sentence introduces the main idea of the paragraph, which is the growing affordability of renewable energy.",
+            "id": "ex_49b7efa9-6bbf-4948-b9bb-5a5650c3a96e_1",
+            "options": [
+              "Renewable energy sources such as wind and solar are becoming increasingly affordable.",
+              "Recent studies show that solar panel efficiency has improved by 20% in the last decade.",
+              "These advancements have led to a surge in installations across urban areas.",
+              "Consequently, many households are now considering renewable options."
+            ],
+            "question": "Which sentence best serves as the topic sentence in the paragraph about renewable energy?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "Evidence is presented to back up the claim made in the topic sentence, ensuring logical cohesion.",
+            "id": "ex_49b7efa9-6bbf-4948-b9bb-5a5650c3a96e_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "In a well-structured paragraph, evidence should directly support the topic sentence.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "for example",
+            "explanation": "Phrases such as 'for example' signal that supporting evidence follows.",
+            "id": "ex_49b7efa9-6bbf-4948-b9bb-5a5650c3a96e_3",
+            "options": [],
+            "question": "To introduce evidence, writers often use phrases like '{blank}'.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "phân tích phê bình",
+            "explanation": "'Critical analysis' in academic writing is commonly translated as 'phân tích phê bình' in Vietnamese.",
+            "id": "ex_49b7efa9-6bbf-4948-b9bb-5a5650c3a96e_4",
+            "options": [
+              "phân tích quan trọng",
+              "phân tích phê bình",
+              "phân tích cơ bản",
+              "phân tích tổng quát"
+            ],
+            "question": "Select the correct Vietnamese translation for the phrase 'critical analysis'.",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "Bằng chứng về mức nước biển tăng cho thấy biến đổi khí hậu đang gây ra hậu quả nghiêm trọng cho các khu vực ven biển.",
+            "explanation": "The sentence links the evidence (rising sea levels) to the broader topic (climate change impacts) through clear analysis.",
+            "id": "ex_49b7efa9-6bbf-4948-b9bb-5a5650c3a96e_5",
+            "options": [],
+            "question": "Write a concise analysis sentence in Vietnamese that explains how the evidence about rising sea levels supports the topic sentence about climate change impacts.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "c6ec756c-f021-4695-8225-3d134f54d4b8",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.090902"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "49b7efa9-6bbf-4948-b9bb-5a5650c3a96e",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "Paragraph Structure: Topic → Evidence → Analysis",
+      "total_exercises": 5,
+      "unit_id": "deed9efe-7627-4bc1-8102-ee5fbe567c2b",
+      "updated_at": {
+        "__dt__": "2026-08-21T05:38:10.061205"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "It is essential for governments to invest heavily in renewable energy to combat climate change.",
+            "explanation": "A clear stance is expressed directly, stating what should be done.",
+            "id": "ex_8f3c1a2b-9d4e-5f6a-b7c8-1234567890ab_1",
+            "options": [
+              "Renewable energy has both benefits and drawbacks, which should be examined.",
+              "It is essential for governments to invest heavily in renewable energy to combat climate change.",
+              "Many people think renewable energy is the future, and it may be useful.",
+              "The role of renewable energy in modern society is worth discussing."
+            ],
+            "question": "Which of the following thesis statements takes a clear stance on the issue of renewable energy adoption?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "Typically the writer presents their own argument first, then addresses the counterargument.",
+            "id": "ex_4a7b9c0d-1e2f-3g4h-5i6j-0987654321cd_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "In an argumentative essay, the counterargument should be presented before the writer's own argument.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "however",
+            "explanation": "\"However\" signals a contrast or opposing point.",
+            "id": "ex_2d5e6f7g-8h9i-0j1k-2l3m-456789abcde0_3",
+            "options": [],
+            "question": "To show contrast between two ideas, you can use the connector '{blank}'.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Một câu luận đề mạnh mẽ sẽ định hướng toàn bộ bài luận tranh luận.",
+            "explanation": "The translation keeps the meaning and uses correct Vietnamese diacritics.",
+            "id": "ex_9b8c7d6e-5f4a-3b2c-1d0e-abcdef123456_4",
+            "options": [],
+            "question": "Translate the following sentence into Vietnamese: 'A strong thesis statement guides the entire argumentative essay.'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Thesis statement:Luận đề, Counterargument:Phản biện",
+            "explanation": "“Thesis statement” translates to “Luận đề”, and “Counterargument” to “Phản biện”.",
+            "id": "ex_0f1e2d3c-4b5a-6c7d-8e9f-0123456789ab_5",
+            "options": [
+              "Thesis statement",
+              "Counterargument",
+              "Luận đề",
+              "Phản biện"
+            ],
+            "question": "Match each argumentative essay term with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "c6ec756c-f021-4695-8225-3d134f54d4b8",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.090936"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "dac698e3-b611-4beb-bc1a-b8937ed6af5d",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "Argumentative Essays: Taking a Clear Stance",
+      "total_exercises": 5,
+      "unit_id": "deed9efe-7627-4bc1-8102-ee5fbe567c2b",
+      "updated_at": {
+        "__dt__": "2026-08-21T05:38:10.061313"
+      },
+      "xp_reward": 22
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "clearly",
+            "explanation": "\"Clearly\" is a formal adverb suitable for academic writing, unlike the informal \"maybe\".",
+            "id": "ex_7db372a6-f4e9-470b-b5e1-4948de616bf6_1",
+            "options": [
+              "clearly",
+              "obviously",
+              "apparently",
+              "maybe"
+            ],
+            "question": "Which word best fits the formal register in the sentence: \"The results ___ indicate a significant improvement.\"",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "Academic style prefers full forms; contractions are too informal.",
+            "id": "ex_7db372a6-f4e9-470b-b5e1-4948de616bf6_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "In academic writing, contractions such as \"can't\" are considered appropriate.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "document",
+            "explanation": "\"Document\" is the precise academic verb meaning to record details formally.",
+            "id": "ex_7db372a6-f4e9-470b-b5e1-4948de616bf6_3",
+            "options": [],
+            "question": "Researchers must {blank} their findings to ensure reproducibility.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "hypothesis:giả thuyết, methodology:phương pháp luận",
+            "explanation": "\"Hypothesis\" means \"giả thuyết\" and \"methodology\" means \"phương pháp luận\" in Vietnamese.",
+            "id": "ex_7db372a6-f4e9-470b-b5e1-4948de616bf6_4",
+            "options": [
+              "hypothesis",
+              "methodology",
+              "giả thuyết",
+              "phương pháp luận"
+            ],
+            "question": "Match each academic term with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "Further research is needed to explore this phenomenon.",
+            "explanation": "The sentence uses the required phrase in a formal register; a correct Vietnamese translation would be \"Cần có nghiên cứu tiếp theo để khám phá hiện tượng này.\"",
+            "id": "ex_7db372a6-f4e9-470b-b5e1-4948de616bf6_5",
+            "options": [],
+            "question": "Write a brief academic sentence in English using the phrase \"further research is needed\" and translate it into Vietnamese.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "c6ec756c-f021-4695-8225-3d134f54d4b8",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.090956"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "7db372a6-f4e9-470b-b5e1-4948de616bf6",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Using Academic Vocabulary & Formal Register",
+      "total_exercises": 5,
+      "unit_id": "deed9efe-7627-4bc1-8102-ee5fbe567c2b",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836862"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "∂",
+            "explanation": "The loop with a line through it (∂) is the standard symbol for deleting a word.",
+            "id": "ex_b764cc41-05c4-4d32-b50f-269ba889cbf8_1",
+            "options": [
+              "∂",
+              "¶",
+              "≈",
+              "≠"
+            ],
+            "question": "Which proofreading symbol indicates that a word should be deleted?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "Formal academic essays avoid contractions to maintain a formal tone.",
+            "id": "ex_b764cc41-05c4-4d32-b50f-269ba889cbf8_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "In academic writing, it is acceptable to use contractions such as \"can't\" in formal essays.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "The results of the experiment were inconclusive.",
+            "explanation": "Subject \"results\" is plural, so the verb must be \"were\".",
+            "id": "ex_b764cc41-05c4-4d32-b50f-269ba889cbf8_3",
+            "options": [],
+            "question": "Identify the error and rewrite the sentence correctly: The results of the experiment was inconclusive. Correct version: {blank}",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Insert:Thêm, Delete:Xóa",
+            "explanation": "\"Insert\" means \"Thêm\" and \"Delete\" means \"Xóa\" in Vietnamese.",
+            "id": "ex_b764cc41-05c4-4d32-b50f-269ba889cbf8_4",
+            "options": [
+              "Insert",
+              "Delete",
+              "Thêm",
+              "Xóa"
+            ],
+            "question": "Match each proofreading term with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "The literature review was thorough and well-structured. Tổng quan văn học rất kỹ lưỡng và có cấu trúc tốt.",
+            "explanation": "The verb must agree with the singular subject \"review\" (was). The Vietnamese translation conveys the same meaning.",
+            "id": "ex_b764cc41-05c4-4d32-b50f-269ba889cbf8_5",
+            "options": [],
+            "question": "Correct the sentence and then provide its Vietnamese translation: \"The literature review were thorough and well-structured.\"",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "c6ec756c-f021-4695-8225-3d134f54d4b8",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.090974"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "b764cc41-05c4-4d32-b50f-269ba889cbf8",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "reading",
+      "title": "Proofreading & Error Correction Techniques",
+      "total_exercises": 5,
+      "unit_id": "deed9efe-7627-4bc1-8102-ee5fbe567c2b",
+      "updated_at": {
+        "__dt__": "2026-08-21T05:38:10.061286"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Many countries are investing in renewable energy to reduce carbon emissions.",
+            "explanation": "A topic sentence should introduce the main idea; this option clearly states the benefit of renewable energy.",
+            "id": "ex_a1b2c3d4-1111-2222-3333-444455556666_1",
+            "options": [
+              "Renewable energy sources are expensive and unreliable.",
+              "Many countries are investing in renewable energy to reduce carbon emissions.",
+              "Solar panels are difficult to install.",
+              "Fossil fuels are the only viable option."
+            ],
+            "question": "Which of the following is the best topic sentence for a paragraph about the benefits of renewable energy?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "Academic essays require formal language; slang is inappropriate.",
+            "id": "ex_f5e6g7h8-7777-8888-9999-aaaa1111bbbb_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "In a B2 essay, using informal language such as slang is acceptable in the conclusion.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "transition word",
+            "explanation": "Transition words help connect ideas smoothly.",
+            "id": "ex_i9j0k1l2-cccc-dddd-eeee-ffff2222gggg_3",
+            "options": [],
+            "question": "In the body paragraph, each supporting sentence should begin with a suitable {blank}.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Hơn nữa",
+            "explanation": "‘Furthermore’ is commonly translated as ‘Hơn nữa’ in academic writing.",
+            "id": "ex_m3n4o5p6-hhhh-iiii-jjjj-kkkk3333llll_4",
+            "options": [
+              "Hơn nữa",
+              "Thêm vào đó",
+              "Cũng như",
+              "Nhưng"
+            ],
+            "question": "Translate the academic linking phrase into Vietnamese: 'Furthermore'",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "Thesis statement:Câu luận đề, Topic sentence:Câu chủ đề",
+            "explanation": "The thesis statement is the overall claim (Câu luận đề); the topic sentence introduces a paragraph (Câu chủ đề).",
+            "id": "ex_q7r8s9t0-mmmm-nnnn-oooo-pppp4444qqqq_5",
+            "options": [
+              "Thesis statement",
+              "Topic sentence",
+              "Câu luận đề",
+              "Câu chủ đề"
+            ],
+            "question": "Match each essay component with its Vietnamese description.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "c6ec756c-f021-4695-8225-3d134f54d4b8",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.090992"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "5495e9ef-ef39-42a6-9124-3944c9c87fe8",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "Essay Writing Test – B2",
+      "total_exercises": 5,
+      "unit_id": "deed9efe-7627-4bc1-8102-ee5fbe567c2b",
+      "updated_at": {
+        "__dt__": "2026-08-21T05:38:10.061215"
+      },
+      "xp_reward": 40
+    }
+  ],
+  "units": [
+    {
+      "background_color": "#9C27B0",
+      "course_id": "c6ec756c-f021-4695-8225-3d134f54d4b8",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.978184"
+      },
+      "description": "Câu điều kiện và thể bị động – ngữ pháp trình độ B2",
+      "icon_url": null,
+      "id": "54c3aacc-243f-461d-9a7e-8e3a9aed6289",
+      "order_index": 1,
+      "title": "Advanced Grammar: Conditionals & Passive Voice",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:38.998942"
+      }
+    },
+    {
+      "background_color": "#FF5722",
+      "course_id": "c6ec756c-f021-4695-8225-3d134f54d4b8",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.000588"
+      },
+      "description": "Đọc hiểu văn bản phức tạp và tư duy phản biện",
+      "icon_url": null,
+      "id": "46ada53d-f733-48fc-baf6-6a546f54873a",
+      "order_index": 2,
+      "title": "Reading & Critical Thinking",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:39.042719"
+      }
+    },
+    {
+      "background_color": "#009688",
+      "course_id": "c6ec756c-f021-4695-8225-3d134f54d4b8",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.044303"
+      },
+      "description": "Viết đoạn văn học thuật và bài luận hoàn chỉnh",
+      "icon_url": null,
+      "id": "deed9efe-7627-4bc1-8102-ee5fbe567c2b",
+      "order_index": 3,
+      "title": "Writing: Academic Paragraphs & Essays",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:39.089105"
+      }
+    }
+  ]
+}

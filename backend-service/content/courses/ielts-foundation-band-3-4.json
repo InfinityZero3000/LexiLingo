@@ -1,0 +1,2269 @@
+{
+  "category": {
+    "color": "#E53935",
+    "course_count": 0,
+    "created_at": {
+      "__dt__": "2026-03-14T03:20:37.101662"
+    },
+    "description": "Luyện thi IELTS Academic, General Training, nhắm Band 3 đến 8+",
+    "icon": "assignment",
+    "id": "1a3c9ab4-e473-478e-a9e2-e85158332eef",
+    "is_active": true,
+    "name": "IELTS Preparation",
+    "order_index": 2,
+    "slug": "test-prep",
+    "updated_at": {
+      "__dt__": "2026-03-14T03:20:37.101684"
+    }
+  },
+  "course": {
+    "category_id": "1a3c9ab4-e473-478e-a9e2-e85158332eef",
+    "content_version": 1,
+    "created_at": {
+      "__dt__": "2026-03-14T03:20:38.282806"
+    },
+    "description": "Khóa học IELTS dành cho học viên mới bắt đầu, trình độ A1–A2, mục tiêu Band 3.0–4.0. Xây dựng nền tảng từ vựng thiết yếu, ngữ pháp cơ bản và làm quen với 4 kỹ năng IELTS lần đầu tiên. Không cần kiến thức nền, hoàn toàn miễn phí!",
+    "estimated_duration": 540,
+    "id": "5b495a13-d570-4e59-a691-3aae70002b52",
+    "is_published": true,
+    "language": "en",
+    "level": "A1",
+    "skill": null,
+    "tags": [
+      "ielts",
+      "test-prep",
+      "band-3",
+      "band-4",
+      "beginner",
+      "foundation",
+      "free",
+      "cefr-a1",
+      "cefr-a2"
+    ],
+    "thumbnail_url": "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=400",
+    "title": "IELTS Foundation: Band 3–4",
+    "total_lessons": 25,
+    "total_xp": 700,
+    "updated_at": {
+      "__dt__": "2026-03-14T03:20:38.535873"
+    }
+  },
+  "format": 1,
+  "lessons": [
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "4",
+            "explanation": "IELTS has four sections: Listening, Reading, Writing, and Speaking.",
+            "id": "ex_2013b14f-b6ac-471d-9f1d-5768ebe4c4ba_1",
+            "options": [
+              "4",
+              "3",
+              "2",
+              "5"
+            ],
+            "question": "How many sections are there in the IELTS test?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "Listening lasts 30 minutes, while Speaking lasts about 11‑14 minutes.",
+            "id": "ex_2013b14f-b6ac-471d-9f1d-5768ebe4c4ba_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The Listening part of IELTS is longer than the Speaking part.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "0",
+            "explanation": "IELTS band scores start at 0 (no ability) and go up to 9 (expert).",
+            "id": "ex_2013b14f-b6ac-471d-9f1d-5768ebe4c4ba_3",
+            "options": [],
+            "question": "In IELTS, the score range is from {blank} to 9.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "What is IELTS?",
+            "explanation": "The Vietnamese sentence asks for the definition of IELTS.",
+            "id": "ex_2013b14f-b6ac-471d-9f1d-5768ebe4c4ba_4",
+            "options": [],
+            "question": "Translate into English: 'IELTS là gì?'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Listening:Nghe, Reading:Đọc",
+            "explanation": "Listening = Nghe, Reading = Đọc.",
+            "id": "ex_2013b14f-b6ac-471d-9f1d-5768ebe4c4ba_5",
+            "options": [
+              "Listening",
+              "Reading",
+              "Nghe",
+              "Đọc"
+            ],
+            "question": "Match each IELTS skill with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "5b495a13-d570-4e59-a691-3aae70002b52",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.340315"
+      },
+      "description": null,
+      "estimated_minutes": 15,
+      "id": "2013b14f-b6ac-471d-9f1d-5768ebe4c4ba",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "What Is IELTS? Format, Skills & Band Score Explained",
+      "total_exercises": 5,
+      "unit_id": "ffc2a019-de80-4268-984d-7c833c8ad34a",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836624"
+      },
+      "xp_reward": 15
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "TOEFL",
+            "explanation": "TOEFL is designed for academic study abroad, while IELTS also tests English but is used for immigration and work.",
+            "id": "ex_ad9f6374-5008-422b-badc-e57813c3af74_1",
+            "options": [
+              "IELTS",
+              "TOEFL",
+              "TOEIC",
+              "SAT"
+            ],
+            "question": "Which test is mainly used for studying in English-speaking universities?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "IELTS speaking is a live interview with a certified examiner.",
+            "id": "ex_ad9f6374-5008-422b-badc-e57813c3af74_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "IELTS includes a speaking interview that is done face-to-face with an examiner.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "Speaking",
+            "explanation": "The fourth part of IELTS is the Speaking test.",
+            "id": "ex_ad9f6374-5008-422b-badc-e57813c3af74_3",
+            "options": [],
+            "question": "The IELTS test has four parts: Listening, Reading, Writing, and {blank}.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "IELTS:Thi IELTS, TOEFL:Thi TOEFL",
+            "explanation": "IELTS corresponds to \"Thi IELTS\" and TOEFL to \"Thi TOEFL\" in Vietnamese.",
+            "id": "ex_ad9f6374-5008-422b-badc-e57813c3af74_4",
+            "options": [
+              "IELTS",
+              "TOEFL",
+              "Thi IELTS",
+              "Thi TOEFL"
+            ],
+            "question": "Match each test name with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "A student may choose TOEIC because it focuses on everyday business English and is often required by companies.",
+            "explanation": "TOEIC assesses workplace English, which is useful for job applications.",
+            "id": "ex_ad9f6374-5008-422b-badc-e57813c3af74_5",
+            "options": [],
+            "question": "In one or two sentences, explain why a student might choose TOEIC over IELTS.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "5b495a13-d570-4e59-a691-3aae70002b52",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.340357"
+      },
+      "description": null,
+      "estimated_minutes": 15,
+      "id": "ad9f6374-5008-422b-badc-e57813c3af74",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "IELTS vs. TOEFL vs. TOEIC: Which Test Do You Need?",
+      "total_exercises": 5,
+      "unit_id": "ffc2a019-de80-4268-984d-7c833c8ad34a",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836938"
+      },
+      "xp_reward": 15
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Chọn",
+            "explanation": "'Choose' instructs you to select one of the given options.",
+            "id": "ex_f7d6af3d-9156-4b43-98ce-5ec19bbf087d_1",
+            "options": [
+              "Chọn",
+              "Viết",
+              "Đọc",
+              "Nói"
+            ],
+            "question": "What does the exam instruction word 'Choose' mean?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "Short Answer tasks require you to write a brief response, often with a word limit.",
+            "id": "ex_f7d6af3d-9156-4b43-98ce-5ec19bbf087d_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The instruction 'Write at least 150 words' is an example of a Short Answer task.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "blank",
+            "explanation": "'Blank' indicates a place where you need to write the missing information.",
+            "id": "ex_f7d6af3d-9156-4b43-98ce-5ec19bbf087d_3",
+            "options": [],
+            "question": "In IELTS instructions, the word '{blank}' tells you to fill a space with a word or phrase.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Multiple Choice:Câu trắc nghiệm, True/False:Câu đúng/sai",
+            "explanation": "These are common IELTS question types and their Vietnamese translations.",
+            "id": "ex_f7d6af3d-9156-4b43-98ce-5ec19bbf087d_4",
+            "options": [
+              "Multiple Choice",
+              "True/False",
+              "Câu trắc nghiệm",
+              "Câu đúng/sai"
+            ],
+            "question": "Match each question type with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "Select the correct answer",
+            "explanation": "The English instruction correctly conveys the meaning of the Vietnamese phrase.",
+            "id": "ex_f7d6af3d-9156-4b43-98ce-5ec19bbf087d_5",
+            "options": [],
+            "question": "Translate the following instruction into English: 'Chọn đáp án đúng'.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "5b495a13-d570-4e59-a691-3aae70002b52",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.340378"
+      },
+      "description": null,
+      "estimated_minutes": 18,
+      "id": "f7d6af3d-9156-4b43-98ce-5ec19bbf087d",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Essential Exam Vocabulary: Instructions & Question Types",
+      "total_exercises": 5,
+      "unit_id": "ffc2a019-de80-4268-984d-7c833c8ad34a",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.837109"
+      },
+      "xp_reward": 18
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "11-14 minutes",
+            "explanation": "The Speaking test takes about 11 to 14 minutes.",
+            "id": "ex_123e4567-e89b-12d3-a456-426614174000_1",
+            "options": [
+              "11-14 minutes",
+              "20 minutes",
+              "30 minutes",
+              "60 minutes"
+            ],
+            "question": "How many minutes are allocated for the Speaking section in the IELTS exam?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "Both Reading and Writing each last 60 minutes, so they take the same time.",
+            "id": "ex_123e4567-e89b-12d3-a456-426614174000_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The Reading section of IELTS takes less time than the Writing section.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "30",
+            "explanation": "Listening is 30 minutes long.",
+            "id": "ex_123e4567-e89b-12d3-a456-426614174000_3",
+            "options": [],
+            "question": "The Listening section lasts {blank} minutes.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Listening:30 minutes, Reading:60 minutes",
+            "explanation": "Listening is 30 minutes, Reading is 60 minutes.",
+            "id": "ex_123e4567-e89b-12d3-a456-426614174000_4",
+            "options": [
+              "Listening",
+              "Reading",
+              "30 minutes",
+              "60 minutes"
+            ],
+            "question": "Match each IELTS section with its allocated time.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "Bạn có 60 phút cho bài viết.",
+            "explanation": "The sentence says you have 60 minutes for Writing.",
+            "id": "ex_123e4567-e89b-12d3-a456-426614174000_5",
+            "options": [
+              "Bạn có 60 phút cho bài viết.",
+              "Bạn có 30 phút cho bài viết.",
+              "Bạn có 45 phút cho bài viết.",
+              "Bạn có 15 phút cho bài viết."
+            ],
+            "question": "Translate to Vietnamese: \"You have 60 minutes for the Writing task.\"",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "5b495a13-d570-4e59-a691-3aae70002b52",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.340404"
+      },
+      "description": null,
+      "estimated_minutes": 15,
+      "id": "250403ef-acd2-4a79-b7b9-88cb2149fa53",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Time Management Basics: How Many Minutes Per Section?",
+      "total_exercises": 5,
+      "unit_id": "ffc2a019-de80-4268-984d-7c833c8ad34a",
+      "updated_at": {
+        "__dt__": "2026-08-14T06:39:10.796107"
+      },
+      "xp_reward": 15
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "International English Language Testing System",
+            "explanation": "IELTS is the abbreviation for International English Language Testing System.",
+            "id": "ex_1f31ab64-e1cb-4c22-8690-2552d3293706_1",
+            "options": [
+              "International English Language Testing System",
+              "International Examination of Language Skills",
+              "Institute of English Learning and Testing",
+              "International English Learning Test"
+            ],
+            "question": "What does the acronym IELTS stand for?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "IELTS is composed of exactly those four sections.",
+            "id": "ex_1f31ab64-e1cb-4c22-8690-2552d3293706_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The IELTS exam has four sections: Listening, Reading, Writing, and Speaking.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "low",
+            "explanation": "Band scores 3‑4 are described as a low level for beginners.",
+            "id": "ex_1f31ab64-e1cb-4c22-8690-2552d3293706_3",
+            "options": [],
+            "question": "A score between 3.0 and 4.0 is considered a {blank} level in the IELTS Foundation course.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "IELTS is an international English proficiency test.",
+            "explanation": "The translation conveys that IELTS assesses English ability on an international level.",
+            "id": "ex_1f31ab64-e1cb-4c22-8690-2552d3293706_4",
+            "options": [
+              "IELTS is an international English proficiency test.",
+              "IELTS is a global English exam.",
+              "IELTS is a test of English language skills.",
+              "IELTS is an English language test."
+            ],
+            "question": "Translate into English: \"IELTS là một kỳ thi kiểm tra năng lực tiếng Anh quốc tế.\"",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Listening:Nghe hiểu, Reading:Đọc hiểu",
+            "explanation": "Listening corresponds to \"Nghe hiểu\" and Reading to \"Đọc hiểu\".",
+            "id": "ex_1f31ab64-e1cb-4c22-8690-2552d3293706_5",
+            "options": [
+              "Listening",
+              "Reading",
+              "Nghe hiểu",
+              "Đọc hiểu"
+            ],
+            "question": "Match each IELTS section with its Vietnamese description.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "5b495a13-d570-4e59-a691-3aae70002b52",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.340431"
+      },
+      "description": null,
+      "estimated_minutes": 10,
+      "id": "1f31ab64-e1cb-4c22-8690-2552d3293706",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "IELTS Overview Quiz",
+      "total_exercises": 5,
+      "unit_id": "ffc2a019-de80-4268-984d-7c833c8ad34a",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836618"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "5 pm",
+            "explanation": "The speaker explicitly states the closing time is 'five p.m.'. In IELTS listening, times are often given in 12-hour format with 'am' or 'pm'.",
+            "id": "ex_001",
+            "options": [],
+            "question": "The library is open from Monday to Friday, 9 am to {blank}.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "15th October",
+            "explanation": "The speaker says 'The seminar is on the fifteenth of October'. Distractors often include numbers mentioned in other contexts (like the start of the month) or similar-sounding dates.",
+            "id": "ex_002",
+            "options": [
+              "14th October",
+              "15th October",
+              "16th October"
+            ],
+            "question": "When is the seminar scheduled?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          },
+          {
+            "correct_answer": "S-M-I-T-H",
+            "explanation": "The speaker spells the name letter by letter. In spelling questions, pay attention to the pronunciation of individual letters, especially those that sound similar (like M and N).",
+            "id": "ex_003",
+            "options": [],
+            "question": "Please spell your surname: {blank}.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "Twenty",
+            "explanation": "The speaker says 'About twenty students attended'. Be careful with similar-sounding numbers like 'twelve' and 'twenty', which are common distractors in IELTS listening tests.",
+            "id": "ex_004",
+            "options": [
+              "Twelve",
+              "Twenty",
+              "Two hundred"
+            ],
+            "question": "How many students attended the workshop?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          },
+          {
+            "correct_answer": "30 June",
+            "explanation": "The speaker mentions 'thirtieth of June'. Remember to write dates clearly, often using the day first followed by the month, as is common in British English IELTS contexts.",
+            "id": "ex_005",
+            "options": [],
+            "question": "The payment deadline is {blank}.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "5b495a13-d570-4e59-a691-3aae70002b52",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.384139"
+      },
+      "description": null,
+      "estimated_minutes": 18,
+      "id": "ffdf960e-a87b-4535-a5be-91e26599a009",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "listening",
+      "title": "Listening for Numbers, Dates & Spelling",
+      "total_exercises": 5,
+      "unit_id": "1cff65c6-70a1-4686-89c2-f0ff30cda6d8",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447917"
+      },
+      "xp_reward": 18
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "blue pen",
+            "explanation": "The speaker explicitly requests a 'blue pen'. In IELTS Listening Section 1, candidates must identify specific objects mentioned in simple requests.",
+            "id": "ex_1a2b3c4d-5e6f-7g8h-9i0j-1k2l3m4n5o6p",
+            "options": [],
+            "question": "Complete the request: Could you please pass me the {blank}?",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "Close the door",
+            "explanation": "The utterance is 'Please close the door.' The distractors involve similar actions (opening, turning off) but refer to different objects not mentioned in the request.",
+            "id": "ex_2b3c4d5e-6f7g-8h9i-0j1k-2l3m4n5o6p7q",
+            "options": [
+              "Open the window",
+              "Close the door",
+              "Turn off the light"
+            ],
+            "question": "What does the speaker want the listener to do?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          },
+          {
+            "correct_answer": "email address",
+            "explanation": "The speaker asks for an 'email address'. This tests the ability to capture specific contact details in a short transactional conversation.",
+            "id": "ex_3c4d5e6f-7g8h-9i0j-1k2l-3m4n5o6p7q8r",
+            "options": [],
+            "question": "Complete the request: Can you send me the {blank}?",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "At the cafe",
+            "explanation": "The utterance is 'Let's meet at the cafe.' The other options are common meeting places but were not specified in the simple request.",
+            "id": "ex_4d5e6f7g-8h9i-0j1k-2l3m-4n5o6p7q8r9s",
+            "options": [
+              "In the library",
+              "At the cafe",
+              "By the bus stop"
+            ],
+            "question": "Where does the speaker want to meet?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          },
+          {
+            "correct_answer": "five o'clock",
+            "explanation": "The speaker specifies the time 'five o'clock'. Candidates must accurately transcribe time expressions in simple scheduling requests.",
+            "id": "ex_5e6f7g8h-9i0j-1k2l-3m4n-5o6p7q8r9s0t",
+            "options": [],
+            "question": "Complete the request: Please call me at {blank}.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "5b495a13-d570-4e59-a691-3aae70002b52",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.384187"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "0ceb7444-226c-4631-90cc-47b89c32a499",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "listening",
+      "title": "Short Conversations: Understanding Simple Requests",
+      "total_exercises": 5,
+      "unit_id": "1cff65c6-70a1-4686-89c2-f0ff30cda6d8",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.377480"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Thompson",
+            "explanation": "The speaker clearly articulates the surname 'Thompson'. In IELTS listening, surnames are often emphasized. Ensure correct spelling of 'ph' and 'son'.",
+            "id": "ex_a1b2c3d4-e5f6-7890-abcd-ef1234567890_1",
+            "options": [],
+            "question": "Type the surname you hear: {blank}",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "25 Oak Avenue",
+            "explanation": "The speaker says 'twenty-five Oak Avenue'. Distractors 23 and 32 are common phonetic near-misses for 'twenty-five'. Always listen carefully to the initial consonant sounds of numbers.",
+            "id": "ex_b2c3d4e5-f6a7-8901-bcde-f12345678901_2",
+            "options": [
+              "23 Oak Avenue",
+              "25 Oak Avenue",
+              "32 Oak Avenue",
+              "52 Oak Avenue"
+            ],
+            "question": "Which street number is mentioned?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          },
+          {
+            "correct_answer": "Fourteen",
+            "explanation": "The utterance is 'Fourteen Maple Street'. The number 'fourteen' is distinct from 'forty'. In address contexts, house numbers are critical details often tested in Part 1.",
+            "id": "ex_c3d4e5f6-a7b8-9012-cdef-123456789012_3",
+            "options": [],
+            "question": "Type the house number you hear: {blank}",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "5567",
+            "explanation": "The speaker says 'five five six seven'. This tests the ability to distinguish between similar digit sequences. '5576' is a common error if the listener mishears the order of the last two digits.",
+            "id": "ex_d4e5f6a7-b8c9-0123-defa-234567890123_4",
+            "options": [
+              "5567",
+              "5576",
+              "6576",
+              "5675"
+            ],
+            "question": "What is the last part of the phone number?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          },
+          {
+            "correct_answer": "SW1A 1AA",
+            "explanation": "The speaker spells out the postcode 'S W one A, one A A'. Postcodes in IELTS often combine letters and numbers. Listen for the pause between the two parts of the postcode.",
+            "id": "ex_e5f6a7b8-c9d0-1234-efab-345678901234_5",
+            "options": [],
+            "question": "Type the postcode you hear: {blank}",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "5b495a13-d570-4e59-a691-3aae70002b52",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.384217"
+      },
+      "description": null,
+      "estimated_minutes": 18,
+      "id": "d129cdd7-e790-4ab1-b50c-15563847126f",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "listening",
+      "title": "Listening for Names, Addresses & Phone Numbers",
+      "total_exercises": 5,
+      "unit_id": "1cff65c6-70a1-4686-89c2-f0ff30cda6d8",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447839"
+      },
+      "xp_reward": 18
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Thompson",
+            "explanation": "The speaker clearly pronounces the surname 'Thompson'. In form-filling tasks, spelling accuracy is crucial. Note the 'p' is silent but must be written.",
+            "id": "ex_001",
+            "options": [],
+            "question": "Write the surname exactly as you hear it: {blank}",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "07911 223355",
+            "explanation": "The speaker corrects themselves after stating the first number. The final confirmed number is 07911 223355. Distractors include the initial incorrect number and a similar-looking prefix.",
+            "id": "ex_002",
+            "options": [
+              "07911 223344",
+              "07911 223355",
+              "07912 223344"
+            ],
+            "question": "What is the student's preferred contact number?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          },
+          {
+            "correct_answer": "Oak Avenue",
+            "explanation": "The speaker states the address as 'Oak Avenue'. This is a proper noun phrase. Ensure capitalization is correct as it is a specific name.",
+            "id": "ex_003",
+            "options": [],
+            "question": "Write the street name: {blank}",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "Introduction to Biology",
+            "explanation": "The speaker mentions 'Introduction to Biology'. The distractor 'Introduction to Biology Lab' adds a detail (Lab) that was not mentioned. The other option is a different subject entirely.",
+            "id": "ex_004",
+            "options": [
+              "Introduction to Biology",
+              "Advanced Chemistry",
+              "Introduction to Biology Lab"
+            ],
+            "question": "Which course module does the student want to register for?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          },
+          {
+            "correct_answer": "12 May 1998",
+            "explanation": "The speaker says 'twelfth of May, nineteen ninety-eight'. In form-filling, dates should be written numerically and clearly. Do not add extra words like 'the' or 'year'.",
+            "id": "ex_005",
+            "options": [],
+            "question": "Write the date of birth: {blank}",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "5b495a13-d570-4e59-a691-3aae70002b52",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.384245"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "da83e128-4a9a-4d4c-a109-1f89ca6e89b8",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "listening",
+      "title": "Filling in Simple Forms While Listening",
+      "total_exercises": 5,
+      "unit_id": "1cff65c6-70a1-4686-89c2-f0ff30cda6d8",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447862"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "10:00 PM",
+            "explanation": "The speaker explicitly states '10:00 PM'. The options '9:00 PM' and '11:00 PM' are distractors based on common library hours, but the audio confirms 10:00 PM.",
+            "id": "ex_21e81675-8333-4906-aa42-7651cf1ac74b_1",
+            "options": [
+              "9:00 PM",
+              "10:00 PM",
+              "11:00 PM",
+              "Midnight"
+            ],
+            "question": "Listen to the announcement and select the correct time for the library closing.",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          },
+          {
+            "correct_answer": "two hundred",
+            "explanation": "The speaker says 'two hundred'. This is a specific numerical detail often tested in IELTS Listening Section 1 or 2. Students must recognize the number spoken clearly.",
+            "id": "ex_21e81675-8333-4906-aa42-7651cf1ac74b_2",
+            "options": [],
+            "question": "Listen to the tutor's remark and type the missing phrase: The essay must be at least {blank} words long.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "Near the library entrance",
+            "explanation": "The speaker says 'Near the library entrance'. 'Inside the cafeteria' is a plausible distractor as students often lose items there, but the audio specifies the library entrance.",
+            "id": "ex_21e81675-8333-4906-aa42-7651cf1ac74b_3",
+            "options": [
+              "Near the library entrance",
+              "Inside the cafeteria",
+              "On the bus stop bench",
+              "At the student union"
+            ],
+            "question": "Listen to the campus announcement and choose the location of the lost wallet.",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          },
+          {
+            "correct_answer": "slow",
+            "explanation": "The speaker says 'slow'. This is a common adjective used in complaints about technical issues. Students must identify the single word describing the speed of the connection.",
+            "id": "ex_21e81675-8333-4906-aa42-7651cf1ac74b_4",
+            "options": [],
+            "question": "Listen to the student's complaint and type the missing word: The internet connection is very {blank}.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "Chapter 6",
+            "explanation": "The speaker says 'Chapter 6'. The other chapters are distractors. Students must listen carefully to the specific number mentioned, as numbers are frequently changed or corrected in IELTS Listening tests.",
+            "id": "ex_21e81675-8333-4906-aa42-7651cf1ac74b_5",
+            "options": [
+              "Chapter 5",
+              "Chapter 6",
+              "Chapter 7",
+              "Chapter 8"
+            ],
+            "question": "Listen to the professor's instruction and select the required reading material.",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "5b495a13-d570-4e59-a691-3aae70002b52",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.384272"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "21e81675-8333-4906-aa42-7651cf1ac74b",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "listening",
+      "title": "Listening Foundation Mini Test",
+      "total_exercises": 5,
+      "unit_id": "1cff65c6-70a1-4686-89c2-f0ff30cda6d8",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.377487"
+      },
+      "xp_reward": 35
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "NOT GIVEN",
+            "explanation": "The text forbids 'talking' but does not specify whether whispering is permitted or prohibited. Therefore, the information is not given.",
+            "id": "ex_001_signs_library",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "The notice on the library door reads: 'Quiet Zone. No talking. Mobile phones must be switched off.' Does the passage state that you can speak in a whisper?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "3 tablets",
+            "explanation": "The text explicitly states 'Do not exceed 3 tablets in 24 hours'. The answer must be taken verbatim from the text and is limited to three words.",
+            "id": "ex_002_label_medicine",
+            "options": [],
+            "question": "Read the medicine label below: 'Take one tablet every 8 hours. Do not exceed 3 tablets in 24 hours. Keep out of reach of children.' Complete the sentence: The maximum number of tablets you can take in one day is {blank}.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "B",
+            "explanation": "The phrases 'Wet floor' and 'Slippery when wet' indicate a danger of slipping, which is a safety hazard. The other options are not supported by the text.",
+            "id": "ex_003_sign_bathroom",
+            "options": [
+              "A",
+              "B",
+              "C",
+              "D"
+            ],
+            "question": "A sign in the swimming pool area says: 'No running. Wet floor. Slippery when wet.' What is the primary reason for this notice? A) To encourage swimming B) To warn of a safety hazard C) To indicate the pool is closed D) To advertise pool lessons",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "FALSE",
+            "explanation": "The text states the 'Last post' on Monday to Friday is 4:30 PM. Therefore, mailing at 5:00 PM is not possible, making the statement false.",
+            "id": "ex_004_notice_post",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "A notice on the post office window states: 'Last post 4:30 PM Monday to Friday. Saturday 1:00 PM. Closed Sunday.' Does the passage state that you can mail a letter at 5:00 PM on Friday?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "2 Hours",
+            "explanation": "The sign explicitly states 'Max Stay 2 Hours'. The answer is taken verbatim from the text and is within the three-word limit.",
+            "id": "ex_005_sign_parking",
+            "options": [],
+            "question": "Read the parking sign: 'Disabled Parking Only. Permit Required. Max Stay 2 Hours.' Complete the sentence: If you have a permit, you can park for a maximum of {blank}.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "5b495a13-d570-4e59-a691-3aae70002b52",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.443843"
+      },
+      "description": null,
+      "estimated_minutes": 18,
+      "id": "d860eabe-5b42-4cc7-b342-772096a3d930",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "reading",
+      "title": "Reading Short Texts: Signs, Labels & Notices",
+      "total_exercises": 5,
+      "unit_id": "c7253b7b-7a34-489d-9153-09084bb26c57",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447850"
+      },
+      "xp_reward": 18
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "FALSE",
+            "explanation": "The text explicitly states that 'single-day tickets are not available for purchase online,' which directly contradicts the statement.",
+            "id": "ex_001_reading_tfg",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "The Summer Music Festival will take place at the City Park from July 10th to July 12th. Tickets for the full three-day pass are priced at $50, but single-day tickets are not available for purchase online. Children under the age of five enter for free, provided they are accompanied by a paying adult. Does the passage state that single-day tickets can be bought online?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "10% discount",
+            "explanation": "The text specifies 'receive a 10% discount off your first purchase'. The answer must be taken verbatim from the text.",
+            "id": "ex_002_fill_blank",
+            "options": [],
+            "question": "Read the advertisement below and complete the sentence with NO MORE THAN THREE WORDS.\n\n'Grand Opening Sale at TechWorld! Visit our store on Main Street this Saturday. Bring this flyer to receive a {blank} off your first purchase of electronics over $100. Offer valid until 5 PM.'\n\nWhat discount do you receive if you bring the flyer?",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Bringing your own camera",
+            "explanation": "The text states 'You must bring your own digital or film camera.' The other options are incorrect: the fee is $5/month, experience is 'not required', and residence is not mentioned.",
+            "id": "ex_003_mc_specific_info",
+            "options": [
+              "Paying a $50 annual fee",
+              "Bringing your own camera",
+              "Having previous experience",
+              "Living in the same street"
+            ],
+            "question": "Read the notice below. What is the primary requirement for joining the Local Photography Club?\n\n'Local Photography Club: New members welcome! We meet every Tuesday at 6 PM in the Community Center hall. You must bring your own digital or film camera. Experience is not required, but a passion for learning is essential. Membership fees are $5 per month.'",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "NOT GIVEN",
+            "explanation": "The text mentions the products used, the time of service, and the satisfaction guarantee, but it does not mention specific tasks like window cleaning. Therefore, the information is not provided.",
+            "id": "ex_004_reading_tfg_ng",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "The 'Green Clean' service offers eco-friendly house cleaning. We use only plant-based products and recycled paper towels. Our team arrives between 9 AM and 5 PM on weekdays. We guarantee satisfaction or we will clean again for free. Does the passage state that the service includes window cleaning?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "September 28th",
+            "explanation": "The text implies a 4-week course starting Sept 1st. However, looking strictly at the provided text in the prompt, I need to ensure the answer is explicitly in the text. Let me adjust the text to include the date explicitly to ensure strict adherence to 'taken verbatim'.\n\n*Correction for internal logic*: The prompt text provided in the question block is: 'Learn Spanish in 4 Weeks! Intensive course for beginners. Classes start on Monday, September 1st. The course includes textbooks and online access. The final exam must be taken by September 28th.'\n\nAnswer: September 28th.",
+            "id": "ex_005_fill_blank_2",
+            "options": [],
+            "question": "Read the advertisement below and complete the sentence with NO MORE THAN THREE WORDS.\n\n'Learn Spanish in 4 Weeks! Intensive course for beginners. Classes start on Monday, September 1st. The course includes textbooks and online access. The final exam must be taken by {blank}.'\n\nWhen is the deadline for the final exam?",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "5b495a13-d570-4e59-a691-3aae70002b52",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.443896"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "15b96364-c924-460a-b159-2d771ba07e2e",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "reading",
+      "title": "Finding Specific Information in Advertisements",
+      "total_exercises": 5,
+      "unit_id": "c7253b7b-7a34-489d-9153-09084bb26c57",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.377482"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "increases",
+            "explanation": "Subject-verb agreement: 'The number' is singular, so the verb must be 'increases'. This is a common Band 4 error.",
+            "id": "ex_6654e8c5-156a-46de-a5fb-cb451583b95e_1",
+            "options": [],
+            "question": "Correct the error in this sentence describing a chart: 'The number of students {blank} increase every year.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Sales increased from 2010 to 2011.",
+            "explanation": "The task requires a simple overview. 'Increased' is the correct verb for a rise. Keep it simple and accurate.",
+            "id": "ex_6654e8c5-156a-46de-a5fb-cb451583b95e_2",
+            "options": [],
+            "question": "Write one simple sentence to describe the main trend in this data: 'Sales were 100 in 2010 and 150 in 2011.'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Prices rose slightly.",
+            "explanation": "A change from 10 to 11 is small. 'Rose slightly' is the correct academic description. 'Doubled' means x2.",
+            "id": "ex_6654e8c5-156a-46de-a5fb-cb451583b95e_3",
+            "options": [
+              "Prices rose slightly.",
+              "Prices doubled.",
+              "Prices fell sharply."
+            ],
+            "question": "Which sentence correctly describes a slight change? Data: 'Prices changed from $10 to $11.'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "Task 1 is factual. Do not give opinions. Only describe the data. Giving an opinion lowers your score.",
+            "id": "ex_6654e8c5-156a-46de-a5fb-cb451583b95e_4",
+            "options": [],
+            "question": "True or False: In IELTS Writing Task 1, you must write an opinion about the chart.",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "There were 50 males, whereas there were 60 females.",
+            "explanation": "Use 'whereas' to show contrast. This is a good way to combine two data points into one complex sentence.",
+            "id": "ex_6654e8c5-156a-46de-a5fb-cb451583b95e_5",
+            "options": [],
+            "question": "Write a sentence using 'whereas' to compare two numbers. Data: 'Males: 50, Females: 60.'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "5b495a13-d570-4e59-a691-3aae70002b52",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.443928"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "6654e8c5-156a-46de-a5fb-cb451583b95e",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "Simple True / False Questions from Short Paragraphs",
+      "total_exercises": 5,
+      "unit_id": "c7253b7b-7a34-489d-9153-09084bb26c57",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.377519"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Data Collection Techniques",
+            "explanation": "The summary explicitly mentions 'methods used... to collect data' and lists examples like 'satellite tags'. This focuses on the techniques (methods) rather than the species or the technology's history.",
+            "id": "ex_001",
+            "options": [
+              "Specific Bird Species Identified",
+              "Data Collection Techniques",
+              "The Impact of Climate Change",
+              "Satellite Technology History"
+            ],
+            "question": "Read the following short description from an IELTS Reading passage: 'The primary aim of this section is to outline the various methods used by researchers to collect data on bird migration patterns, including the use of satellite tags and leg bands. It does not discuss the specific species studied.' Which of the following headings best fits this description? What is the main focus of this text summary?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "Fixed vs. Flexible Intelligence",
+            "explanation": "The text contrasts 'fixed trait' with 'can be developed'. 'Fixed vs. Flexible' accurately captures this comparison. The other options are not mentioned in the summary.",
+            "id": "ex_002",
+            "options": [
+              "Fixed vs. Flexible Intelligence",
+              "Testing IQ in Schools",
+              "The History of Psychology",
+              "Genetics and Brain Size"
+            ],
+            "question": "Read the following short description: 'This paragraph contrasts the traditional view of intelligence as a fixed trait with modern psychological theories that suggest intelligence can be developed through effort and learning.' Which heading matches this description? What is the central theme?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "Harmful Effects of Plastic on Wildlife",
+            "explanation": "The summary focuses on 'negative effects' and 'marine life' with specific examples of harm. While 'global action' is mentioned at the end, the primary content is the damage caused to wildlife.",
+            "id": "ex_003",
+            "options": [
+              "Benefits of Plastic Recycling",
+              "Harmful Effects of Plastic on Wildlife",
+              "Types of Marine Animals",
+              "Global Action Plans for Oceans"
+            ],
+            "question": "Read the following short description: 'The author describes the negative effects of plastic pollution on marine life, citing examples of turtles mistaking bags for jellyfish and seabirds ingesting microplastics. The paragraph concludes by stating that these issues require immediate global action.' Which heading is the most appropriate? What does the summary describe?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "paraphrases",
+            "explanation": "In IELTS matching headings, the correct heading often uses synonyms or different grammatical structures to express the same meaning as the text. These are called paraphrases.",
+            "id": "ex_004",
+            "options": [],
+            "question": "In the IELTS Reading task 'Matching Headings', you must identify the main idea of a paragraph. When comparing the text to the list of headings, you should look for keywords that are {blank} of the original words in the text, not just identical matches.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "The Spread of Early Printing",
+            "explanation": "The summary mentions 'historical development', 'Gutenberg', and 'spread across Europe' in the 15th century. This aligns with 'Spread of Early Printing'. The digital revolution and modern publishing are explicitly excluded.",
+            "id": "ex_005",
+            "options": [
+              "The Digital Printing Industry",
+              "The Spread of Early Printing",
+              "Gutenberg's Personal Life",
+              "Modern Book Publishing"
+            ],
+            "question": "Read the following short description: 'This section details the historical development of the printing press, starting with Gutenberg's invention in the 15th century and ending with its spread across Europe. It does not cover the digital revolution.' Based on this, which heading is correct? What is the topic?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "5b495a13-d570-4e59-a691-3aae70002b52",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.443956"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "4024d041-a550-474f-b982-bf1daed2db7e",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "reading",
+      "title": "Matching: Connecting Headings to Short Descriptions",
+      "total_exercises": 5,
+      "unit_id": "c7253b7b-7a34-489d-9153-09084bb26c57",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:25:40.775120"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "FALSE",
+            "explanation": "The text states that the tests contain 'simple vocabulary' and focus on 'explicit information', which contradicts the idea of 'complex academic arguments'.",
+            "id": "ex_a095f749-b7a2-40ba-b3b1-f355eba07cd5_1",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "Reading Foundation Mini Tests are designed to assess basic literacy skills. They typically contain short texts with simple vocabulary. The questions focus on identifying explicit information. Does the passage state that these tests include complex academic arguments?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "thirty minutes",
+            "explanation": "The text explicitly states 'The test duration is usually thirty minutes.' The answer must be taken verbatim from the text.",
+            "id": "ex_b123f749-c8a2-40ba-b3b1-f355eba07cd5_2",
+            "options": [
+              "thirty minutes",
+              "one hour",
+              "fifteen minutes"
+            ],
+            "question": "Candidates taking the Reading Foundation Mini Test should read the instructions carefully. They must identify the main idea of each paragraph. The test duration is usually thirty minutes. What is the time limit mentioned for the {blank}?",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "To build confidence and locate facts",
+            "explanation": "The text lists 'build confidence' and 'locate specific facts' as key activities, making this the correct summary of the purpose.",
+            "id": "ex_c456f749-d9a2-40ba-b3b1-f355eba07cd5_3",
+            "options": [
+              "To evaluate advanced writing skills",
+              "To build confidence and locate facts",
+              "To prepare students for speaking tests",
+              "To assess listening comprehension"
+            ],
+            "question": "The primary goal of the Reading Foundation Mini Test is to build confidence. Students learn to locate specific facts. They also practice understanding basic sentence structures. What is the main purpose of this test according to the text?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "FALSE",
+            "explanation": "The text explicitly says 'There are no images or charts in the test,' which directly contradicts the statement that it includes visual aids.",
+            "id": "ex_d789f749-e0a2-40ba-b3b1-f355eba07cd5_4",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "The Reading Foundation Mini Test uses texts from scientific journals. The language is simplified for A1 level learners. There are no images or charts in the test. Does the passage state that the test includes visual aids like charts?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "short texts",
+            "explanation": "Although the sentence 'Teachers provide {blank} for homework' implies the answer, we must look at the context of 'Reading Foundation Mini Test' materials. In standard IELTS foundation contexts described similarly, 'short texts' are the typical homework item. However, based strictly on the provided text in this specific exercise block, I need to ensure the text contains the answer. Let me adjust the text to ensure the answer is present. \n\nRevised Text: Preparation for the Reading Foundation Mini Test requires daily reading practice. Students should focus on high-frequency words. Teachers provide short texts for homework. \n\nAnswer: short texts.",
+            "id": "ex_e012f749-f1a2-40ba-b3b1-f355eba07cd5_5",
+            "options": [
+              "daily reading practice",
+              "high-frequency words",
+              "short texts"
+            ],
+            "question": "Preparation for the Reading Foundation Mini Test requires daily reading practice. Students should focus on high-frequency words. Teachers provide {blank} for homework. What do teachers provide for homework?",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "5b495a13-d570-4e59-a691-3aae70002b52",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.443986"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "a095f749-b7a2-40ba-b3b1-f355eba07cd5",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "reading",
+      "title": "Reading Foundation Mini Test",
+      "total_exercises": 5,
+      "unit_id": "c7253b7b-7a34-489d-9153-09084bb26c57",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:26:00.775268"
+      },
+      "xp_reward": 35
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Global temperatures rose significantly.",
+            "explanation": "In English, the standard word order is Subject (Global temperatures) + Verb (rose) + Adverb/Complement (significantly). Option 1 follows this S-V-O structure correctly. Option 2 inverts the subject and verb. Option 3 lacks a clear object or complement relative to the specific data trend description required for Task 1. Option 4 is grammatically incorrect.",
+            "id": "ex_001",
+            "options": [
+              "Global temperatures rose significantly.",
+              "Significantly rose global temperatures.",
+              "Temperatures significantly rose.",
+              "Rose global temperatures significantly."
+            ],
+            "question": "Identify the correct Subject + Verb + Object structure to complete this sentence about global temperature trends found in an IELTS Task 1 chart description.",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Electricity consumption in Japan was 300 terawatt-hours.",
+            "explanation": "This sentence follows the Subject (Electricity consumption in Japan) + Verb (was) + Object (300 terawatt-hours) structure. It accurately reports the data from the prompt using simple, clear language appropriate for Band 3-4 learners.",
+            "id": "ex_002",
+            "options": [],
+            "question": "Write a simple sentence describing the graph below using the Subject + Verb + Object pattern. \n\nGraph Data: In 2000, electricity consumption in Japan was 300 terawatt-hours.\n\nYour sentence must start with 'Electricity consumption' and end with 'terawatt-hours'.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "The number of students increased by five percent.",
+            "explanation": "Option 1 correctly places the subject 'The number of students' before the verb 'increased'. The phrase 'by five percent' acts as an adverbial complement indicating the degree of change. The other options disrupt the standard Subject-Verb order or misplace the modifier.",
+            "id": "ex_003",
+            "options": [
+              "The number of students increased by five percent.",
+              "Increased by five percent the number of students.",
+              "Five percent increased the number of students.",
+              "The number of students by five percent increased."
+            ],
+            "question": "Select the sentence that correctly uses the Subject + Verb + Object structure to describe a change in university enrollment.",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "The population of City A was 1 million.",
+            "explanation": "This sentence adheres to the S-V-O structure: Subject (The population of City A) + Verb (was) + Object (1 million). It is a direct, factual statement suitable for the overview or body paragraph of an IELTS Task 1 report.",
+            "id": "ex_004",
+            "options": [],
+            "question": "Write a simple sentence describing the bar chart below using the Subject + Verb + Object pattern.\n\nChart Data: In 2010, the population of City A was 1 million.\n\nYour sentence must start with 'The population' and end with '1 million'.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Car sales dropped sharply last year.",
+            "explanation": "Option 1 follows the S-V-O structure: Subject (Car sales) + Verb (dropped) + Adverbial Phrase (sharply last year). While 'last year' can move to the front for emphasis (Option 2), Option 1 is the most standard and neutral structure for academic writing. Options 3 and 4 are grammatically incorrect word orders.",
+            "id": "ex_005",
+            "options": [
+              "Car sales dropped sharply last year.",
+              "Last year car sales dropped sharply.",
+              "Sharply dropped car sales last year.",
+              "Dropped car sales sharply last year."
+            ],
+            "question": "Which sentence correctly identifies the Subject, Verb, and Object in a description of car sales?",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "5b495a13-d570-4e59-a691-3aae70002b52",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.493172"
+      },
+      "description": null,
+      "estimated_minutes": 18,
+      "id": "f0697a15-dfee-4d08-acf7-2c624df015e6",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "Writing Complete Sentences: Subject + Verb + Object",
+      "total_exercises": 5,
+      "unit_id": "103c2695-8ced-4dc0-aa9e-8d278538c613",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447901"
+      },
+      "xp_reward": 18
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "A boy is playing football in the park.",
+            "explanation": "The picture shows a boy playing football, so this sentence matches the visual information.",
+            "id": "ex_a1b2c3d4-5e6f-7g8h-9i0j-111213141516_1",
+            "options": [
+              "A boy is playing football in the park.",
+              "A girl is swimming in the pool.",
+              "Two cats are sleeping on a sofa.",
+              "A man is cooking in the kitchen."
+            ],
+            "question": "Look at the picture of a park. Which sentence correctly describes it in 2–3 simple sentences?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "The image contains a girl sitting under a tree with a book, making the statement true.",
+            "id": "ex_f7g8h9i0-1j2k-3l4m-5n6o-789101112131_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The picture shows a girl reading a book under a tree.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "The beach is sunny and there are many people swimming. The sea is blue and the sand is white.",
+            "explanation": "The answer uses basic vocabulary and short sentences to describe the main elements of the beach picture.",
+            "id": "ex_q1w2e3r4-5t6y-7u8i-9o0p-123456789abc_3",
+            "options": [],
+            "question": "Write 2–3 simple sentences describing the picture of a beach.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Con chó đang ngủ trên ghế sofa.",
+            "explanation": "This Vietnamese sentence is the direct translation of the English sentence.",
+            "id": "ex_z9x8c7v6-5b4n-3m2l-1k0j-987654321def_4",
+            "options": [
+              "Con chó đang ngủ trên ghế sofa.",
+              "Con mèo đang ăn cá.",
+              "Con chó đang chạy trong công viên.",
+              "Con chim đang bay."
+            ],
+            "question": "Translate into Vietnamese: \"The dog is sleeping on the sofa.\"",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "cat:con mèo, dog:con chó",
+            "explanation": "The word \"cat\" translates to \"con mèo\" and \"dog\" translates to \"con chó\".",
+            "id": "ex_mn0p9o8-7i6u-5y4t-3r2e-1w2q3e4r5t6y_5",
+            "options": [
+              "cat",
+              "dog",
+              "con mèo",
+              "con chó"
+            ],
+            "question": "Match each English word with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "5b495a13-d570-4e59-a691-3aae70002b52",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.493208"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "d7549d0a-efb6-4c3e-a64b-5294a7297947",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Describing a Simple Picture in 2–3 Sentences",
+      "total_exercises": 5,
+      "unit_id": "103c2695-8ced-4dc0-aa9e-8d278538c613",
+      "updated_at": {
+        "__dt__": "2026-08-19T02:31:23.631009"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "get",
+            "explanation": "The phrasal verb 'get up' is the correct collocation for rising from bed. 'Wake up' refers to stopping sleeping, but 'get up' refers to the physical action of leaving bed, which fits the context of a routine timeline.",
+            "id": "ex_001",
+            "options": [],
+            "question": "Correct the error in this sentence about daily routine: 'I go to work at 8 am every day, but I {blank} up at 7 am.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "My name is John and I work as a teacher.",
+            "explanation": "This answer correctly uses the standard introductory structure for Writing Task 1 General Training letters or speaking introductions, clearly stating identity and profession using simple present tense.",
+            "id": "ex_002",
+            "options": [],
+            "question": "Write a simple sentence introducing your name and job. Example format: 'My name is [Name] and I work as a [Job].'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "I work in an office every day.",
+            "explanation": "The present simple tense ('work') is required for habitual actions and routines indicated by frequency adverbs like 'every day'. The continuous form suggests a temporary action, which is incorrect for a general routine description.",
+            "id": "ex_003",
+            "options": [
+              "I am working in an office every day.",
+              "I work in an office every day.",
+              "I worked in an office every day.",
+              "I have worked in an office every day."
+            ],
+            "question": "Which sentence best describes a daily routine in the correct tense?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "at",
+            "explanation": "The preposition 'at' is used for specific clock times (e.g., at 12:30 pm). 'On' is used for days/dates, and 'in' is used for months, years, or parts of the day (e.g., in the afternoon).",
+            "id": "ex_004",
+            "options": [],
+            "question": "Correct the preposition error: 'I usually have lunch {blank} 12:30 pm.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "My name is Sarah and I read books in the evening.",
+            "explanation": "This answer demonstrates the ability to combine two simple sentences into a compound sentence using the conjunction 'and', maintaining subject-verb agreement and correct time expression.",
+            "id": "ex_005",
+            "options": [],
+            "question": "Write a sentence combining your name and a hobby you do in the evening. Use 'and' to join the ideas.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "5b495a13-d570-4e59-a691-3aae70002b52",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.493235"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "ceb4f156-fbdf-419d-b6c2-8ceb40011463",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "Writing About Yourself: Name, Job, Daily Routine",
+      "total_exercises": 5,
+      "unit_id": "103c2695-8ced-4dc0-aa9e-8d278538c613",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447837"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "The population increased and the number of factories increased.",
+            "explanation": "You must use 'and' to join two positive facts. Ensure both parts of the sentence are complete clauses or parallel structures.",
+            "id": "ex_001_connectors_and",
+            "options": [],
+            "question": "Write one sentence combining these two ideas using the connector 'and': The population increased. The number of factories increased.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "The train is fast but it is expensive.",
+            "explanation": "Use 'but' to show a contrast between two ideas. The first idea is positive (fast), and the second is negative (expensive).",
+            "id": "ex_002_connectors_but",
+            "options": [],
+            "question": "Write one sentence combining these two ideas using the connector 'but': The train is fast. It is expensive.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "People buy local food because they want to help farmers.",
+            "explanation": "Use 'because' to give a reason. The main clause comes first, followed by 'because' and the reason clause.",
+            "id": "ex_003_connectors_because",
+            "options": [],
+            "question": "Write one sentence explaining the reason using 'because': People buy local food. They want to help farmers.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "It is raining so I take an umbrella.",
+            "explanation": "Use 'so' to show a result. The cause comes first, followed by 'so' and the result. Note: In formal writing, you might use a comma before 'so'.",
+            "id": "ex_004_connectors_so",
+            "options": [],
+            "question": "Write one sentence showing the result using 'so': It is raining. I take an umbrella.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "because",
+            "explanation": "The second part of the sentence explains the reason for the first part. Therefore, 'because' is the correct connector. 'So' would be incorrect here as it shows result, not cause, and would require a different sentence structure.",
+            "id": "ex_005_connectors_correction",
+            "options": [],
+            "question": "Correct the error in this sentence: \"The graph shows a rise in sales {blank} the price was low.\"",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "5b495a13-d570-4e59-a691-3aae70002b52",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.493263"
+      },
+      "description": null,
+      "estimated_minutes": 18,
+      "id": "032b1bc6-d8bb-4a8e-ad1a-18b83035187e",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "Using Basic Connectors: And, But, Because, So",
+      "total_exercises": 5,
+      "unit_id": "103c2695-8ced-4dc0-aa9e-8d278538c613",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:17:45.222382"
+      },
+      "xp_reward": 18
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "are",
+            "explanation": "The subject 'governments' is plural, so the verb must be 'are', not 'is'. In IELTS Writing Task 2, accurate subject-verb agreement is essential for Grammatical Range and Accuracy.",
+            "id": "ex_7e6ad478-9d6b-4a17-8934-6624d35bce30_1",
+            "options": [],
+            "question": "Correct the error in this sentence from a Task 2 essay introduction. The sentence contains a subject-verb agreement error common in A1 level writing. 'The governments {blank} responsible for education in their countries.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Overall, the number of internet users increased significantly over the period shown.",
+            "explanation": "An overview sentence in Task 1 must summarize the main trend (increase/decrease/stable) and avoid specific data points. 'Overall' is a standard signal word. Option 2 is formal and accurate. Option 1 is a detail, not an overview. Option 3 is too informal. Option 4 is informal and lacks precision.",
+            "id": "ex_7e6ad478-9d6b-4a17-8934-6624d35bce30_2",
+            "options": [
+              "In 2005, there were 50 million users.",
+              "Overall, the number of internet users increased significantly over the period shown.",
+              "The line goes up.",
+              "People used the internet more and more."
+            ],
+            "question": "Which of the following is the best overview sentence for a Task 1 line graph showing a steady increase in internet users from 2000 to 2010? Choose the option that clearly summarizes the main trend without specific data points.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "the",
+            "explanation": "When comparing specific entities like 'the city' and 'the countryside', the definite article 'the' is required before 'countryside'. Omitting it results in a grammatical error. This is a common mistake for A1-A2 learners in IELTS Writing.",
+            "id": "ex_7e6ad478-9d6b-4a17-8934-6624d35bce30_3",
+            "options": [],
+            "question": "Correct the article usage in this sentence from a Task 2 essay about urbanization. 'Living in the city is often more expensive than living in {blank} countryside.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Dear Sir or Madam,",
+            "explanation": "In General Training Task 1, if the recipient is unknown, 'Dear Sir or Madam' is the standard formal salutation. 'Hi' and 'Hey there' are informal. 'To whom it may concern' is formal but less common for personal complaints; 'Dear Sir or Madam' is the expected standard for this context.",
+            "id": "ex_7e6ad478-9d6b-4a17-8934-6624d35bce30_4",
+            "options": [
+              "Hi,",
+              "Dear Sir or Madam,",
+              "Hey there,",
+              "To whom it may concern,"
+            ],
+            "question": "Identify the correct way to start a formal letter for General Training Task 1, complaining about a faulty product. Choose the most appropriate salutation.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "relied",
+            "explanation": "The phrase 'In the past' indicates a completed time period, requiring the past simple tense. Therefore, 'rely' must be changed to 'relied'. Accurate tense usage is critical for Coherence and Cohesion and Grammatical Range and Accuracy in IELTS Writing.",
+            "id": "ex_7e6ad478-9d6b-4a17-8934-6624d35bce30_5",
+            "options": [],
+            "question": "Correct the verb tense in this sentence from a Task 2 essay discussing historical trends. 'In the past, many people rely on horses for transport.' The error is in the verb 'rely'. It should be {blank}.",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "5b495a13-d570-4e59-a691-3aae70002b52",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.493283"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "7e6ad478-9d6b-4a17-8934-6624d35bce30",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "Writing Foundation Mini Test",
+      "total_exercises": 5,
+      "unit_id": "103c2695-8ced-4dc0-aa9e-8d278538c613",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447752"
+      },
+      "xp_reward": 35
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "My name is John Smith, but I usually go by John.",
+            "explanation": "This response demonstrates a natural way to introduce oneself in IELTS Speaking Part 1. It provides both the full name and the preferred name, using the phrase 'go by' which is appropriate for informal to semi-formal introductions.",
+            "id": "ex_001_name_introduction",
+            "options": [],
+            "question": "My name is John Smith, but I usually go by John.",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "twenty",
+            "explanation": "The word 'twenty' requires clear articulation of the consonant cluster /ti/ and the vowel /i/. In pronunciation practice, focus on maintaining the correct stress and avoiding the common error of pronouncing it as 'twen-tee' with a distinct schwa sound. The correct answer is 'twenty', which fits the context of stating one's age.",
+            "id": "ex_002_age_vocabulary",
+            "options": [],
+            "question": "I am {blank} years old.",
+            "type": "translate",
+            "ui_type": "pronunciation_practice"
+          },
+          {
+            "correct_answer": "Hanoi, busy, good food",
+            "explanation": "A good answer for 'Where are you from?' should include the specific name of the city, a brief descriptive adjective to characterize it, and a simple reason for personal preference. This structure provides enough detail for a Band 4-5 score while remaining concise and relevant to the question.",
+            "id": "ex_003_hometown_description",
+            "options": [],
+            "question": "Plan your answer to: 'Where are you from?'. Include: City name, one characteristic (e.g., busy, quiet), and one reason you like it.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "I come from a nuclear family.",
+            "explanation": "The phrase 'nuclear family' is a standard term used to describe a family unit consisting of parents and children. It is a precise and appropriate term for IELTS Speaking, demonstrating vocabulary related to family structures. Other options may be true for some individuals but are not representative of a standard family structure description in this context.",
+            "id": "ex_004_family_structure",
+            "options": [
+              "I have a big family with many cousins.",
+              "I come from a nuclear family.",
+              "My family is very wealthy.",
+              "I live with my grandparents."
+            ],
+            "question": "Which statement best describes a typical family structure in IELTS Speaking Part 1?",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "thirty",
+            "explanation": "The word 'thirty' involves the voiceless dental fricative /θ/ sound, which is often challenging for learners. Correct pronunciation requires placing the tongue between the teeth and blowing air out. The answer 'thirty' is the correct term for stating one's age as 30 years, and it must be pronounced clearly to avoid confusion with other numbers.",
+            "id": "ex_005_age_pronunciation",
+            "options": [],
+            "question": "I am {blank} years old.",
+            "type": "translate",
+            "ui_type": "pronunciation_practice"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "5b495a13-d570-4e59-a691-3aae70002b52",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.542924"
+      },
+      "description": null,
+      "estimated_minutes": 15,
+      "id": "3ce632ad-0a08-48a4-b3a8-78063e512b64",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "speaking",
+      "title": "Introducing Yourself: Name, Age, Hometown, Family",
+      "total_exercises": 5,
+      "unit_id": "75b31399-0c86-405f-a741-2f35c9c6c12b",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:17:08.084971"
+      },
+      "xp_reward": 18
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Yes, I do. I really enjoy reading books in my free time.",
+            "explanation": "In IELTS Speaking Part 1, candidates should provide a direct answer followed by a brief explanation or personal detail. Option B provides a complete sentence structure ('Yes, I do') and expands with a natural collocation ('in my free time'), demonstrating better fluency and coherence than the fragmented or overly brief alternatives.",
+            "id": "ex_d3f01213-55e1-4bbb-b2dc-b3c9b1624345_1",
+            "options": [
+              "I like reading books.",
+              "Yes, I do. I really enjoy reading books in my free time.",
+              "Reading is good.",
+              "I read every day."
+            ],
+            "question": "What is the most natural and grammatically correct way to answer the Part 1 question: 'Do you have any hobbies?'",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "shopping",
+            "explanation": "The phrase 'go shopping' is a common collocation in daily routine descriptions. Practicing this helps with the linking of the verb 'go' and the gerund 'shopping', ensuring smooth articulation and natural rhythm, which is essential for achieving a higher score in Pronunciation and Fluency.",
+            "id": "ex_d3f01213-55e1-4bbb-b2dc-b3c9b1624345_2",
+            "options": [],
+            "question": "Drill the following phrase frequently used in daily routines. Focus on the linking sound between the verb and the object. Complete the phrase: 'I usually go {blank} after work.'",
+            "type": "translate",
+            "ui_type": "pronunciation_practice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "Effective planning for Part 2 requires organizing ideas into logical categories (e.g., 'What', 'When', 'Why'). Listing every activity in a single sentence leads to a lack of coherence and cohesion. Candidates should use bullet points or short phrases to structure their thoughts, ensuring they cover all parts of the cue card systematically.",
+            "id": "ex_d3f01213-55e1-4bbb-b2dc-b3c9b1624345_3",
+            "options": [],
+            "question": "True or False: When planning your answer for Part 2 (Cue Card: 'Describe a hobby you enjoy'), you should list every single activity you do in one sentence without grouping them by theme.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Q: 'What do you do to relax?' -> A: 'I usually find that listening to classical music helps me unwind after a long day at work.'",
+            "explanation": "This answer uses a complex sentence structure ('I usually find that...'), specific vocabulary ('unwind', 'classical music'), and provides a clear reason ('after a long day at work'). It avoids the brevity of Option A and the simplistic structure of Option C, meeting the criteria for Fluency and Coherence as well as Lexical Resource.",
+            "id": "ex_d3f01213-55e1-4bbb-b2dc-b3c9b1624345_4",
+            "options": [
+              "Q: 'What do you do to relax?' -> A: 'Sleeping.'",
+              "Q: 'What do you do to relax?' -> A: 'I usually find that listening to classical music helps me unwind after a long day at work.'",
+              "Q: 'What do you do to relax?' -> A: 'I am tired so I rest.'"
+            ],
+            "question": "Match the Part 1 question with the most appropriate Band 7+ model answer that demonstrates appropriate register and length.",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "I'm gonna go to work at eight.",
+            "explanation": "The phrase 'I'm gonna' is a common weak form reduction of 'I am going to' in informal spoken English. Recognizing and using these natural reductions helps learners sound more fluent and authentic. While 'I will go' is grammatically correct, 'I'm gonna' reflects the natural rhythm and stress patterns of everyday conversation, which is relevant for Speaking Part 1 and Part 2.",
+            "id": "ex_d3f01213-55e1-4bbb-b2dc-b3c9b1624345_5",
+            "options": [
+              "I go to work at eight.",
+              "I'm gonna go to work at eight.",
+              "I will go to work at eight."
+            ],
+            "question": "Identify the phrase that contains a weak form reduction commonly used in spoken English when discussing daily schedules.",
+            "type": "translate",
+            "ui_type": "pronunciation_practice"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "5b495a13-d570-4e59-a691-3aae70002b52",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.542962"
+      },
+      "description": null,
+      "estimated_minutes": 18,
+      "id": "d3f01213-55e1-4bbb-b2dc-b3c9b1624345",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "speaking",
+      "title": "Talking About Daily Routines & Hobbies",
+      "total_exercises": 5,
+      "unit_id": "75b31399-0c86-405f-a741-2f35c9c6c12b",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:17:55.275058"
+      },
+      "xp_reward": 18
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "com-FOR-ta-ble",
+            "explanation": "In IELTS Speaking, accurate word stress is crucial for intelligibility. 'Comfortable' is a three-syllable word where the primary stress falls on the second syllable (/ˈkʌm.fə.tə.bəl/). Stressing the first syllable is a common error for A1 learners.",
+            "id": "ex_001_vowel_stress",
+            "options": [
+              "COM-for-ta-ble",
+              "com-FOR-ta-ble",
+              "com-for-TA-ble",
+              "com-for-ta-BLE"
+            ],
+            "question": "Identify the correct word stress for the word 'comfortable'. The stressed syllable is marked with an apostrophe (').",
+            "type": "translate",
+            "ui_type": "pronunciation_practice"
+          },
+          {
+            "correct_answer": "/ɒ/ as in 'hot'",
+            "explanation": "The word 'pop' contains the short vowel sound /ɒ/. Confusing this with /ɑː/ or /ʌ/ can make your accent difficult to understand. In the context of the sentence, clear articulation of this short vowel demonstrates basic phonological control.",
+            "id": "ex_002_vowel_sound",
+            "options": [
+              "/ɑː/ as in 'car'",
+              "/ɒ/ as in 'hot'",
+              "/ɔː/ as in 'law'",
+              "/ʌ/ as in 'cup'"
+            ],
+            "question": "Listen to this model answer for Part 1: 'Yes, I do. I really like listening to pop music because it is very relaxing.' Which vowel sound is the focus of the word 'pop'?",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "1-CAM-era, 2-de-VEL-op, 3-FAM-ily",
+            "explanation": "Nouns often have stress on the first syllable (Camera, Family), while verbs often have stress on the second syllable (Develop). Mastering these patterns helps you sound more natural in Part 1 answers about your home and family.",
+            "id": "ex_003_stress_pattern",
+            "options": [
+              "1-CAM-era, 2-de-VEL-op, 3-FAM-ily",
+              "1-ca-ME-ra, 2-DE-vel-op, 3-fa-MI-ly",
+              "1-CAM-era, 2-DE-vel-op, 3-FAM-ily",
+              "1-ca-ME-ra, 2-de-VEL-op, 3-fa-MI-ly"
+            ],
+            "question": "Match the word to its correct stress pattern. 1. Camera 2. Develop 3. Family",
+            "type": "translate",
+            "ui_type": "pronunciation_practice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "This is False. 'Live' (verb) uses the short /ɪ/ sound, while 'like' uses the long /aɪ/ diphthong. Distinguishing between short and long vowels is a key feature of Band 4+ pronunciation. Confusing them changes the meaning or makes speech sound unnatural.",
+            "id": "ex_004_vowel_distinction",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "In the sentence 'I live in a small house near the park,' the vowel sound in 'live' is the same as the vowel sound in 'like'.",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "de-LIC-i-ous",
+            "explanation": "The word 'delicious' has stress on the second syllable (/dɪˈlɪʃəs/). When planning your answer, noting the stress helps you prepare to say it clearly. Example answer: 'Yes, I do. I find cooking delicious and fun.'",
+            "id": "ex_005_part1_planning",
+            "options": [],
+            "question": "Plan a short answer for Part 1: 'Do you like cooking?' Focus on the word 'delicious'. What is the correct stress pattern? (Write the stressed syllable in capital letters).",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "5b495a13-d570-4e59-a691-3aae70002b52",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.542982"
+      },
+      "description": null,
+      "estimated_minutes": 18,
+      "id": "74b2a368-cedc-4fb4-a309-eb880b1dd159",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "speaking",
+      "title": "Pronunciation Basics: Vowel Sounds & Word Stress",
+      "total_exercises": 5,
+      "unit_id": "75b31399-0c86-405f-a741-2f35c9c6c12b",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447739"
+      },
+      "xp_reward": 18
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "I am currently a student at a local university.",
+            "explanation": "Band 3-4 candidates often give one-word answers. This model answer provides a complete sentence with specific detail, which is required for higher bands.",
+            "id": "ex_001_part1_work",
+            "options": [
+              "Yes.",
+              "I work.",
+              "I am currently a student at a local university.",
+              "I like studying."
+            ],
+            "question": "Do you work or are you a student?",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "very",
+            "explanation": "Practising the phrase 'It's a very small town' helps with the linking of 'a' and 'very', and the weak form of 'very' in connected speech.",
+            "id": "ex_002_part1_hometown",
+            "options": [],
+            "question": "Drill this phrase for natural linking: 'It's a {blank} small town.'",
+            "type": "translate",
+            "ui_type": "pronunciation_practice"
+          },
+          {
+            "correct_answer": "play football, watch movies, read books",
+            "explanation": "Planning key points before speaking prevents long pauses. This note-form preparation helps structure a short, relevant answer.",
+            "id": "ex_003_part1_hobbies",
+            "options": [],
+            "question": "Plan your answer to: 'What do you like doing in your free time?' Write 3 key points.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "My favourite food is pizza because it is delicious and easy to make.",
+            "explanation": "Adding a reason ('because...') extends the answer naturally. This moves beyond a simple label and demonstrates basic grammatical range.",
+            "id": "ex_004_part1_food",
+            "options": [
+              "Pizza.",
+              "I like food.",
+              "My favourite food is pizza because it is delicious and easy to make.",
+              "Pizza is good."
+            ],
+            "question": "What is your favourite food?",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "A short answer like 'It is hot' is typical of Band 3-4. To reach higher bands, you must extend your answer with details, such as seasons or comparisons.",
+            "id": "ex_005_part1_weather",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "True or False: For the question 'What is the weather like in your country?', saying 'It is hot' is a sufficient Band 6 answer.",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "5b495a13-d570-4e59-a691-3aae70002b52",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.542999"
+      },
+      "description": null,
+      "estimated_minutes": 18,
+      "id": "fed717d0-f004-46d2-9b7c-0422b07466e9",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "speaking",
+      "title": "Short Answers to Common Part 1 Questions",
+      "total_exercises": 5,
+      "unit_id": "75b31399-0c86-405f-a741-2f35c9c6c12b",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447913"
+      },
+      "xp_reward": 18
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "I like my hometown because it is peaceful.",
+            "explanation": "The model answer uses 'quiet' and 'enjoy', which means the speaker likes the peaceful nature of the place. This is a Band 7 level paraphrase.",
+            "id": "ex_speak_001",
+            "options": [
+              "I hate my hometown because it is too loud.",
+              "I like my hometown because it is peaceful.",
+              "I do not know where I live."
+            ],
+            "question": "Listen to this model answer for Part 1: 'Do you like your hometown?'. The speaker says: 'Well, I think it is a very quiet place, so I enjoy living there.' Which sentence best matches the meaning of this answer?",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "t",
+            "explanation": "The 't' at the end of 'want' links to the vowel in 'to'. This linking makes speech sound more natural and fluent, which is important for the Pronunciation criterion.",
+            "id": "ex_pron_001",
+            "options": [],
+            "question": "In the phrase 'I want to go', native speakers often link the sounds. We say 'I wan__ to go'. What sound connects 'wan' and 'to'?",
+            "type": "translate",
+            "ui_type": "pronunciation_practice"
+          },
+          {
+            "correct_answer": "The speaker likes to swim.",
+            "explanation": "The answer explicitly states 'because I can go swimming'. This shows the ability to give a reason, not just a short word, which helps achieve a higher band score.",
+            "id": "ex_speak_002",
+            "options": [
+              "The weather is cold.",
+              "The speaker likes to swim.",
+              "The speaker has no money."
+            ],
+            "question": "Listen to this model answer for Part 1: 'What is your favorite season?'. The speaker says: 'I suppose I prefer summer because I can go swimming.' What is the main reason given?",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "Book: 'Harry Potter'. Why: Magic, fun, friends.",
+            "explanation": "For Part 2, you should write keywords in notes, not full sentences. This helps you remember your ideas without running out of time. Full sentences are too hard to write quickly.",
+            "id": "ex_write_001",
+            "options": [
+              "Book: 'Harry Potter'. Why: Magic, fun, friends.",
+              "I like the book Harry Potter because it is about magic and it is very fun and I have friends.",
+              "Book."
+            ],
+            "question": "You have 1 minute to prepare for Part 2. The topic is 'Describe a book you like'. Which notes are best for a Band 4-5 speaker?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "To create pictures in the mind.",
+            "explanation": "'Imagine' means to form a mental image. This is an abstract idea common in Part 3. Understanding this vocabulary helps you discuss complex topics clearly.",
+            "id": "ex_speak_003",
+            "options": [
+              "To see real things with eyes.",
+              "To create pictures in the mind.",
+              "To write a book."
+            ],
+            "question": "Listen to this model answer for Part 3: 'Is reading important for children?'. The speaker says: 'Absolutely, it helps them learn new words and imagine things.' What does 'imagine things' mean?",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "5b495a13-d570-4e59-a691-3aae70002b52",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.543015"
+      },
+      "description": null,
+      "estimated_minutes": 15,
+      "id": "b7330dc0-242a-4da6-8e8f-e63e1c6966f4",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "speaking",
+      "title": "Speaking Foundation Mock (Band 3–4)",
+      "total_exercises": 5,
+      "unit_id": "75b31399-0c86-405f-a741-2f35c9c6c12b",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447816"
+      },
+      "xp_reward": 35
+    }
+  ],
+  "units": [
+    {
+      "background_color": "#1E88E5",
+      "course_id": "5b495a13-d570-4e59-a691-3aae70002b52",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.296079"
+      },
+      "description": "Tổng quan bài thi IELTS, cấu trúc 4 kỹ năng và cách tính band score",
+      "icon_url": null,
+      "id": "ffc2a019-de80-4268-984d-7c833c8ad34a",
+      "order_index": 1,
+      "title": "IELTS là gì? – Làm quen với bài thi",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:38.335984"
+      }
+    },
+    {
+      "background_color": "#43A047",
+      "course_id": "5b495a13-d570-4e59-a691-3aae70002b52",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.337750"
+      },
+      "description": "Luyện nghe tiếng Anh rõ ràng, chậm – nhận diện số, tên và thông tin cơ bản",
+      "icon_url": null,
+      "id": "1cff65c6-70a1-4686-89c2-f0ff30cda6d8",
+      "order_index": 2,
+      "title": "Listening – Nghe và hiểu câu đơn giản",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:38.379655"
+      }
+    },
+    {
+      "background_color": "#8E24AA",
+      "course_id": "5b495a13-d570-4e59-a691-3aae70002b52",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.381448"
+      },
+      "description": "Đọc quảng cáo, thông báo và đoạn văn ngắn– dạng bài quen thuộc ở Band 3–4",
+      "icon_url": null,
+      "id": "c7253b7b-7a34-489d-9153-09084bb26c57",
+      "order_index": 3,
+      "title": "Reading – Đọc hiểu văn bản ngắn",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:38.425611"
+      }
+    },
+    {
+      "background_color": "#E53935",
+      "course_id": "5b495a13-d570-4e59-a691-3aae70002b52",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.431528"
+      },
+      "description": "Viết câu hoàn chỉnh, mô tả hình ảnh và viết đoạn văn ngắn đạt Band 3–4",
+      "icon_url": null,
+      "id": "103c2695-8ced-4dc0-aa9e-8d278538c613",
+      "order_index": 4,
+      "title": "Writing – Viết câu và đoạn văn đơn giản",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:38.488969"
+      }
+    },
+    {
+      "background_color": "#00ACC1",
+      "course_id": "5b495a13-d570-4e59-a691-3aae70002b52",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.490956"
+      },
+      "description": "Trả lời câu hỏi cá nhân, phát âm đúng và nói về chủ đề quen thuộc",
+      "icon_url": null,
+      "id": "75b31399-0c86-405f-a741-2f35c9c6c12b",
+      "order_index": 5,
+      "title": "Speaking – Nói những điều cơ bản",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:38.540220"
+      }
+    }
+  ]
+}
