@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// The web admin's own palette (orange on pale blue); deliberately not core's AppColors.
 class AppColors {
   // Primary orange brand — matches web admin --accent #ff4d00
   static const Color primary = Color(0xFFCC3D00);

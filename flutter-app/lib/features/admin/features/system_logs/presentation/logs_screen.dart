@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../shared/widgets/admin_shell.dart';
 import '../data/logs_repository.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class LogsScreen extends StatefulWidget {
   const LogsScreen({super.key});
@@ -133,17 +134,15 @@ class _LogsScreenState extends State<LogsScreen> {
                 delegate: SliverChildListDelegate([
                   Text(
                     'System activity',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 28,
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: AppColors.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     '$_total audit events • ${_logs.length} loaded',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 13,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.onSurfaceMuted,
                     ),
                   ),
@@ -161,7 +160,7 @@ class _LogsScreenState extends State<LogsScreen> {
                           },
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSpacing.md),
                       Expanded(
                         child: _FilterDropdown(
                           label: 'Resource',
@@ -175,7 +174,7 @@ class _LogsScreenState extends State<LogsScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.lg),
                   if (_error != null)
                     _ErrorCard(message: _error!, onRetry: _load)
                   else if (_loading)
@@ -203,7 +202,7 @@ class _LogsScreenState extends State<LogsScreen> {
                       ),
                       decoration: BoxDecoration(
                         color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                         border: Border.all(
                           color: AppColors.outlineVariant,
                           width: 0.5,
@@ -214,10 +213,8 @@ class _LogsScreenState extends State<LogsScreen> {
                         children: [
                           Text(
                             '${_logs.length} / $_total events',
-                            style: GoogleFonts.spaceGrotesk(
-                              fontSize: 12,
-                              color: AppColors.onSurfaceMuted,
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: AppColors.onSurfaceMuted),
                           ),
                           if (_logs.length < _total)
                             TextButton(
@@ -271,13 +268,14 @@ class _FilterDropdown extends StatelessWidget {
     return DropdownButtonFormField<String>(
       initialValue: value,
       isExpanded: true,
-      style: GoogleFonts.spaceGrotesk(fontSize: 13, color: AppColors.onSurface),
+      style: Theme.of(
+        context,
+      ).textTheme.bodySmall?.copyWith(color: AppColors.onSurface),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: GoogleFonts.spaceGrotesk(
-          fontSize: 12,
-          color: AppColors.onSurfaceMuted,
-        ),
+        labelStyle: Theme.of(
+          context,
+        ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
         isDense: true,
       ),
       items: [
@@ -352,7 +350,7 @@ class _LogCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.outlineVariant, width: 0.5),
       ),
       child: Column(
@@ -364,12 +362,11 @@ class _LogCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(
                   color: _actionBackground,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
                 child: Text(
                   log.action.replaceAll('_', ' ').toUpperCase(),
-                  style: GoogleFonts.spaceGrotesk(
-                    fontSize: 10,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: _actionColor,
                   ),
@@ -384,8 +381,7 @@ class _LogCard extends StatelessWidget {
               const SizedBox(width: 5),
               Text(
                 _timestamp,
-                style: GoogleFonts.spaceGrotesk(
-                  fontSize: 11,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: AppColors.onSurfaceMuted,
                 ),
               ),
@@ -411,17 +407,15 @@ class _LogCard extends StatelessWidget {
           const SizedBox(height: 14),
           Text(
             'DETAILS',
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 10,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w700,
               color: AppColors.onSurfaceMuted,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.xs),
           Text(
             log.details?.isNotEmpty == true ? log.details! : '—',
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 13,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: AppColors.onSurfaceVariant,
               height: 1.35,
             ),
@@ -445,8 +439,7 @@ class _Meta extends StatelessWidget {
       children: [
         Text(
           label,
-          style: GoogleFonts.spaceGrotesk(
-            fontSize: 9,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
             fontWeight: FontWeight.w700,
             color: AppColors.onSurfaceMuted,
           ),
@@ -456,8 +449,7 @@ class _Meta extends StatelessWidget {
           value,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: GoogleFonts.spaceGrotesk(
-            fontSize: 12,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
             fontWeight: FontWeight.w600,
             color: AppColors.onSurface,
           ),
@@ -479,7 +471,7 @@ class _ErrorCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.errorContainer,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Row(
         children: [
@@ -488,10 +480,9 @@ class _ErrorCard extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 13,
-                color: AppColors.error,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.error),
             ),
           ),
           TextButton(
@@ -520,7 +511,7 @@ class _EmptyState extends StatelessWidget {
       padding: const EdgeInsets.all(40),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.outlineVariant, width: 0.5),
       ),
       child: Column(
@@ -538,14 +529,13 @@ class _EmptyState extends StatelessWidget {
               color: AppColors.onSurface,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.xs),
           Text(
             'Try changing the active filters.',
             textAlign: TextAlign.center,
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 12,
-              color: AppColors.onSurfaceMuted,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
           ),
         ],
       ),

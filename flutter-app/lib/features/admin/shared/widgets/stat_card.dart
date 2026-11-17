@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class StatCard extends StatelessWidget {
   final String label;
@@ -28,7 +28,7 @@ class StatCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(color: AppColors.outlineVariant, width: 0.5),
         ),
         child: Column(
@@ -41,7 +41,7 @@ class StatCard extends StatelessWidget {
                   height: 36,
                   decoration: BoxDecoration(
                     color: AppColors.primaryContainer,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: Icon(icon, color: AppColors.primary, size: 18),
                 ),
@@ -60,8 +60,7 @@ class StatCard extends StatelessWidget {
                     ),
                     child: Text(
                       change!,
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 10,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: changePositive
                             ? AppColors.success
@@ -71,21 +70,19 @@ class StatCard extends StatelessWidget {
                   ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             Text(
               label.toUpperCase(),
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 10,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.08,
                 color: AppColors.onSurfaceMuted,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               value,
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 28,
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.w700,
                 color: AppColors.onSurface,
                 letterSpacing: -0.03,
@@ -127,7 +124,7 @@ class WideStatCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: backgroundColor == null
             ? Border.all(color: AppColors.outlineVariant, width: 0.5)
             : null,
@@ -136,18 +133,19 @@ class WideStatCard extends StatelessWidget {
         children: [
           Icon(
             icon,
-            color: backgroundColor != null ? Colors.white70 : AppColors.primary,
+            color: backgroundColor != null
+                ? Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7)
+                : AppColors.primary,
             size: 28,
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: AppSpacing.lg),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   label.toUpperCase(),
-                  style: GoogleFonts.spaceGrotesk(
-                    fontSize: 10,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.08,
                     color: backgroundColor != null
@@ -157,8 +155,7 @@ class WideStatCard extends StatelessWidget {
                 ),
                 Text(
                   value,
-                  style: GoogleFonts.spaceGrotesk(
-                    fontSize: 32,
+                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: fg,
                     letterSpacing: -0.03,
@@ -170,10 +167,9 @@ class WideStatCard extends StatelessWidget {
           if (change != null)
             Text(
               change!,
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 16,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 fontWeight: FontWeight.w600,
-                color: changePositive ? Colors.greenAccent : Colors.redAccent,
+                color: changePositive ? AppColors.success : AppColors.error,
               ),
             ),
         ],

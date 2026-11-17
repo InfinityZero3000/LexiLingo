@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:lexilingo_app/features/onboarding/domain/entities/start_learning_target.dart';
 import 'package:lexilingo_app/features/onboarding/presentation/providers/start_learning_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Calls start-learning as soon as it opens, then hands the first lesson to
 /// [onStarted]. A failure keeps the learner here with a retry and a way out.
@@ -65,13 +66,13 @@ class _StartLearningPageState extends State<StartLearningPage> {
       mainAxisSize: MainAxisSize.min,
       children: [
         const CircularProgressIndicator(),
-        const SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.xl),
         Text(
           'onboarding.startingTitle'.tr(),
           textAlign: TextAlign.center,
           style: theme.textTheme.titleLarge,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         Text(
           'onboarding.startingSubtitle'.tr(),
           textAlign: TextAlign.center,
@@ -93,13 +94,13 @@ class _StartLearningPageState extends State<StartLearningPage> {
           size: 48,
           color: theme.colorScheme.error,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.lg),
         Text(
           'onboarding.startFailedTitle'.tr(),
           textAlign: TextAlign.center,
           style: theme.textTheme.titleLarge,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         Text(
           'onboarding.startFailedBody'.tr(),
           textAlign: TextAlign.center,
@@ -107,13 +108,13 @@ class _StartLearningPageState extends State<StartLearningPage> {
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.xl),
         FilledButton(
           onPressed: _run,
           style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(48)),
           child: Text('common.retry'.tr()),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         TextButton(
           onPressed: widget.onSkip,
           style: TextButton.styleFrom(minimumSize: const Size.fromHeight(48)),

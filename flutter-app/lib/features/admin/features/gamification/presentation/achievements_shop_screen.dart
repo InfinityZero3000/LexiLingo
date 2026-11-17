@@ -7,6 +7,7 @@ import '../../../core/constants/api_endpoints.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/admin_shell.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class AchievementsShopScreen extends StatefulWidget {
   const AchievementsShopScreen({super.key});
@@ -93,10 +94,16 @@ class _AchievementsShopScreenState extends State<AchievementsShopScreen> {
         ),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+            ),
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+            ),
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Delete'),
           ),
@@ -227,7 +234,7 @@ class _AchievementsShopScreenState extends State<AchievementsShopScreen> {
                           setState(() => _category = value ?? ''),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppSpacing.md),
                   SizedBox(
                     height: 48,
                     child: FilledButton.icon(
@@ -271,17 +278,16 @@ class _AchievementsShopScreenState extends State<AchievementsShopScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _RemoteIcon(url: icon, fallback: Icons.military_tech),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   '${item['name'] ?? ''}',
-                  style: GoogleFonts.spaceGrotesk(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 Text(
                   '${item['description'] ?? ''}',
@@ -291,7 +297,7 @@ class _AchievementsShopScreenState extends State<AchievementsShopScreen> {
                     color: AppColors.onSurfaceMuted,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 Wrap(
                   spacing: 6,
                   runSpacing: 6,
@@ -348,8 +354,7 @@ class _AchievementsShopScreenState extends State<AchievementsShopScreen> {
                 Expanded(
                   child: Text(
                     '${_shopItems.length} inventory items',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 16,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -399,17 +404,16 @@ class _AchievementsShopScreenState extends State<AchievementsShopScreen> {
             url: '${item['icon_url'] ?? ''}',
             fallback: Icons.shopping_bag_outlined,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   '${item['name'] ?? ''}',
-                  style: GoogleFonts.spaceGrotesk(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 Text(
                   '${item['description'] ?? ''}',
@@ -419,7 +423,7 @@ class _AchievementsShopScreenState extends State<AchievementsShopScreen> {
                     color: AppColors.onSurfaceMuted,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 Wrap(
                   spacing: 6,
                   runSpacing: 6,
@@ -629,7 +633,7 @@ class _AchievementFormState extends State<_AchievementForm> {
                   required: true,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: _Field(
                   controller: _gems,
@@ -813,7 +817,7 @@ class _ShopFormState extends State<_ShopForm> {
                   required: true,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: _Field(
                   controller: _stock,
@@ -884,17 +888,16 @@ class _FormSheet extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             Text(
               title,
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.heading?.copyWith(fontWeight: FontWeight.w700),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             child,
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             SizedBox(
               height: 48,
               child: FilledButton(
@@ -991,10 +994,10 @@ class _Card extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Material(
     color: AppColors.surface,
-    borderRadius: BorderRadius.circular(14),
+    borderRadius: BorderRadius.circular(AppRadius.md),
     child: InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: Padding(padding: const EdgeInsets.all(14), child: child),
     ),
   );
@@ -1010,7 +1013,7 @@ class _RemoteIcon extends StatelessWidget {
     height: 52,
     decoration: BoxDecoration(
       color: AppColors.primaryContainer,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppRadius.md),
     ),
     child: url.startsWith('http')
         ? Image.network(
@@ -1028,17 +1031,16 @@ class _Chip extends StatelessWidget {
   const _Chip(this.text);
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 5),
     decoration: BoxDecoration(
       color: AppColors.surfaceContainerLow,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
     ),
     child: Text(
       text,
-      style: GoogleFonts.spaceGrotesk(
-        fontSize: 11,
-        color: AppColors.onSurfaceMuted,
-      ),
+      style: Theme.of(
+        context,
+      ).textTheme.labelSmall?.copyWith(color: AppColors.onSurfaceMuted),
     ),
   );
 }
@@ -1059,13 +1061,13 @@ class _MessageState extends StatelessWidget {
             size: 48,
             color: AppColors.onSurfaceMuted,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           Text(
             message,
             textAlign: TextAlign.center,
             style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           SizedBox(
             height: 44,
             child: OutlinedButton(
@@ -1089,7 +1091,7 @@ class _EmptyState extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 52, color: AppColors.onSurfaceMuted),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
         Text(
           text,
           style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted),

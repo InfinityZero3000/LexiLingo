@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:lexilingo_app/features/admin/shared/admin_exit_scope.dart';
 import '../../../core/constants/app_colors.dart';
 import 'auth_provider.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -53,7 +53,7 @@ class LoginScreen extends StatelessWidget {
                   constraints: BoxConstraints(minHeight: viewport.maxHeight),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
+                      horizontal: AppSpacing.xl,
                       vertical: 18,
                     ),
                     child: Center(
@@ -72,8 +72,8 @@ class LoginScreen extends StatelessWidget {
                               style: TextButton.styleFrom(
                                 foregroundColor: AppColors.onSurfaceVariant,
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 4,
-                                  vertical: 8,
+                                  horizontal: AppSpacing.xs,
+                                  vertical: AppSpacing.sm,
                                 ),
                               ),
                             ),
@@ -93,7 +93,9 @@ class LoginScreen extends StatelessWidget {
                                         Color(0xFFFF6F2A),
                                       ],
                                     ),
-                                    borderRadius: BorderRadius.circular(14),
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.md,
+                                    ),
                                     boxShadow: const [
                                       BoxShadow(
                                         color: Color(0x59FF4D00),
@@ -102,13 +104,15 @@ class LoginScreen extends StatelessWidget {
                                       ),
                                     ],
                                   ),
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.language,
-                                    color: Colors.white,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onPrimary,
                                     size: 26,
                                   ),
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: AppSpacing.md),
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
@@ -119,12 +123,14 @@ class LoginScreen extends StatelessWidget {
                                     ),
                                     Text(
                                       'ADMIN CONSOLE',
-                                      style: GoogleFonts.spaceGrotesk(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
-                                        letterSpacing: 0.18,
-                                        color: AppColors.onSurfaceMuted,
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                            letterSpacing: 0.18,
+                                            color: AppColors.onSurfaceMuted,
+                                          ),
                                     ),
                                   ],
                                 ),
@@ -133,37 +139,37 @@ class LoginScreen extends StatelessWidget {
                             const SizedBox(height: 56),
                             Text(
                               'Admin Login',
-                              style: GoogleFonts.spaceGrotesk(
-                                fontSize: 34,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.onSurface,
-                                letterSpacing: -0.02,
-                              ),
+                              style: Theme.of(context).textTheme.headlineLarge
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.onSurface,
+                                    letterSpacing: -0.02,
+                                  ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: AppSpacing.sm),
                             Text(
                               'Đăng nhập bằng tài khoản Google admin của bạn.',
-                              style: GoogleFonts.spaceGrotesk(
-                                fontSize: 15,
-                                color: AppColors.onSurfaceVariant,
-                              ),
+                              style: Theme.of(context).textTheme.bodyLarge
+                                  ?.copyWith(color: AppColors.onSurfaceVariant),
                             ),
                             const SizedBox(height: 48),
                             // Google Sign-In button
                             SizedBox(
                               width: double.infinity,
                               height: 56,
-                              child: ElevatedButton(
+                              child: FilledButton(
                                 onPressed: isLoading
                                     ? null
                                     : () => _signInWithGoogle(context),
-                                style: ElevatedButton.styleFrom(
+                                style: FilledButton.styleFrom(
                                   backgroundColor: AppColors.surface,
                                   foregroundColor: AppColors.onSurface,
                                   elevation: 2,
                                   shadowColor: const Color(0x1A0A3256),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.md,
+                                    ),
                                     side: const BorderSide(
                                       color: AppColors.outline,
                                       width: 1.2,
@@ -184,17 +190,21 @@ class LoginScreen extends StatelessWidget {
                                             MainAxisAlignment.center,
                                         children: [
                                           _GoogleLogo(),
-                                          const SizedBox(width: 12),
+                                          const SizedBox(width: AppSpacing.md),
                                           Flexible(
                                             child: FittedBox(
                                               fit: BoxFit.scaleDown,
                                               child: Text(
                                                 'Đăng nhập với Google',
-                                                style: GoogleFonts.spaceGrotesk(
-                                                  fontSize: 15,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: AppColors.onSurface,
-                                                ),
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyLarge
+                                                    ?.copyWith(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      color:
+                                                          AppColors.onSurface,
+                                                    ),
                                               ),
                                             ),
                                           ),
@@ -203,12 +213,14 @@ class LoginScreen extends StatelessWidget {
                               ),
                             ),
                             if (auth.error != null) ...[
-                              const SizedBox(height: 16),
+                              const SizedBox(height: AppSpacing.lg),
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
                                   color: AppColors.errorContainer,
-                                  borderRadius: BorderRadius.circular(10),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.md,
+                                  ),
                                 ),
                                 child: Row(
                                   children: [
@@ -217,14 +229,14 @@ class LoginScreen extends StatelessWidget {
                                       color: AppColors.error,
                                       size: 16,
                                     ),
-                                    const SizedBox(width: 8),
+                                    const SizedBox(width: AppSpacing.sm),
                                     Expanded(
                                       child: Text(
                                         auth.error!,
-                                        style: GoogleFonts.spaceGrotesk(
-                                          fontSize: 13,
-                                          color: AppColors.error,
-                                        ),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(color: AppColors.error),
                                       ),
                                     ),
                                   ],
@@ -235,12 +247,14 @@ class LoginScreen extends StatelessWidget {
                             Center(
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
+                                  horizontal: AppSpacing.lg,
                                   vertical: 10,
                                 ),
                                 decoration: BoxDecoration(
                                   color: AppColors.surfaceContainerLow,
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.md,
+                                  ),
                                   border: Border.all(color: AppColors.outline),
                                 ),
                                 child: FittedBox(
@@ -256,10 +270,12 @@ class LoginScreen extends StatelessWidget {
                                       const SizedBox(width: 6),
                                       Text(
                                         'Google OAuth · Admin only · Secured',
-                                        style: GoogleFonts.spaceGrotesk(
-                                          fontSize: 11,
-                                          color: AppColors.onSurfaceMuted,
-                                        ),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelSmall
+                                            ?.copyWith(
+                                              color: AppColors.onSurfaceMuted,
+                                            ),
                                       ),
                                     ],
                                   ),

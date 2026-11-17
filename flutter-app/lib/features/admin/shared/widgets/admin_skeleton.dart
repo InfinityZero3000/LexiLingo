@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Animated shimmer skeleton for admin panel loading states.
 /// Animates a left-to-right highlight sweep on a muted base color.
@@ -84,7 +85,7 @@ class StatCardSkeleton extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.outlineVariant, width: 0.5),
       ),
       child: Column(
@@ -97,7 +98,7 @@ class StatCardSkeleton extends StatelessWidget {
               const AdminSkeleton(width: 48, height: 22, borderRadius: 6),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           const AdminSkeleton(width: 80, height: 10, borderRadius: 4),
           const SizedBox(height: 6),
           const AdminSkeleton(width: 60, height: 28, borderRadius: 4),
@@ -118,7 +119,7 @@ class SectionCardSkeleton extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.outlineVariant, width: 0.5),
       ),
       child: Column(
@@ -131,9 +132,9 @@ class SectionCardSkeleton extends StatelessWidget {
               AdminSkeleton(width: 60, height: 24, borderRadius: 12),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           const AdminSkeleton(width: 160, height: 12, borderRadius: 4),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           AdminSkeleton(height: contentHeight, borderRadius: 8),
         ],
       ),
@@ -148,11 +149,14 @@ class ListRowSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: 12,
+      ),
       child: Row(
         children: [
           const AdminSkeleton(width: 36, height: 36, borderRadius: 18),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -163,7 +167,7 @@ class ListRowSkeleton extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.md),
           const AdminSkeleton(width: 56, height: 22, borderRadius: 11),
         ],
       ),

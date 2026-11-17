@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../shared/widgets/admin_shell.dart';
 import '../../../shared/widgets/admin_skeleton.dart';
 import '../data/notification_campaign_repository.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class NotificationCampaignScreen extends StatefulWidget {
   const NotificationCampaignScreen({super.key});
@@ -68,6 +69,9 @@ class _NotificationCampaignScreenState
           content: Text(message),
           actions: [
             TextButton(
+              style: TextButton.styleFrom(
+                minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+              ),
               onPressed: () => Navigator.pop(context, false),
               child: const Text('Cancel'),
             ),
@@ -148,7 +152,7 @@ class _NotificationCampaignScreenState
         padding: const EdgeInsets.all(16),
         children: [
           AdminSkeleton(height: 112),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           AdminSkeleton(height: 112),
         ],
       );
@@ -225,7 +229,7 @@ class _CampaignCard extends StatelessWidget {
     padding: const EdgeInsets.all(14),
     decoration: BoxDecoration(
       color: AppColors.surface,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       border: Border.all(
         color: job.needsAttention
             ? AppColors.primary
@@ -243,11 +247,11 @@ class _CampaignCard extends StatelessWidget {
               height: 44,
               decoration: BoxDecoration(
                 color: AppColors.primaryContainer,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Icon(_icon, color: AppColors.primary),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -259,19 +263,17 @@ class _CampaignCard extends StatelessWidget {
                       color: AppColors.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     'Created ${_date(job.createdAt)}',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 11,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: AppColors.onSurfaceMuted,
                     ),
                   ),
                   if (job.scheduledAt != null)
                     Text(
                       'Scheduled ${_date(job.scheduledAt!)}',
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 11,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: AppColors.onSurfaceMuted,
                       ),
                     ),
@@ -282,12 +284,11 @@ class _CampaignCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
               decoration: BoxDecoration(
                 color: _statusColor.withValues(alpha: .12),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
               child: Text(
                 job.status.replaceAll('_', ' '),
-                style: GoogleFonts.spaceGrotesk(
-                  fontSize: 11,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: _statusColor,
                 ),
@@ -296,24 +297,23 @@ class _CampaignCard extends StatelessWidget {
           ],
         ),
         if (job.needsAttention) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           LinearProgressIndicator(
             value: job.progressPercent / 100,
             color: AppColors.primary,
           ),
         ],
         if (job.errorMessage != null) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             job.errorMessage!,
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 12,
-              color: AppColors.error,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.error),
           ),
         ],
         if (job.canApply || job.canCancel || job.canRetry) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -467,7 +467,7 @@ class _CreateCampaignDialogState extends State<_CreateCampaignDialog> {
                     .toList(),
                 onChanged: (v) => setState(() => _jobType = v!),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               TextFormField(
                 controller: _title,
                 maxLength: 100,
@@ -487,7 +487,7 @@ class _CreateCampaignDialogState extends State<_CreateCampaignDialog> {
                 controller: _type,
                 decoration: _decoration('Notification type'),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               TextFormField(
                 controller: _link,
                 decoration: _decoration('Deep link (optional)'),
@@ -559,7 +559,7 @@ class _CreateCampaignDialogState extends State<_CreateCampaignDialog> {
                             : 'Number required',
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: TextFormField(
                         controller: _inactiveDays,
@@ -591,6 +591,9 @@ class _CreateCampaignDialogState extends State<_CreateCampaignDialog> {
     ),
     actions: [
       TextButton(
+        style: TextButton.styleFrom(
+          minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+        ),
         onPressed: () => Navigator.pop(context),
         child: const Text('Cancel'),
       ),

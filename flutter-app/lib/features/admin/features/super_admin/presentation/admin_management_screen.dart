@@ -5,6 +5,7 @@ import '../../../core/constants/api_endpoints.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/admin_shell.dart';
 import '../../../shared/widgets/admin_skeleton.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class AdminManagementScreen extends StatefulWidget {
   const AdminManagementScreen({super.key});
@@ -82,6 +83,9 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
         content: Text(message),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+            ),
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
@@ -178,7 +182,7 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
                   labelText: 'Existing user email',
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               DropdownButtonFormField<int>(
                 initialValue: roleLevel,
                 decoration: const InputDecoration(labelText: 'Role'),
@@ -189,19 +193,21 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
                 onChanged: adding ? null : (value) => roleLevel = value ?? 1,
               ),
               if (dialogError != null) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.md),
                 Text(
                   dialogError!,
-                  style: GoogleFonts.spaceGrotesk(
-                    fontSize: 12,
-                    color: AppColors.error,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: AppColors.error),
                 ),
               ],
             ],
           ),
           actions: [
             TextButton(
+              style: TextButton.styleFrom(
+                minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+              ),
               onPressed: adding ? null : () => Navigator.pop(dialogContext),
               child: const Text('Cancel'),
             ),
@@ -292,17 +298,19 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 12),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: 4,
+            ),
             decoration: BoxDecoration(
               color: AppColors.primary,
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
               'SUPER ADMIN',
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 9,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onPrimary,
                 letterSpacing: 0.5,
               ),
             ),
@@ -323,7 +331,7 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
             child: TextField(
               onChanged: (v) => setState(() => _search = v),
-              style: GoogleFonts.spaceGrotesk(fontSize: 13),
+              style: Theme.of(context).textTheme.bodySmall,
               decoration: InputDecoration(
                 hintText: 'Search admins…',
                 hintStyle: GoogleFonts.spaceGrotesk(
@@ -349,7 +357,7 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
                   label: '${_admins.length} admins',
                   color: AppColors.primaryBright,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.sm),
                 _summaryChip(
                   icon: Icons.admin_panel_settings,
                   label:
@@ -381,7 +389,8 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
                     child: ListView.separated(
                       padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                       itemCount: list.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      separatorBuilder: (_, __) =>
+                          const SizedBox(height: AppSpacing.sm),
                       itemBuilder: (ctx, i) => _AdminCard(
                         admin: list[i],
                         roleLevel: _roleLevel(list[i]),
@@ -405,7 +414,7 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
@@ -415,8 +424,7 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
           const SizedBox(width: 6),
           Text(
             label,
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 12,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
               fontWeight: FontWeight.w600,
               color: color,
             ),
@@ -461,7 +469,7 @@ class _AdminCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.outline, width: 0.5),
       ),
       child: Column(
@@ -475,8 +483,7 @@ class _AdminCard extends StatelessWidget {
                     backgroundColor: AppColors.primaryContainer,
                     child: Text(
                       initials,
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 14,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: AppColors.primary,
                       ),
@@ -486,27 +493,28 @@ class _AdminCard extends StatelessWidget {
                     Positioned.fill(
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Colors.black38,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.scrim.withValues(alpha: 0.38),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.block,
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onPrimary,
                           size: 14,
                         ),
                       ),
                     ),
                 ],
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       name,
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 14,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                         color: AppColors.onSurface,
                       ),
@@ -515,8 +523,7 @@ class _AdminCard extends StatelessWidget {
                     ),
                     Text(
                       email,
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 11,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: AppColors.onSurfaceMuted,
                       ),
                       maxLines: 1,
@@ -535,17 +542,18 @@ class _AdminCard extends StatelessWidget {
                 ),
                 child: Text(
                   isSuperAdmin ? 'SUPER' : 'ADMIN',
-                  style: GoogleFonts.spaceGrotesk(
-                    fontSize: 9,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: isSuperAdmin ? Colors.white : AppColors.primary,
+                    color: isSuperAdmin
+                        ? Theme.of(context).colorScheme.onPrimary
+                        : AppColors.primary,
                     letterSpacing: 0.4,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           Row(
             children: [
               const Icon(
@@ -559,22 +567,20 @@ class _AdminCard extends StatelessWidget {
                   lastLogin.isEmpty
                       ? 'Never signed in'
                       : 'Last login ${lastLogin.split('T').first}',
-                  style: GoogleFonts.spaceGrotesk(
-                    fontSize: 11,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: AppColors.onSurfaceMuted,
                   ),
                 ),
               ),
               Text(
                 provider,
-                style: GoogleFonts.spaceGrotesk(
-                  fontSize: 11,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: AppColors.onSurfaceMuted,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           const Divider(height: 1, color: AppColors.outline),
           const SizedBox(height: 10),
           Row(
@@ -589,7 +595,7 @@ class _AdminCard extends StatelessWidget {
                   onTap: () => onChangeRole(isSuperAdmin ? 1 : 2),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: _ActionButton(
                   icon: isActive ? Icons.block : Icons.check_circle_outline,
@@ -623,10 +629,10 @@ class _ActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: color.withValues(alpha: 0.08),
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(AppRadius.sm),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 13),
           child: Row(
@@ -636,8 +642,7 @@ class _ActionButton extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 label,
-                style: GoogleFonts.spaceGrotesk(
-                  fontSize: 12,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: color,
                 ),
@@ -663,23 +668,22 @@ class _ErrorState extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(Icons.error_outline, color: AppColors.error, size: 40),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           Text(
             'Could not load admins',
             style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.xs),
           Text(
             message,
             textAlign: TextAlign.center,
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 12,
-              color: AppColors.onSurfaceMuted,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           SizedBox(
             height: 44,
             child: OutlinedButton(

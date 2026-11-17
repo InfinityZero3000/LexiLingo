@@ -6,6 +6,13 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:lexilingo_app/core/di/injection_container.dart' as di;
 import 'package:lexilingo_app/core/services/entitlement_service.dart';
 import 'package:lexilingo_app/core/services/purchases_service.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
+
+abstract final class _PaywallPalette {
+  static const night = [Color(0xFF1A1A2E), Color(0xFF16213E)];
+  static const violet = [Color(0xFF6C63FF), Color(0xFF3B1F8C)];
+}
 
 class PaywallScreen extends StatefulWidget {
   const PaywallScreen({super.key});
@@ -84,9 +91,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: isDark
-                ? [const Color(0xFF1A1A2E), const Color(0xFF16213E)]
-                : [const Color(0xFF6C63FF), const Color(0xFF3B1F8C)],
+            colors: isDark ? _PaywallPalette.night : _PaywallPalette.violet,
           ),
         ),
         child: ContentWidth(
@@ -97,7 +102,10 @@ class _PaywallScreenState extends State<PaywallScreen> {
                 Align(
                   alignment: Alignment.topRight,
                   child: IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white70),
+                    icon: Icon(
+                      Icons.close,
+                      color: AppColors.onGradient.withValues(alpha: 0.7),
+                    ),
                     onPressed: () => Navigator.of(context).pop(false),
                   ),
                 ),
@@ -107,43 +115,48 @@ class _PaywallScreenState extends State<PaywallScreen> {
                   size: 80,
                   color: Color(0xFFFFD700),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.lg),
                 Text(
                   'premium.title'.tr(),
-                  style: const TextStyle(
-                    fontSize: 28,
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: AppColors.onGradient,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.md),
                 Text(
                   'premium.subtitle'.tr(),
-                  style: const TextStyle(fontSize: 16, color: Colors.white70),
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: AppColors.onGradient.withValues(alpha: 0.7),
+                  ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: AppSpacing.xxl),
                 _buildFeatureList(),
                 const Spacer(),
                 if (_loading)
-                  const CircularProgressIndicator(color: Colors.white)
+                  const CircularProgressIndicator(color: AppColors.onGradient)
                 else if (_packages.isEmpty)
                   Text(
                     'premium.unavailable'.tr(),
-                    style: const TextStyle(color: Colors.white70),
+                    style: TextStyle(
+                      color: AppColors.onGradient.withValues(alpha: 0.7),
+                    ),
                   )
                 else
                   ..._packages.map(_buildPackageTile),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.md),
                 TextButton(
                   onPressed: _purchasing ? null : _restore,
                   child: Text(
                     'premium.restore'.tr(),
-                    style: const TextStyle(color: Colors.white54),
+                    style: TextStyle(
+                      color: AppColors.onGradient.withValues(alpha: 0.54),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpacing.xl),
               ],
             ),
           ),
@@ -164,15 +177,20 @@ class _PaywallScreenState extends State<PaywallScreen> {
       children: features
           .map(
             (f) => Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 4),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.xxl,
+                vertical: 4,
+              ),
               child: Row(
                 children: [
-                  Icon(f.$2, color: const Color(0xFFFFD700), size: 20),
-                  const SizedBox(width: 12),
+                  Icon(f.$2, color: AppColors.gold, size: 20),
+                  const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: Text(
                       f.$1.tr(),
-                      style: const TextStyle(color: Colors.white, fontSize: 15),
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: AppColors.onGradient,
+                      ),
                     ),
                   ),
                 ],
@@ -192,31 +210,33 @@ class _PaywallScreenState extends State<PaywallScreen> {
         : price;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xl,
+        vertical: 6,
+      ),
       child: FilledButton(
         onPressed: _purchasing ? null : () => _purchase(pkg),
         style: FilledButton.styleFrom(
-          backgroundColor: const Color(0xFFFFD700),
-          foregroundColor: Colors.black87,
+          backgroundColor: AppColors.gold,
+          foregroundColor: AppColors.textDark,
           minimumSize: const Size(double.infinity, 52),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(AppRadius.md),
           ),
         ),
         child: _purchasing
-            ? const SizedBox.square(
+            ? SizedBox.square(
                 dimension: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: Colors.black54,
+                  color: AppColors.textDark.withValues(alpha: 0.54),
                 ),
               )
             : Text(
                 title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
       ),
     );

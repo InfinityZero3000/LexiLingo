@@ -5,6 +5,7 @@ import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../shared/widgets/admin_skeleton.dart';
 import '../data/curriculum_repository.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class CourseDetailScreen extends StatefulWidget {
   final String courseId;
@@ -81,6 +82,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         ),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+            ),
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
@@ -118,6 +122,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         content: Text('Delete “${unit.title}”?'),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+            ),
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
@@ -156,25 +163,24 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                 onPressed: () => context.pop(),
               ),
               actions: [
-                ElevatedButton.icon(
+                FilledButton.icon(
                   onPressed: _edit,
                   icon: const Icon(Icons.add, size: 16),
                   label: Text(
                     'NEW UNIT',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 11,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.05,
                     ),
                   ),
-                  style: ElevatedButton.styleFrom(
+                  style: FilledButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
+                      horizontal: AppSpacing.md,
                       vertical: 8,
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.md),
               ],
             ),
             SliverPadding(
@@ -183,18 +189,16 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                 delegate: SliverChildListDelegate([
                   Text(
                     'CURRICULUM MANAGEMENT',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 10,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.08,
                       color: AppColors.primary,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     'Course Detail',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 28,
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: AppColors.onSurface,
                       letterSpacing: -0.02,
@@ -222,16 +226,15 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpacing.xl),
                   Text(
                     'Unit Structure',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 18,
+                    style: Theme.of(context).textTheme.sectionTitle?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: AppColors.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   if (_error != null)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12),
@@ -241,7 +244,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                             Icons.error_outline,
                             color: AppColors.error,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppSpacing.sm),
                           Expanded(
                             child: Text(
                               _error!,
@@ -304,7 +307,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.primaryBright,
         onPressed: _edit,
-        child: const Icon(Icons.add, color: Colors.white),
+        child: Icon(Icons.add, color: Theme.of(context).colorScheme.onPrimary),
       ),
     );
   }
@@ -327,7 +330,7 @@ class _MiniStat extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.outlineVariant, width: 0.5),
       ),
       child: Column(
@@ -341,7 +344,7 @@ class _MiniStat extends StatelessWidget {
                 height: 28,
                 decoration: BoxDecoration(
                   color: AppColors.primaryContainer,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Icon(icon, color: AppColors.primary, size: 15),
               ),
@@ -350,8 +353,7 @@ class _MiniStat extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             label,
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 9,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w700,
               letterSpacing: 0.06,
               color: AppColors.onSurfaceMuted,
@@ -359,8 +361,7 @@ class _MiniStat extends StatelessWidget {
           ),
           Text(
             value,
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 22,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w700,
               color: AppColors.onSurface,
               letterSpacing: -0.02,
@@ -395,7 +396,7 @@ class _UnitCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
             color: isExpanded ? AppColors.primary : AppColors.outlineVariant,
             width: isExpanded ? 1.5 : 0.5,
@@ -409,18 +410,16 @@ class _UnitCard extends StatelessWidget {
                 children: [
                   Text(
                     'UNIT ${(unit.orderIndex + 1).toString().padLeft(2, '0')}',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 9,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.08,
                       color: AppColors.primary,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     unit.title,
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 15,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: AppColors.onSurface,
                     ),
@@ -433,11 +432,10 @@ class _UnitCard extends StatelessWidget {
                         size: 12,
                         color: AppColors.onSurfaceMuted,
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppSpacing.xs),
                       Text(
                         '${unit.lessonCount} Lessons',
-                        style: GoogleFonts.spaceGrotesk(
-                          fontSize: 11,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: AppColors.onSurfaceMuted,
                         ),
                       ),

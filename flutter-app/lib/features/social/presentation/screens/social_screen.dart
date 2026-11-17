@@ -7,6 +7,7 @@ import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/social/presentation/providers/social_provider.dart';
 import 'package:lexilingo_app/features/social/domain/entities/social_entities.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Social Screen
 /// Activity feed and friends management
@@ -73,7 +74,7 @@ class _SocialScreenState extends State<SocialScreen>
         bottom: TabBar(
           controller: _tabController,
           labelColor: primaryColor,
-          unselectedLabelColor: AppColors.textGrey,
+          unselectedLabelColor: Theme.of(context).colorScheme.onSurfaceVariant,
           indicatorColor: primaryColor,
           // Three tabs share 390 px; the default 16 px label padding clipped
           // "Người theo dõi" by two pixels.
@@ -103,7 +104,10 @@ class _SocialScreenState extends State<SocialScreen>
       floatingActionButton: FloatingActionButton(
         onPressed: _showSearchSheet,
         backgroundColor: primaryColor,
-        child: const Icon(Icons.person_add, color: AppColors.surfaceLight),
+        child: Icon(
+          Icons.person_add,
+          color: Theme.of(context).colorScheme.surface,
+        ),
       ),
     );
   }
@@ -303,7 +307,9 @@ class _SocialScreenState extends State<SocialScreen>
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surfaceLight.withValues(alpha: 0),
+      backgroundColor: Theme.of(
+        context,
+      ).colorScheme.surface.withValues(alpha: 0),
       builder: (context) =>
           _SearchUsersSheet(onFollow: (user) => _toggleFollow(user)),
     );
@@ -332,8 +338,8 @@ class _SuggestedFriendsSection extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(12, 12, 12, 6),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(16),
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: primaryColor.withValues(alpha: 0.24)),
       ),
       child: Column(
@@ -342,7 +348,7 @@ class _SuggestedFriendsSection extends StatelessWidget {
           Row(
             children: [
               Icon(Icons.auto_awesome, color: primaryColor, size: 18),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.sm),
               Flexible(
                 child: Text(
                   'social.suggestedFriends'.tr(),
@@ -464,10 +470,10 @@ class _NearbyLearnersSection extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(12, 12, 12, 6),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(16),
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
-          color: AppColors.greenSuccessBright.withValues(alpha: 0.35),
+          color: context.status.success.withValues(alpha: 0.35),
         ),
       ),
       child: Column(
@@ -475,12 +481,8 @@ class _NearbyLearnersSection extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(
-                Icons.near_me,
-                color: AppColors.greenSuccessBright,
-                size: 18,
-              ),
-              const SizedBox(width: 8),
+              Icon(Icons.near_me, color: context.status.success, size: 18),
+              const SizedBox(width: AppSpacing.sm),
               Flexible(
                 child: Text(
                   'social.nearbyLearners'.tr(),
@@ -548,15 +550,15 @@ class _NearbyLearnersSection extends StatelessWidget {
                 return ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: CircleAvatar(
-                    backgroundColor: AppColors.greenSuccessBright.withValues(
+                    backgroundColor: context.status.success.withValues(
                       alpha: 0.12,
                     ),
                     child: Text(
                       user.displayName.isNotEmpty
                           ? user.displayName[0].toUpperCase()
                           : user.username[0].toUpperCase(),
-                      style: const TextStyle(
-                        color: AppColors.greenSuccessBright,
+                      style: TextStyle(
+                        color: context.status.success,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -603,8 +605,9 @@ class _ActivityFeedCard extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: (isDark ? AppColors.borderDarkSoft : AppColors.grey300)
-                .withValues(alpha: 0.35),
+            color: (Theme.of(
+              context,
+            ).colorScheme.outlineVariant).withValues(alpha: 0.35),
           ),
         ),
       ),
@@ -630,7 +633,7 @@ class _ActivityFeedCard extends StatelessWidget {
                   )
                 : _buildInitial(context),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.md),
 
           // Content
           Expanded(
@@ -663,7 +666,7 @@ class _ActivityFeedCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 Row(
                   children: [
                     Icon(
@@ -671,11 +674,10 @@ class _ActivityFeedCard extends StatelessWidget {
                       size: 14,
                       color: _getActivityColor(context),
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: AppSpacing.xs),
                     Text(
                       _formatTime(activity.createdAt),
-                      style: TextStyle(
-                        fontSize: 12,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColorRoles.textMuted(isDark),
                       ),
                     ),
@@ -696,8 +698,7 @@ class _ActivityFeedCard extends StatelessWidget {
         activity.displayName.isNotEmpty
             ? activity.displayName[0].toUpperCase()
             : activity.username[0].toUpperCase(),
-        style: TextStyle(
-          fontSize: 18,
+        style: Theme.of(context).textTheme.sectionTitle?.copyWith(
           fontWeight: FontWeight.bold,
           color: AppColorRoles.primary(isDark),
         ),
@@ -728,7 +729,7 @@ class _ActivityFeedCard extends StatelessWidget {
       case ActivityFeedItemEntity.typeAchievement:
         return AppColors.gold;
       case ActivityFeedItemEntity.typeCourse:
-        return AppColors.greenSuccessBright;
+        return context.status.success;
       case ActivityFeedItemEntity.typeLesson:
         return AppColorRoles.primary(isDark);
       case ActivityFeedItemEntity.typeStreak:
@@ -781,12 +782,16 @@ class _UserProfileCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = AppColorRoles.primary(isDark);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: 12,
+      ),
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: (isDark ? AppColors.borderDarkSoft : AppColors.grey300)
-                .withValues(alpha: 0.35),
+            color: (Theme.of(
+              context,
+            ).colorScheme.outlineVariant).withValues(alpha: 0.35),
           ),
         ),
       ),
@@ -810,7 +815,7 @@ class _UserProfileCard extends StatelessWidget {
                   )
                 : _buildInitial(context),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.md),
 
           // Info
           Expanded(
@@ -819,19 +824,17 @@ class _UserProfileCard extends StatelessWidget {
               children: [
                 Text(
                   user.displayName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 Text(
                   '@${user.username}',
-                  style: TextStyle(
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColorRoles.textMuted(isDark),
-                    fontSize: 13,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 Row(
                   children: [
                     if (user.currentStreak > 0) ...[
@@ -843,17 +846,15 @@ class _UserProfileCard extends StatelessWidget {
                       const SizedBox(width: 2),
                       Text(
                         '${user.currentStreak}',
-                        style: TextStyle(
-                          fontSize: 12,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColorRoles.textMuted(isDark),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpacing.sm),
                     ],
                     Text(
                       '${user.xp} XP',
-                      style: TextStyle(
-                        fontSize: 12,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColorRoles.textMuted(isDark),
                       ),
                     ),
@@ -867,12 +868,15 @@ class _UserProfileCard extends StatelessWidget {
           GestureDetector(
             onTap: onFollowToggle,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: 8,
+              ),
               decoration: BoxDecoration(
                 color: user.isFollowing
-                    ? (isDark ? AppColors.surfaceDarkMuted : AppColors.grey200)
+                    ? (Theme.of(context).colorScheme.surfaceContainerHighest)
                     : primaryColor,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
               child: Text(
                 user.isFollowing
@@ -880,12 +884,11 @@ class _UserProfileCard extends StatelessWidget {
                           ? 'social.unfollow'.tr()
                           : 'social.following'.tr())
                     : 'social.follow'.tr(),
-                style: TextStyle(
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: user.isFollowing
                       ? AppColorRoles.textSecondary(isDark)
-                      : AppColors.surfaceLight,
+                      : Theme.of(context).colorScheme.surface,
                   fontWeight: FontWeight.w600,
-                  fontSize: 13,
                 ),
               ),
             ),
@@ -902,8 +905,7 @@ class _UserProfileCard extends StatelessWidget {
         user.displayName.isNotEmpty
             ? user.displayName[0].toUpperCase()
             : user.username[0].toUpperCase(),
-        style: TextStyle(
-          fontSize: 18,
+        style: Theme.of(context).textTheme.sectionTitle?.copyWith(
           fontWeight: FontWeight.bold,
           color: AppColorRoles.primary(isDark),
         ),
@@ -948,7 +950,7 @@ class _SearchUsersSheetState extends State<_SearchUsersSheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: isDark ? AppColors.borderDarkSoft : AppColors.grey300,
+              color: Theme.of(context).colorScheme.outlineVariant,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -960,12 +962,11 @@ class _SearchUsersSheetState extends State<_SearchUsersSheet> {
               children: [
                 Text(
                   'social.findFriends'.tr(),
-                  style: const TextStyle(
-                    fontSize: 18,
+                  style: Theme.of(context).textTheme.sectionTitle?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.lg),
                 // Search field
                 TextField(
                   controller: _controller,
@@ -973,11 +974,11 @@ class _SearchUsersSheetState extends State<_SearchUsersSheet> {
                     hintText: 'social.searchByUsername'.tr(),
                     prefixIcon: const Icon(Icons.search),
                     filled: true,
-                    fillColor: isDark
-                        ? AppColors.surfaceDarkMuted
-                        : AppColors.grey100,
+                    fillColor: Theme.of(
+                      context,
+                    ).colorScheme.surfaceContainerHighest,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       borderSide: BorderSide.none,
                     ),
                     suffixIcon: _controller.text.isNotEmpty

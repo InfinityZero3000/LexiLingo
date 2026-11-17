@@ -12,6 +12,7 @@ import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/admin_shell.dart';
 import '../../../shared/widgets/admin_skeleton.dart';
 import '../../auth/presentation/auth_provider.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class SystemHealthScreen extends StatefulWidget {
   const SystemHealthScreen({super.key});
@@ -85,10 +86,9 @@ class _SystemHealthScreenState extends State<SystemHealthScreen> {
         ),
         title: Text(
           'System Core Health',
-          style: GoogleFonts.spaceGrotesk(
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
         actions: [
           IconButton(
@@ -104,7 +104,7 @@ class _SystemHealthScreenState extends State<SystemHealthScreen> {
               child: Column(
                 children: [
                   AdminSkeleton(height: 180, borderRadius: 16),
-                  SizedBox(height: 12),
+                  SizedBox(height: AppSpacing.md),
                   AdminSkeleton(height: 180, borderRadius: 16),
                 ],
               ),
@@ -119,18 +119,17 @@ class _SystemHealthScreenState extends State<SystemHealthScreen> {
                 children: [
                   Text(
                     'Live infrastructure status • refreshes every 30 seconds',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 13,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.onSurfaceVariant,
                     ),
                   ),
                   if (_error != null) ...[
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.md),
                     _InlineWarning(
                       message: 'Some metrics could not be refreshed.',
                     ),
                   ],
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.lg),
                   GridView.count(
                     crossAxisCount: 2,
                     shrinkWrap: true,
@@ -166,7 +165,7 @@ class _SystemHealthScreenState extends State<SystemHealthScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.lg),
                   _section(
                     'Service Status',
                     Icons.dns_outlined,
@@ -178,7 +177,7 @@ class _SystemHealthScreenState extends State<SystemHealthScreen> {
                       );
                     }).toList(),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.lg),
                   _section(
                     'Database Overview',
                     Icons.storage_outlined,
@@ -214,7 +213,7 @@ class _SystemHealthScreenState extends State<SystemHealthScreen> {
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
       color: AppColors.surface,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       border: Border.all(color: AppColors.outlineVariant, width: 0.5),
     ),
     child: Column(
@@ -223,17 +222,16 @@ class _SystemHealthScreenState extends State<SystemHealthScreen> {
         Row(
           children: [
             Icon(icon, color: AppColors.primary, size: 20),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.sm),
             Text(
               title,
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
         if (children.isEmpty)
           Text(
             emptyText ?? 'No data',
@@ -265,22 +263,20 @@ class _SystemHealthScreenState extends State<SystemHealthScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.lock_outlined, color: AppColors.error, size: 48),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             Text(
               'Access Restricted',
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.heading?.copyWith(fontWeight: FontWeight.w700),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               'System monitoring is only accessible to Super Administrators.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 13,
-                color: AppColors.onSurfaceMuted,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
             ),
           ],
         ),
@@ -304,7 +300,7 @@ class _HealthStat extends StatelessWidget {
     padding: const EdgeInsets.all(14),
     decoration: BoxDecoration(
       color: AppColors.surface,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       border: Border.all(color: AppColors.outlineVariant, width: 0.5),
     ),
     child: Column(
@@ -315,16 +311,14 @@ class _HealthStat extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           label,
-          style: GoogleFonts.spaceGrotesk(
-            fontSize: 9,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
             fontWeight: FontWeight.w700,
             color: AppColors.onSurfaceMuted,
           ),
         ),
         Text(
           value,
-          style: GoogleFonts.spaceGrotesk(
-            fontSize: 20,
+          style: Theme.of(context).textTheme.heading?.copyWith(
             fontWeight: FontWeight.w700,
             color: AppColors.onSurface,
           ),
@@ -360,8 +354,7 @@ class _StatusRow extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             status.replaceAll('_', ' ').toUpperCase(),
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 11,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w700,
               color: healthy ? AppColors.success : AppColors.warning,
             ),
@@ -384,18 +377,16 @@ class _CountRow extends StatelessWidget {
         Expanded(
           child: Text(
             label.toUpperCase(),
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 12,
-              color: AppColors.onSurfaceMuted,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
           ),
         ),
         Text(
           value,
-          style: GoogleFonts.spaceGrotesk(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
       ],
     ),
@@ -410,19 +401,18 @@ class _InlineWarning extends StatelessWidget {
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
       color: AppColors.errorContainer,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppRadius.md),
     ),
     child: Row(
       children: [
         const Icon(Icons.warning_amber_rounded, color: AppColors.error),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpacing.sm),
         Expanded(
           child: Text(
             message,
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 12,
-              color: AppColors.error,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.error),
           ),
         ),
       ],
@@ -442,23 +432,22 @@ class _ErrorState extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(Icons.error_outline, color: AppColors.error, size: 40),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           Text(
             'Monitoring unavailable',
             style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.xs),
           Text(
             message,
             textAlign: TextAlign.center,
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 12,
-              color: AppColors.onSurfaceMuted,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           SizedBox(
             height: 44,
             child: OutlinedButton(

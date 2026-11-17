@@ -6,6 +6,7 @@ import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/admin_shell.dart';
 import '../../../shared/widgets/admin_skeleton.dart';
 import '../../../shared/widgets/staggered_entrance.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class VocabularyScreen extends StatefulWidget {
   const VocabularyScreen({super.key});
@@ -70,10 +71,16 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
         ),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+            ),
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+            ),
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Delete'),
           ),
@@ -145,7 +152,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                     padding: const EdgeInsets.all(16),
                     children: const [
                       SectionCardSkeleton(contentHeight: 110),
-                      SizedBox(height: 12),
+                      SizedBox(height: AppSpacing.md),
                       SectionCardSkeleton(contentHeight: 110),
                     ],
                   )
@@ -203,9 +210,9 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
     final translated = translation is Map ? translation['vi'] : translation;
     return Material(
       color: AppColors.surface,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         onTap: () => _showForm(word),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -221,13 +228,11 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                         Flexible(
                           child: Text(
                             '${word['word'] ?? ''}',
-                            style: GoogleFonts.spaceGrotesk(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w700,
-                            ),
+                            style: Theme.of(context).textTheme.sectionTitle
+                                ?.copyWith(fontWeight: FontWeight.w700),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppSpacing.sm),
                         _LevelChip('${word['difficulty_level'] ?? 'A1'}'),
                       ],
                     ),
@@ -248,16 +253,14 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                     if ((translated ?? '').toString().isNotEmpty)
                       Text(
                         '$translated',
-                        style: GoogleFonts.spaceGrotesk(
-                          fontSize: 12,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColors.onSurfaceMuted,
                         ),
                       ),
                     const SizedBox(height: 6),
                     Text(
                       '${word['part_of_speech'] ?? '—'}',
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 11,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: AppColors.primary,
                         fontWeight: FontWeight.w600,
                       ),
@@ -396,19 +399,18 @@ class _VocabularyFormState extends State<_VocabularyForm> {
                 children: [
                   Text(
                     widget.word == null ? 'New word' : 'Edit word',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.heading?.copyWith(fontWeight: FontWeight.w700),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.lg),
                   TextFormField(
                     controller: _word,
                     decoration: decoration('Word *'),
                     validator: (v) =>
                         v == null || v.trim().isEmpty ? 'Required' : null,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   TextFormField(
                     controller: _definition,
                     decoration: decoration('Definition *'),
@@ -416,17 +418,17 @@ class _VocabularyFormState extends State<_VocabularyForm> {
                     validator: (v) =>
                         v == null || v.trim().isEmpty ? 'Required' : null,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   TextFormField(
                     controller: _translation,
                     decoration: decoration('Vietnamese translation'),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   TextFormField(
                     controller: _pronunciation,
                     decoration: decoration('Pronunciation'),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   Row(
                     children: [
                       Expanded(
@@ -442,7 +444,7 @@ class _VocabularyFormState extends State<_VocabularyForm> {
                           onChanged: (v) => setState(() => _partOfSpeech = v!),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSpacing.md),
                       Expanded(
                         child: DropdownButtonFormField<String>(
                           initialValue: _level,
@@ -494,8 +496,7 @@ class _LevelChip extends StatelessWidget {
     ),
     child: Text(
       level,
-      style: GoogleFonts.spaceGrotesk(
-        fontSize: 10,
+      style: Theme.of(context).textTheme.labelSmall?.copyWith(
         color: AppColors.primary,
         fontWeight: FontWeight.w700,
       ),
@@ -516,14 +517,14 @@ class _MessageState extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 40, color: AppColors.onSurfaceMuted),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           Text(
             message,
             textAlign: TextAlign.center,
             style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted),
           ),
           if (action != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             OutlinedButton(onPressed: action, child: const Text('Try again')),
           ],
         ],

@@ -5,6 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../shared/widgets/admin_shell.dart';
 import '../../../shared/widgets/admin_skeleton.dart';
 import '../data/curriculum_repository.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class CurriculumScreen extends StatefulWidget {
   const CurriculumScreen({super.key});
@@ -120,6 +121,9 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
           ),
           actions: [
             TextButton(
+              style: TextButton.styleFrom(
+                minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+              ),
               onPressed: () => Navigator.pop(context, false),
               child: const Text('Cancel'),
             ),
@@ -166,6 +170,9 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
         content: Text('Delete “${course.title}”?'),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+            ),
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
@@ -214,17 +221,16 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
                       color: AppColors.primary,
                       borderRadius: BorderRadius.circular(7),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.language,
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onPrimary,
                       size: 16,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.sm),
                   Text(
                     'LingoAdmin',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 16,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: AppColors.primary,
                     ),
@@ -248,28 +254,25 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
                   // breadcrumb
                   Text(
                     'CURRICULUM MANAGEMENT',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 10,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.08,
                       color: AppColors.primary,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     'Curriculum Overview',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 28,
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: AppColors.onSurface,
                       letterSpacing: -0.02,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     'Manage global language tracks, optimize learning paths across all courses.',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 13,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.onSurfaceVariant,
                     ),
                   ),
@@ -283,7 +286,7 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
                           icon: Icons.menu_book_outlined,
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSpacing.md),
                       Expanded(
                         child: _SmallStat(
                           label: 'PUBLISHED',
@@ -300,7 +303,7 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: AppColors.errorContainer,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
                       child: Row(
                         children: [
@@ -309,48 +312,45 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
                             color: AppColors.error,
                             size: 18,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppSpacing.sm),
                           Expanded(
                             child: Text(
                               _error!,
-                              style: GoogleFonts.spaceGrotesk(
-                                fontSize: 13,
-                                color: AppColors.error,
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: AppColors.error),
                             ),
                           ),
                           GestureDetector(
                             onTap: () => _load(),
                             child: Text(
                               'Retry',
-                              style: GoogleFonts.spaceGrotesk(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.error,
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.error,
+                                  ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.md),
                   ],
                   // Create new course button
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton.icon(
+                    child: FilledButton.icon(
                       onPressed: _edit,
                       icon: const Icon(Icons.add, size: 18),
                       label: Text(
                         '+ Create New Course',
-                        style: GoogleFonts.spaceGrotesk(
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w700,
-                          fontSize: 14,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.lg),
                   // Search
                   TextField(
                     controller: _searchCtrl,
@@ -373,7 +373,7 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
                     ),
                     onSubmitted: _load,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.lg),
                   Wrap(
                     spacing: 8,
                     children: [
@@ -415,21 +415,20 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.sm),
                   Text(
                     'Top Performing Courses',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 18,
+                    style: Theme.of(context).textTheme.sectionTitle?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: AppColors.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   if (_loading)
                     const Column(
                       children: [
                         AdminSkeleton(height: 150),
-                        SizedBox(height: 12),
+                        SizedBox(height: AppSpacing.md),
                         AdminSkeleton(height: 150),
                       ],
                     )
@@ -447,7 +446,8 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: _courses.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      separatorBuilder: (_, __) =>
+                          const SizedBox(height: AppSpacing.md),
                       itemBuilder: (_, i) => _CourseCard(
                         course: _courses[i],
                         onTap: () => context.push(
@@ -491,18 +491,17 @@ class _SmallStat extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.outlineVariant, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, color: AppColors.primary, size: 20),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             value,
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 24,
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.w700,
               color: AppColors.onSurface,
               letterSpacing: -0.02,
@@ -510,8 +509,7 @@ class _SmallStat extends StatelessWidget {
           ),
           Text(
             label,
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 9,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w700,
               letterSpacing: 0.08,
               color: AppColors.onSurfaceMuted,
@@ -545,7 +543,7 @@ class _CourseCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(color: AppColors.outlineVariant, width: 0.5),
         ),
         child: Column(
@@ -624,7 +622,7 @@ class _CourseCard extends StatelessWidget {
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
+                          horizontal: AppSpacing.sm,
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
@@ -635,40 +633,38 @@ class _CourseCard extends StatelessWidget {
                         ),
                         child: Text(
                           course.isPublished ? 'LIVE' : 'DRAFT',
-                          style: GoogleFonts.spaceGrotesk(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.05,
-                            color: course.isPublished
-                                ? AppColors.success
-                                : AppColors.warning,
-                          ),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.05,
+                                color: course.isPublished
+                                    ? AppColors.success
+                                    : AppColors.warning,
+                              ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.sm),
                   Text(
                     course.title,
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 16,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: AppColors.onSurface,
                     ),
                   ),
                   if (course.description != null) ...[
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppSpacing.xs),
                     Text(
                       course.description!,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 12,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.onSurfaceMuted,
                       ),
                     ),
                   ],
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   Row(
                     children: [
                       _InfoChip(
@@ -686,13 +682,13 @@ class _CourseCard extends StatelessWidget {
                           children: [
                             Text(
                               '${course.lessonCount} LESSONS · ${course.totalXp} XP',
-                              style: GoogleFonts.spaceGrotesk(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.onSurfaceMuted,
-                              ),
+                              style: Theme.of(context).textTheme.labelSmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.onSurfaceMuted,
+                                  ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: AppSpacing.xs),
                             ClipRRect(
                               borderRadius: BorderRadius.circular(4),
                               child: LinearProgressIndicator(
@@ -707,7 +703,7 @@ class _CourseCard extends StatelessWidget {
                           ],
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSpacing.md),
                       Icon(
                         Icons.chevron_right,
                         color: AppColors.onSurfaceMuted,
@@ -731,15 +727,17 @@ class _LevelBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 3,
+      ),
       decoration: BoxDecoration(
         color: AppColors.primaryContainer,
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         level,
-        style: GoogleFonts.spaceGrotesk(
-          fontSize: 10,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
           fontWeight: FontWeight.w700,
           color: AppColors.primary,
         ),
@@ -759,13 +757,12 @@ class _InfoChip extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 13, color: AppColors.onSurfaceMuted),
-        const SizedBox(width: 4),
+        const SizedBox(width: AppSpacing.xs),
         Text(
           label,
-          style: GoogleFonts.spaceGrotesk(
-            fontSize: 11,
-            color: AppColors.onSurfaceMuted,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.labelSmall?.copyWith(color: AppColors.onSurfaceMuted),
         ),
       ],
     );

@@ -6,6 +6,7 @@ import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/admin_shell.dart';
 import '../../../shared/widgets/admin_skeleton.dart';
 import '../../../shared/widgets/staggered_entrance.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class GrammarTestsScreen extends StatefulWidget {
   const GrammarTestsScreen({super.key});
@@ -78,10 +79,16 @@ class _GrammarTestsScreenState extends State<GrammarTestsScreen> {
         content: Text('${rule['title']}', style: GoogleFonts.spaceGrotesk()),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+            ),
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+            ),
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Delete'),
           ),
@@ -141,7 +148,7 @@ class _GrammarTestsScreenState extends State<GrammarTestsScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.sm),
                 SizedBox(
                   width: 92,
                   child: DropdownButtonFormField<String>(
@@ -168,7 +175,7 @@ class _GrammarTestsScreenState extends State<GrammarTestsScreen> {
                     padding: const EdgeInsets.all(16),
                     children: const [
                       SectionCardSkeleton(contentHeight: 100),
-                      SizedBox(height: 12),
+                      SizedBox(height: AppSpacing.md),
                       SectionCardSkeleton(contentHeight: 100),
                     ],
                   )
@@ -218,9 +225,9 @@ class _GrammarTestsScreenState extends State<GrammarTestsScreen> {
 
   Widget _ruleCard(Map<String, dynamic> rule) => Material(
     color: AppColors.surface,
-    borderRadius: BorderRadius.circular(14),
+    borderRadius: BorderRadius.circular(AppRadius.md),
     child: InkWell(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       onTap: () => _showForm(rule),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -233,7 +240,7 @@ class _GrammarTestsScreenState extends State<GrammarTestsScreen> {
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: AppColors.primaryContainer,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Text(
                 '${rule['level'] ?? rule['cefr_level'] ?? '?'}',
@@ -243,25 +250,23 @@ class _GrammarTestsScreenState extends State<GrammarTestsScreen> {
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     '${rule['title'] ?? 'Untitled'}',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 15,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   if ((rule['topic'] ?? '').toString().isNotEmpty)
                     Text(
                       '${rule['topic']}',
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 12,
-                        color: AppColors.primary,
-                      ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: AppColors.primary),
                     ),
                   if ((rule['summary'] ?? '').toString().isNotEmpty)
                     Padding(
@@ -270,8 +275,7 @@ class _GrammarTestsScreenState extends State<GrammarTestsScreen> {
                         '${rule['summary']}',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.spaceGrotesk(
-                          fontSize: 12,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColors.onSurfaceMuted,
                         ),
                       ),
@@ -397,19 +401,18 @@ class _GrammarFormState extends State<_GrammarForm> {
                     widget.rule == null
                         ? 'New grammar rule'
                         : 'Edit grammar rule',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.heading?.copyWith(fontWeight: FontWeight.w700),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.lg),
                   TextFormField(
                     controller: _title,
                     decoration: decoration('Title *'),
                     validator: (v) =>
                         v == null || v.trim().isEmpty ? 'Required' : null,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   DropdownButtonFormField<String>(
                     initialValue: _level,
                     decoration: decoration('Level'),
@@ -418,17 +421,17 @@ class _GrammarFormState extends State<_GrammarForm> {
                         .toList(),
                     onChanged: (v) => setState(() => _level = v!),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   TextFormField(
                     controller: _topic,
                     decoration: decoration('Topic'),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   TextFormField(
                     controller: _summary,
                     decoration: decoration('Summary'),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   TextFormField(
                     controller: _content,
                     decoration: decoration('Content *'),
@@ -437,7 +440,7 @@ class _GrammarFormState extends State<_GrammarForm> {
                     validator: (v) =>
                         v == null || v.trim().isEmpty ? 'Required' : null,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   TextFormField(
                     controller: _tags,
                     decoration: decoration('Tags (comma separated)'),
@@ -482,14 +485,14 @@ class _GrammarMessage extends StatelessWidget {
             size: 42,
             color: AppColors.onSurfaceMuted,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           Text(
             message,
             textAlign: TextAlign.center,
             style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted),
           ),
           if (action != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             OutlinedButton(onPressed: action, child: const Text('Try again')),
           ],
         ],

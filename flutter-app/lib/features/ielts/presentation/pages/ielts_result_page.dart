@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/di/service_locator.dart';
 import '../../domain/entities/ielts_entities.dart';
 import '../providers/ielts_provider.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 String _titleCase(String key) => key
     .split('_')
@@ -87,7 +88,7 @@ class _ResultView extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 children: [
                   _OverallCard(result: result),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.lg),
                   if (result.isAwaitingGrading)
                     Card(
                       color: theme.colorScheme.secondaryContainer,
@@ -100,7 +101,7 @@ class _ResultView extends StatelessWidget {
                               height: 16,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: AppSpacing.md),
                             Expanded(
                               child: Text(
                                 'ielts.awaitingGrading'.tr(),
@@ -113,7 +114,7 @@ class _ResultView extends StatelessWidget {
                         ),
                       ),
                     ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.sm),
                   ...result.gradings.map((g) => _GradingCard(grading: g)),
                   ...result.review.entries.map(
                     (entry) => _ReviewSection(
@@ -148,7 +149,7 @@ class _OverallCard extends StatelessWidget {
               style: theme.textTheme.titleMedium,
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             Text(
               result.overallBand?.toStringAsFixed(1) ?? '—',
               style: theme.textTheme.displayMedium?.copyWith(
@@ -280,7 +281,7 @@ class _GradingCard extends StatelessWidget {
                       minHeight: 6,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.sm),
                   SizedBox(
                     width: 28,
                     child: Text(
@@ -294,13 +295,13 @@ class _GradingCard extends StatelessWidget {
             );
           }),
           if (grading.reasoning != null && grading.reasoning!.isNotEmpty) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             Text(grading.reasoning!, style: theme.textTheme.bodySmall),
           ],
           if (grading.improvements.isNotEmpty) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             Text('ielts.raiseBand'.tr(), style: theme.textTheme.labelLarge),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             ...grading.improvements.map(
               (item) => Padding(
                 padding: const EdgeInsets.only(bottom: 4),
@@ -309,9 +310,9 @@ class _GradingCard extends StatelessWidget {
             ),
           ],
           if (grading.corrections.isNotEmpty) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             Text('ielts.corrections'.tr(), style: theme.textTheme.labelLarge),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             ...grading.corrections.map(
               (c) => Padding(
                 padding: const EdgeInsets.only(bottom: 6),
@@ -382,7 +383,7 @@ class _ReviewSection extends StatelessWidget {
                       ? theme.colorScheme.primary
                       : theme.colorScheme.error,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

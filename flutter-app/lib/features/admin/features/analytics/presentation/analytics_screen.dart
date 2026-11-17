@@ -7,6 +7,7 @@ import '../../../shared/widgets/admin_shell.dart';
 import '../../../shared/widgets/admin_skeleton.dart';
 import '../../../shared/widgets/stat_card.dart';
 import '../../../shared/widgets/staggered_entrance.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class AnalyticsScreen extends StatefulWidget {
   const AnalyticsScreen({super.key});
@@ -102,20 +103,16 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                       children: [
                         Text(
                           'Dashboard overview',
-                          style: GoogleFonts.spaceGrotesk(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                          ),
+                          style: Theme.of(context).textTheme.sectionTitle
+                              ?.copyWith(fontWeight: FontWeight.w700),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: AppSpacing.xs),
                         Text(
                           'Live values from the configured mobile analytics endpoint.',
-                          style: GoogleFonts.spaceGrotesk(
-                            fontSize: 12,
-                            color: AppColors.onSurfaceMuted,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: AppColors.onSurfaceMuted),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppSpacing.lg),
                         GridView.count(
                           crossAxisCount: 2,
                           shrinkWrap: true,
@@ -162,12 +159,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppSpacing.lg),
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
                             color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
                             border: Border.all(
                               color: AppColors.outlineVariant,
                               width: 0.5,
@@ -175,10 +172,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                           ),
                           child: Text(
                             'Course, lesson, and vocabulary effectiveness analytics remain web-only because those endpoints are not configured in the mobile admin client.',
-                            style: GoogleFonts.spaceGrotesk(
-                              fontSize: 12,
-                              color: AppColors.onSurfaceMuted,
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: AppColors.onSurfaceMuted),
                           ),
                         ),
                       ],
@@ -204,14 +199,14 @@ class _AnalyticsMessage extends StatelessWidget {
             size: 44,
             color: AppColors.onSurfaceMuted,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           Text(
             message,
             textAlign: TextAlign.center,
             style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted),
           ),
           if (action != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             OutlinedButton(onPressed: action, child: const Text('Try again')),
           ],
         ],

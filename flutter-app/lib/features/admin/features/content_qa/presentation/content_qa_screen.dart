@@ -9,6 +9,7 @@ import '../../../shared/widgets/admin_shell.dart';
 import '../../../shared/widgets/admin_skeleton.dart';
 import '../../../shared/widgets/staggered_entrance.dart';
 import '../data/content_qa_repository.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class ContentQaScreen extends StatefulWidget {
   const ContentQaScreen({super.key});
@@ -107,17 +108,15 @@ class _ContentQaScreenState extends State<ContentQaScreen> {
                 delegate: SliverChildListDelegate([
                   Text(
                     'Review generated content',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 27,
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: AppColors.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     '${_queue?.total ?? 0} tracked jobs',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 13,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.onSurfaceMuted,
                     ),
                   ),
@@ -143,7 +142,7 @@ class _ContentQaScreenState extends State<ContentQaScreen> {
                             selected: _filter,
                             onSelected: _selectFilter,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppSpacing.sm),
                           _QueueFilter(
                             label: 'Needs repair',
                             count: _queue!.failed.length,
@@ -151,7 +150,7 @@ class _ContentQaScreenState extends State<ContentQaScreen> {
                             selected: _filter,
                             onSelected: _selectFilter,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppSpacing.sm),
                           _QueueFilter(
                             label: 'Published',
                             count: _queue!.applied.length,
@@ -162,7 +161,7 @@ class _ContentQaScreenState extends State<ContentQaScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.lg),
                     if (_jobs.isEmpty)
                       const _MessageCard(
                         icon: Icons.fact_check_outlined,
@@ -234,21 +233,21 @@ class _JobCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Material(
     color: AppColors.surface,
-    borderRadius: BorderRadius.circular(16),
+    borderRadius: BorderRadius.circular(AppRadius.lg),
     child: InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Container(
         constraints: const BoxConstraints(minHeight: 88),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(color: AppColors.outlineVariant, width: 0.5),
         ),
         child: Row(
           children: [
             _StatusIcon(status: job.status),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -265,15 +264,14 @@ class _JobCard extends StatelessWidget {
                   const SizedBox(height: 5),
                   Text(
                     '${job.id.length > 8 ? job.id.substring(0, 8) : job.id} · ${job.updatedAt == null ? 'Unknown date' : DateFormat.yMMMd().add_jm().format(job.updatedAt!.toLocal())}',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 12,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.onSurfaceMuted,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.sm),
             const Icon(
               Icons.chevron_right_rounded,
               color: AppColors.onSurfaceMuted,
@@ -313,7 +311,7 @@ class _StatusIcon extends StatelessWidget {
       height: 44,
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Icon(icon, color: color),
     );
@@ -378,6 +376,9 @@ class _JobDetailSheetState extends State<_JobDetailSheet> {
           ),
           actions: [
             TextButton(
+              style: TextButton.styleFrom(
+                minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+              ),
               onPressed: () => Navigator.pop(context, false),
               child: const Text('Cancel'),
             ),
@@ -449,8 +450,7 @@ class _JobDetailSheetState extends State<_JobDetailSheet> {
               Expanded(
                 child: Text(
                   job.title,
-                  style: GoogleFonts.spaceGrotesk(
-                    fontSize: 22,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: AppColors.onSurface,
                   ),
@@ -465,10 +465,9 @@ class _JobDetailSheetState extends State<_JobDetailSheet> {
           ),
           Text(
             job.id,
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 12,
-              color: AppColors.onSurfaceMuted,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
           ),
           const SizedBox(height: 18),
           if (_loading)
@@ -482,18 +481,17 @@ class _JobDetailSheetState extends State<_JobDetailSheet> {
             )
           else ...[
             _Summary(preview: _preview!),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             _Validation(job: job, preview: _preview!),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             Text(
               'Lessons & exercises',
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 18,
+              style: Theme.of(context).textTheme.sectionTitle?.copyWith(
                 fontWeight: FontWeight.w700,
                 color: AppColors.onSurface,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             if (_preview!.lessons.isEmpty)
               const _MessageCard(
                 icon: Icons.menu_book_outlined,
@@ -508,7 +506,7 @@ class _JobDetailSheetState extends State<_JobDetailSheet> {
                 ),
               ),
             if (_error != null) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               _MessageCard(icon: Icons.error_outline_rounded, message: _error!),
             ],
             const SizedBox(height: 20),
@@ -548,7 +546,7 @@ class _Metric extends StatelessWidget {
     padding: const EdgeInsets.all(14),
     decoration: BoxDecoration(
       color: AppColors.surface,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       border: Border.all(color: AppColors.outlineVariant, width: 0.5),
     ),
     child: Column(
@@ -556,18 +554,16 @@ class _Metric extends StatelessWidget {
       children: [
         Text(
           '$value',
-          style: GoogleFonts.spaceGrotesk(
-            fontSize: 22,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w700,
             color: AppColors.onSurface,
           ),
         ),
         Text(
           label,
-          style: GoogleFonts.spaceGrotesk(
-            fontSize: 12,
-            color: AppColors.onSurfaceMuted,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
         ),
       ],
     ),
@@ -587,7 +583,7 @@ class _Validation extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.outlineVariant, width: 0.5),
       ),
       child: Column(
@@ -600,7 +596,7 @@ class _Validation extends StatelessWidget {
               color: AppColors.onSurface,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           if (errors.isEmpty && warnings.isEmpty)
             Text(
               '✓ No blocking issues',
@@ -631,8 +627,7 @@ class _Issue extends StatelessWidget {
     padding: const EdgeInsets.only(top: 6),
     child: Text(
       '• $message',
-      style: GoogleFonts.spaceGrotesk(
-        fontSize: 13,
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(
         color: error ? AppColors.error : AppColors.warning,
       ),
     ),
@@ -655,7 +650,7 @@ class _LessonCard extends StatelessWidget {
     elevation: 0,
     margin: const EdgeInsets.only(bottom: 10),
     shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       side: const BorderSide(color: AppColors.outlineVariant, width: 0.5),
     ),
     child: ExpansionTile(
@@ -672,10 +667,9 @@ class _LessonCard extends StatelessWidget {
               lesson.outcome!,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 12,
-                color: AppColors.onSurfaceMuted,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
             ),
       children: lesson.exercises
           .map(
@@ -683,18 +677,16 @@ class _LessonCard extends StatelessWidget {
               contentPadding: const EdgeInsets.fromLTRB(16, 4, 8, 4),
               title: Text(
                 exercise.question,
-                style: GoogleFonts.spaceGrotesk(
-                  fontSize: 13,
-                  color: AppColors.onSurface,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.onSurface),
               ),
               subtitle: Text(
                 [
                   exercise.uiType,
                   if (exercise.phase != null) exercise.phase!,
                 ].join(' · '),
-                style: GoogleFonts.spaceGrotesk(
-                  fontSize: 11,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: AppColors.onSurfaceMuted,
                 ),
               ),
@@ -745,7 +737,7 @@ class _Actions extends StatelessWidget {
         ),
       if (busy)
         const SizedBox(
-          width: 24,
+          width: AppSpacing.xl,
           height: 24,
           child: CircularProgressIndicator(
             strokeWidth: 2,
@@ -848,20 +840,18 @@ class _EditExerciseSheetState extends State<_EditExerciseSheet> {
         children: [
           Text(
             'Edit exercise',
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 20,
+            style: Theme.of(context).textTheme.heading?.copyWith(
               fontWeight: FontWeight.w700,
               color: AppColors.onSurface,
             ),
           ),
           Text(
             widget.lesson.title,
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 12,
-              color: AppColors.onSurfaceMuted,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           _Field(controller: _question, label: 'Question', lines: 2),
           _Field(
             controller: _options,
@@ -880,7 +870,7 @@ class _EditExerciseSheetState extends State<_EditExerciseSheet> {
               _error!,
               style: GoogleFonts.spaceGrotesk(color: AppColors.error),
             ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           FilledButton(
             onPressed: _saving ? null : _save,
             child: Text(_saving ? 'Saving…' : 'Save'),
@@ -929,13 +919,13 @@ class _MessageCard extends StatelessWidget {
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
       color: AppColors.surface,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       border: Border.all(color: AppColors.outlineVariant, width: 0.5),
     ),
     child: Column(
       children: [
         Icon(icon, size: 32, color: AppColors.onSurfaceMuted),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         Text(
           message,
           textAlign: TextAlign.center,
@@ -955,7 +945,7 @@ class _QueueSkeleton extends StatelessWidget {
   Widget build(BuildContext context) => const Column(
     children: [
       AdminSkeleton(height: 44, borderRadius: 22),
-      SizedBox(height: 16),
+      SizedBox(height: AppSpacing.lg),
       ListRowSkeleton(),
       ListRowSkeleton(),
       ListRowSkeleton(),

@@ -5,6 +5,7 @@ import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../shared/widgets/admin_skeleton.dart';
 import '../data/curriculum_repository.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class UnitsLessonsScreen extends StatefulWidget {
   final String unitId;
@@ -144,7 +145,7 @@ class _UnitsLessonsScreenState extends State<UnitsLessonsScreen> {
                         decoration: const InputDecoration(labelText: 'XP'),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: TextField(
                         controller: threshold,
@@ -164,6 +165,9 @@ class _UnitsLessonsScreenState extends State<UnitsLessonsScreen> {
           ),
           actions: [
             TextButton(
+              style: TextButton.styleFrom(
+                minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+              ),
               onPressed: () => Navigator.pop(context, false),
               child: const Text('Cancel'),
             ),
@@ -208,6 +212,9 @@ class _UnitsLessonsScreenState extends State<UnitsLessonsScreen> {
         content: Text('Delete “${lesson.title}”?'),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+            ),
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
@@ -235,10 +242,9 @@ class _UnitsLessonsScreenState extends State<UnitsLessonsScreen> {
       appBar: AppBar(
         title: Text(
           'Lessons in ${widget.unitTitle}',
-          style: GoogleFonts.spaceGrotesk(
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
         leading: AppBackButton(
           icon: Icons.arrow_back,
@@ -259,7 +265,7 @@ class _UnitsLessonsScreenState extends State<UnitsLessonsScreen> {
               child: Column(
                 children: [
                   AdminSkeleton(height: 100),
-                  SizedBox(height: 12),
+                  SizedBox(height: AppSpacing.md),
                   AdminSkeleton(height: 100),
                 ],
               ),
@@ -272,7 +278,7 @@ class _UnitsLessonsScreenState extends State<UnitsLessonsScreen> {
                     child: Row(
                       children: [
                         const Icon(Icons.error_outline, color: AppColors.error),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppSpacing.sm),
                         Expanded(
                           child: Text(
                             _error!,
@@ -282,6 +288,12 @@ class _UnitsLessonsScreenState extends State<UnitsLessonsScreen> {
                           ),
                         ),
                         TextButton(
+                          style: TextButton.styleFrom(
+                            minimumSize: const Size(
+                              kMinTapTarget,
+                              kMinTapTarget,
+                            ),
+                          ),
                           onPressed: _load,
                           child: const Text('Retry'),
                         ),
@@ -294,7 +306,8 @@ class _UnitsLessonsScreenState extends State<UnitsLessonsScreen> {
                     child: ListView.separated(
                       padding: const EdgeInsets.all(20),
                       itemCount: _lessons.length + 1,
-                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      separatorBuilder: (_, __) =>
+                          const SizedBox(height: AppSpacing.md),
                       itemBuilder: (_, i) {
                         if (i == _lessons.length) {
                           return GestureDetector(
@@ -307,7 +320,9 @@ class _UnitsLessonsScreenState extends State<UnitsLessonsScreen> {
                                   width: 1.5,
                                   style: BorderStyle.solid,
                                 ),
-                                borderRadius: BorderRadius.circular(14),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.md,
+                                ),
                               ),
                               child: Center(
                                 child: Row(
@@ -321,12 +336,14 @@ class _UnitsLessonsScreenState extends State<UnitsLessonsScreen> {
                                     const SizedBox(width: 6),
                                     Text(
                                       'ADD NEW LESSON',
-                                      style: GoogleFonts.spaceGrotesk(
-                                        fontSize: 11,
-                                        fontWeight: FontWeight.w700,
-                                        letterSpacing: 0.05,
-                                        color: AppColors.onSurfaceMuted,
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w700,
+                                            letterSpacing: 0.05,
+                                            color: AppColors.onSurfaceMuted,
+                                          ),
                                     ),
                                   ],
                                 ),
@@ -387,7 +404,7 @@ class _LessonCard extends StatelessWidget {
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
             color: isExpanded ? AppColors.primary : AppColors.outlineVariant,
             width: isExpanded ? 1.5 : 0.5,
@@ -407,49 +424,48 @@ class _LessonCard extends StatelessWidget {
                       color: isExpanded
                           ? AppColors.primary
                           : AppColors.primaryContainer,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                     child: Center(
                       child: Text(
                         '$index.${lesson.orderIndex}',
-                        style: GoogleFonts.spaceGrotesk(
-                          fontSize: 12,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           fontWeight: FontWeight.w700,
-                          color: isExpanded ? Colors.white : AppColors.primary,
+                          color: isExpanded
+                              ? Theme.of(context).colorScheme.onPrimary
+                              : AppColors.primary,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           lesson.title,
-                          style: GoogleFonts.spaceGrotesk(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.onSurface,
-                          ),
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.onSurface,
+                              ),
                         ),
                         if (lesson.description != null)
                           Text(
                             lesson.description!,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.spaceGrotesk(
-                              fontSize: 12,
-                              color: AppColors.onSurfaceMuted,
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: AppColors.onSurfaceMuted),
                           ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.sm),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
+                      horizontal: AppSpacing.sm,
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
@@ -458,15 +474,14 @@ class _LessonCard extends StatelessWidget {
                     ),
                     child: Text(
                       lesson.lessonType.toUpperCase(),
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 9,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: AppColors.primary,
                         letterSpacing: 0.05,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.sm),
                   PopupMenuButton<String>(
                     onSelected: (v) {
                       if (v == 'edit') {
@@ -504,14 +519,14 @@ class _LessonCard extends StatelessWidget {
                             children: [
                               Text(
                                 'CONTENT MODULES',
-                                style: GoogleFonts.spaceGrotesk(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.08,
-                                  color: AppColors.onSurfaceMuted,
-                                ),
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.08,
+                                      color: AppColors.onSurfaceMuted,
+                                    ),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: AppSpacing.sm),
                               _ModuleRow(
                                 icon: Icons.fitness_center,
                                 label: '${lesson.totalExercises} exercises',
@@ -524,31 +539,31 @@ class _LessonCard extends StatelessWidget {
                             ],
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: AppSpacing.lg),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 'QUIZ PROGRESS',
-                                style: GoogleFonts.spaceGrotesk(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.08,
-                                  color: AppColors.onSurfaceMuted,
-                                ),
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.08,
+                                      color: AppColors.onSurfaceMuted,
+                                    ),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: AppSpacing.sm),
                               Row(
                                 children: [
                                   Text(
                                     '${lesson.xpReward} XP',
-                                    style: GoogleFonts.spaceGrotesk(
-                                      fontSize: 12,
-                                      color: AppColors.onSurfaceVariant,
-                                    ),
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          color: AppColors.onSurfaceVariant,
+                                        ),
                                   ),
-                                  const SizedBox(width: 4),
+                                  const SizedBox(width: AppSpacing.xs),
                                   Container(
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 6,
@@ -560,11 +575,13 @@ class _LessonCard extends StatelessWidget {
                                     ),
                                     child: Text(
                                       '${lesson.passThreshold}% PASS',
-                                      style: GoogleFonts.spaceGrotesk(
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.warning,
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.warning,
+                                          ),
                                     ),
                                   ),
                                 ],
@@ -613,10 +630,9 @@ class _ModuleRow extends StatelessWidget {
         Expanded(
           child: Text(
             label,
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 12,
-              color: AppColors.onSurface,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.onSurface),
           ),
         ),
       ],

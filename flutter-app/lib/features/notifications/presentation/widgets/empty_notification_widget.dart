@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Beautiful empty notification state widget with simple bell icon
 /// Clean, minimal design without complex painters
@@ -61,7 +62,7 @@ class _EmptyNotificationWidgetState extends State<EmptyNotificationWidget>
             _buildIllustration(context, isDark, accent),
             const SizedBox(height: 40),
             _buildTitle(context, isDark),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             _buildDescription(context, isDark),
             if (widget.buttonText != null && widget.onRefresh != null) ...[
               const SizedBox(height: 36),
@@ -101,14 +102,15 @@ class _EmptyNotificationWidgetState extends State<EmptyNotificationWidget>
               shape: BoxShape.circle,
               color: isDark
                   ? accent.withValues(alpha: 0.15)
-                  : AppColors.primary.withValues(alpha: 0.1),
+                  : Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.1),
             ),
             child: Icon(
               Icons.notifications_outlined,
               size: 52,
-              color: (isDark ? accent : AppColors.primary).withValues(
-                alpha: 0.6,
-              ),
+              color: (isDark ? accent : Theme.of(context).colorScheme.primary)
+                  .withValues(alpha: 0.6),
             ),
           ),
         ),
@@ -149,23 +151,25 @@ class _EmptyNotificationWidgetState extends State<EmptyNotificationWidget>
         borderRadius: BorderRadius.circular(30),
         gradient: LinearGradient(
           colors: [
-            isDark ? accent : AppColors.primary,
-            (isDark ? accent : AppColors.primary).withValues(alpha: 0.85),
+            isDark ? accent : Theme.of(context).colorScheme.primary,
+            (isDark ? accent : Theme.of(context).colorScheme.primary)
+                .withValues(alpha: 0.85),
           ],
         ),
         boxShadow: [
           BoxShadow(
-            color: (isDark ? accent : AppColors.primary).withValues(alpha: 0.3),
+            color: (isDark ? accent : Theme.of(context).colorScheme.primary)
+                .withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: ElevatedButton(
+      child: FilledButton(
         onPressed: widget.onRefresh,
-        style: ElevatedButton.styleFrom(
+        style: FilledButton.styleFrom(
           backgroundColor: Colors.transparent,
-          foregroundColor: Colors.white,
+          foregroundColor: Theme.of(context).colorScheme.onPrimary,
           shadowColor: Colors.transparent,
           padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
           shape: RoundedRectangleBorder(
@@ -176,11 +180,10 @@ class _EmptyNotificationWidgetState extends State<EmptyNotificationWidget>
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.refresh_rounded, size: 20),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.sm),
             Text(
               widget.buttonText!,
-              style: const TextStyle(
-                fontSize: 16,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 fontWeight: FontWeight.w600,
                 letterSpacing: 0.5,
               ),

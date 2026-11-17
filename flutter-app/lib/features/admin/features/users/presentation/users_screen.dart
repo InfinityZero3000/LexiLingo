@@ -7,6 +7,7 @@ import '../../../shared/widgets/admin_skeleton.dart';
 import '../../../shared/widgets/stat_card.dart';
 import '../../../shared/widgets/staggered_entrance.dart';
 import '../data/users_repository.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class UsersScreen extends StatefulWidget {
   const UsersScreen({super.key});
@@ -92,6 +93,9 @@ class _UsersScreenState extends State<UsersScreen> {
         ),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+            ),
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Hủy'),
           ),
@@ -147,12 +151,11 @@ class _UsersScreenState extends State<UsersScreen> {
             children: [
               Text(
                 'Bộ lọc người dùng',
-                style: GoogleFonts.spaceGrotesk(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.heading?.copyWith(fontWeight: FontWeight.w700),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               Text(
                 'Vai trò',
                 style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w600),
@@ -173,7 +176,7 @@ class _UsersScreenState extends State<UsersScreen> {
                     )
                     .toList(),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               Text(
                 'Trạng thái',
                 style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w600),
@@ -200,7 +203,7 @@ class _UsersScreenState extends State<UsersScreen> {
               SizedBox(
                 width: double.infinity,
                 height: 48,
-                child: ElevatedButton(
+                child: FilledButton(
                   onPressed: () {
                     Navigator.pop(context);
                     _load();
@@ -275,7 +278,7 @@ class _UsersScreenState extends State<UsersScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               TextField(
                 controller: _search,
                 textInputAction: TextInputAction.search,
@@ -309,7 +312,7 @@ class _UsersScreenState extends State<UsersScreen> {
                           child: const Text('Kích hoạt'),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpacing.sm),
                       SizedBox(
                         height: 44,
                         child: OutlinedButton(
@@ -346,7 +349,7 @@ class _UsersScreenState extends State<UsersScreen> {
                         size: 48,
                         color: AppColors.onSurfaceMuted,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppSpacing.md),
                       Text(
                         'Không tìm thấy người dùng',
                         style: GoogleFonts.spaceGrotesk(
@@ -357,7 +360,7 @@ class _UsersScreenState extends State<UsersScreen> {
                   ),
                 )
               else ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.md),
                 ..._users.asMap().entries.map(
                   (entry) => StaggeredEntrance(
                     index: entry.key,
@@ -414,10 +417,10 @@ class _UserCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Material(
     color: AppColors.surface,
-    borderRadius: BorderRadius.circular(16),
+    borderRadius: BorderRadius.circular(AppRadius.lg),
     child: InkWell(
       onTap: onOpen,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Row(
@@ -444,7 +447,7 @@ class _UserCard extends StatelessWidget {
                     .toUpperCase(),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -463,23 +466,21 @@ class _UserCard extends StatelessWidget {
                     user.email,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 12,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.onSurfaceMuted,
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     '${user.roleLabel} • ${user.totalXp} XP • ${user.streakDays} ngày streak',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 11,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: AppColors.onSurfaceVariant,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.sm),
             Icon(
               user.isActive ? Icons.check_circle : Icons.pause_circle,
               color: user.isActive

@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../shared/widgets/admin_shell.dart';
 import '../../../shared/widgets/admin_skeleton.dart';
 import '../data/ranking_agent_repository.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class RankingAgentScreen extends StatefulWidget {
   const RankingAgentScreen({super.key});
@@ -81,6 +82,9 @@ class _RankingAgentScreenState extends State<RankingAgentScreen> {
           content: Text(message, style: GoogleFonts.spaceGrotesk()),
           actions: [
             TextButton(
+              style: TextButton.styleFrom(
+                minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+              ),
               onPressed: () => Navigator.pop(context, false),
               child: const Text('Huỷ'),
             ),
@@ -185,7 +189,7 @@ class _RankingAgentScreenState extends State<RankingAgentScreen> {
                   const Column(
                     children: [
                       AdminSkeleton(height: 120),
-                      SizedBox(height: 12),
+                      SizedBox(height: AppSpacing.md),
                       AdminSkeleton(height: 120),
                     ],
                   )
@@ -241,7 +245,7 @@ class _JobCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.outline),
       ),
       child: Column(
@@ -254,11 +258,11 @@ class _JobCard extends StatelessWidget {
                 height: 44,
                 decoration: BoxDecoration(
                   color: AppColors.primaryContainer,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Icon(icon, color: AppColors.primary),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -272,8 +276,7 @@ class _JobCard extends StatelessWidget {
                     ),
                     Text(
                       _date(job.createdAt),
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 12,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.onSurfaceMuted,
                       ),
                     ),
@@ -290,13 +293,12 @@ class _JobCard extends StatelessWidget {
               color: AppColors.primary,
               backgroundColor: AppColors.surfaceDim,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               '${job.progress['stage'] ?? ''} • ${job.progressPercent}%',
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 12,
-                color: AppColors.onSurfaceMuted,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
             ),
           ],
           if (job.warnings.isNotEmpty || job.blockingErrors.isNotEmpty) ...[
@@ -305,8 +307,7 @@ class _JobCard extends StatelessWidget {
               job.blockingErrors.isNotEmpty
                   ? '${job.blockingErrors.length} lỗi chặn'
                   : '${job.warnings.length} cảnh báo',
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 12,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: job.blockingErrors.isNotEmpty
                     ? AppColors.error
                     : AppColors.warning,
@@ -314,7 +315,7 @@ class _JobCard extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Wrap(
             spacing: 8,
             runSpacing: 4,
@@ -371,12 +372,11 @@ class _StatusChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: .12),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Text(
         status.replaceAll('_', ' '),
-        style: GoogleFonts.spaceGrotesk(
-          fontSize: 11,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
           fontWeight: FontWeight.w700,
           color: color,
         ),
@@ -501,12 +501,11 @@ class _CreateJobSheetState extends State<_CreateJobSheet> {
           children: [
             Text(
               'Tạo Ranking Agent job',
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.heading?.copyWith(fontWeight: FontWeight.w700),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             DropdownButtonFormField<String>(
               initialValue: type,
               decoration: const InputDecoration(labelText: 'Loại job'),
@@ -523,7 +522,7 @@ class _CreateJobSheetState extends State<_CreateJobSheet> {
               ],
               onChanged: (value) => setState(() => type = value!),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             if (type == 'league_reset')
               TextField(
                 controller: week,
@@ -547,7 +546,7 @@ class _CreateJobSheetState extends State<_CreateJobSheet> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: TextField(
                       controller: duration,
@@ -610,7 +609,7 @@ class _CreateJobSheetState extends State<_CreateJobSheet> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: TextField(
                       controller: vocab,
@@ -640,7 +639,7 @@ class _CreateJobSheetState extends State<_CreateJobSheet> {
               title: const Text('AI Insights'),
               subtitle: const Text('Tạo nhận xét ngắn trong bước validating.'),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -648,7 +647,7 @@ class _CreateJobSheetState extends State<_CreateJobSheet> {
                   onPressed: () => Navigator.pop(context),
                   child: const Text('Huỷ'),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.sm),
                 FilledButton(
                   onPressed: () {
                     final value = _payload();
@@ -773,6 +772,9 @@ class _PreviewDialog extends StatelessWidget {
       ),
       actions: [
         TextButton(
+          style: TextButton.styleFrom(
+            minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+          ),
           onPressed: () => Navigator.pop(context),
           child: const Text('Đóng'),
         ),
@@ -793,7 +795,7 @@ class _StateCard extends StatelessWidget {
       child: Column(
         children: [
           Icon(icon, size: 44, color: AppColors.onSurfaceMuted),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           Text(
             message,
             textAlign: TextAlign.center,
@@ -801,6 +803,9 @@ class _StateCard extends StatelessWidget {
           ),
           if (action != null)
             TextButton(
+              style: TextButton.styleFrom(
+                minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+              ),
               onPressed: () => action!(),
               child: const Text('Thử lại'),
             ),

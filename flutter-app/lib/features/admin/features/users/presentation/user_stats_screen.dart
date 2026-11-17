@@ -8,6 +8,7 @@ import '../../../shared/widgets/admin_skeleton.dart';
 import '../../../shared/widgets/stat_card.dart';
 import '../../auth/presentation/auth_provider.dart';
 import '../data/users_repository.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class UserStatsScreen extends StatefulWidget {
   final String userId;
@@ -62,6 +63,9 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
         content: Text(message),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+            ),
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Hủy'),
           ),
@@ -153,7 +157,7 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
               padding: const EdgeInsets.all(16),
               children: const [
                 SectionCardSkeleton(contentHeight: 160),
-                SizedBox(height: 12),
+                SizedBox(height: AppSpacing.md),
                 SectionCardSkeleton(contentHeight: 240),
               ],
             )
@@ -167,8 +171,8 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(_error!),
-                        const SizedBox(height: 12),
-                        ElevatedButton(
+                        const SizedBox(height: AppSpacing.md),
+                        FilledButton(
                           onPressed: _load,
                           child: const Text('Thử lại'),
                         ),
@@ -182,11 +186,11 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 64),
               children: [
                 _profile(),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.md),
                 _metrics(),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.md),
                 _account(),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.md),
                 _activities(),
               ],
             ),
@@ -208,8 +212,7 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
               ? Text(
                   (_user?['display_name'] ?? _user?['email'] ?? '?')[0]
                       .toUpperCase(),
-                  style: GoogleFonts.spaceGrotesk(
-                    fontSize: 26,
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: AppColors.primary,
                   ),
@@ -219,16 +222,15 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
         const SizedBox(height: 10),
         Text(
           _user?['display_name'] ?? _user?['username'] ?? 'Người dùng',
-          style: GoogleFonts.spaceGrotesk(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.heading?.copyWith(fontWeight: FontWeight.w700),
         ),
         Text(
           _user?['email'] ?? '',
           style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -296,12 +298,11 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
         children: [
           Text(
             'Tài khoản & quyền',
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.sectionTitle?.copyWith(fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           _line('Ngày tham gia', _date(_user?['created_at'])),
           _line('Đăng nhập cuối', _date(_user?['last_login'])),
           _line(
@@ -313,7 +314,7 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
             'Thay đổi vai trò',
             style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w600),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -330,13 +331,13 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           SizedBox(
             width: double.infinity,
             height: 48,
-            child: ElevatedButton.icon(
+            child: FilledButton.icon(
               onPressed: _acting ? null : _setActive,
-              style: ElevatedButton.styleFrom(
+              style: FilledButton.styleFrom(
                 backgroundColor: _user?['is_active'] == true
                     ? AppColors.error
                     : AppColors.success,
@@ -366,12 +367,11 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
       children: [
         Text(
           'Hoạt động gần đây',
-          style: GoogleFonts.spaceGrotesk(
-            fontSize: 17,
-            fontWeight: FontWeight.w700,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.sectionTitle?.copyWith(fontWeight: FontWeight.w700),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         if (_activity.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 24),
@@ -400,14 +400,13 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
               ),
               title: Text(
                 item['description'] ?? '',
-                style: GoogleFonts.spaceGrotesk(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
               ),
               subtitle: Text(
                 _date(item['activity_date']),
-                style: GoogleFonts.spaceGrotesk(fontSize: 12),
+                style: Theme.of(context).textTheme.bodySmall,
               ),
               trailing: (item['xp_earned'] ?? 0) > 0
                   ? Text(
@@ -426,19 +425,18 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
 
   BoxDecoration _box() => BoxDecoration(
     color: AppColors.surface,
-    borderRadius: BorderRadius.circular(16),
+    borderRadius: BorderRadius.circular(AppRadius.lg),
     border: Border.all(color: AppColors.outlineVariant),
   );
   Widget _pill(String text, Color color) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
     decoration: BoxDecoration(
       color: color.withValues(alpha: .12),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
     ),
     child: Text(
       text,
-      style: GoogleFonts.spaceGrotesk(
-        fontSize: 12,
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(
         fontWeight: FontWeight.w700,
         color: color,
       ),

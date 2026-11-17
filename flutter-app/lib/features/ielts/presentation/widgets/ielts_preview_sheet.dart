@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/ielts_entities.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// What a test contains, shown before a sitting is created.
 ///
@@ -30,14 +31,14 @@ class IeltsPreviewSheet extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(test.title, style: theme.textTheme.titleLarge),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               'ielts.previewTitle'.tr(),
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             // The contents scroll on short screens; the start button stays in view.
             Flexible(
               child: SingleChildScrollView(
@@ -45,12 +46,12 @@ class IeltsPreviewSheet extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (hasSittingInProgress) ...[
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppSpacing.md),
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
                           color: theme.colorScheme.secondaryContainer,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                         child: Text(
                           'ielts.previewInProgress'.tr(),
@@ -60,7 +61,7 @@ class IeltsPreviewSheet extends StatelessWidget {
                         ),
                       ),
                     ],
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.lg),
                     FutureBuilder<IeltsPaper>(
                       future: loadPaper(),
                       builder: (context, snapshot) {
@@ -92,7 +93,7 @@ class IeltsPreviewSheet extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             SizedBox(
               width: double.infinity,
               child: FilledButton(

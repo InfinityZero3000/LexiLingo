@@ -11,6 +11,7 @@ import '../../../shared/widgets/admin_shell.dart';
 import '../../../shared/widgets/admin_skeleton.dart';
 import '../../../shared/widgets/stat_card.dart';
 import '../../auth/presentation/auth_provider.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class SuperDashboardScreen extends StatefulWidget {
   const SuperDashboardScreen({super.key});
@@ -82,10 +83,9 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
         ),
         title: Text(
           'Super Admin Dashboard',
-          style: GoogleFonts.spaceGrotesk(
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
         actions: [
           IconButton(
@@ -101,7 +101,7 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
               child: Column(
                 children: [
                   AdminSkeleton(height: 120, borderRadius: 16),
-                  SizedBox(height: 12),
+                  SizedBox(height: AppSpacing.md),
                   AdminSkeleton(height: 220, borderRadius: 16),
                 ],
               ),
@@ -116,30 +116,27 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
                 children: [
                   Text(
                     'SYSTEM OVERSIGHT',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 10,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.8,
                       color: AppColors.primary,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     'At-a-glance platform status',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 24,
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: AppColors.onSurface,
                     ),
                   ),
                   if (_error != null) ...[
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.md),
                     Text(
                       'Some dashboard data could not be refreshed.',
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 12,
-                        color: AppColors.error,
-                      ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: AppColors.error),
                     ),
                   ],
                   const SizedBox(height: 18),
@@ -173,7 +170,7 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.lg),
                   _panel('Service Status', [
                     _ServiceRow(label: 'Backend API', status: 'healthy'),
                     _ServiceRow(
@@ -190,7 +187,7 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
                           .toString(),
                     ),
                   ]),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.lg),
                   _panel('Quick Configuration', [
                     _InfoRow(
                       label: 'Environment',
@@ -231,7 +228,7 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
       color: AppColors.surface,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       border: Border.all(color: AppColors.outlineVariant, width: 0.5),
     ),
     child: Column(
@@ -239,10 +236,9 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
       children: [
         Text(
           title,
-          style: GoogleFonts.spaceGrotesk(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 10),
         ...children,
@@ -270,22 +266,20 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             const Icon(Icons.lock_outlined, color: AppColors.error, size: 48),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             Text(
               'Access Restricted',
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.heading?.copyWith(fontWeight: FontWeight.w700),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               'This section is only accessible to Super Administrators.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 13,
-                color: AppColors.onSurfaceMuted,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
             ),
           ],
         ),
@@ -319,8 +313,7 @@ class _ServiceRow extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             status.replaceAll('_', ' ').toUpperCase(),
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 10,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w700,
               color: ok ? AppColors.success : AppColors.warning,
             ),
@@ -343,18 +336,16 @@ class _InfoRow extends StatelessWidget {
         Expanded(
           child: Text(
             label,
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 13,
-              color: AppColors.onSurfaceMuted,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
           ),
         ),
         Text(
           value,
-          style: GoogleFonts.spaceGrotesk(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
         ),
       ],
     ),
@@ -373,23 +364,22 @@ class _DashboardError extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(Icons.error_outline, color: AppColors.error, size: 40),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           Text(
             'Dashboard unavailable',
             style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.xs),
           Text(
             message,
             textAlign: TextAlign.center,
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 12,
-              color: AppColors.onSurfaceMuted,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           SizedBox(
             height: 44,
             child: OutlinedButton(

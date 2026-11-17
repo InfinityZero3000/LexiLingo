@@ -9,6 +9,7 @@ import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../shared/widgets/admin_skeleton.dart';
 import '../data/lesson_exercises_repository.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 const _uiTypeLabels = <String, String>{
   'multiple_choice': 'Multiple Choice',
@@ -206,6 +207,9 @@ class _LessonExercisesScreenState extends State<LessonExercisesScreen> {
         ),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+            ),
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
@@ -288,32 +292,30 @@ class _LessonExercisesScreenState extends State<LessonExercisesScreen> {
           children: [
             Text(
               'LESSON CONTENT',
-              style: GoogleFonts.spaceGrotesk(
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 color: AppColors.primary,
-                fontSize: 11,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.2,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               '${_exercises.length} exercises',
-              style: GoogleFonts.spaceGrotesk(
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 color: AppColors.onSurface,
-                fontSize: 26,
                 fontWeight: FontWeight.w700,
               ),
             ),
             const SizedBox(height: 20),
             if (_error != null) ...[
               _ErrorBanner(message: _error!, onRetry: _loading ? null : _load),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
             ],
             if (_loading)
               const Column(
                 children: [
                   AdminSkeleton(height: 112),
-                  SizedBox(height: 12),
+                  SizedBox(height: AppSpacing.md),
                   AdminSkeleton(height: 112),
                 ],
               )
@@ -367,7 +369,7 @@ class _ExerciseCard extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.outline),
       ),
       child: Column(
@@ -390,20 +392,19 @@ class _ExerciseCard extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: AppColors.primaryContainer,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                   ),
                   child: Text(
                     _uiTypeLabels[exercise.uiType] ?? exercise.uiType,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.spaceGrotesk(
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.primary,
-                      fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.sm),
               Text(
                 '${exercise.points} pts',
                 style: GoogleFonts.spaceGrotesk(
@@ -413,20 +414,19 @@ class _ExerciseCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           Text(
             exercise.question.trim().isEmpty
                 ? 'No question text'
                 : exercise.question,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.spaceGrotesk(
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               color: AppColors.onSurfaceVariant,
-              fontSize: 15,
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -721,7 +721,7 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
                 if (value != null) _changeType(value);
               },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             _Field(
               controller: _question,
               label: 'Question / prompt',
@@ -732,13 +732,12 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
               const SizedBox(height: 20),
               Text(
                 'Options',
-                style: GoogleFonts.spaceGrotesk(
+                style: Theme.of(context).textTheme.sectionTitle?.copyWith(
                   color: AppColors.onSurface,
-                  fontSize: 17,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               ...List.generate(_options.length, (index) {
                 final option = _options[index];
                 return Padding(
@@ -783,7 +782,7 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
               ),
             ],
             if (_pairTypes.contains(_uiType)) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               _Field(
                 controller: _pairs,
                 label: _uiType == 'categorization'
@@ -793,7 +792,7 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
                 validator: _pairsValidator,
               ),
             ] else ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               _Field(
                 controller: _correctAnswer,
                 label: _uiType == 'arrange_the_sentence'
@@ -802,23 +801,23 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
                 validator: _uiType == 'short_writing_answer' ? null : _required,
               ),
             ],
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             _Field(controller: _explanation, label: 'Explanation', maxLines: 2),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             _Field(controller: _hint, label: 'Hint'),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             _Field(
               controller: _audioUrl,
               label: 'Audio URL',
               keyboardType: TextInputType.url,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             _Field(
               controller: _imageUrl,
               label: 'Image URL',
               keyboardType: TextInputType.url,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             Row(
               children: [
                 Expanded(
@@ -829,7 +828,7 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
                     validator: _difficultyValidator,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: _Field(
                     controller: _points,
@@ -896,12 +895,12 @@ class _ErrorBanner extends StatelessWidget {
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
       color: AppColors.errorContainer,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppRadius.md),
     ),
     child: Row(
       children: [
         const Icon(Icons.error_outline, color: AppColors.error),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpacing.sm),
         Expanded(
           child: Text(
             message,
@@ -922,10 +921,13 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 56),
+    padding: const EdgeInsets.symmetric(
+      horizontal: AppSpacing.xl,
+      vertical: 56,
+    ),
     decoration: BoxDecoration(
       color: AppColors.surface,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       border: Border.all(color: AppColors.outline),
     ),
     child: Column(
@@ -935,16 +937,15 @@ class _EmptyState extends StatelessWidget {
           size: 48,
           color: AppColors.onSurfaceMuted,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
         Text(
           'No exercises yet',
-          style: GoogleFonts.spaceGrotesk(
+          style: Theme.of(context).textTheme.sectionTitle?.copyWith(
             color: AppColors.onSurface,
-            fontSize: 18,
             fontWeight: FontWeight.w700,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         FilledButton.icon(
           onPressed: onAdd,
           icon: const Icon(Icons.add),

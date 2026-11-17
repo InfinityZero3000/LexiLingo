@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../shared/widgets/admin_shell.dart';
 import '../data/content_lab_repository.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class ContentLabScreen extends StatefulWidget {
   const ContentLabScreen({super.key});
@@ -88,6 +89,9 @@ class _ContentLabScreenState extends State<ContentLabScreen>
         content: Text(name),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+            ),
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Hủy'),
           ),
@@ -199,7 +203,7 @@ class _ContentLabScreenState extends State<ContentLabScreen>
               border: OutlineInputBorder(),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           DropdownButtonFormField<String>(
             initialValue: _level,
             decoration: const InputDecoration(
@@ -217,7 +221,7 @@ class _ContentLabScreenState extends State<ContentLabScreen>
             ].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
             onChanged: (v) => setState(() => _level = v!),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           if (_loading)
             const Padding(
               padding: EdgeInsets.all(48),
@@ -260,12 +264,11 @@ class _ContentLabScreenState extends State<ContentLabScreen>
                     e.prompt,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.spaceGrotesk(
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w700,
-                      fontSize: 16,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.sm),
                   Wrap(
                     spacing: 8,
                     runSpacing: 6,
@@ -321,9 +324,8 @@ class _ContentLabScreenState extends State<ContentLabScreen>
                 children: [
                   Text(
                     e.title,
-                    style: GoogleFonts.spaceGrotesk(
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w700,
-                      fontSize: 16,
                     ),
                   ),
                   if (e.description?.isNotEmpty == true)
@@ -335,7 +337,7 @@ class _ContentLabScreenState extends State<ContentLabScreen>
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.sm),
                   Wrap(
                     spacing: 8,
                     runSpacing: 6,
@@ -555,12 +557,11 @@ class _FormSheet extends StatelessWidget {
           children: [
             Text(
               title,
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             ...children,
           ],
         ),
@@ -619,7 +620,7 @@ class _Card extends StatelessWidget {
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
       color: AppColors.surface,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       border: Border.all(color: AppColors.outline),
     ),
     child: child,
@@ -634,14 +635,13 @@ class _Chip extends StatelessWidget {
     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
     decoration: BoxDecoration(
       color: AppColors.surfaceContainerLow,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
     ),
     child: Text(
       text,
-      style: GoogleFonts.spaceGrotesk(
-        fontSize: 12,
-        color: AppColors.onSurfaceMuted,
-      ),
+      style: Theme.of(
+        context,
+      ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
     ),
   );
 }
@@ -680,7 +680,7 @@ class _StateCard extends StatelessWidget {
     child: Column(
       children: [
         Icon(icon, size: 48, color: AppColors.onSurfaceMuted),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
         Text(
           text,
           textAlign: TextAlign.center,

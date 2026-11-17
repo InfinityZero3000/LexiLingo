@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../core/constants/app_colors.dart';
 import '../../features/auth/data/auth_repository.dart';
 import '../../features/auth/presentation/auth_provider.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class AdminShell extends StatefulWidget {
   final Widget child;
@@ -57,13 +57,13 @@ class _AdminDrawer extends StatelessWidget {
       child: SafeArea(
         child: Column(
           children: [
-            _buildHeader(user),
+            _buildHeader(context, user),
             const Divider(height: 1, color: AppColors.outline),
             Expanded(
               child: ListView(
                 padding: const EdgeInsets.only(bottom: 8),
                 children: [
-                  _section('OVERVIEW'),
+                  _section(context, 'OVERVIEW'),
                   _item(
                     context,
                     icon: Icons.dashboard_outlined,
@@ -71,7 +71,7 @@ class _AdminDrawer extends StatelessWidget {
                     label: 'Dashboard',
                     route: '/dashboard',
                   ),
-                  _section('CONTENT'),
+                  _section(context, 'CONTENT'),
                   _item(
                     context,
                     icon: Icons.menu_book_outlined,
@@ -114,7 +114,7 @@ class _AdminDrawer extends StatelessWidget {
                     label: 'Analytics',
                     route: '/analytics',
                   ),
-                  _section('USERS'),
+                  _section(context, 'USERS'),
                   _item(
                     context,
                     icon: Icons.group_outlined,
@@ -122,7 +122,7 @@ class _AdminDrawer extends StatelessWidget {
                     label: 'User Management',
                     route: '/users',
                   ),
-                  _section('GAMIFICATION'),
+                  _section(context, 'GAMIFICATION'),
                   _item(
                     context,
                     icon: Icons.military_tech_outlined,
@@ -130,7 +130,7 @@ class _AdminDrawer extends StatelessWidget {
                     label: 'Achievements & Shop',
                     route: '/achievements',
                   ),
-                  _section('AUTOMATION'),
+                  _section(context, 'AUTOMATION'),
                   _item(
                     context,
                     icon: Icons.fact_check_outlined,
@@ -152,7 +152,7 @@ class _AdminDrawer extends StatelessWidget {
                     label: 'Ranking Agent',
                     route: '/ranking-agent',
                   ),
-                  _section('SYSTEM'),
+                  _section(context, 'SYSTEM'),
                   _item(
                     context,
                     icon: Icons.campaign_outlined,
@@ -189,7 +189,7 @@ class _AdminDrawer extends StatelessWidget {
                     route: '/settings',
                   ),
                   if (auth.isSuperAdmin) ...[
-                    _section('SUPER ADMIN'),
+                    _section(context, 'SUPER ADMIN'),
                     _item(
                       context,
                       icon: Icons.admin_panel_settings_outlined,
@@ -205,20 +205,20 @@ class _AdminDrawer extends StatelessWidget {
                       route: '/super/admins',
                     ),
                   ],
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.sm),
                 ],
               ),
             ),
             const Divider(height: 1, color: AppColors.outline),
             _buildLogout(context),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildHeader(AdminUser? user) {
+  Widget _buildHeader(BuildContext context, AdminUser? user) {
     final initials = (user?.displayName.isNotEmpty == true)
         ? user!.displayName
               .split(' ')
@@ -243,9 +243,10 @@ class _AdminDrawer extends StatelessWidget {
                   ? Image.network(
                       user!.avatarUrl!,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _initialsAvatar(initials),
+                      errorBuilder: (_, __, ___) =>
+                          _initialsAvatar(context, initials),
                     )
-                  : _initialsAvatar(initials),
+                  : _initialsAvatar(context, initials),
             ),
           ),
           const SizedBox(width: 10),
@@ -255,8 +256,7 @@ class _AdminDrawer extends StatelessWidget {
               children: [
                 Text(
                   user?.displayName ?? 'Admin',
-                  style: GoogleFonts.spaceGrotesk(
-                    fontSize: 13,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: AppColors.onSurface,
                   ),
@@ -265,8 +265,7 @@ class _AdminDrawer extends StatelessWidget {
                 ),
                 Text(
                   user?.email ?? '',
-                  style: GoogleFonts.spaceGrotesk(
-                    fontSize: 10,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: AppColors.onSurfaceMuted,
                   ),
                   maxLines: 1,
@@ -286,11 +285,10 @@ class _AdminDrawer extends StatelessWidget {
                   ),
                   child: Text(
                     auth.isSuperAdmin ? 'SUPER ADMIN' : 'ADMIN',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 8,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: auth.isSuperAdmin
-                          ? Colors.white
+                          ? Theme.of(context).colorScheme.onPrimary
                           : AppColors.primary,
                       letterSpacing: 0.5,
                     ),
@@ -304,25 +302,23 @@ class _AdminDrawer extends StatelessWidget {
     );
   }
 
-  Widget _initialsAvatar(String initials) => Container(
+  Widget _initialsAvatar(BuildContext context, String initials) => Container(
     color: AppColors.primaryContainer,
     alignment: Alignment.center,
     child: Text(
       initials,
-      style: GoogleFonts.spaceGrotesk(
+      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
         color: AppColors.primary,
         fontWeight: FontWeight.w700,
-        fontSize: 14,
       ),
     ),
   );
 
-  Widget _section(String label) => Padding(
+  Widget _section(BuildContext context, String label) => Padding(
     padding: const EdgeInsets.fromLTRB(20, 8, 20, 2),
     child: Text(
       label,
-      style: GoogleFonts.spaceGrotesk(
-        fontSize: 9,
+      style: Theme.of(context).textTheme.labelSmall?.copyWith(
         fontWeight: FontWeight.w700,
         color: AppColors.onSurfaceMuted,
         letterSpacing: 0.8,
@@ -342,10 +338,10 @@ class _AdminDrawer extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 1),
       child: Material(
         color: active ? const Color(0x1AFF4D00) : Colors.transparent,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: InkWell(
           onTap: () => _navigate(context, route),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
             child: Row(
@@ -360,8 +356,7 @@ class _AdminDrawer extends StatelessWidget {
                 const SizedBox(width: 10),
                 Text(
                   label,
-                  style: GoogleFonts.spaceGrotesk(
-                    fontSize: 12,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontWeight: active ? FontWeight.w700 : FontWeight.w500,
                     color: active
                         ? AppColors.primaryBright
@@ -380,14 +375,14 @@ class _AdminDrawer extends StatelessWidget {
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
     child: Material(
       color: Colors.transparent,
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: InkWell(
         onTap: () async {
           Navigator.of(context).pop();
           await auth.logout();
           if (context.mounted) context.go('/login');
         },
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
           child: Row(
@@ -400,8 +395,7 @@ class _AdminDrawer extends StatelessWidget {
               const SizedBox(width: 10),
               Text(
                 'Logout',
-                style: GoogleFonts.spaceGrotesk(
-                  fontSize: 12,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: AppColors.error,
                 ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../core/constants/app_colors.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// KPI card with an animated count-up on first paint.
 /// The count animates from 0 to [value] over [duration] using [curve].
@@ -73,7 +73,7 @@ class _KpiCountCardState extends State<KpiCountCard>
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: AppColors.outlineVariant, width: 0.5),
         ),
         child: Column(
@@ -86,7 +86,7 @@ class _KpiCountCardState extends State<KpiCountCard>
                   height: 30,
                   decoration: BoxDecoration(
                     color: iconBg,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   child: Icon(widget.icon, color: iconColor, size: 16),
                 ),
@@ -105,8 +105,7 @@ class _KpiCountCardState extends State<KpiCountCard>
                     ),
                     child: Text(
                       widget.change!,
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 9,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: widget.changePositive
                             ? AppColors.success
@@ -116,11 +115,10 @@ class _KpiCountCardState extends State<KpiCountCard>
                   ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               widget.label.toUpperCase(),
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 9,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.06,
                 color: AppColors.onSurfaceMuted,
@@ -133,8 +131,7 @@ class _KpiCountCardState extends State<KpiCountCard>
                 final current = widget.value * _anim.value;
                 return Text(
                   _format(current) + widget.suffix,
-                  style: GoogleFonts.spaceGrotesk(
-                    fontSize: 22,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: AppColors.onSurface,
                     letterSpacing: -0.02,

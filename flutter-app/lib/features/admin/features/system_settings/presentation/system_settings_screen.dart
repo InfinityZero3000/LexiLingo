@@ -5,6 +5,7 @@ import '../../../core/constants/api_endpoints.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/admin_shell.dart';
 import '../../../shared/widgets/admin_skeleton.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class SystemSettingsScreen extends StatefulWidget {
   const SystemSettingsScreen({super.key});
@@ -185,21 +186,19 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                   children: [
                     Text(
                       'System Configuration',
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 22,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: AppColors.onSurface,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppSpacing.xs),
                     Text(
                       'Global app settings — changes apply immediately.',
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 12,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.onSurfaceMuted,
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSpacing.xl),
 
                     // App info card
                     _card(
@@ -210,15 +209,15 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                           const SizedBox(height: 6),
                           TextField(
                             controller: _appNameCtrl,
-                            style: GoogleFonts.spaceGrotesk(fontSize: 14),
+                            style: Theme.of(context).textTheme.bodyMedium,
                             decoration: const InputDecoration(isDense: true),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: AppSpacing.lg),
                           _infoRow(
                             'API prefix',
                             (_config?['api_prefix'] ?? '—').toString(),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: AppSpacing.sm),
                           _infoRow(
                             'Environment',
                             (_config?['app_env'] ?? '—').toString(),
@@ -226,7 +225,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.lg),
 
                     // Logging card
                     _card(
@@ -237,10 +236,8 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                           const SizedBox(height: 6),
                           DropdownButtonFormField<String>(
                             initialValue: _logLevel,
-                            style: GoogleFonts.spaceGrotesk(
-                              fontSize: 14,
-                              color: AppColors.onSurface,
-                            ),
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: AppColors.onSurface),
                             decoration: const InputDecoration(isDense: true),
                             items: _logLevels
                                 .map(
@@ -253,7 +250,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                             onChanged: (v) =>
                                 setState(() => _logLevel = v ?? _logLevel),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: AppSpacing.lg),
                           _toggleRow(
                             title: 'Debug Mode',
                             subtitle:
@@ -264,7 +261,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.lg),
 
                     // Auth card
                     _card(
@@ -278,21 +275,19 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                             controller: _tokenExpiryCtrl,
                             onChanged: (v) =>
                                 _tokenExpiry = int.tryParse(v) ?? _tokenExpiry,
-                            style: GoogleFonts.spaceGrotesk(fontSize: 14),
+                            style: Theme.of(context).textTheme.bodyMedium,
                             decoration: const InputDecoration(isDense: true),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: AppSpacing.sm),
                           Text(
                             'Current: $_tokenExpiry minutes',
-                            style: GoogleFonts.spaceGrotesk(
-                              fontSize: 11,
-                              color: AppColors.onSurfaceMuted,
-                            ),
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(color: AppColors.onSurfaceMuted),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.lg),
                     _card(
                       label: 'SERVICES & SECURITY',
                       child: Column(
@@ -304,65 +299,67 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                             keyboardType: TextInputType.number,
                             onChanged: (v) =>
                                 _refreshDays = int.tryParse(v) ?? _refreshDays,
-                            style: GoogleFonts.spaceGrotesk(fontSize: 14),
+                            style: Theme.of(context).textTheme.bodyMedium,
                             decoration: const InputDecoration(isDense: true),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: AppSpacing.lg),
                           _fieldLabel('AI Service URL'),
                           const SizedBox(height: 6),
                           TextField(
                             controller: _aiUrlCtrl,
                             keyboardType: TextInputType.url,
-                            style: GoogleFonts.spaceGrotesk(fontSize: 14),
+                            style: Theme.of(context).textTheme.bodyMedium,
                             decoration: const InputDecoration(isDense: true),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: AppSpacing.lg),
                           _fieldLabel('Allowed CORS Origins'),
                           const SizedBox(height: 6),
                           TextField(
                             controller: _corsCtrl,
                             maxLines: 2,
-                            style: GoogleFonts.spaceGrotesk(fontSize: 14),
+                            style: Theme.of(context).textTheme.bodyMedium,
                             decoration: const InputDecoration(isDense: true),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: AppSpacing.xxl),
 
                     // Save button
                     SizedBox(
                       width: double.infinity,
                       height: 50,
-                      child: ElevatedButton.icon(
+                      child: FilledButton.icon(
                         onPressed: _saving ? null : _save,
-                        style: ElevatedButton.styleFrom(
+                        style: FilledButton.styleFrom(
                           backgroundColor: AppColors.primaryBright,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
                         ),
                         icon: _saving
-                            ? const SizedBox(
-                                width: 16,
+                            ? SizedBox(
+                                width: AppSpacing.lg,
                                 height: 16,
                                 child: CircularProgressIndicator(
-                                  color: Colors.white,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onPrimary,
                                   strokeWidth: 2,
                                 ),
                               )
-                            : const Icon(
+                            : Icon(
                                 Icons.save_outlined,
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.onPrimary,
                                 size: 18,
                               ),
                         label: Text(
                           'Save Changes',
-                          style: GoogleFonts.spaceGrotesk(
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                            fontSize: 14,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: Theme.of(context).colorScheme.onPrimary,
+                              ),
                         ),
                       ),
                     ),
@@ -379,20 +376,19 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
       children: [
         Text(
           label,
-          style: GoogleFonts.spaceGrotesk(
-            fontSize: 10,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
             fontWeight: FontWeight.w700,
             color: AppColors.onSurfaceMuted,
             letterSpacing: 0.8,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: AppColors.surface,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(color: AppColors.outline, width: 0.5),
           ),
           child: child,
@@ -403,8 +399,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
 
   Widget _fieldLabel(String label) => Text(
     label,
-    style: GoogleFonts.spaceGrotesk(
-      fontSize: 10,
+    style: Theme.of(context).textTheme.labelSmall?.copyWith(
       fontWeight: FontWeight.w700,
       color: AppColors.onSurfaceMuted,
       letterSpacing: 0.5,
@@ -416,15 +411,13 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
     children: [
       Text(
         key,
-        style: GoogleFonts.spaceGrotesk(
-          fontSize: 13,
-          color: AppColors.onSurfaceMuted,
-        ),
+        style: Theme.of(
+          context,
+        ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
       ),
       Text(
         value,
-        style: GoogleFonts.spaceGrotesk(
-          fontSize: 13,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
           fontWeight: FontWeight.w600,
           color: AppColors.onSurface,
         ),
@@ -445,18 +438,16 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
           children: [
             Text(
               title,
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 14,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: AppColors.onSurface,
               ),
             ),
             Text(
               subtitle,
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 11,
-                color: AppColors.onSurfaceMuted,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(color: AppColors.onSurfaceMuted),
             ),
           ],
         ),
@@ -482,23 +473,22 @@ class _SettingsError extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(Icons.error_outline, color: AppColors.error, size: 40),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           Text(
             'Could not load settings',
             style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.xs),
           Text(
             message,
             textAlign: TextAlign.center,
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.spaceGrotesk(
-              fontSize: 12,
-              color: AppColors.onSurfaceMuted,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           SizedBox(
             height: 44,
             child: OutlinedButton(
