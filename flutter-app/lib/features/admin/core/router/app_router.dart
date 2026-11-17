@@ -25,6 +25,9 @@ import '../../features/content_qa/presentation/content_qa_screen.dart';
 import '../../features/notification_campaign/presentation/notification_campaign_screen.dart';
 import '../../features/ranking_agent/presentation/ranking_agent_screen.dart';
 import '../../features/lesson_exercises/presentation/lesson_exercises_screen.dart';
+import '../../features/system/presentation/screens/ai_quality_screen.dart';
+import '../../features/system/presentation/screens/ops_center_screen.dart';
+import '../../features/system/presentation/screens/roles_screen.dart';
 import '../../shared/widgets/admin_shell.dart';
 import '../navigation/admin_access.dart';
 import '../permissions/admin_permissions.dart';
@@ -135,10 +138,7 @@ GoRouter createRouter(AuthProvider authProvider, AdminPermissions permissions) {
             path: '/content-lab',
             builder: (_, __) => const ContentLabScreen(),
           ),
-          GoRoute(
-            path: '/analytics',
-            builder: (_, __) => const AnalyticsScreen(),
-          ),
+          GoRoute(path: '/analytics', builder: (_, __) => AnalyticsScreen()),
 
           // ── Users ─────────────────────────────────────────────────────────
           GoRoute(
@@ -162,7 +162,7 @@ GoRouter createRouter(AuthProvider authProvider, AdminPermissions permissions) {
 
           // ── System ────────────────────────────────────────────────────────
           GoRoute(path: '/ads', builder: (_, __) => const AdsScreen()),
-          GoRoute(path: '/logs', builder: (_, __) => const LogsScreen()),
+          GoRoute(path: '/logs', builder: (_, __) => LogsScreen()),
           GoRoute(
             path: '/content-qa',
             builder: (_, __) => const ContentQaScreen(),
@@ -175,13 +175,16 @@ GoRouter createRouter(AuthProvider authProvider, AdminPermissions permissions) {
             path: '/ranking-agent',
             builder: (_, __) => const RankingAgentScreen(),
           ),
+          GoRoute(path: '/ops', builder: (_, __) => OpsCenterScreen()),
+          GoRoute(path: '/ai-quality', builder: (_, __) => AiQualityScreen()),
+          GoRoute(path: '/roles', builder: (_, __) => RolesScreen()),
           GoRoute(
             path: '/system-health',
-            builder: (_, __) => const SystemHealthScreen(),
+            builder: (_, __) => SystemHealthScreen(),
           ),
           GoRoute(
             path: '/system-settings',
-            builder: (_, __) => const SystemSettingsScreen(),
+            builder: (_, __) => SystemSettingsScreen(),
           ),
           GoRoute(
             path: '/settings',
@@ -195,7 +198,7 @@ GoRouter createRouter(AuthProvider authProvider, AdminPermissions permissions) {
           ),
           GoRoute(
             path: '/super/admins',
-            builder: (_, __) => const AdminManagementScreen(),
+            builder: (_, __) => AdminManagementScreen(),
           ),
         ],
       ),

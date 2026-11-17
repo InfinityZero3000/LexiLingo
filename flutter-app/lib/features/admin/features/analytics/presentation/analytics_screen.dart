@@ -1,217 +1,202 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../core/constants/api_endpoints.dart';
-import '../../../core/constants/admin_colors.dart';
-import '../../../core/network/api_client.dart';
-import '../../../shared/widgets/admin_shell.dart';
-import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
-import 'package:lexilingo_app/core/widgets/stat_card.dart';
-import 'package:lexilingo_app/core/widgets/stagger_list.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
-class AnalyticsScreen extends StatefulWidget {
-  const AnalyticsScreen({super.key});
-  @override
-  State<AnalyticsScreen> createState() => _AnalyticsScreenState();
-}
+import '../../../shared/widgets/admin_async_body.dart';
+import '../../system/data/system_models.dart';
+import '../../system/data/system_repository.dart';
+import '../../system/presentation/widgets/system_widgets.dart';
 
-class _AnalyticsScreenState extends State<AnalyticsScreen> {
-  Map<String, dynamic>? _data;
-  bool _loading = true;
-  String? _error;
+/// KPIs, content performance and funnels; all reads.
+class AnalyticsScreen extends StatelessWidget {
+  AnalyticsScreen({super.key, SystemRepository? repository})
+    : repository = repository ?? SystemRepository();
 
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    try {
-      final response = await ApiClient.instance.get(ApiEndpoints.analyticsKpis);
-      final value = response['kpis'] ?? response['data'];
-      if (mounted) {
-        setState(
-          () => _data = value is Map ? Map<String, dynamic>.from(value) : null,
-        );
-      }
-    } catch (error) {
-      if (mounted) setState(() => _error = 'Could not load analytics.\n$error');
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
-  String _format(dynamic value) {
-    final number = value is num ? value : num.tryParse('$value') ?? 0;
-    if (number >= 1000000) return '${(number / 1000000).toStringAsFixed(1)}M';
-    if (number >= 1000) return '${(number / 1000).toStringAsFixed(1)}K';
-    return number.toStringAsFixed(number == number.truncate() ? 0 : 1);
-  }
+  final SystemRepository repository;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AdminColors.background,
-      appBar: AppBar(
-        backgroundColor: AdminColors.background,
-        leading: IconButton(
-          icon: const Icon(Icons.menu_rounded),
-          onPressed: AdminShell.openDrawer,
+    return DefaultTabController(
+      length: 3,
+      child: SystemPage(
+        title: 'admin.nav.analytics'.tr(),
+        bottom: TabBar(
+          tabs: [
+            Tab(text: 'admin.sys.analytics.overview'.tr()),
+            Tab(text: 'admin.sys.analytics.content'.tr()),
+            Tab(text: 'admin.sys.analytics.funnels'.tr()),
+          ],
         ),
-        title: Text(
-          'Analytics',
-          style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700),
+        body: TabBarView(
+          children: [
+            _Overview(repository: repository),
+            _Content(repository: repository),
+            _Funnels(repository: repository),
+          ],
         ),
-        actions: [
-          IconButton(
-            onPressed: _load,
-            tooltip: 'Refresh',
-            icon: const Icon(Icons.refresh_outlined),
-          ),
-        ],
       ),
-      body: _loading
-          ? GridView.count(
-              padding: const EdgeInsets.all(16),
-              crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 1.2,
-              children: List.generate(4, (_) => const StatCardSkeleton()),
-            )
-          : _error != null
-          ? _AnalyticsMessage(message: _error!, action: _load)
-          : RefreshIndicator(
-              onRefresh: _load,
-              child: _data == null || _data!.isEmpty
-                  ? ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      children: const [
-                        SizedBox(height: 200),
-                        _AnalyticsMessage(
-                          message: 'No analytics data available',
-                        ),
-                      ],
-                    )
-                  : ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-                      children: [
-                        Text(
-                          'Dashboard overview',
-                          style: Theme.of(context).textTheme.sectionTitle
-                              ?.copyWith(fontWeight: FontWeight.w700),
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        Text(
-                          'Live values from the configured mobile analytics endpoint.',
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(color: AdminColors.onSurfaceMuted),
-                        ),
-                        const SizedBox(height: AppSpacing.lg),
-                        GridView.count(
-                          crossAxisCount: 2,
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          childAspectRatio: 1.2,
-                          children: [
-                            StaggeredEntrance(
-                              index: 0,
-                              child: StatCard(
-                                label: 'Total users',
-                                value: _format(_data!['total_users']),
-                                icon: Icons.group_outlined,
-                                note: 'All time',
-                              ),
-                            ),
-                            StaggeredEntrance(
-                              index: 1,
-                              child: StatCard(
-                                label: 'Active 7D',
-                                value: _format(_data!['active_users_7d']),
-                                icon: Icons.timer_outlined,
-                                note: '7 days',
-                              ),
-                            ),
-                            StaggeredEntrance(
-                              index: 2,
-                              child: StatCard(
-                                label: 'Courses',
-                                value: _format(_data!['total_courses']),
-                                icon: Icons.school_outlined,
-                                note: 'Live',
-                              ),
-                            ),
-                            StaggeredEntrance(
-                              index: 3,
-                              child: StatCard(
-                                label: 'Questions',
-                                value: _format(_data!['total_questions']),
-                                icon: Icons.quiz_outlined,
-                                note: 'Bank',
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: AppSpacing.lg),
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: AdminColors.surface,
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                            border: Border.all(
-                              color: AdminColors.outlineVariant,
-                              width: 0.5,
-                            ),
-                          ),
-                          child: Text(
-                            'Course, lesson, and vocabulary effectiveness analytics remain web-only because those endpoints are not configured in the mobile admin client.',
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: AdminColors.onSurfaceMuted),
-                          ),
-                        ),
-                      ],
-                    ),
-            ),
     );
   }
 }
 
-class _AnalyticsMessage extends StatelessWidget {
-  final String message;
-  final Future<void> Function()? action;
-  const _AnalyticsMessage({required this.message, this.action});
+class _Overview extends StatelessWidget {
+  const _Overview({required this.repository});
+  final SystemRepository repository;
+
   @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+  Widget build(BuildContext context) {
+    return AdminAsyncBody<JsonSnapshot>(
+      load: repository.kpis,
+      isEmpty: (s) => s.scalars.isEmpty,
+      empty: Center(child: Text('common.noData'.tr())),
+      builder: (_, s) => ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: systemPagePadding,
         children: [
-          const Icon(
-            Icons.query_stats_outlined,
-            size: 44,
-            color: AdminColors.onSurfaceMuted,
+          MetricWrap(
+            metrics: [for (final e in s.scalars) MetricTile(e.key, e.value)],
           ),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.spaceGrotesk(color: AdminColors.onSurfaceMuted),
+        ],
+      ),
+    );
+  }
+}
+
+class _ContentData {
+  const _ContentData(this.courses, this.performance, this.vocabulary);
+  final List<CoursePopularity> courses;
+  final JsonSnapshot performance;
+  final JsonSnapshot vocabulary;
+}
+
+class _Content extends StatelessWidget {
+  const _Content({required this.repository});
+  final SystemRepository repository;
+
+  Future<_ContentData> _load() async {
+    final results = await Future.wait([
+      repository.coursePopularity(),
+      repository.contentPerformance(),
+      repository.vocabularyEffectiveness(),
+    ]);
+    return _ContentData(
+      results[0] as List<CoursePopularity>,
+      results[1] as JsonSnapshot,
+      results[2] as JsonSnapshot,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AdminAsyncBody<_ContentData>(
+      load: _load,
+      builder: (context, d) => ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: systemPagePadding,
+        children: [
+          SystemSection(
+            title: 'admin.sys.analytics.coursePopularity'.tr(),
+            child: d.courses.isEmpty
+                ? Text('common.noData'.tr())
+                : BarList(
+                    items: [
+                      for (final c in d.courses.take(10))
+                        BarItem(c.title, c.enrollments.toDouble()),
+                    ],
+                  ),
           ),
-          if (action != null) ...[
+          if (!d.performance.isEmpty) ...[
             const SizedBox(height: AppSpacing.md),
-            OutlinedButton(onPressed: action, child: const Text('Try again')),
+            SystemSection(
+              title: 'admin.sys.analytics.contentPerformance'.tr(),
+              child: Column(
+                children: [
+                  SnapshotRows(snapshot: d.performance),
+                  for (final rows in d.performance.tables.values)
+                    SnapshotTable(rows: rows),
+                ],
+              ),
+            ),
+          ],
+          if (!d.vocabulary.isEmpty) ...[
+            const SizedBox(height: AppSpacing.md),
+            SystemSection(
+              title: 'admin.sys.analytics.vocabulary'.tr(),
+              child: Column(
+                children: [
+                  SnapshotRows(snapshot: d.vocabulary),
+                  for (final rows in d.vocabulary.tables.values)
+                    SnapshotTable(rows: rows),
+                ],
+              ),
+            ),
           ],
         ],
       ),
-    ),
-  );
+    );
+  }
+}
+
+class _FunnelData {
+  const _FunnelData(this.activation, this.completion);
+  final List<FunnelStep> activation;
+  final JsonSnapshot completion;
+}
+
+class _Funnels extends StatelessWidget {
+  const _Funnels({required this.repository});
+  final SystemRepository repository;
+
+  Future<_FunnelData> _load() async {
+    final results = await Future.wait([
+      repository.activationFunnel(),
+      repository.completionFunnel(),
+    ]);
+    return _FunnelData(
+      results[0] as List<FunnelStep>,
+      results[1] as JsonSnapshot,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AdminAsyncBody<_FunnelData>(
+      load: _load,
+      builder: (context, d) => ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: systemPagePadding,
+        children: [
+          SystemSection(
+            title: 'admin.sys.analytics.activation'.tr(),
+            child: d.activation.isEmpty
+                ? Text('common.noData'.tr())
+                : BarList(
+                    items: [
+                      for (final s in d.activation)
+                        BarItem(
+                          s.pctOfFirst == null
+                              ? s.label
+                              : '${s.label} (${s.pctOfFirst}%)',
+                          s.count.toDouble(),
+                        ),
+                    ],
+                  ),
+          ),
+          if (!d.completion.isEmpty) ...[
+            const SizedBox(height: AppSpacing.md),
+            SystemSection(
+              title: 'admin.sys.analytics.completion'.tr(),
+              child: Column(
+                children: [
+                  SnapshotRows(snapshot: d.completion),
+                  for (final rows in d.completion.tables.values)
+                    SnapshotTable(rows: rows),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 }

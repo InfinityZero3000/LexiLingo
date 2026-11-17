@@ -2383,7 +2383,10 @@
       "config": "Cấu hình hệ thống",
       "settings": "Cài đặt",
       "superDashboard": "Bảng điều khiển super",
-      "adminManagement": "Quản lý admin"
+      "adminManagement": "Quản lý admin",
+      "ops": "Vận hành",
+      "aiQuality": "Chất lượng AI",
+      "roles": "Vai trò"
     },
     "shell": {
       "logout": "Đăng xuất",
@@ -2409,6 +2412,48 @@
       "notVerified": "Không xác thực được tài khoản này.",
       "notAdmin": "Tài khoản này không có quyền admin.",
       "oauthMissing": "Máy chủ chưa cấu hình đăng nhập Google cho admin."
+    },
+    "sys": {
+      "webOnly": "Chỉ xem trên điện thoại. Thay đổi thực hiện ở web admin.",
+      "ops": {
+        "reminders": "Nhắc nhở",
+        "productEvents": "Sự kiện sản phẩm",
+        "contentAgent": "Content agent",
+        "celery": "Tác vụ nền",
+        "backups": "Sao lưu"
+      },
+      "health": {
+        "system": "Máy chủ",
+        "services": "Dịch vụ",
+        "database": "Cơ sở dữ liệu",
+        "requests": "Yêu cầu",
+        "integrations": "Tích hợp"
+      },
+      "ai": {
+        "summary": "Tổng quan"
+      },
+      "roles": {
+        "system": "Hệ thống"
+      },
+      "analytics": {
+        "overview": "Tổng quan",
+        "content": "Nội dung",
+        "funnels": "Phễu",
+        "coursePopularity": "Độ phổ biến khoá học",
+        "contentPerformance": "Hiệu quả nội dung",
+        "vocabulary": "Hiệu quả từ vựng",
+        "activation": "Phễu kích hoạt",
+        "completion": "Phễu hoàn thành"
+      },
+      "audit": {
+        "empty": "Không có sự kiện nào khớp"
+      },
+      "config": {
+        "info": "Cấu hình máy chủ"
+      },
+      "admins": {
+        "webOnly": "Cấp hoặc gỡ quyền admin thực hiện ở web admin."
+      }
     }
   }
 }

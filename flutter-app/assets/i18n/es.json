@@ -2383,7 +2383,10 @@
       "config": "System config",
       "settings": "Settings",
       "superDashboard": "Super dashboard",
-      "adminManagement": "Admin management"
+      "adminManagement": "Admin management",
+      "ops": "Operations",
+      "aiQuality": "AI quality",
+      "roles": "Roles"
     },
     "shell": {
       "logout": "Log out",
@@ -2409,6 +2412,48 @@
       "notVerified": "This account could not be verified.",
       "notAdmin": "This account has no admin access.",
       "oauthMissing": "Admin Google sign-in is not set up on the server."
+    },
+    "sys": {
+      "webOnly": "Read only here. Changes are made in the web admin.",
+      "ops": {
+        "reminders": "Reminders",
+        "productEvents": "Product events",
+        "contentAgent": "Content agent",
+        "celery": "Background jobs",
+        "backups": "Backups"
+      },
+      "health": {
+        "system": "Server",
+        "services": "Services",
+        "database": "Database",
+        "requests": "Requests",
+        "integrations": "Integrations"
+      },
+      "ai": {
+        "summary": "Summary"
+      },
+      "roles": {
+        "system": "System"
+      },
+      "analytics": {
+        "overview": "Overview",
+        "content": "Content",
+        "funnels": "Funnels",
+        "coursePopularity": "Course popularity",
+        "contentPerformance": "Content performance",
+        "vocabulary": "Vocabulary effectiveness",
+        "activation": "Activation funnel",
+        "completion": "Completion funnel"
+      },
+      "audit": {
+        "empty": "No audit events match"
+      },
+      "config": {
+        "info": "Server configuration"
+      },
+      "admins": {
+        "webOnly": "Granting or removing admin roles is done in the web admin."
+      }
     }
   }
 }
