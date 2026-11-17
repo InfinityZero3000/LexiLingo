@@ -1,10 +1,12 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/review_session_entity.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/user_vocabulary_entity.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/vocabulary_item_entity.dart';
@@ -94,6 +96,29 @@ Future<AnimationController> _pump(
   return exit;
 }
 
+class _NoStrings extends AssetLoader {
+  const _NoStrings();
+  @override
+  Future<Map<String, dynamic>> load(String path, Locale locale) async => {};
+}
+
+/// The card's back reads `context.locale`, so it needs the real scope.
+Widget _localized(Widget child) => EasyLocalization(
+  supportedLocales: const [Locale('en')],
+  path: 'unused',
+  fallbackLocale: const Locale('en'),
+  startLocale: const Locale('en'),
+  assetLoader: const _NoStrings(),
+  child: Builder(
+    builder: (context) => MaterialApp(
+      locale: context.locale,
+      supportedLocales: context.supportedLocales,
+      localizationsDelegates: context.localizationDelegates,
+      home: Scaffold(body: child),
+    ),
+  ),
+);
+
 Finder _layers() => find.byWidgetPredicate(
   (w) =>
       w.key is ValueKey<String> &&
@@ -107,6 +132,9 @@ void main() {
   final hasFont = File('$fontDir/Roboto-Regular.ttf').existsSync();
 
   setUpAll(() async {
+    SharedPreferences.setMockInitialValues({});
+    EasyLocalization.logger.enableLevels = [];
+    await EasyLocalization.ensureInitialized();
     // Ahem (the default test font) is a full em wide and reports overflows
     // no device has.
     if (!hasFont) return;
@@ -149,6 +177,52 @@ void main() {
     tester,
   ) async {
     await _pump(tester, _session(total: 120, reviewed: 99), width: 320);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('a new card is face up at once, never mid-flip', (tester) async {
+    Widget host(String word, {required bool flipped}) => _localized(
+      FlashcardWidget(
+        key: ValueKey(word),
+        card: _card(word),
+        isFlipped: flipped,
+        onTap: () {},
+      ),
+    );
+
+    await tester.pumpWidget(host('alpha', flipped: true));
+    await tester.pumpAndSettle();
+    expect(find.text('vocabulary.tapToReveal'), findsNothing); // on its back
+
+    await tester.pumpWidget(host('beta', flipped: false));
+    await tester.pump(); // one frame: no flip-back to sit through
+
+    expect(find.text('vocabulary.tapToReveal'), findsOneWidget);
+    expect(
+      find.text('someone who speaks or acts for other people'),
+      findsNothing,
+    );
+  });
+
+  testWidgets('flipping takes the card to its back and stays there', (
+    tester,
+  ) async {
+    Widget host({required bool flipped}) => _localized(
+      FlashcardWidget(
+        key: const ValueKey('w'),
+        card: _card('gamma'),
+        isFlipped: flipped,
+        onTap: () {},
+      ),
+    );
+    await tester.pumpWidget(host(flipped: false));
+    await tester.pumpAndSettle();
+    await tester.pumpWidget(host(flipped: true));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    expect(find.text('vocabulary.tapToReveal'), findsOneWidget); // before 90°
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('vocabulary.tapToReveal'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

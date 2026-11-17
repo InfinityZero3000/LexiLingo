@@ -27,6 +27,7 @@ class FlashcardReviewScreen extends StatefulWidget {
 class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _slideController;
+  bool _submitting = false;
 
   @override
   void initState() {
@@ -52,29 +53,31 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
   }
 
   Future<void> _handleReview(ReviewQuality quality) async {
+    // The buttons only lock once the provider is loading, which is after the
+    // card has flown out; a second tap in that window rated the card twice.
+    if (_submitting) return;
+    _submitting = true;
     final provider = context.read<FlashcardProvider>();
 
-    // Animate card sliding out
-    await _slideController.forward();
+    try {
+      await _slideController.forward();
+      await provider.submitReview(quality);
 
-    // Submit review
-    await provider.submitReview(quality);
-
-    // Check if session is complete
-    if (provider.currentSession?.isCompleted ?? false) {
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (_) =>
-                SessionCompleteScreen(session: provider.currentSession!),
-          ),
-        );
+      if (provider.currentSession?.isCompleted ?? false) {
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) =>
+                  SessionCompleteScreen(session: provider.currentSession!),
+            ),
+          );
+        }
+        return;
       }
-      return;
+      if (mounted) _slideController.reset();
+    } finally {
+      _submitting = false;
     }
-
-    // Reset animation for next card
-    _slideController.reset();
   }
 
   void _openSpeakingPractice() {
@@ -235,6 +238,10 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
                           behind: session.remainingCards - 1,
                           exit: _slideController,
                           child: FlashcardWidget(
+                            // A new word gets a new widget, face up. Reusing
+                            // the old one flipped it back over 600ms and
+                            // showed the new word's answer on the way.
+                            key: ValueKey(currentCard.userVocabulary.id),
                             card: currentCard,
                             isFlipped: provider.isCardFlipped,
                             onTap: () {

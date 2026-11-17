@@ -43,13 +43,15 @@ class ReviewDeck extends StatelessWidget {
     final accent = AppColorRoles.primary(isDark);
     final layers = behind.clamp(0, maxBehind);
 
+    Color layerColor(int depth) => Color.alphaBlend(
+      accent.withValues(alpha: (isDark ? 0.14 : 0.13) * depth),
+      surface,
+    );
+
     Widget layer(int depth, String id) => ExcludeSemantics(
       child: Material(
         key: ValueKey('deck-layer-$id'),
-        color: Color.alphaBlend(
-          accent.withValues(alpha: (isDark ? 0.14 : 0.13) * depth),
-          surface,
-        ),
+        color: layerColor(depth),
         elevation: 1,
         shadowColor: Colors.black12,
         borderRadius: BorderRadius.circular(24),
@@ -86,7 +88,14 @@ class ReviewDeck extends StatelessWidget {
                 offset: Offset(-1.3 * box.maxWidth * exit.value, 0),
                 child: Transform.rotate(
                   angle: -0.22 * exit.value,
-                  child: Opacity(opacity: 1 - exit.value * 0.4, child: child),
+                  child: Opacity(
+                    opacity: 1 - exit.value * 0.4,
+                    child: _FaceReveal(
+                      key: child.key,
+                      cover: layerColor(1),
+                      child: child,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -111,4 +120,41 @@ class ReviewDeck extends StatelessWidget {
       ),
     ),
   );
+}
+
+/// A new card arrives where a blank pile layer has just settled, so it starts
+/// covered in that layer's colour and the cover fades: the layer turns into
+/// the card instead of the card popping in over it.
+class _FaceReveal extends StatelessWidget {
+  const _FaceReveal({super.key, required this.cover, required this.child});
+
+  final Color cover;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        child,
+        Positioned.fill(
+          child: IgnorePointer(
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 1, end: 0),
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOut,
+              builder: (context, value, _) => value == 0
+                  ? const SizedBox.shrink()
+                  : Opacity(
+                      opacity: value,
+                      child: Material(
+                        color: cover,
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                    ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
