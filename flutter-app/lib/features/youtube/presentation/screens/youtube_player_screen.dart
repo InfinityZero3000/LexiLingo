@@ -15,6 +15,7 @@ import 'package:lexilingo_app/core/services/quick_save_vocabulary_service.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/youtube_entities.dart';
 import '../providers/youtube_provider.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// YouTube Player Screen — player + subtitles with tap-to-translate,
 /// save video, speed control, and translation history.
@@ -171,8 +172,10 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
   }
 
   void _onWordTap(String word, {String? contextSentence}) {
-    final cleanWord =
-        word.replaceAll(RegExp(r"[^\w\s'-]"), '').trim().toLowerCase();
+    final cleanWord = word
+        .replaceAll(RegExp(r"[^\w\s'-]"), '')
+        .trim()
+        .toLowerCase();
     if (cleanWord.isEmpty) return;
 
     showModalBottomSheet(
@@ -194,7 +197,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
       context: context,
       backgroundColor: Colors.transparent,
       builder: (_) => Container(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+        padding: const EdgeInsets.fromLTRB(20, AppSpacing.md, 20, 28),
         decoration: BoxDecoration(
           color: isDark ? AppColors.surfaceDark : AppColors.textInverted,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
@@ -208,17 +211,19 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                 width: 36,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.textInverted.withValues(alpha: 0.24) : AppColors.grey300,
+                  color: isDark
+                      ? AppColors.textInverted.withValues(alpha: 0.24)
+                      : AppColors.grey300,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             Text(
               'voice.playbackSpeed'.tr(),
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: 14),
             Wrap(
@@ -235,30 +240,35 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 10),
+                      horizontal: 20,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? AppColors.primary
+                          ? Theme.of(context).colorScheme.primary
                           : (isDark
-                              ? AppColors.textInverted.withValues(alpha: 0.08)
-                              : AppColors.grey100),
-                      borderRadius: BorderRadius.circular(10),
+                                ? AppColors.textInverted.withValues(alpha: 0.08)
+                                : AppColors.grey100),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       border: Border.all(
                         color: isSelected
-                            ? AppColors.primary
+                            ? Theme.of(context).colorScheme.primary
                             : (isDark
-                                ? AppColors.textInverted.withValues(alpha: 0.1)
-                                : AppColors.grey200),
+                                  ? AppColors.textInverted.withValues(
+                                      alpha: 0.1,
+                                    )
+                                  : AppColors.grey200),
                       ),
                     ),
                     child: Text(
                       speed == 1.0 ? 'voice.speedNormal'.tr() : '${speed}x',
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: isSelected
                             ? AppColors.textInverted
-                            : (isDark ? AppColors.textOnDarkSecondary : AppColors.textDark),
+                            : (isDark
+                                  ? AppColors.textOnDarkSecondary
+                                  : Theme.of(context).colorScheme.onSurface),
                         fontWeight: FontWeight.w600,
-                        fontSize: 14,
                       ),
                     ),
                   ),
@@ -276,8 +286,9 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? AppColors.backgroundDark : const Color(0xFFF7F8FC),
+      backgroundColor: isDark
+          ? AppColors.backgroundDark
+          : const Color(0xFFF7F8FC),
       body: SafeArea(
         child: FadeTransition(
           opacity: _fadeController,
@@ -287,10 +298,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                 child: TabBarView(
                   controller: _tabController,
                   physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    _buildCaptionsTab(isDark),
-                    _buildVocabTab(isDark),
-                  ],
+                  children: [_buildCaptionsTab(isDark), _buildVocabTab(isDark)],
                 ),
               );
 
@@ -322,7 +330,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                             flex: 2,
                             child: Column(
                               children: [
-                                const SizedBox(height: 8),
+                                const SizedBox(height: AppSpacing.sm),
                                 _buildTabBar(isDark),
                                 tabs,
                               ],
@@ -368,22 +376,27 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
   Widget _buildTopHeader(bool isDark) {
     return Container(
       color: isDark ? AppColors.backgroundDark : AppColors.textInverted,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: 10,
+      ),
       child: Row(
         children: [
           AppBackButton(
             onPressed: () => Navigator.pop(context),
-            color: isDark ? AppColors.textInverted : AppColors.textDark,
+            color: isDark
+                ? AppColors.textInverted
+                : Theme.of(context).colorScheme.onSurface,
             iconSize: 18,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Text(
               'youtube.learnThroughVideo'.tr(),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.2,
-                  ),
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.2,
+              ),
             ),
           ),
         ],
@@ -413,21 +426,32 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
           return const SizedBox.shrink();
         }
         final captions = provider.captions;
-        final hasActive = _activeCaptionIndex >= 0 && _activeCaptionIndex < captions.length;
+        final hasActive =
+            _activeCaptionIndex >= 0 && _activeCaptionIndex < captions.length;
         final activeText = hasActive ? captions[_activeCaptionIndex].text : '';
 
         return Container(
-          margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          margin: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.sm,
+            AppSpacing.lg,
+            AppSpacing.xs,
+          ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
+          ),
           decoration: BoxDecoration(
             color: isDark
                 ? AppColors.textInverted.withValues(alpha: 0.05)
-                : AppColors.primary.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(12),
+                : Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             border: Border.all(
               color: isDark
                   ? AppColors.textInverted.withValues(alpha: 0.1)
-                  : AppColors.primary.withValues(alpha: 0.1),
+                  : Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.1),
             ),
           ),
           child: Row(
@@ -435,10 +459,14 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
             children: [
               Icon(
                 Icons.subtitles_rounded,
-                color: hasActive ? AppColors.primary : (isDark ? AppColors.textInverted.withValues(alpha: 0.3) : AppColors.grey400),
+                color: hasActive
+                    ? Theme.of(context).colorScheme.primary
+                    : (isDark
+                          ? AppColors.textInverted.withValues(alpha: 0.3)
+                          : AppColors.grey400),
                 size: 20,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: hasActive
                     ? Wrap(
@@ -446,17 +474,25 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                         runSpacing: 4,
                         children: activeText.split(' ').map((word) {
                           return GestureDetector(
-                            onTap: () => _onWordTap(word, contextSentence: activeText),
+                            onTap: () =>
+                                _onWordTap(word, contextSentence: activeText),
                             child: Text(
                               '$word ',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: isDark ? AppColors.textInverted : AppColors.textDark,
-                                decoration: TextDecoration.underline,
-                                decorationColor: AppColors.primary.withValues(alpha: 0.4),
-                                decorationStyle: TextDecorationStyle.dashed,
-                              ),
+                              style: Theme.of(context).textTheme.bodyLarge
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: isDark
+                                        ? AppColors.textInverted
+                                        : Theme.of(
+                                            context,
+                                          ).colorScheme.onSurface,
+                                    decoration: TextDecoration.underline,
+                                    decorationColor: Theme.of(context)
+                                        .colorScheme
+                                        .primary
+                                        .withValues(alpha: 0.4),
+                                    decorationStyle: TextDecorationStyle.dashed,
+                                  ),
                             ),
                           );
                         }).toList(),
@@ -464,13 +500,15 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                     : Text(
                         (switch (provider.captionsStatus) {
                           CaptionsStatus.none => 'youtube.noSubtitles',
-                          CaptionsStatus.unavailable => 'youtube.subtitlesUnavailable',
+                          CaptionsStatus.unavailable =>
+                            'youtube.subtitlesUnavailable',
                           _ => 'youtube.subtitlePlaceholder',
                         }).tr(),
-                        style: TextStyle(
-                          fontSize: 14,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           fontStyle: FontStyle.italic,
-                          color: isDark ? AppColors.textInverted.withValues(alpha: 0.3) : AppColors.textGrey,
+                          color: isDark
+                              ? AppColors.textInverted.withValues(alpha: 0.3)
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
               ),
@@ -495,7 +533,12 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
   Widget _buildInfoBar(bool isDark) {
     return Container(
       color: isDark ? AppColors.backgroundDark : AppColors.textInverted,
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 8),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        10,
+        AppSpacing.lg,
+        AppSpacing.sm,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -504,11 +547,16 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.person_rounded,
-                color: AppColors.primary, size: 20),
+            child: Icon(
+              Icons.person_rounded,
+              color: Theme.of(context).colorScheme.primary,
+              size: 20,
+            ),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -517,10 +565,11 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
               children: [
                 Text(
                   widget.video.title,
-                  style: TextStyle(
-                    fontSize: 14,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: isDark ? AppColors.textInverted : AppColors.textDark,
+                    color: isDark
+                        ? AppColors.textInverted
+                        : Theme.of(context).colorScheme.onSurface,
                     height: 1.3,
                   ),
                   maxLines: 2,
@@ -531,28 +580,31 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                   children: [
                     Text(
                       widget.video.channelTitle,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: isDark ? AppColors.textOnDarkMuted : AppColors.textGrey,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: isDark
+                            ? AppColors.textOnDarkMuted
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                     if (widget.video.cefrLevel.isNotEmpty) ...[
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpacing.sm),
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 1),
+                          horizontal: 6,
+                          vertical: 1,
+                        ),
                         decoration: BoxDecoration(
                           color: _cefrColor(widget.video.cefrLevel),
                           borderRadius: BorderRadius.circular(5),
                         ),
                         child: Text(
                           widget.video.cefrLevel,
-                          style: const TextStyle(
-                            color: AppColors.textInverted,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                          ),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: AppColors.textInverted,
+                                fontWeight: FontWeight.w700,
+                              ),
                         ),
                       ),
                     ],
@@ -577,15 +629,22 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
 
         return Container(
           color: isDark ? AppColors.backgroundDark : AppColors.textInverted,
-          padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.sm,
+            0,
+            AppSpacing.sm,
+            10,
+          ),
           child: Row(
             children: [
               _ActionButton(
                 icon: isSaved
                     ? Icons.bookmark_rounded
                     : Icons.bookmark_border_rounded,
-                label: isSaved ? 'youtube.saved'.tr() : 'youtube.saveVideo'.tr(),
-                color: isSaved ? AppColors.primary : null,
+                label: isSaved
+                    ? 'youtube.saved'.tr()
+                    : 'youtube.saveVideo'.tr(),
+                color: isSaved ? Theme.of(context).colorScheme.primary : null,
                 isDark: isDark,
                 onTap: () {
                   if (isSaved) {
@@ -603,7 +662,9 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                     ? 'youtube.speed'.tr()
                     : '${_playbackSpeed}x',
                 isDark: isDark,
-                color: _playbackSpeed != 1.0 ? AppColors.primary : null,
+                color: _playbackSpeed != 1.0
+                    ? Theme.of(context).colorScheme.primary
+                    : null,
                 onTap: _showSpeedSheet,
               ),
               _ActionButton(
@@ -612,22 +673,29 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                 isDark: isDark,
                 onTap: () async {
                   final url = Uri.parse(
-                      'https://www.youtube.com/watch?v=${widget.video.videoId}');
+                    'https://www.youtube.com/watch?v=${widget.video.videoId}',
+                  );
                   if (await canLaunchUrl(url)) {
-                    await launchUrl(url,
-                        mode: LaunchMode.externalApplication);
+                    await launchUrl(url, mode: LaunchMode.externalApplication);
                   }
                 },
               ),
               Consumer<YouTubeProvider>(
                 builder: (context, prov, _) {
-                  final histCount =
-                      prov.translationHistoryFor(widget.video.videoId).length;
+                  final histCount = prov
+                      .translationHistoryFor(widget.video.videoId)
+                      .length;
                   return _ActionButton(
                     icon: Icons.history_edu_rounded,
-                    label: histCount > 0 ? 'youtube.wordCount'.tr(namedArgs: {'count': '$histCount'}) : 'lesson.vocabulary'.tr(),
+                    label: histCount > 0
+                        ? 'youtube.wordCount'.tr(
+                            namedArgs: {'count': '$histCount'},
+                          )
+                        : 'lesson.vocabulary'.tr(),
                     isDark: isDark,
-                    color: histCount > 0 ? AppColors.primary : null,
+                    color: histCount > 0
+                        ? Theme.of(context).colorScheme.primary
+                        : null,
                     onTap: () => _tabController.animateTo(1),
                   );
                 },
@@ -646,7 +714,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
   Widget _buildTabBar(bool isDark) {
     return Container(
       color: isDark ? AppColors.backgroundDark : AppColors.textInverted,
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, 0, AppSpacing.lg, 0),
       child: Column(
         children: [
           Container(
@@ -655,23 +723,26 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
               color: isDark
                   ? AppColors.textInverted.withValues(alpha: 0.07)
                   : const Color(0xFFF3F4F6),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: TabBar(
               controller: _tabController,
               indicator: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(8),
+                color: Theme.of(context).colorScheme.primary,
+                borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               indicatorSize: TabBarIndicatorSize.tab,
               indicatorPadding: const EdgeInsets.all(3),
               labelColor: AppColors.textInverted,
-              unselectedLabelColor:
-                  isDark ? AppColors.textOnDarkMuted : AppColors.textGrey,
-              labelStyle: const TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w600),
-              unselectedLabelStyle: const TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w500),
+              unselectedLabelColor: isDark
+                  ? AppColors.textOnDarkMuted
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
+              labelStyle: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+              unselectedLabelStyle: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
               dividerColor: Colors.transparent,
               tabs: [
                 Tab(text: 'youtube.subtitles'.tr()),
@@ -679,7 +750,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
         ],
       ),
     );
@@ -694,37 +765,49 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
     final unavailable = provider.captionsStatus == CaptionsStatus.unavailable;
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              unavailable ? Icons.cloud_off_rounded : Icons.subtitles_off_rounded,
+              unavailable
+                  ? Icons.cloud_off_rounded
+                  : Icons.subtitles_off_rounded,
               size: 52,
-              color: isDark ? AppColors.textInverted.withValues(alpha: 0.24) : AppColors.grey300,
+              color: isDark
+                  ? AppColors.textInverted.withValues(alpha: 0.24)
+                  : AppColors.grey300,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             Text(
-              (unavailable ? 'youtube.subtitlesUnavailable' : 'youtube.noSubtitles').tr(),
+              (unavailable
+                      ? 'youtube.subtitlesUnavailable'
+                      : 'youtube.noSubtitles')
+                  .tr(),
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: isDark ? AppColors.textOnDarkSecondary : AppColors.textDark,
-                fontSize: 15,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: isDark
+                    ? AppColors.textOnDarkSecondary
+                    : Theme.of(context).colorScheme.onSurface,
                 fontWeight: FontWeight.w600,
               ),
             ),
             const SizedBox(height: 6),
             Text(
-              (unavailable ? 'youtube.subtitlesUnavailableHint' : 'youtube.noSubtitlesHint').tr(),
+              (unavailable
+                      ? 'youtube.subtitlesUnavailableHint'
+                      : 'youtube.noSubtitlesHint')
+                  .tr(),
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: isDark ? AppColors.textOnDarkMuted : AppColors.textGrey,
-                fontSize: 13,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: isDark
+                    ? AppColors.textOnDarkMuted
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
                 height: 1.4,
               ),
             ),
             if (unavailable) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               FilledButton.tonalIcon(
                 style: FilledButton.styleFrom(minimumSize: const Size(44, 44)),
                 onPressed: () => provider.loadCaptions(widget.video.videoId),
@@ -752,29 +835,47 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
         return Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                0,
+                AppSpacing.lg,
+                6,
+              ),
               child: Row(
                 children: [
-                  const Icon(Icons.subtitles_rounded,
-                      size: 15, color: AppColors.primary),
+                  Icon(
+                    Icons.subtitles_rounded,
+                    size: 15,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                   const SizedBox(width: 5),
                   Flexible(
                     child: Text(
-                    'youtube.segmentCount'.tr(namedArgs: {'count': '${provider.captions.length}'}),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark ? AppColors.textOnDarkMuted : AppColors.textGrey,
-                      fontWeight: FontWeight.w500,
-                    ), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      'youtube.segmentCount'.tr(
+                        namedArgs: {'count': '${provider.captions.length}'},
+                      ),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: isDark
+                            ? AppColors.textOnDarkMuted
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                   const Spacer(),
                   Flexible(
                     child: Text(
-                    'youtube.tapWordToLookUp'.tr(),
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: isDark ? AppColors.textInverted.withValues(alpha: 0.3) : AppColors.grey400,
-                    ), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      'youtube.tapWordToLookUp'.tr(),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: isDark
+                            ? AppColors.textInverted.withValues(alpha: 0.3)
+                            : AppColors.grey400,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ],
               ),
@@ -782,13 +883,22 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
             Expanded(
               child: ListView.builder(
                 controller: _captionScrollController,
-                padding: const EdgeInsets.fromLTRB(12, 0, 12, 24),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  0,
+                  AppSpacing.md,
+                  AppSpacing.xl,
+                ),
                 itemCount: provider.captions.length,
                 itemBuilder: (context, index) {
                   final segment = provider.captions[index];
                   final isActive = index == _activeCaptionIndex;
-                  return _buildCaptionRow(index, segment, isDark,
-                      isActive: isActive);
+                  return _buildCaptionRow(
+                    index,
+                    segment,
+                    isDark,
+                    isActive: isActive,
+                  );
                 },
               ),
             ),
@@ -798,22 +908,32 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
     );
   }
 
-  Widget _buildCaptionRow(int index, CaptionSegment segment, bool isDark,
-      {required bool isActive}) {
+  Widget _buildCaptionRow(
+    int index,
+    CaptionSegment segment,
+    bool isDark, {
+    required bool isActive,
+  }) {
     return AnimatedContainer(
       key: _captionRowKeys.putIfAbsent(index, GlobalKey.new),
       duration: const Duration(milliseconds: 350),
       curve: Curves.easeOutCubic,
-      margin: const EdgeInsets.only(bottom: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      margin: const EdgeInsets.only(bottom: AppSpacing.xs),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: isActive
-            ? AppColors.primary.withValues(alpha: 0.08)
+            ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.08)
             : Colors.transparent,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: isActive
             ? Border.all(
-                color: AppColors.primary.withValues(alpha: 0.15))
+                color: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.15),
+              )
             : null,
       ),
       child: Row(
@@ -828,53 +948,58 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
               decoration: BoxDecoration(
                 color: isActive
-                    ? AppColors.primary.withValues(alpha: 0.15)
+                    ? Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.15)
                     : (isDark
-                        ? AppColors.textInverted.withValues(alpha: 0.06)
-                        : AppColors.grey100),
+                          ? AppColors.textInverted.withValues(alpha: 0.06)
+                          : AppColors.grey100),
                 borderRadius: BorderRadius.circular(5),
               ),
               child: Text(
                 _formatTimestamp(segment.startMs),
-                style: TextStyle(
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: isActive
-                      ? AppColors.primary
-                      : (isDark ? AppColors.textOnDarkMuted : AppColors.textGrey),
-                  fontSize: 10,
+                      ? Theme.of(context).colorScheme.primary
+                      : (isDark
+                            ? AppColors.textOnDarkMuted
+                            : Theme.of(context).colorScheme.onSurfaceVariant),
                   fontWeight: FontWeight.w700,
                   fontFamily: 'monospace',
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: AnimatedOpacity(
               opacity: isActive ? 1 : 0.55,
               duration: const Duration(milliseconds: 350),
               curve: Curves.easeOutCubic,
               child: Wrap(
-              spacing: 3,
-              runSpacing: 3,
-              children: segment.text.split(' ').map((word) {
-                return GestureDetector(
-                  onTap: () =>
-                      _onWordTap(word, contextSentence: segment.text),
-                  child: Text(
-                    '$word ',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? AppColors.textInverted : AppColors.textDark,
-                      decoration: TextDecoration.underline,
-                      decorationColor:
-                          AppColors.primary.withValues(alpha: 0.25),
-                      decorationStyle: TextDecorationStyle.dotted,
+                spacing: 3,
+                runSpacing: 3,
+                children: segment.text.split(' ').map((word) {
+                  return GestureDetector(
+                    onTap: () =>
+                        _onWordTap(word, contextSentence: segment.text),
+                    child: Text(
+                      '$word ',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: isDark
+                            ? AppColors.textInverted
+                            : Theme.of(context).colorScheme.onSurface,
+                        decoration: TextDecoration.underline,
+                        decorationColor: Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: 0.25),
+                        decorationStyle: TextDecorationStyle.dotted,
+                      ),
                     ),
-                  ),
-                );
-              }).toList(),
-            ),
+                  );
+                }).toList(),
+              ),
             ),
           ),
         ],
@@ -889,32 +1014,37 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
   Widget _buildVocabTab(bool isDark) {
     return Consumer<YouTubeProvider>(
       builder: (context, provider, _) {
-        final history =
-            provider.translationHistoryFor(widget.video.videoId);
+        final history = provider.translationHistoryFor(widget.video.videoId);
 
         if (history.isEmpty) {
           return Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.translate_rounded,
-                    size: 52,
-                    color: isDark ? AppColors.textInverted.withValues(alpha: 0.24) : AppColors.grey300),
+                Icon(
+                  Icons.translate_rounded,
+                  size: 52,
+                  color: isDark
+                      ? AppColors.textInverted.withValues(alpha: 0.24)
+                      : AppColors.grey300,
+                ),
                 const SizedBox(height: 10),
                 Text(
                   'youtube.noLookupsYet'.tr(),
-                  style: TextStyle(
-                    color: isDark ? AppColors.textOnDarkMuted : AppColors.textGrey,
-                    fontSize: 14,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: isDark
+                        ? AppColors.textOnDarkMuted
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
                   'youtube.tapWordInSubtitle'.tr(),
-                  style: TextStyle(
-                    color: isDark ? AppColors.textInverted.withValues(alpha: 0.24) : AppColors.grey400,
-                    fontSize: 12,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: isDark
+                        ? AppColors.textInverted.withValues(alpha: 0.24)
+                        : AppColors.grey400,
                   ),
                 ),
               ],
@@ -923,7 +1053,12 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
         }
 
         return ListView.separated(
-          padding: const EdgeInsets.fromLTRB(12, 4, 12, 32),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.xs,
+            AppSpacing.md,
+            AppSpacing.xxl,
+          ),
           itemCount: history.length,
           separatorBuilder: (_, __) => Divider(
             height: 1,
@@ -933,8 +1068,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                 ? AppColors.textInverted.withValues(alpha: 0.05)
                 : AppColors.grey200,
           ),
-          itemBuilder: (context, i) =>
-              _buildHistoryItem(history[i], isDark),
+          itemBuilder: (context, i) => _buildHistoryItem(history[i], isDark),
         );
       },
     );
@@ -942,11 +1076,13 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
 
   Widget _buildHistoryItem(WordTranslation item, bool isDark) {
     return InkWell(
-      onTap: () =>
-          _onWordTap(item.word, contextSentence: item.contextSentence),
-      borderRadius: BorderRadius.circular(10),
+      onTap: () => _onWordTap(item.word, contextSentence: item.contextSentence),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: 10,
+        ),
         child: Row(
           children: [
             Expanded(
@@ -957,41 +1093,47 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                     children: [
                       Text(
                         item.word,
-                        style: TextStyle(
-                          fontSize: 15,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           fontWeight: FontWeight.w700,
-                          color: isDark ? AppColors.textInverted : AppColors.textDark,
+                          color: isDark
+                              ? AppColors.textInverted
+                              : Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                       if (item.phonetic.isNotEmpty) ...[
                         const SizedBox(width: 6),
                         Text(
                           item.phonetic,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: isDark
-                                ? AppColors.textOnDarkMuted
-                                : AppColors.textGrey,
-                          ),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: isDark
+                                    ? AppColors.textOnDarkMuted
+                                    : Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                              ),
                         ),
                       ],
                       if (item.partOfSpeech.isNotEmpty) ...[
                         const SizedBox(width: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 5, vertical: 1),
+                            horizontal: 5,
+                            vertical: 1,
+                          ),
                           decoration: BoxDecoration(
-                            color:
-                                AppColors.primary.withValues(alpha: 0.1),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.primary.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
                             item.partOfSpeech,
-                            style: const TextStyle(
-                              fontSize: 9,
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w700,
-                            ),
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  fontWeight: FontWeight.w700,
+                                ),
                           ),
                         ),
                       ],
@@ -1001,11 +1143,12 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                     const SizedBox(height: 2),
                     Text(
                       item.translation,
-                      style: TextStyle(
-                        fontSize: 13,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: isDark
-                            ? AppColors.primary.withValues(alpha: 0.85)
-                            : AppColors.primary,
+                            ? Theme.of(
+                                context,
+                              ).colorScheme.primary.withValues(alpha: 0.85)
+                            : Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -1016,21 +1159,24 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                       '"${item.contextSentence}"',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         fontStyle: FontStyle.italic,
-                        color: isDark ? AppColors.textInverted.withValues(alpha: 0.3) : AppColors.textGrey,
+                        color: isDark
+                            ? AppColors.textInverted.withValues(alpha: 0.3)
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
                 ],
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.sm),
             Icon(
               Icons.chevron_right_rounded,
               size: 18,
-              color: isDark ? AppColors.textInverted.withValues(alpha: 0.20) : AppColors.grey300,
+              color: isDark
+                  ? AppColors.textInverted.withValues(alpha: 0.20)
+                  : AppColors.grey300,
             ),
           ],
         ),
@@ -1044,12 +1190,14 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
 
   void _showSnack(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg),
-      behavior: SnackBarBehavior.floating,
-      duration: const Duration(seconds: 2),
-      backgroundColor: AppColors.primary,
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+      ),
+    );
   }
 
   String _formatTimestamp(int ms) {
@@ -1062,7 +1210,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
   Color _cefrColor(String level) {
     switch (level) {
       case 'A1':
-        return AppColors.greenSuccessBright;
+        return context.status.success;
       case 'A2':
         return AppColors.greenSuccessSoft;
       case 'B1':
@@ -1074,7 +1222,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
       case 'C2':
         return AppColors.purple;
       default:
-        return AppColors.primary;
+        return Theme.of(context).colorScheme.primary;
     }
   }
 }
@@ -1101,24 +1249,24 @@ class _ActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final effectiveColor =
-        color ?? (isDark ? AppColors.textOnDarkMuted : AppColors.textGrey);
+        color ??
+        (isDark
+            ? AppColors.textOnDarkMuted
+            : Theme.of(context).colorScheme.onSurfaceVariant);
 
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
           decoration: BoxDecoration(
             color: isDark
                 ? AppColors.textInverted.withValues(alpha: 0.07)
                 : const Color(0xFFF3F4F6),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             border: color != null
-                ? Border.all(
-                    color: color!.withValues(alpha: 0.25),
-                    width: 1,
-                  )
+                ? Border.all(color: color!.withValues(alpha: 0.25), width: 1)
                 : null,
           ),
           child: Column(
@@ -1128,8 +1276,7 @@ class _ActionButton extends StatelessWidget {
               const SizedBox(height: 3),
               Text(
                 label,
-                style: TextStyle(
-                  fontSize: 10,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: effectiveColor,
                 ),
@@ -1222,13 +1369,19 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(result.alreadyInCollection && result.reviewScheduled
-              ? 'vocabulary.resavedForReview'.tr()
-              : result.alreadyInCollection
-              ? 'youtube.wordAlreadySaved'.tr(namedArgs: {'word': result.normalizedWord})
-              : 'youtube.wordSaved'.tr(namedArgs: {'word': result.normalizedWord})),
+          content: Text(
+            result.alreadyInCollection && result.reviewScheduled
+                ? 'vocabulary.resavedForReview'.tr()
+                : result.alreadyInCollection
+                ? 'youtube.wordAlreadySaved'.tr(
+                    namedArgs: {'word': result.normalizedWord},
+                  )
+                : 'youtube.wordSaved'.tr(
+                    namedArgs: {'word': result.normalizedWord},
+                  ),
+          ),
           behavior: SnackBarBehavior.floating,
-          backgroundColor: AppColors.greenSuccess,
+          backgroundColor: context.status.success,
         ),
       );
     } catch (e) {
@@ -1249,7 +1402,8 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
         maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),
       padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom),
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+      ),
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : AppColors.textInverted,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -1269,29 +1423,31 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
 
   Widget _buildLoading(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.all(AppSpacing.xxl),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           _dragHandle(isDark),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.xl),
           Text(
             widget.word,
-            style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
-                color: AppColors.primary),
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: Theme.of(context).colorScheme.primary,
+            ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.xl),
           const LottieLoadingWidget.medium(),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             'youtube.lookingUp'.tr(),
-            style: TextStyle(
-                color: isDark ? AppColors.textOnDarkMuted : AppColors.textGrey,
-                fontSize: 13),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: isDark
+                  ? AppColors.textOnDarkMuted
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.xl),
         ],
       ),
     );
@@ -1299,7 +1455,12 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
 
   Widget _buildResult(BuildContext context, WordTranslation t, bool isDark) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.xl,
+        AppSpacing.md,
+        AppSpacing.xl,
+        AppSpacing.xl,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -1313,10 +1474,10 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
             children: [
               Text(
                 t.word,
-                style: const TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.primary),
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
               ),
               if (t.hasPhonetic) ...[
                 const SizedBox(width: 10),
@@ -1324,9 +1485,11 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
                   padding: const EdgeInsets.only(bottom: 3),
                   child: Text(
                     t.phonetic,
-                    style: TextStyle(
-                        fontSize: 14,
-                        color: isDark ? AppColors.textOnDarkMuted : AppColors.textGrey),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: isDark
+                          ? AppColors.textOnDarkMuted
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ],
@@ -1334,19 +1497,24 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
           ),
 
           if (t.partOfSpeech.isNotEmpty) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: 3,
+              ),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
+                color: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
                 t.partOfSpeech,
-                style: const TextStyle(
-                    color: AppColors.primary,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
@@ -1357,95 +1525,114 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
           if (t.hasTranslation) ...[
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.md,
+              ),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.07),
-                borderRadius: BorderRadius.circular(12),
+                color: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.07),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 border: Border.all(
-                    color: AppColors.primary.withValues(alpha: 0.15)),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.15),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'vocabulary.translationLabel'.tr(),
-                    style: TextStyle(
-                        fontSize: 11,
-                        color: isDark ? AppColors.textOnDarkMuted : AppColors.textGrey,
-                        fontWeight: FontWeight.w600),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: isDark
+                          ? AppColors.textOnDarkMuted
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     t.translation,
-                    style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: isDark ? AppColors.textInverted : AppColors.textDark),
+                    style: Theme.of(context).textTheme.sectionTitle?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: isDark
+                          ? AppColors.textInverted
+                          : Theme.of(context).colorScheme.onSurface,
+                    ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
           ],
 
           // English definition
           if (t.hasDefinition) ...[
             _sectionLabel('vocabulary.definition'.tr(), isDark),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               t.definition,
-              style: TextStyle(
-                  fontSize: 14,
-                  color: isDark
-                      ? AppColors.textInverted.withValues(alpha: 0.87)
-                      : AppColors.textDark,
-                  height: 1.5),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: isDark
+                    ? AppColors.textInverted.withValues(alpha: 0.87)
+                    : Theme.of(context).colorScheme.onSurface,
+                height: 1.5,
+              ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
           ],
 
           // Examples
           if (t.examples.isNotEmpty) ...[
             _sectionLabel('vocabulary.examples'.tr(), isDark),
             const SizedBox(height: 6),
-            ...t.examples.take(2).map(
-              (ex) => Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('• ',
-                        style: TextStyle(color: AppColors.primary)),
-                    Expanded(
-                      child: Text(
-                        ex,
-                        style: TextStyle(
-                            fontSize: 13,
-                            fontStyle: FontStyle.italic,
-                            color: isDark
-                                ? AppColors.textOnDarkSecondary
-                                : AppColors.textDark,
-                            height: 1.45),
-                      ),
+            ...t.examples
+                .take(2)
+                .map(
+                  (ex) => Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '• ',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            ex,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  fontStyle: FontStyle.italic,
+                                  color: isDark
+                                      ? AppColors.textOnDarkSecondary
+                                      : Theme.of(context).colorScheme.onSurface,
+                                  height: 1.45,
+                                ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
           ],
 
           // Context sentence
           if (widget.contextSentence != null) ...[
             _sectionLabel('youtube.sentenceInVideo'.tr(), isDark),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: isDark
                     ? AppColors.textInverted.withValues(alpha: 0.05)
                     : AppColors.grey100,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: _HighlightedSentence(
                 sentence: widget.contextSentence!,
@@ -1453,21 +1640,20 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
                 isDark: isDark,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
           ],
 
           if (_saveError != null) ...[
             const SizedBox(height: 10),
             Text(
               _saveError!.resolve(),
-              style: const TextStyle(
-                color: AppColors.errorBright,
-                fontSize: 12,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.error,
                 fontWeight: FontWeight.w500,
               ),
             ),
           ],
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           // Action buttons
           Row(
             children: [
@@ -1476,9 +1662,13 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
                   onPressed: () => Navigator.pop(context),
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(
-                        color: isDark ? AppColors.textInverted.withValues(alpha: 0.24) : AppColors.grey300),
+                      color: isDark
+                          ? AppColors.textInverted.withValues(alpha: 0.24)
+                          : AppColors.grey300,
+                    ),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 13),
                   ),
                   child: Text('common.close'.tr()),
@@ -1487,30 +1677,41 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
               const SizedBox(width: 10),
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: (_isSavingWord || _isSavedWord) ? null : () => _quickSave(t),
+                  onPressed: (_isSavingWord || _isSavedWord)
+                      ? null
+                      : () => _quickSave(t),
                   icon: _isSavingWord
                       ? const SizedBox(
-                          width: 16,
-                          height: 16,
+                          width: AppSpacing.lg,
+                          height: AppSpacing.lg,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
                             color: AppColors.textInverted,
                           ),
                         )
                       : Icon(
-                          _isSavedWord ? Icons.check_circle_rounded : Icons.bookmark_add_rounded,
+                          _isSavedWord
+                              ? Icons.check_circle_rounded
+                              : Icons.bookmark_add_rounded,
                           size: 16,
                         ),
-                  label: Text(_isSavingWord
-                      ? 'youtube.saving'.tr()
-                      : _isSavedWord
-                          ? 'youtube.saved'.tr()
-                          : 'youtube.saveWord'.tr()),
+                  label: Text(
+                    _isSavingWord
+                        ? 'youtube.saving'.tr()
+                        : _isSavedWord
+                        ? 'youtube.saved'.tr()
+                        : 'youtube.saveWord'.tr(),
+                  ),
                   style: FilledButton.styleFrom(
-                    backgroundColor: _isSavedWord ? AppColors.greenSuccess : AppColors.primary,
-                    disabledBackgroundColor: _isSavedWord ? AppColors.greenSuccess.withValues(alpha: 0.6) : null,
+                    backgroundColor: _isSavedWord
+                        ? context.status.success
+                        : Theme.of(context).colorScheme.primary,
+                    disabledBackgroundColor: _isSavedWord
+                        ? context.status.success.withValues(alpha: 0.6)
+                        : null,
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 13),
                   ),
                 ),
@@ -1523,23 +1724,26 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
   }
 
   Widget _dragHandle(bool isDark) => Container(
-        width: 36,
-        height: 4,
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.textInverted.withValues(alpha: 0.24) : AppColors.grey300,
-          borderRadius: BorderRadius.circular(2),
-        ),
-      );
+    width: 36,
+    height: 4,
+    decoration: BoxDecoration(
+      color: isDark
+          ? AppColors.textInverted.withValues(alpha: 0.24)
+          : AppColors.grey300,
+      borderRadius: BorderRadius.circular(2),
+    ),
+  );
 
   Widget _sectionLabel(String text, bool isDark) => Text(
-        text,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: isDark ? AppColors.textOnDarkMuted : AppColors.textGrey,
-          letterSpacing: 0.5,
-        ),
-      );
+    text,
+    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+      fontWeight: FontWeight.w700,
+      color: isDark
+          ? AppColors.textOnDarkMuted
+          : Theme.of(context).colorScheme.onSurfaceVariant,
+      letterSpacing: 0.5,
+    ),
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1566,25 +1770,29 @@ class _HighlightedSentence extends StatelessWidget {
     if (idx < 0) {
       return Text(
         sentence,
-        style: TextStyle(
-            fontSize: 13,
-            height: 1.45,
-            color: isDark ? AppColors.textOnDarkSecondary : AppColors.textDark),
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          height: 1.45,
+          color: isDark
+              ? AppColors.textOnDarkSecondary
+              : Theme.of(context).colorScheme.onSurface,
+        ),
       );
     }
 
     return RichText(
       text: TextSpan(
-        style: TextStyle(
-            fontSize: 13,
-            height: 1.45,
-            color: isDark ? AppColors.textOnDarkSecondary : AppColors.textDark),
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+          height: 1.45,
+          color: isDark
+              ? AppColors.textOnDarkSecondary
+              : Theme.of(context).colorScheme.onSurface,
+        ),
         children: [
           TextSpan(text: sentence.substring(0, idx)),
           TextSpan(
             text: sentence.substring(idx, idx + word.length),
-            style: const TextStyle(
-              color: AppColors.primary,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.primary,
               fontWeight: FontWeight.w700,
             ),
           ),

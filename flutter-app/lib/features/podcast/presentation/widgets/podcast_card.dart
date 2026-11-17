@@ -4,6 +4,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../../core/widgets/cefr_badge.dart';
 import '../../../../core/widgets/content_kit.dart';
 import '../../domain/entities/podcast_entities.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Square cover with title and author underneath, for horizontal shelves.
 ///
@@ -75,7 +76,7 @@ class PodcastCard extends StatelessWidget {
                                   shape: BoxShape.circle,
                                 ),
                                 child: Padding(
-                                  padding: const EdgeInsets.all(4),
+                                  padding: const EdgeInsets.all(AppSpacing.xs),
                                   child: Icon(
                                     PhosphorIconsBold.check,
                                     size: 12,
@@ -88,24 +89,22 @@ class PodcastCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   Text(
                     podcast.title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 14,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                       height: 1.3,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     podcast.author,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       height: 1.3,
                       color: contentMuted(context),
                     ),

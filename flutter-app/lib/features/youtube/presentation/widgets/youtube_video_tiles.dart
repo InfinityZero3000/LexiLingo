@@ -6,6 +6,7 @@ import '../../../../core/network/api_config.dart';
 import '../../../../core/widgets/cefr_badge.dart';
 import '../../../../core/widgets/content_kit.dart';
 import '../../domain/entities/youtube_entities.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// YouTube thumbnails are blocked by CORS on web, so they go through the
 /// backend image proxy; already-proxied and empty URLs pass through.
@@ -102,20 +103,20 @@ class YouTubeVideoTile extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: scheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: scheme.outlineVariant),
       ),
       child: Material(
         type: MaterialType.transparency,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppSpacing.md),
             child: Row(
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   child: SizedBox(
                     width: _thumbWidth,
                     child: AspectRatio(
@@ -124,7 +125,7 @@ class YouTubeVideoTile extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: MergeSemantics(
                     child: Column(
@@ -134,22 +135,22 @@ class YouTubeVideoTile extends StatelessWidget {
                           video.title,
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            height: 1.3,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                height: 1.3,
+                              ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: AppSpacing.xs),
                         Text(
                           video.channelTitle,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12,
-                            height: 1.3,
-                            color: contentMuted(context),
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                height: 1.3,
+                                color: contentMuted(context),
+                              ),
                         ),
                       ],
                     ),
@@ -238,30 +239,28 @@ class YouTubeShelfCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                     child: AspectRatio(
                       aspectRatio: 16 / 9,
                       child: YouTubeThumbnail(video: video),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   Text(
                     video.title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 14,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                       height: 1.3,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     video.channelTitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       height: 1.3,
                       color: contentMuted(context),
                     ),
@@ -273,7 +272,7 @@ class YouTubeShelfCard extends StatelessWidget {
                   type: MaterialType.transparency,
                   child: InkWell(
                     onTap: onTap,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                   ),
                 ),
               ),
@@ -351,14 +350,13 @@ class YouTubeChannelAvatar extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpacing.sm),
                     Text(
                       channel.name,
                       maxLines: 2,
                       textAlign: TextAlign.center,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 12,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         fontWeight: FontWeight.w600,
                         height: 1.3,
                       ),
@@ -396,8 +394,7 @@ class _Initial extends StatelessWidget {
       child: Center(
         child: Text(
           initial,
-          style: TextStyle(
-            fontSize: 22,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w700,
             color: scheme.onPrimaryContainer,
           ),

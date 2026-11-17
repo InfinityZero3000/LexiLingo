@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import '../providers/auth_provider.dart';
 import 'login_page.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Opened from the link in the verification email. The first verification signs the learner
 /// in and goes straight on to onboarding; a used or expired link offers a fresh one.
@@ -119,14 +120,14 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
               constraints: const BoxConstraints(maxWidth: 480),
               child: Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 32,
+                  horizontal: AppSpacing.xl,
+                  vertical: AppSpacing.xxl,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Icon(icon, size: 72, color: scheme.primary),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSpacing.xl),
                     Text(
                       title,
                       textAlign: TextAlign.center,
@@ -135,7 +136,7 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
                       ),
                     ),
                     if (body != null) ...[
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppSpacing.md),
                       Text(
                         body,
                         textAlign: TextAlign.center,
@@ -144,7 +145,7 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
                         ),
                       ),
                     ],
-                    const SizedBox(height: 32),
+                    const SizedBox(height: AppSpacing.xxl),
                     if (outcome == null)
                       const Center(child: CircularProgressIndicator()),
                     if (outcome == VerifyEmailOutcome.verified)
@@ -168,10 +169,10 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
                         ),
                         onSubmitted: (_) => _resend(),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: AppSpacing.lg),
                       if (_resendMessage != null)
                         Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.only(bottom: AppSpacing.md),
                           child: Text(
                             _resendMessage!,
                             textAlign: TextAlign.center,
@@ -198,7 +199,7 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> {
                               )
                             : Text('auth.emailVerificationResend'.tr()),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppSpacing.sm),
                       TextButton(
                         onPressed: _toLogin,
                         child: Text('auth.emailVerificationBackToLogin'.tr()),

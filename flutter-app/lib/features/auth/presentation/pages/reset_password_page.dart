@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class ResetPasswordPage extends StatefulWidget {
   const ResetPasswordPage({super.key, this.initialToken});
@@ -59,7 +60,10 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.md,
+              ),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -71,21 +75,21 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: isDark
-                            ? Colors.white
+                            ? AppColors.onGradient
                             : AppColors.surfaceDarkInput,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpacing.sm),
                     Text(
                       'auth.useResetToken'.tr(),
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: isDark
                             ? Colors.white70
-                            : AppColors.textSlateLight,
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSpacing.xl),
                     TextFormField(
                       controller: _tokenController,
                       maxLines: 2,
@@ -95,9 +99,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                         filled: true,
                         fillColor: isDark
                             ? AppColors.surfaceDarkInput
-                            : Colors.white,
+                            : AppColors.onGradient,
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                       ),
                       validator: (value) {
@@ -129,9 +133,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                         filled: true,
                         fillColor: isDark
                             ? AppColors.surfaceDarkInput
-                            : Colors.white,
+                            : AppColors.onGradient,
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                       ),
                       validator: (value) {
@@ -167,9 +171,9 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                         filled: true,
                         fillColor: isDark
                             ? AppColors.surfaceDarkInput
-                            : Colors.white,
+                            : AppColors.onGradient,
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                       ),
                       validator: (value) {
@@ -185,7 +189,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                     const SizedBox(height: 20),
                     SizedBox(
                       height: 56,
-                      child: ElevatedButton(
+                      child: FilledButton(
                         onPressed: authProvider.isLoading
                             ? null
                             : () async {
@@ -210,11 +214,11 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                                   );
                                 }
                               },
-                        style: ElevatedButton.styleFrom(
+                        style: FilledButton.styleFrom(
                           backgroundColor: AppColors.accentMint,
                           foregroundColor: AppColors.accentMintDark,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
                           elevation: 0,
                         ),
@@ -226,15 +230,13 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                               )
                             : Text(
                                 'auth.updatePassword'.tr(),
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: Theme.of(context).textTheme.bodyLarge
+                                    ?.copyWith(fontWeight: FontWeight.bold),
                               ),
                       ),
                     ),
                     if (_isResetDone) ...[
-                      const SizedBox(height: 16),
+                      const SizedBox(height: AppSpacing.lg),
                       TextButton(
                         onPressed: () {
                           Navigator.of(
@@ -245,12 +247,12 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                       ),
                     ],
                     if (authProvider.errorMessage != null) ...[
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppSpacing.md),
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(AppSpacing.md),
                         decoration: BoxDecoration(
                           color: Colors.red.shade50,
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                           border: Border.all(color: Colors.red.shade200),
                         ),
                         child: Row(

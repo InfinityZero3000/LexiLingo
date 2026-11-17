@@ -71,7 +71,9 @@ class _BookmarkButtonState extends State<BookmarkButton>
                 ? Icons.bookmark_rounded
                 : Icons.bookmark_border_rounded,
             key: ValueKey(widget.isBookmarked),
-            color: widget.isBookmarked ? activeColor : Colors.grey,
+            color: widget.isBookmarked
+                ? activeColor
+                : Theme.of(context).colorScheme.outline,
           ),
         ),
         tooltip: widget.isBookmarked

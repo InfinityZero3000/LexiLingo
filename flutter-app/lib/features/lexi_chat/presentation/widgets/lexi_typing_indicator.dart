@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Minimalist animated typing indicator showing Lexi is "thinking".
 /// Three subtle bouncing dots with clean design.
@@ -56,14 +57,19 @@ class _LexiTypingIndicatorState extends State<LexiTypingIndicator>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16, top: 4, bottom: 4),
+      padding: const EdgeInsets.only(
+        left: AppSpacing.lg,
+        right: AppSpacing.lg,
+        top: AppSpacing.xs,
+        bottom: AppSpacing.xs,
+      ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: isDark ? AppColors.surfaceDark : AppColors.backgroundLight,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(
                 color: isDark
                     ? AppColors.surfaceDarkChat
@@ -82,10 +88,11 @@ class _LexiTypingIndicatorState extends State<LexiTypingIndicator>
                       : 'lexiChat.nameTyping'.tr(
                           namedArgs: {'name': widget.name},
                         ),
-                  style: TextStyle(
-                    fontSize: 12,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontStyle: FontStyle.italic,
-                    color: isDark ? Colors.white54 : AppColors.textGrey,
+                    color: isDark
+                        ? Colors.white54
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
                     letterSpacing: -0.2,
                   ),
                 ),
@@ -108,7 +115,7 @@ class _LexiTypingIndicatorState extends State<LexiTypingIndicator>
                             ? AppColorRoles.primary(
                                 isDark,
                               ).withValues(alpha: 0.7)
-                            : AppColors.primary,
+                            : Theme.of(context).colorScheme.primary,
                         shape: BoxShape.circle,
                       ),
                     ),

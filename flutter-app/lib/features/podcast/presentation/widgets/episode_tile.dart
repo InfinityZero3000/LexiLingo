@@ -7,6 +7,7 @@ import '../../../../core/widgets/cefr_badge.dart';
 import '../../../../core/widgets/content_kit.dart';
 import '../../../../core/widgets/lottie_loading_widget.dart';
 import '../../domain/entities/podcast_entities.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Full-width card for a single podcast episode: a play disc, the title,
 /// length and age, and how far the learner got.
@@ -75,20 +76,20 @@ class EpisodeTile extends StatelessWidget {
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: scheme.surface,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(color: scheme.outlineVariant),
           ),
           child: Material(
             type: MaterialType.transparency,
             child: InkWell(
               onTap: onTap,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(AppSpacing.md),
                 child: Row(
                   children: [
                     _PlayDisc(done: episode.isCompleted),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: AppSpacing.md),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,13 +98,13 @@ class EpisodeTile extends StatelessWidget {
                             episode.title,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              height: 1.3,
-                            ),
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.3,
+                                ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: AppSpacing.xs),
                           Row(
                             children: [
                               Flexible(
@@ -111,15 +112,12 @@ class EpisodeTile extends StatelessWidget {
                                   meta,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    height: 1.3,
-                                    color: muted,
-                                  ),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(height: 1.3, color: muted),
                                 ),
                               ),
                               if (level != null) ...[
-                                const SizedBox(width: 8),
+                                const SizedBox(width: AppSpacing.sm),
                                 CefrBadge(
                                   level: level,
                                   size: CefrBadgeSize.small,
@@ -129,7 +127,7 @@ class EpisodeTile extends StatelessWidget {
                           ),
                           if (episode.listenProgress > 0 ||
                               episode.isCompleted) ...[
-                            const SizedBox(height: 8),
+                            const SizedBox(height: AppSpacing.sm),
                             ClipRRect(
                               borderRadius: BorderRadius.circular(2),
                               child: LinearProgressIndicator(
@@ -141,7 +139,7 @@ class EpisodeTile extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: AppSpacing.xs),
                             Text(
                               episode.isCompleted
                                   ? 'podcast.completed'.tr()
@@ -153,11 +151,8 @@ class EpisodeTile extends StatelessWidget {
                                     ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 12,
-                                height: 1.3,
-                                color: muted,
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(height: 1.3, color: muted),
                             ),
                           ],
                         ],

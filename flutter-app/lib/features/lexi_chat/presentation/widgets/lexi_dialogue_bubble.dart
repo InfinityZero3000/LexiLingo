@@ -7,6 +7,7 @@ import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.da
 import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_course_suggestions.dart';
 import 'package:lexilingo_app/features/voice/domain/entities/pronunciation_score.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/pronunciation_score_card.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Minimalist dialogue bubble for Lexi chat.
 ///
@@ -54,28 +55,32 @@ class LexiDialogueBubble extends StatelessWidget {
       children: [
         // Sender label
         Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 4),
+          padding: const EdgeInsets.only(
+            left: AppSpacing.xs,
+            bottom: AppSpacing.xs,
+          ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
                 'lexiChat.title'.tr(),
-                style: TextStyle(
-                  fontSize: 11,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   fontWeight: FontWeight.w500,
-                  color: isDark ? Colors.white54 : AppColors.textGrey,
+                  color: isDark
+                      ? Colors.white54
+                      : Theme.of(context).colorScheme.onSurfaceVariant,
                   letterSpacing: 0.2,
                 ),
               ),
               if (message.hasCorrections) ...[
-                const SizedBox(width: 4),
+                const SizedBox(width: AppSpacing.xs),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
+                    horizontal: AppSpacing.xs,
                     vertical: 1,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.accentYellow.withValues(
+                    color: context.status.warning.withValues(
                       alpha: isDark ? 0.2 : 0.15,
                     ),
                     borderRadius: BorderRadius.circular(4),
@@ -86,15 +91,14 @@ class LexiDialogueBubble extends StatelessWidget {
                       Icon(
                         Icons.auto_fix_high_rounded,
                         size: 10,
-                        color: AppColors.accentYellow,
+                        color: context.status.warning,
                       ),
                       const SizedBox(width: 2),
                       Text(
                         'lexiChat.correctionLabel'.tr(),
-                        style: TextStyle(
-                          fontSize: 9,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           fontWeight: FontWeight.w500,
-                          color: AppColors.accentYellow,
+                          color: context.status.warning,
                         ),
                       ),
                     ],
@@ -106,7 +110,10 @@ class LexiDialogueBubble extends StatelessWidget {
         ),
         // Message bubble
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
+          ),
           decoration: BoxDecoration(
             color: isDark ? AppColors.surfaceDark : AppColors.backgroundLight,
             borderRadius: const BorderRadius.only(
@@ -154,7 +161,7 @@ class LexiDialogueBubble extends StatelessWidget {
                           icon: Icons.auto_fix_high_rounded,
                           label: 'lexiChat.viewNotesButton'.tr(),
                           onTap: onShowCorrections,
-                          color: AppColors.accentYellow,
+                          color: context.status.warning,
                         ),
                       if (message.suggestedPractice != null &&
                           onSuggestedPracticeTap != null)
@@ -183,24 +190,28 @@ class LexiDialogueBubble extends StatelessWidget {
   }
 
   Widget _buildHiddenCaption(BuildContext context, bool isDark) {
-    final color = isDark ? Colors.white70 : AppColors.textGrey;
+    final color = isDark
+        ? Colors.white70
+        : Theme.of(context).colorScheme.onSurfaceVariant;
     return Semantics(
       button: true,
       label: 'lexiChat.voice.tapToReveal'.tr(),
       child: InkWell(
         onTap: onRevealCaption,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: 44),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(Icons.visibility_off_rounded, size: 18, color: color),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.sm),
               Flexible(
                 child: Text(
                   'lexiChat.voice.tapToReveal'.tr(),
-                  style: TextStyle(fontSize: 14, height: 1.5, color: color),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(height: 1.5, color: color),
                 ),
               ),
             ],
@@ -211,16 +222,17 @@ class LexiDialogueBubble extends StatelessWidget {
   }
 
   Widget _buildLexiMessageContent(BuildContext context, bool isDark) {
-    final baseTextStyle = TextStyle(
-      fontSize: 14,
+    final baseTextStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
       height: 1.5,
-      color: isDark ? Colors.white : AppColors.textDark,
+      color: isDark
+          ? AppColors.onGradient
+          : Theme.of(context).colorScheme.onSurface,
       letterSpacing: -0.1,
     );
 
     final highlightColor = isDark
-        ? AppColors.accentYellow.withValues(alpha: 0.25)
-        : AppColors.accentYellow.withValues(alpha: 0.2);
+        ? context.status.warning.withValues(alpha: 0.25)
+        : context.status.warning.withValues(alpha: 0.2);
 
     return QuickSaveSelectionArea(
       sourceType: 'lexi_chat',
@@ -244,7 +256,10 @@ class LexiDialogueBubble extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
+          ),
           decoration: BoxDecoration(
             color: AppColorRoles.primary(isDark),
             borderRadius: const BorderRadius.only(
@@ -263,22 +278,28 @@ class LexiDialogueBubble extends StatelessWidget {
         ),
         if (message.isPendingSync)
           Padding(
-            padding: const EdgeInsets.only(top: 4, right: 4),
+            padding: const EdgeInsets.only(
+              top: AppSpacing.xs,
+              right: AppSpacing.xs,
+            ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(
                   Icons.schedule_rounded,
                   size: 12,
-                  color: isDark ? Colors.white60 : AppColors.textGrey,
+                  color: isDark
+                      ? Colors.white60
+                      : Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: AppSpacing.xs),
                 Flexible(
                   child: Text(
                     'lexiChat.pendingSync'.tr(),
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: isDark ? Colors.white60 : AppColors.textGrey,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: isDark
+                          ? Colors.white60
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -295,8 +316,10 @@ class LexiDialogueBubble extends StatelessWidget {
               icon: Icons.hearing_disabled_rounded,
               label: 'lexiChat.voice.misheardChip'.tr(),
               onTap: onMisheardTap,
-              color: AppColors.accentYellow,
-              labelColor: isDark ? Colors.white : AppColors.textDark,
+              color: context.status.warning,
+              labelColor: isDark
+                  ? AppColors.onGradient
+                  : AppColors.textDark,
             ),
           ),
         if (message.pronunciationScore != null)
@@ -315,8 +338,7 @@ class LexiDialogueBubble extends StatelessWidget {
   /// the mistake is struck through right where the user typed it, tappable
   /// to open the same corrections sheet as the "View notes" chip.
   Widget _buildUserMessageContent(BuildContext context) {
-    final baseStyle = TextStyle(
-      fontSize: 14,
+    final baseStyle = Theme.of(context).textTheme.bodyMedium!.copyWith(
       height: 1.5,
       color: Theme.of(context).colorScheme.surface,
       letterSpacing: -0.1,
@@ -397,12 +419,12 @@ class LexiDialogueBubble extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(AppRadius.sm),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: chipColor.withValues(alpha: isDark ? 0.15 : 0.08),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           border: Border.all(
             color: chipColor.withValues(alpha: isDark ? 0.3 : 0.2),
             width: 1,
@@ -418,8 +440,7 @@ class LexiDialogueBubble extends StatelessWidget {
                 label,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 12,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.w500,
                   color: labelColor ?? chipColor,
                 ),
@@ -455,7 +476,7 @@ class _PronunciationScoreChip extends StatelessWidget {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: SafeArea(
           child: SingleChildScrollView(
             child: PronunciationScoreCard(score: score),
@@ -471,25 +492,24 @@ class _PronunciationScoreChip extends StatelessWidget {
 
     return InkWell(
       onTap: () => _showDetails(context),
-      borderRadius: BorderRadius.circular(999),
+      borderRadius: BorderRadius.circular(AppRadius.pill),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.mic_rounded, size: 12, color: color),
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSpacing.xs),
             Flexible(
               child: Text(
                 'lexiChat.pronunciationScoreLabel'.tr(
                   namedArgs: {'score': '${score.overallScore}'},
                 ),
-                style: TextStyle(
-                  fontSize: 11,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: color,
                 ),

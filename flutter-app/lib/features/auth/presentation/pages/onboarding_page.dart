@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/level/presentation/widgets/cefr_level_picker.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class OnboardingAnswers {
   final String goal;
@@ -94,7 +95,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 760),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+              padding: const EdgeInsets.fromLTRB(20, AppSpacing.lg, 20, 20),
               child: Column(
                 children: [
                   Row(
@@ -109,18 +110,20 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSpacing.md),
                       Text(
                         '${_currentPage + 1}/$_totalSteps',
                         style: theme.textTheme.labelLarge?.copyWith(
-                          color: isDark ? Colors.white70 : AppColors.textSlate,
+                          color: isDark
+                              ? Colors.white70
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                     child: LinearProgressIndicator(
                       value: (_currentPage + 1) / _totalSteps,
                       minHeight: 8,
@@ -170,7 +173,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.sm),
                   if (_currentPage == 1 && widget.onTakePlacementTest != null)
                     TextButton(
                       onPressed: _isSubmitting ? null : _takePlacementTest,
@@ -182,13 +185,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
                   SizedBox(
                     width: double.infinity,
                     height: 54,
-                    child: ElevatedButton(
+                    child: FilledButton(
                       onPressed: _isSubmitting ? null : _goNext,
-                      style: ElevatedButton.styleFrom(
+                      style: FilledButton.styleFrom(
                         backgroundColor: AppColors.accentMint,
                         foregroundColor: AppColors.accentMintDark,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                       ),
                       child: _isSubmitting
@@ -260,26 +263,30 @@ class _OnboardingPageState extends State<OnboardingPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.lg),
         Text(
           title,
           textAlign: TextAlign.center,
           style: theme.textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.bold,
             fontSize: 28,
-            color: isDark ? Colors.white : AppColors.textDark,
+            color: isDark
+                ? AppColors.onGradient
+                : Theme.of(context).colorScheme.onSurface,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         Text(
           subtitle,
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: isDark ? Colors.white70 : AppColors.textGrey,
+            color: isDark
+                ? Colors.white70
+                : Theme.of(context).colorScheme.onSurfaceVariant,
             fontSize: 15,
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.xl),
         Expanded(
           child: GridView.builder(
             physics: const BouncingScrollPhysics(),
@@ -299,7 +306,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                     border: Border.all(
                       color: isSelected
                           ? AppColors.accentMint
@@ -319,7 +326,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         : null,
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
@@ -354,7 +361,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           ),
                         ),
                         Padding(
-                          padding: const EdgeInsets.all(16.0),
+                          padding: const EdgeInsets.all(AppSpacing.lg),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.end,
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -368,14 +375,16 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                   size: 28,
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: AppSpacing.sm),
                               Text(
                                 goal['label'] as String,
-                                style: TextStyle(
-                                  color: AppColors.surfaceLight,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: Theme.of(context).textTheme.sectionTitle
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.surface,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                               ),
                             ],
                           ),
@@ -406,26 +415,30 @@ class _OnboardingPageState extends State<OnboardingPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.lg),
         Text(
           title,
           textAlign: TextAlign.center,
           style: theme.textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.bold,
             fontSize: 28,
-            color: isDark ? Colors.white : AppColors.textDark,
+            color: isDark
+                ? AppColors.onGradient
+                : Theme.of(context).colorScheme.onSurface,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         Text(
           subtitle,
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: isDark ? Colors.white70 : AppColors.textGrey,
+            color: isDark
+                ? Colors.white70
+                : Theme.of(context).colorScheme.onSurfaceVariant,
             fontSize: 15,
           ),
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: AppSpacing.xxl),
         Expanded(
           child: ListView.separated(
             physics: const BouncingScrollPhysics(),
@@ -442,19 +455,20 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     vertical: 18,
                   ),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                     color: selected
                         ? AppColors.accentMint.withValues(alpha: 0.1)
                         : (isDark
                               ? AppColors.surfaceDarkInput.withValues(
                                   alpha: 0.55,
                                 )
-                              : Colors.white),
+                              : AppColors.onGradient),
                     border: Border.all(
                       color: selected
                           ? AppColors.accentMint
                           : (isDark
-                                ? AppColors.textSlate.withValues(alpha: 0.5)
+                                ? Theme.of(context).colorScheme.onSurfaceVariant
+                                      .withValues(alpha: 0.5)
                                 : AppColors.slate200),
                       width: selected ? 2 : 1.5,
                     ),
@@ -485,10 +499,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           option.icon,
                           color: selected
                               ? AppColors.accentMint
-                              : (isDark ? Colors.white54 : AppColors.textGrey),
+                              : (isDark
+                                    ? Colors.white54
+                                    : Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant),
                           size: 26,
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: AppSpacing.lg),
                       ],
                       Expanded(
                         child: Text(
@@ -498,10 +516,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                 ? FontWeight.bold
                                 : FontWeight.w500,
                             color: selected
-                                ? (isDark ? Colors.white : AppColors.textDark)
+                                ? (isDark
+                                      ? AppColors.onGradient
+                                      : Theme.of(context).colorScheme.onSurface)
                                 : (isDark
                                       ? Colors.white70
-                                      : AppColors.textSlate),
+                                      : Theme.of(
+                                          context,
+                                        ).colorScheme.onSurfaceVariant),
                             fontSize: 17,
                           ),
                         ),
@@ -531,7 +553,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 ),
               );
             },
-            separatorBuilder: (_, __) => const SizedBox(height: 16),
+            separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.lg),
             itemCount: options.length,
           ),
         ),

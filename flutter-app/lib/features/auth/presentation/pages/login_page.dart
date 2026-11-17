@@ -11,6 +11,7 @@ import 'email_verification_pending_page.dart';
 import 'forgot_password_page.dart';
 import 'register_page.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -164,8 +165,8 @@ class _LoginPageState extends State<LoginPage> {
             constraints: const BoxConstraints(maxWidth: 480),
             child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: gap(8, 4),
+                horizontal: AppSpacing.lg,
+                vertical: gap(AppSpacing.sm, AppSpacing.xs),
               ),
               child: Form(
                 key: _formKey,
@@ -182,7 +183,7 @@ class _LoginPageState extends State<LoginPage> {
                           'assets/out-app/lexilingo-text.png',
                           height: logoHeight,
                           fit: BoxFit.contain,
-                          color: isDark ? Colors.white : null,
+                          color: isDark ? AppColors.onGradient : null,
                         ),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -193,7 +194,7 @@ class _LoginPageState extends State<LoginPage> {
                                         Navigator.of(context).pop(),
                                     icon: Icons.arrow_back,
                                     color: isDark
-                                        ? Colors.white
+                                        ? AppColors.onGradient
                                         : AppColors.surfaceDarkInput,
                                   )
                                 : const SizedBox(width: 48),
@@ -208,14 +209,14 @@ class _LoginPageState extends State<LoginPage> {
 
                       // Hero
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                         child: Container(
                           height: heroHeight,
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
                               colors: [Color(0x3330E8E8), Color(0x2230E8E8)],
                             ),
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
                           ),
                           child: Image.network(
                             'https://lh3.googleusercontent.com/aida-public/AB6AXuC9e5sG5ITzGQOOtLmmixgmi3eqy1u2vjREx5V2LGBCdNg_bgu7OQarns0X8kgNuuuRN6bV1yWvZej9RBzXmsN0DYptA_CsuDNIuGLUOa_JlGU5R_fFBaQJZgQnWOvW6YVqMVd3tVGfLxAGrmQuwwyVsPQdEpGwB3E_bGE4Zbdw5Eya67psT55Ru81ggipsdLz1q7mHhNths64jCip1sXDvPCi_RBDeHWeza1RJmiuGVC9FfcWdVPLMLPZd2XM9pzu5ezA_FzA2O5g',
@@ -235,7 +236,7 @@ class _LoginPageState extends State<LoginPage> {
                       style: theme.textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: isDark
-                            ? Colors.white
+                            ? AppColors.onGradient
                             : AppColors.surfaceDarkInput,
                       ),
                     ),
@@ -246,11 +247,11 @@ class _LoginPageState extends State<LoginPage> {
                       style: theme.textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                         color: isDark
-                            ? Colors.white
+                            ? AppColors.onGradient
                             : AppColors.surfaceDarkInput,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpacing.sm),
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
@@ -263,14 +264,16 @@ class _LoginPageState extends State<LoginPage> {
                         hintText: 'auth.emailHint'.tr(),
                         prefixIcon: Icon(
                           Icons.email_outlined,
-                          color: isDark ? Colors.white70 : AppColors.textSlate,
+                          color: isDark
+                              ? Colors.white70
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                         filled: true,
                         fillColor: isDark
                             ? AppColors.surfaceDarkInput
-                            : Colors.white,
+                            : AppColors.onGradient,
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                       ),
                       validator: (value) {
@@ -295,7 +298,7 @@ class _LoginPageState extends State<LoginPage> {
                             style: theme.textTheme.bodyMedium?.copyWith(
                               fontWeight: FontWeight.w600,
                               color: isDark
-                                  ? Colors.white
+                                  ? AppColors.onGradient
                                   : AppColors.surfaceDarkInput,
                             ),
                           ),
@@ -332,9 +335,9 @@ class _LoginPageState extends State<LoginPage> {
                         filled: true,
                         fillColor: isDark
                             ? AppColors.surfaceDarkInput
-                            : Colors.white,
+                            : AppColors.onGradient,
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                       ),
                       validator: (value) {
@@ -372,7 +375,7 @@ class _LoginPageState extends State<LoginPage> {
                     SizedBox(height: gap(20, 10)),
                     SizedBox(
                       height: gap(56, 48),
-                      child: ElevatedButton(
+                      child: FilledButton(
                         onPressed:
                             authProvider.isLoading || _isLockedAfterFailures
                             ? null
@@ -424,11 +427,11 @@ class _LoginPageState extends State<LoginPage> {
                                   }
                                 }
                               },
-                        style: ElevatedButton.styleFrom(
+                        style: FilledButton.styleFrom(
                           backgroundColor: AppColors.accentMint,
                           foregroundColor: AppColors.accentMintDark,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
                           elevation: 0,
                         ),
@@ -440,16 +443,14 @@ class _LoginPageState extends State<LoginPage> {
                               )
                             : Text(
                                 'auth.signIn'.tr(),
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: Theme.of(context).textTheme.bodyLarge
+                                    ?.copyWith(fontWeight: FontWeight.bold),
                               ),
                       ),
                     ),
 
                     if (!_isLockedAfterFailures && _failedAttempts > 0) ...[
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppSpacing.md),
                       Text(
                         'auth.wrongCredentialsAttempts'.tr(
                           namedArgs: {
@@ -463,25 +464,25 @@ class _LoginPageState extends State<LoginPage> {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppSpacing.xs),
                       Text(
                         'auth.googleAccountHint'.tr(),
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: isDark
                               ? Colors.white70
-                              : AppColors.textSlateLight,
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
 
                     if (_isLockedAfterFailures) ...[
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppSpacing.md),
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(AppSpacing.md),
                         decoration: BoxDecoration(
                           color: Colors.orange.shade50,
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                           border: Border.all(color: Colors.orange.shade200),
                         ),
                         child: Row(
@@ -513,7 +514,9 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                          ),
                           child: Text(
                             'auth.orLoginWith'.tr(),
                             style: theme.textTheme.labelSmall?.copyWith(
@@ -549,13 +552,15 @@ class _LoginPageState extends State<LoginPage> {
                               label: const Text('Google'),
                               style: OutlinedButton.styleFrom(
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.md,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: AppSpacing.md),
                         Expanded(
                           child: SizedBox(
                             height: gap(56, 44),
@@ -569,7 +574,9 @@ class _LoginPageState extends State<LoginPage> {
                               label: const Text('Facebook'),
                               style: OutlinedButton.styleFrom(
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.md,
+                                  ),
                                 ),
                               ),
                             ),
@@ -588,7 +595,9 @@ class _LoginPageState extends State<LoginPage> {
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: isDark
                                 ? Colors.white70
-                                : AppColors.textSlate,
+                                : Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                           ),
                         ),
                         TextButton(
@@ -608,12 +617,12 @@ class _LoginPageState extends State<LoginPage> {
                     ),
 
                     if (authProvider.errorMessage != null) ...[
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppSpacing.md),
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(AppSpacing.md),
                         decoration: BoxDecoration(
                           color: Colors.red.shade50,
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                           border: Border.all(color: Colors.red.shade200),
                         ),
                         child: Row(

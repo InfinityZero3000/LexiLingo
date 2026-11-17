@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/voice/domain/entities/pronunciation_score.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Pronunciation Score Card Widget
 /// Displays the result of pronunciation assessment
@@ -30,7 +31,7 @@ class PronunciationScoreCard extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -44,7 +45,7 @@ class PronunciationScoreCard extends StatelessWidget {
         children: [
           // Overall Score
           _OverallScoreCircle(score: score.overallScore, grade: score.grade),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
 
           // Feedback
           if (score.feedback != null) ...[
@@ -85,14 +86,14 @@ class PronunciationScoreCard extends StatelessWidget {
           if (score.wordScores.isNotEmpty) ...[
             const SizedBox(height: 20),
             const Divider(),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             Text(
               'voice.wordBreakdown'.tr(),
               style: Theme.of(
                 context,
               ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -104,7 +105,7 @@ class PronunciationScoreCard extends StatelessWidget {
           ],
 
           // Action buttons
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.xl),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -114,23 +115,23 @@ class PronunciationScoreCard extends StatelessWidget {
                   icon: const Icon(Icons.volume_up, size: 18),
                   label: Text('voice.listen'.tr()),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.primary,
+                    foregroundColor: Theme.of(context).colorScheme.primary,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
+                      horizontal: AppSpacing.lg,
                       vertical: 10,
                     ),
                   ),
                 ),
               if (onListenExample != null && onTryAgain != null)
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.md),
               if (onTryAgain != null)
-                ElevatedButton(
+                FilledButton(
                   onPressed: onTryAgain,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: AppColors.onGradient,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
+                      horizontal: AppSpacing.lg,
                       vertical: 10,
                     ),
                   ),
@@ -220,7 +221,7 @@ class _ScoreItem extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, color: _getColor(), size: 24),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.xs),
         Text(
           '$score%',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -230,9 +231,9 @@ class _ScoreItem extends StatelessWidget {
         ),
         Text(
           label,
-          style: Theme.of(
-            context,
-          ).textTheme.bodySmall?.copyWith(color: AppColors.textGrey),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
       ],
     );
@@ -263,10 +264,13 @@ class _WordChip extends StatelessWidget {
     return Tooltip(
       message: wordScore.hasIssue ? wordScore.issue! : 'voice.wordGood'.tr(),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: 6,
+        ),
         decoration: BoxDecoration(
           color: _getColor(context),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: wordScore.hasIssue
               ? Border.all(color: _getTextColor().withValues(alpha: 0.5))
               : null,
@@ -282,7 +286,7 @@ class _WordChip extends StatelessWidget {
               ),
             ),
             if (wordScore.hasIssue) ...[
-              const SizedBox(width: 4),
+              const SizedBox(width: AppSpacing.xs),
               Icon(
                 _getIssueIcon(wordScore.issue!),
                 size: 14,

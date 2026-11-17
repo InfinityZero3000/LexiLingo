@@ -14,6 +14,7 @@ import '../providers/podcast_provider.dart';
 import '../widgets/podcast_card.dart';
 import 'podcast_detail_screen.dart';
 import 'podcast_player_screen.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Main podcast browse screen.
 ///
@@ -94,7 +95,7 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
 
   Widget _buildHeader(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 8, 20, 0),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.sm, AppSpacing.sm, 20, 0),
       child: Row(
         children: [
           AppBackButton(onPressed: () => Navigator.pop(context)),
@@ -113,14 +114,16 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
     final scheme = Theme.of(context).colorScheme;
     final muted = contentMuted(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+      padding: const EdgeInsets.fromLTRB(20, AppSpacing.md, 20, AppSpacing.lg),
       child: TextField(
         controller: _searchController,
         onChanged: _onSearchChanged,
         textInputAction: TextInputAction.search,
         decoration: InputDecoration(
           hintText: 'podcast.searchHint'.tr(),
-          hintStyle: TextStyle(color: muted, fontSize: 14),
+          hintStyle: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: muted),
           prefixIcon: Icon(PhosphorIconsBold.magnifyingGlass, color: muted),
           suffixIcon: _searchController.text.isEmpty
               ? null
@@ -225,7 +228,7 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
         sliver: SliverList.separated(
           itemCount: provider.searchResults.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 12),
+          separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
           itemBuilder: (context, index) {
             final podcast = provider.searchResults[index];
             return _SearchResultTile(
@@ -274,7 +277,7 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
       if (categories.length > 1)
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.only(top: 24),
+            padding: const EdgeInsets.only(top: AppSpacing.xl),
             child: ContentChipBar(
               labels: [
                 'podcast.filterAll'.tr(),
@@ -288,7 +291,10 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
       if (provider.continueListening.isNotEmpty && filter == 0) ...[
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.only(top: 24, bottom: 12),
+            padding: const EdgeInsets.only(
+              top: AppSpacing.xl,
+              bottom: AppSpacing.md,
+            ),
             child: ContentSectionHeader(
               title: 'podcast.continueListening'.tr(),
             ),
@@ -301,7 +307,7 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 20),
               itemCount: provider.continueListening.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 12),
+              separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.md),
               itemBuilder: (context, i) => _ContinueTile(
                 history: provider.continueListening[i],
                 onTap: () => _resume(provider.continueListening[i]),
@@ -313,7 +319,10 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
       if (followed.isNotEmpty && filter == 0) ...[
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.only(top: 24, bottom: 12),
+            padding: const EdgeInsets.only(
+              top: AppSpacing.xl,
+              bottom: AppSpacing.md,
+            ),
             child: ContentSectionHeader(title: 'podcast.following'.tr()),
           ),
         ),
@@ -324,7 +333,7 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 20),
               itemCount: followed.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 12),
+              separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.md),
               itemBuilder: (context, i) => _FollowedTile(
                 follow: followed[i],
                 onTap: () =>
@@ -337,7 +346,10 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
       for (final category in visible) ...[
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.only(top: 24, bottom: 12),
+            padding: const EdgeInsets.only(
+              top: AppSpacing.xl,
+              bottom: AppSpacing.md,
+            ),
             child: ContentSectionHeader(title: category.label),
           ),
         ),
@@ -348,7 +360,7 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 20),
               itemCount: category.podcasts.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 16),
+              separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.lg),
               itemBuilder: (context, i) {
                 final podcast = category.podcasts[i];
                 return PodcastCard(
@@ -488,26 +500,26 @@ class _ContinueTile extends StatelessWidget {
           child: DecoratedBox(
             decoration: BoxDecoration(
               color: scheme.surface,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(color: scheme.outlineVariant),
             ),
             child: Material(
               type: MaterialType.transparency,
               child: InkWell(
                 onTap: onTap,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 child: Padding(
                   padding: const EdgeInsets.all(_padding),
                   child: Row(
                     children: [
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                         child: SizedBox.square(
                           dimension: _cover,
                           child: ContentImage(url: artwork),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSpacing.md),
                       Expanded(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -517,24 +529,21 @@ class _ContinueTile extends StatelessWidget {
                               title,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                height: 1.3,
-                              ),
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    height: 1.3,
+                                  ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: AppSpacing.xs),
                             Text(
                               history.podcastTitle,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: 12,
-                                height: 1.3,
-                                color: muted,
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(height: 1.3, color: muted),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: AppSpacing.sm),
                             ClipRRect(
                               borderRadius: BorderRadius.circular(2),
                               child: LinearProgressIndicator(
@@ -547,24 +556,21 @@ class _ContinueTile extends StatelessWidget {
                               ),
                             ),
                             if (left != null) ...[
-                              const SizedBox(height: 4),
+                              const SizedBox(height: AppSpacing.xs),
                               Text(
                                 'podcast.minutesLeft'.tr(
                                   namedArgs: {'count': '$left'},
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  height: 1.3,
-                                  color: muted,
-                                ),
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(height: 1.3, color: muted),
                               ),
                             ],
                           ],
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpacing.sm),
                       DecoratedBox(
                         decoration: BoxDecoration(
                           color: scheme.primary,
@@ -618,36 +624,36 @@ class _FollowedTile extends StatelessWidget {
           child: DecoratedBox(
             decoration: BoxDecoration(
               color: scheme.surface,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(color: scheme.outlineVariant),
             ),
             child: Material(
               type: MaterialType.transparency,
               child: InkWell(
                 onTap: onTap,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 child: Padding(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(AppSpacing.md),
                   child: Row(
                     children: [
                       ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                         child: SizedBox.square(
                           dimension: 56,
                           child: ContentImage(url: follow.artworkUrl),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSpacing.md),
                       Expanded(
                         child: Text(
                           follow.podcastTitle,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            height: 1.3,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                height: 1.3,
+                              ),
                         ),
                       ),
                       Icon(
@@ -692,26 +698,26 @@ class _SearchResultTile extends StatelessWidget {
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: scheme.surface,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(color: scheme.outlineVariant),
           ),
           child: Material(
             type: MaterialType.transparency,
             child: InkWell(
               onTap: onTap,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(AppSpacing.md),
                 child: Row(
                   children: [
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       child: SizedBox.square(
                         dimension: 64,
                         child: ContentImage(url: podcast.artworkUrl),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: AppSpacing.md),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -720,29 +726,25 @@ class _SearchResultTile extends StatelessWidget {
                             podcast.title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(fontWeight: FontWeight.w600),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: AppSpacing.xs),
                           Text(
                             podcast.author,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: contentMuted(context),
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: contentMuted(context)),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: AppSpacing.sm),
                           Row(
                             children: [
                               CefrBadge(
                                 level: podcast.cefrLevel,
                                 size: CefrBadgeSize.small,
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: AppSpacing.sm),
                               Flexible(
                                 child: Text(
                                   'podcast.episodeCount'.tr(
@@ -752,10 +754,8 @@ class _SearchResultTile extends StatelessWidget {
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: contentMuted(context),
-                                  ),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(color: contentMuted(context)),
                                 ),
                               ),
                             ],
@@ -763,7 +763,7 @@ class _SearchResultTile extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpacing.sm),
                     Icon(
                       isFollowed
                           ? PhosphorIconsFill.checkCircle

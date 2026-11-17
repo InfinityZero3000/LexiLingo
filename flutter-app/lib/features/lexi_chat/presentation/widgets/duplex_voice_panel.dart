@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/voice/duplex_voice_phase.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Docked voice-conversation controls for the Lexi chat page. It owns no
 /// state of its own beyond animation: everything shown comes from [phase].
@@ -89,10 +90,15 @@ class _DuplexVoicePanelState extends State<DuplexVoicePanel>
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        AppSpacing.md,
+      ),
       decoration: BoxDecoration(
         color: scheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -108,7 +114,7 @@ class _DuplexVoicePanelState extends State<DuplexVoicePanel>
               ),
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.xs),
           ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 40),
             child: Text(
@@ -121,7 +127,7 @@ class _DuplexVoicePanelState extends State<DuplexVoicePanel>
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [

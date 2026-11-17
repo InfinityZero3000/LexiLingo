@@ -30,6 +30,7 @@ import '../providers/story_provider.dart';
 import '../widgets/educational_hints_widgets.dart';
 import '../widgets/markdown_message_content.dart';
 import '../widgets/session_summary_dialog.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Topic-Based Chat Page - Enhanced Version (Phase 3)
 class TopicChatPage extends StatefulWidget {
@@ -155,7 +156,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
           content: Text(
             provider.sessionError ?? 'topicChat.failedStartSession'.tr(),
           ),
-          backgroundColor: AppColors.errorBright,
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
       return;
@@ -257,7 +258,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(provider.sessionError!),
-          backgroundColor: AppColors.errorBright,
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
     }
@@ -316,7 +317,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
                           )
                         : ListView.builder(
                             controller: _scrollController,
-                            padding: const EdgeInsets.all(16),
+                            padding: const EdgeInsets.all(AppSpacing.lg),
                             itemCount: provider.messages.length,
                             itemBuilder: (context, index) {
                               final message = provider.messages[index];
@@ -404,7 +405,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
             padding: EdgeInsets.all(10),
             decoration: BoxDecoration(
               color: AppColorRoles.primary(isDark),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Icon(
               _getCategoryIconData(widget.story.category),
@@ -412,7 +413,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
               size: 20,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -420,8 +421,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
               children: [
                 Text(
                   widget.story.title.en,
-                  style: TextStyle(
-                    fontSize: 20,
+                  style: Theme.of(context).textTheme.heading?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: AppColorRoles.textPrimary(isDark),
                   ),
@@ -433,8 +433,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
                       'minutes': '${widget.story.estimatedMinutes}',
                     },
                   ),
-                  style: TextStyle(
-                    fontSize: 12,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColorRoles.textSecondary(isDark),
                   ),
                 ),
@@ -491,11 +490,16 @@ class _TopicChatPageState extends State<TopicChatPage> {
   Widget _buildSrsReminderBanner(bool isDark) {
     final accent = AppColorRoles.primary(isDark);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.sm,
+        AppSpacing.lg,
+        0,
+      ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           onTap: () {
             trackProductEvent(
               'srs_reminder_tapped',
@@ -508,7 +512,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: accent.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppRadius.md),
               border: Border.all(color: accent.withValues(alpha: 0.25)),
             ),
             child: Row(
@@ -520,8 +524,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
                     'topicChat.srsReminderMessage'.tr(
                       namedArgs: {'count': '$_dueVocabularyCount'},
                     ),
-                    style: TextStyle(
-                      fontSize: 13,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: accent,
                     ),
@@ -536,7 +539,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
                     );
                     setState(() => _srsReminderDismissed = true);
                   },
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   child: Padding(
                     padding: const EdgeInsets.all(2),
                     child: Icon(Icons.close_rounded, size: 16, color: accent),
@@ -553,23 +556,23 @@ class _TopicChatPageState extends State<TopicChatPage> {
   Widget _buildSuggestedPrompts(bool isDark) {
     return Container(
       height: 50,
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
         itemCount: widget.story.suggestedPrompts.length,
         itemBuilder: (context, index) {
           final prompt = widget.story.suggestedPrompts[index];
           return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
             child: ActionChip(
-              label: Text(prompt, style: TextStyle(fontSize: 12)),
+              label: Text(prompt, style: Theme.of(context).textTheme.bodySmall),
               onPressed: () => _sendMessage(prompt),
               backgroundColor: isDark
                   ? AppColors.surfaceDarkInk
-                  : AppColors.surfaceLight,
+                  : Theme.of(context).colorScheme.surface,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 side: BorderSide(
                   color: AppColorRoles.primary(isDark).withValues(alpha: 0.3),
                 ),
@@ -584,7 +587,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
   Widget _buildTaskBanner(bool isDark) {
     final Color accent = switch (_taskBannerType) {
       _TaskBannerType.loading => AppColorRoles.primary(isDark),
-      _TaskBannerType.complete => AppColors.greenSuccessBright,
+      _TaskBannerType.complete => context.status.success,
       _TaskBannerType.error => AppColors.orange,
     };
 
@@ -595,16 +598,26 @@ class _TopicChatPageState extends State<TopicChatPage> {
     };
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.sm,
+        AppSpacing.lg,
+        AppSpacing.sm,
+      ),
       child: Dismissible(
         key: ValueKey('task-banner-$_taskBannerTitle-$_taskBannerType'),
         direction: DismissDirection.horizontal,
         onDismissed: (_) => _dismissTaskBannerByUser(),
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          padding: EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: AppSpacing.md,
+          ),
           decoration: BoxDecoration(
-            color: isDark ? AppColors.surfaceDarkCard : AppColors.surfaceLight,
-            borderRadius: BorderRadius.circular(16),
+            color: isDark
+                ? AppColors.surfaceDarkCard
+                : Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(color: accent.withValues(alpha: 0.25)),
             boxShadow: [
               BoxShadow(
@@ -620,7 +633,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
               Row(
                 children: [
                   Icon(icon, color: accent, size: 18),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
                       _taskBannerTitle,
@@ -633,8 +646,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
                   Flexible(
                     child: Text(
                       'topicChat.swipeToCloseHint'.tr(),
-                      style: TextStyle(
-                        fontSize: 11,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: AppColorRoles.textMuted(isDark),
                       ),
                       maxLines: 1,
@@ -644,11 +656,10 @@ class _TopicChatPageState extends State<TopicChatPage> {
                 ],
               ),
               if (_taskBannerDetail.isNotEmpty) ...[
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
                   _taskBannerDetail,
-                  style: TextStyle(
-                    fontSize: 12,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColorRoles.textSecondary(isDark),
                   ),
                 ),
@@ -681,7 +692,9 @@ class _TopicChatPageState extends State<TopicChatPage> {
         MediaQuery.of(context).padding.bottom + 16,
       ),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDarkMuted : AppColors.surfaceLight,
+        color: isDark
+            ? AppColors.surfaceDarkMuted
+            : Theme.of(context).colorScheme.surface,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: isDark ? 0.12 : 0.05),
@@ -696,9 +709,11 @@ class _TopicChatPageState extends State<TopicChatPage> {
             child: Container(
               decoration: BoxDecoration(
                 color: isDark ? AppColors.surfaceDarkInk : AppColors.grey100,
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
                 border: Border.all(
-                  color: isDark ? AppColors.borderDarkSoft : AppColors.grey200,
+                  color: isDark
+                      ? Theme.of(context).colorScheme.outlineVariant
+                      : AppColors.grey200,
                 ),
               ),
               child: TextField(
@@ -714,7 +729,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(
                     horizontal: 20,
-                    vertical: 12,
+                    vertical: AppSpacing.md,
                   ),
                 ),
                 textInputAction: TextInputAction.send,
@@ -722,11 +737,11 @@ class _TopicChatPageState extends State<TopicChatPage> {
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.md),
           GestureDetector(
             onTap: isEnabled ? _sendMessage : null,
             child: Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
                 color: isEnabled
                     ? AppColorRoles.primary(isDark)
@@ -735,7 +750,9 @@ class _TopicChatPageState extends State<TopicChatPage> {
               ),
               child: Icon(
                 Icons.send,
-                color: isDark ? AppColors.slate900 : AppColors.surfaceLight,
+                color: isDark
+                    ? AppColors.slate900
+                    : Theme.of(context).colorScheme.surface,
                 size: 20,
               ),
             ),
@@ -780,10 +797,10 @@ class _TopicChatPageState extends State<TopicChatPage> {
         break;
       default:
         icon = Icons.chat_bubble;
-        color = Colors.grey;
+        color = Theme.of(context).colorScheme.outline;
     }
     return Container(
-      padding: const EdgeInsets.all(8),
+      padding: const EdgeInsets.all(AppSpacing.sm),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         shape: BoxShape.circle,
@@ -820,20 +837,25 @@ class _TopicChatPageState extends State<TopicChatPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+        ),
         title: Text('topicChat.endSessionTitle'.tr()),
         content: Text('topicChat.endSessionConfirmation'.tr()),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+            ),
             onPressed: () => Navigator.pop(context),
             child: Text('topicChat.cancelButton'.tr()),
           ),
-          ElevatedButton(
+          FilledButton(
             onPressed: () => _endSessionAndShowSummary(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.errorBright,
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
             ),
             child: Text('topicChat.endSessionButton'.tr()),
@@ -906,7 +928,7 @@ class _ChatStatusBadge extends StatelessWidget {
     final levelCode = context.watch<ProficiencyProvider>().levelCode;
 
     return Padding(
-      padding: const EdgeInsets.only(right: 4),
+      padding: const EdgeInsets.only(right: AppSpacing.xs),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -919,27 +941,28 @@ class _ChatStatusBadge extends StatelessWidget {
             const SizedBox(width: 2),
             Text(
               '$streak',
-              style: TextStyle(
-                fontSize: 12,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w800,
                 color: AppColors.orange,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.sm),
           ],
           if (levelCode.isNotEmpty)
             Tooltip(
               message: 'topicChat.levelBadgeTooltip'.tr(),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: AppSpacing.xs,
+                ),
                 decoration: BoxDecoration(
                   color: accent.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Text(
                   levelCode,
-                  style: TextStyle(
-                    fontSize: 12,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.w800,
                     color: accent,
                   ),
@@ -965,13 +988,13 @@ class _StoryContextHeader extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      margin: const EdgeInsets.all(12),
-      padding: EdgeInsets.all(12),
+      margin: const EdgeInsets.all(AppSpacing.md),
+      padding: EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: isDark
             ? AppColors.surfaceDarkCard
             : Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: isDark ? 0.14 : 0.03),
@@ -997,7 +1020,7 @@ class _StoryContextHeader extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1011,8 +1034,7 @@ class _StoryContextHeader extends StatelessWidget {
                 ),
                 Text(
                   session.rolePersona.role,
-                  style: TextStyle(
-                    fontSize: 11,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: AppColorRoles.textSecondary(isDark),
                   ),
                 ),
@@ -1021,27 +1043,25 @@ class _StoryContextHeader extends StatelessWidget {
           ),
           Flexible(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: AppSpacing.xs,
+              ),
               decoration: BoxDecoration(
                 color: Colors.green.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
-                    Icons.bolt,
-                    size: 12,
-                    color: AppColors.greenSuccessBright,
-                  ),
-                  const SizedBox(width: 4),
+                  Icon(Icons.bolt, size: 12, color: context.status.success),
+                  const SizedBox(width: AppSpacing.xs),
                   Flexible(
                     child: Text(
                       'topicChat.contextReadyBadgeLabel'.tr(),
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: AppColors.greenSuccessBright,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: context.status.success,
                         fontWeight: FontWeight.bold,
                       ),
                       maxLines: 1,
@@ -1074,15 +1094,16 @@ class _TopicMessageBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isUser = message.isUser;
-    final bubbleTextStyle = TextStyle(
+    final bubbleTextStyle = Theme.of(context).textTheme.bodyLarge?.copyWith(
       color: isUser
-          ? (isDark ? AppColors.slate900 : AppColors.surfaceLight)
+          ? (isDark
+                ? AppColors.slate900
+                : Theme.of(context).colorScheme.surface)
           : AppColorRoles.textPrimary(isDark),
-      fontSize: 15,
     );
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
       child: Column(
         crossAxisAlignment: isUser
             ? CrossAxisAlignment.end
@@ -1106,20 +1127,20 @@ class _TopicMessageBubble extends StatelessWidget {
                     color: AppColorRoles.primary(isDark),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.sm),
               ],
               Flexible(
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
+                    horizontal: AppSpacing.lg,
+                    vertical: AppSpacing.md,
                   ),
                   decoration: BoxDecoration(
                     color: isUser
                         ? AppColorRoles.primary(isDark)
                         : (isDark
                               ? AppColors.surfaceDarkCard
-                              : AppColors.surfaceLight),
+                              : Theme.of(context).colorScheme.surface),
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(20),
                       topRight: const Radius.circular(20),
@@ -1130,7 +1151,7 @@ class _TopicMessageBubble extends StatelessWidget {
                       color: isUser
                           ? AppColorRoles.primary(isDark).withValues(alpha: 0.3)
                           : (isDark
-                                ? AppColors.borderDarkSoft
+                                ? Theme.of(context).colorScheme.outlineVariant
                                 : AppColors.grey200),
                     ),
                     boxShadow: [
@@ -1162,7 +1183,7 @@ class _TopicMessageBubble extends StatelessWidget {
           ),
           if (!isUser && message.hints != null && message.hints!.hasAnyHints)
             Padding(
-              padding: const EdgeInsets.only(top: 8, left: 36),
+              padding: const EdgeInsets.only(top: AppSpacing.sm, left: 36),
               child: EducationalHintsCard(
                 hints: message.hints!,
                 onSaveMistake: (correction) async {
@@ -1237,20 +1258,23 @@ class _TopicMessageBubble extends StatelessWidget {
             ),
           if (!isUser && nextSuggestion != null)
             Padding(
-              padding: const EdgeInsets.only(top: 8, left: 36),
+              padding: const EdgeInsets.only(top: AppSpacing.sm, left: 36),
               child: ActionChip(
                 avatar: Icon(
                   Icons.reply,
                   size: 16,
                   color: AppColorRoles.primary(isDark),
                 ),
-                label: Text(nextSuggestion!, style: TextStyle(fontSize: 12)),
+                label: Text(
+                  nextSuggestion!,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
                 onPressed: () => onSuggestionTap?.call(nextSuggestion!),
                 backgroundColor: isDark
                     ? AppColors.surfaceDarkInk
-                    : AppColors.surfaceLight,
+                    : Theme.of(context).colorScheme.surface,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   side: BorderSide(
                     color: AppColorRoles.primary(isDark).withValues(alpha: 0.3),
                   ),
@@ -1288,7 +1312,7 @@ class VocabularyPreviewSheet extends StatelessWidget {
       child: Column(
         children: [
           Container(
-            margin: const EdgeInsets.only(top: 12),
+            margin: const EdgeInsets.only(top: AppSpacing.md),
             width: 40,
             height: 4,
             decoration: BoxDecoration(
@@ -1301,11 +1325,13 @@ class VocabularyPreviewSheet extends StatelessWidget {
             child: Row(
               children: [
                 Icon(Icons.menu_book, color: AppColorRoles.primary(isDark)),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.md),
                 Flexible(
                   child: Text(
                     'topicChat.keyVocabularyTitle'.tr(),
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.sectionTitle?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -1317,7 +1343,7 @@ class VocabularyPreviewSheet extends StatelessWidget {
           Expanded(
             child: ListView.separated(
               controller: scrollController,
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppSpacing.lg),
               itemCount: vocabulary.length,
               separatorBuilder: (context, index) => const Divider(),
               itemBuilder: (context, index) {
@@ -1332,7 +1358,7 @@ class VocabularyPreviewSheet extends StatelessWidget {
                       ),
                       if (item.partOfSpeech.isNotEmpty)
                         Padding(
-                          padding: const EdgeInsets.only(left: 8),
+                          padding: const EdgeInsets.only(left: AppSpacing.sm),
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 6,
@@ -1346,10 +1372,10 @@ class VocabularyPreviewSheet extends StatelessWidget {
                             ),
                             child: Text(
                               item.partOfSpeech,
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: AppColorRoles.textSecondary(isDark),
-                              ),
+                              style: Theme.of(context).textTheme.labelSmall
+                                  ?.copyWith(
+                                    color: AppColorRoles.textSecondary(isDark),
+                                  ),
                             ),
                           ),
                         ),
@@ -1358,21 +1384,21 @@ class VocabularyPreviewSheet extends StatelessWidget {
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppSpacing.xs),
                       Text(
                         item.definition,
-                        style: const TextStyle(fontSize: 13),
+                        style: Theme.of(context).textTheme.bodySmall,
                       ),
                       if (item.exampleInStory.isNotEmpty)
                         Padding(
-                          padding: const EdgeInsets.only(top: 4),
+                          padding: const EdgeInsets.only(top: AppSpacing.xs),
                           child: Text(
                             '"${item.exampleInStory}"',
-                            style: TextStyle(
-                              fontStyle: FontStyle.italic,
-                              color: AppColorRoles.textSecondary(isDark),
-                              fontSize: 12,
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  fontStyle: FontStyle.italic,
+                                  color: AppColorRoles.textSecondary(isDark),
+                                ),
                           ),
                         ),
                     ],

@@ -5,6 +5,8 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../../core/widgets/content_kit.dart';
 import '../../domain/entities/book_entities.dart';
 import 'book_card.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Hero card: the cover on a blurred copy of itself, with the reading place
 /// when [entry] is given, or an invitation to start when it is not.
@@ -47,7 +49,7 @@ class BookHero extends StatelessWidget {
                   child: Row(
                     children: [
                       _HeroCover(book: book),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: AppSpacing.lg),
                       Expanded(
                         child: _HeroText(book: book, entry: reading),
                       ),
@@ -78,7 +80,7 @@ class _HeroCover extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         boxShadow: const [
           BoxShadow(
             color: Color(0x66000000),
@@ -88,7 +90,7 @@ class _HeroCover extends StatelessWidget {
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: SizedBox.fromSize(
           size: BookHero._cover,
           child: book.coverUrl.isEmpty
@@ -123,33 +125,31 @@ class _HeroText extends StatelessWidget {
               .toUpperCase(),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: Color(0xCCFFFFFF),
-            fontSize: 12,
             fontWeight: FontWeight.w600,
             letterSpacing: 1.6,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         Text(
           book.title,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
-          style: contentDisplay(context, size: 20, color: Colors.white),
+          style: contentDisplay(context, size: 20, color: AppColors.onGradient),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.xs),
         Text(
           book.author,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: Color(0xE6FFFFFF),
-            fontSize: 14,
             height: 1.3,
           ),
         ),
         if (reading != null) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           ClipRRect(
             borderRadius: BorderRadius.circular(2),
             child: LinearProgressIndicator(
@@ -159,17 +159,19 @@ class _HeroText extends StatelessWidget {
               backgroundColor: const Color(0x40FFFFFF),
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.xs),
           Text(
             'books.percentRead'.tr(
               namedArgs: {'percent': '${reading.percent}'},
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: Color(0xE6FFFFFF), fontSize: 12),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: Color(0xE6FFFFFF)),
           ),
         ],
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
         ContentCta(
           label: (reading != null ? 'books.continueCta' : 'books.startCta')
               .tr(),

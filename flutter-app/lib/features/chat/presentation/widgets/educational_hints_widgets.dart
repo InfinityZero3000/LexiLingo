@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../domain/entities/educational_hints.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'markdown_message_content.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 // These cards use fixed light backgrounds, so markdown is always rendered light.
 Widget _md(String text, TextStyle style) => MarkdownMessageContent(
@@ -81,22 +82,17 @@ class EducationalHintsCard extends StatelessWidget {
           // Encouragement
           if (hints.encouragement != null && hints.encouragement!.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.only(top: 4),
+              padding: const EdgeInsets.only(top: AppSpacing.xs),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
-                    Icons.thumb_up,
-                    size: 14,
-                    color: AppColors.greenSuccessBright,
-                  ),
-                  const SizedBox(width: 4),
+                  Icon(Icons.thumb_up, size: 14, color: context.status.success),
+                  const SizedBox(width: AppSpacing.xs),
                   Flexible(
                     child: Text(
                       hints.encouragement!,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.greenSuccessBright,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: context.status.success,
                         fontStyle: FontStyle.italic,
                       ),
                     ),
@@ -127,11 +123,11 @@ class GrammarCorrectionBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: Colors.orange.shade50,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: Colors.orange.shade200),
       ),
       child: Column(
@@ -141,12 +137,11 @@ class GrammarCorrectionBadge extends StatelessWidget {
           Row(
             children: [
               Icon(Icons.edit_note, size: 16, color: Colors.orange.shade700),
-              const SizedBox(width: 4),
+              const SizedBox(width: AppSpacing.xs),
               Flexible(
                 child: Text(
                   'chat.grammarCorrection'.tr(),
-                  style: TextStyle(
-                    fontSize: 12,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: Colors.orange.shade700,
                   ),
@@ -156,7 +151,7 @@ class GrammarCorrectionBadge extends StatelessWidget {
               ),
               if (correction.errorType != null)
                 Padding(
-                  padding: const EdgeInsets.only(left: 8),
+                  padding: const EdgeInsets.only(left: AppSpacing.sm),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 6,
@@ -168,8 +163,7 @@ class GrammarCorrectionBadge extends StatelessWidget {
                     ),
                     child: Text(
                       correction.errorType!,
-                      style: TextStyle(
-                        fontSize: 10,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: Colors.orange.shade800,
                       ),
                     ),
@@ -192,7 +186,7 @@ class GrammarCorrectionBadge extends StatelessWidget {
               ],
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
 
           // Original vs Corrected
           if (correction.original.isNotEmpty)
@@ -202,23 +196,23 @@ class GrammarCorrectionBadge extends StatelessWidget {
                 // Original (struck through)
                 Expanded(
                   child: Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(AppSpacing.sm),
                     decoration: BoxDecoration(
                       color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                     child: Row(
                       children: [
                         Icon(Icons.close, size: 14, color: Colors.red.shade400),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: AppSpacing.xs),
                         Flexible(
                           child: Text(
                             correction.original,
-                            style: TextStyle(
-                              decoration: TextDecoration.lineThrough,
-                              color: Colors.red.shade700,
-                              fontSize: 13,
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  decoration: TextDecoration.lineThrough,
+                                  color: Colors.red.shade700,
+                                ),
                           ),
                         ),
                       ],
@@ -226,16 +220,16 @@ class GrammarCorrectionBadge extends StatelessWidget {
                   ),
                 ),
                 const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 8),
+                  padding: EdgeInsets.symmetric(horizontal: AppSpacing.sm),
                   child: Icon(Icons.arrow_forward, size: 16),
                 ),
                 // Corrected
                 Expanded(
                   child: Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(AppSpacing.sm),
                     decoration: BoxDecoration(
                       color: Colors.green.shade50,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                     child: Row(
                       children: [
@@ -244,14 +238,13 @@ class GrammarCorrectionBadge extends StatelessWidget {
                           size: 14,
                           color: Colors.green.shade600,
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: AppSpacing.xs),
                         Flexible(
                           child: _md(
                             correction.corrected,
-                            TextStyle(
+                            Theme.of(context).textTheme.bodySmall!.copyWith(
                               color: Colors.green.shade700,
                               fontWeight: FontWeight.w500,
-                              fontSize: 13,
                             ),
                           ),
                         ),
@@ -263,22 +256,24 @@ class GrammarCorrectionBadge extends StatelessWidget {
             ),
 
           // Explanation
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Container(
-            padding: EdgeInsets.all(8),
+            padding: EdgeInsets.all(AppSpacing.sm),
             decoration: BoxDecoration(
-              color: AppColors.surfaceLight,
-              borderRadius: BorderRadius.circular(8),
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(Icons.lightbulb, size: 14, color: Colors.amber.shade600),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: _md(
                     correction.explanation,
-                    const TextStyle(fontSize: 12, color: AppColors.textDark),
+                    Theme.of(context).textTheme.bodySmall!.copyWith(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
                   ),
                 ),
               ],
@@ -288,11 +283,10 @@ class GrammarCorrectionBadge extends StatelessWidget {
           // Rule name
           if (correction.rule != null)
             Padding(
-              padding: const EdgeInsets.only(top: 4),
+              padding: const EdgeInsets.only(top: AppSpacing.xs),
               child: Text(
                 'chat.correctionRule'.tr(namedArgs: {'rule': correction.rule!}),
-                style: TextStyle(
-                  fontSize: 11,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: AppColors.grey600,
                   fontStyle: FontStyle.italic,
                 ),
@@ -301,7 +295,7 @@ class GrammarCorrectionBadge extends StatelessWidget {
 
           if (onPractice != null)
             Padding(
-              padding: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.only(top: AppSpacing.sm),
               child: ActionChip(
                 avatar: Icon(
                   Icons.fitness_center_rounded,
@@ -310,7 +304,9 @@ class GrammarCorrectionBadge extends StatelessWidget {
                 ),
                 label: Text(
                   'chat.practiceThisAction'.tr(),
-                  style: TextStyle(fontSize: 12, color: Colors.orange.shade700),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Colors.orange.shade700,
+                  ),
                 ),
                 onPressed: onPractice,
                 backgroundColor: Colors.orange.shade100,
@@ -343,11 +339,11 @@ class VocabularyHintCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: Colors.blue.shade50,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: Colors.blue.shade200),
       ),
       child: Column(
@@ -357,21 +353,20 @@ class VocabularyHintCard extends StatelessWidget {
           Row(
             children: [
               Icon(Icons.book, size: 16, color: Colors.blue.shade700),
-              const SizedBox(width: 4),
+              const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Row(
                   children: [
                     Text(
                       hint.term,
-                      style: TextStyle(
-                        fontSize: 14,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Colors.blue.shade700,
                       ),
                     ),
                     if (hint.partOfSpeech != null)
                       Padding(
-                        padding: const EdgeInsets.only(left: 8),
+                        padding: const EdgeInsets.only(left: AppSpacing.sm),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 6,
@@ -383,10 +378,8 @@ class VocabularyHintCard extends StatelessWidget {
                           ),
                           child: Text(
                             hint.partOfSpeech!,
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Colors.blue.shade800,
-                            ),
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(color: Colors.blue.shade800),
                           ),
                         ),
                       ),
@@ -396,14 +389,19 @@ class VocabularyHintCard extends StatelessWidget {
               // Pronunciation
               if (hint.pronunciation != null)
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.xs,
+                  ),
                   decoration: BoxDecoration(
-                    color: AppColors.surfaceLight,
-                    borderRadius: BorderRadius.circular(8),
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   child: Text(
                     hint.pronunciation!,
-                    style: TextStyle(fontSize: 11, color: Colors.blue.shade600),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: Colors.blue.shade600,
+                    ),
                   ),
                 ),
               if (onPracticePronunciation != null)
@@ -434,38 +432,39 @@ class VocabularyHintCard extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
 
           // Definition
           _md(
             hint.definition,
-            const TextStyle(fontSize: 13, color: AppColors.textDark),
+            Theme.of(context).textTheme.bodySmall!.copyWith(
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
 
           // Example
           if (hint.example != null && hint.example!.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.only(top: AppSpacing.sm),
               child: Container(
-                padding: EdgeInsets.all(8),
+                padding: EdgeInsets.all(AppSpacing.sm),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceLight,
-                  borderRadius: BorderRadius.circular(8),
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.edit_note_rounded,
                       size: 14,
-                      color: Colors.grey,
+                      color: Theme.of(context).colorScheme.outline,
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: AppSpacing.xs),
                     Expanded(
                       child: _md(
                         hint.example!,
-                        TextStyle(
-                          fontSize: 12,
+                        Theme.of(context).textTheme.bodySmall!.copyWith(
                           fontStyle: FontStyle.italic,
                           color: AppColors.grey700,
                         ),
@@ -500,7 +499,10 @@ class TopicProgressIndicator extends StatelessWidget {
     final progress = totalSteps > 0 ? currentStep / totalSteps : 0.0;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
       ),
@@ -512,22 +514,20 @@ class TopicProgressIndicator extends StatelessWidget {
             children: [
               Text(
                 stepLabel ?? 'Progress',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
               ),
               Text(
                 '$currentStep / $totalSteps',
-                style: TextStyle(
-                  fontSize: 12,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).primaryColor,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.xs),
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
@@ -570,28 +570,30 @@ class _ExpandableHintsToggleState extends State<ExpandableHintsToggle> {
         // Toggle button
         InkWell(
           onTap: () => setState(() => _isExpanded = !_isExpanded),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: 6,
+            ),
             decoration: BoxDecoration(
               color: Colors.purple.shade50,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               border: Border.all(color: Colors.purple.shade200),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.school, size: 14, color: Colors.purple.shade600),
-                const SizedBox(width: 4),
+                const SizedBox(width: AppSpacing.xs),
                 Text(
                   'chat.learningHintsCount'.plural(totalHints),
-                  style: TextStyle(
-                    fontSize: 12,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Colors.purple.shade700,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: AppSpacing.xs),
                 Icon(
                   _isExpanded ? Icons.expand_less : Icons.expand_more,
                   size: 16,
@@ -605,7 +607,7 @@ class _ExpandableHintsToggleState extends State<ExpandableHintsToggle> {
         // Expanded hints
         if (_isExpanded)
           Padding(
-            padding: const EdgeInsets.only(top: 8),
+            padding: const EdgeInsets.only(top: AppSpacing.sm),
             child: EducationalHintsCard(hints: widget.hints),
           ),
       ],

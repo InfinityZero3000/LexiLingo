@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Shown on Home while the signed-in account has not verified its email. Unverified
 /// accounts may learn; this keeps asking, and offers a fresh link.
@@ -49,19 +50,24 @@ class _VerifyEmailBannerState extends State<VerifyEmailBanner> {
 
     final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.only(top: AppSpacing.md),
       child: Material(
         color: scheme.tertiaryContainer,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.sm,
+            AppSpacing.sm,
+            AppSpacing.sm,
+          ),
           child: Row(
             children: [
               Icon(
                 Icons.mark_email_unread_outlined,
                 color: scheme.onTertiaryContainer,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Text(
                   'auth.verifyEmailBanner'.tr(),
@@ -70,7 +76,7 @@ class _VerifyEmailBannerState extends State<VerifyEmailBanner> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.sm),
               TextButton(
                 onPressed: _sending ? null : () => _resend(email),
                 child: _sending

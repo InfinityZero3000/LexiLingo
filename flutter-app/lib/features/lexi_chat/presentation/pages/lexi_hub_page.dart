@@ -3,6 +3,7 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/chat/presentation/pages/story_selection_page.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/pages/lexi_chat_page.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_mode_switch.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 export 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_mode_switch.dart'
     show LexiMode;
@@ -211,7 +212,9 @@ class _LexiHubPageState extends State<LexiHubPage>
                     LexiMode.chat => LexiChatPage(
                       isActive: widget.isActive && _mode == mode,
                       titleSlot: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.xs,
+                        ),
                         child: _slots[mode],
                       ),
                     ),
@@ -219,7 +222,12 @@ class _LexiHubPageState extends State<LexiHubPage>
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 6, 16, 6),
+                          padding: const EdgeInsets.fromLTRB(
+                            AppSpacing.lg,
+                            6,
+                            AppSpacing.lg,
+                            6,
+                          ),
                           child: _slots[mode],
                         ),
                         Expanded(
