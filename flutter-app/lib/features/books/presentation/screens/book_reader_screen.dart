@@ -50,10 +50,14 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final provider = context.read<BookProvider>();
       await provider.loadBookText();
-      // Jump to last read position
-      if (provider.currentPage > 0 && _pageController.hasClients) {
-        _pageController.jumpToPage(provider.currentPage);
-      }
+      if (!mounted) return;
+      // The PageView only exists once the loaded pages have been built.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (provider.currentPage > 0 && _pageController.hasClients) {
+          _pageController.jumpToPage(provider.currentPage);
+        }
+      });
       _refreshBookmarkState();
     });
   }
@@ -74,6 +78,7 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
     // Turning a page is the proof someone is reading.
     _readingTime.markActive();
     await context.read<BookProvider>().goToPage(page);
+    if (!mounted) return;
     _refreshBookmarkState();
   }
 
@@ -231,7 +236,7 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
                           Icon(
                             Icons.error_outline_rounded,
                             size: 48,
-                            color: Theme.of(context).colorScheme.outline,
+                            color: textColor.withValues(alpha: 0.6),
                           ),
                           const SizedBox(height: AppSpacing.md),
                           Text(
@@ -241,7 +246,7 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
                                     : ''),
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              color: Theme.of(context).colorScheme.outline,
+                              color: textColor.withValues(alpha: 0.7),
                             ),
                           ),
                           const SizedBox(height: AppSpacing.lg),
@@ -256,19 +261,25 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
                 else if (provider.pages.isNotEmpty)
                   GestureDetector(
                     onTap: _toggleControls,
-                    child: PageView.builder(
-                      controller: _pageController,
-                      onPageChanged: _onPageChanged,
-                      itemCount: provider.pages.length,
-                      itemBuilder: (context, pageIndex) {
-                        return _buildPage(
-                          context,
-                          provider.pages[pageIndex],
-                          settings,
-                          textColor,
-                          bgColor,
-                        );
+                    child: NotificationListener<ScrollNotification>(
+                      onNotification: (_) {
+                        _readingTime.markActive();
+                        return false;
                       },
+                      child: PageView.builder(
+                        controller: _pageController,
+                        onPageChanged: _onPageChanged,
+                        itemCount: provider.pages.length,
+                        itemBuilder: (context, pageIndex) {
+                          return _buildPage(
+                            context,
+                            provider.pages[pageIndex],
+                            settings,
+                            textColor,
+                            bgColor,
+                          );
+                        },
+                      ),
                     ),
                   ),
 
@@ -409,6 +420,7 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
             isBookmarked: _isCurrentPageBookmarked,
             onToggle: () async {
               await provider.toggleBookmark();
+              if (!mounted) return;
               _refreshBookmarkState();
             },
           ),

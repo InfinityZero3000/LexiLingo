@@ -160,15 +160,21 @@ class NewsProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _currentQuiz = await _repository.getQuiz(
+      final quiz = await _repository.getQuiz(
         articleId,
         article: _currentQuizArticle,
       );
+      // Closing the screen or opening another article's quiz while this was
+      // in flight must not let the late answer overwrite the newer state.
+      if (_currentQuizArticleId != articleId) return;
+      _currentQuiz = quiz;
     } catch (e) {
       debugPrint('Failed to load quiz: $e');
     } finally {
-      _isLoadingQuiz = false;
-      notifyListeners();
+      if (_currentQuizArticleId == articleId) {
+        _isLoadingQuiz = false;
+        notifyListeners();
+      }
     }
   }
 

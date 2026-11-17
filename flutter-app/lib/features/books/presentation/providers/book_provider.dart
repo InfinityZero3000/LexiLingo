@@ -148,38 +148,50 @@ class BookProvider extends ChangeNotifier {
     }
   }
 
+  int _searchToken = 0;
+
   /// Search for books with a 400 ms debounce.
   void searchBooks(String query) {
     _searchDebounce?.cancel();
 
     if (query.length < 2) {
+      _searchToken++;
+      _isSearching = false;
       _searchResults = [];
       notifyListeners();
       return;
     }
 
     _searchDebounce = Timer(const Duration(milliseconds: 400), () async {
+      final token = ++_searchToken;
       _isSearching = true;
       _error = null;
       notifyListeners();
 
       try {
-        _searchResults = await _repository.searchBooks(
+        final results = await _repository.searchBooks(
           query: query,
           cefrLevel: _selectedCefrLevel,
         );
+        if (token != _searchToken) return;
+        _searchResults = results;
       } catch (e) {
+        if (token != _searchToken) return;
         _error = e.toString();
         _searchResults = [];
       } finally {
-        _isSearching = false;
-        notifyListeners();
+        if (token == _searchToken) {
+          _isSearching = false;
+          notifyListeners();
+        }
       }
     });
   }
 
   void clearSearch() {
     _searchDebounce?.cancel();
+    _searchToken++;
+    _isSearching = false;
     _searchResults = [];
     notifyListeners();
   }
@@ -208,13 +220,21 @@ class BookProvider extends ChangeNotifier {
     notifyListeners();
 
     final nextPage = (_levelPage[level] ?? 0) + 1;
+    final topic = _selectedTopic;
     try {
       final books = await _repository.browseByLevel(
         level: level,
         page: nextPage,
-        topic: _selectedTopic,
+        topic: topic,
       );
-      _levelBooks[level] = [...(_levelBooks[level] ?? []), ...books];
+      // The topic filter clears every level's pages; a reply for the old
+      // topic would otherwise be appended to the new topic's shelf.
+      if (topic != _selectedTopic) return;
+      final have = {for (final b in _levelBooks[level] ?? const <Book>[]) b.id};
+      _levelBooks[level] = [
+        ...(_levelBooks[level] ?? []),
+        ...books.where((b) => !have.contains(b.id)),
+      ];
       _levelPage[level] = nextPage;
       _levelHasMore[level] = books.isNotEmpty;
     } catch (_) {
@@ -246,6 +266,7 @@ class BookProvider extends ChangeNotifier {
       _repository.getDownloadedPath(book.id),
     ]);
 
+    if (_currentBook?.id != book.id) return;
     _currentProgress = results[0] as UserBook?;
     _bookmarks = (results[1] as List<Bookmark>?) ?? [];
     _downloadedPath = results[2] as String?;
@@ -498,10 +519,13 @@ class BookProvider extends ChangeNotifier {
     return excerpt.length > 1800 ? excerpt.substring(0, 1800) : excerpt;
   }
 
+  int _quizLoadToken = 0;
+
   Future<void> loadChapterQuiz(int chapter) async {
     final book = _currentBook;
     if (book == null) return;
 
+    final token = ++_quizLoadToken;
     _isLoading = true;
     _currentQuiz = null;
     _quizCompleted = false;
@@ -510,17 +534,22 @@ class BookProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _currentQuiz = await _repository.getChapterQuiz(
+      final quiz = await _repository.getChapterQuiz(
         bookId: book.id,
         chapter: chapter,
         book: book,
         chapterExcerpt: _quizExcerptForChapter(chapter),
       );
+      if (token != _quizLoadToken) return;
+      _currentQuiz = quiz;
     } catch (e) {
+      if (token != _quizLoadToken) return;
       _error = e.toString();
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      if (token == _quizLoadToken) {
+        _isLoading = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -588,6 +617,7 @@ class BookProvider extends ChangeNotifier {
   }
 
   void completeQuiz() {
+    if (_quizCompleted) return;
     _quizCompleted = true;
     notifyListeners();
 
@@ -597,10 +627,12 @@ class BookProvider extends ChangeNotifier {
       final xp = (quiz.xpReward * _quizScore / quiz.questions.length)
           .round()
           .clamp(5, quiz.xpReward);
-      _repository.awardXP(
-        baseXp: xp,
-        sourceId: 'book_quiz_${quiz.bookId}_ch${quiz.chapter}',
-        sourceDetail: 'chapter_quiz',
+      unawaited(
+        _repository.awardXP(
+          baseXp: xp,
+          sourceId: 'book_quiz_${quiz.bookId}_ch${quiz.chapter}',
+          sourceDetail: 'chapter_quiz',
+        ),
       );
     }
   }

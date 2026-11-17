@@ -88,6 +88,20 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
       Future.delayed(const Duration(milliseconds: 500), () {
         _tryInitHandler(attempt: attempt + 1);
       });
+    } else {
+      setState(() {
+        _handlerInitializing = false;
+        _loadError = true;
+      });
+    }
+  }
+
+  void _retryLoad() {
+    if (_handler == null) {
+      setState(() => _loadError = false);
+      _tryInitHandler();
+    } else {
+      _loadEpisode();
     }
   }
 
@@ -180,6 +194,9 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
           : (widget.episode.listenProgress > 5
                 ? widget.episode.listenProgress
                 : null);
+      // The learner may have left, or started another episode, while the
+      // history was loading; seeking then would jump the wrong audio.
+      if (!mounted) return;
       if (resume != null) await _handler!.seek(Duration(seconds: resume));
     } catch (e) {
       debugPrint('PodcastPlayerScreen: failed to load audio: $e');
@@ -279,10 +296,13 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
                 child: Column(
                   children: [
                     if (_handler == null)
-                      const Padding(
-                        padding: EdgeInsets.all(AppSpacing.xxl),
-                        child: LottieLoadingWidget.medium(),
-                      )
+                      if (!_loadError)
+                        const Padding(
+                          padding: EdgeInsets.all(AppSpacing.xxl),
+                          child: LottieLoadingWidget.medium(),
+                        )
+                      else
+                        const SizedBox.shrink()
                     else
                       AudioPlayerControls(
                         onPlay: _handler!.play,
@@ -328,7 +348,7 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
                                 ),
                               ),
                               TextButton(
-                                onPressed: _loadEpisode,
+                                onPressed: _retryLoad,
                                 style: TextButton.styleFrom(
                                   foregroundColor: scheme.onErrorContainer,
                                   minimumSize: const Size(44, 44),

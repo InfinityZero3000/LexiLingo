@@ -361,7 +361,10 @@ class _SeekBarState extends State<_SeekBar> {
       ),
       child: Slider(
         value: value,
-        onChanged: (v) => setState(() => _dragValue = v),
+        // With no known length a drag would seek to 0 ms and restart the audio.
+        onChanged: widget.duration == Duration.zero
+            ? null
+            : (v) => setState(() => _dragValue = v),
         onChangeEnd: (v) {
           final ms = (v * widget.duration.inMilliseconds).round();
           widget.onSeek(Duration(milliseconds: ms));

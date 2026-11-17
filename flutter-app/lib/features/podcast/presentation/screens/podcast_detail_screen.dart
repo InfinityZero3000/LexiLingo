@@ -62,6 +62,7 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
   }
 
   Future<void> _toggleFollow() async {
+    if (_followLoading) return;
     setState(() => _followLoading = true);
     try {
       await context.read<PodcastProvider>().toggleFollow(widget.podcast);

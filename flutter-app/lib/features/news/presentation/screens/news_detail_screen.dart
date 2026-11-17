@@ -55,6 +55,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
       sourceDetail: 'reading_time',
     )..start();
     _loadFullContentIfNeeded();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _syncProgress());
   }
 
   /// Auto-fetch full article content if the current content looks truncated.
@@ -78,6 +79,9 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
               _fullContent = fullContent;
               _isLoadingFullContent = false;
             });
+            WidgetsBinding.instance.addPostFrameCallback(
+              (_) => _syncProgress(),
+            );
           } else {
             if (mounted) setState(() => _isLoadingFullContent = false);
           }
@@ -98,15 +102,22 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
   void _trackProgress() {
     // Scrolling is the proof someone is reading rather than holding the phone.
     _readingTime.markActive();
-    if (!_scrollController.hasClients) return;
-    final maxScroll = _scrollController.position.maxScrollExtent;
-    if (maxScroll <= 0) return;
+    _syncProgress();
+  }
 
+  void _syncProgress() {
+    if (!mounted || !_scrollController.hasClients) return;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    // An article that fits on one screen has nothing to scroll, so reaching
+    // its end must not depend on a scroll that can never happen.
+    final progress = maxScroll <= 0
+        ? 1.0
+        : (_scrollController.offset / maxScroll).clamp(0.0, 1.0);
+    final showQuiz = _showQuizButton || progress >= 0.9;
+    if (progress == _readingProgress && showQuiz == _showQuizButton) return;
     setState(() {
-      _readingProgress = (_scrollController.offset / maxScroll).clamp(0.0, 1.0);
-      if (_readingProgress >= 0.9 && !_showQuizButton) {
-        _showQuizButton = true;
-      }
+      _readingProgress = progress;
+      _showQuizButton = showQuiz;
     });
   }
 
@@ -242,15 +253,20 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              const Spacer(),
-                              Text(
-                                widget.article.sourceName,
-                                style: Theme.of(context).textTheme.labelSmall
-                                    ?.copyWith(
-                                      color: AppColors.onGradient.withValues(
-                                        alpha: 0.6,
+                              const SizedBox(width: AppSpacing.sm),
+                              Expanded(
+                                child: Text(
+                                  widget.article.sourceName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.end,
+                                  style: Theme.of(context).textTheme.labelSmall
+                                      ?.copyWith(
+                                        color: AppColors.onGradient.withValues(
+                                          alpha: 0.6,
+                                        ),
                                       ),
-                                    ),
+                                ),
                               ),
                             ],
                           ),
@@ -284,23 +300,27 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                           Row(
                             children: [
                               if (widget.article.author.isNotEmpty)
-                                Text(
-                                  'news.byAuthor'.tr(
-                                    namedArgs: {
-                                      'author': widget.article.author,
-                                    },
+                                Flexible(
+                                  child: Text(
+                                    'news.byAuthor'.tr(
+                                      namedArgs: {
+                                        'author': widget.article.author,
+                                      },
+                                    ),
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          color: isDark
+                                              ? AppColors.onGradient.withValues(
+                                                  alpha: 0.54,
+                                                )
+                                              : Theme.of(
+                                                  context,
+                                                ).colorScheme.onSurfaceVariant,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  style: Theme.of(context).textTheme.bodySmall
-                                      ?.copyWith(
-                                        color: isDark
-                                            ? AppColors.onGradient.withValues(
-                                                alpha: 0.54,
-                                              )
-                                            : Theme.of(
-                                                context,
-                                              ).colorScheme.onSurfaceVariant,
-                                        fontWeight: FontWeight.w500,
-                                      ),
                                 ),
                               if (widget.article.author.isNotEmpty &&
                                   widget.article.publishedAt.isNotEmpty)

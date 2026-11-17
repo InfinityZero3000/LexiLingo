@@ -81,7 +81,8 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                 return const Center(child: LottieLoadingWidget.medium());
               }
 
-              if (provider.currentQuiz == null) {
+              if (provider.currentQuiz == null ||
+                  provider.currentQuiz!.questions.isEmpty) {
                 return Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -97,6 +98,14 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      OutlinedButton(
+                        onPressed: () => provider.loadQuiz(
+                          widget.article.id,
+                          article: widget.article,
+                        ),
+                        child: Text('common.retry'.tr()),
                       ),
                     ],
                   ),

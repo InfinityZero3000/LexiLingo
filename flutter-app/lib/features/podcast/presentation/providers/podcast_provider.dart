@@ -70,6 +70,9 @@ class PodcastProvider extends ChangeNotifier {
     }
   }
 
+  int _searchToken = 0;
+  int _episodesToken = 0;
+
   /// Search for podcasts matching [query] with a 300 ms debounce.
   ///
   /// Clears results immediately when [query] is shorter than 2 characters.
@@ -77,30 +80,39 @@ class PodcastProvider extends ChangeNotifier {
     _searchDebounce?.cancel();
 
     if (query.length < 2) {
+      _searchToken++;
+      _isSearching = false;
       _searchResults = [];
       notifyListeners();
       return;
     }
 
     _searchDebounce = Timer(const Duration(milliseconds: 300), () async {
+      final token = ++_searchToken;
       _isSearching = true;
       _error = null;
       notifyListeners();
 
       try {
-        _searchResults = await _repository.searchPodcasts(query: query);
+        final results = await _repository.searchPodcasts(query: query);
+        if (token != _searchToken) return;
+        _searchResults = results;
       } catch (e) {
+        if (token != _searchToken) return;
         _error = e.toString();
         _searchResults = [];
       } finally {
-        _isSearching = false;
-        notifyListeners();
+        if (token == _searchToken) {
+          _isSearching = false;
+          notifyListeners();
+        }
       }
     });
   }
 
   /// Set [podcast] as the active podcast and load its episode list.
   Future<void> loadEpisodes(Podcast podcast) async {
+    final token = ++_episodesToken;
     _currentPodcast = podcast;
     _currentEpisodes = [];
     _isLoading = true;
@@ -109,16 +121,21 @@ class PodcastProvider extends ChangeNotifier {
 
     try {
       final episodes = await _repository.getEpisodes(feedUrl: podcast.feedUrl);
-      _currentEpisodes = await _withListeningProgress(episodes);
+      final withProgress = await _withListeningProgress(episodes);
+      if (token != _episodesToken) return;
+      _currentEpisodes = withProgress;
     } catch (e) {
+      if (token != _episodesToken) return;
       debugPrint(
         '[PodcastProvider] loadEpisodes failed for "${podcast.title}" '
         '(feed: ${podcast.feedUrl}): $e',
       );
       _error = e.toString();
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      if (token == _episodesToken) {
+        _isLoading = false;
+        notifyListeners();
+      }
     }
   }
 

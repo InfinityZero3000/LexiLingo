@@ -139,10 +139,15 @@ class YouTubeProvider extends ChangeNotifier {
     }
   }
 
+  int _resultsEpoch = 0;
+  int _captionsEpoch = 0;
+
   /// Search for videos by query.
   Future<void> searchVideos(String query, {String? channelId}) async {
     if (query.length < 2) return;
+    final epoch = ++_resultsEpoch;
 
+    _isLoading = false;
     _searchQuery = query;
     _activeChannelName = '';
     _activeChannelId = '';
@@ -157,20 +162,25 @@ class YouTubeProvider extends ChangeNotifier {
         query: query,
         channelId: channelId,
       );
+      if (epoch != _resultsEpoch) return;
       _searchResults = result.videos;
       _nextPageToken = result.nextPageToken;
     } catch (e) {
+      if (epoch != _resultsEpoch) return;
       _error = e.toString();
     } finally {
-      _isSearching = false;
-      notifyListeners();
+      if (epoch == _resultsEpoch) {
+        _isSearching = false;
+        notifyListeners();
+      }
     }
   }
 
   /// Load next page of search results or channel videos.
   Future<void> loadMoreResults() async {
-    if (_nextPageToken == null || _isSearching) return;
+    if (_nextPageToken == null || _isSearching || _isLoading) return;
 
+    final epoch = _resultsEpoch;
     _isSearching = true;
     notifyListeners();
 
@@ -188,13 +198,17 @@ class YouTubeProvider extends ChangeNotifier {
           pageToken: _nextPageToken,
         );
       }
+      if (epoch != _resultsEpoch) return;
       _searchResults.addAll(result.videos);
       _nextPageToken = result.nextPageToken;
     } catch (e) {
+      if (epoch != _resultsEpoch) return;
       _error = e.toString();
     } finally {
-      _isSearching = false;
-      notifyListeners();
+      if (epoch == _resultsEpoch) {
+        _isSearching = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -205,6 +219,8 @@ class YouTubeProvider extends ChangeNotifier {
     String channelId, {
     String channelName = '',
   }) async {
+    final epoch = ++_resultsEpoch;
+    _isSearching = false;
     _isLoading = true;
     _error = null;
     _searchResults = [];
@@ -217,18 +233,23 @@ class YouTubeProvider extends ChangeNotifier {
 
     try {
       final result = await _repository.getChannelVideos(channelId);
+      if (epoch != _resultsEpoch) return;
       _searchResults = result.videos;
       _nextPageToken = result.nextPageToken;
     } catch (e) {
+      if (epoch != _resultsEpoch) return;
       _error = e.toString();
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      if (epoch == _resultsEpoch) {
+        _isLoading = false;
+        notifyListeners();
+      }
     }
   }
 
   /// Load captions for a video; call again to retry after [CaptionsStatus.unavailable].
   Future<void> loadCaptions(String videoId, {String lang = 'en'}) async {
+    final epoch = ++_captionsEpoch;
     _isLoadingCaptions = true;
     _captionsStatus = CaptionsStatus.loading;
     _captions = [];
@@ -236,14 +257,18 @@ class YouTubeProvider extends ChangeNotifier {
 
     try {
       final result = await _repository.getCaptions(videoId, lang: lang);
+      if (epoch != _captionsEpoch) return;
       _captions = result.segments;
       _captionsStatus = result.status;
     } catch (e) {
       debugPrint('Failed to load captions: $e');
+      if (epoch != _captionsEpoch) return;
       _captionsStatus = CaptionsStatus.unavailable;
     } finally {
-      _isLoadingCaptions = false;
-      notifyListeners();
+      if (epoch == _captionsEpoch) {
+        _isLoadingCaptions = false;
+        notifyListeners();
+      }
     }
   }
 
