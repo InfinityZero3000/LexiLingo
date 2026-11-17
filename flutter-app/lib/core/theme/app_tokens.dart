@@ -131,3 +131,11 @@ extension AppThemeContext on BuildContext {
           ? AppStatusColors.dark
           : AppStatusColors.light);
 }
+
+extension AppTextRoles on TextTheme {
+  /// 18px: section headings between titleMedium (16) and titleLarge (22).
+  TextStyle? get sectionTitle => titleMedium?.copyWith(fontSize: 18);
+
+  /// 20px: card and dialog headings.
+  TextStyle? get heading => titleMedium?.copyWith(fontSize: 20);
+}

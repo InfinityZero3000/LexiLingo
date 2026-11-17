@@ -51,6 +51,12 @@ void main() {
     }
   });
 
+  testWidgets('heading roles are 18 and 20', (tester) async {
+    final t = AppTheme.lightTheme.textTheme;
+    expect(t.sectionTitle!.fontSize, 18);
+    expect(t.heading!.fontSize, 20);
+  });
+
   testWidgets('context.status follows the active theme', (tester) async {
     late AppStatusColors got;
     await tester.pumpWidget(

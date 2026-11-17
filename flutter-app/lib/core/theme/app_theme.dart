@@ -194,6 +194,14 @@ class AppColors {
   ];
   static const Color roadmapNodeFallbackDark = Color(0xFF66CFF5);
 
+  // ── Shared accents (same values the feature palettes already used) ──────
+  static const Color pink = Color(0xFFE91E63);
+  static const Color legendary = Color(0xFFFF6B00);
+  static const Color skyBlue = Color(0xFF38B2FF);
+
+  /// Foreground for text and icons drawn on a gradient or photo, in either mode.
+  static const Color onGradient = Color(0xFFFFFFFF);
+
   // ── Slate / Ink ───────────────────────────────────────────────────────────
   static const Color slate900 = Color(0xFF0F172A);
   static const Color slate800 = Color(0xFF1E293B);
