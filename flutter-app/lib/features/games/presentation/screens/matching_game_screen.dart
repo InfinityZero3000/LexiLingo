@@ -108,9 +108,10 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
   }
 
   void _selectMatchItem(String matchText) {
-    if (_selectedWord == null) return;
+    final wordId = _selectedWord;
+    if (wordId == null || _matchState[wordId] == _PairState.wrong) return;
     final game = context.read<GamesProvider>().matching!;
-    final pair = game.pairs.firstWhere((p) => p.wordId == _selectedWord);
+    final pair = game.pairs.firstWhere((p) => p.wordId == wordId);
     final correctMatch = pair.matchText;
 
     var matched = matchText == correctMatch;
@@ -122,8 +123,8 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
     if (matched) {
       _correctCount++;
       setState(() {
-        _matchedIds.add(_selectedWord!);
-        _matchState[_selectedWord!] = _PairState.correct;
+        _matchedIds.add(wordId);
+        _matchState[wordId] = _PairState.correct;
         _selectedWord = null;
         _selectedMatch = null;
       });
@@ -137,16 +138,19 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
       // Wrong — shake effect
       setState(() {
         _selectedMatch = matchText;
-        _matchState[_selectedWord!] = _PairState.wrong;
+        _matchState[wordId] = _PairState.wrong;
       });
       Future.delayed(const Duration(milliseconds: 700), () {
-        if (mounted) {
-          setState(() {
-            _matchState.remove(_selectedWord);
+        if (!mounted) return;
+        setState(() {
+          if (_matchState[wordId] == _PairState.wrong) {
+            _matchState.remove(wordId);
+          }
+          if (_selectedWord == wordId) {
             _selectedWord = null;
             _selectedMatch = null;
-          });
-        }
+          }
+        });
       });
     }
   }

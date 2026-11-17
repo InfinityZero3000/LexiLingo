@@ -304,13 +304,13 @@ class GamificationProvider extends ChangeNotifier {
   Future<void> loadLeaderboard({String? league}) async {
     final targetLeague = league ?? _selectedLeague;
     final targetKey = targetLeague.toLowerCase();
+    _selectedLeague = targetLeague;
     _loadingLeaderboardLeagues.add(targetKey);
     _leaderboardError = null;
     notifyListeners();
     try {
       final data = await _repository.getLeaderboard(targetLeague);
       _leaderboards[targetKey] = data;
-      _selectedLeague = targetLeague;
     } catch (e) {
       _leaderboardError = e.toString();
       debugPrint('Error loading leaderboard: $e');

@@ -105,7 +105,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
         return;
       }
 
+      final alreadySelected = provider.selectedLeague.toLowerCase() == league;
       _tabController.animateTo(index, duration: Duration.zero);
+      if (alreadySelected) await provider.loadLeaderboard(league: league);
     } finally {
       if (mounted) {
         setState(() {

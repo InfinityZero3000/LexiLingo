@@ -13,15 +13,10 @@ import 'package:lexilingo_app/features/games/presentation/widgets/streak_indicat
 import 'package:lexilingo_app/features/games/presentation/widgets/game_card.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/daily_challenge_card.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/daily_challenge_mapper.dart';
+import 'package:lexilingo_app/features/games/presentation/screens/game_screen_factory.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/daily_challenge_entity.dart'
     as progress;
 import 'package:lexilingo_app/features/progress/presentation/providers/daily_challenges_provider.dart';
-import 'package:lexilingo_app/features/games/presentation/screens/word_scramble_screen.dart';
-import 'package:lexilingo_app/features/games/presentation/screens/fill_blank_screen.dart';
-import 'package:lexilingo_app/features/games/presentation/screens/matching_game_screen.dart';
-import 'package:lexilingo_app/features/games/presentation/screens/spelling_bee_screen.dart';
-import 'package:lexilingo_app/features/games/presentation/screens/grammar_quiz_screen.dart';
-import 'package:lexilingo_app/features/games/presentation/screens/hangman_screen.dart';
 
 /// Main games hub screen — entry point for all English games.
 ///
@@ -81,22 +76,10 @@ class _GamesHubScreenState extends State<GamesHubScreen>
   }
 
   void _navigateToGame(BuildContext context, GameType gameType) {
-    Widget screen;
-    switch (gameType) {
-      case GameType.wordScramble:
-        screen = const WordScrambleScreen();
-      case GameType.fillBlank:
-        screen = const FillBlankScreen();
-      case GameType.matching:
-        screen = const MatchingGameScreen();
-      case GameType.spellingBee:
-        screen = const SpellingBeeScreen();
-      case GameType.grammarQuiz:
-        screen = const GrammarQuizScreen();
-      case GameType.hangman:
-        screen = const HangmanScreen();
-    }
-    Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => gameScreenFor(gameType)),
+    );
   }
 
   @override

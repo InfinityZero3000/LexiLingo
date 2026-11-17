@@ -54,7 +54,13 @@ class _ShopScreenState extends State<ShopScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _categories.length, vsync: this);
+    final selected = context.read<GamificationProvider>().selectedCategory;
+    final initialIndex = _categories.indexWhere((c) => c.id == selected);
+    _tabController = TabController(
+      length: _categories.length,
+      vsync: this,
+      initialIndex: initialIndex < 0 ? 0 : initialIndex,
+    );
     _tabController.addListener(_onTabChanged);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -78,6 +84,7 @@ class _ShopScreenState extends State<ShopScreen>
   }
 
   Future<void> _handlePurchase(ShopItemEntity item) async {
+    if (_purchasingItemId != null) return;
     final provider = context.read<GamificationProvider>();
 
     // Check if can afford

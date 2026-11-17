@@ -96,8 +96,7 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
         break;
       case ShopItemEntity.effectSkipToken:
         _submittedAnswers[word.wordId] = '';
-        setState(() => _answered = true);
-        Future.delayed(const Duration(milliseconds: 300), _nextWord);
+        _nextWord();
         break;
       case ShopItemEntity.effectScoreMultiplier:
         final multiplier = (effects['multiplier'] as num?)?.toInt() ?? 2;
@@ -130,7 +129,7 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
   }
 
   void _submitAnswer() {
-    if (_answered) return;
+    if (_answered || _inputController.text.trim().isEmpty) return;
     final game = context.read<GamesProvider>().spellingBee!;
     final word = game.words[_wordIndex];
     final input = _inputController.text.trim().toLowerCase();

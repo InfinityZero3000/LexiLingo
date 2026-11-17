@@ -6258,6 +6258,18 @@
       }
     },
     {
+      "id": "lib/features/games/presentation/screens/game_result_screen.dart::_GameResultScreenState::MaterialPageRoute::0",
+      "path": "lib/features/games/presentation/screens/game_result_screen.dart",
+      "entryPoint": "imperativeRoute",
+      "symbol": "_GameResultScreenState",
+      "callKind": "MaterialPageRoute",
+      "ordinal": 0,
+      "line": 440,
+      "category": "eligible",
+      "group": 5,
+      "status": "inventoried"
+    },
+    {
       "id": "lib/features/games/presentation/screens/games_hub_screen.dart::_GamesHubScreenState::MaterialPageRoute::0",
       "path": "lib/features/games/presentation/screens/games_hub_screen.dart",
       "entryPoint": "imperativeRoute",

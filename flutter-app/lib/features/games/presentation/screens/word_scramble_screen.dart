@@ -325,11 +325,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (_) => GameResultScreen(
-          result: result,
-          xpResult: xpResult,
-          onPlayAgain: () {},
-        ),
+        builder: (_) => GameResultScreen(result: result, xpResult: xpResult),
       ),
     );
   }
@@ -417,7 +413,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
                         minHeight: 4,
                       ),
                       Expanded(
-                        child: Padding(
+                        child: SingleChildScrollView(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 20,
                             vertical: AppSpacing.lg,
@@ -466,7 +462,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
                                       duration: const Duration(
                                         milliseconds: 150,
                                       ),
-                                      width: 42,
+                                      width: kMinTapTarget,
                                       height: 48,
                                       margin: const EdgeInsets.all(
                                         AppSpacing.xs,
@@ -513,24 +509,21 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
                                 }),
                               ),
                               if (_wordAnswered)
-                                Expanded(
-                                  child: SingleChildScrollView(
-                                    padding: const EdgeInsets.only(top: 20),
-                                    child: AnswerFeedbackPanel(
-                                      verdict:
-                                          _verdict ?? AnswerVerdict.correct,
-                                      correctAnswer: [
-                                        word.word,
-                                        if (word.ipaPronunciation?.isNotEmpty ??
-                                            false)
-                                          word.ipaPronunciation!,
-                                      ].join('  '),
-                                      explanation: word.definition,
-                                      explanationLabel:
-                                          'games.answerFeedback.meaningLabel'
-                                              .tr(),
-                                      extra: word.vietnameseTranslation,
-                                    ),
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 20),
+                                  child: AnswerFeedbackPanel(
+                                    verdict: _verdict ?? AnswerVerdict.correct,
+                                    correctAnswer: [
+                                      word.word,
+                                      if (word.ipaPronunciation?.isNotEmpty ??
+                                          false)
+                                        word.ipaPronunciation!,
+                                    ].join('  '),
+                                    explanation: word.definition,
+                                    explanationLabel:
+                                        'games.answerFeedback.meaningLabel'
+                                            .tr(),
+                                    extra: word.vietnameseTranslation,
                                   ),
                                 )
                               else ...[
@@ -565,7 +558,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
                                     );
                                   }),
                                 ),
-                                const Spacer(),
+                                const SizedBox(height: AppSpacing.xl),
                                 // Hint & Skip
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
