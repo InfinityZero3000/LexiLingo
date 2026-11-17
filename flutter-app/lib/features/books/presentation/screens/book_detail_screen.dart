@@ -360,7 +360,9 @@ class _Actions extends StatelessWidget {
           ? null
           : provider.downloadBook,
     );
-    return isDownloaded ? button : PremiumGate(child: button);
+    return isDownloaded
+        ? button
+        : PremiumGate(borderRadius: BorderRadius.circular(26), child: button);
   }
 }
 

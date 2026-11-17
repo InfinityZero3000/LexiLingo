@@ -11,7 +11,15 @@ class PremiumGate extends StatefulWidget {
   final Widget child;
   final Widget? lockedChild;
 
-  const PremiumGate({super.key, required this.child, this.lockedChild});
+  /// Corners of the locked scrim; match the wrapped widget's own shape.
+  final BorderRadius borderRadius;
+
+  const PremiumGate({
+    super.key,
+    required this.child,
+    this.lockedChild,
+    this.borderRadius = BorderRadius.zero,
+  });
 
   @override
   State<PremiumGate> createState() => _PremiumGateState();
@@ -64,8 +72,8 @@ class _PremiumGateState extends State<PremiumGate> {
       },
       child:
           widget.lockedChild ??
-          ColoredBox(
-            color: Colors.black12,
+          ClipRRect(
+            borderRadius: widget.borderRadius,
             child: Stack(
               alignment: Alignment.center,
               children: [
