@@ -2349,5 +2349,10 @@
     "gateNoQuestions": "El examen del siguiente nivel aún no está disponible.",
     "gateMaxLevel": "Estás certificado en el nivel más alto.",
     "gateError": "No se pudo cargar el examen. Inténtalo de nuevo."
+  },
+  "coreKit": {
+    "typeToConfirm": "Escribe «{text}» para confirmar",
+    "loadMore": "Ver más",
+    "noResults": "Sin resultados"
   }
 }
