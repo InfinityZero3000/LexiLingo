@@ -2579,5 +2579,45 @@
       "blocked": "Not publishable",
       "problems": "Problems"
     }
+  },
+  "adminGrowth": {
+    "common": {
+      "empty": "Nothing here yet",
+      "retry": "Retry",
+      "refresh": "Refresh",
+      "save": "Save",
+      "cancel": "Cancel",
+      "edit": "Edit",
+      "active": "Active",
+      "saved": "Saved.",
+      "saveFailed": "Could not save.",
+      "updateFailed": "Update failed.",
+      "actionFailed": "Action failed.",
+      "webOnlyTitle": "Delete on the web admin",
+      "webOnlyBody": "Deleting and image uploads are not available on mobile. Use the web admin."
+    },
+    "ads": {
+      "title": "Banners & Ads",
+      "create": "New banner",
+      "edit": "Edit banner",
+      "empty": "No banners yet.",
+      "fieldTitle": "Title *",
+      "fieldDescription": "Description",
+      "fieldImage": "Image URL *",
+      "fieldLink": "Target URL",
+      "fieldPosition": "Position",
+      "fieldPriority": "Priority",
+      "fieldMinLevel": "Minimum level",
+      "fieldMaxLevel": "Maximum level",
+      "fieldLanguage": "Target language (blank = every language)",
+      "from": "From: {}",
+      "to": "To: {}",
+      "unlimited": "No limit",
+      "needTitleImage": "A title and an image URL are required.",
+      "anyLanguage": "any language",
+      "anyLevel": "any level",
+      "priorityChip": "priority {}",
+      "levelAny": "Any"
+    }
   }
 }

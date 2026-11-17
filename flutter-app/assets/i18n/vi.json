@@ -2579,5 +2579,45 @@
       "blocked": "Chưa thể xuất bản",
       "problems": "Vấn đề"
     }
+  },
+  "adminGrowth": {
+    "common": {
+      "empty": "Chưa có gì",
+      "retry": "Thử lại",
+      "refresh": "Làm mới",
+      "save": "Lưu",
+      "cancel": "Hủy",
+      "edit": "Sửa",
+      "active": "Hoạt động",
+      "saved": "Đã lưu.",
+      "saveFailed": "Không thể lưu.",
+      "updateFailed": "Cập nhật thất bại.",
+      "actionFailed": "Thao tác thất bại.",
+      "webOnlyTitle": "Xóa trên web admin",
+      "webOnlyBody": "Xóa và tải ảnh lên không có trên di động. Hãy dùng web admin."
+    },
+    "ads": {
+      "title": "Banner & Ads",
+      "create": "Tạo banner",
+      "edit": "Sửa banner",
+      "empty": "Chưa có banner nào.",
+      "fieldTitle": "Tiêu đề *",
+      "fieldDescription": "Mô tả",
+      "fieldImage": "URL hình ảnh *",
+      "fieldLink": "URL đích",
+      "fieldPosition": "Vị trí",
+      "fieldPriority": "Độ ưu tiên",
+      "fieldMinLevel": "Trình độ tối thiểu",
+      "fieldMaxLevel": "Trình độ tối đa",
+      "fieldLanguage": "Ngôn ngữ mục tiêu (bỏ trống = mọi ngôn ngữ)",
+      "from": "Từ: {}",
+      "to": "Đến: {}",
+      "unlimited": "Không giới hạn",
+      "needTitleImage": "Cần có tiêu đề và URL hình ảnh.",
+      "anyLanguage": "mọi ngôn ngữ",
+      "anyLevel": "mọi trình độ",
+      "priorityChip": "ưu tiên {}",
+      "levelAny": "Bất kỳ"
+    }
   }
 }
