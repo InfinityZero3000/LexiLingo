@@ -40,6 +40,11 @@ class FlashcardProvider extends ChangeNotifier {
   int _loadedVocabCount = 0;
   bool _isLoadingMore = false;
 
+  // Ratings are delivered in the background, one after another
+  Future<void> _delivery = Future<void>.value();
+  final List<SubmitReviewParams> _unsent = [];
+  bool _disposed = false;
+
   // Getters
   ReviewSessionEntity? get currentSession => _currentSession;
   bool get isLoading => _isLoading;
@@ -138,8 +143,9 @@ class FlashcardProvider extends ChangeNotifier {
           _pendingUserVocabs = dueVocabularyList;
 
           // Load first batch in parallel — fast initial display
-          final firstBatch =
-              _pendingUserVocabs.take(_initialBatchSize).toList();
+          final firstBatch = _pendingUserVocabs
+              .take(_initialBatchSize)
+              .toList();
           final cards = await _loadVocabCards(firstBatch);
           _loadedVocabCount = firstBatch.length;
 
@@ -191,7 +197,8 @@ class FlashcardProvider extends ChangeNotifier {
         },
         (vocabItems) async {
           if (vocabItems.isEmpty) {
-            _errorMessage = UiText.key('flashcard.noVocabularyForTopic', 
+            _errorMessage = UiText.key(
+              'flashcard.noVocabularyForTopic',
               namedArgs: {'topic': tag},
             );
             _isLoading = false;
@@ -297,8 +304,9 @@ class FlashcardProvider extends ChangeNotifier {
 
           _pendingUserVocabs = deckItems.take(limit).toList();
 
-          final firstBatch =
-              _pendingUserVocabs.take(_initialBatchSize).toList();
+          final firstBatch = _pendingUserVocabs
+              .take(_initialBatchSize)
+              .toList();
           final cards = await _loadVocabCards(firstBatch);
           _loadedVocabCount = firstBatch.length;
 
@@ -335,82 +343,87 @@ class FlashcardProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Submit review for current card
+  /// Moves to the next card at once and delivers the rating in the
+  /// background, so a slow network never leaves the pile waiting. Only the last
+  /// card waits for delivery, so the summary shows the final XP.
   Future<void> submitReview(ReviewQuality quality) async {
-    if (_currentSession == null) return;
+    final session = _currentSession;
+    final card = session?.currentCard;
+    if (session == null || card == null) return;
 
-    final currentCard = _currentSession!.currentCard;
-    if (currentCard == null) return;
+    final timeSpentMs = _cardStartTime != null
+        ? DateTime.now().difference(_cardStartTime!).inMilliseconds
+        : null;
 
-    _isLoading = true;
+    final tags = card.vocabularyItem.tags;
+    trackContentInteraction(
+      itemType: 'vocab',
+      itemId: card.userVocabulary.vocabularyId,
+      action: quality.isCorrect ? 'review_correct' : 'review_incorrect',
+      topic: (tags != null && tags.isNotEmpty) ? tags.first : null,
+      source: 'flashcard',
+      dwellMs: timeSpentMs,
+    );
+
+    final reviewed = session.reviewedCards + 1;
+    _currentSession = session.copyWith(
+      reviewedCards: reviewed,
+      correctCount: session.correctCount + (quality.isCorrect ? 1 : 0),
+    );
+
+    // Trigger background preload when approaching end of loaded cards
+    if (_currentSession!.cards.length - reviewed <= _preloadThreshold) {
+      _loadMoreCards(); // fire-and-forget
+    }
+
+    _isCardFlipped = false;
+    _cardStartTime = DateTime.now();
     notifyListeners();
 
-    try {
-      final timeSpentMs = _cardStartTime != null
-          ? DateTime.now().difference(_cardStartTime!).inMilliseconds
-          : null;
+    final review = SubmitReviewParams(
+      userVocabularyId: card.userVocabulary.id,
+      quality: quality,
+      timeSpentMs: timeSpentMs,
+    );
+    _delivery = _delivery.then((_) => _deliver(review));
 
-      final tags = currentCard.vocabularyItem.tags;
-      trackContentInteraction(
-        itemType: 'vocab',
-        itemId: currentCard.userVocabulary.vocabularyId,
-        action: quality.isCorrect ? 'review_correct' : 'review_incorrect',
-        topic: (tags != null && tags.isNotEmpty) ? tags.first : null,
-        source: 'flashcard',
-        dwellMs: timeSpentMs,
-      );
-
-      final result = await submitReviewUseCase(
-        SubmitReviewParams(
-          userVocabularyId: currentCard.userVocabulary.id,
-          quality: quality,
-          timeSpentMs: timeSpentMs,
-        ),
-      );
-
-      result.fold(
-        (failure) {
-          _errorMessage = (_getFailureMessage(failure));
-          _isLoading = false;
-          notifyListeners();
-        },
-        (reviewResult) {
-          final newReviewedCount = _currentSession!.reviewedCards + 1;
-          final newCorrectCount =
-              _currentSession!.correctCount + (quality.isCorrect ? 1 : 0);
-          final newXpEarned =
-              _currentSession!.totalXpEarned + reviewResult.xpEarned;
-
-          _currentSession = _currentSession!.copyWith(
-            reviewedCards: newReviewedCount,
-            correctCount: newCorrectCount,
-            totalXpEarned: newXpEarned,
-          );
-
-          // Trigger background preload when approaching end of loaded cards
-          final loadedCards = _currentSession!.cards.length;
-          if (loadedCards - newReviewedCount <= _preloadThreshold) {
-            _loadMoreCards(); // fire-and-forget
-          }
-
-          if (_currentSession!.isCompleted) {
-            _currentSession = _currentSession!.copyWith(
-              completedAt: DateTime.now(),
-            );
-          }
-
-          _isCardFlipped = false;
-          _cardStartTime = DateTime.now();
-          _isLoading = false;
-          notifyListeners();
-        },
-      );
-    } catch (e) {
-      debugPrint('Failed to submit review: $e');
-      _errorMessage = UiText.key('flashcard.submitFailed');
-      _isLoading = false;
-      notifyListeners();
+    if (_currentSession?.isCompleted ?? false) {
+      await _delivery;
+      final done = _currentSession;
+      if (done != null) {
+        _currentSession = done.copyWith(completedAt: DateTime.now());
+        _notify();
+      }
     }
+  }
+
+  /// One rating at a time, in order. A rating that fails is retried ahead of
+  /// the next one; whatever is still unsent after the last card is dropped
+  /// and its word comes due again.
+  Future<void> _deliver(SubmitReviewParams review) async {
+    _unsent.add(review);
+    final batch = List.of(_unsent);
+    _unsent.clear();
+    for (final item in batch) {
+      try {
+        final result = await submitReviewUseCase(item);
+        result.fold((_) => _unsent.add(item), (reviewResult) {
+          final session = _currentSession;
+          if (session == null) return;
+          _currentSession = session.copyWith(
+            totalXpEarned: session.totalXpEarned + reviewResult.xpEarned,
+          );
+        });
+      } catch (e) {
+        debugPrint('Failed to submit review: $e');
+        _unsent.add(item);
+      }
+    }
+    _notify();
+  }
+
+  void _notify() {
+    if (!_disposed) notifyListeners();
   }
 
   /// End current session
@@ -438,6 +451,7 @@ class FlashcardProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     _currentSession = null;
     super.dispose();
   }
