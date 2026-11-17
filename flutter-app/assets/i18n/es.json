@@ -2012,6 +2012,7 @@
     "tagHistory": "Historia",
     "removeFromDeckFailed": "No se pudo quitar del mazo",
     "alreadyInVocabulary": "\"{}\" ya está en tu vocabulario.",
+    "resavedForReview": "Ya está en tu cuaderno — añadida al repaso de hoy",
     "savedNewWord": "Nueva palabra \"{}\" guardada en tu vocabulario.",
     "savedWord": "\"{}\" guardada en tu vocabulario.",
     "addToFlashcards": "Añadir a tarjetas",

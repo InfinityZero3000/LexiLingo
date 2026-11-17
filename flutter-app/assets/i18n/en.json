@@ -2148,6 +2148,7 @@
     "tagHistory": "History",
     "removeFromDeckFailed": "Failed to remove from deck",
     "alreadyInVocabulary": "\"{}\" is already in your vocabulary.",
+    "resavedForReview": "Already in your notebook — added to today's review",
     "savedNewWord": "Saved new word \"{}\" to your vocabulary.",
     "savedWord": "Saved \"{}\" to your vocabulary.",
     "addToFlashcards": "Add to Flashcards",

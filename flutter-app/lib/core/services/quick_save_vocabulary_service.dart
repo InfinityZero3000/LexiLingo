@@ -9,6 +9,7 @@ class QuickSaveVocabularyResult {
   final bool alreadyInCollection;
   final String? vocabularyId;
   final String? userVocabularyId;
+  final bool reviewScheduled;
 
   const QuickSaveVocabularyResult({
     required this.normalizedWord,
@@ -16,6 +17,7 @@ class QuickSaveVocabularyResult {
     required this.alreadyInCollection,
     required this.vocabularyId,
     this.userVocabularyId,
+    this.reviewScheduled = false,
   });
 
   factory QuickSaveVocabularyResult.fromJson(Map<String, dynamic> json) {
@@ -27,6 +29,7 @@ class QuickSaveVocabularyResult {
       alreadyInCollection: json['already_in_collection'] as bool? ?? false,
       vocabularyId: vocabulary?['id'] as String?,
       userVocabularyId: userVocabulary?['id'] as String?,
+      reviewScheduled: json['review_scheduled'] as bool? ?? false,
     );
   }
 }

@@ -588,7 +588,9 @@ class _DictionarySheetState extends State<_DictionarySheet> {
 
       if (!mounted) return;
       setState(() => _isAlreadySaved = true);
-      final message = result.alreadyInCollection
+      final message = result.alreadyInCollection && result.reviewScheduled
+          ? 'vocabulary.resavedForReview'.tr()
+          : result.alreadyInCollection
           ? 'bookReader.wordAlreadyInCollection'.tr(
               namedArgs: {'word': result.normalizedWord},
             )

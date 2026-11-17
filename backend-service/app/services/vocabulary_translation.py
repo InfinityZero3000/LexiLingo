@@ -13,10 +13,12 @@ from datetime import datetime, timezone
 from typing import Any
 
 import httpx
+import redis.asyncio as redis_asyncio
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.redis import get_redis
 from app.models.vocabulary import VocabularyItem
 
 logger = logging.getLogger(__name__)
@@ -377,9 +379,53 @@ async def find_incomplete_ids(db: AsyncSession, limit: int, chunk: int = 500) ->
     return found
 
 
-def schedule_enrichment(item: Any) -> bool:
-    """Queue enrichment for an incomplete item; never raises, so a broker outage cannot fail a save."""
+PENDING_TTL_SECONDS = 3600
+
+
+def pending_key(item_id: Any) -> str:
+    return f"vocab:enrich:pending:{item_id}"
+
+
+async def _claim_pending(item_id: Any) -> bool:
+    """SET NX the pending marker; True when this caller owns it, or when Redis cannot say."""
+    try:
+        client = await get_redis()
+        if client is None:
+            return True
+        return bool(await client.set(pending_key(item_id), "1", nx=True, ex=PENDING_TTL_SECONDS))
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Enrichment dedup unavailable for %s: %s", item_id, type(exc).__name__)
+        return True
+
+
+async def release_pending(item_id: Any) -> None:
+    """Drop the pending marker once a task is done with the item; never raises."""
+    client = None
+    own = False
+    try:
+        client = await get_redis()
+        if client is None and (settings.REDIS_URL or "").startswith(("redis://", "rediss://", "unix://")):
+            client = redis_asyncio.from_url(
+                settings.REDIS_URL, password=settings.REDIS_PASSWORD, decode_responses=True
+            )
+            own = True
+        if client is not None:
+            await client.delete(pending_key(item_id))
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Could not clear enrichment marker for %s: %s", item_id, type(exc).__name__)
+    finally:
+        if own and client is not None:
+            try:
+                await client.aclose()
+            except Exception:  # noqa: BLE001
+                pass
+
+
+async def schedule_enrichment(item: Any) -> bool:
+    """Queue enrichment for an incomplete item once; never raises, so a broker outage cannot fail a save."""
     if not settings.VOCAB_AUTO_TRANSLATE_ENABLED or not item_gaps(item):
+        return False
+    if not await _claim_pending(item.id):
         return False
     try:
         from app.tasks.vocabulary_enrichment import enrich_vocabulary_item
@@ -387,5 +433,6 @@ def schedule_enrichment(item: Any) -> bool:
         enrich_vocabulary_item.apply_async(args=[str(item.id)], retry=False)
     except Exception as exc:  # noqa: BLE001
         logger.warning("Could not queue vocabulary enrichment for %s: %s", item.id, type(exc).__name__)
+        await release_pending(item.id)
         return False
     return True

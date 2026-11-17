@@ -2012,6 +2012,7 @@
     "tagHistory": "歴史",
     "removeFromDeckFailed": "デッキから削除できませんでした",
     "alreadyInVocabulary": "「{}」はすでに単語帳にあります。",
+    "resavedForReview": "すでに単語帳にあります — 今日の復習に追加しました",
     "savedNewWord": "新しい単語「{}」を単語帳に保存しました。",
     "savedWord": "「{}」を単語帳に保存しました。",
     "addToFlashcards": "フラッシュカードに追加",

@@ -2012,6 +2012,7 @@
     "tagHistory": "역사",
     "removeFromDeckFailed": "덱에서 제거하지 못했습니다",
     "alreadyInVocabulary": "\"{}\"은(는) 이미 단어장에 있습니다.",
+    "resavedForReview": "이미 단어장에 있어요 — 오늘의 복습에 추가했어요",
     "savedNewWord": "새 단어 \"{}\"을(를) 단어장에 저장했습니다.",
     "savedWord": "\"{}\"을(를) 단어장에 저장했습니다.",
     "addToFlashcards": "플래시카드에 추가",

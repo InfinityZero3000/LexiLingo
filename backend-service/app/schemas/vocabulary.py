@@ -163,6 +163,8 @@ class QuickSaveVocabularyResponse(BaseModel):
     created_new_item: bool
     already_in_collection: bool
     normalized_word: str
+    review_scheduled: bool = False
+    next_review_date: Optional[datetime] = None
 
 
 # ===== Review Schemas =====

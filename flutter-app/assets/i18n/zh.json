@@ -2012,6 +2012,7 @@
     "tagHistory": "历史",
     "removeFromDeckFailed": "无法从卡组中移除",
     "alreadyInVocabulary": "“{}”已在你的词汇表中。",
+    "resavedForReview": "已在你的生词本中 — 已加入今天的复习",
     "savedNewWord": "已将新单词“{}”保存到词汇表。",
     "savedWord": "已将“{}”保存到词汇表。",
     "addToFlashcards": "添加到抽认卡",

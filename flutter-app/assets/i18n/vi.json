@@ -2148,6 +2148,7 @@
     "tagHistory": "Lịch sử",
     "removeFromDeckFailed": "Không xóa được khỏi bộ thẻ",
     "alreadyInVocabulary": "\"{}\" đã có trong sổ từ vựng của bạn.",
+    "resavedForReview": "Từ này đã có trong sổ — đã thêm vào lượt ôn hôm nay",
     "savedNewWord": "Đã lưu từ mới \"{}\" vào sổ từ vựng.",
     "savedWord": "Đã lưu \"{}\" vào sổ từ vựng.",
     "addToFlashcards": "Thêm vào thẻ ghi nhớ",
