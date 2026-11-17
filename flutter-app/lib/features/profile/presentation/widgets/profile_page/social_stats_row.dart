@@ -4,6 +4,7 @@ import 'package:lexilingo_app/features/profile/presentation/providers/profile_pr
 import 'package:lexilingo_app/features/profile/presentation/widgets/profile_ui_components.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Social stats row showing XP, followers, following
 class SocialStatsRow extends StatelessWidget {
@@ -22,12 +23,14 @@ class SocialStatsRow extends StatelessWidget {
               value: '${stats?.totalVocabularyReviewed ?? 0}',
               label: 'profile.words'.tr(),
               icon: Icons.spellcheck_rounded,
-              color: AppColors.greenSuccessBright,
+              color: context.status.success,
             ),
             Container(
               height: 40,
               width: 1,
-              color: AppColors.grey400.withValues(alpha: 0.5),
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
             ),
             AnimatedSocialStat(
               value: '${stats?.totalLessonsCompleted ?? 0}',
@@ -40,7 +43,9 @@ class SocialStatsRow extends StatelessWidget {
             Container(
               height: 40,
               width: 1,
-              color: AppColors.grey400.withValues(alpha: 0.5),
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
             ),
             AnimatedSocialStat(
               value: '${stats?.currentStreak ?? 0}',

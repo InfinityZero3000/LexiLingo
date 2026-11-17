@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/news_entities.dart';
 import '../providers/news_provider.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// News List Screen — browse English news articles by category and CEFR level.
 ///
@@ -96,14 +97,18 @@ class _NewsListScreenState extends State<NewsListScreen> {
                               Icon(
                                 Icons.error_outline_rounded,
                                 size: 48,
-                                color: Colors.red.shade300,
+                                color: Theme.of(context).colorScheme.error,
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: AppSpacing.md),
                               Text(
                                 'news.loadError'.tr(),
-                                style: TextStyle(color: AppColors.grey500),
+                                style: TextStyle(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: AppSpacing.sm),
                               TextButton(
                                 onPressed: () =>
                                     provider.loadArticles(refresh: true),
@@ -124,15 +129,19 @@ class _NewsListScreenState extends State<NewsListScreen> {
                               Icon(
                                 Icons.article_outlined,
                                 size: 64,
-                                color: AppColors.grey400,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: AppSpacing.md),
                               Text(
                                 'news.noArticles'.tr(),
-                                style: TextStyle(
-                                  color: AppColors.grey500,
-                                  fontSize: 16,
-                                ),
+                                style: Theme.of(context).textTheme.bodyLarge
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                    ),
                               ),
                             ],
                           ),
@@ -155,7 +164,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
                           if (row == rows) {
                             return provider.isLoading
                                 ? const Padding(
-                                    padding: EdgeInsets.all(16),
+                                    padding: EdgeInsets.all(AppSpacing.lg),
                                     child: Center(
                                       child: LottieLoadingWidget.tiny(),
                                     ),
@@ -164,7 +173,9 @@ class _NewsListScreenState extends State<NewsListScreen> {
                           }
                           final first = row * columns;
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
+                            padding: const EdgeInsets.only(
+                              bottom: AppSpacing.lg,
+                            ),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -173,7 +184,8 @@ class _NewsListScreenState extends State<NewsListScreen> {
                                   i < first + columns;
                                   i++
                                 ) ...[
-                                  if (i > first) const SizedBox(width: 16),
+                                  if (i > first)
+                                    const SizedBox(width: AppSpacing.lg),
                                   Expanded(
                                     child: i < articles.length
                                         ? _buildArticleCard(articles[i], isDark)
@@ -220,31 +232,35 @@ class _NewsListScreenState extends State<NewsListScreen> {
         children: provider.categories.map((cat) {
           final isSelected = provider.selectedCategory == cat.id;
           return Padding(
-            padding: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.only(right: AppSpacing.sm),
             child: FilterChip(
               selected: isSelected,
               showCheckmark: false,
               avatar: Icon(
                 categoryIcons[cat.id] ?? Icons.article_rounded,
                 size: 16,
-                color: isSelected ? Colors.white : AppColors.textGrey,
+                color: isSelected
+                    ? AppColors.onGradient
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
               label: Text(
                 cat.label,
-                style: TextStyle(
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: isSelected
-                      ? Colors.white
-                      : (isDark ? Colors.white70 : AppColors.textDark),
+                      ? AppColors.onGradient
+                      : (isDark
+                            ? AppColors.onGradient.withValues(alpha: 0.7)
+                            : Theme.of(context).colorScheme.onSurface),
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  fontSize: 12,
                 ),
               ),
               backgroundColor: isDark
-                  ? Colors.white.withValues(alpha: 0.06)
+                  ? AppColors.onGradient.withValues(alpha: 0.06)
                   : AppColors.grey100,
-              selectedColor: AppColors.primary,
+              selectedColor: Theme.of(context).colorScheme.primary,
+
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
               side: BorderSide.none,
               onSelected: (_) => provider.selectCategory(cat.id),
@@ -275,12 +291,17 @@ class _NewsListScreenState extends State<NewsListScreen> {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          color: isDark
+              ? AppColors.onGradient.withValues(alpha: 0.06)
+              : Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: [
             if (!isDark)
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
+                color: Theme.of(
+                  context,
+                ).colorScheme.shadow.withValues(alpha: 0.05),
+
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -320,7 +341,9 @@ class _NewsListScreenState extends State<NewsListScreen> {
                             end: Alignment.bottomCenter,
                             colors: [
                               Colors.transparent,
-                              Colors.black.withValues(alpha: 0.5),
+                              Theme.of(
+                                context,
+                              ).colorScheme.shadow.withValues(alpha: 0.5),
                             ],
                           ),
                         ),
@@ -332,11 +355,11 @@ class _NewsListScreenState extends State<NewsListScreen> {
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 10,
-                            vertical: 4,
+                            vertical: AppSpacing.xs,
                           ),
                           decoration: BoxDecoration(
                             color: cefrColor,
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
                             boxShadow: [
                               BoxShadow(
                                 color: cefrColor.withValues(alpha: 0.4),
@@ -347,11 +370,11 @@ class _NewsListScreenState extends State<NewsListScreen> {
                           ),
                           child: Text(
                             article.cefrLevel,
-                            style: TextStyle(
-                              color: AppColors.surfaceLight,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 12,
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: AppColors.surfaceLight,
+                                  fontWeight: FontWeight.w800,
+                                ),
                           ),
                         ),
                       ),
@@ -361,33 +384,40 @@ class _NewsListScreenState extends State<NewsListScreen> {
                         right: 12,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
+                            horizontal: AppSpacing.sm,
+                            vertical: AppSpacing.xs,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.6),
-                            borderRadius: BorderRadius.circular(8),
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.shadow.withValues(alpha: 0.6),
+
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.schedule_rounded,
                                 size: 12,
-                                color: Colors.white70,
+                                color: AppColors.onGradient.withValues(
+                                  alpha: 0.7,
+                                ),
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: AppSpacing.xs),
                               Text(
                                 'course.durationMin'.tr(
                                   namedArgs: {
                                     'count': '${article.readingTimeMin}',
                                   },
                                 ),
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(
+                                      color: AppColors.onGradient.withValues(
+                                        alpha: 0.7,
+                                      ),
+                                      fontWeight: FontWeight.w500,
+                                    ),
                               ),
                             ],
                           ),
@@ -399,11 +429,13 @@ class _NewsListScreenState extends State<NewsListScreen> {
                         left: 12,
                         child: Text(
                           article.sourceName,
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                          ),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: AppColors.onGradient.withValues(
+                                  alpha: 0.7,
+                                ),
+                                fontWeight: FontWeight.w500,
+                              ),
                         ),
                       ),
                     ],
@@ -419,9 +451,8 @@ class _NewsListScreenState extends State<NewsListScreen> {
                 children: [
                   Text(
                     article.title,
-                    style: const TextStyle(
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w700,
-                      fontSize: 15,
                       height: 1.3,
                     ),
                     maxLines: 2,
@@ -431,11 +462,13 @@ class _NewsListScreenState extends State<NewsListScreen> {
                     const SizedBox(height: 6),
                     Text(
                       article.description,
-                      style: TextStyle(
-                        color: isDark ? Colors.white60 : AppColors.textGrey,
-                        fontSize: 13,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: isDark
+                            ? AppColors.onGradient.withValues(alpha: 0.6)
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
                         height: 1.4,
                       ),
+
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -448,23 +481,23 @@ class _NewsListScreenState extends State<NewsListScreen> {
                       children: article.highlightedWords.take(4).map((word) {
                         return Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
+                            horizontal: AppSpacing.sm,
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
                             color: cefrColor.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
                             border: Border.all(
                               color: cefrColor.withValues(alpha: 0.2),
                             ),
                           ),
                           child: Text(
                             word,
-                            style: TextStyle(
-                              color: cefrColor,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: cefrColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
                           ),
                         );
                       }).toList(),
@@ -486,11 +519,11 @@ class _NewsListScreenState extends State<NewsListScreen> {
   Color _cefrColor(String level) {
     switch (level) {
       case 'A1':
-        return AppColors.greenSuccessBright;
+        return context.status.success;
       case 'A2':
         return AppColors.greenSuccessSoft;
       case 'B1':
-        return AppColors.warning;
+        return context.status.warning;
       case 'B2':
         return AppColors.orange;
       case 'C1':
@@ -498,7 +531,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
       case 'C2':
         return AppColors.purple;
       default:
-        return AppColors.primary;
+        return Theme.of(context).colorScheme.primary;
     }
   }
 }
@@ -531,7 +564,6 @@ class _NewsFloatingHeader extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       color: Theme.of(context).scaffoldBackgroundColor,
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
@@ -539,9 +571,9 @@ class _NewsFloatingHeader extends SliverPersistentHeaderDelegate {
         children: [
           AppBackButton(
             onPressed: () => Navigator.pop(context),
-            color: isDark ? Colors.white : AppColors.textDark,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Text(
               'news.title'.tr(),

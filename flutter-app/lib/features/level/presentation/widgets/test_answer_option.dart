@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// One lettered answer choice, shared by the placement test and the level exam.
 class TestAnswerOption extends StatelessWidget {
@@ -23,8 +24,8 @@ class TestAnswerOption extends StatelessWidget {
     final border = selected
         ? accent
         : isDark
-        ? AppColors.borderDarkSoft
-        : AppColors.slate200;
+        ? Theme.of(context).colorScheme.outlineVariant
+        : Theme.of(context).colorScheme.outlineVariant;
     final background = selected
         ? accent.withValues(alpha: isDark ? 0.2 : 0.1)
         : isDark
@@ -33,15 +34,15 @@ class TestAnswerOption extends StatelessWidget {
 
     return Material(
       color: background,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: Container(
           width: double.infinity,
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             border: Border.all(color: border, width: selected ? 1.5 : 1),
           ),
           child: Row(
@@ -59,13 +60,13 @@ class TestAnswerOption extends StatelessWidget {
                   String.fromCharCode(65 + index),
                   style: TextStyle(
                     color: selected
-                        ? Colors.white
+                        ? AppColors.onGradient
                         : AppColorRoles.textPrimary(isDark),
                     fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Text(
                   text,

@@ -18,6 +18,7 @@ import 'package:lexilingo_app/features/progress/presentation/providers/progress_
 import 'package:lexilingo_app/features/user/presentation/pages/settings_page.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class ProfilePage extends StatefulWidget {
   final bool isActive;
@@ -99,10 +100,10 @@ class _ProfilePageState extends State<ProfilePage> {
         title: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(AppSpacing.sm),
               decoration: BoxDecoration(
                 color: accent,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Icon(
                 Icons.person_rounded,
@@ -110,7 +111,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 size: 20,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Text(
                 'profile.title'.tr(),
@@ -134,7 +135,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   MaterialPageRoute(builder: (_) => const WalletScreen()),
                 ),
                 child: Container(
-                  margin: const EdgeInsets.only(right: 8),
+                  margin: const EdgeInsets.only(right: AppSpacing.sm),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
                     vertical: 6,
@@ -143,7 +144,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     gradient: const LinearGradient(
                       colors: AppColors.purpleGradient,
                     ),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -153,13 +154,12 @@ class _ProfilePageState extends State<ProfilePage> {
                         color: AppColors.surfaceLight,
                         size: 16,
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppSpacing.xs),
                       Text(
                         '${gamification.wallet?.gems ?? 0}',
-                        style: TextStyle(
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColors.surfaceLight,
                           fontWeight: FontWeight.bold,
-                          fontSize: 13,
                         ),
                       ),
                     ],
@@ -188,7 +188,8 @@ class _ProfilePageState extends State<ProfilePage> {
           if (_isAdminUser(user))
             IconButton(
               icon: const Icon(Icons.admin_panel_settings_rounded),
-              color: Colors.deepOrange,
+              color: Theme.of(context).colorScheme.error,
+
               tooltip: 'profile.adminMobile'.tr(),
               onPressed: _openAdminPanel,
             ),

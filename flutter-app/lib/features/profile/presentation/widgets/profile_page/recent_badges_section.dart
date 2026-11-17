@@ -10,6 +10,7 @@ import 'package:lexilingo_app/features/profile/presentation/providers/profile_pr
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class RecentBadgesSection extends StatefulWidget {
   const RecentBadgesSection({super.key});
@@ -76,10 +77,12 @@ class _RecentBadgesSectionState extends State<RecentBadgesSection>
             size: 40,
             color: AppColors.grey500,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             'profile.completeLessonsToEarnBadges'.tr(),
-            style: const TextStyle(color: AppColors.grey600, fontSize: 12),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -152,10 +155,12 @@ class _RecentBadgesSectionState extends State<RecentBadgesSection>
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             achievement.name,
-            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w500),
             overflow: TextOverflow.ellipsis,
           ),
         ],
@@ -216,7 +221,7 @@ class _RecentBadgesSectionState extends State<RecentBadgesSection>
         return Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(AppSpacing.lg),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -250,9 +255,12 @@ class _RecentBadgesSectionState extends State<RecentBadgesSection>
                   ? ShimmerContainer(
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.lg,
+                        ),
                         itemCount: 4,
-                        separatorBuilder: (_, __) => const SizedBox(width: 16),
+                        separatorBuilder: (_, __) =>
+                            const SizedBox(width: AppSpacing.lg),
                         itemBuilder: (context, index) {
                           return const SkeletonCircle(size: 80);
                         },
@@ -265,7 +273,8 @@ class _RecentBadgesSectionState extends State<RecentBadgesSection>
                       // Room above/below so the badge shadow isn't clipped.
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                       itemCount: visibleBadges.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 16),
+                      separatorBuilder: (_, __) =>
+                          const SizedBox(width: AppSpacing.lg),
                       itemBuilder: (context, index) {
                         final badge = visibleBadges[index];
                         return _buildBadgeItemFromEntity(badge);

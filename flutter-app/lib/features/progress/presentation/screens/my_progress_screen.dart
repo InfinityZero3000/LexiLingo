@@ -10,6 +10,7 @@ import 'package:lexilingo_app/features/progress/presentation/widgets/progress_ca
 import 'package:lexilingo_app/features/progress/presentation/widgets/course_progress_card.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/content_activity_tab.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/xp_line_chart.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// My Progress Screen
 /// Displays user's overall progress statistics
@@ -51,14 +52,14 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
                       size: 64,
                       color: Theme.of(context).colorScheme.error,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.lg),
                     Text(
                       progressProvider.errorMessage!,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyLarge,
                     ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
+                    const SizedBox(height: AppSpacing.xl),
+                    FilledButton(
                       onPressed: () {
                         progressProvider.fetchMyProgress();
                         context.read<HomeProvider>().loadWeeklyProgress();
@@ -86,7 +87,7 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
               ]),
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSpacing.lg),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -143,12 +144,12 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
                       ],
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSpacing.xl),
 
                     // Weekly Overview Charts
                     _WeeklyOverviewSection(),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSpacing.xl),
 
                     // Course Progress
                     Text(
@@ -157,12 +158,12 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.md),
 
                     if (courseProgressList.isEmpty)
                       Card(
                         child: Padding(
-                          padding: const EdgeInsets.all(24),
+                          padding: const EdgeInsets.all(AppSpacing.xl),
                           child: Center(
                             child: Column(
                               children: [
@@ -173,7 +174,7 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
                                     context,
                                   ).colorScheme.onSurfaceVariant,
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: AppSpacing.sm),
                                 Text(
                                   'profile.noEnrolledCoursesYet'.tr(),
                                   style: Theme.of(context).textTheme.bodyLarge,
@@ -214,11 +215,11 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
     IconData icon,
   ) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
       child: Row(
         children: [
           Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
-          SizedBox(width: 12),
+          SizedBox(width: AppSpacing.md),
           Expanded(
             child: Text(label, style: Theme.of(context).textTheme.bodyLarge),
           ),
@@ -277,7 +278,7 @@ class _WeeklyOverviewSectionState extends State<_WeeklyOverviewSection>
                 context,
               ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               'progress.weeklySummary'.tr(
                 namedArgs: {
@@ -286,16 +287,15 @@ class _WeeklyOverviewSectionState extends State<_WeeklyOverviewSection>
                   'days': '${weekly.daysActive}',
                 },
               ),
-              style: TextStyle(
-                fontSize: 13,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppColorRoles.textMuted(isDark),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             Container(
               decoration: BoxDecoration(
                 color: isDark ? AppColors.surfaceDarkMuted : AppColors.grey100,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: TabBar(
                 controller: _tabController,
@@ -303,14 +303,13 @@ class _WeeklyOverviewSectionState extends State<_WeeklyOverviewSection>
                 dividerColor: Colors.transparent,
                 indicator: BoxDecoration(
                   color: primary,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 labelColor: AppColors.surfaceLight,
                 unselectedLabelColor: AppColorRoles.textMuted(isDark),
-                labelStyle: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
+                labelStyle: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
                 isScrollable: false,
                 labelPadding: EdgeInsets.zero,
                 tabs: [
@@ -321,7 +320,7 @@ class _WeeklyOverviewSectionState extends State<_WeeklyOverviewSection>
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             SizedBox(
               height: 200,
               child: TabBarView(

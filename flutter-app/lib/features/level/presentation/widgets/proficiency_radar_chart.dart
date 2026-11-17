@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Proficiency radar/spider chart using CustomPainter
+const Color _radarFill = Color(0x336366F1);
+
 class ProficiencyRadarChart extends StatefulWidget {
   final Map<String, double> scores;
   final double size;
@@ -17,7 +19,7 @@ class ProficiencyRadarChart extends StatefulWidget {
     super.key,
     required this.scores,
     this.size = 220,
-    this.fillColor = const Color(0x336366F1),
+    this.fillColor = _radarFill,
     this.strokeColor = AppColors.primary,
     this.gridColor = AppColors.slate200,
     this.labelColor = AppColors.textSlateLight,
@@ -70,9 +72,11 @@ class _ProficiencyRadarChartState extends State<ProficiencyRadarChart>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final effectiveGridColor = isDark
-        ? Colors.white.withValues(alpha: 0.12)
+        ? AppColors.onGradient.withValues(alpha: 0.12)
         : widget.gridColor;
-    final effectiveLabelColor = isDark ? Colors.grey[400]! : widget.labelColor;
+    final effectiveLabelColor = isDark
+        ? Theme.of(context).colorScheme.onSurfaceVariant
+        : widget.labelColor;
 
     return AnimatedBuilder(
       animation: _animation,
@@ -256,7 +260,7 @@ class _RadarChartPainter extends CustomPainter {
       ..style = PaintingStyle.fill;
 
     final dotBorderPaint = Paint()
-      ..color = Colors.white
+      ..color = AppColors.onGradient
       ..style = PaintingStyle.fill;
 
     for (var i = 0; i < entries.length; i++) {

@@ -9,6 +9,7 @@ import 'package:lexilingo_app/features/level/presentation/providers/placement_te
 import 'package:lexilingo_app/features/level/presentation/providers/proficiency_provider.dart';
 import 'package:lexilingo_app/features/level/presentation/widgets/test_answer_option.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class PlacementTestPage extends StatefulWidget {
   const PlacementTestPage({super.key});
@@ -205,8 +206,11 @@ class _QuestionState extends StatelessWidget {
     final answeredCount = answers.length;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = AppColorRoles.primary(isDark);
-    final surface = isDark ? AppColors.surfaceDarkMuted : Colors.white;
-    final border = isDark ? AppColors.borderDarkSoft : AppColors.slate200;
+    final surface = Theme.of(context).colorScheme.surface;
+
+    final border = isDark
+        ? Theme.of(context).colorScheme.outlineVariant
+        : Theme.of(context).colorScheme.outlineVariant;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -238,15 +242,16 @@ class _QuestionState extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
         ClipRRect(
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
           child: LinearProgressIndicator(
             value: progress,
             minHeight: 8,
             backgroundColor: isDark
-                ? Colors.white.withValues(alpha: 0.08)
-                : AppColors.grey200,
+                ? AppColors.onGradient.withValues(alpha: 0.08)
+                : Theme.of(context).colorScheme.outlineVariant,
+
             valueColor: AlwaysStoppedAnimation<Color>(accent),
           ),
         ),
@@ -255,7 +260,7 @@ class _QuestionState extends StatelessWidget {
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             color: surface,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(color: border),
           ),
           child: Column(
@@ -312,9 +317,9 @@ class _QuestionState extends StatelessWidget {
                 child: Text('assessment.previous'.tr()),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
-              child: ElevatedButton.icon(
+              child: FilledButton.icon(
                 onPressed: isSubmitting
                     ? null
                     : isLast
@@ -323,7 +328,7 @@ class _QuestionState extends StatelessWidget {
                 icon: isSubmitting
                     ? const SizedBox(
                         width: 16,
-                        height: 16,
+                        height: AppSpacing.lg,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
                     : Icon(
@@ -336,9 +341,9 @@ class _QuestionState extends StatelessWidget {
                       ? 'assessment.submitTest'.tr()
                       : 'assessment.next'.tr(),
                 ),
-                style: ElevatedButton.styleFrom(
+                style: FilledButton.styleFrom(
                   backgroundColor: accent,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.onGradient,
                 ),
               ),
             ),
@@ -370,10 +375,12 @@ class _ResultState extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(22),
           decoration: BoxDecoration(
-            color: isDark ? AppColors.surfaceDarkMuted : Colors.white,
-            borderRadius: BorderRadius.circular(18),
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(
-              color: isDark ? AppColors.borderDarkSoft : AppColors.slate200,
+              color: isDark
+                  ? Theme.of(context).colorScheme.outlineVariant
+                  : Theme.of(context).colorScheme.outlineVariant,
             ),
           ),
           child: Column(
@@ -391,7 +398,7 @@ class _ResultState extends StatelessWidget {
                   size: 34,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               Text(
                 'assessment.testCompleted'.tr(),
                 textAlign: TextAlign.center,
@@ -399,7 +406,7 @@ class _ResultState extends StatelessWidget {
                   fontWeight: FontWeight.w900,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               Text(
                 'assessment.resultSubtitle'.tr(),
                 textAlign: TextAlign.center,
@@ -455,13 +462,13 @@ class _ResultState extends StatelessWidget {
                       child: Text('assessment.retakeTest'.tr()),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppSpacing.md),
                   Expanded(
-                    child: ElevatedButton(
+                    child: FilledButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      style: ElevatedButton.styleFrom(
+                      style: FilledButton.styleFrom(
                         backgroundColor: accent,
-                        foregroundColor: Colors.white,
+                        foregroundColor: AppColors.onGradient,
                       ),
                       child: Text('common.done'.tr()),
                     ),
@@ -487,10 +494,13 @@ class _ResultMetric extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: 14,
+      ),
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDarkInput : AppColors.grey50,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Column(
         children: [
@@ -501,7 +511,7 @@ class _ResultMetric extends StatelessWidget {
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.xs),
           Text(
             label,
             textAlign: TextAlign.center,
@@ -572,7 +582,7 @@ class _CenteredState extends StatelessWidget {
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -585,7 +595,7 @@ class _CenteredState extends StatelessWidget {
                 context,
               ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               message,
               textAlign: TextAlign.center,
@@ -595,7 +605,7 @@ class _CenteredState extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 18),
-            ElevatedButton(onPressed: onAction, child: Text(actionLabel)),
+            FilledButton(onPressed: onAction, child: Text(actionLabel)),
           ],
         ),
       ),
@@ -622,7 +632,7 @@ class _MetaChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: color.withValues(alpha: isDark ? 0.18 : 0.1),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -631,10 +641,9 @@ class _MetaChip extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             label,
-            style: TextStyle(
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: color,
               fontWeight: FontWeight.w800,
-              fontSize: 12,
             ),
           ),
         ],
@@ -657,7 +666,7 @@ class _TextChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDarkInput : AppColors.grey100,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

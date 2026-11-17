@@ -8,6 +8,7 @@ import 'package:lexilingo_app/features/level/domain/entities/proficiency_entity.
 import 'package:lexilingo_app/features/level/presentation/providers/proficiency_provider.dart';
 import 'package:lexilingo_app/features/level/presentation/widgets/level_history_timeline.dart';
 import 'package:lexilingo_app/features/level/presentation/widgets/proficiency_radar_chart.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Proficiency card with radar chart for profile page
 /// Shows 5 proficiency dimensions evaluated by AI from conversations
@@ -58,7 +59,10 @@ class ProficiencyCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.lg,
+          ),
           child: Text(
             'profile.yourProficiency'.tr(),
             style: Theme.of(
@@ -67,15 +71,15 @@ class ProficiencyCard extends StatelessWidget {
           ),
         ),
         Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
+          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: isDark ? AppColors.surfaceDarkMuted : Colors.white,
-            borderRadius: BorderRadius.circular(20),
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(
               color: isDark
                   ? accent.withValues(alpha: 0.22)
-                  : AppColors.slate200,
+                  : Theme.of(context).colorScheme.outlineVariant,
             ),
           ),
           child: Column(
@@ -86,12 +90,12 @@ class ProficiencyCard extends StatelessWidget {
                   'profile.proficiencyUnlockHint'.tr(),
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontSize: 13,
                     height: 1.4,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.lg),
               ],
 
               // Radar chart with center icon
@@ -112,11 +116,15 @@ class ProficiencyCard extends StatelessWidget {
                         size: 240,
                         fillColor: isDark
                             ? accent.withValues(alpha: 0.25)
-                            : AppColors.primary.withValues(alpha: 0.15),
+                            : Theme.of(
+                                context,
+                              ).colorScheme.primary.withValues(alpha: 0.15),
+
                         strokeColor: accent,
                         gridColor: isDark
-                            ? Colors.white.withValues(alpha: 0.1)
-                            : AppColors.slate200,
+                            ? AppColors.onGradient.withValues(alpha: 0.1)
+                            : Theme.of(context).colorScheme.outlineVariant,
+
                         animate: true,
                       ),
                       // Center decorative icon
@@ -129,12 +137,16 @@ class ProficiencyCard extends StatelessWidget {
                                 ? AppColors.surfaceDarkMuted.withValues(
                                     alpha: 0.9,
                                   )
-                                : Colors.white.withValues(alpha: 0.9),
+                                : AppColors.onGradient.withValues(alpha: 0.9),
+
                             shape: BoxShape.circle,
                             border: Border.all(
                               color: isDark
                                   ? accent.withValues(alpha: 0.3)
-                                  : AppColors.slate200,
+                                  : Theme.of(
+                                      context,
+                                    ).colorScheme.outlineVariant,
+
                               width: 1.5,
                             ),
                           ),
@@ -151,7 +163,7 @@ class ProficiencyCard extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
 
               // Unlock message
               if (!hasEnoughData) ...[
@@ -160,11 +172,11 @@ class ProficiencyCard extends StatelessWidget {
                     namedArgs: {'count': '$unlockThreshold'},
                   ),
                   style: TextStyle(
-                    color: isDark ? Colors.grey[400] : Colors.grey[500],
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontSize: 12,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.lg),
               ],
 
               // Action buttons
@@ -185,16 +197,18 @@ class ProficiencyCard extends StatelessWidget {
                         }
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.md,
+                        ),
                         decoration: BoxDecoration(
                           color: isDark
-                              ? Colors.white.withValues(alpha: 0.1)
-                              : const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(12),
+                              ? AppColors.onGradient.withValues(alpha: 0.1)
+                              : AppColors.grey100,
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                           border: Border.all(
                             color: isDark
-                                ? Colors.white.withValues(alpha: 0.15)
-                                : AppColors.slate200,
+                                ? AppColors.onGradient.withValues(alpha: 0.15)
+                                : Theme.of(context).colorScheme.outlineVariant,
                           ),
                         ),
                         child: Row(
@@ -203,7 +217,7 @@ class ProficiencyCard extends StatelessWidget {
                             Icon(
                               Icons.quiz_rounded,
                               size: 16,
-                              color: isDark ? Colors.white : AppColors.textDark,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                             const SizedBox(width: 6),
                             Flexible(
@@ -211,13 +225,15 @@ class ProficiencyCard extends StatelessWidget {
                                 'assessment.placementTest'.tr(),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                  color: isDark
-                                      ? Colors.white
-                                      : AppColors.textDark,
-                                ),
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: isDark
+                                          ? AppColors.onGradient
+                                          : Theme.of(
+                                              context,
+                                            ).colorScheme.onSurface,
+                                    ),
                               ),
                             ),
                           ],
@@ -225,7 +241,7 @@ class ProficiencyCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppSpacing.md),
                   // Start Lessons button
                   Expanded(
                     flex: 2,
@@ -239,21 +255,23 @@ class ProficiencyCard extends StatelessWidget {
                         );
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.md,
+                        ),
                         decoration: BoxDecoration(
                           color: accent,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
                               'profile.startLessons'.tr(),
-                              style: TextStyle(
-                                color: AppColors.surfaceLight,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: AppColors.surfaceLight,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                             ),
                           ],
                         ),
@@ -282,10 +300,16 @@ class ProficiencyCard extends StatelessWidget {
         content: Text('assessment.confirmStartMessage'.tr()),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+            ),
             onPressed: () => Navigator.pop(dialogContext, false),
             child: Text('common.cancel'.tr()),
           ),
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+            ),
             onPressed: () => Navigator.pop(dialogContext, true),
             child: Text('assessment.startNow'.tr()),
           ),
@@ -301,7 +325,10 @@ class ProficiencyCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.lg,
+          ),
           child: Text(
             'profile.yourProficiency'.tr(),
             style: Theme.of(
@@ -310,15 +337,15 @@ class ProficiencyCard extends StatelessWidget {
           ),
         ),
         Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          padding: const EdgeInsets.all(24),
+          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          padding: const EdgeInsets.all(AppSpacing.xl),
           decoration: BoxDecoration(
-            color: isDark ? AppColors.surfaceDarkMuted : Colors.white,
-            borderRadius: BorderRadius.circular(20),
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(
               color: isDark
                   ? accent.withValues(alpha: 0.22)
-                  : AppColors.slate200,
+                  : Theme.of(context).colorScheme.outlineVariant,
             ),
           ),
           child: const Center(

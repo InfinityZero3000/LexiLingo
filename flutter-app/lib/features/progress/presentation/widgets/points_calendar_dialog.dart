@@ -7,13 +7,15 @@ import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import '../../domain/entities/streak_entity.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/features/progress/presentation/theme/progress_palette.dart';
 
 const _kCalendarCellCount = 42;
 
 void showPointsCalendarDialog(BuildContext context, StreakEntity streak) {
   showDialog(
     context: context,
-    barrierColor: Colors.black54,
+    barrierColor: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.54),
     builder: (ctx) => Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
@@ -168,13 +170,11 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppColors.surfaceDark : const Color(0xFFFAF6F2);
-    final cardBg = isDark
-        ? AppColors.surfaceDarkElevated
-        : AppColors.surfaceLight;
+    final bg = isDark ? AppColors.surfaceDark : ProgressPalette.calendarCream;
+    final cardBg = Theme.of(context).colorScheme.surface;
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(AppRadius.xl),
       child: Container(
         color: bg,
         child: SingleChildScrollView(
@@ -183,7 +183,7 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
             children: [
               _buildHeader(context, isDark),
               _buildCalendar(isDark, cardBg),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               _buildReminderSection(isDark),
               const SizedBox(height: 20),
             ],
@@ -202,17 +202,18 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
             onPressed: () => Navigator.pop(context),
             color: isDark
                 ? AppColors.surfaceLight.withValues(alpha: 0.7)
-                : AppColors.textDark,
+                : Theme.of(context).colorScheme.onSurface,
           ),
           Expanded(
             child: Text(
               'home.pointsCalendar'.tr(),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 22,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.w800,
-                color: isDark ? AppColors.surfaceLight : AppColors.textDark,
+                color: isDark
+                    ? AppColors.surfaceLight
+                    : Theme.of(context).colorScheme.onSurface,
                 letterSpacing: -0.4,
               ),
             ),
@@ -232,14 +233,17 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
     final startOffset = firstWeekday % 7;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       child: Container(
         decoration: BoxDecoration(
           color: cardBg,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+              color: Theme.of(
+                context,
+              ).colorScheme.shadow.withValues(alpha: isDark ? 0.2 : 0.05),
+
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -249,7 +253,7 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
         child: Column(
           children: [
             _buildMonthNav(isDark),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             _buildWeekHeader(isDark),
             const Divider(height: 16, thickness: 0.5),
             _buildDaysGrid(daysInMonth, startOffset, isDark),
@@ -271,10 +275,11 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 16,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               fontWeight: FontWeight.w700,
-              color: isDark ? AppColors.surfaceLight : AppColors.textDark,
+              color: isDark
+                  ? AppColors.surfaceLight
+                  : Theme.of(context).colorScheme.onSurface,
             ),
           ),
         ),
@@ -291,7 +296,7 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
         size: 22,
         color: isDark
             ? AppColors.surfaceLight.withValues(alpha: 0.6)
-            : AppColors.textGrey,
+            : Theme.of(context).colorScheme.onSurfaceVariant,
       ),
     );
   }
@@ -308,14 +313,13 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
               child: Center(
                 child: Text(
                   e.value,
-                  style: TextStyle(
-                    fontSize: 13,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: e.key == 0 || e.key == 6
-                        ? const Color(0xFFFF8C00)
+                        ? ProgressPalette.flameOrange
                         : isDark
                         ? AppColors.surfaceLight.withValues(alpha: 0.6)
-                        : AppColors.textGrey,
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
@@ -366,11 +370,11 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
 
   Widget _buildReminderSection(bool isDark) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF4BAFF0),
-          borderRadius: BorderRadius.circular(18),
+          color: ProgressPalette.calendarSky,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
         child: Column(
@@ -378,9 +382,8 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
           children: [
             Text(
               'home.setupCheckinReminder'.tr(),
-              style: const TextStyle(
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 color: AppColors.surfaceLight,
-                fontSize: 16,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -397,7 +400,7 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
                     _saveReminderPrefs();
                   },
                   activeThumbColor: AppColors.surfaceLight,
-                  activeTrackColor: const Color(0xFF2575CC),
+                  activeTrackColor: ProgressPalette.calendarBlue,
                   inactiveThumbColor: AppColors.surfaceLight,
                   inactiveTrackColor: AppColors.surfaceLight.withValues(
                     alpha: 0.4,
@@ -417,9 +420,8 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
                   onTap: _pickTime,
                   child: Text(
                     _reminderTime.format(context),
-                    style: const TextStyle(
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       color: AppColors.surfaceLight,
-                      fontSize: 15,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -440,13 +442,12 @@ class _PointsCalendarContentState extends State<_PointsCalendarContent> {
     return Row(
       children: [
         Icon(icon, color: AppColors.surfaceLight, size: 22),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpacing.md),
         Expanded(
           child: Text(
             label,
-            style: const TextStyle(
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               color: AppColors.surfaceLight,
-              fontSize: 15,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -490,28 +491,27 @@ class _DayCell extends StatelessWidget {
     FontWeight fontWeight = FontWeight.w500;
 
     if (isCheckin) {
-      bgColor = const Color(0xFFFF8C35);
+      bgColor = ProgressPalette.streakOrange;
       textColor = AppColors.surfaceLight;
       fontWeight = FontWeight.w700;
     } else if (isToday) {
       bgColor = null;
-      textColor = const Color(0xFFFF8C35);
+      textColor = ProgressPalette.streakOrange;
       fontWeight = FontWeight.w700;
     } else if (isFuture) {
       textColor = isDark
           ? AppColors.surfaceLight.withValues(alpha: 0.24)
-          : const Color(0xFFB0B0B0);
+          : ProgressPalette.dayOff;
     } else {
       textColor = isDark
           ? AppColors.surfaceLight.withValues(alpha: 0.7)
-          : AppColors.textDark;
+          : Theme.of(context).colorScheme.onSurface;
     }
 
     Widget cell = Center(
       child: Text(
         '$day',
-        style: TextStyle(
-          fontSize: 14,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
           fontWeight: fontWeight,
           color: textColor,
         ),
@@ -529,7 +529,7 @@ class _DayCell extends StatelessWidget {
         margin: const EdgeInsets.all(3),
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: const Color(0xFFFF8C35), width: 2),
+          border: Border.all(color: ProgressPalette.streakOrange, width: 2),
         ),
         child: cell,
       );
