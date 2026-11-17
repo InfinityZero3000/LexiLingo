@@ -6,6 +6,7 @@ import 'package:lexilingo_app/features/user/domain/entities/weekly_activity_enti
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
+import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 void _showWeeklyActivityDetail(
@@ -379,27 +380,28 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'profile.weeklyActivity'.tr(),
-                          style: Theme.of(context).textTheme.heading?.copyWith(
-                            fontWeight: FontWeight.bold,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'profile.weeklyActivity'.tr(),
+                            style: Theme.of(context).textTheme.heading
+                                ?.copyWith(fontWeight: FontWeight.bold),
                           ),
-                        ),
-                        Text(
-                          'profile.last7DaysDetailedBreakdown'.tr(),
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                              ),
-                        ),
-                      ],
+                          Text(
+                            'profile.last7DaysDetailedBreakdown'.tr(),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                          ),
+                        ],
+                      ),
                     ),
-                    GestureDetector(
+                    TapTarget(
                       onTap: () => Navigator.pop(context),
                       child: Container(
                         padding: const EdgeInsets.all(AppSpacing.sm),

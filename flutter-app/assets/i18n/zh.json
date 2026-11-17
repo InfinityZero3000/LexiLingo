@@ -2244,6 +2244,8 @@
     }
   },
   "ielts": {
+    "passageTab": "文章",
+    "questionsTab": "题目",
     "sourceLine": "来源：",
     "licensedUnder": "许可协议：",
     "adaptedNotice": "已对原文进行改编。",

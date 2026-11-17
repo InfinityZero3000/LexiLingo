@@ -128,7 +128,9 @@ class _SittingViewState extends State<_SittingView> {
           ),
         ),
         body: ContentWidth(
-          maxWidth: ContentWidth.reading,
+          maxWidth: section.skill == IeltsSkill.reading
+              ? ContentWidth.wide
+              : ContentWidth.reading,
           child: _SectionBody(section: section),
         ),
         bottomNavigationBar: ContentWidth(
@@ -430,35 +432,222 @@ class _AudioPlayerBarState extends State<_AudioPlayerBar> {
 // Reading
 // ---------------------------------------------------------------------------
 
-class _ReadingSection extends StatelessWidget {
+class _ReadingSection extends StatefulWidget {
   final IeltsSection section;
   const _ReadingSection({required this.section});
 
   @override
-  Widget build(BuildContext context) {
+  State<_ReadingSection> createState() => _ReadingSectionState();
+}
+
+class _ReadingSectionState extends State<_ReadingSection> {
+  static const double _sideBySideFrom = 768;
+
+  final ScrollController _scroll = ScrollController();
+  final GlobalKey _viewportKey = GlobalKey();
+  late List<GlobalKey> _passageKeys;
+  late List<GlobalKey> _questionKeys;
+  bool _onQuestions = false;
+  int _widePart = 0;
+
+  List<IeltsPart> get _parts => widget.section.parts;
+
+  @override
+  void initState() {
+    super.initState();
+    _passageKeys = [for (final _ in _parts) GlobalKey()];
+    _questionKeys = [for (final _ in _parts) GlobalKey()];
+    _scroll.addListener(_syncSegment);
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  double? _topOf(GlobalKey key) {
+    final box = key.currentContext?.findRenderObject() as RenderBox?;
+    final viewport = _viewportKey.currentContext?.findRenderObject();
+    if (box == null || viewport is! RenderBox || !box.attached) return null;
+    return box.localToGlobal(Offset.zero, ancestor: viewport).dy;
+  }
+
+  int _currentPart() {
+    var current = 0;
+    for (var i = 0; i < _parts.length; i++) {
+      final top = _topOf(_passageKeys[i]);
+      if (top != null && top <= 80) current = i;
+    }
+    return current;
+  }
+
+  void _syncSegment() {
+    final top = _topOf(_questionKeys[_currentPart()]);
+    if (top == null) return;
+    final onQuestions = top <= 80;
+    if (onQuestions != _onQuestions) setState(() => _onQuestions = onQuestions);
+  }
+
+  void _jumpTo(bool questions) {
+    final keys = questions ? _questionKeys : _passageKeys;
+    final context = keys[_currentPart()].currentContext;
+    if (context == null) return;
+    setState(() => _onQuestions = questions);
+    Scrollable.ensureVisible(
+      context,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
+    );
+  }
+
+  Widget _passage(BuildContext context, IeltsPart part, {Key? key}) {
     final theme = Theme.of(context);
-    return ListView(
-      padding: const EdgeInsets.all(16),
+    return Column(
+      key: key,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (final part in section.parts) ...[
-          if (part.passageTitle != null)
-            Text(part.passageTitle!, style: theme.textTheme.titleMedium),
-          const SizedBox(height: AppSpacing.sm),
-          if (part.passageText != null)
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  part.passageText!,
-                  style: theme.textTheme.bodyMedium?.copyWith(height: 1.6),
-                ),
+        if (part.passageTitle != null)
+          Text(part.passageTitle!, style: theme.textTheme.titleMedium),
+        const SizedBox(height: AppSpacing.sm),
+        if (part.passageText != null)
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: Text(
+                part.passageText!,
+                style: theme.textTheme.bodyMedium?.copyWith(height: 1.6),
               ),
             ),
-          if (part.hasAttribution) IeltsPassageAttribution(part: part),
-          const SizedBox(height: AppSpacing.lg),
-          ...part.groups.map((group) => _QuestionGroup(group: group)),
-          const Divider(height: 32),
-        ],
+          ),
+        if (part.hasAttribution) IeltsPassageAttribution(part: part),
+      ],
+    );
+  }
+
+  Widget _questions(IeltsPart part, {Key? key}) {
+    return Column(
+      key: key,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: part.groups.map((g) => _QuestionGroup(group: g)).toList(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_parts.isEmpty) return const SizedBox.shrink();
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= _sideBySideFrom) {
+          return _buildWide(context);
+        }
+        return _buildNarrow(context);
+      },
+    );
+  }
+
+  Widget _buildNarrow(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.sm,
+            AppSpacing.lg,
+            0,
+          ),
+          child: SegmentedButton<bool>(
+            showSelectedIcon: false,
+            segments: [
+              ButtonSegment(
+                value: false,
+                label: Text('ielts.passageTab'.tr()),
+                icon: const Icon(Icons.article_outlined),
+              ),
+              ButtonSegment(
+                value: true,
+                label: Text('ielts.questionsTab'.tr()),
+                icon: const Icon(Icons.checklist),
+              ),
+            ],
+            selected: {_onQuestions},
+            onSelectionChanged: (value) => _jumpTo(value.first),
+          ),
+        ),
+        Expanded(
+          child: SingleChildScrollView(
+            key: _viewportKey,
+            controller: _scroll,
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (var i = 0; i < _parts.length; i++) ...[
+                  _passage(context, _parts[i], key: _passageKeys[i]),
+                  const SizedBox(height: AppSpacing.lg),
+                  _questions(_parts[i], key: _questionKeys[i]),
+                  const Divider(height: 32),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWide(BuildContext context) {
+    final part = _parts[_widePart.clamp(0, _parts.length - 1)];
+    return Column(
+      children: [
+        if (_parts.length > 1)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.sm,
+                AppSpacing.lg,
+                0,
+              ),
+              child: Wrap(
+                spacing: AppSpacing.sm,
+                children: [
+                  for (var i = 0; i < _parts.length; i++)
+                    ChoiceChip(
+                      label: Text(
+                        'ielts.partNumber'.tr(
+                          namedArgs: {'order': '${_parts[i].order}'},
+                        ),
+                      ),
+                      selected: i == _widePart,
+                      onSelected: (_) => setState(() => _widePart = i),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        Expanded(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: ListView(
+                  key: PageStorageKey('ielts-passage-${part.order}'),
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  children: [_passage(context, part)],
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  key: PageStorageKey('ielts-questions-${part.order}'),
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  children: [_questions(part)],
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -689,6 +878,7 @@ class _SpeakingPartState extends State<_SpeakingPart> {
   late final TextEditingController _transcriptController;
   bool _recording = false;
   bool _transcribing = false;
+  bool _busy = false;
   UiText? _error;
 
   String get _key =>
@@ -705,11 +895,28 @@ class _SpeakingPartState extends State<_SpeakingPart> {
   @override
   void dispose() {
     _transcriptController.dispose();
-    _recorder.dispose();
+    unawaited(_releaseRecorder());
     super.dispose();
   }
 
+  Future<void> _releaseRecorder() async {
+    try {
+      if (await _recorder.isRecording()) await _recorder.stop();
+    } catch (_) {}
+    await _recorder.dispose();
+  }
+
   Future<void> _toggle() async {
+    if (_busy) return;
+    _busy = true;
+    try {
+      await _toggleRecording();
+    } finally {
+      _busy = false;
+    }
+  }
+
+  Future<void> _toggleRecording() async {
     final provider = context.read<IeltsProvider>();
     if (_recording) {
       final path = await _recorder.stop();
@@ -746,13 +953,16 @@ class _SpeakingPartState extends State<_SpeakingPart> {
       return;
     }
 
-    if (!await _recorder.hasPermission()) {
+    final granted = await _recorder.hasPermission();
+    if (!mounted) return;
+    if (!granted) {
       if (mounted) {
         setState(() => _error = const UiText.key('ielts.micPermissionRequired'));
       }
       return;
     }
     final dir = await getTemporaryDirectory();
+    if (!mounted) return;
     final path = '${dir.path}/ielts_$_key.m4a';
     await _recorder.start(const RecordConfig(), path: path);
     if (!mounted) return;

@@ -2244,6 +2244,8 @@
     }
   },
   "ielts": {
+    "passageTab": "Passage",
+    "questionsTab": "Questions",
     "sourceLine": "Source:",
     "licensedUnder": "Licensed under",
     "adaptedNotice": "Adapted from the original text.",

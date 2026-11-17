@@ -28071,10 +28071,10 @@
       }
     },
     {
-      "id": "lib/features/ielts/presentation/pages/ielts_sitting_page.dart::_ReadingSection::Card::0",
+      "id": "lib/features/ielts/presentation/pages/ielts_sitting_page.dart::_ReadingSectionState::Card::0",
       "path": "lib/features/ielts/presentation/pages/ielts_sitting_page.dart",
       "entryPoint": "surface",
-      "symbol": "_ReadingSection",
+      "symbol": "_ReadingSectionState",
       "callKind": "Card",
       "ordinal": 0,
       "line": 409,
