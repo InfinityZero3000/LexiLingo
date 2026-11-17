@@ -2354,5 +2354,61 @@
     "typeToConfirm": "Gõ \"{text}\" để xác nhận",
     "loadMore": "Tải thêm",
     "noResults": "Không có kết quả"
+  },
+  "admin": {
+    "nav": {
+      "group": {
+        "overview": "Tổng quan",
+        "learners": "Người học",
+        "content": "Nội dung",
+        "growth": "Tăng trưởng",
+        "system": "Hệ thống",
+        "superAdmin": "Super admin"
+      },
+      "dashboard": "Bảng điều khiển",
+      "users": "Người dùng",
+      "courses": "Khoá học",
+      "topics": "Chủ đề",
+      "vocabulary": "Từ vựng",
+      "grammar": "Ngữ pháp & bài thi",
+      "contentLab": "Phòng nội dung",
+      "contentQa": "Hàng đợi duyệt nội dung",
+      "achievements": "Thành tựu & cửa hàng",
+      "ads": "Banner",
+      "campaigns": "Chiến dịch thông báo",
+      "rankingAgent": "Tác tử xếp hạng",
+      "analytics": "Phân tích",
+      "logs": "Nhật ký kiểm toán",
+      "health": "Sức khoẻ hệ thống",
+      "config": "Cấu hình hệ thống",
+      "settings": "Cài đặt",
+      "superDashboard": "Bảng điều khiển super",
+      "adminManagement": "Quản lý admin"
+    },
+    "shell": {
+      "logout": "Đăng xuất",
+      "roleAdmin": "ADMIN",
+      "roleSuper": "SUPER ADMIN",
+      "permissionsFailed": "Không tải được quyền của bạn."
+    },
+    "access": {
+      "forbiddenTitle": "Không có quyền",
+      "forbiddenBody": "Vai trò của bạn không gồm mục này. Hãy hỏi super admin nếu cần.",
+      "featureOffTitle": "Đang tắt",
+      "featureOffBody": "Tính năng này đang được tắt trên máy chủ."
+    },
+    "errors": {
+      "network": "Không kết nối được máy chủ. Kiểm tra mạng.",
+      "unauthorized": "Phiên đăng nhập đã hết. Hãy đăng nhập lại.",
+      "forbidden": "Bạn không có quyền với mục này.",
+      "notFound": "Không tìm thấy.",
+      "featureOff": "Tính năng này đang được tắt trên máy chủ.",
+      "server": "Máy chủ gặp sự cố. Thử lại sau.",
+      "generic": "Có lỗi xảy ra. Hãy thử lại.",
+      "googleCancelled": "Đã huỷ đăng nhập Google.",
+      "notVerified": "Không xác thực được tài khoản này.",
+      "notAdmin": "Tài khoản này không có quyền admin.",
+      "oauthMissing": "Máy chủ chưa cấu hình đăng nhập Google cho admin."
+    }
   }
 }

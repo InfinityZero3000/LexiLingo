@@ -2354,5 +2354,61 @@
     "typeToConfirm": "Escribe «{text}» para confirmar",
     "loadMore": "Ver más",
     "noResults": "Sin resultados"
+  },
+  "admin": {
+    "nav": {
+      "group": {
+        "overview": "Overview",
+        "learners": "Learners",
+        "content": "Content",
+        "growth": "Growth",
+        "system": "System",
+        "superAdmin": "Super admin"
+      },
+      "dashboard": "Dashboard",
+      "users": "Users",
+      "courses": "Courses",
+      "topics": "Topics",
+      "vocabulary": "Vocabulary",
+      "grammar": "Grammar & tests",
+      "contentLab": "Content lab",
+      "contentQa": "Content QA queue",
+      "achievements": "Achievements & shop",
+      "ads": "Banners",
+      "campaigns": "Notification campaigns",
+      "rankingAgent": "Ranking agent",
+      "analytics": "Analytics",
+      "logs": "Audit log",
+      "health": "System health",
+      "config": "System config",
+      "settings": "Settings",
+      "superDashboard": "Super dashboard",
+      "adminManagement": "Admin management"
+    },
+    "shell": {
+      "logout": "Log out",
+      "roleAdmin": "ADMIN",
+      "roleSuper": "SUPER ADMIN",
+      "permissionsFailed": "Could not load your permissions."
+    },
+    "access": {
+      "forbiddenTitle": "No access",
+      "forbiddenBody": "Your role does not include this. Ask a super admin if you need it.",
+      "featureOffTitle": "Turned off",
+      "featureOffBody": "This feature is switched off on the server."
+    },
+    "errors": {
+      "network": "Cannot reach the server. Check your connection.",
+      "unauthorized": "Your session has ended. Sign in again.",
+      "forbidden": "You do not have permission for this.",
+      "notFound": "Not found.",
+      "featureOff": "This feature is switched off on the server.",
+      "server": "The server had a problem. Try again later.",
+      "generic": "Something went wrong. Try again.",
+      "googleCancelled": "Google sign-in was cancelled.",
+      "notVerified": "This account could not be verified.",
+      "notAdmin": "This account has no admin access.",
+      "oauthMissing": "Admin Google sign-in is not set up on the server."
+    }
   }
 }
