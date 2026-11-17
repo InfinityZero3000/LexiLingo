@@ -2012,6 +2012,7 @@
     "tagHistory": "Histoire",
     "removeFromDeckFailed": "Impossible de retirer du paquet",
     "alreadyInVocabulary": "« {} » est déjà dans votre vocabulaire.",
+    "resavedForReview": "Déjà dans ton carnet — ajouté à la révision du jour",
     "savedNewWord": "Nouveau mot « {} » enregistré dans votre vocabulaire.",
     "savedWord": "« {} » enregistré dans votre vocabulaire.",
     "addToFlashcards": "Ajouter aux cartes",

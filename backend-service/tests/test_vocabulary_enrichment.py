@@ -319,24 +319,99 @@ def _fake_item(translation):
     return item
 
 
-def test_schedule_enqueues_incomplete_once_and_skips_complete():
+class FakeRedis:
+    def __init__(self):
+        self.store: dict[str, str] = {}
+
+    async def set(self, key, value, nx=False, ex=None):
+        if nx and key in self.store:
+            return None
+        self.store[key] = value
+        return True
+
+    async def delete(self, key):
+        return 1 if self.store.pop(key, None) is not None else 0
+
+
+@pytest.fixture
+def fake_redis():
+    client = FakeRedis()
+    with patch("app.services.vocabulary_translation.get_redis", new=AsyncMock(return_value=client)):
+        yield client
+
+
+@pytest.mark.asyncio
+async def test_schedule_enqueues_incomplete_once_and_skips_complete(fake_redis):
     with patch.object(tasks.enrich_vocabulary_item, "apply_async", autospec=True) as queued:
-        assert vt.schedule_enrichment(_fake_item({"vi": "kéo"})) is True
+        assert await vt.schedule_enrichment(_fake_item({"vi": "kéo"})) is True
         assert queued.call_count == 1
-        assert vt.schedule_enrichment(_fake_item(_complete())) is False
+        assert await vt.schedule_enrichment(_fake_item(_complete())) is False
         assert queued.call_count == 1
 
 
-def test_schedule_is_off_when_flag_off(monkeypatch):
+@pytest.mark.asyncio
+async def test_schedule_is_off_when_flag_off(monkeypatch, fake_redis):
     monkeypatch.setattr(settings, "VOCAB_AUTO_TRANSLATE_ENABLED", False)
     with patch.object(tasks.enrich_vocabulary_item, "apply_async", autospec=True) as queued:
-        assert vt.schedule_enrichment(_fake_item({"vi": "kéo"})) is False
+        assert await vt.schedule_enrichment(_fake_item({"vi": "kéo"})) is False
     queued.assert_not_called()
 
 
-def test_broker_outage_does_not_raise():
+@pytest.mark.asyncio
+async def test_broker_outage_does_not_raise_and_frees_the_marker(fake_redis):
+    item = _fake_item({"vi": "kéo"})
     with patch.object(tasks.enrich_vocabulary_item, "apply_async", autospec=True, side_effect=OSError("redis down")):
-        assert vt.schedule_enrichment(_fake_item({"vi": "kéo"})) is False
+        assert await vt.schedule_enrichment(item) is False
+    assert vt.pending_key(item.id) not in fake_redis.store
+
+
+@pytest.mark.asyncio
+async def test_same_item_is_queued_once_until_released(fake_redis):
+    item = _fake_item({"vi": "kéo"})
+    with patch.object(tasks.enrich_vocabulary_item, "apply_async", autospec=True) as queued:
+        assert await vt.schedule_enrichment(item) is True
+        assert await vt.schedule_enrichment(item) is False
+        assert await vt.schedule_enrichment(item) is False
+        assert queued.call_count == 1
+        await vt.release_pending(item.id)
+        assert await vt.schedule_enrichment(item) is True
+        assert queued.call_count == 2
+
+
+@pytest.mark.asyncio
+async def test_redis_down_still_enqueues():
+    item = _fake_item({"vi": "kéo"})
+    with patch("app.services.vocabulary_translation.get_redis", new=AsyncMock(side_effect=OSError("no redis"))), \
+         patch.object(tasks.enrich_vocabulary_item, "apply_async", autospec=True) as queued:
+        assert await vt.schedule_enrichment(item) is True
+        assert await vt.schedule_enrichment(item) is True
+    assert queued.call_count == 2
+
+
+@pytest.mark.asyncio
+async def test_redis_not_connected_still_enqueues():
+    with patch("app.services.vocabulary_translation.get_redis", new=AsyncMock(return_value=None)), \
+         patch.object(tasks.enrich_vocabulary_item, "apply_async", autospec=True) as queued:
+        assert await vt.schedule_enrichment(_fake_item({"vi": "kéo"})) is True
+    assert queued.call_count == 1
+
+
+def test_task_releases_the_marker_when_finished():
+    release = AsyncMock()
+    with patch.object(tasks, "_enrich_one", new=AsyncMock(return_value=("enriched", None))), \
+         patch.object(tasks, "release_pending", new=release):
+        assert tasks.enrich_vocabulary_item.run("abc") == {"status": "enriched"}
+    release.assert_awaited_once_with("abc")
+
+
+def test_task_keeps_the_marker_while_a_retry_is_pending():
+    release = AsyncMock()
+    with patch.object(tasks, "_enrich_one", new=AsyncMock(return_value=("retry", None))), \
+         patch.object(tasks, "release_pending", new=release), \
+         patch.object(tasks.enrich_vocabulary_item, "retry", side_effect=RuntimeError("retry")):
+        with pytest.raises(RuntimeError):
+            tasks.enrich_vocabulary_item.run("abc")
+    release.assert_not_awaited()
 
 
 @pytest.mark.asyncio

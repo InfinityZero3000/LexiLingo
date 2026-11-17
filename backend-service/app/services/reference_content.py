@@ -3,6 +3,7 @@
 import csv
 import io
 import json
+import logging
 import os
 import shutil
 import uuid
@@ -17,6 +18,8 @@ from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession
 from app.models.content import GrammarItem, QuestionItem
 from app.models.course import Course, Lesson
 from app.models.vocabulary import DifficultyLevel, PartOfSpeech, VocabularyItem
+
+logger = logging.getLogger(__name__)
 
 FILE_FORMAT = 1
 LEVELS = [level.value for level in DifficultyLevel]
@@ -79,6 +82,16 @@ def _vocab_sort(row: dict[str, Any]) -> tuple[str, str, str]:
     return (row["word"].casefold(), row["part_of_speech"], row["id"])
 
 
+def audit_duplicates(rows: list[dict[str, Any]]) -> dict[str, int]:
+    """Groups of vocabulary rows sharing (lower(word), part_of_speech) and sharing lower(word)."""
+    by_pos = Counter((r["word"].lower(), r["part_of_speech"]) for r in rows)
+    by_word = Counter(r["word"].lower() for r in rows)
+    return {
+        "by_word_pos": sum(1 for n in by_pos.values() if n > 1),
+        "by_word": sum(1 for n in by_word.values() if n > 1),
+    }
+
+
 def build_files(payload: dict[str, list[dict[str, Any]]]) -> dict[str, str]:
     """Relative path -> file text, deterministic for unchanged data."""
     by_level: dict[str, list[dict[str, Any]]] = {level: [] for level in LEVELS}
@@ -97,6 +110,9 @@ def build_files(payload: dict[str, list[dict[str, Any]]]) -> dict[str, str]:
             {"format": FILE_FORMAT, "table": "vocabulary_items", "level": level, "items": rows}
         )
     manifest["counts"]["total"] = sum(len(r) for r in by_level.values())
+    manifest["duplicates"] = audit_duplicates(payload["vocabulary_items"])
+    if any(manifest["duplicates"].values()):
+        logger.warning("Reference corpus has duplicate vocabulary rows: %s", manifest["duplicates"])
     files["vocabulary/manifest.json"] = _dump(manifest)
 
     questions = sorted(

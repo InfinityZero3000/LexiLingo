@@ -1222,7 +1222,9 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(result.alreadyInCollection
+          content: Text(result.alreadyInCollection && result.reviewScheduled
+              ? 'vocabulary.resavedForReview'.tr()
+              : result.alreadyInCollection
               ? 'youtube.wordAlreadySaved'.tr(namedArgs: {'word': result.normalizedWord})
               : 'youtube.wordSaved'.tr(namedArgs: {'word': result.normalizedWord})),
           behavior: SnackBarBehavior.floating,

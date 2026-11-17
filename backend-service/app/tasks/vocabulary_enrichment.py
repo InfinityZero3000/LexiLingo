@@ -20,6 +20,7 @@ from app.services.vocabulary_translation import (
     GroqRetryable,
     enrich_item,
     find_incomplete_ids,
+    release_pending,
 )
 
 logger = logging.getLogger(__name__)
@@ -48,13 +49,27 @@ def enrich_vocabulary_item(self, item_id: str) -> dict:
         status, hint = asyncio.run(_enrich_one(item_id))
     except Exception:  # noqa: BLE001 - a bad item must not poison the queue
         logger.exception("Vocabulary enrichment crashed for %s", item_id)
+        _release(item_id)
         return {"status": "failed"}
     if status not in ("retry", "partial"):
+        _release(item_id)
         return {"status": status}
     if self.request.retries >= self.max_retries:
         logger.warning("Vocabulary enrichment gave up on %s (%s); the sweep will retry later", item_id, status)
+        _release(item_id)
         return {"status": "gave_up"}
     raise self.retry(countdown=retry_countdown(self.request.retries, hint))
+
+
+def _release(item_id: str) -> None:
+    """Clear the queue-dedup marker on its own loop so it works whatever asyncio.run is doing."""
+    loop = asyncio.new_event_loop()
+    try:
+        loop.run_until_complete(release_pending(item_id))
+    except Exception:  # noqa: BLE001
+        logger.warning("Could not clear enrichment marker for %s", item_id)
+    finally:
+        loop.close()
 
 
 async def _enrich_one(item_id: str) -> tuple[str, float | None]:
@@ -130,6 +145,7 @@ async def _export(root: Path) -> dict:
             "format": reference_content.FILE_FORMAT,
             "generated_at": datetime.now(UTC).isoformat(),
             "counts": counts,
+            "duplicates": reference_content.audit_duplicates(payload["vocabulary_items"]),
         }
         written = reference_content.publish_export(files, root, meta)
         logger.info("Reference corpus exported to %s: %s", root, counts)

@@ -106,6 +106,8 @@ class _QuickSaveWordSheetState extends State<_QuickSaveWordSheet> {
           ? 'vocabulary.savedToCollections'.tr(
               args: [result.normalizedWord, '$addedToDecks'],
             )
+          : result.alreadyInCollection && result.reviewScheduled
+          ? 'vocabulary.resavedForReview'.tr()
           : result.alreadyInCollection
           ? 'vocabulary.alreadyInVocabulary'.tr(args: [result.normalizedWord])
           : result.createdNewItem
