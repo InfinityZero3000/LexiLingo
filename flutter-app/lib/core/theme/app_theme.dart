@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_tactile_theme.dart';
+import 'app_tokens.dart';
 
 /// Applies CJK font fallbacks to every style in a [TextTheme].
 /// Lexend has no Chinese/Japanese/Korean glyphs; these fallbacks prevent □ boxes.
@@ -193,6 +194,14 @@ class AppColors {
   ];
   static const Color roadmapNodeFallbackDark = Color(0xFF66CFF5);
 
+  // ── Shared accents (same values the feature palettes already used) ──────
+  static const Color pink = Color(0xFFE91E63);
+  static const Color legendary = Color(0xFFFF6B00);
+  static const Color skyBlue = Color(0xFF38B2FF);
+
+  /// Foreground for text and icons drawn on a gradient or photo, in either mode.
+  static const Color onGradient = Color(0xFFFFFFFF);
+
   // ── Slate / Ink ───────────────────────────────────────────────────────────
   static const Color slate900 = Color(0xFF0F172A);
   static const Color slate800 = Color(0xFF1E293B);
@@ -319,7 +328,9 @@ class AppTheme {
 
   static ThemeData get lightTheme {
     final base = _lightThemeBase;
-    return base.copyWith(extensions: [AppTactileTheme.from(base)]);
+    return base.copyWith(
+      extensions: [AppTactileTheme.from(base), AppStatusColors.light],
+    );
   }
 
   static ThemeData get _lightThemeBase {
@@ -370,7 +381,9 @@ class AppTheme {
 
   static ThemeData get darkTheme {
     final base = _darkThemeBase;
-    return base.copyWith(extensions: [AppTactileTheme.from(base)]);
+    return base.copyWith(
+      extensions: [AppTactileTheme.from(base), AppStatusColors.dark],
+    );
   }
 
   static ThemeData get _darkThemeBase {
