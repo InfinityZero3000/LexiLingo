@@ -33,12 +33,13 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
   void initState() {
     super.initState();
     _flipController = AnimationController(
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 450),
       vsync: this,
+      value: widget.isFlipped ? 1 : 0,
     );
 
     _flipAnimation = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: _flipController, curve: Curves.easeInOut),
+      CurvedAnimation(parent: _flipController, curve: Curves.easeInOutCubic),
     );
   }
 
@@ -64,27 +65,29 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: widget.onTap,
-      child: AnimatedBuilder(
-        animation: _flipAnimation,
-        builder: (context, child) {
-          // Calculate rotation
-          final angle = _flipAnimation.value * pi;
-          final isBackVisible = angle > pi / 2;
+      child: RepaintBoundary(
+        child: AnimatedBuilder(
+          animation: _flipAnimation,
+          builder: (context, child) {
+            // Calculate rotation
+            final angle = _flipAnimation.value * pi;
+            final isBackVisible = angle > pi / 2;
 
-          return Transform(
-            alignment: Alignment.center,
-            transform: Matrix4.identity()
-              ..setEntry(3, 2, 0.001) // Perspective
-              ..rotateY(angle),
-            child: isBackVisible
-                ? Transform(
-                    alignment: Alignment.center,
-                    transform: Matrix4.identity()..rotateY(pi),
-                    child: _buildCardBack(),
-                  )
-                : _buildCardFront(),
-          );
-        },
+            return Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.identity()
+                ..setEntry(3, 2, 0.001) // Perspective
+                ..rotateY(angle),
+              child: isBackVisible
+                  ? Transform(
+                      alignment: Alignment.center,
+                      transform: Matrix4.identity()..rotateY(pi),
+                      child: _buildCardBack(),
+                    )
+                  : _buildCardFront(),
+            );
+          },
+        ),
       ),
     );
   }
