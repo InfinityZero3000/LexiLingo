@@ -19,6 +19,8 @@ import '../../features/super_admin/presentation/admin_management_screen.dart';
 import '../../features/system_logs/presentation/logs_screen.dart';
 import '../../features/ads/presentation/ads_screen.dart';
 import '../../features/topics/presentation/topics_screen.dart';
+import '../../features/categories/presentation/categories_screen.dart';
+import '../../features/ielts/presentation/ielts_screen.dart';
 import '../../features/system_settings/presentation/system_settings_screen.dart';
 import '../../features/content_lab/presentation/content_lab_screen.dart';
 import '../../features/content_qa/presentation/content_qa_screen.dart';
@@ -125,7 +127,12 @@ GoRouter createRouter(AuthProvider authProvider, AdminPermissions permissions) {
               ),
             ],
           ),
+          GoRoute(
+            path: '/categories',
+            builder: (_, __) => const CategoriesScreen(),
+          ),
           GoRoute(path: '/topics', builder: (_, __) => const TopicsScreen()),
+          GoRoute(path: '/ielts', builder: (_, __) => const IeltsScreen()),
           GoRoute(
             path: '/vocabulary',
             builder: (_, __) => const VocabularyScreen(),
