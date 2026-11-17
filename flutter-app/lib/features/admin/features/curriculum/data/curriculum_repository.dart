@@ -1,5 +1,7 @@
+import 'package:lexilingo_app/core/state/paginated_list_controller.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/constants/api_endpoints.dart';
+import '../../../shared/widgets/admin_paged_list.dart';
 
 class Course {
   final String id;
@@ -115,7 +117,48 @@ class Lesson {
 }
 
 class CurriculumRepository {
-  final _api = ApiClient.instance;
+  CurriculumRepository({ApiClient? api}) : _api = api ?? ApiClient.instance;
+
+  final ApiClient _api;
+
+  Future<PageResult<Course>> listCourses(
+    PageRequest request,
+    Map<String, Object?> filters,
+  ) async {
+    final body = await _api.getData(
+      ApiEndpoints.adminCourses,
+      params: {
+        ...PaginationStyle.pageSize.query(request),
+        for (final e in filters.entries)
+          if (e.value != null && '${e.value}'.isNotEmpty) e.key: e.value,
+      },
+    );
+    return adminPage(body, Course.fromJson, keys: const ['courses']);
+  }
+
+  Future<PageResult<Unit>> listUnits(String courseId) async {
+    final page = adminPage(
+      await _api.getData(
+        ApiEndpoints.adminUnits,
+        params: {'course_id': courseId},
+      ),
+      Unit.fromJson,
+      keys: const ['units'],
+    );
+    return PageResult(items: page.items, total: page.items.length);
+  }
+
+  Future<PageResult<Lesson>> listLessons(String unitId) async {
+    final page = adminPage(
+      await _api.getData(
+        ApiEndpoints.adminLessons,
+        params: {'unit_id': unitId},
+      ),
+      Lesson.fromJson,
+      keys: const ['lessons'],
+    );
+    return PageResult(items: page.items, total: page.items.length);
+  }
 
   Future<List<Course>> getCourses({
     int page = 1,
@@ -164,10 +207,6 @@ class CurriculumRepository {
     await _api.put('${ApiEndpoints.adminUnits}/$id', data: data);
   }
 
-  Future<void> deleteUnit(String id) async {
-    await _api.delete('${ApiEndpoints.adminUnits}/$id');
-  }
-
   Future<List<Lesson>> getLessons(String unitId) async {
     final resp = await _api.get(
       ApiEndpoints.adminLessons,
@@ -186,10 +225,6 @@ class CurriculumRepository {
     await _api.put('${ApiEndpoints.adminLessons}/$id', data: data);
   }
 
-  Future<void> deleteLesson(String id) async {
-    await _api.delete('${ApiEndpoints.adminLessons}/$id');
-  }
-
   Future<void> publishCourse(String id) async {
     await _api.put(
       '${ApiEndpoints.adminCourses}/$id',
@@ -202,9 +237,5 @@ class CurriculumRepository {
       '${ApiEndpoints.adminCourses}/$id',
       data: {'is_published': false},
     );
-  }
-
-  Future<void> deleteCourse(String id) async {
-    await _api.delete('${ApiEndpoints.adminCourses}/$id');
   }
 }
