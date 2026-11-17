@@ -3,7 +3,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/educational_hints.dart';
-import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'markdown_message_content.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
@@ -287,7 +286,7 @@ class GrammarCorrectionBadge extends StatelessWidget {
               child: Text(
                 'chat.correctionRule'.tr(namedArgs: {'rule': correction.rule!}),
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AppColors.grey600,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   fontStyle: FontStyle.italic,
                 ),
               ),
@@ -466,7 +465,7 @@ class VocabularyHintCard extends StatelessWidget {
                         hint.example!,
                         Theme.of(context).textTheme.bodySmall!.copyWith(
                           fontStyle: FontStyle.italic,
-                          color: AppColors.grey700,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ),
@@ -533,7 +532,9 @@ class TopicProgressIndicator extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 6,
-              backgroundColor: AppColors.grey200,
+              backgroundColor: Theme.of(
+                context,
+              ).colorScheme.surfaceContainerHighest,
             ),
           ),
         ],

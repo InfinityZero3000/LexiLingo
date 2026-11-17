@@ -67,6 +67,7 @@ class _LexiChatPageState extends State<LexiChatPage>
 
   // Voice recording (mobile/desktop)
   final AudioRecorder _recorder = AudioRecorder();
+  String? _recordingPath;
   bool _isRecording = false;
   bool _isTranscribing = false;
   Timer? _recordingTimer;
@@ -187,6 +188,7 @@ class _LexiChatPageState extends State<LexiChatPage>
       () async => _webSpeechSub?.cancel(),
       () async {
         if (_isRecording) await _recorder.cancel();
+        _discardRecordingFile();
       },
       () async {
         await _duplexVoice?.stop();
@@ -206,6 +208,13 @@ class _LexiChatPageState extends State<LexiChatPage>
       _isWebSpeechActive = false;
       _voiceStarting = false;
     });
+  }
+
+  void _discardRecordingFile() {
+    final path = _recordingPath;
+    _recordingPath = null;
+    if (path == null || kIsWeb) return;
+    unawaited(File(path).delete().then<void>((_) {}).catchError((Object _) {}));
   }
 
   String get _userId {
@@ -244,6 +253,7 @@ class _LexiChatPageState extends State<LexiChatPage>
     _scrollController.dispose();
     _focusNode.dispose();
     _recorder.dispose();
+    _discardRecordingFile();
     _recordingTimer?.cancel();
     _webSpeechSub?.cancel();
     _webSpeech?.dispose();
@@ -481,8 +491,10 @@ class _LexiChatPageState extends State<LexiChatPage>
         const RecordConfig(encoder: AudioEncoder.aacLc, numChannels: 1),
         path: recordingPath,
       );
+      _recordingPath = recordingPath;
       if (!mounted || epoch != _voiceEpoch) {
         await _recorder.cancel();
+        _discardRecordingFile();
         return;
       }
 
@@ -509,13 +521,17 @@ class _LexiChatPageState extends State<LexiChatPage>
 
     try {
       final path = await _recorder.stop();
-      if (!mounted || epoch != _voiceEpoch) return;
+      if (!mounted || epoch != _voiceEpoch) {
+        _discardRecordingFile();
+        return;
+      }
       setState(() {
         _isRecording = false;
         _isTranscribing = true;
       });
 
       if (path == null) {
+        _discardRecordingFile();
         setState(() => _isTranscribing = false);
         return;
       }
@@ -524,11 +540,13 @@ class _LexiChatPageState extends State<LexiChatPage>
       final exists = await file.exists();
       if (!mounted) return;
       if (!exists) {
+        _discardRecordingFile();
         _showSnack('lexiChat.audioReadError'.tr());
         setState(() => _isTranscribing = false);
         return;
       }
       final bytes = await file.readAsBytes();
+      _discardRecordingFile();
 
       if (!mounted) return;
       final chatProvider = context.read<LexiChatProvider>();
@@ -550,6 +568,7 @@ class _LexiChatPageState extends State<LexiChatPage>
       await _sendMessage();
       unawaited(_assessAndAttachPronunciation(bytes, transcript));
     } catch (e) {
+      _discardRecordingFile();
       if (!mounted) return;
       setState(() {
         _isRecording = false;

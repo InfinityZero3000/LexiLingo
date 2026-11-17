@@ -594,14 +594,18 @@ class _TopicListItem extends StatelessWidget {
                           color: AppColorRoles.textMuted(isDark),
                         ),
                         const SizedBox(width: AppSpacing.xs),
-                        Text(
-                          'course.durationMin'.tr(
-                            namedArgs: {'count': '${story.estimatedMinutes}'},
+                        Flexible(
+                          child: Text(
+                            'course.durationMin'.tr(
+                              namedArgs: {'count': '${story.estimatedMinutes}'},
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: AppColorRoles.textMuted(isDark),
+                                ),
                           ),
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: AppColorRoles.textMuted(isDark),
-                              ),
                         ),
                       ],
                     ),

@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/quick_save_selection_area.dart';
@@ -317,9 +318,7 @@ class LexiDialogueBubble extends StatelessWidget {
               label: 'lexiChat.voice.misheardChip'.tr(),
               onTap: onMisheardTap,
               color: context.status.warning,
-              labelColor: isDark
-                  ? AppColors.onGradient
-                  : AppColors.textDark,
+              labelColor: isDark ? AppColors.onGradient : AppColors.textDark,
             ),
           ),
         if (message.pronunciationScore != null)
@@ -420,33 +419,35 @@ class LexiDialogueBubble extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(AppRadius.sm),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: chipColor.withValues(alpha: isDark ? 0.15 : 0.08),
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          border: Border.all(
-            color: chipColor.withValues(alpha: isDark ? 0.3 : 0.2),
-            width: 1,
+      child: TapTargetBox(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: chipColor.withValues(alpha: isDark ? 0.15 : 0.08),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            border: Border.all(
+              color: chipColor.withValues(alpha: isDark ? 0.3 : 0.2),
+              width: 1,
+            ),
           ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 14, color: chipColor),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w500,
-                  color: labelColor ?? chipColor,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14, color: chipColor),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w500,
+                    color: labelColor ?? chipColor,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

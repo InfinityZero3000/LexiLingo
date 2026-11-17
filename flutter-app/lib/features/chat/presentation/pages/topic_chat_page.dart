@@ -10,6 +10,7 @@ import 'package:lexilingo_app/core/widgets/quick_save_selection_area.dart';
 import 'package:lexilingo_app/core/widgets/quick_save_word_sheet.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/app_back_button.dart';
+import 'package:lexilingo_app/core/widgets/tap_target.dart';
 
 import '../../../achievements/presentation/providers/achievement_provider.dart';
 import '../../../achievements/presentation/widgets/achievement_unlock_overlay.dart';
@@ -58,6 +59,8 @@ class _TopicChatPageState extends State<TopicChatPage> {
   bool _srsReminderDismissed = false;
 
   late final StoryProvider _storyProvider;
+  String _lastStreamSignature = '';
+  int _lastMessageCount = 0;
 
   @override
   void initState() {
@@ -268,6 +271,27 @@ class _TopicChatPageState extends State<TopicChatPage> {
     }
   }
 
+  bool get _nearBottom {
+    if (!_scrollController.hasClients) return true;
+    final position = _scrollController.position;
+    return position.maxScrollExtent - position.pixels < 120;
+  }
+
+  void _followStream(StoryProvider provider) {
+    final last = provider.messages.isEmpty ? null : provider.messages.last;
+    final signature = '${provider.messages.length}:${last?.content.length}';
+    if (signature == _lastStreamSignature) return;
+    final grew = provider.messages.length != _lastMessageCount;
+    _lastStreamSignature = signature;
+    _lastMessageCount = provider.messages.length;
+    if (!provider.isSendingMessage && !grew) return;
+    if (!_nearBottom) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) return;
+      _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+    });
+  }
+
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
@@ -291,6 +315,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
       appBar: _buildAppBar(isDark),
       body: Consumer<StoryProvider>(
         builder: (context, provider, child) {
+          _followStream(provider);
           return Align(
             alignment: Alignment.topCenter,
             child: ConstrainedBox(
@@ -748,22 +773,28 @@ class _TopicChatPageState extends State<TopicChatPage> {
             ),
           ),
           const SizedBox(width: AppSpacing.md),
-          GestureDetector(
-            onTap: canSend ? _sendMessage : null,
-            child: Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                color: canSend
-                    ? AppColorRoles.primary(isDark)
-                    : AppColors.grey500,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.send,
-                color: isDark
-                    ? AppColors.slate900
-                    : Theme.of(context).colorScheme.surface,
-                size: 20,
+          Semantics(
+            button: true,
+            enabled: canSend,
+            label: 'chat.send'.tr(),
+            excludeSemantics: true,
+            child: TapTarget(
+              onTap: canSend ? _sendMessage : null,
+              child: Container(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                decoration: BoxDecoration(
+                  color: canSend
+                      ? AppColorRoles.primary(isDark)
+                      : AppColors.grey500,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.send,
+                  color: isDark
+                      ? AppColors.slate900
+                      : Theme.of(context).colorScheme.surface,
+                  size: 20,
+                ),
               ),
             ),
           ),
