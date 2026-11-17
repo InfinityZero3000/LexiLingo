@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../shared/widgets/admin_shell.dart';
 import '../data/banner_repository.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 const _kPositions = ['hero', 'sidebar', 'interstitial'];
 const _kLevels = ['Any', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
@@ -65,8 +66,17 @@ class _AdsScreenState extends State<AdsScreen> {
         title: const Text('Xóa banner?'),
         content: Text(item.title),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Hủy')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Xóa')),
+          TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+            ),
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Hủy'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Xóa'),
+          ),
         ],
       ),
     );
@@ -120,7 +130,10 @@ class _AdsScreenState extends State<AdsScreen> {
       ),
       title: Text(
         'Banner & Ads',
-        style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, color: AppColors.onSurface),
+        style: GoogleFonts.spaceGrotesk(
+          fontWeight: FontWeight.w700,
+          color: AppColors.onSurface,
+        ),
       ),
     ),
     floatingActionButton: FloatingActionButton.extended(
@@ -134,20 +147,29 @@ class _AdsScreenState extends State<AdsScreen> {
       color: AppColors.primary,
       onRefresh: _load,
       child: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            )
           : _error != null
           ? _StateCard(icon: Icons.error_outline, text: _error!, action: _load)
           : _banners.isEmpty
-          ? const _StateCard(icon: Icons.campaign_outlined, text: 'Chưa có banner nào.')
+          ? const _StateCard(
+              icon: Icons.campaign_outlined,
+              text: 'Chưa có banner nào.',
+            )
           : ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-              children: _banners.map((b) => _BannerCard(
-                item: b,
-                onEdit: () => _form(b),
-                onDelete: () => _delete(b),
-                onToggle: () => _toggleActive(b),
-              )).toList(),
+              children: _banners
+                  .map(
+                    (b) => _BannerCard(
+                      item: b,
+                      onEdit: () => _form(b),
+                      onDelete: () => _delete(b),
+                      onToggle: () => _toggleActive(b),
+                    ),
+                  )
+                  .toList(),
             ),
     ),
   );
@@ -156,7 +178,12 @@ class _AdsScreenState extends State<AdsScreen> {
 class _BannerCard extends StatelessWidget {
   final BannerItem item;
   final VoidCallback onEdit, onDelete, onToggle;
-  const _BannerCard({required this.item, required this.onEdit, required this.onDelete, required this.onToggle});
+  const _BannerCard({
+    required this.item,
+    required this.onEdit,
+    required this.onDelete,
+    required this.onToggle,
+  });
 
   @override
   Widget build(BuildContext context) => Container(
@@ -164,7 +191,7 @@ class _BannerCard extends StatelessWidget {
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
       color: AppColors.surface,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       border: Border.all(color: AppColors.outline),
     ),
     child: Column(
@@ -175,7 +202,9 @@ class _BannerCard extends StatelessWidget {
             Expanded(
               child: Text(
                 item.title,
-                style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 16),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
               ),
             ),
             Switch(value: item.isActive, onChanged: (_) => onToggle()),
@@ -191,7 +220,7 @@ class _BannerCard extends StatelessWidget {
               style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted),
             ),
           ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         Wrap(
           spacing: 8,
           runSpacing: 6,
@@ -236,7 +265,12 @@ class _BannerForm extends StatefulWidget {
 }
 
 class _BannerFormState extends State<_BannerForm> {
-  late final TextEditingController title, description, imageUrl, linkUrl, priority, targetLanguage;
+  late final TextEditingController title,
+      description,
+      imageUrl,
+      linkUrl,
+      priority,
+      targetLanguage;
   late String position, minLevel, maxLevel;
   late bool active;
   DateTime? startAt, endAt;
@@ -270,8 +304,9 @@ class _BannerFormState extends State<_BannerForm> {
     setState(() => isStart ? startAt = picked : endAt = picked);
   }
 
-  String _fmt(DateTime? d) =>
-      d == null ? 'Không giới hạn' : '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+  String _fmt(DateTime? d) => d == null
+      ? 'Không giới hạn'
+      : '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
   @override
   Widget build(BuildContext context) => _FormSheet(
@@ -281,21 +316,50 @@ class _BannerFormState extends State<_BannerForm> {
       _field(description, 'Mô tả', lines: 2),
       _field(imageUrl, 'URL hình ảnh *'),
       _field(linkUrl, 'URL đích'),
-      _drop('Vị trí', position, _kPositions, (v) => setState(() => position = v)),
+      _drop(
+        'Vị trí',
+        position,
+        _kPositions,
+        (v) => setState(() => position = v),
+      ),
       _field(priority, 'Độ ưu tiên', number: true),
       Row(
         children: [
-          Expanded(child: OutlinedButton(onPressed: () => _pickDate(true), child: Text('Từ: ${_fmt(startAt)}'))),
-          const SizedBox(width: 8),
-          Expanded(child: OutlinedButton(onPressed: () => _pickDate(false), child: Text('Đến: ${_fmt(endAt)}'))),
+          Expanded(
+            child: OutlinedButton(
+              onPressed: () => _pickDate(true),
+              child: Text('Từ: ${_fmt(startAt)}'),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: OutlinedButton(
+              onPressed: () => _pickDate(false),
+              child: Text('Đến: ${_fmt(endAt)}'),
+            ),
+          ),
         ],
       ),
-      const SizedBox(height: 12),
+      const SizedBox(height: AppSpacing.md),
       Row(
         children: [
-          Expanded(child: _drop('Trình độ tối thiểu', minLevel, _kLevels, (v) => setState(() => minLevel = v))),
-          const SizedBox(width: 8),
-          Expanded(child: _drop('Trình độ tối đa', maxLevel, _kLevels, (v) => setState(() => maxLevel = v))),
+          Expanded(
+            child: _drop(
+              'Trình độ tối thiểu',
+              minLevel,
+              _kLevels,
+              (v) => setState(() => minLevel = v),
+            ),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: _drop(
+              'Trình độ tối đa',
+              maxLevel,
+              _kLevels,
+              (v) => setState(() => maxLevel = v),
+            ),
+          ),
         ],
       ),
       _field(targetLanguage, 'Ngôn ngữ mục tiêu (bỏ trống = mọi ngôn ngữ)'),
@@ -314,7 +378,9 @@ class _BannerFormState extends State<_BannerForm> {
         }
         Navigator.pop(context, {
           'title': title.text.trim(),
-          'description': description.text.trim().isEmpty ? null : description.text.trim(),
+          'description': description.text.trim().isEmpty
+              ? null
+              : description.text.trim(),
           'image_url': imageUrl.text.trim(),
           'link_url': linkUrl.text.trim().isEmpty ? null : linkUrl.text.trim(),
           'position': position,
@@ -324,7 +390,9 @@ class _BannerFormState extends State<_BannerForm> {
           'end_at': endAt?.toUtc().toIso8601String(),
           'target_min_level': minLevel == 'Any' ? null : minLevel,
           'target_max_level': maxLevel == 'Any' ? null : maxLevel,
-          'target_language': targetLanguage.text.trim().isEmpty ? null : targetLanguage.text.trim(),
+          'target_language': targetLanguage.text.trim().isEmpty
+              ? null
+              : targetLanguage.text.trim(),
         });
       }),
     ],
@@ -338,13 +406,23 @@ class _FormSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SafeArea(
     child: Padding(
-      padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.viewInsetsOf(context).bottom + 20),
+      padding: EdgeInsets.fromLTRB(
+        20,
+        20,
+        20,
+        MediaQuery.viewInsetsOf(context).bottom + 20,
+      ),
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(title, style: GoogleFonts.spaceGrotesk(fontSize: 22, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 16),
+            Text(
+              title,
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: AppSpacing.lg),
             ...children,
           ],
         ),
@@ -353,28 +431,48 @@ class _FormSheet extends StatelessWidget {
   );
 }
 
-Widget _field(TextEditingController c, String label, {int lines = 1, bool number = false}) => Padding(
+Widget _field(
+  TextEditingController c,
+  String label, {
+  int lines = 1,
+  bool number = false,
+}) => Padding(
   padding: const EdgeInsets.only(bottom: 12),
   child: TextField(
     controller: c,
     maxLines: lines,
     keyboardType: number ? TextInputType.number : null,
-    decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
+    decoration: InputDecoration(
+      labelText: label,
+      border: const OutlineInputBorder(),
+    ),
   ),
 );
 
-Widget _drop(String label, String value, List<String> options, ValueChanged<String> change) => Padding(
+Widget _drop(
+  String label,
+  String value,
+  List<String> options,
+  ValueChanged<String> change,
+) => Padding(
   padding: const EdgeInsets.only(bottom: 12),
   child: DropdownButtonFormField<String>(
     initialValue: value,
-    decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
-    items: options.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+    decoration: InputDecoration(
+      labelText: label,
+      border: const OutlineInputBorder(),
+    ),
+    items: options
+        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+        .toList(),
     onChanged: (v) => change(v!),
   ),
 );
 
-Widget _save(BuildContext context, VoidCallback onPressed) =>
-    SizedBox(height: 48, child: FilledButton(onPressed: onPressed, child: const Text('Lưu')));
+Widget _save(BuildContext context, VoidCallback onPressed) => SizedBox(
+  height: 48,
+  child: FilledButton(onPressed: onPressed, child: const Text('Lưu')),
+);
 
 class _Chip extends StatelessWidget {
   final String text;
@@ -382,8 +480,16 @@ class _Chip extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-    decoration: BoxDecoration(color: AppColors.surfaceContainerLow, borderRadius: BorderRadius.circular(20)),
-    child: Text(text, style: GoogleFonts.spaceGrotesk(fontSize: 12, color: AppColors.onSurfaceMuted)),
+    decoration: BoxDecoration(
+      color: AppColors.surfaceContainerLow,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+    ),
+    child: Text(
+      text,
+      style: Theme.of(
+        context,
+      ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+    ),
   );
 }
 
@@ -400,9 +506,14 @@ class _StateCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 48, color: AppColors.onSurfaceMuted),
-          const SizedBox(height: 12),
-          Text(text, textAlign: TextAlign.center, style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted)),
-          if (action != null) TextButton(onPressed: action, child: const Text('Thử lại')),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            text,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted),
+          ),
+          if (action != null)
+            TextButton(onPressed: action, child: const Text('Thử lại')),
         ],
       ),
     ),

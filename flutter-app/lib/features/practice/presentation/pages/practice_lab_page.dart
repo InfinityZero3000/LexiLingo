@@ -10,6 +10,7 @@ import 'package:lexilingo_app/features/practice/presentation/widgets/practice_la
 import 'package:lexilingo_app/features/practice/presentation/widgets/practice_lab_navigation.dart';
 import 'package:lexilingo_app/features/vocabulary/due_vocabulary_count.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class PracticeLabPage extends StatefulWidget {
   const PracticeLabPage({super.key});
@@ -60,14 +61,10 @@ class _PracticeLabPageState extends State<PracticeLabPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     // A bottom-nav tab, not a pushed route: no AppBar, and the list ends
     // under the floating nav bar instead of behind it.
     return Scaffold(
-      backgroundColor: isDark
-          ? AppColors.backgroundDark
-          : AppColors.backgroundLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: ContentWidth(
         child: SafeArea(
           bottom: false,
@@ -113,9 +110,9 @@ class _PracticeLabPageState extends State<PracticeLabPage> {
                       focusCount: focusCount,
                       isLoading: proficiency.isLoading,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.lg),
                     const _IeltsEntryCard(),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.lg),
                     _SectionHeader(
                       title: 'practiceLab.recommendedTitle'.tr(),
                       subtitle: hasRecommendations
@@ -131,7 +128,7 @@ class _PracticeLabPageState extends State<PracticeLabPage> {
                       ),
                       const SizedBox(height: 10),
                     ],
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpacing.sm),
                     _SectionHeader(
                       title: 'practiceLab.allSkillsTitle'.tr(),
                       subtitle: 'practiceLab.allSkillsSubtitle'.tr(),
@@ -202,11 +199,9 @@ class _PracticeLabHero extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDarkMuted : Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: isDark ? AppColors.borderDarkSoft : AppColors.slate200,
-        ),
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -219,7 +214,7 @@ class _PracticeLabHero extends StatelessWidget {
                 height: 48,
                 decoration: BoxDecoration(
                   color: accent.withValues(alpha: isDark ? 0.2 : 0.12),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Icon(Icons.science_rounded, color: accent, size: 26),
               ),
@@ -234,7 +229,7 @@ class _PracticeLabHero extends StatelessWidget {
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppSpacing.xs),
                     Text(
                       'practiceLab.heroSubtitle'.tr(),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -247,7 +242,7 @@ class _PracticeLabHero extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           Row(
             children: [
               Expanded(
@@ -275,7 +270,7 @@ class _PracticeLabHero extends StatelessWidget {
                         size: 18,
                         color: AppColorRoles.textSecondary(isDark),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: Text(
                           'practiceLab.noFocusHint'.tr(),
@@ -309,10 +304,13 @@ class _HeroMetric extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: 12,
+      ),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDarkInput : AppColors.grey50,
-        borderRadius: BorderRadius.circular(12),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -386,23 +384,21 @@ class _PracticeLabSkillCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surface = isDark ? AppColors.surfaceDarkMuted : Colors.white;
+    final surface = Theme.of(context).colorScheme.surface;
     final borderColor = item.recommended
         ? item.color.withValues(alpha: isDark ? 0.65 : 0.45)
-        : isDark
-        ? AppColors.borderDarkSoft
-        : AppColors.slate200;
+        : Theme.of(context).colorScheme.outlineVariant;
 
     return Material(
       color: surface,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Container(
           padding: EdgeInsets.all(compact ? 14 : 16),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(color: borderColor),
           ),
           child: Row(
@@ -413,7 +409,7 @@ class _PracticeLabSkillCard extends StatelessWidget {
                 height: compact ? 44 : 50,
                 decoration: BoxDecoration(
                   color: item.color.withValues(alpha: isDark ? 0.2 : 0.12),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Icon(
                   item.icon,
@@ -438,7 +434,7 @@ class _PracticeLabSkillCard extends StatelessWidget {
                           ),
                         ),
                         if (item.recommended) ...[
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppSpacing.sm),
                           _RecommendedPill(color: item.color),
                         ],
                       ],
@@ -494,13 +490,13 @@ class _LockedPracticeLabCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surface = isDark ? AppColors.surfaceDarkMuted : Colors.white;
+    final surface = Theme.of(context).colorScheme.surface;
 
     return Container(
       padding: EdgeInsets.all(compact ? 14 : 16),
       decoration: BoxDecoration(
         color: surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
           color: AppColors.gold.withValues(alpha: isDark ? 0.65 : 0.5),
         ),
@@ -512,7 +508,7 @@ class _LockedPracticeLabCard extends StatelessWidget {
             height: compact ? 44 : 50,
             decoration: BoxDecoration(
               color: AppColors.gold.withValues(alpha: isDark ? 0.18 : 0.14),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: const Icon(
               Icons.workspace_premium_rounded,
@@ -536,11 +532,11 @@ class _LockedPracticeLabCard extends StatelessWidget {
                             ?.copyWith(fontWeight: FontWeight.w900),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpacing.sm),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                        horizontal: AppSpacing.sm,
+                        vertical: AppSpacing.xs,
                       ),
                       decoration: BoxDecoration(
                         color: AppColors.gold.withValues(alpha: 0.15),
@@ -548,10 +544,9 @@ class _LockedPracticeLabCard extends StatelessWidget {
                       ),
                       child: Text(
                         'practiceLab.premiumOnly'.tr(),
-                        style: const TextStyle(
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: AppColors.goldDark,
                           fontWeight: FontWeight.w900,
-                          fontSize: 11,
                         ),
                       ),
                     ),
@@ -594,17 +589,19 @@ class _RecommendedPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 4,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         'practiceLab.focus'.tr(),
-        style: TextStyle(
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
           color: color,
           fontWeight: FontWeight.w900,
-          fontSize: 11,
         ),
       ),
     );
@@ -622,10 +619,13 @@ class _SmallChip extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 5,
+      ),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDarkInput : AppColors.grey100,
-        borderRadius: BorderRadius.circular(8),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -671,14 +671,14 @@ class _IeltsEntryCard extends StatelessWidget {
                 height: 48,
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Icon(
                   Icons.school_outlined,
                   color: theme.colorScheme.onPrimaryContainer,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: AppSpacing.lg),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -697,7 +697,7 @@ class _IeltsEntryCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.sm),
               Icon(
                 Icons.chevron_right,
                 color: theme.colorScheme.onSurfaceVariant,

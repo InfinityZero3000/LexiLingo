@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../shared/widgets/admin_shell.dart';
 import '../data/logs_repository.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class LogsScreen extends StatefulWidget {
   const LogsScreen({super.key});
@@ -86,8 +87,10 @@ class _LogsScreenState extends State<LogsScreen> {
       setState(() => _loadingMore = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Không thể tải thêm nhật ký.',
-              style: GoogleFonts.spaceGrotesk()),
+          content: Text(
+            'Không thể tải thêm nhật ký.',
+            style: GoogleFonts.spaceGrotesk(),
+          ),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
@@ -111,29 +114,37 @@ class _LogsScreenState extends State<LogsScreen> {
               elevation: 0,
               scrolledUnderElevation: 0,
               leading: IconButton(
-                icon: const Icon(Icons.menu_rounded,
-                    color: AppColors.onSurface),
+                icon: const Icon(
+                  Icons.menu_rounded,
+                  color: AppColors.onSurface,
+                ),
                 onPressed: AdminShell.openDrawer,
               ),
-              title: Text('Audit Logs',
-                  style: GoogleFonts.spaceGrotesk(
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.onSurface)),
+              title: Text(
+                'Audit Logs',
+                style: GoogleFonts.spaceGrotesk(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.onSurface,
+                ),
+              ),
             ),
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
-                  Text('System activity',
-                      style: GoogleFonts.spaceGrotesk(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.onSurface)),
-                  const SizedBox(height: 4),
+                  Text(
+                    'System activity',
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     '$_total audit events • ${_logs.length} loaded',
-                    style: GoogleFonts.spaceGrotesk(
-                        fontSize: 13, color: AppColors.onSurfaceMuted),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.onSurfaceMuted,
+                    ),
                   ),
                   const SizedBox(height: 20),
                   Row(
@@ -149,7 +160,7 @@ class _LogsScreenState extends State<LogsScreen> {
                           },
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSpacing.md),
                       Expanded(
                         child: _FilterDropdown(
                           label: 'Resource',
@@ -163,7 +174,7 @@ class _LogsScreenState extends State<LogsScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.lg),
                   if (_error != null)
                     _ErrorCard(message: _error!, onRetry: _load)
                   else if (_loading)
@@ -171,32 +182,40 @@ class _LogsScreenState extends State<LogsScreen> {
                       padding: EdgeInsets.all(48),
                       child: Center(
                         child: CircularProgressIndicator(
-                            color: AppColors.primary),
+                          color: AppColors.primary,
+                        ),
                       ),
                     )
                   else if (_logs.isEmpty)
                     const _EmptyState()
                   else ...[
-                    ..._logs.map((log) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: _LogCard(log: log),
-                        )),
+                    ..._logs.map(
+                      (log) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _LogCard(log: log),
+                      ),
+                    ),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 12),
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
                         color: AppColors.surface,
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                         border: Border.all(
-                            color: AppColors.outlineVariant, width: 0.5),
+                          color: AppColors.outlineVariant,
+                          width: 0.5,
+                        ),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('${_logs.length} / $_total events',
-                              style: GoogleFonts.spaceGrotesk(
-                                  fontSize: 12,
-                                  color: AppColors.onSurfaceMuted)),
+                          Text(
+                            '${_logs.length} / $_total events',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: AppColors.onSurfaceMuted),
+                          ),
                           if (_logs.length < _total)
                             TextButton(
                               onPressed: _loadingMore ? null : _loadMore,
@@ -205,13 +224,17 @@ class _LogsScreenState extends State<LogsScreen> {
                                       width: 16,
                                       height: 16,
                                       child: CircularProgressIndicator(
-                                          color: AppColors.primary,
-                                          strokeWidth: 2),
+                                        color: AppColors.primary,
+                                        strokeWidth: 2,
+                                      ),
                                     )
-                                  : Text('Load more',
+                                  : Text(
+                                      'Load more',
                                       style: GoogleFonts.spaceGrotesk(
-                                          fontWeight: FontWeight.w700,
-                                          color: AppColors.primary)),
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
                             ),
                         ],
                       ),
@@ -245,12 +268,14 @@ class _FilterDropdown extends StatelessWidget {
     return DropdownButtonFormField<String>(
       initialValue: value,
       isExpanded: true,
-      style: GoogleFonts.spaceGrotesk(
-          fontSize: 13, color: AppColors.onSurface),
+      style: Theme.of(
+        context,
+      ).textTheme.bodySmall?.copyWith(color: AppColors.onSurface),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: GoogleFonts.spaceGrotesk(
-            fontSize: 12, color: AppColors.onSurfaceMuted),
+        labelStyle: Theme.of(
+          context,
+        ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
         isDense: true,
       ),
       items: [
@@ -258,12 +283,16 @@ class _FilterDropdown extends StatelessWidget {
           value: null,
           child: Text('All', style: GoogleFonts.spaceGrotesk()),
         ),
-        ...options.map((option) => DropdownMenuItem(
-              value: option,
-              child: Text(option.replaceAll('_', ' '),
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.spaceGrotesk()),
-            )),
+        ...options.map(
+          (option) => DropdownMenuItem(
+            value: option,
+            child: Text(
+              option.replaceAll('_', ' '),
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.spaceGrotesk(),
+            ),
+          ),
+        ),
       ],
       onChanged: onChanged,
     );
@@ -282,7 +311,9 @@ class _LogCard extends StatelessWidget {
 
   String get _timestamp {
     final date = DateTime.tryParse(log.createdAt)?.toLocal();
-    return date == null ? log.createdAt : DateFormat('dd/MM/yyyy HH:mm').format(date);
+    return date == null
+        ? log.createdAt
+        : DateFormat('dd/MM/yyyy HH:mm').format(date);
   }
 
   Color get _actionColor {
@@ -319,7 +350,7 @@ class _LogCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.outlineVariant, width: 0.5),
       ),
       child: Column(
@@ -328,46 +359,66 @@ class _LogCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(
                   color: _actionBackground,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
-                child: Text(log.action.replaceAll('_', ' ').toUpperCase(),
-                    style: GoogleFonts.spaceGrotesk(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: _actionColor)),
+                child: Text(
+                  log.action.replaceAll('_', ' ').toUpperCase(),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: _actionColor,
+                  ),
+                ),
               ),
               const Spacer(),
-              const Icon(Icons.schedule,
-                  size: 14, color: AppColors.onSurfaceMuted),
+              const Icon(
+                Icons.schedule,
+                size: 14,
+                color: AppColors.onSurfaceMuted,
+              ),
               const SizedBox(width: 5),
-              Text(_timestamp,
-                  style: GoogleFonts.spaceGrotesk(
-                      fontSize: 11, color: AppColors.onSurfaceMuted)),
+              Text(
+                _timestamp,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: AppColors.onSurfaceMuted,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 14),
           Row(
             children: [
-              Expanded(child: _Meta(label: 'RESOURCE', value: log.resourceType)),
-              Expanded(child: _Meta(label: 'RESOURCE ID', value: _shortId(log.resourceId))),
-              Expanded(child: _Meta(label: 'ADMIN ID', value: _shortId(log.userId))),
+              Expanded(
+                child: _Meta(label: 'RESOURCE', value: log.resourceType),
+              ),
+              Expanded(
+                child: _Meta(
+                  label: 'RESOURCE ID',
+                  value: _shortId(log.resourceId),
+                ),
+              ),
+              Expanded(
+                child: _Meta(label: 'ADMIN ID', value: _shortId(log.userId)),
+              ),
             ],
           ),
           const SizedBox(height: 14),
-          Text('DETAILS',
-              style: GoogleFonts.spaceGrotesk(
-                  fontSize: 10,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.onSurfaceMuted)),
-          const SizedBox(height: 4),
+          Text(
+            'DETAILS',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: AppColors.onSurfaceMuted,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
           Text(
             log.details?.isNotEmpty == true ? log.details! : '—',
-            style: GoogleFonts.spaceGrotesk(
-                fontSize: 13, color: AppColors.onSurfaceVariant, height: 1.35),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColors.onSurfaceVariant,
+              height: 1.35,
+            ),
           ),
         ],
       ),
@@ -386,19 +437,23 @@ class _Meta extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: GoogleFonts.spaceGrotesk(
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                color: AppColors.onSurfaceMuted)),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: AppColors.onSurfaceMuted,
+          ),
+        ),
         const SizedBox(height: 3),
-        Text(value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.spaceGrotesk(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: AppColors.onSurface)),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: AppColors.onSurface,
+          ),
+        ),
       ],
     );
   }
@@ -416,22 +471,29 @@ class _ErrorCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.errorContainer,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Row(
         children: [
           const Icon(Icons.error_outline, color: AppColors.error),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(message,
-                style: GoogleFonts.spaceGrotesk(
-                    fontSize: 13, color: AppColors.error)),
+            child: Text(
+              message,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.error),
+            ),
           ),
           TextButton(
             onPressed: onRetry,
-            child: Text('Retry',
-                style: GoogleFonts.spaceGrotesk(
-                    fontWeight: FontWeight.w700, color: AppColors.error)),
+            child: Text(
+              'Retry',
+              style: GoogleFonts.spaceGrotesk(
+                fontWeight: FontWeight.w700,
+                color: AppColors.error,
+              ),
+            ),
           ),
         ],
       ),
@@ -449,23 +511,32 @@ class _EmptyState extends StatelessWidget {
       padding: const EdgeInsets.all(40),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.outlineVariant, width: 0.5),
       ),
       child: Column(
         children: [
-          const Icon(Icons.manage_search_outlined,
-              size: 36, color: AppColors.onSurfaceMuted),
+          const Icon(
+            Icons.manage_search_outlined,
+            size: 36,
+            color: AppColors.onSurfaceMuted,
+          ),
           const SizedBox(height: 10),
-          Text('No audit logs found',
-              style: GoogleFonts.spaceGrotesk(
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.onSurface)),
-          const SizedBox(height: 4),
-          Text('Try changing the active filters.',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.spaceGrotesk(
-                  fontSize: 12, color: AppColors.onSurfaceMuted)),
+          Text(
+            'No audit logs found',
+            style: GoogleFonts.spaceGrotesk(
+              fontWeight: FontWeight.w700,
+              color: AppColors.onSurface,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'Try changing the active filters.',
+            textAlign: TextAlign.center,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+          ),
         ],
       ),
     );

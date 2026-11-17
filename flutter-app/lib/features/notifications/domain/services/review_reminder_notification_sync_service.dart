@@ -48,7 +48,9 @@ class ReviewReminderNotificationSyncService {
       id: notificationId,
       type: NotificationType.vocabularyReviewReminder,
       title: 'notifications.reviewReminderTitle'.tr(),
-      body: 'notifications.reviewWaitingBody'.tr(namedArgs: {'count': '$dueCount'}),
+      body: 'notifications.reviewWaitingBody'.tr(
+        namedArgs: {'count': '$dueCount'},
+      ),
       timestamp: sameReminderDay ? existing?.timestamp ?? now : now,
       isRead: sameReminderDay ? existing?.isRead ?? false : false,
       data: {

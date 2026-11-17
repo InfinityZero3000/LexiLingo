@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/features/notifications/domain/services/push_permission_gateway.dart';
 import 'package:lexilingo_app/features/notifications/presentation/providers/push_permission_provider.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class PushPermissionCard extends StatelessWidget {
   final PushPermissionGateway? gateway;
@@ -33,7 +34,7 @@ class _PushPermissionBody extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -43,7 +44,7 @@ class _PushPermissionBody extends StatelessWidget {
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyLarge,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           Row(
             children: [
               Expanded(
@@ -53,7 +54,7 @@ class _PushPermissionBody extends StatelessWidget {
                   child: Text('lesson.pushPromptLater'.tr()),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: FilledButton(
                   style: FilledButton.styleFrom(

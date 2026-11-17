@@ -17,6 +17,7 @@ import '../../domain/entities/ielts_entities.dart';
 import '../providers/ielts_provider.dart';
 import '../widgets/ielts_passage_attribution.dart';
 import 'ielts_result_page.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 String _skillLabel(IeltsSkill skill) => switch (skill) {
   IeltsSkill.listening => 'ielts.skillListening'.tr(),
@@ -114,7 +115,7 @@ class _SittingViewState extends State<_SittingView> {
                 children: [
                   for (var i = 0; i < sections.length; i++)
                     Padding(
-                      padding: const EdgeInsets.only(right: 8, bottom: 8),
+                      padding: const EdgeInsets.only(right: AppSpacing.sm, bottom: 8),
                       child: ChoiceChip(
                         label: Text(_skillLabel(sections[i].skill)),
                         selected: i == index,
@@ -168,8 +169,7 @@ class _SittingViewState extends State<_SittingView> {
         title: Text('ielts.leaveTitle'.tr()),
         content: Text('ielts.leaveBody'.tr()),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
+          TextButton(style: TextButton.styleFrom(minimumSize: const Size(kMinTapTarget, kMinTapTarget)), onPressed: () => Navigator.of(dialogContext).pop(false),
             child: Text('ielts.stay'.tr()),
           ),
           FilledButton(
@@ -192,8 +192,7 @@ class _SittingViewState extends State<_SittingView> {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
+          TextButton(style: TextButton.styleFrom(minimumSize: const Size(kMinTapTarget, kMinTapTarget)), onPressed: () => Navigator.of(dialogContext).pop(false),
             child: Text('ielts.keepWorking'.tr()),
           ),
           FilledButton(
@@ -300,17 +299,17 @@ class _ListeningSection extends StatelessWidget {
                 'ielts.partNumber'.tr(namedArgs: {'order': '${part.order}'}),
             style: Theme.of(context).textTheme.titleMedium,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           if (part.audioUrl != null && part.audioUrl!.isNotEmpty)
             _AudioPlayerBar(url: part.audioUrl!),
           if (part.instructions != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               part.instructions!,
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           ...part.groups.map((group) => _QuestionGroup(group: group)),
           const Divider(height: 32),
         ],
@@ -368,7 +367,7 @@ class _AudioPlayerBarState extends State<_AudioPlayerBar> {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
         child: StreamBuilder<PlayerState>(
           stream: _player.playerStateStream,
           builder: (context, snapshot) {
@@ -394,7 +393,7 @@ class _AudioPlayerBarState extends State<_AudioPlayerBar> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           LinearProgressIndicator(value: value.clamp(0.0, 1.0)),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: AppSpacing.xs),
                           Text(
                             '${_fmt(position)} / ${_fmt(total)}',
                             style: theme.textTheme.labelSmall,
@@ -404,7 +403,7 @@ class _AudioPlayerBarState extends State<_AudioPlayerBar> {
                     },
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.sm),
               ],
             );
           },
@@ -437,7 +436,7 @@ class _ReadingSection extends StatelessWidget {
         for (final part in section.parts) ...[
           if (part.passageTitle != null)
             Text(part.passageTitle!, style: theme.textTheme.titleMedium),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           if (part.passageText != null)
             Card(
               child: Padding(
@@ -449,7 +448,7 @@ class _ReadingSection extends StatelessWidget {
               ),
             ),
           if (part.hasAttribution) IeltsPassageAttribution(part: part),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           ...part.groups.map((group) => _QuestionGroup(group: group)),
           const Divider(height: 32),
         ],
@@ -518,7 +517,7 @@ class _QuestionTile extends StatelessWidget {
             '${question.number ?? ''}. ${question.prompt}',
             style: theme.textTheme.bodyMedium,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           if (options.isNotEmpty)
             Wrap(
               spacing: 8,
@@ -600,7 +599,7 @@ class _WritingTask extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(_partLabel(key).toUpperCase(), style: theme.textTheme.labelLarge),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -608,9 +607,9 @@ class _WritingTask extends StatelessWidget {
           ),
         ),
         if (part.imageUrl != null && part.imageUrl!.isNotEmpty) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             child: Image.network(
               part.imageUrl!.startsWith('http')
                   ? part.imageUrl!
@@ -619,7 +618,7 @@ class _WritingTask extends StatelessWidget {
             ),
           ),
         ],
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
         TextFormField(
           initialValue: text,
           maxLines: 12,
@@ -637,7 +636,7 @@ class _WritingTask extends StatelessWidget {
           ),
           onChanged: (value) => provider.setAnswer(key, value),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         if (part.suggestedMinutes != null)
           Text(
             'ielts.aimMinutes'.tr(
@@ -765,7 +764,7 @@ class _SpeakingPartState extends State<_SpeakingPart> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(_partLabel(_key).toUpperCase(), style: theme.textTheme.labelLarge),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -777,7 +776,7 @@ class _SpeakingPartState extends State<_SpeakingPart> {
                   style: theme.textTheme.bodyMedium,
                 ),
                 if (widget.part.prepSeconds != null) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.sm),
                   Text(
                     'ielts.prepAndSpeak'.tr(
                       namedArgs: {
@@ -794,7 +793,7 @@ class _SpeakingPartState extends State<_SpeakingPart> {
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
         Row(
           children: [
             FilledButton.icon(
@@ -804,7 +803,7 @@ class _SpeakingPartState extends State<_SpeakingPart> {
                 _recording ? 'ielts.stop'.tr() : 'ielts.recordAnswer'.tr(),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.md),
             if (_transcribing)
               const SizedBox(
                 width: 18,
@@ -814,10 +813,10 @@ class _SpeakingPartState extends State<_SpeakingPart> {
           ],
         ),
         if (_error != null) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Text(_error!.resolve(), style: TextStyle(color: theme.colorScheme.error)),
         ],
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
         TextFormField(
           controller: _transcriptController,
           maxLines: 6,

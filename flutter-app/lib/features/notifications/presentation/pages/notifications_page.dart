@@ -9,6 +9,7 @@ import '../providers/notification_provider.dart';
 import '../widgets/empty_notification_widget.dart';
 import '../../domain/entities/notification_entity.dart';
 import '../../domain/services/notification_navigation_service.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Notifications Page
 /// Displays all notifications grouped by date with real-time updates
@@ -57,16 +58,16 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(12),
+                        color: Theme.of(context).colorScheme.primary,
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
                       child: Icon(
                         Icons.notifications_rounded,
-                        color: AppColors.surfaceLight,
+                        color: Theme.of(context).colorScheme.surface,
                         size: 22,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: AppSpacing.md),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,7 +93,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: Colors.grey[600]),
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
                           ),
                         ],
                       ),
@@ -101,7 +106,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                       IconButton(
                         onPressed: () => provider.markAllAsRead(),
                         icon: const Icon(Icons.done_all_rounded),
-                        color: AppColors.primary,
+                        color: Theme.of(context).colorScheme.primary,
                         tooltip: 'notifications.markAllRead'.tr(),
                       ),
                   ],
@@ -210,10 +215,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
       duration: const Duration(seconds: 4),
       behavior: SnackBarBehavior.floating,
       backgroundColor: Theme.of(context).colorScheme.inverseSurface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
       action: SnackBarAction(
         label: 'notifications.undo'.tr(),
-        textColor: AppColors.accentYellow,
+        textColor: context.status.warning,
         onPressed: () => provider.undoDelete(),
       ),
     );
@@ -233,7 +240,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   Widget _buildSectionHeader(BuildContext context, String title) {
     return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16, top: 24, bottom: 8),
+      padding: const EdgeInsets.only(
+        left: AppSpacing.lg,
+        right: AppSpacing.lg,
+        top: AppSpacing.xl,
+        bottom: 8,
+      ),
       child: Text(
         title,
         style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -263,7 +275,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
           gradient: LinearGradient(
             colors: [AppColors.dangerGradient[0], const Color(0xFFDC2626)],
           ),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         alignment: Alignment.centerRight,
         padding: EdgeInsets.only(right: 24),
@@ -272,15 +284,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
           children: [
             Icon(
               Icons.delete_outline_rounded,
-              color: AppColors.surfaceLight,
+              color: Theme.of(context).colorScheme.surface,
               size: 24,
             ),
-            SizedBox(height: 4),
+            SizedBox(height: AppSpacing.xs),
             Text(
               'notifications.deleteAction'.tr(),
-              style: TextStyle(
-                color: AppColors.surfaceLight,
-                fontSize: 11,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: Theme.of(context).colorScheme.surface,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -290,13 +301,20 @@ class _NotificationsPageState extends State<NotificationsPage> {
       child: InkWell(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: 12,
+          ),
           decoration: BoxDecoration(
             color: notification.isRead
                 ? Theme.of(context).cardColor
-                : AppColors.primary.withValues(alpha: 0.03),
+                : Theme.of(context).colorScheme.primary.withValues(alpha: 0.03),
             border: Border(
-              bottom: BorderSide(color: Colors.grey.withValues(alpha: 0.05)),
+              bottom: BorderSide(
+                color: Theme.of(
+                  context,
+                ).colorScheme.outlineVariant.withValues(alpha: 0.05),
+              ),
             ),
           ),
           child: Row(
@@ -304,11 +322,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
             children: [
               if (!notification.isRead)
                 Container(
-                  margin: const EdgeInsets.only(top: 24, right: 8),
+                  margin: const EdgeInsets.only(top: AppSpacing.xl, right: 8),
                   width: 6,
                   height: 6,
-                  decoration: const BoxDecoration(
-                    color: AppColors.primary,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
                     shape: BoxShape.circle,
                   ),
                 )
@@ -319,11 +337,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
                 height: 48,
                 decoration: BoxDecoration(
                   color: iconColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Icon(icon, color: iconColor, size: 24),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: AppSpacing.lg),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -402,14 +420,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   Color _getColor(String? hexColor) {
     if (hexColor == null || hexColor.isEmpty) {
-      return AppColors.primary;
+      return Theme.of(context).colorScheme.primary;
     }
 
     try {
       final hex = hexColor.replaceFirst('#', '');
       return Color(int.parse('FF$hex', radix: 16));
     } catch (_) {
-      return AppColors.primary;
+      return Theme.of(context).colorScheme.primary;
     }
   }
 }

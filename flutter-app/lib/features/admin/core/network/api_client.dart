@@ -18,52 +18,56 @@ class ApiClient {
   late final Dio _dio;
 
   ApiClient._() {
-    _dio = Dio(BaseOptions(
-      baseUrl: ApiEndpoints.baseUrl,
-      connectTimeout: const Duration(seconds: 15),
-      receiveTimeout: const Duration(seconds: 30),
-      headers: {'Content-Type': 'application/json'},
-    ));
+    _dio = Dio(
+      BaseOptions(
+        baseUrl: ApiEndpoints.baseUrl,
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 30),
+        headers: {'Content-Type': 'application/json'},
+      ),
+    );
 
-    _dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) async {
-        var token = await TokenStorage.getAccessToken();
-        // Renew before the request instead of after a 401 — the 401 path cannot
-        // recover uploads or any request replayed outside this client.
-        if (token != null && isAccessTokenExpiring(token)) {
-          if (await _tryRefresh()) {
-            token = await TokenStorage.getAccessToken();
-          }
-        }
-        if (token != null) {
-          options.headers['Authorization'] = 'Bearer $token';
-        }
-        handler.next(options);
-      },
-      onError: (error, handler) async {
-        final options = error.requestOptions;
-        if (error.response?.statusCode == 401 &&
-            options.extra[_retriedFlag] != true) {
-          final refreshed = await _tryRefresh();
-          if (refreshed) {
-            // Guard against a refresh that keeps succeeding while the request
-            // keeps returning 401 — otherwise fetch() loops forever.
-            options.extra[_retriedFlag] = true;
-            final token = await TokenStorage.getAccessToken();
-            options.headers['Authorization'] = 'Bearer $token';
-            try {
-              handler.resolve(await _dio.fetch(options));
-              return;
-            } on DioException catch (retryError) {
-              handler.next(retryError);
-              return;
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          var token = await TokenStorage.getAccessToken();
+          // Renew before the request instead of after a 401 — the 401 path cannot
+          // recover uploads or any request replayed outside this client.
+          if (token != null && isAccessTokenExpiring(token)) {
+            if (await _tryRefresh()) {
+              token = await TokenStorage.getAccessToken();
             }
           }
-          await TokenStorage.clear();
-        }
-        handler.next(error);
-      },
-    ));
+          if (token != null) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+          handler.next(options);
+        },
+        onError: (error, handler) async {
+          final options = error.requestOptions;
+          if (error.response?.statusCode == 401 &&
+              options.extra[_retriedFlag] != true) {
+            final refreshed = await _tryRefresh();
+            if (refreshed) {
+              // Guard against a refresh that keeps succeeding while the request
+              // keeps returning 401 — otherwise fetch() loops forever.
+              options.extra[_retriedFlag] = true;
+              final token = await TokenStorage.getAccessToken();
+              options.headers['Authorization'] = 'Bearer $token';
+              try {
+                handler.resolve(await _dio.fetch(options));
+                return;
+              } on DioException catch (retryError) {
+                handler.next(retryError);
+                return;
+              }
+            }
+            await TokenStorage.clear();
+          }
+          handler.next(error);
+        },
+      ),
+    );
   }
 
   static ApiClient get instance => _instance ??= ApiClient._();
@@ -105,7 +109,10 @@ class ApiClient {
     return false;
   }
 
-  Future<Map<String, dynamic>> get(String path, {Map<String, dynamic>? params}) async {
+  Future<Map<String, dynamic>> get(
+    String path, {
+    Map<String, dynamic>? params,
+  }) async {
     final response = await _dio.get(path, queryParameters: params);
     return response.data as Map<String, dynamic>;
   }

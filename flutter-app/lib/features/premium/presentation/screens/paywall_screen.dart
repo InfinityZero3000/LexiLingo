@@ -6,6 +6,13 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:lexilingo_app/core/di/injection_container.dart' as di;
 import 'package:lexilingo_app/core/services/entitlement_service.dart';
 import 'package:lexilingo_app/core/services/purchases_service.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
+
+abstract final class _PaywallPalette {
+  static const night = [Color(0xFF1A1A2E), Color(0xFF16213E)];
+  static const violet = [Color(0xFF6C63FF), Color(0xFF3B1F8C)];
+}
 
 class PaywallScreen extends StatefulWidget {
   const PaywallScreen({super.key});
@@ -27,7 +34,12 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
   Future<void> _loadOfferings() async {
     final packages = await PurchasesService.instance.getOfferings();
-    if (mounted) setState(() { _packages = packages; _loading = false; });
+    if (mounted) {
+      setState(() {
+        _packages = packages;
+        _loading = false;
+      });
+    }
   }
 
   Future<void> _purchase(Package pkg) async {
@@ -38,14 +50,16 @@ class _PaywallScreenState extends State<PaywallScreen> {
       if (success) {
         await di.sl<EntitlementService>().sync();
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('premium.success'.tr())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('premium.success'.tr())));
         Navigator.of(context).pop(true);
       }
     } on PlatformException catch (e) {
       if (!mounted) return;
-      final msg = (e.message?.isNotEmpty == true) ? e.message! : 'premium.purchaseFailed'.tr();
+      final msg = (e.message?.isNotEmpty == true)
+          ? e.message!
+          : 'premium.purchaseFailed'.tr();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     } finally {
       if (mounted) setState(() => _purchasing = false);
@@ -60,7 +74,9 @@ class _PaywallScreenState extends State<PaywallScreen> {
     setState(() => _purchasing = false);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(success ? 'premium.restored'.tr() : 'premium.no_purchases'.tr()),
+        content: Text(
+          success ? 'premium.restored'.tr() : 'premium.no_purchases'.tr(),
+        ),
       ),
     );
     if (success && mounted) Navigator.of(context).pop(true);
@@ -76,59 +92,76 @@ class _PaywallScreenState extends State<PaywallScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: isDark
-                ? [const Color(0xFF1A1A2E), const Color(0xFF16213E)]
-                : [const Color(0xFF6C63FF), const Color(0xFF3B1F8C)],
+            colors: isDark ? _PaywallPalette.night : _PaywallPalette.violet,
           ),
         ),
-        child: ContentWidth(maxWidth: ContentWidth.reading, child: SafeArea(
-          child: Column(
-            children: [
-              Align(
-                alignment: Alignment.topRight,
-                child: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white70),
-                  onPressed: () => Navigator.of(context).pop(false),
+        child: ContentWidth(
+          maxWidth: ContentWidth.reading,
+          child: SafeArea(
+            child: Column(
+              children: [
+                Align(
+                  alignment: Alignment.topRight,
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.close,
+                      color: AppColors.onGradient.withValues(alpha: 0.7),
+                    ),
+                    onPressed: () => Navigator.of(context).pop(false),
+                  ),
                 ),
-              ),
-              const Spacer(),
-              const Icon(Icons.workspace_premium_rounded, size: 80, color: Color(0xFFFFD700)),
-              const SizedBox(height: 16),
-              Text(
-                'premium.title'.tr(),
-                style: const TextStyle(
-                  fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white,
+                const Spacer(),
+                const Icon(
+                  Icons.workspace_premium_rounded,
+                  size: 80,
+                  color: Color(0xFFFFD700),
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'premium.subtitle'.tr(),
-                style: const TextStyle(fontSize: 16, color: Colors.white70),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 32),
-              _buildFeatureList(),
-              const Spacer(),
-              if (_loading)
-                const CircularProgressIndicator(color: Colors.white)
-              else if (_packages.isEmpty)
-                Text('premium.unavailable'.tr(),
-                    style: const TextStyle(color: Colors.white70))
-              else
-                ..._packages.map(_buildPackageTile),
-              const SizedBox(height: 12),
-              TextButton(
-                onPressed: _purchasing ? null : _restore,
-                child: Text(
-                  'premium.restore'.tr(),
-                  style: const TextStyle(color: Colors.white54),
+                const SizedBox(height: AppSpacing.lg),
+                Text(
+                  'premium.title'.tr(),
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.onGradient,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-              ),
-              const SizedBox(height: 24),
-            ],
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  'premium.subtitle'.tr(),
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: AppColors.onGradient.withValues(alpha: 0.7),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppSpacing.xxl),
+                _buildFeatureList(),
+                const Spacer(),
+                if (_loading)
+                  const CircularProgressIndicator(color: AppColors.onGradient)
+                else if (_packages.isEmpty)
+                  Text(
+                    'premium.unavailable'.tr(),
+                    style: TextStyle(
+                      color: AppColors.onGradient.withValues(alpha: 0.7),
+                    ),
+                  )
+                else
+                  ..._packages.map(_buildPackageTile),
+                const SizedBox(height: AppSpacing.md),
+                TextButton(
+                  onPressed: _purchasing ? null : _restore,
+                  child: Text(
+                    'premium.restore'.tr(),
+                    style: TextStyle(
+                      color: AppColors.onGradient.withValues(alpha: 0.54),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xl),
+              ],
+            ),
           ),
-        ),),
+        ),
       ),
     );
   }
@@ -142,18 +175,30 @@ class _PaywallScreenState extends State<PaywallScreen> {
     ];
 
     return Column(
-      children: features.map((f) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 4),
-        child: Row(
-          children: [
-            Icon(f.$2, color: const Color(0xFFFFD700), size: 20),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(f.$1.tr(), style: const TextStyle(color: Colors.white, fontSize: 15)),
+      children: features
+          .map(
+            (f) => Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.xxl,
+                vertical: 4,
+              ),
+              child: Row(
+                children: [
+                  Icon(f.$2, color: AppColors.gold, size: 20),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Text(
+                      f.$1.tr(),
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: AppColors.onGradient,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
-      )).toList(),
+          )
+          .toList(),
     );
   }
 
@@ -162,25 +207,38 @@ class _PaywallScreenState extends State<PaywallScreen> {
     final title = pkg.packageType == PackageType.monthly
         ? 'premium.monthly'.tr(namedArgs: {'price': price})
         : pkg.packageType == PackageType.annual
-            ? 'premium.annual'.tr(namedArgs: {'price': price})
-            : price;
+        ? 'premium.annual'.tr(namedArgs: {'price': price})
+        : price;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xl,
+        vertical: 6,
+      ),
       child: FilledButton(
         onPressed: _purchasing ? null : () => _purchase(pkg),
         style: FilledButton.styleFrom(
-          backgroundColor: const Color(0xFFFFD700),
-          foregroundColor: Colors.black87,
+          backgroundColor: AppColors.gold,
+          foregroundColor: AppColors.textDark,
           minimumSize: const Size(double.infinity, 52),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
         ),
         child: _purchasing
-            ? const SizedBox.square(
+            ? SizedBox.square(
                 dimension: 20,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black54),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.textDark.withValues(alpha: 0.54),
+                ),
               )
-            : Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            : Text(
+                title,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
       ),
     );
   }

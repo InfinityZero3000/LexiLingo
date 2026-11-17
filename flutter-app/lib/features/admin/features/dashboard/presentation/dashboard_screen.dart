@@ -1,7 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/api_endpoints.dart';
 import '../../../core/constants/app_colors.dart';
@@ -11,6 +10,7 @@ import '../../../shared/widgets/admin_skeleton.dart';
 import '../../../shared/widgets/kpi_count_card.dart';
 import '../../../shared/widgets/staggered_entrance.dart';
 import '../../auth/presentation/auth_provider.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -72,8 +72,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             .map<Map<String, dynamic>>(
               (e) => {
                 'lang': (e['language'] ?? e['lang'] ?? '').toString(),
-                'pct':
-                    ((e['percentage'] ?? e['pct'] ?? 0) as num) / 100.0,
+                'pct': ((e['percentage'] ?? e['pct'] ?? 0) as num) / 100.0,
               },
             )
             .toList();
@@ -98,8 +97,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  double _kpiVal(String key) =>
-      ((_kpis?[key] as num?) ?? 0).toDouble();
+  double _kpiVal(String key) => ((_kpis?[key] as num?) ?? 0).toDouble();
 
   @override
   Widget build(BuildContext context) {
@@ -132,7 +130,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     height: 32,
                     decoration: BoxDecoration(
                       color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                     child: const Icon(
                       Icons.language,
@@ -140,11 +138,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       size: 18,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.sm),
                   Text(
                     'LingoAdmin',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 18,
+                    style: Theme.of(context).textTheme.sectionTitle?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: AppColors.primary,
                     ),
@@ -160,8 +157,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     // Initial is always the child so it still shows if the
                     // network avatar below fails to load — onBackgroundImageError
                     // only silences the exception, it can't swap in a fallback.
-                    backgroundImage:
-                        user?.avatarUrl?.trim().isNotEmpty == true
+                    backgroundImage: user?.avatarUrl?.trim().isNotEmpty == true
                         ? NetworkImage(user!.avatarUrl!.trim())
                         : null,
                     onBackgroundImageError:
@@ -172,10 +168,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       (user?.displayName.isNotEmpty == true)
                           ? user!.displayName[0].toUpperCase()
                           : 'A',
-                      style: GoogleFonts.spaceGrotesk(
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColors.primary,
                         fontWeight: FontWeight.w700,
-                        fontSize: 12,
                       ),
                     ),
                   ),
@@ -185,9 +180,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 80),
               sliver: SliverList(
-                delegate: SliverChildListDelegate(
-                  _buildBody(context),
-                ),
+                delegate: SliverChildListDelegate(_buildBody(context)),
               ),
             ),
           ],
@@ -200,7 +193,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (_loading) {
       return [
         _buildQuickActions(context),
-        const SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.xl),
         GridView.count(
           crossAxisCount: 2,
           shrinkWrap: true,
@@ -212,7 +205,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         const SizedBox(height: 14),
         const SectionCardSkeleton(contentHeight: 140),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
         const SectionCardSkeleton(contentHeight: 88),
       ];
     }
@@ -220,26 +213,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (_error != null) {
       return [
         _buildQuickActions(context),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.lg),
         _ErrorBanner(message: _error!, onRetry: _load),
       ];
     }
 
     return [
       _buildQuickActions(context),
-      const SizedBox(height: 16),
+      const SizedBox(height: AppSpacing.lg),
 
       // ── KPI Grid ────────────────────────────────────────────────────────
       Text(
         'KEY METRICS',
-        style: GoogleFonts.spaceGrotesk(
-          fontSize: 10,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
           fontWeight: FontWeight.w700,
           letterSpacing: 0.08,
           color: AppColors.onSurfaceMuted,
         ),
       ),
-      const SizedBox(height: 8),
+      const SizedBox(height: AppSpacing.sm),
       if (_kpis == null || _kpis!.isEmpty)
         const _EmptyState(message: 'No KPI data is available yet.')
       else ...[
@@ -250,7 +242,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             activeUsers: _kpiVal('active_users_7d'),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         GridView.count(
           crossAxisCount: 2,
           shrinkWrap: true,
@@ -300,7 +292,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
       ],
-      const SizedBox(height: 12),
+      const SizedBox(height: AppSpacing.md),
 
       // ── DAU Line Chart ───────────────────────────────────────────────────
       StaggeredEntrance(
@@ -310,14 +302,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           subtitle: 'Engagement over 10 weeks',
           trailing: _Chip(label: '10 Weeks'),
           child: _dauSeries.isEmpty
-              ? const _EmptyState(message: 'No engagement data for this period.')
-              : SizedBox(
-                  height: 130,
-                  child: _DauLineChart(values: _dauSeries),
-                ),
+              ? const _EmptyState(
+                  message: 'No engagement data for this period.',
+                )
+              : SizedBox(height: 130, child: _DauLineChart(values: _dauSeries)),
         ),
       ),
-      const SizedBox(height: 12),
+      const SizedBox(height: AppSpacing.md),
 
       // ── User Growth ──────────────────────────────────────────────────────
       StaggeredEntrance(
@@ -327,14 +318,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
           subtitle: 'Total registered users over 30 days',
           trailing: const _Chip(label: '30 Days'),
           child: _growthSeries.isEmpty
-              ? const _EmptyState(message: 'No user growth data for this period.')
+              ? const _EmptyState(
+                  message: 'No user growth data for this period.',
+                )
               : SizedBox(
                   height: 130,
                   child: _DauLineChart(values: _growthSeries, labelPrefix: 'D'),
                 ),
         ),
       ),
-      const SizedBox(height: 12),
+      const SizedBox(height: AppSpacing.md),
 
       // ── Language Distribution ────────────────────────────────────────────
       StaggeredEntrance(
@@ -350,7 +343,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     final l = entry.value;
                     return Column(
                       children: [
-                        if (i > 0) const SizedBox(height: 8),
+                        if (i > 0) const SizedBox(height: AppSpacing.sm),
                         _LanguageBar(
                           lang: l['lang'] as String,
                           pct: (l['pct'] as double).clamp(0.0, 1.0),
@@ -370,13 +363,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       children: [
         Text(
           'Quick Actions',
-          style: GoogleFonts.spaceGrotesk(
-            fontSize: 14,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.w700,
             color: AppColors.onSurface,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
@@ -387,14 +379,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 filled: true,
                 onTap: () => context.push('/curriculum'),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.sm),
               _QuickAction(
                 icon: Icons.group_outlined,
                 label: 'USERS',
                 filled: false,
                 onTap: () => context.push('/users'),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.sm),
               _QuickAction(
                 icon: Icons.bar_chart_outlined,
                 label: 'ANALYTICS',
@@ -430,7 +422,7 @@ class _PrimaryKpiCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.primary,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Row(
         children: [
@@ -440,26 +432,23 @@ class _PrimaryKpiCard extends StatelessWidget {
               children: [
                 Text(
                   'TOTAL USERS',
-                  style: GoogleFonts.spaceGrotesk(
-                    fontSize: 12,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: AppColors.surface.withValues(alpha: 0.75),
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
                   _format(value),
-                  style: GoogleFonts.spaceGrotesk(
-                    fontSize: 32,
+                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: AppColors.surface,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
                   '${_format(activeUsers)} active in the last 7 days',
-                  style: GoogleFonts.spaceGrotesk(
-                    fontSize: 12,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.surface.withValues(alpha: 0.75),
                   ),
                 ),
@@ -486,10 +475,9 @@ class _EmptyState extends StatelessWidget {
         child: Text(
           message,
           textAlign: TextAlign.center,
-          style: GoogleFonts.spaceGrotesk(
-            fontSize: 12,
-            color: AppColors.onSurfaceMuted,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
         ),
       ),
     );
@@ -522,10 +510,8 @@ class _DauLineChart extends StatelessWidget {
           show: true,
           drawVerticalLine: false,
           horizontalInterval: (max / 4).clamp(1, double.infinity),
-          getDrawingHorizontalLine: (_) => const FlLine(
-            color: AppColors.outline,
-            strokeWidth: 0.5,
-          ),
+          getDrawingHorizontalLine: (_) =>
+              const FlLine(color: AppColors.outline, strokeWidth: 0.5),
         ),
         borderData: FlBorderData(show: false),
         titlesData: FlTitlesData(
@@ -536,8 +522,7 @@ class _DauLineChart extends StatelessWidget {
               interval: (max / 4).clamp(1, double.infinity),
               getTitlesWidget: (value, _) => Text(
                 _formatY(value),
-                style: GoogleFonts.spaceGrotesk(
-                  fontSize: 10,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: AppColors.onSurfaceMuted,
                 ),
               ),
@@ -547,14 +532,16 @@ class _DauLineChart extends StatelessWidget {
             sideTitles: SideTitles(
               showTitles: true,
               reservedSize: 22,
-              interval: (values.length / 5).ceilToDouble().clamp(1, double.infinity),
+              interval: (values.length / 5).ceilToDouble().clamp(
+                1,
+                double.infinity,
+              ),
               getTitlesWidget: (value, _) {
                 final i = value.toInt();
                 if (i < 0 || i >= values.length) return const SizedBox.shrink();
                 return Text(
                   '$labelPrefix${i + 1}',
-                  style: GoogleFonts.spaceGrotesk(
-                    fontSize: 10,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: AppColors.onSurfaceMuted,
                   ),
                 );
@@ -603,10 +590,9 @@ class _DauLineChart extends StatelessWidget {
             getTooltipItems: (spots) => spots.map((s) {
               return LineTooltipItem(
                 _formatY(s.y),
-                GoogleFonts.spaceGrotesk(
+                Theme.of(context).textTheme.bodySmall!.copyWith(
                   color: AppColors.surface,
                   fontWeight: FontWeight.w700,
-                  fontSize: 12,
                 ),
               );
             }).toList(),
@@ -646,10 +632,8 @@ class _QuickAction extends StatelessWidget {
           color: filled
               ? AppColors.primaryBright
               : AppColors.surface.withValues(alpha: 0),
-          borderRadius: BorderRadius.circular(10),
-          border: filled
-              ? null
-              : Border.all(color: AppColors.outline),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: filled ? null : Border.all(color: AppColors.outline),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -662,8 +646,7 @@ class _QuickAction extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               label,
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 11,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.05,
                 color: filled ? AppColors.surface : AppColors.primary,
@@ -695,7 +678,7 @@ class _SectionCard extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.outlineVariant, width: 0.5),
       ),
       child: Column(
@@ -710,8 +693,7 @@ class _SectionCard extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 14,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: AppColors.onSurface,
                       ),
@@ -719,8 +701,7 @@ class _SectionCard extends StatelessWidget {
                     if (subtitle != null)
                       Text(
                         subtitle!,
-                        style: GoogleFonts.spaceGrotesk(
-                          fontSize: 11,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: AppColors.onSurfaceMuted,
                         ),
                       ),
@@ -730,7 +711,7 @@ class _SectionCard extends StatelessWidget {
               if (trailing != null) trailing!,
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           child,
         ],
       ),
@@ -748,12 +729,11 @@ class _Chip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Text(
         label,
-        style: GoogleFonts.spaceGrotesk(
-          fontSize: 11,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
           fontWeight: FontWeight.w600,
           color: AppColors.onSurfaceVariant,
         ),
@@ -777,22 +757,20 @@ class _LanguageBar extends StatelessWidget {
           children: [
             Text(
               lang,
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 13,
-                color: AppColors.onSurface,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurface),
             ),
             Text(
               '${(pct * 100).toInt()}%',
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 13,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: AppColors.onSurface,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.xs),
         ClipRRect(
           borderRadius: BorderRadius.circular(4),
           child: LinearProgressIndicator(
@@ -819,20 +797,19 @@ class _ErrorBanner extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.errorContainer,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
           const Icon(Icons.error_outline, color: AppColors.error, size: 18),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               message,
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 13,
-                color: AppColors.error,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.error),
             ),
           ),
           TextButton(
@@ -843,10 +820,9 @@ class _ErrorBanner extends StatelessWidget {
             ),
             child: Text(
               'Retry',
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
             ),
           ),
         ],

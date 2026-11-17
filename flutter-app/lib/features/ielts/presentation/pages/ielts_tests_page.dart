@@ -9,6 +9,7 @@ import '../providers/ielts_provider.dart';
 import '../widgets/ielts_preview_sheet.dart';
 import 'ielts_sitting_page.dart';
 import 'ielts_result_page.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class IeltsTestsPage extends StatelessWidget {
   const IeltsTestsPage({super.key});
@@ -63,17 +64,17 @@ class _IeltsTestsView extends StatelessWidget {
                         'ielts.yourResults'.tr(),
                         style: theme.textTheme.titleMedium,
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppSpacing.sm),
                       ...provider.history
                           .take(3)
                           .map((attempt) => _HistoryTile(attempt: attempt)),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: AppSpacing.xl),
                     ],
                     Text(
                       'ielts.availableTests'.tr(),
                       style: theme.textTheme.titleMedium,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpacing.sm),
                     if (provider.tests.isEmpty && !provider.isLoading)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 48),
@@ -125,7 +126,7 @@ class _TestCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         onTap: () => _preview(context),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -148,7 +149,7 @@ class _TestCard extends StatelessWidget {
                 ],
               ),
               if (test.description != null && test.description!.isNotEmpty) ...[
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
                   test.description!,
                   maxLines: 2,
@@ -158,7 +159,7 @@ class _TestCard extends StatelessWidget {
                   ),
                 ),
               ],
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               Wrap(
                 spacing: 16,
                 runSpacing: 4,
@@ -204,7 +205,7 @@ class _Meta extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 14, color: theme.colorScheme.onSurfaceVariant),
-        const SizedBox(width: 4),
+        const SizedBox(width: AppSpacing.xs),
         Text(
           label,
           style: theme.textTheme.bodySmall?.copyWith(

@@ -9,6 +9,7 @@ import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../shared/widgets/admin_skeleton.dart';
 import '../data/lesson_exercises_repository.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 const _uiTypeLabels = <String, String>{
   'multiple_choice': 'Multiple Choice',
@@ -102,8 +103,7 @@ class LessonExercisesScreen extends StatefulWidget {
   });
 
   @override
-  State<LessonExercisesScreen> createState() =>
-      _LessonExercisesScreenState();
+  State<LessonExercisesScreen> createState() => _LessonExercisesScreenState();
 }
 
 class _LessonExercisesScreenState extends State<LessonExercisesScreen> {
@@ -207,6 +207,9 @@ class _LessonExercisesScreenState extends State<LessonExercisesScreen> {
         ),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+            ),
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
@@ -289,32 +292,30 @@ class _LessonExercisesScreenState extends State<LessonExercisesScreen> {
           children: [
             Text(
               'LESSON CONTENT',
-              style: GoogleFonts.spaceGrotesk(
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 color: AppColors.primary,
-                fontSize: 11,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.2,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               '${_exercises.length} exercises',
-              style: GoogleFonts.spaceGrotesk(
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 color: AppColors.onSurface,
-                fontSize: 26,
                 fontWeight: FontWeight.w700,
               ),
             ),
             const SizedBox(height: 20),
             if (_error != null) ...[
               _ErrorBanner(message: _error!, onRetry: _loading ? null : _load),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
             ],
             if (_loading)
               const Column(
                 children: [
                   AdminSkeleton(height: 112),
-                  SizedBox(height: 12),
+                  SizedBox(height: AppSpacing.md),
                   AdminSkeleton(height: 112),
                 ],
               )
@@ -368,7 +369,7 @@ class _ExerciseCard extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.outline),
       ),
       child: Column(
@@ -385,24 +386,25 @@ class _ExerciseCard extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.primaryContainer,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                   ),
                   child: Text(
                     _uiTypeLabels[exercise.uiType] ?? exercise.uiType,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.spaceGrotesk(
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.primary,
-                      fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.sm),
               Text(
                 '${exercise.points} pts',
                 style: GoogleFonts.spaceGrotesk(
@@ -412,20 +414,19 @@ class _ExerciseCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           Text(
             exercise.question.trim().isEmpty
                 ? 'No question text'
                 : exercise.question,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.spaceGrotesk(
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               color: AppColors.onSurfaceVariant,
-              fontSize: 15,
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -473,12 +474,12 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => IconButton(
-        constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-        tooltip: tooltip,
-        onPressed: onPressed,
-        color: color ?? AppColors.onSurfaceMuted,
-        icon: Icon(icon),
-      );
+    constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+    tooltip: tooltip,
+    onPressed: onPressed,
+    color: color ?? AppColors.onSurfaceMuted,
+    icon: Icon(icon),
+  );
 }
 
 class _ExerciseEditor extends StatefulWidget {
@@ -526,10 +527,10 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
     _pairs = TextEditingController(
       text: _pairTypes.contains(_uiType)
           ? (exercise?.correctAnswer ?? '')
-              .split(',')
-              .map((p) => p.trim())
-              .where((p) => p.isNotEmpty)
-              .join('\n')
+                .split(',')
+                .map((p) => p.trim())
+                .where((p) => p.isNotEmpty)
+                .join('\n')
           : '',
     );
   }
@@ -565,9 +566,7 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
 
   String? _difficultyValidator(String? value) {
     final parsed = int.tryParse(value ?? '');
-    return parsed == null || parsed < 1 || parsed > 5
-        ? 'Enter 1 to 5'
-        : null;
+    return parsed == null || parsed < 1 || parsed > 5 ? 'Enter 1 to 5' : null;
   }
 
   void _changeType(String value) {
@@ -659,7 +658,8 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
     Navigator.pop(
       context,
       Exercise(
-        id: widget.exercise?.id ??
+        id:
+            widget.exercise?.id ??
             'ex_${DateTime.now().microsecondsSinceEpoch}',
         type: _uiTypeToType[_uiType] ?? _uiType,
         uiType: _uiType,
@@ -676,8 +676,7 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
     );
   }
 
-  String? _nullable(String value) =>
-      value.trim().isEmpty ? null : value.trim();
+  String? _nullable(String value) => value.trim().isEmpty ? null : value.trim();
 
   @override
   Widget build(BuildContext context) {
@@ -711,16 +710,18 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
               initialValue: _uiType,
               decoration: const InputDecoration(labelText: 'Exercise type'),
               items: _uiTypeLabels.entries
-                  .map((entry) => DropdownMenuItem(
-                        value: entry.key,
-                        child: Text(entry.value),
-                      ))
+                  .map(
+                    (entry) => DropdownMenuItem(
+                      value: entry.key,
+                      child: Text(entry.value),
+                    ),
+                  )
                   .toList(),
               onChanged: (value) {
                 if (value != null) _changeType(value);
               },
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             _Field(
               controller: _question,
               label: 'Question / prompt',
@@ -731,13 +732,12 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
               const SizedBox(height: 20),
               Text(
                 'Options',
-                style: GoogleFonts.spaceGrotesk(
+                style: Theme.of(context).textTheme.sectionTitle?.copyWith(
                   color: AppColors.onSurface,
-                  fontSize: 17,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               ...List.generate(_options.length, (index) {
                 final option = _options[index];
                 return Padding(
@@ -759,8 +759,10 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
                         ),
                       ),
                       IconButton(
-                        constraints:
-                            const BoxConstraints(minWidth: 48, minHeight: 48),
+                        constraints: const BoxConstraints(
+                          minWidth: 48,
+                          minHeight: 48,
+                        ),
                         tooltip: 'Remove option',
                         color: AppColors.error,
                         onPressed: () => _removeOption(index),
@@ -780,7 +782,7 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
               ),
             ],
             if (_pairTypes.contains(_uiType)) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               _Field(
                 controller: _pairs,
                 label: _uiType == 'categorization'
@@ -790,37 +792,32 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
                 validator: _pairsValidator,
               ),
             ] else ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               _Field(
                 controller: _correctAnswer,
                 label: _uiType == 'arrange_the_sentence'
                     ? 'Correct sentence (the word bank is built from it)'
                     : 'Correct answer',
-                validator:
-                    _uiType == 'short_writing_answer' ? null : _required,
+                validator: _uiType == 'short_writing_answer' ? null : _required,
               ),
             ],
-            const SizedBox(height: 16),
-            _Field(
-              controller: _explanation,
-              label: 'Explanation',
-              maxLines: 2,
-            ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
+            _Field(controller: _explanation, label: 'Explanation', maxLines: 2),
+            const SizedBox(height: AppSpacing.lg),
             _Field(controller: _hint, label: 'Hint'),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             _Field(
               controller: _audioUrl,
               label: 'Audio URL',
               keyboardType: TextInputType.url,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             _Field(
               controller: _imageUrl,
               label: 'Image URL',
               keyboardType: TextInputType.url,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             Row(
               children: [
                 Expanded(
@@ -831,7 +828,7 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
                     validator: _difficultyValidator,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: _Field(
                     controller: _points,
@@ -854,12 +851,10 @@ class _EditableOption {
   bool isCorrect;
 
   _EditableOption({String text = '', this.isCorrect = false})
-      : text = TextEditingController(text: text);
+    : text = TextEditingController(text: text);
 
-  factory _EditableOption.fromModel(ExerciseOption option) => _EditableOption(
-        text: option.text,
-        isCorrect: option.isCorrect,
-      );
+  factory _EditableOption.fromModel(ExerciseOption option) =>
+      _EditableOption(text: option.text, isCorrect: option.isCorrect);
 
   void dispose() => text.dispose();
 }
@@ -881,12 +876,12 @@ class _Field extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => TextFormField(
-        controller: controller,
-        maxLines: maxLines,
-        keyboardType: keyboardType,
-        validator: validator,
-        decoration: InputDecoration(labelText: label),
-      );
+    controller: controller,
+    maxLines: maxLines,
+    keyboardType: keyboardType,
+    validator: validator,
+    decoration: InputDecoration(labelText: label),
+  );
 }
 
 class _ErrorBanner extends StatelessWidget {
@@ -897,26 +892,26 @@ class _ErrorBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AppColors.errorContainer,
-          borderRadius: BorderRadius.circular(12),
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: AppColors.errorContainer,
+      borderRadius: BorderRadius.circular(AppRadius.md),
+    ),
+    child: Row(
+      children: [
+        const Icon(Icons.error_outline, color: AppColors.error),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: Text(
+            message,
+            style: GoogleFonts.spaceGrotesk(color: AppColors.error),
+          ),
         ),
-        child: Row(
-          children: [
-            const Icon(Icons.error_outline, color: AppColors.error),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                message,
-                style: GoogleFonts.spaceGrotesk(color: AppColors.error),
-              ),
-            ),
-            if (onRetry != null)
-              TextButton(onPressed: onRetry, child: const Text('Retry')),
-          ],
-        ),
-      );
+        if (onRetry != null)
+          TextButton(onPressed: onRetry, child: const Text('Retry')),
+      ],
+    ),
+  );
 }
 
 class _EmptyState extends StatelessWidget {
@@ -926,35 +921,37 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 56),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.outline),
+    padding: const EdgeInsets.symmetric(
+      horizontal: AppSpacing.xl,
+      vertical: 56,
+    ),
+    decoration: BoxDecoration(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      border: Border.all(color: AppColors.outline),
+    ),
+    child: Column(
+      children: [
+        const Icon(
+          Icons.quiz_outlined,
+          size: 48,
+          color: AppColors.onSurfaceMuted,
         ),
-        child: Column(
-          children: [
-            const Icon(
-              Icons.quiz_outlined,
-              size: 48,
-              color: AppColors.onSurfaceMuted,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'No exercises yet',
-              style: GoogleFonts.spaceGrotesk(
-                color: AppColors.onSurface,
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 8),
-            FilledButton.icon(
-              onPressed: onAdd,
-              icon: const Icon(Icons.add),
-              label: const Text('Add exercise'),
-            ),
-          ],
+        const SizedBox(height: AppSpacing.md),
+        Text(
+          'No exercises yet',
+          style: Theme.of(context).textTheme.sectionTitle?.copyWith(
+            color: AppColors.onSurface,
+            fontWeight: FontWeight.w700,
+          ),
         ),
-      );
+        const SizedBox(height: AppSpacing.sm),
+        FilledButton.icon(
+          onPressed: onAdd,
+          icon: const Icon(Icons.add),
+          label: const Text('Add exercise'),
+        ),
+      ],
+    ),
+  );
 }

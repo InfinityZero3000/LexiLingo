@@ -9,6 +9,7 @@ import '../../../shared/widgets/admin_shell.dart';
 import '../../../shared/widgets/admin_skeleton.dart';
 import '../../../shared/widgets/staggered_entrance.dart';
 import '../data/content_qa_repository.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class ContentQaScreen extends StatefulWidget {
   const ContentQaScreen({super.key});
@@ -52,10 +53,10 @@ class _ContentQaScreenState extends State<ContentQaScreen> {
   }
 
   List<ContentQaJob> get _jobs => switch (_filter) {
-        'failed' => _queue?.failed ?? [],
-        'completed' => _queue?.applied ?? [],
-        _ => _queue?.reviewable ?? [],
-      };
+    'failed' => _queue?.failed ?? [],
+    'completed' => _queue?.applied ?? [],
+    _ => _queue?.reviewable ?? [],
+  };
 
   Future<void> _openJob(ContentQaJob job) async {
     await showModalBottomSheet<void>(
@@ -87,12 +88,18 @@ class _ContentQaScreenState extends State<ContentQaScreen> {
               elevation: 0,
               scrolledUnderElevation: 0,
               leading: IconButton(
-                icon: const Icon(Icons.menu_rounded, color: AppColors.onSurface),
+                icon: const Icon(
+                  Icons.menu_rounded,
+                  color: AppColors.onSurface,
+                ),
                 onPressed: AdminShell.openDrawer,
               ),
               title: Text(
                 'Content QA Queue',
-                style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, color: AppColors.onSurface),
+                style: GoogleFonts.spaceGrotesk(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.onSurface,
+                ),
               ),
             ),
             SliverPadding(
@@ -101,12 +108,17 @@ class _ContentQaScreenState extends State<ContentQaScreen> {
                 delegate: SliverChildListDelegate([
                   Text(
                     'Review generated content',
-                    style: GoogleFonts.spaceGrotesk(fontSize: 27, fontWeight: FontWeight.w700, color: AppColors.onSurface),
+                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.onSurface,
+                    ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     '${_queue?.total ?? 0} tracked jobs',
-                    style: GoogleFonts.spaceGrotesk(fontSize: 13, color: AppColors.onSurfaceMuted),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.onSurfaceMuted,
+                    ),
                   ),
                   const SizedBox(height: 20),
                   if (_loading)
@@ -123,24 +135,48 @@ class _ContentQaScreenState extends State<ContentQaScreen> {
                       scrollDirection: Axis.horizontal,
                       child: Row(
                         children: [
-                          _QueueFilter(label: 'Needs approval', count: _queue!.reviewable.length, value: 'preview_ready', selected: _filter, onSelected: _selectFilter),
-                          const SizedBox(width: 8),
-                          _QueueFilter(label: 'Needs repair', count: _queue!.failed.length, value: 'failed', selected: _filter, onSelected: _selectFilter),
-                          const SizedBox(width: 8),
-                          _QueueFilter(label: 'Published', count: _queue!.applied.length, value: 'completed', selected: _filter, onSelected: _selectFilter),
+                          _QueueFilter(
+                            label: 'Needs approval',
+                            count: _queue!.reviewable.length,
+                            value: 'preview_ready',
+                            selected: _filter,
+                            onSelected: _selectFilter,
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          _QueueFilter(
+                            label: 'Needs repair',
+                            count: _queue!.failed.length,
+                            value: 'failed',
+                            selected: _filter,
+                            onSelected: _selectFilter,
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          _QueueFilter(
+                            label: 'Published',
+                            count: _queue!.applied.length,
+                            value: 'completed',
+                            selected: _filter,
+                            onSelected: _selectFilter,
+                          ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.lg),
                     if (_jobs.isEmpty)
-                      const _MessageCard(icon: Icons.fact_check_outlined, message: 'Nothing is waiting in this bucket.')
+                      const _MessageCard(
+                        icon: Icons.fact_check_outlined,
+                        message: 'Nothing is waiting in this bucket.',
+                      )
                     else
                       ..._jobs.indexed.map(
                         (entry) => StaggeredEntrance(
                           index: entry.$1,
                           child: Padding(
                             padding: const EdgeInsets.only(bottom: 12),
-                            child: _JobCard(job: entry.$2, onTap: () => _openJob(entry.$2)),
+                            child: _JobCard(
+                              job: entry.$2,
+                              onTap: () => _openJob(entry.$2),
+                            ),
                           ),
                         ),
                       ),
@@ -164,19 +200,28 @@ class _QueueFilter extends StatelessWidget {
   final String selected;
   final ValueChanged<String> onSelected;
 
-  const _QueueFilter({required this.label, required this.count, required this.value, required this.selected, required this.onSelected});
+  const _QueueFilter({
+    required this.label,
+    required this.count,
+    required this.value,
+    required this.selected,
+    required this.onSelected,
+  });
 
   @override
   Widget build(BuildContext context) => FilterChip(
-        selected: value == selected,
-        onSelected: (_) => onSelected(value),
-        label: Text('$label  $count', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w600)),
-        selectedColor: AppColors.primaryContainer,
-        checkmarkColor: AppColors.primary,
-        backgroundColor: AppColors.surface,
-        side: const BorderSide(color: AppColors.outlineVariant),
-        materialTapTargetSize: MaterialTapTargetSize.padded,
-      );
+    selected: value == selected,
+    onSelected: (_) => onSelected(value),
+    label: Text(
+      '$label  $count',
+      style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w600),
+    ),
+    selectedColor: AppColors.primaryContainer,
+    checkmarkColor: AppColors.primary,
+    backgroundColor: AppColors.surface,
+    side: const BorderSide(color: AppColors.outlineVariant),
+    materialTapTargetSize: MaterialTapTargetSize.padded,
+  );
 }
 
 class _JobCard extends StatelessWidget {
@@ -187,42 +232,55 @@ class _JobCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            constraints: const BoxConstraints(minHeight: 88),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.outlineVariant, width: 0.5),
-            ),
-            child: Row(
-              children: [
-                _StatusIcon(status: job.status),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(job.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, color: AppColors.onSurface)),
-                      const SizedBox(height: 5),
-                      Text(
-                        '${job.id.length > 8 ? job.id.substring(0, 8) : job.id} · ${job.updatedAt == null ? 'Unknown date' : DateFormat.yMMMd().add_jm().format(job.updatedAt!.toLocal())}',
-                        style: GoogleFonts.spaceGrotesk(fontSize: 12, color: AppColors.onSurfaceMuted),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                const Icon(Icons.chevron_right_rounded, color: AppColors.onSurfaceMuted),
-              ],
-            ),
-          ),
+    color: AppColors.surface,
+    borderRadius: BorderRadius.circular(AppRadius.lg),
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 88),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: AppColors.outlineVariant, width: 0.5),
         ),
-      );
+        child: Row(
+          children: [
+            _StatusIcon(status: job.status),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    job.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.spaceGrotesk(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    '${job.id.length > 8 ? job.id.substring(0, 8) : job.id} · ${job.updatedAt == null ? 'Unknown date' : DateFormat.yMMMd().add_jm().format(job.updatedAt!.toLocal())}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.onSurfaceMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: AppColors.onSurfaceMuted,
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 class _StatusIcon extends StatelessWidget {
@@ -232,14 +290,29 @@ class _StatusIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (color, background, icon) = switch (status) {
-      'preview_ready' => (AppColors.warning, AppColors.warningContainer, Icons.rate_review_outlined),
-      'failed' => (AppColors.error, AppColors.errorContainer, Icons.error_outline_rounded),
-      _ => (AppColors.success, AppColors.successContainer, Icons.check_circle_outline_rounded),
+      'preview_ready' => (
+        AppColors.warning,
+        AppColors.warningContainer,
+        Icons.rate_review_outlined,
+      ),
+      'failed' => (
+        AppColors.error,
+        AppColors.errorContainer,
+        Icons.error_outline_rounded,
+      ),
+      _ => (
+        AppColors.success,
+        AppColors.successContainer,
+        Icons.check_circle_outline_rounded,
+      ),
     };
     return Container(
       width: 44,
       height: 44,
-      decoration: BoxDecoration(color: background, borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
       child: Icon(icon, color: color),
     );
   }
@@ -269,7 +342,10 @@ class _JobDetailSheetState extends State<_JobDetailSheet> {
 
   Future<void> _load() async {
     try {
-      final results = await Future.wait([widget.repository.getJob(widget.job.id), widget.repository.getPreview(widget.job.id)]);
+      final results = await Future.wait([
+        widget.repository.getJob(widget.job.id),
+        widget.repository.getPreview(widget.job.id),
+      ]);
       if (!mounted) return;
       setState(() {
         _job = results[0] as ContentQaJob;
@@ -290,13 +366,26 @@ class _JobDetailSheetState extends State<_JobDetailSheet> {
       final ok = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text(action == 'apply' ? 'Approve & publish?' : 'Reject this job?'),
-          content: Text(action == 'apply'
-              ? 'This will publish the generated content to production immediately.'
-              : 'This will discard the generated content for this job.'),
+          title: Text(
+            action == 'apply' ? 'Approve & publish?' : 'Reject this job?',
+          ),
+          content: Text(
+            action == 'apply'
+                ? 'This will publish the generated content to production immediately.'
+                : 'This will discard the generated content for this job.',
+          ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-            FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Confirm')),
+            TextButton(
+              style: TextButton.styleFrom(
+                minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+              ),
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Confirm'),
+            ),
           ],
         ),
       );
@@ -323,7 +412,12 @@ class _JobDetailSheetState extends State<_JobDetailSheet> {
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: AppColors.surface,
-      builder: (_) => _EditExerciseSheet(repository: widget.repository, jobId: widget.job.id, lesson: lesson, exercise: exercise),
+      builder: (_) => _EditExerciseSheet(
+        repository: widget.repository,
+        jobId: widget.job.id,
+        lesson: lesson,
+        exercise: exercise,
+      ),
     );
     if (updated != null && mounted) setState(() => _preview = updated);
   }
@@ -340,33 +434,79 @@ class _JobDetailSheetState extends State<_JobDetailSheet> {
         controller: controller,
         padding: const EdgeInsets.fromLTRB(20, 10, 20, 32),
         children: [
-          Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.outlineVariant, borderRadius: BorderRadius.circular(2)))),
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.outlineVariant,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
           const SizedBox(height: 18),
           Row(
             children: [
-              Expanded(child: Text(job.title, style: GoogleFonts.spaceGrotesk(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.onSurface))),
-              IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded), tooltip: 'Close'),
+              Expanded(
+                child: Text(
+                  job.title,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.onSurface,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close_rounded),
+                tooltip: 'Close',
+              ),
             ],
           ),
-          Text(job.id, style: GoogleFonts.spaceGrotesk(fontSize: 12, color: AppColors.onSurfaceMuted)),
+          Text(
+            job.id,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+          ),
           const SizedBox(height: 18),
           if (_loading)
             const SectionCardSkeleton(contentHeight: 240)
           else if (_error != null && _preview == null)
-            _MessageCard(icon: Icons.error_outline_rounded, message: _error!, actionLabel: 'Try again', onAction: _load)
+            _MessageCard(
+              icon: Icons.error_outline_rounded,
+              message: _error!,
+              actionLabel: 'Try again',
+              onAction: _load,
+            )
           else ...[
             _Summary(preview: _preview!),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             _Validation(job: job, preview: _preview!),
-            const SizedBox(height: 16),
-            Text('Lessons & exercises', style: GoogleFonts.spaceGrotesk(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.onSurface)),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.lg),
+            Text(
+              'Lessons & exercises',
+              style: Theme.of(context).textTheme.sectionTitle?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: AppColors.onSurface,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.sm),
             if (_preview!.lessons.isEmpty)
-              const _MessageCard(icon: Icons.menu_book_outlined, message: 'No lesson content in this preview.')
+              const _MessageCard(
+                icon: Icons.menu_book_outlined,
+                message: 'No lesson content in this preview.',
+              )
             else
-              ..._preview!.lessons.map((lesson) => _LessonCard(lesson: lesson, editable: job.status == 'preview_ready', onEdit: (exercise) => _edit(lesson, exercise))),
+              ..._preview!.lessons.map(
+                (lesson) => _LessonCard(
+                  lesson: lesson,
+                  editable: job.status == 'preview_ready',
+                  onEdit: (exercise) => _edit(lesson, exercise),
+                ),
+              ),
             if (_error != null) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               _MessageCard(icon: Icons.error_outline_rounded, message: _error!),
             ],
             const SizedBox(height: 20),
@@ -384,15 +524,15 @@ class _Summary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: [
-          _Metric(label: 'Courses', value: preview.courseCount),
-          _Metric(label: 'Lessons', value: preview.lessons.length),
-          _Metric(label: 'Vocabulary', value: preview.vocabularyCount),
-          _Metric(label: 'Exercises', value: preview.exerciseCount),
-        ],
-      );
+    spacing: 8,
+    runSpacing: 8,
+    children: [
+      _Metric(label: 'Courses', value: preview.courseCount),
+      _Metric(label: 'Lessons', value: preview.lessons.length),
+      _Metric(label: 'Vocabulary', value: preview.vocabularyCount),
+      _Metric(label: 'Exercises', value: preview.exerciseCount),
+    ],
+  );
 }
 
 class _Metric extends StatelessWidget {
@@ -402,14 +542,32 @@ class _Metric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width: (MediaQuery.sizeOf(context).width - 48) / 2,
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.outlineVariant, width: 0.5)),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('$value', style: GoogleFonts.spaceGrotesk(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.onSurface)),
-          Text(label, style: GoogleFonts.spaceGrotesk(fontSize: 12, color: AppColors.onSurfaceMuted)),
-        ]),
-      );
+    width: (MediaQuery.sizeOf(context).width - 48) / 2,
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      border: Border.all(color: AppColors.outlineVariant, width: 0.5),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '$value',
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: AppColors.onSurface,
+          ),
+        ),
+        Text(
+          label,
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+        ),
+      ],
+    ),
+  );
 }
 
 class _Validation extends StatelessWidget {
@@ -423,17 +581,38 @@ class _Validation extends StatelessWidget {
     final warnings = [...job.warnings, ...preview.warnings];
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(14), border: Border.all(color: AppColors.outlineVariant, width: 0.5)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text('Validation', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, color: AppColors.onSurface)),
-        const SizedBox(height: 8),
-        if (errors.isEmpty && warnings.isEmpty)
-          Text('✓ No blocking issues', style: GoogleFonts.spaceGrotesk(color: AppColors.success, fontWeight: FontWeight.w600))
-        else ...[
-          ...errors.map((message) => _Issue(message: message, error: true)),
-          ...warnings.map((message) => _Issue(message: message, error: false)),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: AppColors.outlineVariant, width: 0.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Validation',
+            style: GoogleFonts.spaceGrotesk(
+              fontWeight: FontWeight.w700,
+              color: AppColors.onSurface,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          if (errors.isEmpty && warnings.isEmpty)
+            Text(
+              '✓ No blocking issues',
+              style: GoogleFonts.spaceGrotesk(
+                color: AppColors.success,
+                fontWeight: FontWeight.w600,
+              ),
+            )
+          else ...[
+            ...errors.map((message) => _Issue(message: message, error: true)),
+            ...warnings.map(
+              (message) => _Issue(message: message, error: false),
+            ),
+          ],
         ],
-      ]),
+      ),
     );
   }
 }
@@ -445,60 +624,128 @@ class _Issue extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(top: 6),
-        child: Text('• $message', style: GoogleFonts.spaceGrotesk(fontSize: 13, color: error ? AppColors.error : AppColors.warning)),
-      );
+    padding: const EdgeInsets.only(top: 6),
+    child: Text(
+      '• $message',
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+        color: error ? AppColors.error : AppColors.warning,
+      ),
+    ),
+  );
 }
 
 class _LessonCard extends StatelessWidget {
   final ContentQaLesson lesson;
   final bool editable;
   final ValueChanged<ContentQaExercise> onEdit;
-  const _LessonCard({required this.lesson, required this.editable, required this.onEdit});
+  const _LessonCard({
+    required this.lesson,
+    required this.editable,
+    required this.onEdit,
+  });
 
   @override
   Widget build(BuildContext context) => Card(
-        color: AppColors.surface,
-        elevation: 0,
-        margin: const EdgeInsets.only(bottom: 10),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14), side: const BorderSide(color: AppColors.outlineVariant, width: 0.5)),
-        child: ExpansionTile(
-          title: Text(lesson.title, style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, color: AppColors.onSurface)),
-          subtitle: lesson.outcome == null ? null : Text(lesson.outcome!, maxLines: 2, overflow: TextOverflow.ellipsis, style: GoogleFonts.spaceGrotesk(fontSize: 12, color: AppColors.onSurfaceMuted)),
-          children: lesson.exercises.map((exercise) => ListTile(
-            contentPadding: const EdgeInsets.fromLTRB(16, 4, 8, 4),
-            title: Text(exercise.question, style: GoogleFonts.spaceGrotesk(fontSize: 13, color: AppColors.onSurface)),
-            subtitle: Text([exercise.uiType, if (exercise.phase != null) exercise.phase!].join(' · '), style: GoogleFonts.spaceGrotesk(fontSize: 11, color: AppColors.onSurfaceMuted)),
-            trailing: IconButton(
-              onPressed: editable ? () => onEdit(exercise) : null,
-              icon: const Icon(Icons.edit_outlined),
-              tooltip: 'Edit exercise',
-            ),
-          )).toList(),
+    color: AppColors.surface,
+    elevation: 0,
+    margin: const EdgeInsets.only(bottom: 10),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(AppRadius.md),
+      side: const BorderSide(color: AppColors.outlineVariant, width: 0.5),
+    ),
+    child: ExpansionTile(
+      title: Text(
+        lesson.title,
+        style: GoogleFonts.spaceGrotesk(
+          fontWeight: FontWeight.w700,
+          color: AppColors.onSurface,
         ),
-      );
+      ),
+      subtitle: lesson.outcome == null
+          ? null
+          : Text(
+              lesson.outcome!,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ),
+      children: lesson.exercises
+          .map(
+            (exercise) => ListTile(
+              contentPadding: const EdgeInsets.fromLTRB(16, 4, 8, 4),
+              title: Text(
+                exercise.question,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.onSurface),
+              ),
+              subtitle: Text(
+                [
+                  exercise.uiType,
+                  if (exercise.phase != null) exercise.phase!,
+                ].join(' · '),
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: AppColors.onSurfaceMuted,
+                ),
+              ),
+              trailing: IconButton(
+                onPressed: editable ? () => onEdit(exercise) : null,
+                icon: const Icon(Icons.edit_outlined),
+                tooltip: 'Edit exercise',
+              ),
+            ),
+          )
+          .toList(),
+    ),
+  );
 }
 
 class _Actions extends StatelessWidget {
   final String status;
   final bool busy;
   final ValueChanged<String> onAction;
-  const _Actions({required this.status, required this.busy, required this.onAction});
+  const _Actions({
+    required this.status,
+    required this.busy,
+    required this.onAction,
+  });
 
   @override
   Widget build(BuildContext context) => Wrap(
-        spacing: 10,
-        runSpacing: 10,
-        children: [
-          if (status == 'preview_ready')
-            FilledButton.icon(onPressed: busy ? null : () => onAction('apply'), icon: const Icon(Icons.check_circle_outline), label: const Text('Approve & publish')),
-          if (status == 'preview_ready' || status == 'failed')
-            OutlinedButton.icon(onPressed: busy ? null : () => onAction('cancel'), icon: const Icon(Icons.cancel_outlined), label: const Text('Reject')),
-          if (status == 'failed')
-            OutlinedButton.icon(onPressed: busy ? null : () => onAction('retry'), icon: const Icon(Icons.replay_rounded), label: const Text('Retry')),
-          if (busy) const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary)),
-        ],
-      );
+    spacing: 10,
+    runSpacing: 10,
+    children: [
+      if (status == 'preview_ready')
+        FilledButton.icon(
+          onPressed: busy ? null : () => onAction('apply'),
+          icon: const Icon(Icons.check_circle_outline),
+          label: const Text('Approve & publish'),
+        ),
+      if (status == 'preview_ready' || status == 'failed')
+        OutlinedButton.icon(
+          onPressed: busy ? null : () => onAction('cancel'),
+          icon: const Icon(Icons.cancel_outlined),
+          label: const Text('Reject'),
+        ),
+      if (status == 'failed')
+        OutlinedButton.icon(
+          onPressed: busy ? null : () => onAction('retry'),
+          icon: const Icon(Icons.replay_rounded),
+          label: const Text('Retry'),
+        ),
+      if (busy)
+        const SizedBox(
+          width: AppSpacing.xl,
+          height: 24,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: AppColors.primary,
+          ),
+        ),
+    ],
+  );
 }
 
 class _EditExerciseSheet extends StatefulWidget {
@@ -506,18 +753,35 @@ class _EditExerciseSheet extends StatefulWidget {
   final String jobId;
   final ContentQaLesson lesson;
   final ContentQaExercise exercise;
-  const _EditExerciseSheet({required this.repository, required this.jobId, required this.lesson, required this.exercise});
+  const _EditExerciseSheet({
+    required this.repository,
+    required this.jobId,
+    required this.lesson,
+    required this.exercise,
+  });
 
   @override
   State<_EditExerciseSheet> createState() => _EditExerciseSheetState();
 }
 
 class _EditExerciseSheetState extends State<_EditExerciseSheet> {
-  late final TextEditingController _question = TextEditingController(text: widget.exercise.question);
-  late final TextEditingController _answer = TextEditingController(text: widget.exercise.correctAnswer);
-  late final TextEditingController _explanation = TextEditingController(text: widget.exercise.explanation ?? '');
-  late final TextEditingController _options = TextEditingController(text: widget.exercise.options == null ? '' : const JsonEncoder.withIndent('  ').convert(widget.exercise.options));
-  late final TextEditingController _outcome = TextEditingController(text: widget.lesson.outcome ?? '');
+  late final TextEditingController _question = TextEditingController(
+    text: widget.exercise.question,
+  );
+  late final TextEditingController _answer = TextEditingController(
+    text: widget.exercise.correctAnswer,
+  );
+  late final TextEditingController _explanation = TextEditingController(
+    text: widget.exercise.explanation ?? '',
+  );
+  late final TextEditingController _options = TextEditingController(
+    text: widget.exercise.options == null
+        ? ''
+        : const JsonEncoder.withIndent('  ').convert(widget.exercise.options),
+  );
+  late final TextEditingController _outcome = TextEditingController(
+    text: widget.lesson.outcome ?? '',
+  );
   bool _saving = false;
   String? _error;
 
@@ -544,38 +808,78 @@ class _EditExerciseSheetState extends State<_EditExerciseSheet> {
       _error = null;
     });
     try {
-      final preview = await widget.repository.updateRecord(widget.jobId, widget.exercise.id, {
-        'question': _question.text,
-        'correct_answer': _answer.text,
-        if (_explanation.text.isNotEmpty) 'explanation': _explanation.text,
-        if (options != null) 'options': options,
-        if (_outcome.text.isNotEmpty) 'lesson_outcome': _outcome.text,
-      });
+      final preview = await widget.repository
+          .updateRecord(widget.jobId, widget.exercise.id, {
+            'question': _question.text,
+            'correct_answer': _answer.text,
+            if (_explanation.text.isNotEmpty) 'explanation': _explanation.text,
+            if (options != null) 'options': options,
+            if (_outcome.text.isNotEmpty) 'lesson_outcome': _outcome.text,
+          });
       if (mounted) Navigator.pop(context, preview);
     } catch (_) {
-      if (mounted) setState(() { _saving = false; _error = 'Could not save this edit.'; });
+      if (mounted) {
+        setState(() {
+          _saving = false;
+          _error = 'Could not save this edit.';
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.viewInsetsOf(context).bottom + 20),
-        child: SingleChildScrollView(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Text('Edit exercise', style: GoogleFonts.spaceGrotesk(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.onSurface)),
-            Text(widget.lesson.title, style: GoogleFonts.spaceGrotesk(fontSize: 12, color: AppColors.onSurfaceMuted)),
-            const SizedBox(height: 16),
-            _Field(controller: _question, label: 'Question', lines: 2),
-            _Field(controller: _options, label: 'Options (JSON, optional)', lines: 3),
-            _Field(controller: _answer, label: 'Correct answer'),
-            _Field(controller: _explanation, label: 'Explanation (optional)', lines: 2),
-            _Field(controller: _outcome, label: 'Lesson outcome', lines: 2),
-            if (_error != null) Text(_error!, style: GoogleFonts.spaceGrotesk(color: AppColors.error)),
-            const SizedBox(height: 12),
-            FilledButton(onPressed: _saving ? null : _save, child: Text(_saving ? 'Saving…' : 'Save')),
-          ]),
-        ),
-      );
+    padding: EdgeInsets.fromLTRB(
+      20,
+      20,
+      20,
+      MediaQuery.viewInsetsOf(context).bottom + 20,
+    ),
+    child: SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Edit exercise',
+            style: Theme.of(context).textTheme.heading?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: AppColors.onSurface,
+            ),
+          ),
+          Text(
+            widget.lesson.title,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          _Field(controller: _question, label: 'Question', lines: 2),
+          _Field(
+            controller: _options,
+            label: 'Options (JSON, optional)',
+            lines: 3,
+          ),
+          _Field(controller: _answer, label: 'Correct answer'),
+          _Field(
+            controller: _explanation,
+            label: 'Explanation (optional)',
+            lines: 2,
+          ),
+          _Field(controller: _outcome, label: 'Lesson outcome', lines: 2),
+          if (_error != null)
+            Text(
+              _error!,
+              style: GoogleFonts.spaceGrotesk(color: AppColors.error),
+            ),
+          const SizedBox(height: AppSpacing.md),
+          FilledButton(
+            onPressed: _saving ? null : _save,
+            child: Text(_saving ? 'Saving…' : 'Save'),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _Field extends StatelessWidget {
@@ -586,14 +890,17 @@ class _Field extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: TextField(
-          controller: controller,
-          maxLines: lines,
-          style: GoogleFonts.spaceGrotesk(color: AppColors.onSurface),
-          decoration: InputDecoration(labelText: label, alignLabelWithHint: lines > 1),
-        ),
-      );
+    padding: const EdgeInsets.only(bottom: 12),
+    child: TextField(
+      controller: controller,
+      maxLines: lines,
+      style: GoogleFonts.spaceGrotesk(color: AppColors.onSurface),
+      decoration: InputDecoration(
+        labelText: label,
+        alignLabelWithHint: lines > 1,
+      ),
+    ),
+  );
 }
 
 class _MessageCard extends StatelessWidget {
@@ -601,30 +908,48 @@ class _MessageCard extends StatelessWidget {
   final String message;
   final String? actionLabel;
   final VoidCallback? onAction;
-  const _MessageCard({required this.icon, required this.message, this.actionLabel, this.onAction});
+  const _MessageCard({
+    required this.icon,
+    required this.message,
+    this.actionLabel,
+    this.onAction,
+  });
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(color: AppColors.surface, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.outlineVariant, width: 0.5)),
-        child: Column(children: [
-          Icon(icon, size: 32, color: AppColors.onSurfaceMuted),
-          const SizedBox(height: 8),
-          Text(message, textAlign: TextAlign.center, style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted)),
-          if (onAction != null) TextButton(onPressed: onAction, child: Text(actionLabel ?? 'Retry')),
-        ]),
-      );
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      border: Border.all(color: AppColors.outlineVariant, width: 0.5),
+    ),
+    child: Column(
+      children: [
+        Icon(icon, size: 32, color: AppColors.onSurfaceMuted),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          message,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted),
+        ),
+        if (onAction != null)
+          TextButton(onPressed: onAction, child: Text(actionLabel ?? 'Retry')),
+      ],
+    ),
+  );
 }
 
 class _QueueSkeleton extends StatelessWidget {
   const _QueueSkeleton();
 
   @override
-  Widget build(BuildContext context) => const Column(children: [
-        AdminSkeleton(height: 44, borderRadius: 22),
-        SizedBox(height: 16),
-        ListRowSkeleton(),
-        ListRowSkeleton(),
-        ListRowSkeleton(),
-      ]);
+  Widget build(BuildContext context) => const Column(
+    children: [
+      AdminSkeleton(height: 44, borderRadius: 22),
+      SizedBox(height: AppSpacing.lg),
+      ListRowSkeleton(),
+      ListRowSkeleton(),
+      ListRowSkeleton(),
+    ],
+  );
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../domain/entities/ielts_entities.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 typedef IeltsLinkOpener = Future<bool> Function(Uri uri);
 
@@ -52,7 +53,7 @@ class IeltsPassageAttribution extends StatelessWidget {
           if (attribution != null && attribution.isNotEmpty)
             Text('${'ielts.sourceLine'.tr()} $attribution.', style: style),
           if (licenseId != null) ...[
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSpacing.xs),
             Text('ielts.licensedUnder'.tr(), style: style),
             if (licenseLink != null && licenseLink.hasScheme)
               TextButton(
