@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// End-of-session summary shown after the learner ends a topic chat —
 /// mirrors a Duolingo-style lesson-complete card. Every number shown here
@@ -47,9 +48,11 @@ class SessionSummaryDialog extends StatelessWidget {
     final accent = AppColorRoles.primary(isDark);
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -60,7 +63,7 @@ class SessionSummaryDialog extends StatelessWidget {
               size: 48,
               color: accent,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             Text(
               'topicChat.sessionSummaryTitle'.tr(),
               style: Theme.of(
@@ -68,7 +71,7 @@ class SessionSummaryDialog extends StatelessWidget {
               ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               _hasActivity
                   ? 'topicChat.sessionSummarySubtitle'.tr()
@@ -106,21 +109,21 @@ class SessionSummaryDialog extends StatelessWidget {
                     label: 'topicChat.xpStat'.tr(
                       namedArgs: {'count': '$totalXp'},
                     ),
-                    color: AppColors.accentYellow,
+                    color: context.status.warning,
                   ),
               ],
             ),
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
+              child: FilledButton(
                 onPressed: () => Navigator.of(context).pop(),
-                style: ElevatedButton.styleFrom(
+                style: FilledButton.styleFrom(
                   backgroundColor: accent,
                   foregroundColor: Theme.of(context).colorScheme.surface,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                 ),
                 child: Text('topicChat.sessionSummaryDone'.tr()),
@@ -146,9 +149,10 @@ class _SessionBarChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final maxY = [mistakesSaved, wordsSaved]
-        .reduce((a, b) => a > b ? a : b)
-        .toDouble();
+    final maxY = [
+      mistakesSaved,
+      wordsSaved,
+    ].reduce((a, b) => a > b ? a : b).toDouble();
     final labels = [
       'topicChat.mistakesCorrectedLabel'.tr(),
       'topicChat.newWordsLabel'.tr(),
@@ -183,8 +187,7 @@ class _SessionBarChart extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
                     labels[i],
-                    style: TextStyle(
-                      fontSize: 11,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: AppColorRoles.textMuted(isDark),
                     ),
@@ -217,14 +220,14 @@ class _SessionBarChart extends StatelessWidget {
             getTooltipColor: (_) => Colors.transparent,
             tooltipPadding: EdgeInsets.zero,
             tooltipMargin: 4,
-            getTooltipItem: (group, groupIndex, rod, rodIndex) => BarTooltipItem(
-              '${rod.toY.round()}',
-              TextStyle(
-                fontWeight: FontWeight.w800,
-                fontSize: 13,
-                color: colors[groupIndex],
-              ),
-            ),
+            getTooltipItem: (group, groupIndex, rod, rodIndex) =>
+                BarTooltipItem(
+                  '${rod.toY.round()}',
+                  Theme.of(context).textTheme.bodySmall!.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: colors[groupIndex],
+                  ),
+                ),
           ),
         ),
       ),
@@ -238,15 +241,22 @@ class _StatChip extends StatelessWidget {
   final String label;
   final Color color;
 
-  const _StatChip({required this.icon, required this.label, required this.color});
+  const _StatChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -255,8 +265,7 @@ class _StatChip extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 13,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
               fontWeight: FontWeight.w700,
               color: color,
             ),

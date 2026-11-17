@@ -4,6 +4,7 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../../core/widgets/cefr_badge.dart';
 import '../../../../core/widgets/content_kit.dart';
 import '../../domain/entities/book_entities.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Portrait cover with title and author underneath, for horizontal shelves.
 ///
@@ -42,24 +43,22 @@ class BookCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   BookCover(book: book),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   Text(
                     book.title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 14,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                       height: 1.3,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     book.author,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       height: 1.3,
                       color: contentMuted(context),
                     ),
@@ -176,15 +175,19 @@ class BookJacket extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 32, 12, 16),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.xxl,
+          AppSpacing.md,
+          AppSpacing.lg,
+        ),
         child: Align(
           alignment: Alignment.centerLeft,
           child: Text(
             title,
             maxLines: 5,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 16,
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               fontWeight: FontWeight.w700,
               height: 1.25,
               color: scheme.onPrimaryContainer,

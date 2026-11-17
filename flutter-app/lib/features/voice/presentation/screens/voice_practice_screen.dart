@@ -15,6 +15,7 @@ import 'package:lexilingo_app/core/widgets/lottie_animation_widget.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/voice_provider.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/record_button.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/pronunciation_score_card.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Voice Practice Screen
 /// Allows users to practice pronunciation by:
@@ -279,7 +280,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
         provider.resetState();
         setState(() => _isPreparingExample = false);
         debugPrint('voice.failedToPlayAudio: $e');
-      _showError('voice.failedToPlayAudio'.tr());
+        _showError('voice.failedToPlayAudio'.tr());
       }
     } else {
       provider.resetState();
@@ -317,7 +318,10 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
   void _showError(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: AppColors.errorBright),
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      ),
     );
   }
 
@@ -340,16 +344,18 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
   Widget _buildGuideCard(BuildContext context, VoiceProvider voiceProvider) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.primary.withValues(alpha: 0.12),
+            Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
             AppColors.accentMint.withValues(alpha: 0.08),
           ],
         ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.12)),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -361,13 +367,15 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.12),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.lightbulb_outline,
                   size: 18,
-                  color: AppColors.primary,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
               const SizedBox(width: 10),
@@ -427,16 +435,19 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
     required bool done,
   }) {
     final color = done
-        ? AppColors.greenSuccessBright
+        ? context.status.success
         : active
-        ? AppColors.primary
-        : AppColors.textGrey;
+        ? Theme.of(context).colorScheme.primary
+        : Theme.of(context).colorScheme.onSurfaceVariant;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: done || active ? 0.12 : 0.08),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         border: Border.all(color: color.withValues(alpha: 0.22)),
       ),
       child: Row(
@@ -483,7 +494,9 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
             hintText: 'voice.enterPhraseHint'.tr(),
             filled: true,
             fillColor: Theme.of(context).cardColor,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+            ),
             prefixIcon: const Icon(Icons.short_text),
             suffixIcon: IconButton(
               icon: const Icon(Icons.clear),
@@ -501,23 +514,27 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
             voiceProvider.clearResults();
           },
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
             children: _samplePhrases.take(4).map((phrase) {
               final selected = phrase == selectedPhrase;
               return Padding(
-                padding: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.only(right: AppSpacing.sm),
                 child: ActionChip(
                   label: Text(phrase),
                   avatar: selected ? const Icon(Icons.check, size: 16) : null,
                   backgroundColor: selected
-                      ? AppColors.primary.withValues(alpha: 0.12)
+                      ? Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: 0.12)
                       : Theme.of(context).cardColor,
                   side: BorderSide(
                     color: selected
-                        ? AppColors.primary.withValues(alpha: 0.35)
+                        ? Theme.of(
+                            context,
+                          ).colorScheme.primary.withValues(alpha: 0.35)
                         : AppColors.grey300,
                   ),
                   onPressed: _isRecording || _isBusy
@@ -542,7 +559,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
     return Row(
       children: [
         Expanded(
-          child: ElevatedButton.icon(
+          child: FilledButton.icon(
             onPressed: _isRecording || _isProcessing || _isPreparingExample
                 ? null
                 : (_isPlaying ? _stopPlaying : _playExample),
@@ -563,13 +580,13 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
                         ? 'voice.stop'.tr()
                         : 'voice.listenToExample'.tr()),
             ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: AppColors.onGradient,
               minimumSize: const Size.fromHeight(50),
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
             ),
           ),
@@ -580,8 +597,10 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
           icon: const Icon(Icons.shuffle),
           tooltip: 'voice.randomPhrase'.tr(),
           style: IconButton.styleFrom(
-            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-            foregroundColor: AppColors.primary,
+            backgroundColor: Theme.of(
+              context,
+            ).colorScheme.primary.withValues(alpha: 0.1),
+            foregroundColor: Theme.of(context).colorScheme.primary,
             minimumSize: const Size(50, 50),
           ),
         ),
@@ -606,11 +625,13 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: AppColors.grey300.withValues(alpha: 0.8)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.06),
+            color: Theme.of(
+              context,
+            ).colorScheme.primary.withValues(alpha: 0.06),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -627,37 +648,39 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
               ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Align(
             alignment: Alignment.centerLeft,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color:
-                    (_isRecording ? AppColors.errorBright : AppColors.primary)
+                    (_isRecording
+                            ? Theme.of(context).colorScheme.error
+                            : Theme.of(context).colorScheme.primary)
                         .withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
               child: Text(
                 status,
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
                   color: _isRecording
-                      ? AppColors.errorBright
-                      : AppColors.primary,
+                      ? Theme.of(context).colorScheme.error
+                      : Theme.of(context).colorScheme.primary,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.xl),
           if (!_hasRecorderPermission)
-            ElevatedButton.icon(
+            FilledButton.icon(
               onPressed: _checkPermission,
               icon: const Icon(Icons.mic_off),
               label: Text('voice.grantMicrophonePermission'.tr()),
-              style: ElevatedButton.styleFrom(
+              style: FilledButton.styleFrom(
                 backgroundColor: AppColors.orange,
-                foregroundColor: Colors.white,
+                foregroundColor: AppColors.onGradient,
               ),
             )
           else if (_isProcessing)
@@ -684,7 +707,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
           'voice.analyzingPronunciation'.tr(),
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: AppColors.textGrey,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -701,21 +724,21 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.errorBg,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
-          color: AppColors.errorBright.withValues(alpha: 0.45),
+          color: Theme.of(context).colorScheme.error.withValues(alpha: 0.45),
         ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(Icons.error_outline, color: AppColors.errorBright),
+          Icon(Icons.error_outline, color: Theme.of(context).colorScheme.error),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               voiceProvider.errorMessage!,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.errorDark,
+                color: Theme.of(context).colorScheme.error,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -728,7 +751,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
           IconButton(
             onPressed: voiceProvider.resetState,
             icon: const Icon(Icons.close),
-            color: AppColors.errorDark,
+            color: Theme.of(context).colorScheme.error,
           ),
         ],
       ),
@@ -741,10 +764,10 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
   ) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.grey300),
       ),
       child: Column(
@@ -752,11 +775,11 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
         children: [
           Text(
             'voice.youSaid'.tr(),
-            style: Theme.of(
-              context,
-            ).textTheme.titleSmall?.copyWith(color: AppColors.textGrey),
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             voiceProvider.lastTranscription!.text,
             style: Theme.of(context).textTheme.bodyLarge,
@@ -789,11 +812,11 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _buildGuideCard(context, voiceProvider),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpacing.xl),
                   _buildPhraseSection(context, voiceProvider),
                   const SizedBox(height: 18),
                   _buildListenControls(context),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpacing.xl),
                   _buildRecordingSection(context, voiceProvider),
                   if (voiceProvider.hasError &&
                       voiceProvider.errorMessage != null) ...[
@@ -806,7 +829,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
                     _buildTranscriptionCard(context, voiceProvider),
                   ],
                   if (voiceProvider.lastPronunciationScore != null) ...[
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSpacing.xl),
                     if (voiceProvider.lastPronunciationScore!.overallScore >=
                         80) ...[
                       const LottieAnimationWidget.success(
@@ -814,16 +837,16 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
                         height: 100,
                         repeat: false,
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppSpacing.xs),
                       Text(
                         'voice.excellentPronunciation'.tr(),
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(
-                              color: AppColors.greenSuccessBright,
+                              color: context.status.success,
                               fontWeight: FontWeight.bold,
                             ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppSpacing.md),
                     ],
                     PronunciationScoreCard(
                       score: voiceProvider.lastPronunciationScore!,

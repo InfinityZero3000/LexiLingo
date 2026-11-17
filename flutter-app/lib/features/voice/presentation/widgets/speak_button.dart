@@ -116,7 +116,7 @@ class _SpeakButtonState extends State<SpeakButton> {
             content: Text(
               'voice.playError'.tr(namedArgs: {'error': e.toString()}),
             ),
-            backgroundColor: AppColors.errorBright,
+            backgroundColor: Theme.of(context).colorScheme.error,
             duration: const Duration(seconds: 2),
           ),
         );
@@ -132,7 +132,7 @@ class _SpeakButtonState extends State<SpeakButton> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final buttonColor = widget.color ?? theme.primaryColor;
-    final iconColor = widget.iconColor ?? Colors.white;
+    final iconColor = widget.iconColor ?? AppColors.onGradient;
 
     if (widget.mini) {
       return _buildMiniButton(buttonColor, iconColor);

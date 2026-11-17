@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key, String? initialEmail})
@@ -54,7 +55,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.md,
+              ),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -63,27 +67,29 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     Icon(
                       Icons.lock_reset,
                       size: 56,
-                      color: isDark ? AppColors.accentMint : AppColors.primary,
+                      color: isDark
+                          ? AppColors.accentMint
+                          : Theme.of(context).colorScheme.primary,
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.lg),
                     Text(
                       'auth.resetYourPassword'.tr(),
                       textAlign: TextAlign.center,
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: isDark
-                            ? Colors.white
+                            ? AppColors.onGradient
                             : AppColors.surfaceDarkInput,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpacing.sm),
                     Text(
                       'auth.resetPasswordInstructions'.tr(),
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyMedium?.copyWith(
                         color: isDark
                             ? Colors.white70
-                            : AppColors.textSlateLight,
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 28),
@@ -96,16 +102,18 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                         filled: true,
                         fillColor: isDark
                             ? AppColors.surfaceDarkInput
-                            : Colors.white,
+                            : AppColors.onGradient,
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'auth.pleaseEnterEmail'.tr();
                         }
-                        if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value.trim())) {
+                        if (!RegExp(
+                          r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                        ).hasMatch(value.trim())) {
                           return 'auth.invalidEmail'.tr();
                         }
                         return null;
@@ -114,7 +122,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     const SizedBox(height: 20),
                     SizedBox(
                       height: 56,
-                      child: ElevatedButton(
+                      child: FilledButton(
                         onPressed: authProvider.isLoading
                             ? null
                             : () async {
@@ -136,11 +144,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                   );
                                 }
                               },
-                        style: ElevatedButton.styleFrom(
+                        style: FilledButton.styleFrom(
                           backgroundColor: AppColors.accentMint,
                           foregroundColor: AppColors.accentMintDark,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
                           elevation: 0,
                         ),
@@ -152,20 +160,18 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                               )
                             : Text(
                                 'auth.sendResetInstructions'.tr(),
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: Theme.of(context).textTheme.bodyLarge
+                                    ?.copyWith(fontWeight: FontWeight.bold),
                               ),
                       ),
                     ),
                     if (_requestSent) ...[
                       const SizedBox(height: 20),
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(AppSpacing.md),
                         decoration: BoxDecoration(
                           color: Colors.green.shade50,
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                           border: Border.all(color: Colors.green.shade200),
                         ),
                         child: Row(
@@ -186,12 +192,12 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                       ),
                     ],
                     if (authProvider.errorMessage != null) ...[
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppSpacing.md),
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(AppSpacing.md),
                         decoration: BoxDecoration(
                           color: Colors.red.shade50,
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                           border: Border.all(color: Colors.red.shade200),
                         ),
                         child: Row(
@@ -211,7 +217,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                         ),
                       ),
                     ],
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.lg),
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(),
                       child: Text('auth.backToLogin'.tr()),

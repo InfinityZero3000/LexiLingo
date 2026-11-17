@@ -1,6 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Record Button Widget
 /// Animated button for recording audio
@@ -81,11 +81,11 @@ class _RecordButtonState extends State<RecordButton>
       children: [
         if (widget.isRecording)
           Padding(
-            padding: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.only(bottom: AppSpacing.md),
             child: Text(
               recordingLabel,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: AppColors.errorBright,
+                color: Theme.of(context).colorScheme.error,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -103,16 +103,16 @@ class _RecordButtonState extends State<RecordButton>
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: widget.isProcessing
-                        ? Colors.grey
+                        ? Theme.of(context).colorScheme.outline
                         : (widget.isRecording
-                              ? AppColors.errorBright
-                              : AppColors.primary),
+                              ? Theme.of(context).colorScheme.error
+                              : Theme.of(context).colorScheme.primary),
                     boxShadow: [
                       BoxShadow(
                         color:
                             (widget.isRecording
-                                    ? AppColors.errorBright
-                                    : AppColors.primary)
+                                    ? Theme.of(context).colorScheme.error
+                                    : Theme.of(context).colorScheme.primary)
                                 .withValues(alpha: 0.3),
                         blurRadius: 12,
                         spreadRadius: 2,
@@ -122,12 +122,12 @@ class _RecordButtonState extends State<RecordButton>
                   child: widget.isProcessing
                       ? Icon(
                           Icons.hourglass_top,
-                          color: AppColors.surfaceLight,
+                          color: Theme.of(context).colorScheme.surface,
                           size: 32,
                         )
                       : Icon(
                           widget.isRecording ? Icons.stop : Icons.mic,
-                          color: AppColors.surfaceLight,
+                          color: Theme.of(context).colorScheme.surface,
                           size: 36,
                         ),
                 ),
@@ -140,28 +140,30 @@ class _RecordButtonState extends State<RecordButton>
           SizedBox(
             width: 132,
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
               child: LinearProgressIndicator(
                 value: progress,
                 minHeight: 6,
-                backgroundColor: AppColors.errorBright.withValues(alpha: 0.14),
-                valueColor: const AlwaysStoppedAnimation<Color>(
-                  AppColors.errorBright,
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.error.withValues(alpha: 0.14),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  Theme.of(context).colorScheme.error,
                 ),
               ),
             ),
           ),
         ],
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
         Text(
           widget.isProcessing
               ? 'voice.processing'.tr()
               : (widget.isRecording
                     ? 'voice.tapToStop'.tr()
                     : 'voice.tapToRecord'.tr()),
-          style: Theme.of(
-            context,
-          ).textTheme.bodyMedium?.copyWith(color: AppColors.textGrey),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
       ],
     );

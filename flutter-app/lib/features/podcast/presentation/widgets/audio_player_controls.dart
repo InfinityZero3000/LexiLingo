@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../../../core/widgets/content_kit.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Bottom-bar style audio player controls widget.
 ///
@@ -65,7 +66,7 @@ class AudioPlayerControls extends StatelessWidget {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        padding: const EdgeInsets.fromLTRB(20, AppSpacing.md, 20, 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -81,22 +82,26 @@ class AudioPlayerControls extends StatelessWidget {
 
             // ── Time labels ──
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     _formatDuration(position),
-                    style: TextStyle(fontSize: 12, color: muted),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: muted),
                   ),
                   Text(
                     _formatDuration(duration),
-                    style: TextStyle(fontSize: 12, color: muted),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: muted),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
 
             // ── Playback controls ──
             Row(
@@ -174,17 +179,16 @@ class AudioPlayerControls extends StatelessWidget {
       builder: (_) {
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                   child: Text(
                     'podcast.playbackSpeed'.tr(),
-                    style: const TextStyle(
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w700,
-                      fontSize: 16,
                     ),
                   ),
                 ),
@@ -238,17 +242,16 @@ class AudioPlayerControls extends StatelessWidget {
       builder: (_) {
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                   child: Text(
                     'podcast.sleepTimer'.tr(),
-                    style: const TextStyle(
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w700,
-                      fontSize: 16,
                     ),
                   ),
                 ),
@@ -421,10 +424,9 @@ class _SpeedButton extends StatelessWidget {
                 widthFactor: 1,
                 child: Text(
                   '$speed×',
-                  style: TextStyle(
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: scheme.primary,
                     fontWeight: FontWeight.w700,
-                    fontSize: 14,
                   ),
                 ),
               ),

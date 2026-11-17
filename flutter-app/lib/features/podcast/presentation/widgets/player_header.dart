@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/widgets/cefr_badge.dart';
 import '../../../../core/widgets/content_kit.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// The "now playing" head of the player: the artwork on a blurred copy of
 /// itself, then the episode and show names. Everything on it is white — the
@@ -65,7 +67,7 @@ class PlayerHeader extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpacing.xl),
                   Text(
                     title,
                     textAlign: TextAlign.center,
@@ -74,7 +76,7 @@ class PlayerHeader extends StatelessWidget {
                     style: contentDisplay(
                       context,
                       size: 22,
-                      color: Colors.white,
+                      color: AppColors.onGradient,
                     ),
                   ),
                   if (podcastTitle.isNotEmpty) ...[
@@ -84,13 +86,12 @@ class PlayerHeader extends StatelessWidget {
                       textAlign: TextAlign.center,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Color(0xE6FFFFFF),
-                        fontSize: 14,
                       ),
                     ),
                   ],
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   CefrBadge(
                     level: level,
                     size: CefrBadgeSize.medium,

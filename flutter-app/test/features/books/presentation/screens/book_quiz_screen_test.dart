@@ -200,8 +200,8 @@ void main() {
       await _pump(tester, _quiz(2), theme: dark);
       await tester.tap(find.text('Right'));
       await tester.pumpAndSettle();
-      final button = tester.widget<ElevatedButton>(
-        find.widgetWithText(ElevatedButton, 'Next question'),
+      final button = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Next question'),
       );
       final fg = button.style!.foregroundColor!.resolve({})!;
       expect(

@@ -10,6 +10,7 @@ import '../providers/auth_provider.dart';
 import 'login_page.dart';
 import 'email_verification_pending_page.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class RegisterPage extends StatefulWidget {
   /// The name the pre-sign-up questions already asked for.
@@ -79,17 +80,20 @@ class _RegisterPageState extends State<RegisterPage> {
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: Theme.of(context).colorScheme.surface,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.lg,
+      ),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         borderSide: BorderSide(color: outline),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         borderSide: BorderSide(color: outline),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         borderSide: const BorderSide(color: AppColors.accentMint, width: 1.6),
       ),
     );
@@ -113,7 +117,10 @@ class _RegisterPageState extends State<RegisterPage> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: AppSpacing.sm,
+              ),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -158,7 +165,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         height: 1.1,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.md),
                     Text(
                       'auth.joinLearners'.tr(),
                       style: textTheme.titleMedium?.copyWith(
@@ -312,7 +319,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       },
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.lg),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -337,7 +344,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                         Expanded(
                           child: Padding(
-                            padding: const EdgeInsets.only(top: 12),
+                            padding: const EdgeInsets.only(top: AppSpacing.md),
                             child: RichText(
                               text: TextSpan(
                                 style: textTheme.bodyLarge?.copyWith(
@@ -368,7 +375,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       ],
                     ),
                     if (_showTermsError) ...[
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppSpacing.xs),
                       Text(
                         'auth.pleaseAcceptTerms'.tr(),
                         style: textTheme.bodyMedium?.copyWith(
@@ -378,10 +385,10 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ],
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.lg),
                     SizedBox(
                       height: 58,
-                      child: ElevatedButton(
+                      child: FilledButton(
                         onPressed: authProvider.isLoading
                             ? null
                             : () async {
@@ -435,7 +442,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                   );
                                 }
                               },
-                        style: ElevatedButton.styleFrom(
+                        style: FilledButton.styleFrom(
                           backgroundColor: AppColors.accentMint,
                           foregroundColor: const Color(0xFF0B132B),
                           shape: RoundedRectangleBorder(
@@ -451,10 +458,8 @@ class _RegisterPageState extends State<RegisterPage> {
                               )
                             : Text(
                                 'auth.createAccount'.tr(),
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                ),
+                                style: Theme.of(context).textTheme.sectionTitle
+                                    ?.copyWith(fontWeight: FontWeight.w800),
                               ),
                       ),
                     ),
@@ -470,7 +475,9 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                         ),
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                          ),
                           child: Text(
                             'auth.orContinueWith'.tr(),
                             style: textTheme.labelLarge?.copyWith(
@@ -504,14 +511,16 @@ class _RegisterPageState extends State<RegisterPage> {
                         icon: const Icon(Icons.g_mobiledata, size: 30),
                         label: Text(
                           'auth.continueWithGoogle'.tr(),
-                          style: const TextStyle(
-                            color: Color(0xFF0B132B),
-                            fontWeight: FontWeight.w700,
-                            fontSize: 18,
-                          ),
+                          style: Theme.of(context).textTheme.sectionTitle
+                              ?.copyWith(
+                                color: Color(0xFF0B132B),
+                                fontWeight: FontWeight.w700,
+                              ),
                         ),
                         style: OutlinedButton.styleFrom(
-                          backgroundColor: AppColors.surfaceLight,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.surface,
                           side: const BorderSide(color: Color(0xFFD7DEE7)),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(28),
@@ -520,10 +529,10 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
 
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.md),
                     SizedBox(
                       height: 58,
-                      child: ElevatedButton.icon(
+                      child: FilledButton.icon(
                         onPressed: authProvider.isLoading
                             ? null
                             : () async {
@@ -531,17 +540,17 @@ class _RegisterPageState extends State<RegisterPage> {
                               },
                         icon: Icon(
                           Icons.facebook,
-                          color: AppColors.surfaceLight,
+                          color: Theme.of(context).colorScheme.surface,
                         ),
                         label: Text(
                           'auth.continueWithFacebook'.tr(),
-                          style: TextStyle(
-                            color: AppColors.surfaceLight,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 18,
-                          ),
+                          style: Theme.of(context).textTheme.sectionTitle
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.surface,
+                                fontWeight: FontWeight.w700,
+                              ),
                         ),
-                        style: ElevatedButton.styleFrom(
+                        style: FilledButton.styleFrom(
                           backgroundColor: const Color(0xFF0B132B),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(28),
@@ -586,27 +595,27 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
 
                     if (authProvider.errorMessage != null) ...[
-                      const SizedBox(height: 16),
+                      const SizedBox(height: AppSpacing.lg),
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(AppSpacing.md),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFFF3F3),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                           border: Border.all(color: const Color(0xFFFFCFCF)),
                         ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.error_outline,
-                              color: AppColors.errorBright,
+                              color: Theme.of(context).colorScheme.error,
                             ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: SelectableText(
                                 authProvider.errorMessage!,
-                                style: const TextStyle(
-                                  color: AppColors.errorDark,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.error,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -615,7 +624,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                       ),
                     ],
-                    if (kIsWeb) const SizedBox(height: 24),
+                    if (kIsWeb) const SizedBox(height: AppSpacing.xl),
                   ],
                 ),
               ),

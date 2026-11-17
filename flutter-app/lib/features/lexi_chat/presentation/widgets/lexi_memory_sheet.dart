@@ -4,6 +4,7 @@ import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/repositories/lexi_chat_repository.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/providers/lexi_memory_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Bottom sheet listing what Lexi remembers from chat, with a way to forget it.
 class LexiMemorySheet extends StatelessWidget {
@@ -33,7 +34,12 @@ class LexiMemorySheet extends StatelessWidget {
         maxHeight: MediaQuery.sizeOf(context).height * 0.7,
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.xl,
+          0,
+          AppSpacing.xl,
+          AppSpacing.lg,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -44,7 +50,7 @@ class LexiMemorySheet extends StatelessWidget {
                 fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               'lexiChat.memory.subtitle'.tr(),
               style: theme.textTheme.bodyMedium?.copyWith(
@@ -52,7 +58,7 @@ class LexiMemorySheet extends StatelessWidget {
                 height: 1.5,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             Flexible(child: _Body(provider: provider)),
           ],
         ),
@@ -73,12 +79,12 @@ class _Body extends StatelessWidget {
     switch (provider.status) {
       case LexiMemoryStatus.loading:
         return const Padding(
-          padding: EdgeInsets.symmetric(vertical: 32),
+          padding: EdgeInsets.symmetric(vertical: AppSpacing.xxl),
           child: Center(child: CircularProgressIndicator()),
         );
       case LexiMemoryStatus.failed:
         return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
           child: Column(
             children: [
               Text(
@@ -86,7 +92,7 @@ class _Body extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: theme.textTheme.bodyMedium,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               FilledButton.tonal(
                 onPressed: provider.load,
                 child: Text('lexiChat.memory.retry'.tr()),
@@ -98,7 +104,7 @@ class _Body extends StatelessWidget {
         final facts = provider.facts;
         if (facts.isEmpty) {
           return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24),
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
             child: Center(
               child: Text(
                 'lexiChat.memory.empty'.tr(),
@@ -130,7 +136,7 @@ class _Body extends StatelessWidget {
                 },
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Align(
               alignment: Alignment.centerRight,
               child: TextButton.icon(
@@ -161,6 +167,9 @@ class _Body extends StatelessWidget {
         content: Text('lexiChat.memory.confirmBody'.tr()),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+            ),
             onPressed: () => Navigator.of(dialogContext).pop(false),
             child: Text('lexiChat.memory.cancel'.tr()),
           ),
@@ -202,7 +211,7 @@ class _FactRow extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
       child: Row(
         children: [
           Expanded(
@@ -215,7 +224,7 @@ class _FactRow extends StatelessWidget {
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 Text(value, style: theme.textTheme.bodyLarge),
               ],
             ),

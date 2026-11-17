@@ -5,6 +5,7 @@ import 'package:lexilingo_app/core/l10n/app_localizations.dart';
 import 'package:lexilingo_app/core/widgets/language_flag.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/language_switcher_button.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Answers collected during the pre-authentication onboarding flow.
 class PreAuthAnswers {
@@ -139,7 +140,7 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 680),
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                padding: const EdgeInsets.fromLTRB(20, AppSpacing.lg, 20, 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -150,7 +151,9 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
                           onPressed: _goBack,
                           icon: Icon(
                             Icons.arrow_back_rounded,
-                            color: isDark ? Colors.white : AppColors.textDark,
+                            color: isDark
+                                ? AppColors.onGradient
+                                : Theme.of(context).colorScheme.onSurface,
                           ),
                         ),
                         Expanded(
@@ -159,7 +162,9 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
                             textAlign: TextAlign.center,
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: isDark ? Colors.white : AppColors.textDark,
+                              color: isDark
+                                  ? AppColors.onGradient
+                                  : Theme.of(context).colorScheme.onSurface,
                             ),
                           ),
                         ),
@@ -168,7 +173,9 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
                           style: theme.textTheme.labelLarge?.copyWith(
                             color: isDark
                                 ? Colors.white60
-                                : AppColors.textSlate,
+                                : Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
                           ),
                         ),
                         const SizedBox(width: 6),
@@ -178,7 +185,7 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
                     const SizedBox(height: 10),
                     // Progress bar
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(999),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
                       child: LinearProgressIndicator(
                         value: (_currentPage + 1) / _totalPages,
                         minHeight: 6,
@@ -205,18 +212,18 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
                         ],
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.md),
                     // Continue button
                     SizedBox(
                       width: double.infinity,
                       height: 54,
-                      child: ElevatedButton(
+                      child: FilledButton(
                         onPressed: _goNext,
-                        style: ElevatedButton.styleFrom(
+                        style: FilledButton.styleFrom(
                           backgroundColor: AppColors.accentMint,
                           foregroundColor: AppColors.accentMintDark,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
                           elevation: 0,
                         ),
@@ -224,10 +231,8 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
                           _currentPage < _totalPages - 1
                               ? 'preAuth.continue'.tr()
                               : 'preAuth.createMyAccount'.tr(),
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
@@ -243,7 +248,9 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
                             style: TextStyle(
                               color: isDark
                                   ? Colors.white60
-                                  : AppColors.textSlate,
+                                  : Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -282,13 +289,15 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.xl),
           Text(
             'preAuth.nameQuestion'.tr(),
             textAlign: TextAlign.center,
             style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.bold,
-              color: isDark ? Colors.white : AppColors.textDark,
+              color: isDark
+                  ? AppColors.onGradient
+                  : Theme.of(context).colorScheme.onSurface,
               height: 1.2,
             ),
           ),
@@ -297,22 +306,28 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
             'preAuth.nameHint'.tr(),
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: isDark ? Colors.white60 : AppColors.textGrey,
+              color: isDark
+                  ? Colors.white60
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: AppSpacing.xxl),
           TextField(
             controller: _nameController,
             autofocus: true,
             textCapitalization: TextCapitalization.words,
             style: theme.textTheme.bodyLarge?.copyWith(
-              color: isDark ? Colors.white : AppColors.textDark,
+              color: isDark
+                  ? AppColors.onGradient
+                  : Theme.of(context).colorScheme.onSurface,
               fontWeight: FontWeight.w500,
             ),
             decoration: InputDecoration(
               hintText: 'preAuth.namePlaceholder'.tr(),
               hintStyle: TextStyle(
-                color: isDark ? Colors.white38 : AppColors.textGrey,
+                color: isDark
+                    ? Colors.white38
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
               prefixIcon: const Icon(
                 Icons.badge_outlined,
@@ -322,31 +337,33 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
               filled: true,
               fillColor: isDark
                   ? AppColors.slate800.withValues(alpha: 0.6)
-                  : Colors.white,
+                  : AppColors.onGradient,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 borderSide: BorderSide.none,
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 borderSide: const BorderSide(
                   color: AppColors.accentMint,
                   width: 2,
                 ),
               ),
               contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 16,
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.lg,
               ),
             ),
             onSubmitted: (_) => _goNext(),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           Text(
             'preAuth.nameChangeLater'.tr(),
             textAlign: TextAlign.center,
             style: theme.textTheme.labelMedium?.copyWith(
-              color: isDark ? Colors.white38 : AppColors.textGrey,
+              color: isDark
+                  ? Colors.white38
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -362,22 +379,26 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         Text(
           'preAuth.nativeLanguageQuestion'.tr(),
           textAlign: TextAlign.center,
           style: theme.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
-            color: isDark ? Colors.white : AppColors.textDark,
+            color: isDark
+                ? AppColors.onGradient
+                : Theme.of(context).colorScheme.onSurface,
             height: 1.2,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         Text(
           'preAuth.nativeLanguageHint'.tr(),
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: isDark ? Colors.white60 : AppColors.textGrey,
+            color: isDark
+                ? Colors.white60
+                : Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
         const SizedBox(height: 20),
@@ -398,7 +419,7 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
                         ? AppColors.accentMint.withValues(alpha: 0.2)
                         : isDark
                         ? AppColors.slate800.withValues(alpha: 0.5)
-                        : Colors.white,
+                        : AppColors.onGradient,
                     border: Border.all(
                       color: isSelected
                           ? AppColors.accentMint
@@ -407,13 +428,13 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
                           : AppColors.slate200,
                       width: isSelected ? 2 : 1,
                     ),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       _LanguageOptionIcon(code: lang.code),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpacing.sm),
                       Flexible(
                         child: Text(
                           lang.localizedLabel(context),
@@ -424,14 +445,14 @@ class _PreAuthQuestionsPageState extends State<PreAuthQuestionsPage>
                             color: isSelected
                                 ? AppColors.accentMint
                                 : isDark
-                                ? Colors.white
-                                : AppColors.textDark,
+                                ? AppColors.onGradient
+                                : Theme.of(context).colorScheme.onSurface,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       if (isSelected) ...[
-                        const SizedBox(width: 4),
+                        const SizedBox(width: AppSpacing.xs),
                         const Icon(
                           Icons.check_circle_rounded,
                           color: AppColors.accentMint,

@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../providers/book_provider.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Comprehension quiz screen for a book chapter.
 ///
@@ -73,7 +74,9 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
           'books.chapterQuizTitle'.tr(
             namedArgs: {'chapter': '${widget.chapter}'},
           ),
-          style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 17),
+          style: Theme.of(
+            context,
+          ).textTheme.sectionTitle?.copyWith(fontWeight: FontWeight.w700),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -96,7 +99,9 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
                 child: Text(
                   'books.quizNotAvailable'.tr(),
                   style: TextStyle(
-                    color: isDark ? Colors.white54 : AppColors.textGrey,
+                    color: isDark
+                        ? Colors.white54
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               );
@@ -148,12 +153,13 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.md),
               Text(
                 '${_currentQuestion + 1}/$total',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: isDark ? Colors.white54 : AppColors.textGrey,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: isDark
+                      ? Colors.white54
+                      : Theme.of(context).colorScheme.onSurfaceVariant,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -170,14 +176,15 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
                   // Question
                   Text(
                     question.question,
-                    style: TextStyle(
-                      fontSize: 17,
+                    style: Theme.of(context).textTheme.sectionTitle?.copyWith(
                       fontWeight: FontWeight.w700,
                       height: 1.45,
-                      color: isDark ? Colors.white : AppColors.textDark,
+                      color: isDark
+                          ? AppColors.onGradient
+                          : Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpacing.xl),
 
                   // Options
                   ...question.options.asMap().entries.map((entry) {
@@ -196,12 +203,12 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
 
                   // Explanation after answering
                   if (_answered && question.explanation.isNotEmpty) ...[
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.lg),
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: accentColor.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                         border: Border.all(
                           color: accentColor.withValues(alpha: 0.2),
                         ),
@@ -214,17 +221,19 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
                             color: accentColor,
                             size: 18,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppSpacing.sm),
                           Expanded(
                             child: Text(
                               question.explanation,
-                              style: TextStyle(
-                                fontSize: 13,
-                                height: 1.5,
-                                color: isDark
-                                    ? Colors.white70
-                                    : AppColors.textGrey,
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    height: 1.5,
+                                    color: isDark
+                                        ? Colors.white70
+                                        : Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
+                                  ),
                             ),
                           ),
                         ],
@@ -238,27 +247,26 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
 
           // Next / Finish button
           if (_answered) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
+              child: FilledButton(
                 onPressed: () => _nextQuestion(provider),
-                style: ElevatedButton.styleFrom(
+                style: FilledButton.styleFrom(
                   backgroundColor: accentColor,
                   foregroundColor: Theme.of(context).colorScheme.onPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                 ),
                 child: Text(
                   _currentQuestion < quiz.questions.length - 1
                       ? 'books.nextQuestion'.tr()
                       : 'books.seeResults'.tr(),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
                 ),
               ),
             ),
@@ -286,7 +294,7 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
     final resultIconColor = pct >= 0.8
         ? AppColors.warning
         : pct >= 0.6
-        ? AppColors.greenSuccessBright
+        ? context.status.success
         : AppColorRoles.primary(isDark);
     final msg = pct >= 0.8
         ? 'books.quizExcellent'.tr()
@@ -301,40 +309,42 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
 
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(AppSpacing.xxl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(resultIcon, size: 56, color: resultIconColor),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             Text(
               msg,
-              style: TextStyle(
-                fontSize: 24,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.w800,
-                color: isDark ? Colors.white : AppColors.textDark,
+                color: isDark
+                    ? AppColors.onGradient
+                    : Theme.of(context).colorScheme.onSurface,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               'books.quizScore'.tr(
                 namedArgs: {'score': '$score', 'total': '$total'},
               ),
-              style: TextStyle(
-                fontSize: 16,
-                color: isDark ? Colors.white60 : AppColors.textGrey,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: isDark
+                    ? Colors.white60
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.xl),
             if (xpEarned > 0)
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,
-                  vertical: 12,
+                  vertical: AppSpacing.md,
                 ),
                 decoration: BoxDecoration(
                   color: accentColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   border: Border.all(color: accentColor.withValues(alpha: 0.3)),
                 ),
                 child: Row(
@@ -344,10 +354,9 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
                     const SizedBox(width: 6),
                     Text(
                       'games.xpEarned'.tr(namedArgs: {'xp': '$xpEarned'}),
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: accentColor,
                         fontWeight: FontWeight.w700,
-                        fontSize: 16,
                       ),
                     ),
                   ],
@@ -356,22 +365,21 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
             const SizedBox(height: 40),
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
+              child: FilledButton(
                 onPressed: () => Navigator.pop(context),
-                style: ElevatedButton.styleFrom(
+                style: FilledButton.styleFrom(
                   backgroundColor: accentColor,
                   foregroundColor: Theme.of(context).colorScheme.onPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                 ),
                 child: Text(
                   'books.backToBook'.tr(),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
                 ),
               ),
             ),
@@ -412,21 +420,25 @@ class _OptionTile extends StatelessWidget {
     Color textColor;
 
     if (showGreen) {
-      borderColor = AppColors.greenSuccessBright;
-      bgColor = AppColors.greenSuccessBright.withValues(alpha: 0.12);
-      textColor = AppColors.greenSuccessBright;
+      borderColor = context.status.success;
+      bgColor = context.status.success.withValues(alpha: 0.12);
+      textColor = context.status.success;
     } else if (showRed) {
-      borderColor = AppColors.errorBright;
+      borderColor = Theme.of(context).colorScheme.error;
       bgColor = Colors.red.withValues(alpha: 0.1);
-      textColor = AppColors.errorBright;
+      textColor = Theme.of(context).colorScheme.error;
     } else if (selected) {
       borderColor = accentColor;
       bgColor = accentColor.withValues(alpha: 0.08);
-      textColor = isDark ? Colors.white : AppColors.textDark;
+      textColor = isDark
+          ? AppColors.onGradient
+          : Theme.of(context).colorScheme.onSurface;
     } else {
       borderColor = isDark ? Colors.white24 : AppColors.grey300;
-      bgColor = isDark ? AppColors.surfaceDarkElevated : Colors.white;
-      textColor = isDark ? Colors.white : AppColors.textDark;
+      bgColor = isDark ? AppColors.surfaceDarkElevated : AppColors.onGradient;
+      textColor = isDark
+          ? AppColors.onGradient
+          : Theme.of(context).colorScheme.onSurface;
     }
 
     return GestureDetector(
@@ -434,10 +446,13 @@ class _OptionTile extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: 13,
+        ),
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: borderColor, width: 1.5),
         ),
         child: Row(
@@ -448,9 +463,9 @@ class _OptionTile extends StatelessWidget {
               height: 26,
               decoration: BoxDecoration(
                 color: showGreen
-                    ? AppColors.greenSuccessBright
+                    ? context.status.success
                     : showRed
-                    ? AppColors.errorBright
+                    ? Theme.of(context).colorScheme.error
                     : selected
                     ? accentColor
                     : (isDark ? Colors.white12 : AppColors.grey200),
@@ -459,22 +474,22 @@ class _OptionTile extends StatelessWidget {
               child: Center(
                 child: Text(
                   String.fromCharCode(65 + index), // A, B, C, D
-                  style: TextStyle(
-                    fontSize: 12,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: (showGreen || showRed || selected)
-                        ? Colors.white
-                        : (isDark ? Colors.white60 : AppColors.textGrey),
+                        ? AppColors.onGradient
+                        : (isDark
+                              ? Colors.white60
+                              : Theme.of(context).colorScheme.onSurfaceVariant),
                   ),
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Text(
                 option,
-                style: TextStyle(
-                  fontSize: 14,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   height: 1.4,
                   fontWeight: (showGreen || showRed)
                       ? FontWeight.w600
@@ -484,15 +499,15 @@ class _OptionTile extends StatelessWidget {
               ),
             ),
             if (showGreen)
-              const Icon(
+              Icon(
                 Icons.check_circle_rounded,
-                color: AppColors.greenSuccessBright,
+                color: context.status.success,
                 size: 20,
               ),
             if (showRed)
-              const Icon(
+              Icon(
                 Icons.cancel_rounded,
-                color: AppColors.errorBright,
+                color: Theme.of(context).colorScheme.error,
                 size: 20,
               ),
           ],

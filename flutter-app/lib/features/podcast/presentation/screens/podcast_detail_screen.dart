@@ -13,6 +13,8 @@ import '../../domain/entities/podcast_entities.dart';
 import '../providers/podcast_provider.dart';
 import '../widgets/episode_tile.dart';
 import 'podcast_player_screen.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Podcast detail screen: artwork over a blurred copy of itself, the actions
 /// that matter (play the latest episode, follow) and the episode list.
@@ -124,7 +126,12 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
                     ),
                     SliverToBoxAdapter(
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(0, 24, 0, 12),
+                        padding: const EdgeInsets.fromLTRB(
+                          0,
+                          AppSpacing.xl,
+                          0,
+                          AppSpacing.md,
+                        ),
                         child: ContentSectionHeader(
                           title: 'podcast.episodeCount'.tr(
                             namedArgs: {'count': '$episodeCount'},
@@ -156,7 +163,7 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
           sliver: SliverList.separated(
             itemCount: 5,
-            separatorBuilder: (_, _) => const SizedBox(height: 12),
+            separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
             itemBuilder: (_, _) => const _EpisodeSkeleton(),
           ),
         ),
@@ -194,7 +201,7 @@ class _PodcastDetailScreenState extends State<PodcastDetailScreen> {
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
         sliver: SliverList.separated(
           itemCount: episodes.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 12),
+          separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
           itemBuilder: (context, index) {
             final ep = episodes[index];
             return EpisodeTile(
@@ -264,12 +271,12 @@ class _Header extends StatelessWidget {
           ),
         ),
         Padding(
-          padding: EdgeInsets.fromLTRB(20, top, 20, 24),
+          padding: EdgeInsets.fromLTRB(20, top, 20, AppSpacing.xl),
           child: Column(
             children: [
               DecoratedBox(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
                   boxShadow: const [
                     BoxShadow(
                       color: Color(0x66000000),
@@ -279,7 +286,7 @@ class _Header extends StatelessWidget {
                   ],
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
                   child: SizedBox.square(
                     dimension: _artwork,
                     child: ContentImage(url: podcast.artworkUrl),
@@ -292,19 +299,21 @@ class _Header extends StatelessWidget {
                 textAlign: TextAlign.center,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
-                style: contentDisplay(context, color: Colors.white),
+                style: contentDisplay(context, color: AppColors.onGradient),
               ),
               if (podcast.author.isNotEmpty) ...[
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
                   podcast.author,
                   textAlign: TextAlign.center,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: _onScrim, fontSize: 14),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: _onScrim),
                 ),
               ],
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               CefrBadge(
                 level: podcast.cefrLevel,
                 size: CefrBadgeSize.medium,
@@ -365,7 +374,7 @@ class _Actions extends StatelessWidget {
                   type: MaterialType.transparency,
                   child: InkWell(
                     onTap: onPlayLatest,
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
                   ),
                 ),
               ),
@@ -387,13 +396,13 @@ class _Actions extends StatelessWidget {
             style: const TextStyle(fontWeight: FontWeight.w700),
           ),
           style: OutlinedButton.styleFrom(
-            foregroundColor: Colors.white,
+            foregroundColor: AppColors.onGradient,
             disabledForegroundColor: const Color(0x99FFFFFF),
             side: const BorderSide(color: Color(0x99FFFFFF)),
             minimumSize: const Size(44, 44),
             padding: const EdgeInsets.symmetric(horizontal: 20),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(AppRadius.xl),
             ),
           ),
         ),
@@ -422,21 +431,22 @@ class _Description extends StatelessWidget {
           textAlign: TextAlign.center,
           maxLines: expanded ? null : 3,
           overflow: expanded ? TextOverflow.visible : TextOverflow.ellipsis,
-          style: const TextStyle(
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: _Header._onScrim,
-            fontSize: 14,
             height: 1.5,
           ),
         ),
         TextButton(
           onPressed: onToggle,
           style: TextButton.styleFrom(
-            foregroundColor: Colors.white,
+            foregroundColor: AppColors.onGradient,
             minimumSize: const Size(44, 44),
           ),
           child: Text(
             expanded ? 'podcast.showLess'.tr() : 'podcast.showMore'.tr(),
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
           ),
         ),
       ],
@@ -460,7 +470,7 @@ class _EpisodeSkeleton extends StatelessWidget {
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: scheme.surface,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: const SizedBox(height: 80, width: double.infinity),
       ),
