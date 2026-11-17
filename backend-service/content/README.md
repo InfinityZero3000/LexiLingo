@@ -101,3 +101,14 @@ UUIDs, duplicate ids and duplicate word+part of speech); one bad row refuses the
 (word, part of speech) already exists under another id is skipped and reported, and a `course_id`, `lesson_id`
 or `grammar_id` pointing at a row the target lacks is left empty (import courses first). Nothing is deleted.
 Tests: `tests/test_reference_content.py`.
+
+## Reference corpus (vocabulary + question bank) — server only
+
+The full vocabulary and question-bank export (`vocabulary/vocabulary_items.<LEVEL>.json`,
+`vocabulary/manifest.json`, `questions/question_bank.json`, `export.json`) is **not** in this repo: the
+GitHub repository is public and the corpus must stay private. The Celery task
+`app.tasks.vocabulary_enrichment.export_reference_corpus` rewrites it daily (03:15 UTC) on the
+`backend-reminder-worker` container, into `REFERENCE_CORPUS_DIR` (`/data/reference-corpus`), which is the
+host directory `/var/lib/lexilingo/reference-content/live`. The previous export is kept in `previous/`.
+With `REFERENCE_CORPUS_DIR` empty the task logs and does nothing. Create the host directory once
+(`mkdir -p /var/lib/lexilingo/reference-content/live`) and never copy its contents into a checkout.

@@ -36,6 +36,7 @@ if Celery is not None:
             "app.tasks.reminders",
             "app.tasks.skill_history",
             "app.tasks.streak_reminders",
+            "app.tasks.vocabulary_enrichment",
             "app.tasks.word_of_day",
         ],
     )
@@ -140,6 +141,15 @@ if Celery is not None:
         "prefetch-podcasts": {
             "task": "app.tasks.content_prefetch_schedule.prefetch_podcasts",
             "schedule": crontab(minute=0, hour=0),
+        },
+        # Safety net for words saved while Groq was down or the broker was unreachable.
+        "enrich-incomplete-vocabulary": {
+            "task": "app.tasks.vocabulary_enrichment.enrich_incomplete_vocabulary",
+            "schedule": crontab(minute="*/30"),
+        },
+        "export-reference-corpus": {
+            "task": "app.tasks.vocabulary_enrichment.export_reference_corpus",
+            "schedule": crontab(hour=3, minute=15),
         },
     }
 else:

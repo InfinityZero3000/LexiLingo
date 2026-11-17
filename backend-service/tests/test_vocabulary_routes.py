@@ -33,6 +33,12 @@ USER_VOCAB_ID = "00000000-0000-0000-0000-000000000060"
 # Fixtures
 # ============================================================================
 
+@pytest.fixture(autouse=True)
+def _no_enrichment_broker():
+    with patch("app.routes.vocabulary.schedule_enrichment", autospec=True) as queued:
+        yield queued
+
+
 @pytest.fixture
 async def auth_client():
     from app.main import app
