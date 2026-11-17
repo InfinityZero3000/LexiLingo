@@ -7,20 +7,51 @@ import 'package:lexilingo_app/features/home/presentation/widgets/home_page/recom
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/section_title.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_ui_components.dart';
 
-/// One rail for everything the learner has not chosen yet: personal
-/// recommendations first, then featured courses not already recommended.
+/// Recommendations split by what the learner would do with them: study
+/// (lessons, courses), review (words), watch or read (videos, news).
+({
+  List<RecommendationItem> study,
+  List<RecommendationItem> words,
+  List<RecommendationItem> media,
+})
+groupRecommendations(List<RecommendationItem> items) {
+  final study = <RecommendationItem>[];
+  final words = <RecommendationItem>[];
+  final media = <RecommendationItem>[];
+  for (final item in items) {
+    switch (item.itemType) {
+      case 'lesson' || 'course':
+        study.add(item);
+      case 'vocab':
+        words.add(item);
+      case 'video' || 'news':
+        media.add(item);
+    }
+  }
+  // Lessons are the smaller commitment, so they lead the study rail.
+  study.sort(
+    (a, b) =>
+        (a.itemType == 'lesson' ? 0 : 1) - (b.itemType == 'lesson' ? 0 : 1),
+  );
+  return (study: study, words: words, media: media);
+}
+
+/// Everything the learner has not chosen yet, one titled rail per kind of
+/// content. A kind with nothing to show is left out.
 class DiscoverRail extends StatefulWidget {
-  const DiscoverRail({super.key});
+  const DiscoverRail({super.key, this.loader = loadHomeRecommendations});
+
+  final Future<List<RecommendationItem>> Function() loader;
 
   static const double railHeight = 212;
+  static const double wordsRailHeight = 112;
 
   @override
   State<DiscoverRail> createState() => _DiscoverRailState();
 }
 
 class _DiscoverRailState extends State<DiscoverRail> {
-  late final Future<List<RecommendationItem>> _future =
-      loadHomeRecommendations();
+  late final Future<List<RecommendationItem>> _future = widget.loader();
 
   @override
   Widget build(BuildContext context) {
@@ -29,47 +60,49 @@ class _DiscoverRailState extends State<DiscoverRail> {
       builder: (context, snapshot) {
         final loadingRecommendations =
             snapshot.connectionState == ConnectionState.waiting;
-        final recommendations = snapshot.data ?? const <RecommendationItem>[];
+        final groups = groupRecommendations(
+          snapshot.data ?? const <RecommendationItem>[],
+        );
 
         return Consumer<HomeProvider>(
           builder: (context, home, _) {
             final recommendedCourseIds = {
-              for (final item in recommendations)
+              for (final item in groups.study)
                 if (item.itemType == 'course') item.itemId,
             };
             final courses = home.featuredCourses
                 .where((course) => !recommendedCourseIds.contains(course.id))
                 .toList();
-            final loadingCourses =
-                home.isLoadingCourses && home.featuredCourses.isEmpty;
+            final loading =
+                loadingRecommendations ||
+                (home.isLoadingCourses && home.featuredCourses.isEmpty);
+            final studyCount = groups.study.length + courses.length;
 
-            final Widget body;
-            if (recommendations.isEmpty && courses.isEmpty) {
-              body = loadingCourses || loadingRecommendations
-                  ? ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: 3,
-                      itemBuilder: (context, index) => const SizedBox(
-                        width: 220,
-                        child: CardSkeleton(isHorizontal: false),
-                      ),
-                    )
-                  : FeaturedCoursesEmptyState(provider: home);
-            } else {
-              body = ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: recommendations.length + courses.length,
-                itemBuilder: (context, index) => index < recommendations.length
+            final Widget study;
+            if (studyCount > 0) {
+              study = _rail(
+                height: DiscoverRail.railHeight,
+                itemCount: studyCount,
+                itemBuilder: (context, index) => index < groups.study.length
                     ? RecommendationCard(
-                        item: recommendations[index],
+                        item: groups.study[index],
                         slot: index % 5,
                       )
                     : FeaturedCourseCard(
-                        course: courses[index - recommendations.length],
+                        course: courses[index - groups.study.length],
                       ),
               );
+            } else if (loading) {
+              study = _rail(
+                height: DiscoverRail.railHeight,
+                itemCount: 3,
+                itemBuilder: (context, index) => const SizedBox(
+                  width: 220,
+                  child: CardSkeleton(isHorizontal: false),
+                ),
+              );
+            } else {
+              study = FeaturedCoursesEmptyState(provider: home);
             }
 
             return Padding(
@@ -77,9 +110,46 @@ class _DiscoverRailState extends State<DiscoverRail> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SectionTitle(title: 'home.discover'.tr()),
+                  SectionTitle(
+                    title: 'home.discoverStudy'.tr(),
+                    actionLabel: 'common.seeAll'.tr(),
+                    onAction: () => Navigator.pushNamed(context, '/courses'),
+                  ),
                   const SizedBox(height: 8),
-                  SizedBox(height: DiscoverRail.railHeight, child: body),
+                  study,
+                  if (groups.words.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    SectionTitle(
+                      title: 'home.discoverWords'.tr(),
+                      actionLabel: 'home.discoverWordsAction'.tr(),
+                      onAction: () =>
+                          Navigator.pushNamed(context, '/vocabulary/review'),
+                    ),
+                    const SizedBox(height: 8),
+                    _rail(
+                      height: DiscoverRail.wordsRailHeight,
+                      itemCount: groups.words.length,
+                      itemBuilder: (context, index) =>
+                          VocabSuggestionTile(item: groups.words[index]),
+                    ),
+                  ],
+                  if (groups.media.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    SectionTitle(
+                      title: 'home.discoverMedia'.tr(),
+                      actionLabel: 'common.seeAll'.tr(),
+                      onAction: () => Navigator.pushNamed(context, '/youtube'),
+                    ),
+                    const SizedBox(height: 8),
+                    _rail(
+                      height: DiscoverRail.railHeight,
+                      itemCount: groups.media.length,
+                      itemBuilder: (context, index) => RecommendationCard(
+                        item: groups.media[index],
+                        slot: index % 5,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             );
@@ -88,4 +158,20 @@ class _DiscoverRailState extends State<DiscoverRail> {
       },
     );
   }
+
+  // Bottom padding leaves room for the tactile cards' drop edge.
+  Widget _rail({
+    required double height,
+    required int itemCount,
+    required IndexedWidgetBuilder itemBuilder,
+  }) => SizedBox(
+    // Fixed-height cards hold wrapped text, so they grow with the text size.
+    height: height * MediaQuery.textScalerOf(context).scale(1).clamp(1.0, 1.5),
+    child: ListView.builder(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.fromLTRB(16, 0, 4, 6),
+      itemCount: itemCount,
+      itemBuilder: itemBuilder,
+    ),
+  );
 }

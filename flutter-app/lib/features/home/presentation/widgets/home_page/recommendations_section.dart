@@ -117,7 +117,7 @@ class RecommendationCard extends StatelessWidget {
         theme.extension<AppTactileTheme>() ?? AppTactileTheme.from(theme);
 
     return GestureDetector(
-      onTap: () => _open(context),
+      onTap: () => RecommendationCard.open(context, item),
       child: Container(
         width: width,
         margin: const EdgeInsets.only(right: 12),
@@ -215,7 +215,7 @@ class RecommendationCard extends StatelessWidget {
     );
   }
 
-  void _open(BuildContext context) {
+  static void open(BuildContext context, RecommendationItem item) {
     trackContentInteraction(
       itemType: item.itemType,
       itemId: item.itemId,
@@ -264,4 +264,95 @@ class RecommendationCard extends StatelessWidget {
     'news' => 'home.recTypeNews'.tr(),
     _ => 'home.recTypeOther'.tr(),
   };
+}
+
+/// A word is one line of content, so it gets a small card, not a course-sized one.
+class VocabSuggestionTile extends StatelessWidget {
+  const VocabSuggestionTile({super.key, required this.item});
+
+  final RecommendationItem item;
+
+  static const double width = 176;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final accent = recommendationAccent('vocab', isDark: isDark);
+    final tactile =
+        theme.extension<AppTactileTheme>() ?? AppTactileTheme.from(theme);
+    final pronunciation = (item.payload['pronunciation'] as String?)?.trim();
+
+    return Semantics(
+      button: true,
+      label: '${item.title}. ${item.localizedReason}',
+      child: GestureDetector(
+        onTap: () => RecommendationCard.open(context, item),
+        child: Container(
+          width: width,
+          margin: const EdgeInsets.only(right: 12),
+          padding: const EdgeInsets.all(12),
+          decoration: tactile.decoration(
+            variant: TactileSurfaceVariant.interactive,
+            accent: accent,
+            fill: Color.alphaBlend(
+              accent.withValues(alpha: isDark ? 0.16 : 0.10),
+              theme.colorScheme.surface,
+            ),
+          ),
+          child: ExcludeSemantics(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        item.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: AppColorRoles.textPrimary(isDark),
+                        ),
+                      ),
+                    ),
+                    if (item.level != null) ...[
+                      const SizedBox(width: 8),
+                      Text(
+                        item.level!,
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: accent,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                if (pronunciation != null && pronunciation.isNotEmpty)
+                  Text(
+                    pronunciation,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: AppColorRoles.textSecondary(isDark),
+                    ),
+                  ),
+                const Spacer(),
+                Text(
+                  item.localizedReason,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColorRoles.textSecondary(isDark),
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
