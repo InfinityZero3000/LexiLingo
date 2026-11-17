@@ -396,6 +396,7 @@ class _LexiChatPageState extends State<LexiChatPage>
   Future<void> _sendMessage() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
+    if (context.read<LexiChatProvider>().isSending) return;
     _controller.clear();
 
     final provider = context.read<LexiChatProvider>();
@@ -406,6 +407,7 @@ class _LexiChatPageState extends State<LexiChatPage>
   }
 
   Future<void> _sendQuickReply(String text) async {
+    if (context.read<LexiChatProvider>().isSending) return;
     _controller.text = text;
     await _sendMessage();
   }
@@ -437,13 +439,14 @@ class _LexiChatPageState extends State<LexiChatPage>
         _controller.selection = TextSelection.collapsed(offset: display.length);
       },
       onError: (error) {
+        if (!mounted) return;
         setState(() => _isWebSpeechActive = false);
         _showSnack(
           'lexiChat.sttFailed'.tr(namedArgs: {'error': error.toString()}),
         );
       },
       onDone: () {
-        if (_isWebSpeechActive) {
+        if (mounted && _isWebSpeechActive) {
           setState(() => _isWebSpeechActive = false);
         }
       },
@@ -465,7 +468,7 @@ class _LexiChatPageState extends State<LexiChatPage>
     final epoch = _voiceEpoch;
     try {
       final hasPermission = await _recorder.hasPermission();
-      if (epoch != _voiceEpoch) return;
+      if (!mounted || epoch != _voiceEpoch) return;
       if (!hasPermission) {
         _showSnack('lexiChat.micPermissionRequired'.tr());
         return;
@@ -478,7 +481,7 @@ class _LexiChatPageState extends State<LexiChatPage>
         const RecordConfig(encoder: AudioEncoder.aacLc, numChannels: 1),
         path: recordingPath,
       );
-      if (epoch != _voiceEpoch) {
+      if (!mounted || epoch != _voiceEpoch) {
         await _recorder.cancel();
         return;
       }
@@ -488,7 +491,9 @@ class _LexiChatPageState extends State<LexiChatPage>
         _recordingDuration = Duration.zero;
       });
 
+      _recordingTimer?.cancel();
       _recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (!mounted) return;
         setState(() => _recordingDuration += const Duration(seconds: 1));
       });
     } catch (e) {
@@ -516,7 +521,9 @@ class _LexiChatPageState extends State<LexiChatPage>
       }
 
       final file = File(path);
-      if (!await file.exists()) {
+      final exists = await file.exists();
+      if (!mounted) return;
+      if (!exists) {
         _showSnack('lexiChat.audioReadError'.tr());
         setState(() => _isTranscribing = false);
         return;
@@ -599,6 +606,7 @@ class _LexiChatPageState extends State<LexiChatPage>
   }
 
   void _showSnack(String msg) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(msg), duration: const Duration(seconds: 2)),
     );

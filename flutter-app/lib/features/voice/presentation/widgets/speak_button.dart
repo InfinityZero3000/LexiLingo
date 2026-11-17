@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -35,13 +36,14 @@ class SpeakButton extends StatefulWidget {
 
 class _SpeakButtonState extends State<SpeakButton> {
   final AudioPlayer _player = AudioPlayer();
+  StreamSubscription<PlayerState>? _stateSub;
   bool _isLoading = false;
   bool _isPlaying = false;
 
   @override
   void initState() {
     super.initState();
-    _player.playerStateStream.listen((state) {
+    _stateSub = _player.playerStateStream.listen((state) {
       if (mounted) {
         setState(() {
           _isPlaying = state.playing;
@@ -55,6 +57,7 @@ class _SpeakButtonState extends State<SpeakButton> {
 
   @override
   void dispose() {
+    _stateSub?.cancel();
     _player.dispose();
     super.dispose();
   }
@@ -102,11 +105,18 @@ class _SpeakButtonState extends State<SpeakButton> {
               .firstWhere(
                 (state) => state.processingState == ProcessingState.completed,
               )
-              .then((_) {
-                try {
-                  file!.deleteSync();
-                } catch (_) {}
-              });
+              .then(
+                (_) {
+                  try {
+                    file!.deleteSync();
+                  } catch (_) {}
+                },
+                onError: (_) {
+                  try {
+                    file!.deleteSync();
+                  } catch (_) {}
+                },
+              );
         }
       }
     } catch (e) {
@@ -221,13 +231,14 @@ class SpeakIconButton extends StatefulWidget {
 
 class _SpeakIconButtonState extends State<SpeakIconButton> {
   final AudioPlayer _player = AudioPlayer();
+  StreamSubscription<PlayerState>? _stateSub;
   bool _isLoading = false;
   bool _isPlaying = false;
 
   @override
   void initState() {
     super.initState();
-    _player.playerStateStream.listen((state) {
+    _stateSub = _player.playerStateStream.listen((state) {
       if (mounted) {
         setState(() {
           _isPlaying = state.playing;
@@ -247,6 +258,7 @@ class _SpeakIconButtonState extends State<SpeakIconButton> {
 
   @override
   void dispose() {
+    _stateSub?.cancel();
     _player.dispose();
     super.dispose();
   }
@@ -308,11 +320,18 @@ class _SpeakIconButtonState extends State<SpeakIconButton> {
               .firstWhere(
                 (state) => state.processingState == ProcessingState.completed,
               )
-              .then((_) {
-                try {
-                  file!.deleteSync();
-                } catch (_) {}
-              });
+              .then(
+                (_) {
+                  try {
+                    file!.deleteSync();
+                  } catch (_) {}
+                },
+                onError: (_) {
+                  try {
+                    file!.deleteSync();
+                  } catch (_) {}
+                },
+              );
         }
       }
     } catch (e) {

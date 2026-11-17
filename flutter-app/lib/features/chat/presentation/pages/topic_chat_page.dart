@@ -57,9 +57,12 @@ class _TopicChatPageState extends State<TopicChatPage> {
   int? _dueVocabularyCount;
   bool _srsReminderDismissed = false;
 
+  late final StoryProvider _storyProvider;
+
   @override
   void initState() {
     super.initState();
+    _storyProvider = context.read<StoryProvider>();
     _scrollController.addListener(_handleTopReached);
     // The save sheet only reports "dismissed", not "saved vs cancelled" —
     // listen to the service's own success stream instead so the session
@@ -109,7 +112,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
     _scrollController.dispose();
     _focusNode.dispose();
     // Capture provider before microtask to avoid using context after dispose
-    final provider = context.read<StoryProvider>();
+    final provider = _storyProvider;
     Future.microtask(() {
       provider.clearActiveSession();
     });
@@ -240,10 +243,11 @@ class _TopicChatPageState extends State<TopicChatPage> {
     final message = text ?? _controller.text.trim();
     if (message.isEmpty) return;
 
+    final provider = context.read<StoryProvider>();
+    if (provider.isSendingMessage) return;
+
     if (text == null) _controller.clear();
     _focusNode.requestFocus();
-
-    final provider = context.read<StoryProvider>();
     final userId = _currentUserId(context);
 
     final success = await provider.sendMessageStreaming(
@@ -375,6 +379,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
                     ),
                   _buildInputField(
                     isEnabled: provider.hasActiveSession,
+                    isSending: provider.isSendingMessage,
                     isDark: isDark,
                   ),
                 ],
@@ -683,7 +688,12 @@ class _TopicChatPageState extends State<TopicChatPage> {
     );
   }
 
-  Widget _buildInputField({required bool isEnabled, required bool isDark}) {
+  Widget _buildInputField({
+    required bool isEnabled,
+    required bool isSending,
+    required bool isDark,
+  }) {
+    final canSend = isEnabled && !isSending;
     return Container(
       padding: EdgeInsets.fromLTRB(
         16,
@@ -739,11 +749,11 @@ class _TopicChatPageState extends State<TopicChatPage> {
           ),
           const SizedBox(width: AppSpacing.md),
           GestureDetector(
-            onTap: isEnabled ? _sendMessage : null,
+            onTap: canSend ? _sendMessage : null,
             child: Container(
               padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
-                color: isEnabled
+                color: canSend
                     ? AppColorRoles.primary(isDark)
                     : AppColors.grey500,
                 shape: BoxShape.circle,
