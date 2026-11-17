@@ -43,6 +43,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
   LearningProvider? _provider;
   bool _heartsSheetOpen = false;
   int _seenHeartsPrompts = 0;
+  bool _streakRecorded = false;
 
   @override
   void initState() {
@@ -113,6 +114,11 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) => _showHeartsSheet());
     }
 
+    if (!provider.isCompleted) {
+      _wasCompleted = false;
+      _streakRecorded = false;
+    }
+
     // Lesson just completed
     if (!_wasCompleted && provider.isCompleted) {
       _wasCompleted = true;
@@ -173,7 +179,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                   padding: const EdgeInsets.all(AppSpacing.sm),
                   child: Center(
                     child: Text(
-                      '${provider.currentExerciseIndex + 1}/${provider.totalExercises}',
+                      '${(provider.currentExerciseIndex + 1).clamp(1, provider.totalExercises)}/${provider.totalExercises}',
                       style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -669,102 +675,104 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final primaryColor = AppColorRoles.primary(isDark);
     final disabledColor = theme.colorScheme.surfaceContainerHighest;
-    final actionForeground = answered || canCheckDraft
+    final actionForeground = canCheckDraft && !answered
         ? AppColors.textInverted
         : AppColorRoles.textMuted(isDark);
 
     // Button colour: correct=green, wrong=orange, not answered=primary blue
     final checkColor = answered
-        ? (correct ? const Color(0xFF2DBD73) : const Color(0xFFFF6B35))
+        ? (correct ? context.status.success : context.status.warning)
         : primaryColor;
+    final checkForeground = answered
+        ? (correct ? context.status.onSuccess : context.status.onWarning)
+        : actionForeground;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, AppSpacing.md, 20, 20),
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
         border: Border(top: BorderSide(color: theme.dividerColor, width: 1)),
       ),
-      child: Row(
-        children: [
-          // Skip — always visible, outlined pill
-          Expanded(
-            child: OutlinedButton(
-              onPressed: () {
-                if (!_blockedByHearts(provider)) provider.skipExercise();
-              },
-              style: OutlinedButton.styleFrom(
-                foregroundColor: primaryColor,
-                side: BorderSide(color: primaryColor, width: 1.5),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, AppSpacing.md, 20, 20),
+          child: Row(
+            children: [
+              // Skip — always visible, outlined pill
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    if (!_blockedByHearts(provider)) provider.skipExercise();
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: primaryColor,
+                    side: BorderSide(color: primaryColor, width: 1.5),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                  ),
+                  child: Text('common.skip'.tr()),
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 15),
               ),
-              child: Text('common.skip'.tr()),
-            ),
+              const SizedBox(width: 12),
+              // Check / Continue — filled pill
+              Expanded(
+                flex: 2,
+                child: ElevatedButton.icon(
+                  onPressed: answered
+                      ? () {
+                          if (!_blockedByHearts(provider)) {
+                            provider.nextExercise();
+                          }
+                        }
+                      : canCheckDraft
+                      ? () => provider.submitCurrentDraftAnswer()
+                      : null,
+                  icon: Icon(
+                    answered
+                        ? (correct
+                              ? Icons.check_circle_outline
+                              : Icons.arrow_forward_rounded)
+                        : Icons.check_circle_outline,
+                    size: 20,
+                    color: checkForeground,
+                  ),
+                  label: Text(
+                    answered
+                        ? 'lesson.continueButton'.tr()
+                        : 'lesson.checkAnswer'.tr(),
+                    style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: checkForeground,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: checkColor,
+                    disabledBackgroundColor: disabledColor,
+                    disabledForegroundColor: AppColorRoles.textMuted(isDark),
+                    foregroundColor: checkForeground,
+                    elevation: answered ? 2 : 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          // Check / Continue — filled pill
-          Expanded(
-            flex: 2,
-            child: ElevatedButton.icon(
-              onPressed: answered
-                  ? () {
-                      if (!_blockedByHearts(provider)) provider.nextExercise();
-                    }
-                  : canCheckDraft
-                  ? () => provider.submitCurrentDraftAnswer()
-                  : null,
-              icon: Icon(
-                answered
-                    ? (correct
-                          ? Icons.check_circle_outline
-                          : Icons.arrow_forward_rounded)
-                    : Icons.check_circle_outline,
-                size: 20,
-                color: actionForeground,
-              ),
-              label: Text(
-                answered
-                    ? 'lesson.continueButton'.tr()
-                    : 'lesson.checkAnswer'.tr(),
-                style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: actionForeground,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: checkColor,
-                disabledBackgroundColor: disabledColor,
-                disabledForegroundColor: AppColorRoles.textMuted(isDark),
-                foregroundColor: AppColors.textInverted,
-                elevation: answered ? 2 : 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 15),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildCompletionScreen(
-    BuildContext context,
-    LearningProvider provider,
-  ) {
-    final score = provider.score;
-    final total = provider.totalExercises;
-    final percentage = (score / total * 100).toInt();
-
-    // Update streak when lesson is completed, then show milestone if reached
+  void _recordStreak() {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       final streakProvider = context.read<StreakProvider>();
       await streakProvider.updateStreak();
-      if (!context.mounted) return;
+      if (!mounted) return;
       if (streakProvider.milestoneJustReached) {
         await StreakMilestoneOverlay.show(
           context,
@@ -773,6 +781,21 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
         );
       }
     });
+  }
+
+  Widget _buildCompletionScreen(
+    BuildContext context,
+    LearningProvider provider,
+  ) {
+    final score = provider.score;
+    final total = provider.totalExercises;
+    final percentage = total == 0 ? 0 : (score / total * 100).toInt();
+    final saving = provider.isCompleting;
+
+    if (!_streakRecorded) {
+      _streakRecorded = true;
+      _recordStreak();
+    }
 
     return Stack(
       children: [
@@ -789,308 +812,331 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
         ),
 
         // Content
-        Padding(
-          padding: const EdgeInsets.all(AppSpacing.xl),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Trophy icon with glow effect
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0.0, end: 1.0),
-                duration: const Duration(milliseconds: 800),
-                curve: Curves.elasticOut,
-                builder: (context, value, child) {
-                  return Transform.scale(scale: value, child: child);
-                },
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Container(
-                      width: 140,
-                      height: 140,
-                      decoration: BoxDecoration(
-                        color:
-                            (percentage >= 80
-                                    ? context.status.warning
-                                    : context.status.success)
-                                .withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
+        LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight - AppSpacing.xl * 2,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Trophy icon with glow effect
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0.0, end: 1.0),
+                    duration: const Duration(milliseconds: 800),
+                    curve: Curves.elasticOut,
+                    builder: (context, value, child) {
+                      return Transform.scale(scale: value, child: child);
+                    },
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Container(
+                          width: 140,
+                          height: 140,
+                          decoration: BoxDecoration(
                             color:
                                 (percentage >= 80
                                         ? context.status.warning
                                         : context.status.success)
-                                    .withValues(alpha: 0.3),
-                            blurRadius: 30,
-                            spreadRadius: 10,
+                                    .withValues(alpha: 0.2),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color:
+                                    (percentage >= 80
+                                            ? context.status.warning
+                                            : context.status.success)
+                                        .withValues(alpha: 0.3),
+                                blurRadius: 30,
+                                spreadRadius: 10,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    ),
-                    if (percentage >= 80)
-                      const LottieAnimationWidget(
-                        animation: LottieAnimation.starBurst,
-                        width: 120,
-                        height: 120,
-                        repeat: false,
-                      )
-                    else
-                      AnimatedCheckmark(
-                        color: context.status.success,
-                        size: 80,
-                      ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              // Animated Title
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0.0, end: 1.0),
-                duration: const Duration(milliseconds: 600),
-                curve: Curves.easeOut,
-                builder: (context, value, child) {
-                  return Opacity(
-                    opacity: value,
-                    child: Transform.translate(
-                      offset: Offset(0, 20 * (1 - value)),
-                      child: child,
-                    ),
-                  );
-                },
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          percentage >= 80
-                              ? Icons.celebration
-                              : Icons.auto_awesome,
-                          color: percentage >= 80
-                              ? context.status.warning
-                              : AppColors.purple,
-                          size: 28,
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          percentage >= 80
-                              ? 'lesson.excellent'.tr()
-                              : 'lesson.wellDone'.tr(),
-                          style: Theme.of(context).textTheme.headlineMedium
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(width: 8),
-                        Icon(
-                          percentage >= 80
-                              ? Icons.celebration
-                              : Icons.auto_awesome,
-                          color: percentage >= 80
-                              ? context.status.warning
-                              : AppColors.purple,
-                          size: 28,
-                        ),
+                        if (percentage >= 80)
+                          const LottieAnimationWidget(
+                            animation: LottieAnimation.starBurst,
+                            width: 120,
+                            height: 120,
+                            repeat: false,
+                          )
+                        else
+                          AnimatedCheckmark(
+                            color: context.status.success,
+                            size: 80,
+                          ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'lesson.scoreSummary'.tr(
-                        namedArgs: {
-                          'score': '$score',
-                          'total': '$total',
-                          'percentage': '$percentage',
-                        },
-                      ),
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: AppColorRoles.textSecondary(
-                          Theme.of(context).brightness == Brightness.dark,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              if (provider.completionFailed) ...[
-                Text(
-                  'lesson.resultNotSavedTitle'.tr(),
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'lesson.resultNotSavedMessage'.tr(),
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                OutlinedButton.icon(
-                  onPressed: provider.retryCompletion,
-                  icon: const Icon(Icons.refresh_rounded),
-                  label: Text('common.retry'.tr()),
-                ),
-              ] else if ((provider.lessonResult?.totalXpEarned ?? 0) > 0)
-                TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0.0, end: 1.0),
-                  duration: const Duration(milliseconds: 800),
-                  curve: Curves.bounceOut,
-                  builder: (context, value, child) {
-                    return Transform.scale(scale: value, child: child);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.xl,
-                      vertical: AppSpacing.md,
-                    ),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [context.status.warning, AppColors.orange],
-                      ),
-                      borderRadius: BorderRadius.circular(30),
-                      boxShadow: [
-                        BoxShadow(
-                          color: context.status.warning.withValues(alpha: 0.4),
-                          blurRadius: 15,
-                          spreadRadius: 2,
+
+                  const SizedBox(height: 32),
+
+                  // Animated Title
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0.0, end: 1.0),
+                    duration: const Duration(milliseconds: 600),
+                    curve: Curves.easeOut,
+                    builder: (context, value, child) {
+                      return Opacity(
+                        opacity: value,
+                        child: Transform.translate(
+                          offset: Offset(0, 20 * (1 - value)),
+                          child: child,
                         ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                      );
+                    },
+                    child: Column(
                       children: [
-                        Icon(
-                          Icons.stars,
-                          color: AppColors.surfaceLight,
-                          size: 28,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              percentage >= 80
+                                  ? Icons.celebration
+                                  : Icons.auto_awesome,
+                              color: percentage >= 80
+                                  ? context.status.warning
+                                  : AppColors.purple,
+                              size: 28,
+                            ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                percentage >= 80
+                                    ? 'lesson.excellent'.tr()
+                                    : 'lesson.wellDone'.tr(),
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineMedium
+                                    ?.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Icon(
+                              percentage >= 80
+                                  ? Icons.celebration
+                                  : Icons.auto_awesome,
+                              color: percentage >= 80
+                                  ? context.status.warning
+                                  : AppColors.purple,
+                              size: 28,
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(height: 12),
                         Text(
-                          '+${provider.lessonResult!.totalXpEarned} XP',
-                          style: Theme.of(context).textTheme.headlineSmall!
-                              .copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.surfaceLight,
+                          textAlign: TextAlign.center,
+                          'lesson.scoreSummary'.tr(
+                            namedArgs: {
+                              'score': '$score',
+                              'total': '$total',
+                              'percentage': '$percentage',
+                            },
+                          ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(
+                                color: AppColorRoles.textSecondary(
+                                  Theme.of(context).brightness ==
+                                      Brightness.dark,
+                                ),
                               ),
                         ),
                       ],
                     ),
                   ),
-                ),
 
-              const SizedBox(height: 24),
-              const PushPermissionCard(),
-              const SizedBox(height: 24),
+                  const SizedBox(height: 32),
 
-              // Action buttons
-              if (provider.lessonResult?.nextLessonUnlocked != null) ...[
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () => Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => LearningSessionScreen(
-                          lessonId: provider.lessonResult!.nextLessonUnlocked!,
-                          courseId: widget.courseId,
+                  if (provider.completionFailed) ...[
+                    Text(
+                      'lesson.resultNotSavedTitle'.tr(),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'lesson.resultNotSavedMessage'.tr(),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      onPressed: saving ? null : provider.retryCompletion,
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: Text('common.retry'.tr()),
+                    ),
+                  ] else if ((provider.lessonResult?.totalXpEarned ?? 0) > 0)
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0.0, end: 1.0),
+                      duration: const Duration(milliseconds: 800),
+                      curve: Curves.bounceOut,
+                      builder: (context, value, child) {
+                        return Transform.scale(scale: value, child: child);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.xl,
+                          vertical: AppSpacing.md,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [context.status.warning, AppColors.orange],
+                          ),
+                          borderRadius: BorderRadius.circular(30),
+                          boxShadow: [
+                            BoxShadow(
+                              color: context.status.warning.withValues(
+                                alpha: 0.4,
+                              ),
+                              blurRadius: 15,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.stars,
+                              color: AppColors.surfaceLight,
+                              size: 28,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '+${provider.lessonResult!.totalXpEarned} XP',
+                              style: Theme.of(context).textTheme.headlineSmall!
+                                  .copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.surfaceLight,
+                                  ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                    icon: const Icon(Icons.arrow_forward),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: AppSpacing.lg,
-                      ),
-                      backgroundColor: context.status.success,
-                      foregroundColor: context.status.onSuccess,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                      ),
-                    ),
-                    label: Text(
-                      LocaleKeys.lesson_nextLesson.tr(),
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context, true),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: AppSpacing.lg,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                      ),
-                    ),
-                    child: Text(
-                      'lesson.continueButton'.tr(),
-                      style: const TextStyle(fontSize: 18),
-                    ),
-                  ),
-                ),
-              ] else
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context, true),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: AppSpacing.lg,
-                      ),
-                      backgroundColor: context.status.success,
-                      foregroundColor: context.status.onSuccess,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                      ),
-                    ),
-                    child: Text(
-                      'lesson.continueButton'.tr(),
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
 
-              const SizedBox(height: 12),
+                  const SizedBox(height: 24),
+                  const PushPermissionCard(),
+                  const SizedBox(height: 24),
 
-              if (percentage < 80)
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: () {
-                      provider.restartLesson();
-                    },
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: AppSpacing.lg,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                  // Action buttons
+                  if (provider.lessonResult?.nextLessonUnlocked != null) ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: saving
+                            ? null
+                            : () => Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => LearningSessionScreen(
+                                    lessonId: provider
+                                        .lessonResult!
+                                        .nextLessonUnlocked!,
+                                    courseId: widget.courseId,
+                                  ),
+                                ),
+                              ),
+                        icon: const Icon(Icons.arrow_forward),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: AppSpacing.lg,
+                          ),
+                          backgroundColor: context.status.success,
+                          foregroundColor: context.status.onSuccess,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                          ),
+                        ),
+                        label: Text(
+                          LocaleKeys.lesson_nextLesson.tr(),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
-                    child: Text(
-                      'lesson.practiceAgain'.tr(),
-                      style: TextStyle(fontSize: 18),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: saving
+                            ? null
+                            : () => Navigator.pop(context, true),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: AppSpacing.lg,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                          ),
+                        ),
+                        child: Text(
+                          'lesson.continueButton'.tr(),
+                          style: const TextStyle(fontSize: 18),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-            ],
+                  ] else
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: saving
+                            ? null
+                            : () => Navigator.pop(context, true),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: AppSpacing.lg,
+                          ),
+                          backgroundColor: context.status.success,
+                          foregroundColor: context.status.onSuccess,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                          ),
+                        ),
+                        child: Text(
+                          'lesson.continueButton'.tr(),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  const SizedBox(height: 12),
+
+                  if (percentage < 80)
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: saving ? null : provider.restartLesson,
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: AppSpacing.lg,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                          ),
+                        ),
+                        child: Text(
+                          'lesson.practiceAgain'.tr(),
+                          style: TextStyle(fontSize: 18),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
         ),
       ],

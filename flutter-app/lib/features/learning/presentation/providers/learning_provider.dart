@@ -190,10 +190,14 @@ class LearningProvider with ChangeNotifier {
         final contentResult = await _getLessonContentUseCase(
           GetLessonContentParams(lessonId: lessonId),
         );
-        contentResult.fold(
-          _applyBlockingFailure,
-          (lesson) => _currentLesson = lesson,
-        );
+        contentResult.fold(_applyBlockingFailure, (lesson) {
+          if (lesson.exercises.isEmpty) {
+            _isContentUnavailable = true;
+            _error = 'content_unavailable';
+          } else {
+            _currentLesson = lesson;
+          }
+        });
       }
 
       _currentExerciseIndex = 0;
@@ -290,7 +294,9 @@ class LearningProvider with ChangeNotifier {
   }
 
   void nextExercise() {
-    if (_currentLesson == null) return;
+    if (_currentLesson == null || _currentExerciseIndex >= totalExercises) {
+      return;
+    }
     _currentExerciseIndex++;
     _exerciseStartTime = DateTime.now();
     if (_currentExerciseIndex >= totalExercises) {
@@ -300,7 +306,9 @@ class LearningProvider with ChangeNotifier {
   }
 
   void skipExercise() {
-    if (_currentLesson == null) return;
+    if (_currentLesson == null || _currentExerciseIndex >= totalExercises) {
+      return;
+    }
     // Skip after answering just moves on — overwriting the result would turn
     // a correct answer into a miss.
     if (isCurrentAnswered) return nextExercise();

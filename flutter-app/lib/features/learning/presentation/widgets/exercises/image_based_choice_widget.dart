@@ -31,15 +31,6 @@ class ImageBasedChoiceWidget extends StatelessWidget {
     final imageUrl = exercise.metadata?['image_url'] as String?;
     final hasImageUrl = imageUrl != null && imageUrl.trim().isNotEmpty;
 
-    Widget imagePlaceholder() => Container(
-      height: 180,
-      decoration: BoxDecoration(
-        color: colors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-      ),
-      child: Icon(Icons.image_outlined, size: 64, color: colors.border),
-    );
-
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, AppSpacing.xl, 20, AppSpacing.lg),
       child: Column(
@@ -56,40 +47,29 @@ class ImageBasedChoiceWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          // Image area
-          ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            child: hasImageUrl
-                ? Image.network(
-                    imageUrl,
-                    height: 200,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => imagePlaceholder(),
-                  )
-                : imagePlaceholder(),
-          ),
-          const SizedBox(height: 20),
-          // 2x2 grid options
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 2.5,
-            children: options.map((opt) {
-              final sel = userAnswer == opt;
-              final corr = exercise.correctAnswer == opt;
-              return ExerciseOptionCard(
-                text: opt,
-                isSelected: sel,
-                isCorrect: corr,
-                isAnswered: isAnswered,
-                onTap: () => onAnswer(opt),
-                radius: 999,
-              );
-            }).toList(),
-          ),
+          if (hasImageUrl) ...[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+              child: Image.network(
+                imageUrl,
+                height: 200,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => const SizedBox.shrink(),
+              ),
+            ),
+            const SizedBox(height: 20),
+          ],
+          for (final opt in options) ...[
+            ExerciseOptionCard(
+              text: opt,
+              isSelected: userAnswer == opt,
+              isCorrect: exercise.correctAnswer == opt,
+              isAnswered: isAnswered,
+              onTap: () => onAnswer(opt),
+              radius: AppRadius.pill,
+            ),
+            const SizedBox(height: 12),
+          ],
           if (isAnswered) ...[
             const SizedBox(height: 16),
             ExerciseExplanationCard(
