@@ -67,12 +67,13 @@ class _UsersScreenState extends State<UsersScreen> {
         _selected.removeWhere((id) => !_users.any((user) => user.id == id));
       });
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _loading = false;
           _more = false;
           _error = 'Không thể tải danh sách người dùng.';
         });
+      }
     }
   }
 

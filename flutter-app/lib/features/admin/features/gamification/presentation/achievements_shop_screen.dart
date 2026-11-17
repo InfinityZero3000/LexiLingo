@@ -45,11 +45,12 @@ class _AchievementsShopScreenState extends State<AchievementsShopScreen> {
   }
 
   Future<void> _load() async {
-    if (mounted)
+    if (mounted) {
       setState(() {
         _loading = true;
         _error = null;
       });
+    }
     try {
       final responses = await Future.wait([
         ApiClient.instance.get(ApiEndpoints.adminAchievements),
@@ -66,8 +67,9 @@ class _AchievementsShopScreenState extends State<AchievementsShopScreen> {
         _shopItems = _asList(shop, 'shop_items');
       });
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         setState(() => _error = 'Could not load gamification data.\n$error');
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -133,10 +135,11 @@ class _AchievementsShopScreenState extends State<AchievementsShopScreen> {
       await action();
       await _load();
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Action failed: $error')));
+      }
     }
   }
 
@@ -572,10 +575,11 @@ class _AchievementFormState extends State<_AchievementForm> {
       await widget.onSaved();
       if (mounted) Navigator.pop(context);
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Save failed: $error')));
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -775,10 +779,11 @@ class _ShopFormState extends State<_ShopForm> {
       await widget.onSaved();
       if (mounted) Navigator.pop(context);
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Save failed: $error')));
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -943,13 +948,15 @@ class _Field extends StatelessWidget {
       style: GoogleFonts.spaceGrotesk(),
       decoration: InputDecoration(labelText: label, errorText: errorText),
       validator: (value) {
-        if (required && (value == null || value.trim().isEmpty))
+        if (required && (value == null || value.trim().isEmpty)) {
           return 'Required';
+        }
         if (number &&
             value != null &&
             value.isNotEmpty &&
-            (int.tryParse(value) == null || int.parse(value) < 0))
+            (int.tryParse(value) == null || int.parse(value) < 0)) {
           return 'Enter 0 or more';
+        }
         return null;
       },
     ),

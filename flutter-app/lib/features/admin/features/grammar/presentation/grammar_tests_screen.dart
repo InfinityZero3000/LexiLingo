@@ -51,11 +51,13 @@ class _GrammarTestsScreenState extends State<GrammarTestsScreen> {
       final list = data is Map
           ? data['items'] ?? data['grammar'] ?? []
           : data ?? [];
-      if (mounted)
+      if (mounted) {
         setState(() => _rules = List<Map<String, dynamic>>.from(list));
+      }
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         setState(() => _error = 'Could not load grammar rules.\n$error');
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -102,10 +104,11 @@ class _GrammarTestsScreenState extends State<GrammarTestsScreen> {
       );
       await _load();
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Delete failed: $error')));
+      }
     }
   }
 
@@ -370,10 +373,11 @@ class _GrammarFormState extends State<_GrammarForm> {
       await widget.onSaved();
       if (mounted) Navigator.pop(context);
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Save failed: $error')));
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }

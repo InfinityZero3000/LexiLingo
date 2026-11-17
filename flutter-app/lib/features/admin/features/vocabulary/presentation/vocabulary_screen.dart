@@ -47,11 +47,13 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
       final list = data is Map
           ? data['items'] ?? data['vocabulary'] ?? []
           : data ?? [];
-      if (mounted)
+      if (mounted) {
         setState(() => _words = List<Map<String, dynamic>>.from(list));
+      }
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         setState(() => _error = 'Could not load vocabulary.\n$error');
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -94,10 +96,11 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
       );
       await _load();
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Delete failed: $error')));
+      }
     }
   }
 
@@ -370,10 +373,11 @@ class _VocabularyFormState extends State<_VocabularyForm> {
       await widget.onSaved();
       if (mounted) Navigator.pop(context);
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Save failed: $error')));
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }

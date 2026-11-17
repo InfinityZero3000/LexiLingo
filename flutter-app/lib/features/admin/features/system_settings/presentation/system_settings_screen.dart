@@ -79,11 +79,12 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
         });
       }
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _error = 'Could not load settings.';
           _loading = false;
         });
+      }
     }
   }
 

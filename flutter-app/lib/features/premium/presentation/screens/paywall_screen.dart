@@ -34,11 +34,12 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
   Future<void> _loadOfferings() async {
     final packages = await PurchasesService.instance.getOfferings();
-    if (mounted)
+    if (mounted) {
       setState(() {
         _packages = packages;
         _loading = false;
       });
+    }
   }
 
   Future<void> _purchase(Package pkg) async {

@@ -34,17 +34,19 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     });
     try {
       final units = await _repo.getUnits(widget.courseId);
-      if (mounted)
+      if (mounted) {
         setState(() {
           _units = units;
           _loading = false;
         });
+      }
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _loading = false;
           _error = 'Could not load units.';
         });
+      }
     }
   }
 

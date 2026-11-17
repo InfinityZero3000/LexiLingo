@@ -41,17 +41,19 @@ class _UnitsLessonsScreenState extends State<UnitsLessonsScreen> {
     });
     try {
       final lessons = await _repo.getLessons(widget.unitId);
-      if (mounted)
+      if (mounted) {
         setState(() {
           _lessons = lessons;
           _loading = false;
         });
+      }
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _loading = false;
           _error = 'Could not load lessons.';
         });
+      }
     }
   }
 

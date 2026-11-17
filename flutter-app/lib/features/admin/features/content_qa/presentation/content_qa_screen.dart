@@ -818,11 +818,12 @@ class _EditExerciseSheetState extends State<_EditExerciseSheet> {
           });
       if (mounted) Navigator.pop(context, preview);
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _saving = false;
           _error = 'Could not save this edit.';
         });
+      }
     }
   }
 

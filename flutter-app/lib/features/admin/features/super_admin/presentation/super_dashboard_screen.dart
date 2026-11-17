@@ -71,8 +71,9 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (!context.watch<AuthProvider>().isSuperAdmin)
+    if (!context.watch<AuthProvider>().isSuperAdmin) {
       return _restricted(context);
+    }
     final totals = _info?['totals'] as Map?;
     return Scaffold(
       backgroundColor: AppColors.background,

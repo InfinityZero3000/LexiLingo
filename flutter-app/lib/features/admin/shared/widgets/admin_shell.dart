@@ -44,8 +44,9 @@ class _AdminDrawer extends StatelessWidget {
   }
 
   bool _isActive(String route) {
-    if (route == '/dashboard')
+    if (route == '/dashboard') {
       return currentLoc == '/dashboard' || currentLoc == '/';
+    }
     return currentLoc.startsWith(route);
   }
 

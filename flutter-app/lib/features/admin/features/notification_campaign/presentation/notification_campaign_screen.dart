@@ -29,11 +29,12 @@ class _NotificationCampaignScreenState
   }
 
   Future<void> _load() async {
-    if (mounted)
+    if (mounted) {
       setState(() {
         _loading = true;
         _error = null;
       });
+    }
     try {
       final jobs = await _repository.getJobs();
       if (mounted) setState(() => _jobs = jobs);
@@ -54,10 +55,11 @@ class _NotificationCampaignScreenState
       final job = await _repository.createJob(payload);
       if (mounted) setState(() => _jobs = [job, ..._jobs]);
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Could not create campaign.')),
         );
+      }
     }
   }
 
@@ -100,17 +102,19 @@ class _NotificationCampaignScreenState
         'cancel' => await _repository.cancel(job.id),
         _ => await _repository.retry(job.id),
       };
-      if (mounted)
+      if (mounted) {
         setState(
           () => _jobs = _jobs
               .map((j) => j.id == updated.id ? updated : j)
               .toList(),
         );
+      }
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Could not $action this campaign.')),
         );
+      }
     }
   }
 
@@ -147,7 +151,7 @@ class _NotificationCampaignScreenState
   );
 
   Widget _body() {
-    if (_loading && _jobs.isEmpty)
+    if (_loading && _jobs.isEmpty) {
       return ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -156,7 +160,8 @@ class _NotificationCampaignScreenState
           AdminSkeleton(height: 112),
         ],
       );
-    if (_error != null && _jobs.isEmpty)
+    }
+    if (_error != null && _jobs.isEmpty) {
       return ListView(
         children: [
           SizedBox(height: 160),
@@ -172,7 +177,8 @@ class _NotificationCampaignScreenState
           ),
         ],
       );
-    if (_jobs.isEmpty)
+    }
+    if (_jobs.isEmpty) {
       return ListView(
         children: [
           const SizedBox(height: 160),
@@ -189,6 +195,7 @@ class _NotificationCampaignScreenState
           ),
         ],
       );
+    }
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
       itemCount: _jobs.length,
@@ -397,7 +404,7 @@ class _CreateCampaignDialogState extends State<_CreateCampaignDialog> {
       context: context,
       initialTime: TimeOfDay.fromDateTime(_sendAt ?? DateTime.now()),
     );
-    if (time != null)
+    if (time != null) {
       setState(
         () => _sendAt = DateTime(
           date.year,
@@ -407,6 +414,7 @@ class _CreateCampaignDialogState extends State<_CreateCampaignDialog> {
           time.minute,
         ),
       );
+    }
   }
 
   void _submit() {
@@ -422,10 +430,12 @@ class _CreateCampaignDialogState extends State<_CreateCampaignDialog> {
     if (_segment) {
       if (_leagues.isNotEmpty) filters['leagues'] = _leagues.toList();
       if (_levels.isNotEmpty) filters['cefr_levels'] = _levels.toList();
-      if (_minStreak.text.isNotEmpty)
+      if (_minStreak.text.isNotEmpty) {
         filters['min_streak'] = int.parse(_minStreak.text);
-      if (_inactiveDays.text.isNotEmpty)
+      }
+      if (_inactiveDays.text.isNotEmpty) {
         filters['inactive_days'] = int.parse(_inactiveDays.text);
+      }
     }
     final config = <String, dynamic>{
       'audience': {'type': _segment ? 'segment' : 'all', 'filters': filters},

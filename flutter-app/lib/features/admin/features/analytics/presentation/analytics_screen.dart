@@ -34,10 +34,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     try {
       final response = await ApiClient.instance.get(ApiEndpoints.analyticsKpis);
       final value = response['kpis'] ?? response['data'];
-      if (mounted)
+      if (mounted) {
         setState(
           () => _data = value is Map ? Map<String, dynamic>.from(value) : null,
         );
+      }
     } catch (error) {
       if (mounted) setState(() => _error = 'Could not load analytics.\n$error');
     } finally {

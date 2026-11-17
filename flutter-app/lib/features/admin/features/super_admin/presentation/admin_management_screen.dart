@@ -51,11 +51,12 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
         });
       }
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _error = 'Could not load admins.';
           _loading = false;
         });
+      }
     }
   }
 
@@ -240,26 +241,29 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
                               break;
                             }
                           }
-                          if (target == null)
+                          if (target == null) {
                             throw Exception(
                               'User not found. They must register first.',
                             );
+                          }
                           await ApiClient.instance.put(
                             '${ApiEndpoints.adminUsers}/${target['id']}/role',
                             data: {'level': roleLevel},
                           );
-                          if (dialogContext.mounted)
+                          if (dialogContext.mounted) {
                             Navigator.pop(dialogContext);
+                          }
                           await _load();
                         } catch (e) {
                           final message = e.toString().startsWith('Exception: ')
                               ? e.toString().replaceFirst('Exception: ', '')
                               : 'Could not add admin.';
-                          if (dialogContext.mounted)
+                          if (dialogContext.mounted) {
                             setDialogState(() {
                               dialogError = message;
                               adding = false;
                             });
+                          }
                         }
                       },
                 child: adding

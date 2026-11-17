@@ -40,18 +40,20 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
         _repo.getUserStats(widget.userId),
         _repo.getUserActivity(widget.userId),
       ]);
-      if (mounted)
+      if (mounted) {
         setState(() {
           _user = results[0] as Map<String, dynamic>;
           _activity = results[1] as List<Map<String, dynamic>>;
           _loading = false;
         });
+      }
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _loading = false;
           _error = 'Không thể tải chi tiết người dùng.';
         });
+      }
     }
   }
 

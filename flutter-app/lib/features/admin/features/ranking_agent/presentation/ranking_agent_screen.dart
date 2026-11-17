@@ -110,8 +110,9 @@ class _RankingAgentScreenState extends State<RankingAgentScreen> {
       );
       if (!ok) return;
     } else if (action == 'cancel') {
-      if (!await _confirm('Huỷ job?', 'Job đang chạy sẽ bị dừng.', 'Huỷ job'))
+      if (!await _confirm('Huỷ job?', 'Job đang chạy sẽ bị dừng.', 'Huỷ job')) {
         return;
+      }
     }
     try {
       if (action == 'apply') await _repo.applyJob(job.id);
@@ -446,8 +447,9 @@ class _CreateJobSheetState extends State<_CreateJobSheet> {
           multiplierValue > 5 ||
           durationValue == null ||
           durationValue < 1 ||
-          durationValue > 168)
+          durationValue > 168) {
         return null;
+      }
       config = {
         'name': name.text.trim(),
         'multiplier': multiplierValue,
@@ -470,8 +472,9 @@ class _CreateJobSheetState extends State<_CreateJobSheet> {
       if (values.isEmpty ||
           (streak.text.isNotEmpty &&
               (streakValue == null || streakValue < 0)) ||
-          (vocab.text.isNotEmpty && (vocabValue == null || vocabValue < 0)))
+          (vocab.text.isNotEmpty && (vocabValue == null || vocabValue < 0))) {
         return null;
+      }
       config = {
         'achievement_slugs': values,
         'criteria': {

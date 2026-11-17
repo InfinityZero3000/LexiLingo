@@ -29,11 +29,12 @@ class _ContentLabScreenState extends State<ContentLabScreen>
     super.initState();
     _tabs = TabController(length: 2, vsync: this)
       ..addListener(() {
-        if (!_tabs.indexIsChanging)
+        if (!_tabs.indexIsChanging) {
           setState(() {
             _search.clear();
             _level = 'All';
           });
+        }
       });
     _load();
   }
@@ -62,11 +63,12 @@ class _ContentLabScreenState extends State<ContentLabScreen>
         _loading = false;
       });
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _loading = false;
           _error = 'Không thể tải Content Lab.';
         });
+      }
     }
   }
 
@@ -248,11 +250,12 @@ class _ContentLabScreenState extends State<ContentLabScreen>
                   e.questionType.toLowerCase().contains(q)),
         )
         .toList();
-    if (items.isEmpty)
+    if (items.isEmpty) {
       return const _StateCard(
         icon: Icons.quiz_outlined,
         text: 'Không có câu hỏi.',
       );
+    }
     return Column(
       children: items
           .map(
@@ -310,11 +313,12 @@ class _ContentLabScreenState extends State<ContentLabScreen>
                   (e.description ?? '').toLowerCase().contains(q)),
         )
         .toList();
-    if (items.isEmpty)
+    if (items.isEmpty) {
       return const _StateCard(
         icon: Icons.assignment_outlined,
         text: 'Không có bài thi.',
       );
+    }
     return Column(
       children: items
           .map(

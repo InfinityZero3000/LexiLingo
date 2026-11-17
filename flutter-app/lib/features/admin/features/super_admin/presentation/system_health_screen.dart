@@ -75,8 +75,9 @@ class _SystemHealthScreenState extends State<SystemHealthScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (!context.watch<AuthProvider>().isSuperAdmin)
+    if (!context.watch<AuthProvider>().isSuperAdmin) {
       return _restricted(context);
+    }
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(

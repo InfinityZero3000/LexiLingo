@@ -53,11 +53,12 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
         });
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _loading = false;
           _error = 'Không thể tải danh sách courses.';
         });
+      }
     }
   }
 
