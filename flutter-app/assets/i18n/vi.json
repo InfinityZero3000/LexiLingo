@@ -2386,7 +2386,9 @@
       "adminManagement": "Quản lý admin",
       "ops": "Vận hành",
       "aiQuality": "Chất lượng AI",
-      "roles": "Vai trò"
+      "roles": "Vai trò",
+      "categories": "Danh mục",
+      "ielts": "IELTS"
     },
     "shell": {
       "logout": "Đăng xuất",
@@ -2454,6 +2456,128 @@
       "admins": {
         "webOnly": "Cấp hoặc gỡ quyền admin thực hiện ở web admin."
       }
+    },
+    "content": {
+      "actions": "Thao tác",
+      "active": "Đang dùng",
+      "create": "Tạo mới",
+      "description": "Mô tả",
+      "draft": "Bản nháp",
+      "fillRequired": "Hãy điền đúng các trường bắt buộc.",
+      "inactive": "Ngừng dùng",
+      "level": "Trình độ",
+      "name": "Tên",
+      "published": "Đã xuất bản",
+      "tags": "Thẻ",
+      "tagsHint": "Cách nhau bằng dấu phẩy",
+      "title": "Tiêu đề",
+      "webOnly": "Xoá và nhập hàng loạt chỉ có trên admin web."
+    },
+    "vocabulary": {
+      "new": "Từ mới",
+      "edit": "Sửa từ",
+      "word": "Từ",
+      "definition": "Định nghĩa",
+      "translation": "Bản dịch",
+      "pronunciation": "Phát âm",
+      "partOfSpeech": "Từ loại",
+      "empty": "Chưa có từ vựng"
+    },
+    "grammar": {
+      "new": "Quy tắc mới",
+      "edit": "Sửa quy tắc",
+      "topic": "Chủ đề",
+      "summary": "Tóm tắt",
+      "content": "Nội dung",
+      "empty": "Chưa có quy tắc ngữ pháp"
+    },
+    "contentLab": {
+      "questions": "Câu hỏi",
+      "exams": "Bài thi",
+      "newQuestion": "Câu hỏi mới",
+      "editQuestion": "Sửa câu hỏi",
+      "newExam": "Bài thi mới",
+      "editExam": "Sửa bài thi",
+      "prompt": "Đề bài",
+      "type": "Loại",
+      "options": "Lựa chọn (mảng JSON)",
+      "answer": "Đáp án (JSON)",
+      "explanation": "Giải thích",
+      "duration": "Thời lượng (phút)",
+      "passingScore": "Điểm đạt (%)",
+      "questionsReadOnly": "{count} câu hỏi (chỉ xem)",
+      "examMeta": "{minutes} phút · {count} câu hỏi",
+      "noQuestions": "Chưa có câu hỏi",
+      "noExams": "Chưa có bài thi"
+    },
+    "courses": {
+      "new": "Khoá học mới",
+      "edit": "Sửa khoá học",
+      "empty": "Không tìm thấy khoá học",
+      "search": "Tìm khoá học",
+      "language": "Ngôn ngữ",
+      "thumbnail": "URL ảnh bìa",
+      "publish": "Xuất bản",
+      "unpublish": "Gỡ xuất bản",
+      "publishTitle": "Xuất bản khoá học này?",
+      "unpublishTitle": "Gỡ xuất bản khoá học này?",
+      "counts": "{units} chương · {lessons} bài học"
+    },
+    "units": {
+      "title": "Chương",
+      "new": "Chương mới",
+      "edit": "Sửa chương",
+      "empty": "Chưa có chương",
+      "lessons": "{count} bài học"
+    },
+    "lessons": {
+      "new": "Bài học mới",
+      "edit": "Sửa bài học",
+      "empty": "Chưa có bài học",
+      "outcome": "Kết quả",
+      "type": "Loại",
+      "skill": "Kỹ năng tính điểm",
+      "inheritSkill": "Theo khoá học",
+      "xp": "XP",
+      "passPercent": "Đạt %",
+      "minutes": "Số phút",
+      "exercises": "{count} bài tập",
+      "xpValue": "{count} XP"
+    },
+    "categories": {
+      "new": "Danh mục mới",
+      "edit": "Sửa danh mục",
+      "empty": "Chưa có danh mục",
+      "slug": "Slug",
+      "icon": "Biểu tượng",
+      "color": "Màu",
+      "order": "Thứ tự",
+      "courses": "{count} khoá học"
+    },
+    "topics": {
+      "new": "Chủ đề mới",
+      "edit": "Sửa chủ đề",
+      "empty": "Chưa có chủ đề",
+      "titleEn": "Tiêu đề (tiếng Anh)",
+      "titleVi": "Tiêu đề (tiếng Việt)",
+      "category": "Danh mục",
+      "minutes": "Số phút ước tính",
+      "icon": "Khoá biểu tượng",
+      "opening": "Câu mở đầu",
+      "suggested": "Gợi ý hội thoại",
+      "minutesShort": "{count} phút"
+    },
+    "ielts": {
+      "tests": "Đề thi",
+      "attempts": "Lượt làm bài",
+      "noTests": "Chưa có đề IELTS",
+      "noAttempts": "Chưa có lượt làm bài",
+      "meta": "{questions} câu hỏi · {attempts} lượt làm",
+      "band": "Band {band}",
+      "noBand": "Chưa chấm",
+      "publishable": "Sẵn sàng xuất bản",
+      "blocked": "Chưa thể xuất bản",
+      "problems": "Vấn đề"
     }
   }
 }
