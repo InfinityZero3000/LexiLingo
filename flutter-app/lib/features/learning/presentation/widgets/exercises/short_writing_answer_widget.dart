@@ -3,6 +3,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/features/learning/domain/entities/lesson_entity.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_palette.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_chrome.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 // ═══════════════════════════════════════════════════════════════
 // 16. Short Writing Answer
@@ -45,7 +46,7 @@ class _ShortWritingAnswerWidgetState extends State<ShortWritingAnswerWidget> {
     final highlight = _extractHighlightWord();
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+      padding: const EdgeInsets.fromLTRB(20, AppSpacing.xl, 20, AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -56,7 +57,7 @@ class _ShortWritingAnswerWidgetState extends State<ShortWritingAnswerWidget> {
                 height: 36,
                 decoration: BoxDecoration(
                   color: colors.surface,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Icon(
                   Icons.edit_note_rounded,
@@ -79,8 +80,7 @@ class _ShortWritingAnswerWidgetState extends State<ShortWritingAnswerWidget> {
           // Question with highlighted word
           RichText(
             text: TextSpan(
-              style: TextStyle(
-                fontSize: 22,
+              style: Theme.of(context).textTheme.titleLarge!.copyWith(
                 fontWeight: FontWeight.w800,
                 color: colors.textPrimary,
                 height: 1.3,
@@ -118,15 +118,15 @@ class _ShortWritingAnswerWidgetState extends State<ShortWritingAnswerWidget> {
               filled: true,
               fillColor: colors.card,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 borderSide: BorderSide(color: colors.border),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 borderSide: BorderSide(color: colors.border, width: 1.5),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 borderSide: BorderSide(color: colors.primary, width: 2),
               ),
             ),
@@ -143,7 +143,7 @@ class _ShortWritingAnswerWidgetState extends State<ShortWritingAnswerWidget> {
                 backgroundColor: colors.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 15),
               ),

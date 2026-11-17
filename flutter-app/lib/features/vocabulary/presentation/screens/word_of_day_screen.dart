@@ -7,6 +7,7 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/cefr_badge.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/vocabulary_item_entity.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/repositories/vocabulary_repository.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Full-screen Word of the Day view.
 /// Receives [VocabularyItemEntity] via Navigator arguments.
@@ -85,21 +86,26 @@ class _WordOfDayScreenState extends State<WordOfDayScreen>
           child: SlideTransition(
             position: _slide,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+              padding: const EdgeInsets.fromLTRB(
+                20,
+                AppSpacing.sm,
+                20,
+                AppSpacing.xxl,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Hero word block
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(24),
+                    padding: const EdgeInsets.all(AppSpacing.xl),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: AppColorRoles.primaryGradient(isDark),
                       ),
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
                       boxShadow: [
                         BoxShadow(
                           color: AppColorRoles.primary(
@@ -197,7 +203,9 @@ class _WordOfDayScreenState extends State<WordOfDayScreen>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: word.examples.map((example) {
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.only(
+                              bottom: AppSpacing.sm,
+                            ),
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -205,7 +213,7 @@ class _WordOfDayScreenState extends State<WordOfDayScreen>
                                   width: 4,
                                   height: 4,
                                   margin: const EdgeInsets.only(
-                                    top: 8,
+                                    top: AppSpacing.sm,
                                     right: 10,
                                   ),
                                   decoration: BoxDecoration(
@@ -246,7 +254,7 @@ class _WordOfDayScreenState extends State<WordOfDayScreen>
                         return Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 10,
-                            vertical: 4,
+                            vertical: AppSpacing.xs,
                           ),
                           decoration: BoxDecoration(
                             color: AppColorRoles.primary(
@@ -277,9 +285,11 @@ class _WordOfDayScreenState extends State<WordOfDayScreen>
                           ? null
                           : () => _addToCollection(context, word),
                       style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.lg,
+                        ),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
                         ),
                       ),
                       icon: Icon(
@@ -324,7 +334,7 @@ class _WordOfDayScreenState extends State<WordOfDayScreen>
           ),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.md),
           ),
           duration: const Duration(seconds: 2),
         ),
@@ -345,7 +355,9 @@ class _WordOfDayScreenState extends State<WordOfDayScreen>
       SnackBar(
         content: Text('common.copiedToClipboard'.tr()),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
         duration: const Duration(seconds: 2),
       ),
     );

@@ -170,7 +170,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                   return const SizedBox.shrink();
                 }
                 return Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(AppSpacing.sm),
                   child: Center(
                     child: Text(
                       '${provider.currentExerciseIndex + 1}/${provider.totalExercises}',
@@ -218,7 +218,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                       children: [
                         Expanded(
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(999),
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
                             child: LinearProgressIndicator(
                               value: provider.progress,
                               minHeight: 10,
@@ -276,7 +276,10 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
 
     return Center(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xxl,
+          vertical: AppSpacing.xl,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -367,10 +370,13 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
         child: Semantics(
           label: key.tr(),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: 6,
+            ),
             decoration: BoxDecoration(
               color: colorScheme.secondaryContainer,
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
             ),
             child: Text(
               key.tr(),
@@ -391,13 +397,13 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
     }
     final colorScheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, AppSpacing.md),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
           color: colorScheme.primaryContainer,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -673,7 +679,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
         : primaryColor;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+      padding: const EdgeInsets.fromLTRB(20, AppSpacing.md, 20, 20),
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
         border: Border(top: BorderSide(color: theme.dividerColor, width: 1)),
@@ -690,7 +696,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                 foregroundColor: primaryColor,
                 side: BorderSide(color: primaryColor, width: 1.5),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 15),
               ),
@@ -734,7 +740,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                 foregroundColor: AppColors.textInverted,
                 elevation: answered ? 2 : 0,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 15),
               ),
@@ -784,7 +790,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
 
         // Content
         Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(AppSpacing.xl),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -941,8 +947,8 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
+                      horizontal: AppSpacing.xl,
+                      vertical: AppSpacing.md,
                     ),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -968,11 +974,11 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                         const SizedBox(width: 8),
                         Text(
                           '+${provider.lessonResult!.totalXpEarned} XP',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.surfaceLight,
-                          ),
+                          style: Theme.of(context).textTheme.headlineSmall!
+                              .copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.surfaceLight,
+                              ),
                         ),
                       ],
                     ),
@@ -999,11 +1005,13 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                     ),
                     icon: const Icon(Icons.arrow_forward),
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSpacing.lg,
+                      ),
                       backgroundColor: context.status.success,
-                      foregroundColor: AppColors.textInverted,
+                      foregroundColor: context.status.onSuccess,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),
                     ),
                     label: Text(
@@ -1021,9 +1029,11 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context, true),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSpacing.lg,
+                      ),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),
                     ),
                     child: Text(
@@ -1038,11 +1048,13 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                   child: ElevatedButton(
                     onPressed: () => Navigator.pop(context, true),
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSpacing.lg,
+                      ),
                       backgroundColor: context.status.success,
-                      foregroundColor: AppColors.textInverted,
+                      foregroundColor: context.status.onSuccess,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),
                     ),
                     child: Text(
@@ -1065,9 +1077,11 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                       provider.restartLesson();
                     },
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSpacing.lg,
+                      ),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),
                     ),
                     child: Text(

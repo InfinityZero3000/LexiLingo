@@ -106,7 +106,7 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
             // Content
             SafeArea(
               child: Padding(
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.all(AppSpacing.xl),
                 child: Column(
                   children: [
                     const SizedBox(height: 40),
@@ -132,10 +132,8 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                     // Title
                     Text(
                       'flashcard.sessionCompleteTitle'.tr(),
-                      style: const TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.headlineLarge!
+                          .copyWith(fontWeight: FontWeight.bold),
                       textAlign: TextAlign.center,
                     ),
 
@@ -210,9 +208,13 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                               Navigator.of(context).pop();
                             },
                             style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: AppSpacing.lg,
+                              ),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.md,
+                                ),
                               ),
                             ),
                             child: Text('flashcard.backToLibrary'.tr()),
@@ -226,9 +228,13 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                               // Navigate to review again
                             },
                             style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: AppSpacing.lg,
+                              ),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.md,
+                                ),
                               ),
                             ),
                             child: Text('flashcard.reviewMore'.tr()),
@@ -295,7 +301,7 @@ class _StatCard extends StatelessWidget {
         color: Theme.of(context).brightness == Brightness.dark
             ? AppColors.surfaceDarkMuted
             : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -311,7 +317,7 @@ class _StatCard extends StatelessWidget {
             height: 56,
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Icon(icon, color: color, size: 28),
           ),
@@ -334,18 +340,14 @@ class _StatCard extends StatelessWidget {
                     curve: Curves.easeOutCubic,
                     builder: (_, count, __) => Text(
                       '$countPrefix$count',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: color,
-                      ),
+                      style: Theme.of(context).textTheme.headlineSmall!
+                          .copyWith(fontWeight: FontWeight.bold, color: color),
                     ),
                   )
                 else
                   Text(
                     value!,
-                    style: TextStyle(
-                      fontSize: 24,
+                    style: Theme.of(context).textTheme.headlineSmall!.copyWith(
                       fontWeight: FontWeight.bold,
                       color: color,
                     ),

@@ -3,6 +3,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/features/learning/domain/entities/lesson_entity.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_palette.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_chrome.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 // ═══════════════════════════════════════════════════════════════
 // 6. Dialogue Completion
@@ -77,7 +78,7 @@ class _DialogueCompletionWidgetState extends State<DialogueCompletionWidget> {
     final options = widget.exercise.options ?? [];
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+      padding: const EdgeInsets.fromLTRB(20, AppSpacing.xl, 20, AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -107,8 +108,8 @@ class _DialogueCompletionWidgetState extends State<DialogueCompletionWidget> {
               Flexible(
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
+                    horizontal: AppSpacing.lg,
+                    vertical: AppSpacing.md,
                   ),
                   decoration: BoxDecoration(
                     color: colors.card,
@@ -141,8 +142,8 @@ class _DialogueCompletionWidgetState extends State<DialogueCompletionWidget> {
               Flexible(
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
+                    horizontal: AppSpacing.lg,
+                    vertical: AppSpacing.md,
                   ),
                   decoration: BoxDecoration(
                     color: colors.surface,
@@ -177,7 +178,7 @@ class _DialogueCompletionWidgetState extends State<DialogueCompletionWidget> {
             final sel = widget.userAnswer == opt;
             final corr = widget.exercise.correctAnswer == opt;
             return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.only(bottom: AppSpacing.md),
               child: ExerciseOptionCard(
                 text: opt,
                 isSelected: sel,
@@ -215,12 +216,12 @@ class _DialogueCompletionWidgetState extends State<DialogueCompletionWidget> {
           ),
         ),
         Container(
-          margin: const EdgeInsets.symmetric(horizontal: 4),
+          margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
           width: 84,
           height: 36,
           decoration: BoxDecoration(
             color: widget.isAnswered ? colors.primary : Colors.white,
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             border: Border.all(color: colors.primary, width: 1.5),
           ),
           child: TextField(
@@ -248,7 +249,10 @@ class _DialogueCompletionWidgetState extends State<DialogueCompletionWidget> {
               ),
               border: InputBorder.none,
               isDense: true,
-              contentPadding: EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 6,
+                vertical: AppSpacing.sm,
+              ),
             ),
           ),
         ),

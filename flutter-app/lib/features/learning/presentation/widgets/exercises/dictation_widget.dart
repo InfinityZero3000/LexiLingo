@@ -3,6 +3,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/features/learning/domain/entities/lesson_entity.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_palette.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_chrome.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 // ═══════════════════════════════════════════════════════════════
 // 8. Dictation
@@ -42,14 +43,13 @@ class _DictationWidgetState extends State<DictationWidget> {
   Widget build(BuildContext context) {
     final colors = ExercisePalette.of(context);
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+      padding: const EdgeInsets.fromLTRB(20, AppSpacing.xl, 20, AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             'lesson.exercise.dictationTitle'.tr(),
-            style: TextStyle(
-              fontSize: 24,
+            style: Theme.of(context).textTheme.headlineSmall!.copyWith(
               fontWeight: FontWeight.w800,
               color: colors.primary,
             ),
@@ -84,15 +84,15 @@ class _DictationWidgetState extends State<DictationWidget> {
               filled: true,
               fillColor: colors.card,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 borderSide: BorderSide(color: colors.border),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 borderSide: BorderSide(color: colors.border, width: 1.5),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 borderSide: BorderSide(color: colors.primary, width: 2),
               ),
             ),
@@ -107,7 +107,7 @@ class _DictationWidgetState extends State<DictationWidget> {
                 ),
                 decoration: BoxDecoration(
                   color: colors.surface,
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
                 child: Text(
                   'lesson.exercise.dictationWordCount'.tr(
@@ -133,7 +133,7 @@ class _DictationWidgetState extends State<DictationWidget> {
                 backgroundColor: colors.primary,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 15),
               ),

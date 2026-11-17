@@ -3,6 +3,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/features/learning/domain/entities/lesson_entity.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_palette.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_chrome.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 // ═══════════════════════════════════════════════════════════════
 // 4. Arrange the Sentence
@@ -88,14 +89,13 @@ class _ArrangeSentenceWidgetState extends State<ArrangeSentenceWidget> {
         ? ((widget.isCorrect ?? false) ? kCorrect : kError)
         : null;
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+      padding: const EdgeInsets.fromLTRB(20, AppSpacing.xl, 20, AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             'lesson.exercise.arrangeSentenceTitle'.tr(),
-            style: TextStyle(
-              fontSize: 22,
+            style: Theme.of(context).textTheme.titleLarge!.copyWith(
               fontWeight: FontWeight.w800,
               color: colors.textPrimary,
             ),
@@ -114,12 +114,12 @@ class _ArrangeSentenceWidgetState extends State<ArrangeSentenceWidget> {
           // note below.
           Container(
             constraints: const BoxConstraints(minHeight: 80),
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             decoration: BoxDecoration(
               color: gradedColor != null
                   ? gradedColor.withValues(alpha: 0.08)
                   : colors.card,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(
                 color: gradedColor ?? colors.border,
                 style: BorderStyle.solid,
@@ -175,11 +175,13 @@ class _ArrangeSentenceWidgetState extends State<ArrangeSentenceWidget> {
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: 14,
-                                    vertical: 8,
+                                    vertical: AppSpacing.sm,
                                   ),
                                   decoration: BoxDecoration(
                                     color: gradedColor ?? colors.primary,
-                                    borderRadius: BorderRadius.circular(999),
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.pill,
+                                    ),
                                     border: Border.all(
                                       color: gradedColor ?? colors.primaryDeep,
                                     ),
@@ -214,12 +216,12 @@ class _ArrangeSentenceWidgetState extends State<ArrangeSentenceWidget> {
                       onTap: widget.isAnswered ? null : () => _placeWord(w),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
+                          horizontal: AppSpacing.lg,
                           vertical: 10,
                         ),
                         decoration: BoxDecoration(
                           color: colors.card,
-                          borderRadius: BorderRadius.circular(999),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
                           border: Border.all(color: colors.border, width: 1.5),
                           boxShadow: [
                             BoxShadow(

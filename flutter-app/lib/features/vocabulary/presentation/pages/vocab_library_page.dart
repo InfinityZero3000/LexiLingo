@@ -82,7 +82,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
             TapTarget(
               onTap: () => _showAddWordDialog(context, vocabProvider),
               child: Container(
-                margin: const EdgeInsets.only(right: 16),
+                margin: const EdgeInsets.only(right: AppSpacing.lg),
                 child: Icon(
                   Icons.add_circle,
                   color: Theme.of(context).colorScheme.primary,
@@ -141,8 +141,8 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                   // Search Bar
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
+                      horizontal: AppSpacing.lg,
+                      vertical: AppSpacing.sm,
                     ),
                     child: Container(
                       height: 48,
@@ -150,7 +150,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                         color: Theme.of(
                           context,
                         ).colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                         boxShadow: [
                           BoxShadow(
                             color: AppColors.slate900.withValues(alpha: 0.05),
@@ -161,7 +161,10 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                       child: Row(
                         children: [
                           Padding(
-                            padding: const EdgeInsets.only(left: 12, right: 8),
+                            padding: const EdgeInsets.only(
+                              left: AppSpacing.md,
+                              right: AppSpacing.sm,
+                            ),
                             child: Icon(
                               Icons.search,
                               color: Theme.of(
@@ -194,8 +197,8 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                   // Words Header
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
+                      horizontal: AppSpacing.lg,
+                      vertical: AppSpacing.sm,
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -247,7 +250,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                         : RefreshIndicator(
                             onRefresh: () => vocabProvider.loadWords(),
                             child: ListView.builder(
-                              padding: const EdgeInsets.all(16),
+                              padding: const EdgeInsets.all(AppSpacing.lg),
                               itemCount: words.length,
                               itemBuilder: (context, index) {
                                 final word = words[index];
@@ -272,7 +275,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
     final customDecks = vocabProvider.decks;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -362,7 +365,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         gradient: deckGradient(deckColor),
         boxShadow: [
           BoxShadow(
@@ -375,7 +378,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           onLongPress: () =>
               _showDeleteDeckConfirmation(context, deck, vocabProvider),
           onTap: () => _startDeckStudy(context, deck),
@@ -407,7 +410,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(AppSpacing.lg),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -415,7 +418,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(
-                          padding: const EdgeInsets.all(8),
+                          padding: const EdgeInsets.all(AppSpacing.sm),
                           decoration: BoxDecoration(
                             color: AppColors.textInverted.withValues(
                               alpha: 0.2,
@@ -471,12 +474,12 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                     const SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
+                        horizontal: AppSpacing.md,
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
                         color: AppColors.textInverted,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -515,7 +518,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
           color: isDark
               ? Theme.of(context).colorScheme.outlineVariant
@@ -527,10 +530,10 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           onTap: () => _showCreateDeckDialog(context, vocabProvider),
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -713,7 +716,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.error,
-                foregroundColor: AppColors.textInverted,
+                foregroundColor: Theme.of(context).colorScheme.onError,
               ),
               onPressed: () async {
                 final success = await vocabProvider.deleteDeck(deck.id);
@@ -754,7 +757,12 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
           children: [
             const SizedBox(height: 8),
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+              padding: const EdgeInsets.fromLTRB(
+                20,
+                AppSpacing.md,
+                20,
+                AppSpacing.xs,
+              ),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
@@ -870,7 +878,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
   Widget _buildTopicCard(BuildContext context, _TopicConfig topic) {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         gradient: LinearGradient(
           colors: topic.gradient,
           begin: Alignment.topLeft,
@@ -887,7 +895,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           onTap: () => _startTopicStudy(context, topic),
           child: Stack(
             clipBehavior: Clip.antiAlias,
@@ -917,7 +925,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(AppSpacing.lg),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -941,12 +949,12 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                     const SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
+                        horizontal: AppSpacing.md,
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
                         color: AppColors.textInverted,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -1048,7 +1056,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
       height: 44,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
         children: [
           _buildFilterChip(
             'vocabulary.filterAll'.tr(),
@@ -1059,7 +1067,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
             tag,
           ) {
             return Padding(
-              padding: const EdgeInsets.only(left: 8),
+              padding: const EdgeInsets.only(left: AppSpacing.sm),
               child: _buildFilterChip(
                 _tagLabel(tag),
                 selectedTag == tag,
@@ -1091,14 +1099,17 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: AppSpacing.sm,
+        ),
         decoration: BoxDecoration(
           color: isSelected
               ? Theme.of(context).colorScheme.primary
               : (isDark
                     ? AppColors.textInverted.withValues(alpha: 0.06)
                     : AppColors.grey100),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: Text(
           label,
@@ -1119,10 +1130,10 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
     final ipa = vocabWord.pronunciation ?? '';
     final def = vocabWord.definition;
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: AppSpacing.md),
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         boxShadow: [
           BoxShadow(
             color: AppColors.slate900.withValues(alpha: 0.05),
@@ -1134,12 +1145,12 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: InkWell(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           onTap: () => showVocabWordDetail(context, vocabWord),
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppSpacing.md),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -1151,7 +1162,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                         height: 48,
                         decoration: BoxDecoration(
                           color: colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
                         ),
                         child: Icon(
                           Icons.menu_book,
@@ -1248,7 +1259,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
 
   Widget _buildSkeletonList() {
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       itemCount: 6,
       itemBuilder: (context, index) => const SkeletonVocabCard(),
     );
@@ -1375,7 +1386,12 @@ class _AddWordSheetState extends State<_AddWordSheet> {
         color: cs.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      padding: EdgeInsets.fromLTRB(24, 16, 24, 24 + bottomPadding),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.xl,
+        AppSpacing.lg,
+        AppSpacing.xl,
+        AppSpacing.xl + bottomPadding,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1396,8 +1412,7 @@ class _AddWordSheetState extends State<_AddWordSheet> {
           // Title
           Text(
             'vocabulary.addNewWord'.tr(),
-            style: TextStyle(
-              fontSize: 22,
+            style: Theme.of(context).textTheme.titleLarge!.copyWith(
               fontWeight: FontWeight.bold,
               color: cs.onSurface,
             ),
@@ -1416,7 +1431,7 @@ class _AddWordSheetState extends State<_AddWordSheet> {
               labelText: 'vocabulary.wordLabel'.tr(),
               hintText: 'vocabulary.wordInputHint'.tr(),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               prefixIcon: const Icon(Icons.abc_rounded),
               suffixIcon: _buildWordStatus(),
@@ -1459,7 +1474,7 @@ class _AddWordSheetState extends State<_AddWordSheet> {
               labelText: 'vocabulary.definition'.tr(),
               hintText: 'vocabulary.definitionHint'.tr(),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               prefixIcon: const Padding(
                 padding: EdgeInsets.only(bottom: 40),
@@ -1481,10 +1496,10 @@ class _AddWordSheetState extends State<_AddWordSheet> {
               labelText: 'vocabulary.exampleSentenceLabel'.tr(),
               hintText: 'vocabulary.exampleSentenceHint'.tr(),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               prefixIcon: const Padding(
-                padding: EdgeInsets.only(bottom: 24),
+                padding: EdgeInsets.only(bottom: AppSpacing.xl),
                 child: Icon(Icons.format_quote_outlined),
               ),
             ),
@@ -1508,10 +1523,12 @@ class _AddWordSheetState extends State<_AddWordSheet> {
                   onPressed: _saving ? null : _save,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: AppColors.textInverted,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.lg,
+                    ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                   ),
                   child: _saving
@@ -1540,7 +1557,7 @@ class _AddWordSheetState extends State<_AddWordSheet> {
   Widget? _buildWordStatus() {
     if (_isLooking) {
       return const Padding(
-        padding: EdgeInsets.all(12),
+        padding: EdgeInsets.all(AppSpacing.md),
         child: SizedBox(
           width: 20,
           height: 20,
@@ -1577,7 +1594,7 @@ class _InfoChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Row(

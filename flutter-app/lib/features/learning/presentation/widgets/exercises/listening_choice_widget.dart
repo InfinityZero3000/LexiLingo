@@ -3,6 +3,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/features/learning/domain/entities/lesson_entity.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_palette.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_chrome.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 // ═══════════════════════════════════════════════════════════════
 // 11. Listen and Choose
@@ -29,7 +30,7 @@ class ListeningChoiceWidget extends StatelessWidget {
     final options = exercise.options ?? [];
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+      padding: const EdgeInsets.fromLTRB(20, AppSpacing.xl, 20, AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -53,7 +54,7 @@ class ListeningChoiceWidget extends StatelessWidget {
             padding: const EdgeInsets.symmetric(vertical: 28),
             decoration: BoxDecoration(
               color: colors.card,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(color: colors.border, width: 1.5),
             ),
             child: Column(
@@ -81,7 +82,7 @@ class ListeningChoiceWidget extends StatelessWidget {
             final sel = userAnswer == opt;
             final corr = exercise.correctAnswer == opt;
             return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.only(bottom: AppSpacing.md),
               child: ExerciseOptionCard(
                 text: opt,
                 label: '${i + 1}',

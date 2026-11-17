@@ -537,7 +537,7 @@ class _LessonNodeState extends State<_LessonNode>
                         right: 3,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
+                            horizontal: AppSpacing.xs,
                             vertical: 1,
                           ),
                           decoration: BoxDecoration(
@@ -624,10 +624,13 @@ class _StarsBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: 2,
+      ),
       decoration: BoxDecoration(
         color: context.status.warning,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         boxShadow: [
           BoxShadow(color: Colors.black26, blurRadius: 3, offset: Offset(0, 1)),
         ],
@@ -673,10 +676,13 @@ class _CurrentLessonLabel extends StatelessWidget {
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
             decoration: BoxDecoration(
               color: color,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppRadius.md),
               boxShadow: [
                 BoxShadow(
                   color: color.withValues(alpha: 0.35),
@@ -736,14 +742,14 @@ class _UnitBanner extends StatelessWidget {
     );
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [color, color.withValues(alpha: 0.75)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: color.withValues(alpha: 0.35),
@@ -753,7 +759,7 @@ class _UnitBanner extends StatelessWidget {
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 0, sigmaY: 0),
           child: Padding(
@@ -766,13 +772,12 @@ class _UnitBanner extends StatelessWidget {
                   height: 44,
                   decoration: BoxDecoration(
                     color: AppColors.surfaceLight.withValues(alpha: 0.32),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: Center(
                     child: Text(
                       '${unit.unitNumber}',
-                      style: TextStyle(
-                        fontSize: 22,
+                      style: Theme.of(context).textTheme.titleLarge!.copyWith(
                         fontWeight: FontWeight.w800,
                         color: AppColors.textDark,
                       ),

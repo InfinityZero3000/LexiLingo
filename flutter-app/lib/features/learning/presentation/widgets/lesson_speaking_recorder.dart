@@ -11,6 +11,7 @@ import 'package:record/record.dart';
 import '../../../voice/presentation/providers/voice_provider.dart';
 import '../../domain/services/speaking_answer_matcher.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 typedef StartLessonRecording = Future<void> Function();
 typedef StopLessonRecording = Future<Uint8List> Function();
@@ -310,7 +311,7 @@ class _LessonSpeakingRecorderState extends State<LessonSpeakingRecorder> {
               ),
               child: _isProcessing
                   ? Padding(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(AppSpacing.xl),
                       child: CircularProgressIndicator(
                         strokeWidth: 3,
                         color: primary,

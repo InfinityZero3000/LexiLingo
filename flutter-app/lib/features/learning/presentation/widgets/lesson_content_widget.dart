@@ -49,7 +49,7 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accentColor = AppColorRoles.primary(isDark);
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(AppSpacing.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -57,7 +57,7 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
           Card(
             elevation: 2,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
             ),
             child: Padding(
               padding: const EdgeInsets.all(20),
@@ -105,10 +105,10 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                   if (widget.exercise.hint != null) ...[
                     const SizedBox(height: 16),
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(AppSpacing.md),
                       decoration: BoxDecoration(
                         color: accentColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -160,22 +160,22 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                         .withValues(alpha: 0.1)
                   : Colors.grey[50],
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 borderSide: BorderSide(color: Colors.grey[300]!, width: 2),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 borderSide: BorderSide(color: Colors.grey[300]!, width: 2),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 borderSide: BorderSide(
                   color: Theme.of(context).primaryColor,
                   width: 2,
                 ),
               ),
               disabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 borderSide: BorderSide(
                   color: widget.isAnswered
                       ? (widget.isCorrect!
@@ -216,9 +216,9 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                 }
               },
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
               ),
               child: Text(
@@ -237,7 +237,7 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                   ? Colors.green.withValues(alpha: 0.1)
                   : AppColors.orange.withValues(alpha: 0.1),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 side: BorderSide(
                   color: widget.isCorrect!
                       ? context.status.success
@@ -246,7 +246,7 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                 ),
               ),
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSpacing.lg),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

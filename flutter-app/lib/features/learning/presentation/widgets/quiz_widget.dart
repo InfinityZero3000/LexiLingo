@@ -70,7 +70,7 @@ class _QuizWidgetState extends State<QuizWidget>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accentColor = AppColorRoles.primary(isDark);
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(AppSpacing.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -78,7 +78,7 @@ class _QuizWidgetState extends State<QuizWidget>
           Card(
             elevation: 2,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
             ),
             child: Padding(
               padding: const EdgeInsets.all(20),
@@ -126,10 +126,10 @@ class _QuizWidgetState extends State<QuizWidget>
                   if (widget.exercise.hint != null) ...[
                     const SizedBox(height: 16),
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(AppSpacing.md),
                       decoration: BoxDecoration(
                         color: accentColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
                       child: Row(
                         children: [
@@ -190,7 +190,7 @@ class _QuizWidgetState extends State<QuizWidget>
             }
 
             return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.only(bottom: AppSpacing.md),
               child: InkWell(
                 onTap: widget.isAnswered
                     ? null
@@ -198,13 +198,13 @@ class _QuizWidgetState extends State<QuizWidget>
                         setState(() => _selectedAnswer = option);
                         widget.onAnswer(option);
                       },
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppSpacing.lg),
                   decoration: BoxDecoration(
                     color: backgroundColor ?? Colors.grey[50],
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     border: Border.all(
                       color: borderColor ?? Colors.grey[300]!,
                       width: 2,
@@ -247,7 +247,7 @@ class _QuizWidgetState extends State<QuizWidget>
                     ? Colors.green.withValues(alpha: 0.1)
                     : AppColors.orange.withValues(alpha: 0.1),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   side: BorderSide(
                     color: widget.isCorrect!
                         ? context.status.success
@@ -256,7 +256,7 @@ class _QuizWidgetState extends State<QuizWidget>
                   ),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppSpacing.lg),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

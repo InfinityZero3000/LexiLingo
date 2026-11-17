@@ -19,7 +19,10 @@ class ReviewQualityButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 20,
+        vertical: AppSpacing.lg,
+      ),
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark
             ? AppColors.surfaceDarkMuted
@@ -142,12 +145,15 @@ class _QualityButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: isEnabled ? () => onPressed!(quality) : null,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+          padding: const EdgeInsets.symmetric(
+            vertical: AppSpacing.lg,
+            horizontal: AppSpacing.md,
+          ),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(color: color.withValues(alpha: 0.3), width: 2),
           ),
           child: Column(

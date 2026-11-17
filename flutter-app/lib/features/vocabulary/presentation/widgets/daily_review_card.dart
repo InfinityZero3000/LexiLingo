@@ -7,6 +7,7 @@ import 'package:lexilingo_app/features/vocabulary/presentation/providers/flashca
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/quiz_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/screens/flashcard_review_screen.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/screens/quiz_review_screen.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/features/vocabulary/vocabulary_di.dart'
     as vocab_di;
 
@@ -82,7 +83,7 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
       ),
       builder: (sheetContext) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, AppSpacing.xl),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,16 +149,16 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
       color: Colors.transparent,
       child: InkWell(
         onTap: _handleCardTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Ink(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: gradient,
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -193,12 +194,12 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                             ),
                             child: Text(
                               _dueCount > 99 ? '99+' : '$_dueCount',
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.error,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                height: 1.2,
-                              ),
+                              style: Theme.of(context).textTheme.labelSmall!
+                                  .copyWith(
+                                    color: Theme.of(context).colorScheme.error,
+                                    fontWeight: FontWeight.w700,
+                                    height: 1.2,
+                                  ),
                             ),
                           ),
                         ),
@@ -232,11 +233,11 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                 const SizedBox(height: 12),
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: onColor,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: Text(
                     'home.startReview'.tr(),
@@ -277,14 +278,14 @@ class _ReviewModeTile extends StatelessWidget {
     final accent = AppColorRoles.primary(isDark);
     return Material(
       color: isDark ? AppColors.surfaceDarkMuted : Colors.white,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(color: theme.colorScheme.outlineVariant),
           ),
           child: Row(
@@ -294,7 +295,7 @@ class _ReviewModeTile extends StatelessWidget {
                 height: 48,
                 decoration: BoxDecoration(
                   color: accent.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Icon(icon, color: accent),
               ),

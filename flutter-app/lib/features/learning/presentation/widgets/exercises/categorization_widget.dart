@@ -5,6 +5,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/features/learning/domain/entities/lesson_entity.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_palette.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_chrome.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 // ═══════════════════════════════════════════════════════════════
 // 18. Categorization (Phân loại từ vựng)
@@ -101,14 +102,13 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
         : const <String, String>{};
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+      padding: const EdgeInsets.fromLTRB(20, AppSpacing.xl, 20, AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             'lesson.exercise.categorizationTitle'.tr(),
-            style: TextStyle(
-              fontSize: 22,
+            style: Theme.of(context).textTheme.titleLarge!.copyWith(
               fontWeight: FontWeight.w800,
               color: colors.textPrimary,
             ),
@@ -131,7 +131,7 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
                 .map((e) => e.key)
                 .toList();
             return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.only(bottom: AppSpacing.md),
               child: DragTarget<String>(
                 onWillAcceptWithDetails: (details) => !widget.isAnswered,
                 onAcceptWithDetails: (details) {
@@ -166,7 +166,7 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
                                 !widget.isAnswered
                             ? colors.primary.withValues(alpha: 0.06)
                             : colors.card,
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                         border: Border.all(
                           color:
                               (_selectedWord != null || isHovered) &&
@@ -228,14 +228,16 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
                                         },
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
+                                      horizontal: AppSpacing.md,
                                       vertical: 7,
                                     ),
                                     decoration: BoxDecoration(
                                       color: graded != null
                                           ? graded.withValues(alpha: 0.14)
                                           : colors.surface,
-                                      borderRadius: BorderRadius.circular(999),
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.pill,
+                                      ),
                                       border: graded != null
                                           ? Border.all(color: graded)
                                           : null,
@@ -285,7 +287,7 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: colors.surface,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
               child: Wrap(
                 spacing: 10,
@@ -300,7 +302,7 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
                     ),
                     decoration: BoxDecoration(
                       color: sel ? colors.primary : colors.card,
-                      borderRadius: BorderRadius.circular(999),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
                       border: Border.all(
                         color: sel ? colors.primary : colors.border,
                         width: 1.5,

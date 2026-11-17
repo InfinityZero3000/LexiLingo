@@ -13,6 +13,7 @@ import 'package:lexilingo_app/features/vocabulary/presentation/screens/session_c
 import 'package:lexilingo_app/features/vocabulary/presentation/screens/vocabulary_speaking_practice_screen.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/tts_speed_selector.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Flashcard Review Screen (Presentation Layer)
 /// Interactive flashcard review with animations
@@ -134,7 +135,7 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
             if (provider.errorMessage != null) {
               return Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(24.0),
+                  padding: const EdgeInsets.all(AppSpacing.xl),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -167,7 +168,7 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
               final theme = Theme.of(context);
               return Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(AppSpacing.xl),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [

@@ -16,6 +16,7 @@ import 'package:lexilingo_app/features/vocabulary/presentation/screens/session_c
 import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/tts_speed_selector.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class VocabularySpeakingPracticeScreen extends StatefulWidget {
   const VocabularySpeakingPracticeScreen({super.key});
@@ -265,7 +266,12 @@ class _VocabularySpeakingPracticeScreenState
       context: context,
       showDragHandle: true,
       builder: (context) => Padding(
-        padding: const EdgeInsets.fromLTRB(24, 8, 24, 28),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.xl,
+          AppSpacing.sm,
+          AppSpacing.xl,
+          28,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -387,7 +393,7 @@ class _VocabularySpeakingPracticeScreenState
     final total = session.totalCards;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+      padding: const EdgeInsets.fromLTRB(20, AppSpacing.sm, 20, 0),
       child: Row(
         children: [
           SpeakButton(
@@ -406,7 +412,7 @@ class _VocabularySpeakingPracticeScreenState
           const SizedBox(width: 12),
           Expanded(
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
               child: LinearProgressIndicator(
                 minHeight: 10,
                 value: total == 0 ? 0 : current / total,
@@ -426,7 +432,7 @@ class _VocabularySpeakingPracticeScreenState
     final vocabulary = card.vocabularyItem;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 26, 24, 18),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.xl, 26, AppSpacing.xl, 18),
       child: Column(
         children: [
           Text(
@@ -443,9 +449,8 @@ class _VocabularySpeakingPracticeScreenState
             const SizedBox(height: 12),
             Text(
               '/${vocabulary.pronunciation}/',
-              style: const TextStyle(
+              style: Theme.of(context).textTheme.titleLarge!.copyWith(
                 color: Color(0xFF6A7A70),
-                fontSize: 22,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -522,7 +527,7 @@ class _VocabularySpeakingPracticeScreenState
                   color: active
                       ? const Color(0xFF2EAE5B)
                       : const Color(0xFFC9D8CE),
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
               );
             }),

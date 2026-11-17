@@ -3,6 +3,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/features/learning/domain/entities/lesson_entity.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_palette.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_chrome.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 // ═══════════════════════════════════════════════════════════════
 // 9. Grammar Correction
@@ -40,14 +41,13 @@ class GrammarCorrectionWidget extends StatelessWidget {
     final errorSentence = _extractError();
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+      padding: const EdgeInsets.fromLTRB(20, AppSpacing.xl, 20, AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             'lesson.exercise.grammarCorrectionTitle'.tr(),
-            style: TextStyle(
-              fontSize: 22,
+            style: Theme.of(context).textTheme.titleLarge!.copyWith(
               fontWeight: FontWeight.w800,
               color: colors.textPrimary,
             ),
@@ -62,10 +62,10 @@ class GrammarCorrectionWidget extends StatelessWidget {
           const SizedBox(height: 20),
           // Error sentence card
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             decoration: BoxDecoration(
               color: kError.withValues(alpha: 0.06),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(
                 color: kError.withValues(alpha: 0.3),
                 width: 1.5,
@@ -93,8 +93,7 @@ class GrammarCorrectionWidget extends StatelessWidget {
                     children: [
                       Text(
                         'lesson.exercise.incorrectSentence'.tr(),
-                        style: TextStyle(
-                          fontSize: 10,
+                        style: Theme.of(context).textTheme.labelSmall!.copyWith(
                           fontWeight: FontWeight.w700,
                           color: colors.primary,
                           letterSpacing: 1.2,
@@ -122,7 +121,7 @@ class GrammarCorrectionWidget extends StatelessWidget {
               final sel = userAnswer == opt;
               final corr = exercise.correctAnswer == opt;
               return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.only(bottom: AppSpacing.md),
                 child: ExerciseOptionCard(
                   text: opt,
                   label: '${i + 1}',
@@ -190,11 +189,11 @@ class _GrammarTextInputState extends State<_GrammarTextInput> {
             filled: true,
             fillColor: colors.card,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               borderSide: BorderSide(color: colors.border),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               borderSide: BorderSide(color: colors.primary, width: 2),
             ),
           ),
@@ -211,9 +210,12 @@ class _GrammarTextInputState extends State<_GrammarTextInput> {
               backgroundColor: colors.primary,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
-              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 32),
+              padding: const EdgeInsets.symmetric(
+                vertical: 14,
+                horizontal: AppSpacing.xxl,
+              ),
             ),
             child: Text(
               'common.confirm'.tr(),

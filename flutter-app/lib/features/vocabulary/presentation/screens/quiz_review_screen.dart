@@ -161,9 +161,9 @@ class _QuizBody extends StatelessWidget {
       children: [
         // Progress bar
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, AppSpacing.sm),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             child: LinearProgressIndicator(
               value: provider.progress,
               minHeight: 8,
@@ -175,17 +175,22 @@ class _QuizBody extends StatelessWidget {
 
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            padding: const EdgeInsets.fromLTRB(
+              20,
+              AppSpacing.md,
+              20,
+              AppSpacing.xl,
+            ),
             children: [
               // Prompt card
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(AppSpacing.xl),
                 decoration: BoxDecoration(
                   color: theme.brightness == Brightness.dark
                       ? AppColors.surfaceDarkMuted
                       : Colors.white,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   border: Border.all(color: theme.colorScheme.outlineVariant),
                 ),
                 child: Column(
@@ -267,9 +272,9 @@ class _FeedbackBar extends StatelessWidget {
     return Container(
       padding: EdgeInsets.fromLTRB(
         20,
-        16,
+        AppSpacing.lg,
         20,
-        16 + MediaQuery.of(context).padding.bottom,
+        AppSpacing.lg + MediaQuery.of(context).padding.bottom,
       ),
       decoration: BoxDecoration(
         color: theme.brightness == Brightness.dark
@@ -313,9 +318,9 @@ class _FeedbackBar extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: color,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
               ),
               child: Text(

@@ -18,12 +18,12 @@ class SessionHeader extends StatelessWidget {
     // One line: the bar and the count say where you are, the two chips say
     // how it is going. "Reviewed" and "Remaining" only repeated the count.
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+      padding: const EdgeInsets.fromLTRB(20, AppSpacing.xs, 20, AppSpacing.md),
       child: Row(
         children: [
           Expanded(
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               child: TweenAnimationBuilder<double>(
                 tween: Tween(end: session.progress),
                 duration: const Duration(milliseconds: 350),

@@ -5,6 +5,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/features/learning/domain/entities/lesson_entity.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_palette.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_chrome.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 // ═══════════════════════════════════════════════════════════════
 // 12. Match Word to Meaning
@@ -161,7 +162,10 @@ class _MatchWordMeaningWidgetState extends State<MatchWordMeaningWidget> {
           duration: const Duration(milliseconds: 180),
           constraints: const BoxConstraints(minHeight: 48),
           alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: 10,
+          ),
           decoration: BoxDecoration(
             color: color,
             borderRadius: BorderRadius.circular(22),
@@ -206,7 +210,7 @@ class _MatchWordMeaningWidgetState extends State<MatchWordMeaningWidget> {
     final rows = max(_left.length, _right.length);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+      padding: const EdgeInsets.fromLTRB(20, AppSpacing.xl, 20, AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -239,7 +243,9 @@ class _MatchWordMeaningWidgetState extends State<MatchWordMeaningWidget> {
                       children: [
                         for (var i = 0; i < rows; i++)
                           Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.only(
+                              bottom: AppSpacing.md,
+                            ),
                             child: Row(
                               children: [
                                 Expanded(
@@ -266,10 +272,10 @@ class _MatchWordMeaningWidgetState extends State<MatchWordMeaningWidget> {
           const SizedBox(height: 8),
           // Instruction hint
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppSpacing.md),
             decoration: BoxDecoration(
               color: colors.surface,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Row(
               children: [

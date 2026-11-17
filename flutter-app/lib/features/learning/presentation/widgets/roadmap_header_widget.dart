@@ -40,7 +40,10 @@ class RoadmapHeaderWidget extends StatelessWidget {
           children: [
             // App bar
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: AppSpacing.sm,
+              ),
               child: Row(
                 children: [
                   AppBackButton(
@@ -66,7 +69,12 @@ class RoadmapHeaderWidget extends StatelessWidget {
 
             // Progress stats
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.sm,
+                AppSpacing.lg,
+                AppSpacing.xl,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -106,7 +114,7 @@ class RoadmapHeaderWidget extends StatelessWidget {
 
             // Overall progress bar
             Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16),
+              margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -133,7 +141,7 @@ class RoadmapHeaderWidget extends StatelessWidget {
                   ),
                   SizedBox(height: 8),
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                     child: LinearProgressIndicator(
                       value: roadmap.completionPercentage / 100,
                       minHeight: 8,
@@ -187,10 +195,13 @@ class RoadmapHeaderWidget extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: 6,
+      ),
       decoration: BoxDecoration(
         color: badgeColor.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: badgeColor, width: 1),
       ),
       child: Text(
@@ -216,10 +227,10 @@ class RoadmapHeaderWidget extends StatelessWidget {
         child: Column(
           children: [
             Container(
-              padding: EdgeInsets.all(8),
+              padding: EdgeInsets.all(AppSpacing.sm),
               decoration: BoxDecoration(
                 color: AppColors.surfaceLight,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Icon(icon, color: iconColor, size: 24),
             ),

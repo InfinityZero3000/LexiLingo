@@ -5,6 +5,7 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/cefr_badge.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/review_session_entity.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Flashcard Widget with Flip Animation
 /// Clean Code: Single responsibility - render and animate flashcard
@@ -103,7 +104,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
         color: Theme.of(context).brightness == Brightness.dark
             ? AppColors.surfaceDarkMuted
             : Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.1),
@@ -112,7 +113,10 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
           ),
         ],
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xl,
+        vertical: AppSpacing.xl,
+      ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -260,7 +264,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
         color: Theme.of(context).brightness == Brightness.dark
             ? AppColors.surfaceDarkMuted
             : Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.1),
@@ -269,7 +273,10 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
           ),
         ],
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xl,
+        vertical: AppSpacing.xl,
+      ),
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -280,11 +287,11 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
                   children: [
                     Text(
                       vocabulary.word,
-                      style: const TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.5,
-                      ),
+                      style: Theme.of(context).textTheme.headlineLarge!
+                          .copyWith(
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: -0.5,
+                          ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 8),
@@ -364,7 +371,9 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
                 Text(gloss, style: const TextStyle(fontSize: 18, height: 1.5)),
               if (definitionTr != null)
                 Padding(
-                  padding: EdgeInsets.only(top: gloss != null ? 4 : 0),
+                  padding: EdgeInsets.only(
+                    top: gloss != null ? AppSpacing.xs : 0,
+                  ),
                   child: Text(
                     definitionTr,
                     style: Theme.of(context).textTheme.bodyLarge!.copyWith(
@@ -390,7 +399,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
                   .take(3)
                   .map(
                     (example) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [

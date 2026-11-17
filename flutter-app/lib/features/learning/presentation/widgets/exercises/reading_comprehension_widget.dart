@@ -3,6 +3,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/features/learning/domain/entities/lesson_entity.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_palette.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_chrome.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 // ═══════════════════════════════════════════════════════════════
 // 15. Reading Comprehension
@@ -48,14 +49,13 @@ class ReadingComprehensionWidget extends StatelessWidget {
     final letters = ['A', 'B', 'C', 'D', 'E'];
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+      padding: const EdgeInsets.fromLTRB(20, AppSpacing.xl, 20, AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             'lesson.exercise.readingTitle'.tr(),
-            style: TextStyle(
-              fontSize: 22,
+            style: Theme.of(context).textTheme.titleLarge!.copyWith(
               fontWeight: FontWeight.w800,
               color: colors.textPrimary,
             ),
@@ -71,10 +71,10 @@ class ReadingComprehensionWidget extends StatelessWidget {
             const SizedBox(height: 16),
             Container(
               constraints: const BoxConstraints(maxHeight: 160),
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppSpacing.lg),
               decoration: BoxDecoration(
                 color: colors.card,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 border: Border.all(color: colors.border),
               ),
               child: SingleChildScrollView(
@@ -104,7 +104,7 @@ class ReadingComprehensionWidget extends StatelessWidget {
             final sel = userAnswer == opt;
             final corr = exercise.correctAnswer == opt;
             return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.only(bottom: AppSpacing.md),
               child: ExerciseOptionCard(
                 text: opt,
                 label: i < letters.length ? letters[i] : '${i + 1}',

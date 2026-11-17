@@ -3,6 +3,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/features/learning/domain/entities/lesson_entity.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_palette.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_chrome.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 // ═══════════════════════════════════════════════════════════════
 // 13. Vocabulary Flashcard
@@ -51,16 +52,21 @@ class _VocabularyFlashcardWidgetState extends State<VocabularyFlashcardWidget> {
     // If options is just ["Got it!"], show simple flashcard
     if (options.length == 1 && options[0] == 'Got it!') {
       return SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+        padding: const EdgeInsets.fromLTRB(
+          20,
+          AppSpacing.xl,
+          20,
+          AppSpacing.lg,
+        ),
         child: Column(
           children: [
             // Flashcard
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(AppSpacing.xl),
               decoration: BoxDecoration(
                 color: colors.card,
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
                 border: Border.all(color: colors.border),
                 boxShadow: [
                   BoxShadow(
@@ -76,8 +82,7 @@ class _VocabularyFlashcardWidgetState extends State<VocabularyFlashcardWidget> {
                   const SizedBox(height: 12),
                   Text(
                     word,
-                    style: TextStyle(
-                      fontSize: 28,
+                    style: Theme.of(context).textTheme.headlineMedium!.copyWith(
                       fontWeight: FontWeight.w800,
                       color: colors.primary,
                     ),
@@ -97,7 +102,7 @@ class _VocabularyFlashcardWidgetState extends State<VocabularyFlashcardWidget> {
                   if (hasImageUrl) ...[
                     const SizedBox(height: 16),
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       child: Image.network(
                         imageUrl,
                         height: 140,
@@ -118,11 +123,11 @@ class _VocabularyFlashcardWidgetState extends State<VocabularyFlashcardWidget> {
                 duration: const Duration(milliseconds: 180),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 40,
-                  vertical: 16,
+                  vertical: AppSpacing.lg,
                 ),
                 decoration: BoxDecoration(
                   color: widget.isAnswered ? kCorrect : colors.primary,
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                   boxShadow: [
                     BoxShadow(
                       color: colors.primary.withValues(alpha: 0.3),
@@ -147,7 +152,7 @@ class _VocabularyFlashcardWidgetState extends State<VocabularyFlashcardWidget> {
 
     // Vocab MCQ variant: word + "What is the meaning?" + options
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+      padding: const EdgeInsets.fromLTRB(20, AppSpacing.lg, 20, AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -156,7 +161,7 @@ class _VocabularyFlashcardWidgetState extends State<VocabularyFlashcardWidget> {
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: colors.card,
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(AppRadius.xl),
               border: Border.all(color: colors.border),
             ),
             child: Column(
@@ -178,7 +183,7 @@ class _VocabularyFlashcardWidgetState extends State<VocabularyFlashcardWidget> {
                 if (hasImageUrl) ...[
                   const SizedBox(height: 12),
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     child: Image.network(
                       imageUrl,
                       height: 120,
