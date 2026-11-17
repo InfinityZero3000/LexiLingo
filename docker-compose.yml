@@ -217,6 +217,7 @@ services:
       CONTENT_AGENT_SERVICE_TOKEN: ${CONTENT_AGENT_SERVICE_TOKEN:-}
       REMINDERS_ENABLED: ${REMINDERS_ENABLED:-false}
       REMINDER_DRY_RUN: ${REMINDER_DRY_RUN:-true}
+      REFERENCE_CORPUS_DIR: /data/reference-corpus
     depends_on:
       postgres:
         condition: service_healthy
@@ -224,6 +225,9 @@ services:
         condition: service_healthy
     volumes:
       - ./backend-service/firebase-service-account.json:/run/secrets/firebase-service-account.json:ro
+      # Private reference corpus (never in the repo): written daily by export_reference_corpus.
+      # The host dir must be writable by uid 1000 (appuser).
+      - /var/lib/lexilingo/reference-content/live:/data/reference-corpus
     logging:
       driver: json-file
       options:

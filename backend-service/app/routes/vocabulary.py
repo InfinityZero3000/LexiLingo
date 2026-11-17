@@ -30,6 +30,7 @@ from app.clients.ai_service_client import AIServiceClient
 from app.models.user import User
 from app.crud.vocabulary import USER_SAVED_PLACEHOLDER, vocabulary_crud
 from app.services.streak_service import record_daily_activity, update_user_streak
+from app.services.vocabulary_translation import schedule_enrichment
 from app.schemas.common import MessageResponse
 from app.services.rank_service import rank_proficiency_level
 from app.schemas.vocabulary import (
@@ -459,6 +460,8 @@ async def quick_save_to_collection(
             user_vocab.notes = f"{existing_notes}\n{metadata_line}".strip()
             await db.commit()
             await db.refresh(user_vocab)
+
+    schedule_enrichment(vocab_item)
 
     return QuickSaveVocabularyResponse(
         user_vocabulary=UserVocabularyResponse.model_validate(user_vocab),

@@ -3,6 +3,8 @@
 import csv
 import io
 import json
+import os
+import shutil
 import uuid
 from collections import Counter
 from dataclasses import dataclass, field
@@ -112,6 +114,29 @@ def write_files(files: dict[str, str], root: Path) -> None:
         path = root / rel
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(text, encoding="utf-8")
+
+
+def publish_export(files: dict[str, str], root: Path, meta: dict[str, Any]) -> list[str]:
+    """Replace the export under `root`, keeping the one before it in `root/previous`.
+
+    Everything is written to a staging dir first, so a failure while building leaves the live
+    export untouched; each top-level entry is then swapped with os.replace.
+    """
+    root.mkdir(parents=True, exist_ok=True)
+    staging = root / f".staging-{uuid.uuid4().hex}"
+    try:
+        write_files({**files, "export.json": _dump(meta)}, staging)
+        entries = sorted(p.name for p in staging.iterdir())
+        previous = root / "previous"
+        shutil.rmtree(previous, ignore_errors=True)
+        previous.mkdir()
+        for name in entries:
+            if (root / name).exists():
+                os.replace(root / name, previous / name)
+            os.replace(staging / name, root / name)
+        return entries
+    finally:
+        shutil.rmtree(staging, ignore_errors=True)
 
 
 def seed_csv(vocab_rows: list[dict[str, Any]]) -> str:

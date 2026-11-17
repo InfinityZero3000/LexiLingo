@@ -323,6 +323,16 @@ class Settings(BaseSettings):
     # Set to your load balancer IP(s) in production; leave empty for dev/direct deployments.
     TRUSTED_PROXIES: str = ""
 
+    # Groq (vocabulary auto-translation; comma-separated pool like ai-service)
+    GROQ_API_KEYS: str | None = None
+    GROQ_API_KEY: str | None = None
+    VOCAB_AUTO_TRANSLATE_ENABLED: bool = True
+    # The worker runs concurrency=1 and also sends reminders; keep a sweep to ~1-2 min.
+    VOCAB_ENRICH_SWEEP_BATCH: int = 10
+    VOCAB_ENRICH_DELAY_SECONDS: float = 6.0
+    # Private reference corpus export; empty disables the daily export task.
+    REFERENCE_CORPUS_DIR: str = ""
+
     # Reminder scheduler (disabled by default for safe rollout)
     REMINDERS_ENABLED: bool = False
     REMINDER_DRY_RUN: bool = True
