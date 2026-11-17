@@ -269,6 +269,20 @@ async def _tokens(db: AsyncSession, user_id: uuid.UUID) -> list[str]:
     return [t for t in rows.scalars() if t]
 
 
+_NURTURE_KINDS = (D1, D3, STREAK_RISK, WEEKLY)
+
+
+async def _sent_today(db: AsyncSession) -> int:
+    start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    return (
+        await db.execute(
+            select(func.count())
+            .select_from(Notification)
+            .where(Notification.type.in_(_NURTURE_KINDS), Notification.created_at >= start)
+        )
+    ).scalar_one()
+
+
 async def _deliver(
     db: AsyncSession,
     recipients: list[Recipient],
@@ -279,8 +293,14 @@ async def _deliver(
 ) -> dict[str, int]:
     """Claim, send, and give the claim back when nothing went out."""
     result = {"selected": len(recipients), "sent": 0, "duplicate": 0, "failed": 0, "deferred": 0}
-    batch = recipients[: settings.NURTURE_MAX_PER_RUN]
+    room = max(0, settings.NURTURE_DAILY_BUDGET - await _sent_today(db))
+    batch = recipients[: min(settings.NURTURE_MAX_PER_RUN, room)]
     result["deferred"] = len(recipients) - len(batch)
+    if result["deferred"]:
+        logger.warning(
+            "Nurture %s deferred %d of %d (daily budget %d, room %d)",
+            kind, result["deferred"], len(recipients), settings.NURTURE_DAILY_BUDGET, room,
+        )
     for recipient in batch:
         title, body = copy(recipient)
         if not await _claim(db, recipient, kind, title, body, route):

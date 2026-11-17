@@ -318,3 +318,20 @@ def test_beat_schedules_the_three_tasks():
         "app.tasks.nurture.send_streak_risk_emails",
         "app.tasks.nurture.send_weekly_summaries",
     } <= tasks
+
+
+@pytest.mark.asyncio
+async def test_daily_budget_caps_sends_across_runs_and_reports_the_rest(
+    db_session, live, senders, monkeypatch
+):
+    monkeypatch.setattr(settings, "NURTURE_DAILY_BUDGET", 2)
+    monkeypatch.setattr(settings, "NURTURE_SEND_DELAY_SECONDS", 0)
+    for name in ("b1", "b2", "b3"):
+        await make_user(db_session, name)
+
+    first = await nurture.run_activation(db_session, nurture.D1, NOW)
+    second = await nurture.run_activation(db_session, nurture.D1, NOW)
+
+    assert (first["sent"], first["deferred"]) == (2, 1)
+    assert (second["sent"], second["deferred"]) == (0, 1)
+    assert senders.activation.call_count == 2
