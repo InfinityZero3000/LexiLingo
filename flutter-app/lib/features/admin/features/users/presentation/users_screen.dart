@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/admin_colors.dart';
 import '../../../shared/widgets/admin_shell.dart';
-import '../../../shared/widgets/admin_skeleton.dart';
-import '../../../shared/widgets/stat_card.dart';
-import '../../../shared/widgets/staggered_entrance.dart';
+import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
+import 'package:lexilingo_app/core/widgets/stat_card.dart';
+import 'package:lexilingo_app/core/widgets/stagger_list.dart';
 import '../data/users_repository.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
@@ -130,7 +130,7 @@ class _UsersScreenState extends State<UsersScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(text, style: GoogleFonts.spaceGrotesk()),
-        backgroundColor: error ? AppColors.error : AppColors.success,
+        backgroundColor: error ? AdminColors.error : AdminColors.success,
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -224,7 +224,7 @@ class _UsersScreenState extends State<UsersScreen> {
     final activeCount = _users.where((user) => user.isActive).length;
     final totalXp = _users.fold<int>(0, (sum, user) => sum + user.totalXp);
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AdminColors.background,
       appBar: AppBar(
         leading: IconButton(
           onPressed: AdminShell.openDrawer,
@@ -328,10 +328,10 @@ class _UsersScreenState extends State<UsersScreen> {
                 Padding(
                   padding: const EdgeInsets.only(top: 16),
                   child: ListTile(
-                    tileColor: AppColors.errorContainer,
+                    tileColor: AdminColors.errorContainer,
                     leading: const Icon(
                       Icons.error_outline,
-                      color: AppColors.error,
+                      color: AdminColors.error,
                     ),
                     title: Text(_error!),
                     trailing: TextButton(
@@ -348,7 +348,7 @@ class _UsersScreenState extends State<UsersScreen> {
                       const Icon(
                         Icons.people_outline,
                         size: 48,
-                        color: AppColors.onSurfaceMuted,
+                        color: AdminColors.onSurfaceMuted,
                       ),
                       const SizedBox(height: AppSpacing.md),
                       Text(
@@ -417,7 +417,7 @@ class _UserCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-    color: AppColors.surface,
+    color: AdminColors.surface,
     borderRadius: BorderRadius.circular(AppRadius.lg),
     child: InkWell(
       onTap: onOpen,
@@ -432,7 +432,7 @@ class _UserCard extends StatelessWidget {
             ),
             CircleAvatar(
               radius: 22,
-              backgroundColor: AppColors.primaryContainer,
+              backgroundColor: AdminColors.primaryContainer,
               backgroundImage: (user.avatarUrl?.trim().isNotEmpty ?? false)
                   ? NetworkImage(user.avatarUrl!.trim())
                   : null,
@@ -468,14 +468,14 @@ class _UserCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.onSurfaceMuted,
+                      color: AdminColors.onSurfaceMuted,
                     ),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     '${user.roleLabel} • ${user.totalXp} XP • ${user.streakDays} ngày streak',
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AppColors.onSurfaceVariant,
+                      color: AdminColors.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -485,8 +485,8 @@ class _UserCard extends StatelessWidget {
             Icon(
               user.isActive ? Icons.check_circle : Icons.pause_circle,
               color: user.isActive
-                  ? AppColors.success
-                  : AppColors.onSurfaceMuted,
+                  ? AdminColors.success
+                  : AdminColors.onSurfaceMuted,
               size: 22,
             ),
           ],

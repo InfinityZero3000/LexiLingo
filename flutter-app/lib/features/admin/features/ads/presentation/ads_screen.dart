@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/admin_colors.dart';
 import '../../../shared/widgets/admin_shell.dart';
 import '../data/banner_repository.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
@@ -53,7 +53,7 @@ class _AdsScreenState extends State<AdsScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(text, style: GoogleFonts.spaceGrotesk()),
-        backgroundColor: error ? AppColors.error : AppColors.success,
+        backgroundColor: error ? AdminColors.error : AdminColors.success,
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -103,7 +103,7 @@ class _AdsScreenState extends State<AdsScreen> {
     final payload = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: AdminColors.surface,
       builder: (_) => _BannerForm(item: item),
     );
     if (payload == null) return;
@@ -120,35 +120,35 @@ class _AdsScreenState extends State<AdsScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.background,
+    backgroundColor: AdminColors.background,
     appBar: AppBar(
-      backgroundColor: AppColors.background,
+      backgroundColor: AdminColors.background,
       elevation: 0,
       leading: IconButton(
-        icon: const Icon(Icons.menu_rounded, color: AppColors.onSurface),
+        icon: const Icon(Icons.menu_rounded, color: AdminColors.onSurface),
         onPressed: AdminShell.openDrawer,
       ),
       title: Text(
         'Banner & Ads',
         style: GoogleFonts.spaceGrotesk(
           fontWeight: FontWeight.w700,
-          color: AppColors.onSurface,
+          color: AdminColors.onSurface,
         ),
       ),
     ),
     floatingActionButton: FloatingActionButton.extended(
-      backgroundColor: AppColors.primary,
-      foregroundColor: AppColors.surface,
+      backgroundColor: AdminColors.primary,
+      foregroundColor: AdminColors.surface,
       onPressed: () => _form(),
       icon: const Icon(Icons.add),
       label: const Text('Tạo banner'),
     ),
     body: RefreshIndicator(
-      color: AppColors.primary,
+      color: AdminColors.primary,
       onRefresh: _load,
       child: _loading
           ? const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
+              child: CircularProgressIndicator(color: AdminColors.primary),
             )
           : _error != null
           ? _StateCard(icon: Icons.error_outline, text: _error!, action: _load)
@@ -190,9 +190,9 @@ class _BannerCard extends StatelessWidget {
     margin: const EdgeInsets.only(bottom: 12),
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: AppColors.surface,
+      color: AdminColors.surface,
       borderRadius: BorderRadius.circular(AppRadius.md),
-      border: Border.all(color: AppColors.outline),
+      border: Border.all(color: AdminColors.outline),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -217,7 +217,9 @@ class _BannerCard extends StatelessWidget {
               item.description!,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted),
+              style: GoogleFonts.spaceGrotesk(
+                color: AdminColors.onSurfaceMuted,
+              ),
             ),
           ),
         const SizedBox(height: AppSpacing.sm),
@@ -248,7 +250,7 @@ class _BannerCard extends StatelessWidget {
               constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
               tooltip: 'Xóa',
               onPressed: onDelete,
-              icon: const Icon(Icons.delete_outline, color: AppColors.error),
+              icon: const Icon(Icons.delete_outline, color: AdminColors.error),
             ),
           ],
         ),
@@ -481,14 +483,14 @@ class _Chip extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
     decoration: BoxDecoration(
-      color: AppColors.surfaceContainerLow,
+      color: AdminColors.surfaceContainerLow,
       borderRadius: BorderRadius.circular(AppRadius.lg),
     ),
     child: Text(
       text,
       style: Theme.of(
         context,
-      ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+      ).textTheme.bodySmall?.copyWith(color: AdminColors.onSurfaceMuted),
     ),
   );
 }
@@ -505,12 +507,12 @@ class _StateCard extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 48, color: AppColors.onSurfaceMuted),
+          Icon(icon, size: 48, color: AdminColors.onSurfaceMuted),
           const SizedBox(height: AppSpacing.md),
           Text(
             text,
             textAlign: TextAlign.center,
-            style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted),
+            style: GoogleFonts.spaceGrotesk(color: AdminColors.onSurfaceMuted),
           ),
           if (action != null)
             TextButton(onPressed: action, child: const Text('Thử lại')),

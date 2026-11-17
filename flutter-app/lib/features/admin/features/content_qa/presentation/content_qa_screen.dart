@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/admin_colors.dart';
 import '../../../shared/widgets/admin_shell.dart';
-import '../../../shared/widgets/admin_skeleton.dart';
-import '../../../shared/widgets/staggered_entrance.dart';
+import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
+import 'package:lexilingo_app/core/widgets/stagger_list.dart';
 import '../data/content_qa_repository.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
@@ -63,7 +63,7 @@ class _ContentQaScreenState extends State<ContentQaScreen> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: AppColors.background,
+      backgroundColor: AdminColors.background,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -75,22 +75,22 @@ class _ContentQaScreenState extends State<ContentQaScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AdminColors.background,
       body: RefreshIndicator(
-        color: AppColors.primary,
+        color: AdminColors.primary,
         onRefresh: _load,
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverAppBar(
               pinned: true,
-              backgroundColor: AppColors.background,
+              backgroundColor: AdminColors.background,
               elevation: 0,
               scrolledUnderElevation: 0,
               leading: IconButton(
                 icon: const Icon(
                   Icons.menu_rounded,
-                  color: AppColors.onSurface,
+                  color: AdminColors.onSurface,
                 ),
                 onPressed: AdminShell.openDrawer,
               ),
@@ -98,7 +98,7 @@ class _ContentQaScreenState extends State<ContentQaScreen> {
                 'Content QA Queue',
                 style: GoogleFonts.spaceGrotesk(
                   fontWeight: FontWeight.w700,
-                  color: AppColors.onSurface,
+                  color: AdminColors.onSurface,
                 ),
               ),
             ),
@@ -110,14 +110,14 @@ class _ContentQaScreenState extends State<ContentQaScreen> {
                     'Review generated content',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.onSurface,
+                      color: AdminColors.onSurface,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     '${_queue?.total ?? 0} tracked jobs',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.onSurfaceMuted,
+                      color: AdminColors.onSurfaceMuted,
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -216,10 +216,10 @@ class _QueueFilter extends StatelessWidget {
       '$label  $count',
       style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w600),
     ),
-    selectedColor: AppColors.primaryContainer,
-    checkmarkColor: AppColors.primary,
-    backgroundColor: AppColors.surface,
-    side: const BorderSide(color: AppColors.outlineVariant),
+    selectedColor: AdminColors.primaryContainer,
+    checkmarkColor: AdminColors.primary,
+    backgroundColor: AdminColors.surface,
+    side: const BorderSide(color: AdminColors.outlineVariant),
     materialTapTargetSize: MaterialTapTargetSize.padded,
   );
 }
@@ -232,7 +232,7 @@ class _JobCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-    color: AppColors.surface,
+    color: AdminColors.surface,
     borderRadius: BorderRadius.circular(AppRadius.lg),
     child: InkWell(
       onTap: onTap,
@@ -242,7 +242,7 @@ class _JobCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: AppColors.outlineVariant, width: 0.5),
+          border: Border.all(color: AdminColors.outlineVariant, width: 0.5),
         ),
         child: Row(
           children: [
@@ -258,14 +258,14 @@ class _JobCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.spaceGrotesk(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.onSurface,
+                      color: AdminColors.onSurface,
                     ),
                   ),
                   const SizedBox(height: 5),
                   Text(
                     '${job.id.length > 8 ? job.id.substring(0, 8) : job.id} · ${job.updatedAt == null ? 'Unknown date' : DateFormat.yMMMd().add_jm().format(job.updatedAt!.toLocal())}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.onSurfaceMuted,
+                      color: AdminColors.onSurfaceMuted,
                     ),
                   ),
                 ],
@@ -274,7 +274,7 @@ class _JobCard extends StatelessWidget {
             const SizedBox(width: AppSpacing.sm),
             const Icon(
               Icons.chevron_right_rounded,
-              color: AppColors.onSurfaceMuted,
+              color: AdminColors.onSurfaceMuted,
             ),
           ],
         ),
@@ -291,18 +291,18 @@ class _StatusIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final (color, background, icon) = switch (status) {
       'preview_ready' => (
-        AppColors.warning,
-        AppColors.warningContainer,
+        AdminColors.warning,
+        AdminColors.warningContainer,
         Icons.rate_review_outlined,
       ),
       'failed' => (
-        AppColors.error,
-        AppColors.errorContainer,
+        AdminColors.error,
+        AdminColors.errorContainer,
         Icons.error_outline_rounded,
       ),
       _ => (
-        AppColors.success,
-        AppColors.successContainer,
+        AdminColors.success,
+        AdminColors.successContainer,
         Icons.check_circle_outline_rounded,
       ),
     };
@@ -411,7 +411,7 @@ class _JobDetailSheetState extends State<_JobDetailSheet> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: AdminColors.surface,
       builder: (_) => _EditExerciseSheet(
         repository: widget.repository,
         jobId: widget.job.id,
@@ -439,7 +439,7 @@ class _JobDetailSheetState extends State<_JobDetailSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.outlineVariant,
+                color: AdminColors.outlineVariant,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -452,7 +452,7 @@ class _JobDetailSheetState extends State<_JobDetailSheet> {
                   job.title,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.onSurface,
+                    color: AdminColors.onSurface,
                   ),
                 ),
               ),
@@ -467,7 +467,7 @@ class _JobDetailSheetState extends State<_JobDetailSheet> {
             job.id,
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ).textTheme.bodySmall?.copyWith(color: AdminColors.onSurfaceMuted),
           ),
           const SizedBox(height: 18),
           if (_loading)
@@ -488,7 +488,7 @@ class _JobDetailSheetState extends State<_JobDetailSheet> {
               'Lessons & exercises',
               style: Theme.of(context).textTheme.sectionTitle?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: AppColors.onSurface,
+                color: AdminColors.onSurface,
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -545,9 +545,9 @@ class _Metric extends StatelessWidget {
     width: (MediaQuery.sizeOf(context).width - 48) / 2,
     padding: const EdgeInsets.all(14),
     decoration: BoxDecoration(
-      color: AppColors.surface,
+      color: AdminColors.surface,
       borderRadius: BorderRadius.circular(AppRadius.md),
-      border: Border.all(color: AppColors.outlineVariant, width: 0.5),
+      border: Border.all(color: AdminColors.outlineVariant, width: 0.5),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -556,14 +556,14 @@ class _Metric extends StatelessWidget {
           '$value',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w700,
-            color: AppColors.onSurface,
+            color: AdminColors.onSurface,
           ),
         ),
         Text(
           label,
           style: Theme.of(
             context,
-          ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+          ).textTheme.bodySmall?.copyWith(color: AdminColors.onSurfaceMuted),
         ),
       ],
     ),
@@ -582,9 +582,9 @@ class _Validation extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AdminColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.outlineVariant, width: 0.5),
+        border: Border.all(color: AdminColors.outlineVariant, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -593,7 +593,7 @@ class _Validation extends StatelessWidget {
             'Validation',
             style: GoogleFonts.spaceGrotesk(
               fontWeight: FontWeight.w700,
-              color: AppColors.onSurface,
+              color: AdminColors.onSurface,
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -601,7 +601,7 @@ class _Validation extends StatelessWidget {
             Text(
               '✓ No blocking issues',
               style: GoogleFonts.spaceGrotesk(
-                color: AppColors.success,
+                color: AdminColors.success,
                 fontWeight: FontWeight.w600,
               ),
             )
@@ -628,7 +628,7 @@ class _Issue extends StatelessWidget {
     child: Text(
       '• $message',
       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-        color: error ? AppColors.error : AppColors.warning,
+        color: error ? AdminColors.error : AdminColors.warning,
       ),
     ),
   );
@@ -646,19 +646,19 @@ class _LessonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Card(
-    color: AppColors.surface,
+    color: AdminColors.surface,
     elevation: 0,
     margin: const EdgeInsets.only(bottom: 10),
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(AppRadius.md),
-      side: const BorderSide(color: AppColors.outlineVariant, width: 0.5),
+      side: const BorderSide(color: AdminColors.outlineVariant, width: 0.5),
     ),
     child: ExpansionTile(
       title: Text(
         lesson.title,
         style: GoogleFonts.spaceGrotesk(
           fontWeight: FontWeight.w700,
-          color: AppColors.onSurface,
+          color: AdminColors.onSurface,
         ),
       ),
       subtitle: lesson.outcome == null
@@ -667,9 +667,9 @@ class _LessonCard extends StatelessWidget {
               lesson.outcome!,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AdminColors.onSurfaceMuted,
+              ),
             ),
       children: lesson.exercises
           .map(
@@ -679,7 +679,7 @@ class _LessonCard extends StatelessWidget {
                 exercise.question,
                 style: Theme.of(
                   context,
-                ).textTheme.bodySmall?.copyWith(color: AppColors.onSurface),
+                ).textTheme.bodySmall?.copyWith(color: AdminColors.onSurface),
               ),
               subtitle: Text(
                 [
@@ -687,7 +687,7 @@ class _LessonCard extends StatelessWidget {
                   if (exercise.phase != null) exercise.phase!,
                 ].join(' · '),
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AppColors.onSurfaceMuted,
+                  color: AdminColors.onSurfaceMuted,
                 ),
               ),
               trailing: IconButton(
@@ -741,7 +741,7 @@ class _Actions extends StatelessWidget {
           height: 24,
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            color: AppColors.primary,
+            color: AdminColors.primary,
           ),
         ),
     ],
@@ -843,14 +843,14 @@ class _EditExerciseSheetState extends State<_EditExerciseSheet> {
             'Edit exercise',
             style: Theme.of(context).textTheme.heading?.copyWith(
               fontWeight: FontWeight.w700,
-              color: AppColors.onSurface,
+              color: AdminColors.onSurface,
             ),
           ),
           Text(
             widget.lesson.title,
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ).textTheme.bodySmall?.copyWith(color: AdminColors.onSurfaceMuted),
           ),
           const SizedBox(height: AppSpacing.lg),
           _Field(controller: _question, label: 'Question', lines: 2),
@@ -869,7 +869,7 @@ class _EditExerciseSheetState extends State<_EditExerciseSheet> {
           if (_error != null)
             Text(
               _error!,
-              style: GoogleFonts.spaceGrotesk(color: AppColors.error),
+              style: GoogleFonts.spaceGrotesk(color: AdminColors.error),
             ),
           const SizedBox(height: AppSpacing.md),
           FilledButton(
@@ -894,7 +894,7 @@ class _Field extends StatelessWidget {
     child: TextField(
       controller: controller,
       maxLines: lines,
-      style: GoogleFonts.spaceGrotesk(color: AppColors.onSurface),
+      style: GoogleFonts.spaceGrotesk(color: AdminColors.onSurface),
       decoration: InputDecoration(
         labelText: label,
         alignLabelWithHint: lines > 1,
@@ -919,18 +919,18 @@ class _MessageCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
-      color: AppColors.surface,
+      color: AdminColors.surface,
       borderRadius: BorderRadius.circular(AppRadius.lg),
-      border: Border.all(color: AppColors.outlineVariant, width: 0.5),
+      border: Border.all(color: AdminColors.outlineVariant, width: 0.5),
     ),
     child: Column(
       children: [
-        Icon(icon, size: 32, color: AppColors.onSurfaceMuted),
+        Icon(icon, size: 32, color: AdminColors.onSurfaceMuted),
         const SizedBox(height: AppSpacing.sm),
         Text(
           message,
           textAlign: TextAlign.center,
-          style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted),
+          style: GoogleFonts.spaceGrotesk(color: AdminColors.onSurfaceMuted),
         ),
         if (onAction != null)
           TextButton(onPressed: onAction, child: Text(actionLabel ?? 'Retry')),
@@ -945,7 +945,7 @@ class _QueueSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) => const Column(
     children: [
-      AdminSkeleton(height: 44, borderRadius: 22),
+      SkeletonBox(height: 44, borderRadius: 22),
       SizedBox(height: AppSpacing.lg),
       ListRowSkeleton(),
       ListRowSkeleton(),

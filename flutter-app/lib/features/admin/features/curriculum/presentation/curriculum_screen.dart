@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/admin_colors.dart';
 import '../../../shared/widgets/admin_shell.dart';
-import '../../../shared/widgets/admin_skeleton.dart';
+import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
 import '../data/curriculum_repository.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
@@ -196,20 +196,20 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AdminColors.background,
       body: RefreshIndicator(
         onRefresh: () => _load(_searchCtrl.text.trim()),
         child: CustomScrollView(
           slivers: [
             SliverAppBar(
               pinned: true,
-              backgroundColor: AppColors.background,
+              backgroundColor: AdminColors.background,
               elevation: 0,
               scrolledUnderElevation: 0,
               leading: IconButton(
                 icon: const Icon(
                   Icons.menu_rounded,
-                  color: AppColors.onSurface,
+                  color: AdminColors.onSurface,
                 ),
                 onPressed: AdminShell.openDrawer,
               ),
@@ -219,7 +219,7 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
                     width: 28,
                     height: 28,
                     decoration: BoxDecoration(
-                      color: AppColors.primary,
+                      color: AdminColors.primary,
                       borderRadius: BorderRadius.circular(7),
                     ),
                     child: Icon(
@@ -233,20 +233,11 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
                     'LingoAdmin',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
+                      color: AdminColors.primary,
                     ),
                   ),
                 ],
               ),
-              actions: [
-                IconButton(
-                  icon: const Icon(
-                    Icons.notifications_outlined,
-                    color: AppColors.onSurface,
-                  ),
-                  onPressed: () {},
-                ),
-              ],
             ),
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
@@ -258,7 +249,7 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.08,
-                      color: AppColors.primary,
+                      color: AdminColors.primary,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xs),
@@ -266,7 +257,7 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
                     'Curriculum Overview',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.onSurface,
+                      color: AdminColors.onSurface,
                       letterSpacing: -0.02,
                     ),
                   ),
@@ -274,7 +265,7 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
                   Text(
                     'Manage global language tracks, optimize learning paths across all courses.',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.onSurfaceVariant,
+                      color: AdminColors.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -303,14 +294,14 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: AppColors.errorContainer,
+                        color: AdminColors.errorContainer,
                         borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
                       child: Row(
                         children: [
                           const Icon(
                             Icons.error_outline,
-                            color: AppColors.error,
+                            color: AdminColors.error,
                             size: 18,
                           ),
                           const SizedBox(width: AppSpacing.sm),
@@ -318,7 +309,7 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
                             child: Text(
                               _error!,
                               style: Theme.of(context).textTheme.bodySmall
-                                  ?.copyWith(color: AppColors.error),
+                                  ?.copyWith(color: AdminColors.error),
                             ),
                           ),
                           GestureDetector(
@@ -328,7 +319,7 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
                               style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(
                                     fontWeight: FontWeight.w700,
-                                    color: AppColors.error,
+                                    color: AdminColors.error,
                                   ),
                             ),
                           ),
@@ -359,12 +350,12 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
                       hintText: 'Search courses...',
                       prefixIcon: const Icon(
                         Icons.search,
-                        color: AppColors.onSurfaceMuted,
+                        color: AdminColors.onSurfaceMuted,
                       ),
                       suffixIcon: IconButton(
                         icon: const Icon(
                           Icons.close,
-                          color: AppColors.onSurfaceMuted,
+                          color: AdminColors.onSurfaceMuted,
                         ),
                         onPressed: () {
                           _searchCtrl.clear();
@@ -421,16 +412,16 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
                     'Top Performing Courses',
                     style: Theme.of(context).textTheme.sectionTitle?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.onSurface,
+                      color: AdminColors.onSurface,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
                   if (_loading)
                     const Column(
                       children: [
-                        AdminSkeleton(height: 150),
+                        SkeletonBox(height: 150),
                         SizedBox(height: AppSpacing.md),
-                        AdminSkeleton(height: 150),
+                        SkeletonBox(height: 150),
                       ],
                     )
                   else if (_courses.isEmpty)
@@ -438,7 +429,7 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
                       child: Text(
                         'No courses found',
                         style: GoogleFonts.spaceGrotesk(
-                          color: AppColors.onSurfaceMuted,
+                          color: AdminColors.onSurfaceMuted,
                         ),
                       ),
                     )
@@ -491,20 +482,20 @@ class _SmallStat extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AdminColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.outlineVariant, width: 0.5),
+        border: Border.all(color: AdminColors.outlineVariant, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: AppColors.primary, size: 20),
+          Icon(icon, color: AdminColors.primary, size: 20),
           const SizedBox(height: AppSpacing.sm),
           Text(
             value,
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.w700,
-              color: AppColors.onSurface,
+              color: AdminColors.onSurface,
               letterSpacing: -0.02,
             ),
           ),
@@ -513,7 +504,7 @@ class _SmallStat extends StatelessWidget {
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w700,
               letterSpacing: 0.08,
-              color: AppColors.onSurfaceMuted,
+              color: AdminColors.onSurfaceMuted,
             ),
           ),
         ],
@@ -543,9 +534,9 @@ class _CourseCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AdminColors.surface,
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: AppColors.outlineVariant, width: 0.5),
+          border: Border.all(color: AdminColors.outlineVariant, width: 0.5),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -562,11 +553,11 @@ class _CourseCard extends StatelessWidget {
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => Container(
                     height: 120,
-                    color: AppColors.surfaceContainerHigh,
+                    color: AdminColors.surfaceContainerHigh,
                     child: const Center(
                       child: Icon(
                         Icons.image_outlined,
-                        color: AppColors.onSurfaceMuted,
+                        color: AdminColors.onSurfaceMuted,
                       ),
                     ),
                   ),
@@ -576,7 +567,7 @@ class _CourseCard extends StatelessWidget {
               Container(
                 height: 80,
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceContainerHigh,
+                  color: AdminColors.surfaceContainerHigh,
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(16),
                   ),
@@ -584,7 +575,7 @@ class _CourseCard extends StatelessWidget {
                 child: Center(
                   child: Icon(
                     Icons.menu_book,
-                    color: AppColors.primary,
+                    color: AdminColors.primary,
                     size: 32,
                   ),
                 ),
@@ -628,8 +619,8 @@ class _CourseCard extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           color: course.isPublished
-                              ? AppColors.successContainer
-                              : AppColors.warningContainer,
+                              ? AdminColors.successContainer
+                              : AdminColors.warningContainer,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -639,8 +630,8 @@ class _CourseCard extends StatelessWidget {
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 0.05,
                                 color: course.isPublished
-                                    ? AppColors.success
-                                    : AppColors.warning,
+                                    ? AdminColors.success
+                                    : AdminColors.warning,
                               ),
                         ),
                       ),
@@ -651,7 +642,7 @@ class _CourseCard extends StatelessWidget {
                     course.title,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.onSurface,
+                      color: AdminColors.onSurface,
                     ),
                   ),
                   if (course.description != null) ...[
@@ -661,7 +652,7 @@ class _CourseCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.onSurfaceMuted,
+                        color: AdminColors.onSurfaceMuted,
                       ),
                     ),
                   ],
@@ -686,7 +677,7 @@ class _CourseCard extends StatelessWidget {
                               style: Theme.of(context).textTheme.labelSmall
                                   ?.copyWith(
                                     fontWeight: FontWeight.w700,
-                                    color: AppColors.onSurfaceMuted,
+                                    color: AdminColors.onSurfaceMuted,
                                   ),
                             ),
                             const SizedBox(height: AppSpacing.xs),
@@ -694,9 +685,10 @@ class _CourseCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(4),
                               child: LinearProgressIndicator(
                                 value: course.isPublished ? 1 : 0,
-                                backgroundColor: AppColors.surfaceContainerHigh,
+                                backgroundColor:
+                                    AdminColors.surfaceContainerHigh,
                                 valueColor: const AlwaysStoppedAnimation(
-                                  AppColors.primary,
+                                  AdminColors.primary,
                                 ),
                                 minHeight: 5,
                               ),
@@ -707,7 +699,7 @@ class _CourseCard extends StatelessWidget {
                       const SizedBox(width: AppSpacing.md),
                       Icon(
                         Icons.chevron_right,
-                        color: AppColors.onSurfaceMuted,
+                        color: AdminColors.onSurfaceMuted,
                       ),
                     ],
                   ),
@@ -733,14 +725,14 @@ class _LevelBadge extends StatelessWidget {
         vertical: 3,
       ),
       decoration: BoxDecoration(
-        color: AppColors.primaryContainer,
+        color: AdminColors.primaryContainer,
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         level,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
           fontWeight: FontWeight.w700,
-          color: AppColors.primary,
+          color: AdminColors.primary,
         ),
       ),
     );
@@ -757,13 +749,13 @@ class _InfoChip extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 13, color: AppColors.onSurfaceMuted),
+        Icon(icon, size: 13, color: AdminColors.onSurfaceMuted),
         const SizedBox(width: AppSpacing.xs),
         Text(
           label,
           style: Theme.of(
             context,
-          ).textTheme.labelSmall?.copyWith(color: AppColors.onSurfaceMuted),
+          ).textTheme.labelSmall?.copyWith(color: AdminColors.onSurfaceMuted),
         ),
       ],
     );

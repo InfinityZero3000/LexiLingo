@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/admin_colors.dart';
 import '../../../shared/widgets/admin_shell.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
@@ -10,11 +10,11 @@ class TopicsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AdminColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: AdminColors.background,
         leading: IconButton(
-          icon: const Icon(Icons.menu_rounded, color: AppColors.onSurface),
+          icon: const Icon(Icons.menu_rounded, color: AdminColors.onSurface),
           onPressed: AdminShell.openDrawer,
         ),
         title: Text(
@@ -29,9 +29,9 @@ class TopicsScreen extends StatelessWidget {
             constraints: const BoxConstraints(maxWidth: 420),
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: AdminColors.surface,
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(color: AppColors.outlineVariant, width: 0.5),
+              border: Border.all(color: AdminColors.outlineVariant, width: 0.5),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -40,12 +40,12 @@ class TopicsScreen extends StatelessWidget {
                   width: 52,
                   height: 52,
                   decoration: BoxDecoration(
-                    color: AppColors.primaryContainer,
+                    color: AdminColors.primaryContainer,
                     borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: const Icon(
                     Icons.forum_outlined,
-                    color: AppColors.primary,
+                    color: AdminColors.primary,
                     size: 26,
                   ),
                 ),
@@ -55,7 +55,7 @@ class TopicsScreen extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.sectionTitle?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.onSurface,
+                    color: AdminColors.onSurface,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
@@ -63,7 +63,7 @@ class TopicsScreen extends StatelessWidget {
                   'Conversation topics are managed by the separate AI admin service. Use the web admin until that service is configured for mobile.',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.onSurfaceMuted,
+                    color: AdminColors.onSurfaceMuted,
                   ),
                 ),
               ],

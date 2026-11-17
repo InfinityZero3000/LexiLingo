@@ -7,10 +7,10 @@ import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 
 import '../../../core/constants/api_endpoints.dart';
-import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/admin_colors.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/admin_shell.dart';
-import '../../../shared/widgets/admin_skeleton.dart';
+import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
 import '../../auth/presentation/auth_provider.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
@@ -79,10 +79,10 @@ class _SystemHealthScreenState extends State<SystemHealthScreen> {
       return _restricted(context);
     }
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AdminColors.background,
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.menu_rounded, color: AppColors.onSurface),
+          icon: const Icon(Icons.menu_rounded, color: AdminColors.onSurface),
           onPressed: AdminShell.openDrawer,
         ),
         title: Text(
@@ -94,7 +94,7 @@ class _SystemHealthScreenState extends State<SystemHealthScreen> {
         actions: [
           IconButton(
             tooltip: 'Refresh',
-            icon: const Icon(Icons.refresh, color: AppColors.primary),
+            icon: const Icon(Icons.refresh, color: AdminColors.primary),
             onPressed: _loading ? null : _load,
           ),
         ],
@@ -104,9 +104,9 @@ class _SystemHealthScreenState extends State<SystemHealthScreen> {
               padding: EdgeInsets.all(20),
               child: Column(
                 children: [
-                  AdminSkeleton(height: 180, borderRadius: 16),
+                  SkeletonBox(height: 180, borderRadius: 16),
                   SizedBox(height: AppSpacing.md),
-                  AdminSkeleton(height: 180, borderRadius: 16),
+                  SkeletonBox(height: 180, borderRadius: 16),
                 ],
               ),
             )
@@ -121,7 +121,7 @@ class _SystemHealthScreenState extends State<SystemHealthScreen> {
                   Text(
                     'Live infrastructure status • refreshes every 30 seconds',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.onSurfaceVariant,
+                      color: AdminColors.onSurfaceVariant,
                     ),
                   ),
                   if (_error != null) ...[
@@ -213,16 +213,16 @@ class _SystemHealthScreenState extends State<SystemHealthScreen> {
   }) => Container(
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
-      color: AppColors.surface,
+      color: AdminColors.surface,
       borderRadius: BorderRadius.circular(AppRadius.lg),
-      border: Border.all(color: AppColors.outlineVariant, width: 0.5),
+      border: Border.all(color: AdminColors.outlineVariant, width: 0.5),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Icon(icon, color: AppColors.primary, size: 20),
+            Icon(icon, color: AdminColors.primary, size: 20),
             const SizedBox(width: AppSpacing.sm),
             Text(
               title,
@@ -236,7 +236,7 @@ class _SystemHealthScreenState extends State<SystemHealthScreen> {
         if (children.isEmpty)
           Text(
             emptyText ?? 'No data',
-            style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted),
+            style: GoogleFonts.spaceGrotesk(color: AdminColors.onSurfaceMuted),
           )
         else
           ...children,
@@ -245,11 +245,11 @@ class _SystemHealthScreenState extends State<SystemHealthScreen> {
   );
 
   Widget _restricted(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.background,
+    backgroundColor: AdminColors.background,
     appBar: AppBar(
       leading: AppBackButton(
         icon: Icons.arrow_back,
-        color: AppColors.onSurface,
+        color: AdminColors.onSurface,
         onPressed: () => context.pop(),
       ),
       title: Text(
@@ -263,7 +263,7 @@ class _SystemHealthScreenState extends State<SystemHealthScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.lock_outlined, color: AppColors.error, size: 48),
+            const Icon(Icons.lock_outlined, color: AdminColors.error, size: 48),
             const SizedBox(height: AppSpacing.lg),
             Text(
               'Access Restricted',
@@ -275,9 +275,9 @@ class _SystemHealthScreenState extends State<SystemHealthScreen> {
             Text(
               'System monitoring is only accessible to Super Administrators.',
               textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AdminColors.onSurfaceMuted,
+              ),
             ),
           ],
         ),
@@ -300,28 +300,28 @@ class _HealthStat extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(14),
     decoration: BoxDecoration(
-      color: AppColors.surface,
+      color: AdminColors.surface,
       borderRadius: BorderRadius.circular(AppRadius.md),
-      border: Border.all(color: AppColors.outlineVariant, width: 0.5),
+      border: Border.all(color: AdminColors.outlineVariant, width: 0.5),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Icon(icon, color: AppColors.primary, size: 22),
+        Icon(icon, color: AdminColors.primary, size: 22),
         const SizedBox(height: 6),
         Text(
           label,
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
             fontWeight: FontWeight.w700,
-            color: AppColors.onSurfaceMuted,
+            color: AdminColors.onSurfaceMuted,
           ),
         ),
         Text(
           value,
           style: Theme.of(context).textTheme.heading?.copyWith(
             fontWeight: FontWeight.w700,
-            color: AppColors.onSurface,
+            color: AdminColors.onSurface,
           ),
         ),
       ],
@@ -349,7 +349,7 @@ class _StatusRow extends StatelessWidget {
           ),
           Icon(
             healthy ? Icons.check_circle : Icons.warning_amber_rounded,
-            color: healthy ? AppColors.success : AppColors.warning,
+            color: healthy ? AdminColors.success : AdminColors.warning,
             size: 18,
           ),
           const SizedBox(width: 6),
@@ -357,7 +357,7 @@ class _StatusRow extends StatelessWidget {
             status.replaceAll('_', ' ').toUpperCase(),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w700,
-              color: healthy ? AppColors.success : AppColors.warning,
+              color: healthy ? AdminColors.success : AdminColors.warning,
             ),
           ),
         ],
@@ -380,7 +380,7 @@ class _CountRow extends StatelessWidget {
             label.toUpperCase(),
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ).textTheme.bodySmall?.copyWith(color: AdminColors.onSurfaceMuted),
           ),
         ),
         Text(
@@ -401,19 +401,19 @@ class _InlineWarning extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
-      color: AppColors.errorContainer,
+      color: AdminColors.errorContainer,
       borderRadius: BorderRadius.circular(AppRadius.md),
     ),
     child: Row(
       children: [
-        const Icon(Icons.warning_amber_rounded, color: AppColors.error),
+        const Icon(Icons.warning_amber_rounded, color: AdminColors.error),
         const SizedBox(width: AppSpacing.sm),
         Expanded(
           child: Text(
             message,
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: AppColors.error),
+            ).textTheme.bodySmall?.copyWith(color: AdminColors.error),
           ),
         ),
       ],
@@ -432,7 +432,7 @@ class _ErrorState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline, color: AppColors.error, size: 40),
+          const Icon(Icons.error_outline, color: AdminColors.error, size: 40),
           const SizedBox(height: AppSpacing.md),
           Text(
             'Monitoring unavailable',
@@ -446,7 +446,7 @@ class _ErrorState extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ).textTheme.bodySmall?.copyWith(color: AdminColors.onSurfaceMuted),
           ),
           const SizedBox(height: AppSpacing.lg),
           SizedBox(

@@ -4,7 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/api_endpoints.dart';
-import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/admin_colors.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/admin_shell.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
@@ -166,9 +166,9 @@ class _AchievementsShopScreenState extends State<AchievementsShopScreen> {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AdminColors.background,
         appBar: AppBar(
-          backgroundColor: AppColors.background,
+          backgroundColor: AdminColors.background,
           leading: IconButton(
             icon: const Icon(Icons.menu_rounded),
             onPressed: AdminShell.openDrawer,
@@ -194,7 +194,7 @@ class _AchievementsShopScreenState extends State<AchievementsShopScreen> {
         ),
         body: _loading
             ? const Center(
-                child: CircularProgressIndicator(color: AppColors.primary),
+                child: CircularProgressIndicator(color: AdminColors.primary),
               )
             : _error != null
             ? _MessageState(message: _error!, onRetry: _load)
@@ -297,7 +297,7 @@ class _AchievementsShopScreenState extends State<AchievementsShopScreen> {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.spaceGrotesk(
-                    color: AppColors.onSurfaceMuted,
+                    color: AdminColors.onSurfaceMuted,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
@@ -333,7 +333,7 @@ class _AchievementsShopScreenState extends State<AchievementsShopScreen> {
                       _delete(ApiEndpoints.adminAchievements, item),
                   icon: const Icon(
                     Icons.delete_outline,
-                    color: AppColors.error,
+                    color: AdminColors.error,
                   ),
                 ),
               ),
@@ -423,7 +423,7 @@ class _AchievementsShopScreenState extends State<AchievementsShopScreen> {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.spaceGrotesk(
-                    color: AppColors.onSurfaceMuted,
+                    color: AdminColors.onSurfaceMuted,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
@@ -452,7 +452,7 @@ class _AchievementsShopScreenState extends State<AchievementsShopScreen> {
                   onPressed: () => _delete(ApiEndpoints.adminShop, item),
                   icon: const Icon(
                     Icons.delete_outline,
-                    color: AppColors.error,
+                    color: AdminColors.error,
                   ),
                 ),
               ),
@@ -869,7 +869,7 @@ class _FormSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     decoration: const BoxDecoration(
-      color: AppColors.surface,
+      color: AdminColors.surface,
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
     padding: EdgeInsets.fromLTRB(
@@ -888,7 +888,7 @@ class _FormSheet extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.outline,
+                  color: AdminColors.outline,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -1000,7 +1000,7 @@ class _Card extends StatelessWidget {
   const _Card({required this.child, required this.onTap});
   @override
   Widget build(BuildContext context) => Material(
-    color: AppColors.surface,
+    color: AdminColors.surface,
     borderRadius: BorderRadius.circular(AppRadius.md),
     child: InkWell(
       onTap: onTap,
@@ -1019,7 +1019,7 @@ class _RemoteIcon extends StatelessWidget {
     width: 52,
     height: 52,
     decoration: BoxDecoration(
-      color: AppColors.primaryContainer,
+      color: AdminColors.primaryContainer,
       borderRadius: BorderRadius.circular(AppRadius.md),
     ),
     child: url.startsWith('http')
@@ -1027,9 +1027,9 @@ class _RemoteIcon extends StatelessWidget {
             url,
             fit: BoxFit.contain,
             errorBuilder: (_, __, ___) =>
-                Icon(fallback, color: AppColors.primary),
+                Icon(fallback, color: AdminColors.primary),
           )
-        : Icon(fallback, color: AppColors.primary),
+        : Icon(fallback, color: AdminColors.primary),
   );
 }
 
@@ -1040,14 +1040,14 @@ class _Chip extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 5),
     decoration: BoxDecoration(
-      color: AppColors.surfaceContainerLow,
+      color: AdminColors.surfaceContainerLow,
       borderRadius: BorderRadius.circular(AppRadius.lg),
     ),
     child: Text(
       text,
       style: Theme.of(
         context,
-      ).textTheme.labelSmall?.copyWith(color: AppColors.onSurfaceMuted),
+      ).textTheme.labelSmall?.copyWith(color: AdminColors.onSurfaceMuted),
     ),
   );
 }
@@ -1066,13 +1066,13 @@ class _MessageState extends StatelessWidget {
           const Icon(
             Icons.cloud_off_outlined,
             size: 48,
-            color: AppColors.onSurfaceMuted,
+            color: AdminColors.onSurfaceMuted,
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
             message,
             textAlign: TextAlign.center,
-            style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted),
+            style: GoogleFonts.spaceGrotesk(color: AdminColors.onSurfaceMuted),
           ),
           const SizedBox(height: AppSpacing.md),
           SizedBox(
@@ -1097,11 +1097,11 @@ class _EmptyState extends StatelessWidget {
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 52, color: AppColors.onSurfaceMuted),
+        Icon(icon, size: 52, color: AdminColors.onSurfaceMuted),
         const SizedBox(height: AppSpacing.md),
         Text(
           text,
-          style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted),
+          style: GoogleFonts.spaceGrotesk(color: AdminColors.onSurfaceMuted),
         ),
       ],
     ),

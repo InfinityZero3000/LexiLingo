@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/admin_colors.dart';
 import '../../../shared/widgets/admin_shell.dart';
-import '../../../shared/widgets/admin_skeleton.dart';
+import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
 import '../data/notification_campaign_repository.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
@@ -120,9 +120,9 @@ class _NotificationCampaignScreenState
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.background,
+    backgroundColor: AdminColors.background,
     appBar: AppBar(
-      backgroundColor: AppColors.background,
+      backgroundColor: AdminColors.background,
       leading: IconButton(
         icon: const Icon(Icons.menu_rounded),
         onPressed: AdminShell.openDrawer,
@@ -131,7 +131,7 @@ class _NotificationCampaignScreenState
         'Notification Campaigns',
         style: GoogleFonts.spaceGrotesk(
           fontWeight: FontWeight.w700,
-          color: AppColors.onSurface,
+          color: AdminColors.onSurface,
         ),
       ),
       actions: [
@@ -144,7 +144,7 @@ class _NotificationCampaignScreenState
     ),
     floatingActionButton: FloatingActionButton(
       onPressed: _create,
-      backgroundColor: AppColors.primaryBright,
+      backgroundColor: AdminColors.primaryBright,
       child: const Icon(Icons.add_rounded),
     ),
     body: RefreshIndicator(onRefresh: _load, child: _body()),
@@ -155,9 +155,9 @@ class _NotificationCampaignScreenState
       return ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          AdminSkeleton(height: 112),
+          SkeletonBox(height: 112),
           const SizedBox(height: AppSpacing.md),
-          AdminSkeleton(height: 112),
+          SkeletonBox(height: 112),
         ],
       );
     }
@@ -165,11 +165,11 @@ class _NotificationCampaignScreenState
       return ListView(
         children: [
           SizedBox(height: 160),
-          Icon(Icons.error_outline, size: 44, color: AppColors.error),
+          Icon(Icons.error_outline, size: 44, color: AdminColors.error),
           Center(
             child: Text(
               'Could not load campaigns',
-              style: GoogleFonts.spaceGrotesk(color: AppColors.error),
+              style: GoogleFonts.spaceGrotesk(color: AdminColors.error),
             ),
           ),
           Center(
@@ -185,12 +185,14 @@ class _NotificationCampaignScreenState
           const Icon(
             Icons.campaign_outlined,
             size: 48,
-            color: AppColors.onSurfaceMuted,
+            color: AdminColors.onSurfaceMuted,
           ),
           Center(
             child: Text(
               'No campaigns yet',
-              style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted),
+              style: GoogleFonts.spaceGrotesk(
+                color: AdminColors.onSurfaceMuted,
+              ),
             ),
           ),
         ],
@@ -219,10 +221,10 @@ class _CampaignCard extends StatelessWidget {
     _ => Icons.notifications_outlined,
   };
   Color get _statusColor => switch (job.status) {
-    'completed' => AppColors.success,
-    'failed' => AppColors.error,
-    'sending' || 'preview_ready' => AppColors.warning,
-    _ => AppColors.primary,
+    'completed' => AdminColors.success,
+    'failed' => AdminColors.error,
+    'sending' || 'preview_ready' => AdminColors.warning,
+    _ => AdminColors.primary,
   };
   String _date(String value) {
     final d = DateTime.tryParse(value)?.toLocal();
@@ -235,12 +237,12 @@ class _CampaignCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(14),
     decoration: BoxDecoration(
-      color: AppColors.surface,
+      color: AdminColors.surface,
       borderRadius: BorderRadius.circular(AppRadius.md),
       border: Border.all(
         color: job.needsAttention
-            ? AppColors.primary
-            : AppColors.outlineVariant,
+            ? AdminColors.primary
+            : AdminColors.outlineVariant,
         width: 0.5,
       ),
     ),
@@ -253,10 +255,10 @@ class _CampaignCard extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: AppColors.primaryContainer,
+                color: AdminColors.primaryContainer,
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
-              child: Icon(_icon, color: AppColors.primary),
+              child: Icon(_icon, color: AdminColors.primary),
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
@@ -267,21 +269,21 @@ class _CampaignCard extends StatelessWidget {
                     job.jobType.replaceAll('_', ' '),
                     style: GoogleFonts.spaceGrotesk(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.onSurface,
+                      color: AdminColors.onSurface,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     'Created ${_date(job.createdAt)}',
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AppColors.onSurfaceMuted,
+                      color: AdminColors.onSurfaceMuted,
                     ),
                   ),
                   if (job.scheduledAt != null)
                     Text(
                       'Scheduled ${_date(job.scheduledAt!)}',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: AppColors.onSurfaceMuted,
+                        color: AdminColors.onSurfaceMuted,
                       ),
                     ),
                 ],
@@ -307,7 +309,7 @@ class _CampaignCard extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           LinearProgressIndicator(
             value: job.progressPercent / 100,
-            color: AppColors.primary,
+            color: AdminColors.primary,
           ),
         ],
         if (job.errorMessage != null) ...[
@@ -316,7 +318,7 @@ class _CampaignCard extends StatelessWidget {
             job.errorMessage!,
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: AppColors.error),
+            ).textTheme.bodySmall?.copyWith(color: AdminColors.error),
           ),
         ],
         if (job.canApply || job.canCancel || job.canRetry) ...[

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/admin_colors.dart';
 import '../../../core/constants/api_endpoints.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/admin_shell.dart';
-import '../../../shared/widgets/admin_skeleton.dart';
+import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class AdminManagementScreen extends StatefulWidget {
@@ -199,7 +199,7 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
                   dialogError!,
                   style: Theme.of(
                     context,
-                  ).textTheme.bodySmall?.copyWith(color: AppColors.error),
+                  ).textTheme.bodySmall?.copyWith(color: AdminColors.error),
                 ),
               ],
             ],
@@ -287,12 +287,12 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
     final list = _filtered;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AdminColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: AdminColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.menu_rounded, color: AppColors.onSurface),
+          icon: const Icon(Icons.menu_rounded, color: AdminColors.onSurface),
           onPressed: AdminShell.openDrawer,
         ),
         title: Text(
@@ -307,7 +307,7 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
               vertical: 4,
             ),
             decoration: BoxDecoration(
-              color: AppColors.primary,
+              color: AdminColors.primary,
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
@@ -339,12 +339,12 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
               decoration: InputDecoration(
                 hintText: 'Search admins…',
                 hintStyle: GoogleFonts.spaceGrotesk(
-                  color: AppColors.onSurfaceMuted,
+                  color: AdminColors.onSurfaceMuted,
                 ),
                 prefixIcon: const Icon(
                   Icons.search,
                   size: 18,
-                  color: AppColors.onSurfaceMuted,
+                  color: AdminColors.onSurfaceMuted,
                 ),
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(vertical: 10),
@@ -359,14 +359,14 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
                 _summaryChip(
                   icon: Icons.manage_accounts,
                   label: '${_admins.length} admins',
-                  color: AppColors.primaryBright,
+                  color: AdminColors.primaryBright,
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 _summaryChip(
                   icon: Icons.admin_panel_settings,
                   label:
                       '${_admins.where((a) => _roleLevel(a) >= 2).length} super',
-                  color: AppColors.primary,
+                  color: AdminColors.primary,
                 ),
               ],
             ),
@@ -375,7 +375,7 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
             child: _loading
                 ? const Padding(
                     padding: EdgeInsets.all(16),
-                    child: AdminSkeleton(height: 220, borderRadius: 16),
+                    child: SkeletonBox(height: 220, borderRadius: 16),
                   )
                 : _error != null
                 ? _ErrorState(message: _error!, onRetry: _load)
@@ -384,7 +384,7 @@ class _AdminManagementScreenState extends State<AdminManagementScreen> {
                     child: Text(
                       'No admins found',
                       style: GoogleFonts.spaceGrotesk(
-                        color: AppColors.onSurfaceMuted,
+                        color: AdminColors.onSurfaceMuted,
                       ),
                     ),
                   )
@@ -472,9 +472,9 @@ class _AdminCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AdminColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.outline, width: 0.5),
+        border: Border.all(color: AdminColors.outline, width: 0.5),
       ),
       child: Column(
         children: [
@@ -484,12 +484,12 @@ class _AdminCard extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 22,
-                    backgroundColor: AppColors.primaryContainer,
+                    backgroundColor: AdminColors.primaryContainer,
                     child: Text(
                       initials,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
+                        color: AdminColors.primary,
                       ),
                     ),
                   ),
@@ -520,7 +520,7 @@ class _AdminCard extends StatelessWidget {
                       name,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: AppColors.onSurface,
+                        color: AdminColors.onSurface,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -528,7 +528,7 @@ class _AdminCard extends StatelessWidget {
                     Text(
                       email,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: AppColors.onSurfaceMuted,
+                        color: AdminColors.onSurfaceMuted,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -540,8 +540,8 @@ class _AdminCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                 decoration: BoxDecoration(
                   color: isSuperAdmin
-                      ? AppColors.primary
-                      : AppColors.primaryContainer,
+                      ? AdminColors.primary
+                      : AdminColors.primaryContainer,
                   borderRadius: BorderRadius.circular(5),
                 ),
                 child: Text(
@@ -550,7 +550,7 @@ class _AdminCard extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                     color: isSuperAdmin
                         ? Theme.of(context).colorScheme.onPrimary
-                        : AppColors.primary,
+                        : AdminColors.primary,
                     letterSpacing: 0.4,
                   ),
                 ),
@@ -563,7 +563,7 @@ class _AdminCard extends StatelessWidget {
               const Icon(
                 Icons.login,
                 size: 14,
-                color: AppColors.onSurfaceMuted,
+                color: AdminColors.onSurfaceMuted,
               ),
               const SizedBox(width: 6),
               Expanded(
@@ -572,20 +572,20 @@ class _AdminCard extends StatelessWidget {
                       ? 'Never signed in'
                       : 'Last login ${lastLogin.split('T').first}',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: AppColors.onSurfaceMuted,
+                    color: AdminColors.onSurfaceMuted,
                   ),
                 ),
               ),
               Text(
                 provider,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AppColors.onSurfaceMuted,
+                  color: AdminColors.onSurfaceMuted,
                 ),
               ),
             ],
           ),
           const SizedBox(height: AppSpacing.md),
-          const Divider(height: 1, color: AppColors.outline),
+          const Divider(height: 1, color: AdminColors.outline),
           const SizedBox(height: 10),
           Row(
             children: [
@@ -595,7 +595,9 @@ class _AdminCard extends StatelessWidget {
                       ? Icons.arrow_downward
                       : Icons.arrow_upward,
                   label: isSuperAdmin ? 'Demote' : 'Promote',
-                  color: isSuperAdmin ? AppColors.warning : AppColors.success,
+                  color: isSuperAdmin
+                      ? AdminColors.warning
+                      : AdminColors.success,
                   onTap: () => onChangeRole(isSuperAdmin ? 1 : 2),
                 ),
               ),
@@ -604,7 +606,7 @@ class _AdminCard extends StatelessWidget {
                 child: _ActionButton(
                   icon: isActive ? Icons.block : Icons.check_circle_outline,
                   label: isActive ? 'Deactivate' : 'Activate',
-                  color: isActive ? AppColors.error : AppColors.success,
+                  color: isActive ? AdminColors.error : AdminColors.success,
                   onTap: onToggleStatus,
                 ),
               ),
@@ -671,7 +673,7 @@ class _ErrorState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline, color: AppColors.error, size: 40),
+          const Icon(Icons.error_outline, color: AdminColors.error, size: 40),
           const SizedBox(height: AppSpacing.md),
           Text(
             'Could not load admins',
@@ -685,7 +687,7 @@ class _ErrorState extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ).textTheme.bodySmall?.copyWith(color: AdminColors.onSurfaceMuted),
           ),
           const SizedBox(height: AppSpacing.lg),
           SizedBox(

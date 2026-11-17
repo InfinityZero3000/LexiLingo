@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lexilingo_app/core/widgets/app_back_button.dart';
-import '../../../core/constants/app_colors.dart';
-import '../../../shared/widgets/admin_skeleton.dart';
+import '../../../core/constants/admin_colors.dart';
+import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
 import '../data/curriculum_repository.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
@@ -240,7 +240,7 @@ class _UnitsLessonsScreenState extends State<UnitsLessonsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AdminColors.background,
       appBar: AppBar(
         title: Text(
           'Lessons in ${widget.unitTitle}',
@@ -250,7 +250,7 @@ class _UnitsLessonsScreenState extends State<UnitsLessonsScreen> {
         ),
         leading: AppBackButton(
           icon: Icons.arrow_back,
-          color: AppColors.onSurface,
+          color: AdminColors.onSurface,
           onPressed: () => context.pop(),
         ),
         actions: [
@@ -266,9 +266,9 @@ class _UnitsLessonsScreenState extends State<UnitsLessonsScreen> {
               padding: EdgeInsets.all(20),
               child: Column(
                 children: [
-                  AdminSkeleton(height: 100),
+                  SkeletonBox(height: 100),
                   SizedBox(height: AppSpacing.md),
-                  AdminSkeleton(height: 100),
+                  SkeletonBox(height: 100),
                 ],
               ),
             )
@@ -279,13 +279,16 @@ class _UnitsLessonsScreenState extends State<UnitsLessonsScreen> {
                     padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
                     child: Row(
                       children: [
-                        const Icon(Icons.error_outline, color: AppColors.error),
+                        const Icon(
+                          Icons.error_outline,
+                          color: AdminColors.error,
+                        ),
                         const SizedBox(width: AppSpacing.sm),
                         Expanded(
                           child: Text(
                             _error!,
                             style: GoogleFonts.spaceGrotesk(
-                              color: AppColors.error,
+                              color: AdminColors.error,
                             ),
                           ),
                         ),
@@ -318,7 +321,7 @@ class _UnitsLessonsScreenState extends State<UnitsLessonsScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 16),
                               decoration: BoxDecoration(
                                 border: Border.all(
-                                  color: AppColors.outlineVariant,
+                                  color: AdminColors.outlineVariant,
                                   width: 1.5,
                                   style: BorderStyle.solid,
                                 ),
@@ -333,7 +336,7 @@ class _UnitsLessonsScreenState extends State<UnitsLessonsScreen> {
                                     const Icon(
                                       Icons.add,
                                       size: 16,
-                                      color: AppColors.onSurfaceMuted,
+                                      color: AdminColors.onSurfaceMuted,
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
@@ -344,7 +347,7 @@ class _UnitsLessonsScreenState extends State<UnitsLessonsScreen> {
                                           ?.copyWith(
                                             fontWeight: FontWeight.w700,
                                             letterSpacing: 0.05,
-                                            color: AppColors.onSurfaceMuted,
+                                            color: AdminColors.onSurfaceMuted,
                                           ),
                                     ),
                                   ],
@@ -405,10 +408,12 @@ class _LessonCard extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AdminColors.surface,
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
-            color: isExpanded ? AppColors.primary : AppColors.outlineVariant,
+            color: isExpanded
+                ? AdminColors.primary
+                : AdminColors.outlineVariant,
             width: isExpanded ? 1.5 : 0.5,
           ),
         ),
@@ -424,8 +429,8 @@ class _LessonCard extends StatelessWidget {
                     height: 32,
                     decoration: BoxDecoration(
                       color: isExpanded
-                          ? AppColors.primary
-                          : AppColors.primaryContainer,
+                          ? AdminColors.primary
+                          : AdminColors.primaryContainer,
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                     child: Center(
@@ -435,7 +440,7 @@ class _LessonCard extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                           color: isExpanded
                               ? Theme.of(context).colorScheme.onPrimary
-                              : AppColors.primary,
+                              : AdminColors.primary,
                         ),
                       ),
                     ),
@@ -450,7 +455,7 @@ class _LessonCard extends StatelessWidget {
                           style: Theme.of(context).textTheme.bodyLarge
                               ?.copyWith(
                                 fontWeight: FontWeight.w700,
-                                color: AppColors.onSurface,
+                                color: AdminColors.onSurface,
                               ),
                         ),
                         if (lesson.description != null)
@@ -459,7 +464,7 @@ class _LessonCard extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: AppColors.onSurfaceMuted),
+                                ?.copyWith(color: AdminColors.onSurfaceMuted),
                           ),
                       ],
                     ),
@@ -471,14 +476,14 @@ class _LessonCard extends StatelessWidget {
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: AppColors.primaryContainer,
+                      color: AdminColors.primaryContainer,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
                       lesson.lessonType.toUpperCase(),
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
+                        color: AdminColors.primary,
                         letterSpacing: 0.05,
                       ),
                     ),
@@ -525,7 +530,7 @@ class _LessonCard extends StatelessWidget {
                                     ?.copyWith(
                                       fontWeight: FontWeight.w700,
                                       letterSpacing: 0.08,
-                                      color: AppColors.onSurfaceMuted,
+                                      color: AdminColors.onSurfaceMuted,
                                     ),
                               ),
                               const SizedBox(height: AppSpacing.sm),
@@ -552,7 +557,7 @@ class _LessonCard extends StatelessWidget {
                                     ?.copyWith(
                                       fontWeight: FontWeight.w700,
                                       letterSpacing: 0.08,
-                                      color: AppColors.onSurfaceMuted,
+                                      color: AdminColors.onSurfaceMuted,
                                     ),
                               ),
                               const SizedBox(height: AppSpacing.sm),
@@ -562,7 +567,7 @@ class _LessonCard extends StatelessWidget {
                                     '${lesson.xpReward} XP',
                                     style: Theme.of(context).textTheme.bodySmall
                                         ?.copyWith(
-                                          color: AppColors.onSurfaceVariant,
+                                          color: AdminColors.onSurfaceVariant,
                                         ),
                                   ),
                                   const SizedBox(width: AppSpacing.xs),
@@ -572,7 +577,7 @@ class _LessonCard extends StatelessWidget {
                                       vertical: 2,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: AppColors.warningContainer,
+                                      color: AdminColors.warningContainer,
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Text(
@@ -582,7 +587,7 @@ class _LessonCard extends StatelessWidget {
                                           .labelSmall
                                           ?.copyWith(
                                             fontWeight: FontWeight.w700,
-                                            color: AppColors.warning,
+                                            color: AdminColors.warning,
                                           ),
                                     ),
                                   ),
@@ -595,9 +600,9 @@ class _LessonCard extends StatelessWidget {
                                   value:
                                       lesson.passThreshold.clamp(0, 100) / 100,
                                   backgroundColor:
-                                      AppColors.surfaceContainerHigh,
+                                      AdminColors.surfaceContainerHigh,
                                   valueColor: AlwaysStoppedAnimation(
-                                    AppColors.warning,
+                                    AdminColors.warning,
                                   ),
                                   minHeight: 5,
                                 ),
@@ -627,14 +632,14 @@ class _ModuleRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 14, color: AppColors.primary),
+        Icon(icon, size: 14, color: AdminColors.primary),
         const SizedBox(width: 6),
         Expanded(
           child: Text(
             label,
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: AppColors.onSurface),
+            ).textTheme.bodySmall?.copyWith(color: AdminColors.onSurface),
           ),
         ),
       ],

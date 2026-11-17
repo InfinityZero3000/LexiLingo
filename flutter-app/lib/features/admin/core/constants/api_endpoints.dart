@@ -14,6 +14,7 @@ class ApiEndpoints {
   static const String refreshToken = '/auth/refresh';
   static const String logout = '/auth/logout';
   static const String me = '/users/me';
+  static const String myPermissions = '/admin/rbac/me/permissions';
 
   // Dashboard analytics — raw JSON (no ApiResponse wrapper)
   static const String analyticsKpis = '/admin/analytics/dashboard/kpis';

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/admin_colors.dart';
 import '../../../shared/widgets/admin_shell.dart';
-import '../../../shared/widgets/admin_skeleton.dart';
+import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
 import '../data/ranking_agent_repository.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
@@ -46,7 +46,7 @@ class _RankingAgentScreenState extends State<RankingAgentScreen> {
     final payload = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: AdminColors.surface,
       builder: (_) => const _CreateJobSheet(),
     );
     if (payload == null) return;
@@ -129,14 +129,14 @@ class _RankingAgentScreenState extends State<RankingAgentScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(text, style: GoogleFonts.spaceGrotesk()),
-        backgroundColor: error ? AppColors.error : AppColors.success,
+        backgroundColor: error ? AdminColors.error : AdminColors.success,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.background,
+    backgroundColor: AdminColors.background,
     floatingActionButton: FloatingActionButton.extended(
       onPressed: _create,
       icon: const Icon(Icons.add),
@@ -146,25 +146,28 @@ class _RankingAgentScreenState extends State<RankingAgentScreen> {
       ),
     ),
     body: RefreshIndicator(
-      color: AppColors.primary,
+      color: AdminColors.primary,
       onRefresh: _load,
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           SliverAppBar(
             pinned: true,
-            backgroundColor: AppColors.background,
+            backgroundColor: AdminColors.background,
             elevation: 0,
             scrolledUnderElevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.menu_rounded, color: AppColors.onSurface),
+              icon: const Icon(
+                Icons.menu_rounded,
+                color: AdminColors.onSurface,
+              ),
               onPressed: AdminShell.openDrawer,
             ),
             title: Text(
               'Ranking Agent',
               style: GoogleFonts.spaceGrotesk(
                 fontWeight: FontWeight.w700,
-                color: AppColors.onSurface,
+                color: AdminColors.onSurface,
               ),
             ),
             actions: [
@@ -182,16 +185,16 @@ class _RankingAgentScreenState extends State<RankingAgentScreen> {
                 Text(
                   'Tự động hoá league reset, XP events và phát thành tích hàng loạt.',
                   style: GoogleFonts.spaceGrotesk(
-                    color: AppColors.onSurfaceMuted,
+                    color: AdminColors.onSurfaceMuted,
                   ),
                 ),
                 const SizedBox(height: 20),
                 if (_loading && _jobs.isEmpty)
                   const Column(
                     children: [
-                      AdminSkeleton(height: 120),
+                      SkeletonBox(height: 120),
                       SizedBox(height: AppSpacing.md),
-                      AdminSkeleton(height: 120),
+                      SkeletonBox(height: 120),
                     ],
                   )
                 else if (_error != null)
@@ -245,9 +248,9 @@ class _JobCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AdminColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.outline),
+        border: Border.all(color: AdminColors.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -258,10 +261,10 @@ class _JobCard extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: AppColors.primaryContainer,
+                  color: AdminColors.primaryContainer,
                   borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
-                child: Icon(icon, color: AppColors.primary),
+                child: Icon(icon, color: AdminColors.primary),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
@@ -272,13 +275,13 @@ class _JobCard extends StatelessWidget {
                       _typeLabel(job.jobType),
                       style: GoogleFonts.spaceGrotesk(
                         fontWeight: FontWeight.w700,
-                        color: AppColors.onSurface,
+                        color: AdminColors.onSurface,
                       ),
                     ),
                     Text(
                       _date(job.createdAt),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.onSurfaceMuted,
+                        color: AdminColors.onSurfaceMuted,
                       ),
                     ),
                   ],
@@ -291,15 +294,15 @@ class _JobCard extends StatelessWidget {
             const SizedBox(height: 14),
             LinearProgressIndicator(
               value: job.progressPercent / 100,
-              color: AppColors.primary,
-              backgroundColor: AppColors.surfaceDim,
+              color: AdminColors.primary,
+              backgroundColor: AdminColors.surfaceDim,
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(
               '${job.progress['stage'] ?? ''} • ${job.progressPercent}%',
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AdminColors.onSurfaceMuted,
+              ),
             ),
           ],
           if (job.warnings.isNotEmpty || job.blockingErrors.isNotEmpty) ...[
@@ -310,8 +313,8 @@ class _JobCard extends StatelessWidget {
                   : '${job.warnings.length} cảnh báo',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: job.blockingErrors.isNotEmpty
-                    ? AppColors.error
-                    : AppColors.warning,
+                    ? AdminColors.error
+                    : AdminColors.warning,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -338,7 +341,7 @@ class _JobCard extends StatelessWidget {
                   onPressed: () => onAction('cancel'),
                   style: TextButton.styleFrom(
                     minimumSize: const Size(44, 44),
-                    foregroundColor: AppColors.error,
+                    foregroundColor: AdminColors.error,
                   ),
                   child: const Text('Huỷ'),
                 ),
@@ -363,11 +366,11 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = switch (status) {
-      'completed' => AppColors.success,
-      'failed' => AppColors.error,
-      'preview_ready' => AppColors.warning,
-      'cancelled' => AppColors.onSurfaceMuted,
-      _ => AppColors.primary,
+      'completed' => AdminColors.success,
+      'failed' => AdminColors.error,
+      'preview_ready' => AdminColors.warning,
+      'cancelled' => AdminColors.onSurfaceMuted,
+      _ => AdminColors.primary,
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
@@ -763,12 +766,12 @@ class _PreviewDialog extends StatelessWidget {
             if (preview.warnings.isNotEmpty)
               Text(
                 'Cảnh báo:\n${preview.warnings.join('\n')}',
-                style: const TextStyle(color: AppColors.warning),
+                style: const TextStyle(color: AdminColors.warning),
               ),
             if (preview.blockingErrors.isNotEmpty)
               Text(
                 'Lỗi chặn:\n${preview.blockingErrors.join('\n')}',
-                style: const TextStyle(color: AppColors.error),
+                style: const TextStyle(color: AdminColors.error),
               ),
           ],
         ),
@@ -797,12 +800,12 @@ class _StateCard extends StatelessWidget {
       padding: const EdgeInsets.all(40),
       child: Column(
         children: [
-          Icon(icon, size: 44, color: AppColors.onSurfaceMuted),
+          Icon(icon, size: 44, color: AdminColors.onSurfaceMuted),
           const SizedBox(height: AppSpacing.md),
           Text(
             message,
             textAlign: TextAlign.center,
-            style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted),
+            style: GoogleFonts.spaceGrotesk(color: AdminColors.onSurfaceMuted),
           ),
           if (action != null)
             TextButton(

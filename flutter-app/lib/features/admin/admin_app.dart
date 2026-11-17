@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:provider/provider.dart';
+import 'core/permissions/admin_permissions.dart';
 import 'core/router/app_router.dart';
-import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/auth_provider.dart';
 import 'shared/admin_exit_scope.dart';
 
-/// Full-screen admin panel embedded inside the main flutter-app.
-/// Opened via Navigator.push from profile_page when the user is an admin.
-///
-/// FROZEN: this is a mobile port of the web admin (admin-service) and now trails
-/// it. New admin features go to the web admin; change this module only to keep
-/// it building and safe. If a mobile companion is ever wanted, rebuild a small
-/// one (approve jobs, read the audit log) on the shared ApiClient, Theme and i18n.
+/// Light only until every admin screen has stopped reading the fixed colours
+/// in `AdminColors`; those do not follow a dark theme, so following the system
+/// here would put dark text on dark cards. Shell, login and the shared widgets
+/// already read the theme, and `AppTheme.darkTheme` is wired as `darkTheme`.
+const adminThemeMode = ThemeMode.light;
+
+/// Full-screen admin panel embedded in the main app. Opened with
+/// Navigator.push from the profile page when the user is an admin. It keeps
+/// its own session, router and permission set; theme, tokens and widgets come
+/// from the app's `core/`.
 class AdminApp extends StatefulWidget {
   const AdminApp({super.key});
 
@@ -21,19 +25,35 @@ class AdminApp extends StatefulWidget {
 }
 
 class _AdminAppState extends State<AdminApp> {
-  late final AuthProvider _authProvider;
-  late final _router = createRouter(_authProvider);
+  late final AuthProvider _authProvider = AuthProvider();
+  late final AdminPermissions _permissions = AdminPermissions();
+  late final _router = createRouter(_authProvider, _permissions);
+  AuthState? _lastAuthState;
 
   @override
   void initState() {
     super.initState();
-    _authProvider = AuthProvider();
+    _authProvider.addListener(_syncPermissions);
     _authProvider.init();
+  }
+
+  void _syncPermissions() {
+    final state = _authProvider.state;
+    if (state == _lastAuthState) return;
+    _lastAuthState = state;
+    if (state == AuthState.authenticated) {
+      _permissions.load();
+    } else if (state == AuthState.unauthenticated) {
+      _permissions.clear();
+    }
   }
 
   @override
   void dispose() {
-    _authProvider.dispose();
+    _authProvider
+      ..removeListener(_syncPermissions)
+      ..dispose();
+    _permissions.dispose();
     super.dispose();
   }
 
@@ -46,12 +66,17 @@ class _AdminAppState extends State<AdminApp> {
       ),
       child: AdminExitScope(
         onExit: () => Navigator.of(context).maybePop(),
-        child: ChangeNotifierProvider.value(
-          value: _authProvider,
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider.value(value: _authProvider),
+            ChangeNotifierProvider.value(value: _permissions),
+          ],
           child: MaterialApp.router(
             title: 'LexiLingo Admin',
             debugShowCheckedModeBanner: false,
-            theme: AppTheme.light,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: adminThemeMode,
             routerConfig: _router,
           ),
         ),

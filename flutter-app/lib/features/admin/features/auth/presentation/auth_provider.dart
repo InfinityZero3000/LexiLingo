@@ -1,20 +1,28 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 import 'package:lexilingo_app/core/services/google_sign_in_service.dart';
+import '../../../core/network/admin_api_error.dart';
 import '../data/auth_repository.dart';
 
 enum AuthState { unknown, authenticated, unauthenticated, loading }
 
 class AuthProvider extends ChangeNotifier {
-  final _repo = AuthRepository();
-  final _googleSignIn = GoogleSignInService();
+  AuthProvider({AuthRepository? repository, GoogleSignInService? googleSignIn})
+    : _repo = repository ?? AuthRepository(),
+      _googleSignIn = googleSignIn ?? GoogleSignInService();
+
+  final AuthRepository _repo;
+  final GoogleSignInService _googleSignIn;
 
   AuthState _state = AuthState.unknown;
   AdminUser? _user;
-  String? _error;
+  UiText? _error;
 
   AuthState get state => _state;
   AdminUser? get user => _user;
-  String? get error => _error;
+  UiText? get errorText => _error;
+  String? get error => _error?.resolve();
   bool get isAuthenticated => _state == AuthState.authenticated;
   bool get isSuperAdmin => _user?.isSuperAdmin ?? false;
   bool get hasUserZoneAccess => _user?.hasUserZoneAccess ?? false;
@@ -34,7 +42,7 @@ class AuthProvider extends ChangeNotifier {
     try {
       final idToken = await _googleSignIn.signIn();
       if (idToken == null) {
-        _error = 'Đăng nhập Google bị hủy';
+        _error = const UiText.key('admin.errors.googleCancelled');
         _state = AuthState.unauthenticated;
         notifyListeners();
         return false;
@@ -97,16 +105,26 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  String _parseError(dynamic e) {
-    final str = e.toString();
-    if (str.contains('401')) return 'Tài khoản không được xác thực';
-    if (str.contains('403')) return 'Tài khoản không có quyền truy cập admin';
-    if (str.contains('Admin Google OAuth not configured')) {
-      return 'Google OAuth admin chưa được cấu hình trên server';
+  UiText _parseError(Object e) {
+    if (_mentionsMissingOAuth(e)) {
+      return const UiText.key('admin.errors.oauthMissing');
     }
-    if (str.contains('SocketException') || str.contains('connection')) {
-      return 'Không thể kết nối máy chủ';
+    final error = AdminApiError.from(e);
+    switch (error.kind) {
+      case AdminErrorKind.unauthorized:
+        return const UiText.key('admin.errors.notVerified');
+      case AdminErrorKind.forbidden:
+        return const UiText.key('admin.errors.notAdmin');
+      case AdminErrorKind.network:
+      case AdminErrorKind.server:
+        return error.message;
+      default:
+        return error.message;
     }
-    return 'Có lỗi xảy ra, vui lòng thử lại';
+  }
+
+  bool _mentionsMissingOAuth(Object e) {
+    final body = e is DioException ? e.response?.data : null;
+    return '$body $e'.contains('Admin Google OAuth not configured');
   }
 }
