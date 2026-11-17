@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:confetti/confetti.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/features/games/presentation/theme/game_palette.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -346,7 +348,7 @@ class _HangmanScreenState extends State<HangmanScreen>
                   ),
                   actions: [
                     Padding(
-                      padding: const EdgeInsets.only(right: 12),
+                      padding: const EdgeInsets.only(right: AppSpacing.md),
                       child: Row(
                         children: List.generate(
                           _effectiveMaxLives(game),
@@ -368,8 +370,8 @@ class _HangmanScreenState extends State<HangmanScreen>
                     children: [
                       Padding(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 6,
+                          horizontal: AppSpacing.lg,
+                          vertical: AppSpacing.sm,
                         ),
                         child: GamePowerUpTray(
                           availableTypes: _hangmanPowerUps,
@@ -380,7 +382,7 @@ class _HangmanScreenState extends State<HangmanScreen>
                       ),
                       if (_shieldActive)
                         Padding(
-                          padding: EdgeInsets.only(bottom: 6),
+                          padding: EdgeInsets.only(bottom: AppSpacing.sm),
                           child: ActivePowerUpBadge(
                             itemType: ShopItemEntity.effectMistakeShield,
                             label: 'games.shieldActive'.tr(),
@@ -388,13 +390,17 @@ class _HangmanScreenState extends State<HangmanScreen>
                         ),
                       if (_translationReveal != null)
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.lg,
+                          ),
                           child: Container(
-                            padding: const EdgeInsets.all(10),
-                            margin: const EdgeInsets.only(bottom: 6),
+                            padding: const EdgeInsets.all(AppSpacing.sm),
+                            margin: const EdgeInsets.only(
+                              bottom: AppSpacing.sm,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.purple.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
                               border: Border.all(
                                 color: AppColors.purple.withValues(alpha: 0.4),
                               ),
@@ -407,11 +413,13 @@ class _HangmanScreenState extends State<HangmanScreen>
                                   size: 14,
                                   color: AppColors.purple,
                                 ),
-                                const SizedBox(width: 6),
+                                const SizedBox(width: AppSpacing.sm),
                                 Flexible(
                                   child: Text(
                                     _translationReveal!,
-                                    style: const TextStyle(fontSize: 13),
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall?.copyWith(),
                                     textAlign: TextAlign.center,
                                   ),
                                 ),
@@ -422,8 +430,8 @@ class _HangmanScreenState extends State<HangmanScreen>
                       // Category chip
                       Padding(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 6,
+                          horizontal: AppSpacing.lg,
+                          vertical: AppSpacing.sm,
                         ),
                         child: Row(
                           children: [
@@ -432,10 +440,8 @@ class _HangmanScreenState extends State<HangmanScreen>
                                 game.category.isEmpty
                                     ? 'hangman.defaultCategory'.tr()
                                     : game.category,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.primary,
-                                ),
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(color: AppColors.primary),
                               ),
                               backgroundColor: AppColors.primary.withValues(
                                 alpha: 0.1,
@@ -450,30 +456,32 @@ class _HangmanScreenState extends State<HangmanScreen>
                                       '${_effectiveMaxLives(game) - _wrongGuesses}',
                                 },
                               ),
-                              style: TextStyle(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                                fontSize: 13,
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                                  ),
                             ),
                           ],
                         ),
                       ),
                       // Hangman figure
                       HangmanFigure(wrongGuesses: _wrongGuesses),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppSpacing.sm),
                       // Hint reveal
                       if (_revealedHint != null)
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.lg,
+                          ),
                           child: Container(
-                            padding: const EdgeInsets.all(10),
+                            padding: const EdgeInsets.all(AppSpacing.sm),
                             decoration: BoxDecoration(
                               color: AppColors.accentYellow.withValues(
                                 alpha: 0.2,
                               ),
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
                               border: Border.all(color: AppColors.accentYellow),
                             ),
                             child: Row(
@@ -484,11 +492,13 @@ class _HangmanScreenState extends State<HangmanScreen>
                                   size: 14,
                                   color: AppColors.accentYellow,
                                 ),
-                                const SizedBox(width: 6),
+                                const SizedBox(width: AppSpacing.sm),
                                 Flexible(
                                   child: Text(
                                     _revealedHint!,
-                                    style: const TextStyle(fontSize: 13),
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall?.copyWith(),
                                     textAlign: TextAlign.center,
                                   ),
                                 ),
@@ -498,19 +508,23 @@ class _HangmanScreenState extends State<HangmanScreen>
                         ),
                       // Word blanks
                       Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: AppSpacing.md,
+                        ),
                         child: Wrap(
                           alignment: WrapAlignment.center,
                           spacing: 4,
                           children: word.map((letter) {
                             if (letter == ' ') {
-                              return const SizedBox(width: 16);
+                              return const SizedBox(width: AppSpacing.lg);
                             }
                             final revealed = _guessedLetters.contains(letter);
                             return Container(
                               width: 30,
                               height: 38,
-                              margin: const EdgeInsets.only(bottom: 4),
+                              margin: const EdgeInsets.only(
+                                bottom: AppSpacing.xs,
+                              ),
                               decoration: BoxDecoration(
                                 border: Border(
                                   bottom: BorderSide(
@@ -527,13 +541,15 @@ class _HangmanScreenState extends State<HangmanScreen>
                               child: revealed
                                   ? Text(
                                       letter,
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 20,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onSurface,
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onSurface,
+                                          ),
                                     )
                                   : null,
                             );
@@ -548,19 +564,19 @@ class _HangmanScreenState extends State<HangmanScreen>
                             'hangman.wordRevealLabel'.tr(
                               namedArgs: {'word': game.word},
                             ),
-                            style: const TextStyle(
-                              color: AppColors.errorBright,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(
+                                  color: AppColors.errorBright,
+                                  fontWeight: FontWeight.bold,
+                                ),
                             textAlign: TextAlign.center,
                           ),
                         ),
                       // Hint buttons
                       Padding(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 6,
+                          horizontal: AppSpacing.lg,
+                          vertical: AppSpacing.sm,
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -573,7 +589,7 @@ class _HangmanScreenState extends State<HangmanScreen>
                               onTap: () => _useHint1(game),
                               color: AppColors.greenSuccess,
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: AppSpacing.sm),
                             _HintButton(
                               label: 'hangman.hint2Label'.tr(),
                               detail: '-${game.hints.hint2XpCost}XP',
@@ -582,7 +598,7 @@ class _HangmanScreenState extends State<HangmanScreen>
                               onTap: () => _useHint2(game),
                               color: AppColors.orange,
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: AppSpacing.sm),
                             _HintButton(
                               label: 'hangman.hint3Label'.tr(),
                               detail: '-${game.hints.hint3XpCost}XP',
@@ -597,7 +613,9 @@ class _HangmanScreenState extends State<HangmanScreen>
                       // Keyboard
                       Expanded(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm,
+                          ),
                           child: _Keyboard(
                             guessedLetters: _guessedLetters,
                             wordLetters: word.toSet(),
@@ -621,7 +639,7 @@ class _HangmanScreenState extends State<HangmanScreen>
               AppColors.primary,
               AppColors.accentYellow,
               AppColors.greenSuccess,
-              Colors.pink,
+              GamePalette.confettiPink,
             ],
           ),
         ],
@@ -653,12 +671,15 @@ class _HintButton extends StatelessWidget {
     return GestureDetector(
       onTap: active ? onTap : null,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.sm,
+        ),
         decoration: BoxDecoration(
           color: active
               ? color.withValues(alpha: 0.1)
               : Theme.of(context).colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           border: Border.all(
             color: active
                 ? color
@@ -671,9 +692,8 @@ class _HintButton extends StatelessWidget {
           children: [
             Text(
               label,
-              style: TextStyle(
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.bold,
-                fontSize: 12,
                 color: active
                     ? color
                     : Theme.of(context).colorScheme.onSurfaceVariant,
@@ -681,8 +701,7 @@ class _HintButton extends StatelessWidget {
             ),
             Text(
               used ? 'hangman.hintUsedLabel'.tr() : detail,
-              style: TextStyle(
-                fontSize: 10,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 color: active
                     ? color.withValues(alpha: 0.7)
                     : Theme.of(context).colorScheme.onSurfaceVariant,
@@ -744,15 +763,14 @@ class _Keyboard extends StatelessWidget {
                 margin: const EdgeInsets.all(2),
                 decoration: BoxDecoration(
                   color: bg,
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                   border: Border.all(color: border),
                 ),
                 alignment: Alignment.center,
                 child: Text(
                   letter,
-                  style: TextStyle(
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    fontSize: 13,
                     color: text,
                   ),
                 ),

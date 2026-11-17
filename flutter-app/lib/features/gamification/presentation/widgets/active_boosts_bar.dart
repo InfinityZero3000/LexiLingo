@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/inventory_item.dart';
@@ -21,14 +22,13 @@ class ActiveBoostsBar extends StatelessWidget {
         if (boosts.isEmpty) return const SizedBox.shrink();
 
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'gamification.activeBoosts'.tr(),
-                style: TextStyle(
-                  fontSize: 10,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.1,
                   color: AppColorRoles.textMuted(
@@ -36,13 +36,13 @@ class ActiveBoostsBar extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: AppSpacing.sm),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: boosts.map((boost) {
                     return Padding(
-                      padding: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsets.only(right: AppSpacing.sm),
                       child: _BoostPill(boost: boost),
                     );
                   }).toList(),
@@ -95,7 +95,10 @@ class _BoostPillState extends State<_BoostPill> {
     final label = _labelForEffect(effectType);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: boostColor.withValues(alpha: isDark ? 0.18 : 0.10),
         borderRadius: BorderRadius.circular(99),
@@ -105,32 +108,30 @@ class _BoostPillState extends State<_BoostPill> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 14, color: boostColor),
-          const SizedBox(width: 6),
+          const SizedBox(width: AppSpacing.sm),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
               fontWeight: FontWeight.w700,
               color: boostColor,
             ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: AppSpacing.sm),
           Container(
             width: 1,
             height: 12,
             color: boostColor.withValues(alpha: 0.3),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: AppSpacing.sm),
           Icon(
             Icons.timer_outlined,
             size: 12,
             color: boostColor.withValues(alpha: 0.8),
           ),
-          const SizedBox(width: 3),
+          const SizedBox(width: AppSpacing.xs),
           Text(
             _formatDuration(_remaining),
-            style: TextStyle(
-              fontSize: 11,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w600,
               color: boostColor.withValues(alpha: 0.9),
             ),

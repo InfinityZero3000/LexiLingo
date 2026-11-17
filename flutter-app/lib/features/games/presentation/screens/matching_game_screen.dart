@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:confetti/confetti.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -331,7 +332,7 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
               ),
               actions: [
                 Padding(
-                  padding: const EdgeInsets.only(right: 12),
+                  padding: const EdgeInsets.only(right: AppSpacing.md),
                   child: _TimerChip(
                     timeLeft: _timeLeft,
                     total: game.timerSeconds,
@@ -353,8 +354,8 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
+                          horizontal: AppSpacing.md,
+                          vertical: AppSpacing.sm,
                         ),
                         child: GamePowerUpTray(
                           availableTypes: _matchingPowerUps,
@@ -363,14 +364,14 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
                       ),
                       if (_luckyCloverActive)
                         Padding(
-                          padding: EdgeInsets.only(bottom: 6),
+                          padding: EdgeInsets.only(bottom: AppSpacing.sm),
                           child: ActivePowerUpBadge(
                             itemType: ShopItemEntity.effectLuckyClover,
                             label: 'games.luckyCloverActive'.tr(),
                           ),
                         ),
                       Padding(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(AppSpacing.md),
                         child: Text(
                           'matchingGame.matchedProgress'.tr(
                             namedArgs: {
@@ -378,17 +379,19 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
                               'total': '${game.pairs.length}',
                             },
                           ),
-                          style: TextStyle(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant,
-                            fontSize: 13,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
                         ),
                       ),
                       Expanded(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                          ),
                           child: Row(
                             children: [
                               // Words column
@@ -419,7 +422,7 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
                                   label: 'matchingGame.wordsColumnLabel'.tr(),
                                 ),
                               ),
-                              const SizedBox(width: 10),
+                              const SizedBox(width: AppSpacing.sm),
                               // Matches column
                               Expanded(
                                 child: _ColumnList(
@@ -463,7 +466,7 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
                       gravity: 0.4,
                       colors: const [
                         AppColors.primary,
-                        Colors.yellow,
+                        AppColors.accentYellow,
                         AppColors.greenSuccessBright,
                         AppColors.orange,
                       ],
@@ -503,13 +506,12 @@ class _ColumnList extends StatelessWidget {
       children: [
         Text(
           label,
-          style: TextStyle(
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
             fontWeight: FontWeight.bold,
-            fontSize: 13,
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: AppSpacing.sm),
         Expanded(
           child: ListView.builder(
             itemCount: items.length,
@@ -535,20 +537,19 @@ class _ColumnList extends StatelessWidget {
                 onTap: () => onTap(item),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 180),
-                  margin: const EdgeInsets.only(bottom: 8),
+                  margin: const EdgeInsets.only(bottom: AppSpacing.sm),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.md,
                   ),
                   decoration: BoxDecoration(
                     color: bg,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                     border: Border.all(color: border, width: 1.5),
                   ),
                   child: Text(
                     item,
-                    style: TextStyle(
-                      fontSize: 13,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                     maxLines: 3,
@@ -578,18 +579,20 @@ class _TimerChip extends StatelessWidget {
         ? AppColors.orange
         : AppColors.errorBright;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(color: color),
       ),
       child: Text(
         '${timeLeft}s',
-        style: TextStyle(
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
           fontWeight: FontWeight.bold,
           color: color,
-          fontSize: 14,
         ),
       ),
     );

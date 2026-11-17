@@ -1,5 +1,7 @@
 import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/features/games/presentation/theme/game_palette.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
@@ -114,13 +116,15 @@ class _GamesHubScreenState extends State<GamesHubScreen>
                   _buildAppBar(provider, titleColor),
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.lg,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const SizedBox(height: 16),
+                          const SizedBox(height: AppSpacing.lg),
                           _buildXpHeader(provider),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: AppSpacing.lg),
                           _buildDailyChallenge(context, challengesProvider),
                           const SizedBox(height: 20),
                           _buildLevelPicker(provider),
@@ -129,16 +133,16 @@ class _GamesHubScreenState extends State<GamesHubScreen>
                             'gamesHub.gamesSectionTitle'.tr(),
                             titleColor,
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: AppSpacing.md),
                           _buildGameGrid(context, provider),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: AppSpacing.xl),
                           _buildSectionTitle(
                             'gamesHub.leaderboardSectionTitle'.tr(),
                             titleColor,
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: AppSpacing.md),
                           _buildLeaderboard(provider),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: AppSpacing.xxl),
                         ],
                       ),
                     ),
@@ -159,15 +163,14 @@ class _GamesHubScreenState extends State<GamesHubScreen>
       elevation: 0,
       title: Text(
         'gamesHub.title'.tr(),
-        style: TextStyle(
+        style: Theme.of(context).textTheme.titleLarge?.copyWith(
           color: titleColor,
           fontWeight: FontWeight.bold,
-          fontSize: 20,
         ),
       ),
       actions: [
         Padding(
-          padding: const EdgeInsets.only(right: 12),
+          padding: const EdgeInsets.only(right: AppSpacing.md),
           child: StreakIndicator(
             streakDays: provider.streakDays,
             compact: true,
@@ -186,7 +189,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
           height: 120,
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
         ),
       );
@@ -194,10 +197,10 @@ class _GamesHubScreenState extends State<GamesHubScreen>
 
     if (provider.error != null && provider.xpProfile == null) {
       return Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.errorContainer,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
             color: Theme.of(context).colorScheme.error.withValues(alpha: 0.4),
           ),
@@ -208,13 +211,12 @@ class _GamesHubScreenState extends State<GamesHubScreen>
               Icons.error_outline_rounded,
               color: Theme.of(context).colorScheme.error,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Text(
                 'gamesHub.xpLoadError'.tr(),
-                style: TextStyle(
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.onErrorContainer,
-                  fontSize: 13,
                 ),
               ),
             ),
@@ -233,10 +235,10 @@ class _GamesHubScreenState extends State<GamesHubScreen>
     final dailyCap = dailyXp + provider.dailyCapRemaining;
 
     return Container(
-      padding: EdgeInsets.all(16),
+      padding: EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: Theme.of(context).shadowColor.withValues(alpha: 0.06),
@@ -254,7 +256,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
             xpForNextLevel: profile?.xpForNextLevel ?? 100,
             currentXpInLevel: profile?.currentXpInLevel ?? 0,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -263,14 +265,13 @@ class _GamesHubScreenState extends State<GamesHubScreen>
                 color: AppColors.textGrey,
                 size: 16,
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: AppSpacing.xs),
               Flexible(
                 child: Text(
                   'games.dailyXpToday'.tr(
                     namedArgs: {'current': '$dailyXp', 'cap': '$dailyCap'},
                   ),
-                  style: const TextStyle(
-                    fontSize: 13,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColors.textGrey,
                     fontWeight: FontWeight.w500,
                   ),
@@ -338,7 +339,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle('gamesHub.dailyChallengeLabel'.tr(), titleColor),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppSpacing.sm),
         if (challengesProvider.isLoading && selectedChallenge == null)
           Shimmer.fromColors(
             baseColor: AppColors.grey200,
@@ -347,7 +348,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
               height: 88,
               decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
             ),
           )
@@ -380,20 +381,19 @@ class _GamesHubScreenState extends State<GamesHubScreen>
       children: [
         Text(
           'gamesHub.difficultyLabel'.tr(),
-          style: TextStyle(
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.bold,
-            fontSize: 14,
             color: titleColor,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
             children: _levels.map((level) {
               final selected = provider.selectedLevel == level;
               return Padding(
-                padding: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.only(right: AppSpacing.sm),
                 child: ChoiceChip(
                   label: Text(level),
                   selected: selected,
@@ -405,7 +405,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
                   ),
                   backgroundColor: Theme.of(context).colorScheme.surface,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                     side: BorderSide(
                       color: selected ? AppColors.primary : AppColors.grey300,
                     ),
@@ -422,8 +422,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
   Widget _buildSectionTitle(String title, Color titleColor) {
     return Text(
       title,
-      style: TextStyle(
-        fontSize: 17,
+      style: Theme.of(context).textTheme.titleMedium?.copyWith(
         fontWeight: FontWeight.bold,
         color: titleColor,
       ),
@@ -462,10 +461,10 @@ class _GamesHubScreenState extends State<GamesHubScreen>
     final board = provider.leaderboard;
     if (board.isEmpty) {
       return Container(
-        padding: EdgeInsets.all(16),
+        padding: EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: Center(
           child: Text(
@@ -482,10 +481,15 @@ class _GamesHubScreenState extends State<GamesHubScreen>
     final third = top3.length > 2 ? top3[2] : null;
 
     return Container(
-      padding: EdgeInsets.fromLTRB(12, 20, 12, 16),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        20,
+        AppSpacing.md,
+        AppSpacing.lg,
+      ),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: Theme.of(context).shadowColor.withValues(alpha: 0.05),
@@ -505,12 +509,12 @@ class _GamesHubScreenState extends State<GamesHubScreen>
                 Expanded(
                   child: _buildPodiumColumn(second, 1, 72, AppColors.silver),
                 ),
-              if (second != null) const SizedBox(width: 8),
+              if (second != null) const SizedBox(width: AppSpacing.sm),
               if (first != null)
                 Expanded(
                   child: _buildPodiumColumn(first, 0, 104, AppColors.gold),
                 ),
-              if (third != null) const SizedBox(width: 8),
+              if (third != null) const SizedBox(width: AppSpacing.sm),
               if (third != null)
                 Expanded(
                   child: _buildPodiumColumn(third, 2, 56, AppColors.bronze),
@@ -519,7 +523,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
           ),
           // 4th–8th entries below podium
           if (board.length > 3) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             const Divider(height: 1),
             ...board.skip(3).take(5).toList().asMap().entries.map((e) {
               final user = e.value;
@@ -539,8 +543,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
                   child: Center(
                     child: Text(
                       '${e.key + 4}',
-                      style: const TextStyle(
-                        fontSize: 12,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: AppColors.textGrey,
                       ),
@@ -549,10 +552,9 @@ class _GamesHubScreenState extends State<GamesHubScreen>
                 ),
                 title: Text(
                   user.username,
-                  style: TextStyle(
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: usernameColor,
                     fontWeight: FontWeight.w600,
-                    fontSize: 14,
                   ),
                 ),
                 trailing: Column(
@@ -561,18 +563,16 @@ class _GamesHubScreenState extends State<GamesHubScreen>
                   children: [
                     Text(
                       '${user.totalXp} XP',
-                      style: const TextStyle(
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: AppColors.primary,
-                        fontSize: 13,
                       ),
                     ),
                     Text(
                       'games.weeklyXp'.tr(
                         namedArgs: {'xp': '${user.weeklyXp}'},
                       ),
-                      style: const TextStyle(
-                        fontSize: 11,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: AppColors.textGrey,
                       ),
                     ),
@@ -601,7 +601,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
     const rankLabels = ['1st', '2nd', '3rd'];
     const medalColors = [AppColors.gold, AppColors.silver, AppColors.bronze];
     final textColor = rank == 0
-        ? const Color(0xFF9A7A00) // dark gold for legibility
+        ? GamePalette.goldOnLight
         : color.withValues(alpha: 0.85);
     final usernameColor = isDark ? AppColors.textInverted : AppColors.textDark;
 
@@ -622,7 +622,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
             size: 24,
             color: medalColors[rank],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.xs),
           Container(
             width: 44,
             height: 44,
@@ -634,19 +634,17 @@ class _GamesHubScreenState extends State<GamesHubScreen>
             child: Center(
               child: Text(
                 user.username.isNotEmpty ? user.username[0].toUpperCase() : '?',
-                style: TextStyle(
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  fontSize: 18,
                   color: textColor,
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.xs),
           Text(
             user.username,
-            style: TextStyle(
-              fontSize: 11,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w700,
               color: usernameColor,
             ),
@@ -657,9 +655,11 @@ class _GamesHubScreenState extends State<GamesHubScreen>
           const SizedBox(height: 2),
           Text(
             '${user.totalXp} XP',
-            style: const TextStyle(fontSize: 10, color: AppColors.textGrey),
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(color: AppColors.textGrey),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.sm),
           Container(
             width: double.infinity,
             height: podiumHeight,
@@ -676,10 +676,9 @@ class _GamesHubScreenState extends State<GamesHubScreen>
             alignment: Alignment.center,
             child: Text(
               rankLabels[rank],
-              style: TextStyle(
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: AppColors.surfaceLight,
-                fontSize: 15,
                 shadows: [
                   Shadow(
                     color: Theme.of(

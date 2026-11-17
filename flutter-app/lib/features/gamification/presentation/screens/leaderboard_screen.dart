@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
@@ -190,7 +191,12 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
               children: [
                 if (showLeagueCard)
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.lg,
+                      0,
+                      AppSpacing.lg,
+                      AppSpacing.md,
+                    ),
                     child: provider.leagueStatus == null
                         ? const _LeagueCardSkeleton()
                         : LeagueCard(
@@ -230,10 +236,10 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           _LeagueBadgeSmall(league: league),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: AppSpacing.sm),
                           Text(_getLeagueName(league)),
                           if (isCurrentLeague) ...[
-                            const SizedBox(width: 6),
+                            const SizedBox(width: AppSpacing.sm),
                             Container(
                               width: 7,
                               height: 7,
@@ -248,7 +254,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                     );
                   }).toList(),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 Expanded(
                   child: LayoutBuilder(
                     builder: (context, constraints) {
@@ -325,28 +331,28 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
           ),
           child: Column(
             children: [
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               Container(
                 width: 48,
                 height: 5,
                 decoration: BoxDecoration(
                   color: isDark ? AppColors.grey700 : AppColors.grey300,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.xl),
               Text(
                 'leaderboard.aboutLeagues'.tr(),
                 style: Theme.of(
                   context,
                 ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               Expanded(
                 child: ListView.separated(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 8,
+                    horizontal: AppSpacing.xl,
+                    vertical: AppSpacing.sm,
                   ),
                   itemCount: _leagues.length,
                   separatorBuilder: (_, __) => const Divider(),
@@ -356,11 +362,13 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                     final visualData = rankVisualDataFor(rank);
 
                     return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: AppSpacing.md,
+                      ),
                       child: Row(
                         children: [
                           RankAssetIcon(rank: rank, size: 56),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: AppSpacing.lg),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -375,28 +383,32 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
                                             ).createShader(bounds),
                                         child: Text(
                                           rankDisplayNameFor(rank),
-                                          style: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppColors.surfaceLight,
-                                          ),
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                                color: AppColors.surfaceLight,
+                                              ),
                                         ),
                                       )
                                     : Text(
                                         rankDisplayNameFor(rank),
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: visualData.color,
-                                        ),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              color: visualData.color,
+                                            ),
                                       ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: AppSpacing.xs),
                                 Text(
                                   'leaderboard.${rank}Desc'.tr(),
-                                  style: TextStyle(
-                                    color: AppColorRoles.textMuted(isDark),
-                                    fontSize: 13,
-                                  ),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: AppColorRoles.textMuted(isDark),
+                                      ),
                                 ),
                               ],
                             ),
@@ -518,9 +530,8 @@ class _RankHelpButton extends StatelessWidget {
         ),
         child: Text(
           '?',
-          style: TextStyle(
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
             color: foreground,
-            fontSize: 18,
             fontWeight: FontWeight.w900,
             height: 1,
           ),
@@ -539,12 +550,15 @@ class _LeagueCardSkeleton extends StatelessWidget {
 
     return ShimmerContainer(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.lg,
+        ),
         decoration: BoxDecoration(
           color: Theme.of(
             context,
           ).colorScheme.surface.withValues(alpha: isDark ? 0.44 : 0.74),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
             color: Theme.of(
               context,
@@ -562,20 +576,20 @@ class _LeagueCardSkeleton extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const SkeletonText(width: 150, height: 20),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppSpacing.sm),
                   SkeletonText(
                     width: MediaQuery.of(context).size.width * 0.42,
                     height: 14,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   const Row(
                     children: [
                       SkeletonBox(width: 78, height: 24, borderRadius: 999),
-                      SizedBox(width: 8),
+                      SizedBox(width: AppSpacing.sm),
                       SkeletonBox(width: 64, height: 24, borderRadius: 999),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppSpacing.sm),
                   const SkeletonText(width: 112, height: 12),
                 ],
               ),
@@ -710,21 +724,26 @@ class _RankingPanelSkeleton extends StatelessWidget {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.lg,
+                AppSpacing.sm,
+              ),
               child: Column(
                 children: [
                   const SkeletonBox(width: 40, height: 4, borderRadius: 2),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: AppSpacing.lg),
                   Row(
                     children: [
                       SkeletonBox(width: 34, height: 34, borderRadius: 17),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: AppSpacing.sm),
                       const Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             SkeletonText(width: 132, height: 16),
-                            SizedBox(height: 6),
+                            SizedBox(height: AppSpacing.sm),
                             SkeletonText(width: 78, height: 11),
                           ],
                         ),
@@ -738,7 +757,7 @@ class _RankingPanelSkeleton extends StatelessWidget {
             Expanded(
               child: ListView.builder(
                 physics: const NeverScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 14),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
                 itemCount: 4,
                 itemBuilder: (context, index) {
                   return const _RankingRowSkeleton();
@@ -758,18 +777,21 @@ class _RankingRowSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 5),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: AppColors.surfaceLight.withValues(alpha: 0.34),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Row(
         children: [
           const SkeletonBox(width: 32, height: 32, borderRadius: 16),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSpacing.sm),
           const SkeletonBox(width: 42, height: 42, borderRadius: 21),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -778,7 +800,7 @@ class _RankingRowSkeleton extends StatelessWidget {
                   width: MediaQuery.of(context).size.width * 0.34,
                   height: 14,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 SkeletonText(
                   width: MediaQuery.of(context).size.width * 0.24,
                   height: 12,
@@ -786,7 +808,7 @@ class _RankingRowSkeleton extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSpacing.sm),
           const SkeletonBox(width: 64, height: 30, borderRadius: 999),
         ],
       ),

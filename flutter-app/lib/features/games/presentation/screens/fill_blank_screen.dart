@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:confetti/confetti.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -358,8 +359,8 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 6,
+                          horizontal: AppSpacing.lg,
+                          vertical: AppSpacing.sm,
                         ),
                         child: GamePowerUpTray(
                           availableTypes: _fillBlankPowerUps,
@@ -369,7 +370,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                       ),
                       if (_luckyCloverActive)
                         Padding(
-                          padding: EdgeInsets.only(bottom: 6),
+                          padding: EdgeInsets.only(bottom: AppSpacing.sm),
                           child: ActivePowerUpBadge(
                             itemType: ShopItemEntity.effectLuckyClover,
                             label: 'games.luckyCloverActive'.tr(),
@@ -378,8 +379,8 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                       // Timer bar
                       Padding(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
+                          horizontal: AppSpacing.lg,
+                          vertical: AppSpacing.sm,
                         ),
                         child: Row(
                           children: [
@@ -388,7 +389,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                               size: 16,
                               color: AppColors.primary,
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: AppSpacing.sm),
                             Expanded(
                               child: LinearProgressIndicator(
                                 value: _timeLeft / game.timerSecondsPerQuestion,
@@ -401,20 +402,20 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                                 minHeight: 6,
                               ),
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: AppSpacing.sm),
                             Text(
                               'fillBlank.timerFormat'.tr(
                                 namedArgs: {'seconds': '$_timeLeft'},
                               ),
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                                color: _timeLeft > 5
-                                    ? Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant
-                                    : AppColors.errorBright,
-                              ),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: _timeLeft > 5
+                                        ? Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant
+                                        : AppColors.errorBright,
+                                  ),
                             ),
                           ],
                         ),
@@ -422,7 +423,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                       Expanded(
                         child: SingleChildScrollView(
                           controller: _scroll,
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(AppSpacing.lg),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -432,7 +433,9 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                                 padding: EdgeInsets.all(20),
                                 decoration: BoxDecoration(
                                   color: Theme.of(context).colorScheme.surface,
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.lg,
+                                  ),
                                   boxShadow: [
                                     BoxShadow(
                                       color: Theme.of(context)
@@ -445,14 +448,14 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                                 ),
                                 child: Text(
                                   q.sentence,
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface,
-                                    height: 1.5,
-                                  ),
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurface,
+                                        height: 1.5,
+                                      ),
                                 ),
                               ),
                               const SizedBox(height: 20),
@@ -513,11 +516,13 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                                         milliseconds: 200,
                                       ),
                                       padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
+                                        horizontal: AppSpacing.md,
                                       ),
                                       decoration: BoxDecoration(
                                         color: bg,
-                                        borderRadius: BorderRadius.circular(12),
+                                        borderRadius: BorderRadius.circular(
+                                          AppRadius.md,
+                                        ),
                                         border: Border.all(
                                           color: border,
                                           width: 1.5,
@@ -526,11 +531,13 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                                       alignment: Alignment.center,
                                       child: Text(
                                         q.options[i],
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 14,
-                                          color: text,
-                                        ),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.w600,
+                                              color: text,
+                                            ),
                                         textAlign: TextAlign.center,
                                       ),
                                     ),
@@ -538,7 +545,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                                 }),
                               ),
                               if (_verdict != null) ...[
-                                const SizedBox(height: 16),
+                                const SizedBox(height: AppSpacing.lg),
                                 AnswerFeedbackPanel(
                                   verdict: _verdict!,
                                   chosen: _selectedIndex == null
@@ -576,7 +583,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                       gravity: 0.4,
                       colors: const [
                         AppColors.primary,
-                        Colors.yellow,
+                        AppColors.accentYellow,
                         AppColors.greenSuccessBright,
                         AppColors.orange,
                       ],

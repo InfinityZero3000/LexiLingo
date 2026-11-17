@@ -2,6 +2,8 @@ import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/features/games/presentation/theme/game_palette.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
@@ -299,8 +301,8 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
+                      horizontal: AppSpacing.lg,
+                      vertical: AppSpacing.sm,
                     ),
                     child: GamePowerUpTray(
                       availableTypes: _spellingBeePowerUps,
@@ -310,18 +312,22 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                   ),
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(AppSpacing.xl),
                       child: Column(
                         children: [
                           const SizedBox(height: 20),
                           if (_translationReveal != null)
                             Container(
                               width: double.infinity,
-                              margin: const EdgeInsets.only(bottom: 12),
-                              padding: const EdgeInsets.all(12),
+                              margin: const EdgeInsets.only(
+                                bottom: AppSpacing.md,
+                              ),
+                              padding: const EdgeInsets.all(AppSpacing.md),
                               decoration: BoxDecoration(
                                 color: AppColors.purple.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
+                                ),
                                 border: Border.all(
                                   color: AppColors.purple.withValues(
                                     alpha: 0.4,
@@ -335,11 +341,13 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                                     size: 16,
                                     color: AppColors.purple,
                                   ),
-                                  const SizedBox(width: 8),
+                                  const SizedBox(width: AppSpacing.sm),
                                   Expanded(
                                     child: Text(
                                       _translationReveal!,
-                                      style: const TextStyle(fontSize: 13),
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall?.copyWith(),
                                     ),
                                   ),
                                 ],
@@ -349,13 +357,17 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                           if (_audioErrorMessage != null)
                             Container(
                               width: double.infinity,
-                              margin: const EdgeInsets.only(bottom: 12),
-                              padding: const EdgeInsets.all(12),
+                              margin: const EdgeInsets.only(
+                                bottom: AppSpacing.md,
+                              ),
+                              padding: const EdgeInsets.all(AppSpacing.md),
                               decoration: BoxDecoration(
                                 color: Theme.of(
                                   context,
                                 ).colorScheme.errorContainer,
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
+                                ),
                               ),
                               child: Row(
                                 children: [
@@ -366,16 +378,18 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                                     ).colorScheme.onErrorContainer,
                                     size: 18,
                                   ),
-                                  const SizedBox(width: 8),
+                                  const SizedBox(width: AppSpacing.sm),
                                   Expanded(
                                     child: Text(
                                       'spellingBee.audioError'.tr(),
-                                      style: TextStyle(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onErrorContainer,
-                                        fontSize: 13,
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onErrorContainer,
+                                          ),
                                     ),
                                   ),
                                   TextButton(
@@ -412,7 +426,7 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                                     colors: _playsLeft > 0
                                         ? [
                                             AppColors.primary,
-                                            const Color(0xFF38B2FF),
+                                            GamePalette.skyBlue,
                                           ]
                                         : [
                                             AppColors.grey300,
@@ -442,7 +456,7 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: AppSpacing.md),
                           Text(
                             'spellingBee.playsLeftLabel'.tr(
                               namedArgs: {
@@ -450,23 +464,21 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                                 'max': '${word.maxReplays}',
                               },
                             ),
-                            style: TextStyle(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurfaceVariant,
-                              fontSize: 13,
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
                           ),
-                          const SizedBox(height: 32),
+                          const SizedBox(height: AppSpacing.xxl),
                           // Input field
                           TextField(
                             controller: _inputController,
                             enabled: !_answered,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.bold),
                             decoration: InputDecoration(
                               hintText: 'spellingBee.inputHint'.tr(),
                               hintStyle: TextStyle(
@@ -477,13 +489,17 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                               filled: true,
                               fillColor: Theme.of(context).colorScheme.surface,
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.md,
+                                ),
                                 borderSide: const BorderSide(
                                   color: AppColors.grey300,
                                 ),
                               ),
                               focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.md,
+                                ),
                                 borderSide: const BorderSide(
                                   color: AppColors.primary,
                                   width: 2,
@@ -493,28 +509,32 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                             onSubmitted: (_) =>
                                 _answered ? null : _submitAnswer(),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: AppSpacing.lg),
                           if (!_answered) ...[
                             SizedBox(
                               width: double.infinity,
-                              child: ElevatedButton(
+                              child: FilledButton(
                                 onPressed: _submitAnswer,
-                                style: ElevatedButton.styleFrom(
+                                style: FilledButton.styleFrom(
+                                  minimumSize: const Size(
+                                    kMinTapTarget,
+                                    kMinTapTarget,
+                                  ),
                                   backgroundColor: AppColors.primary,
                                   foregroundColor: AppColors.textInverted,
                                   padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
+                                    vertical: AppSpacing.lg,
                                   ),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.md,
+                                    ),
                                   ),
                                 ),
                                 child: Text(
                                   'spellingBee.submitButton'.tr(),
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
+                                  style: Theme.of(context).textTheme.bodyLarge
+                                      ?.copyWith(fontWeight: FontWeight.bold),
                                 ),
                               ),
                             ),
@@ -522,7 +542,7 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                             // Answer revealed
                             Container(
                               width: double.infinity,
-                              padding: const EdgeInsets.all(16),
+                              padding: const EdgeInsets.all(AppSpacing.lg),
                               decoration: BoxDecoration(
                                 color: _isCorrect
                                     ? AppColors.greenSuccess.withValues(
@@ -530,7 +550,9 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                                       )
                                     : Theme.of(context).colorScheme.error
                                           .withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.md,
+                                ),
                                 border: Border.all(
                                   color: _isCorrect
                                       ? AppColors.greenSuccess
@@ -551,72 +573,82 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
                                     ),
                                   ),
                                   if (!_isCorrect) ...[
-                                    const SizedBox(height: 4),
+                                    const SizedBox(height: AppSpacing.xs),
                                     Text(
                                       word.word,
-                                      style: TextStyle(
-                                        fontSize: 22,
-                                        fontWeight: FontWeight.bold,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onSurface,
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onSurface,
+                                          ),
                                     ),
                                   ],
                                   if (word.ipaPronunciation?.isNotEmpty ??
                                       false) ...[
-                                    const SizedBox(height: 4),
+                                    const SizedBox(height: AppSpacing.xs),
                                     Text(
                                       word.ipaPronunciation!,
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onSurfaceVariant,
-                                        fontStyle: FontStyle.italic,
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onSurfaceVariant,
+                                            fontStyle: FontStyle.italic,
+                                          ),
                                     ),
                                   ],
                                   if (word.definition.isNotEmpty) ...[
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: AppSpacing.sm),
                                     Text(
                                       word.definition,
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onSurface,
-                                        height: 1.4,
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onSurface,
+                                            height: 1.4,
+                                          ),
                                       textAlign: TextAlign.center,
                                     ),
                                   ],
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: AppSpacing.lg),
                             SizedBox(
                               width: double.infinity,
-                              child: ElevatedButton(
+                              child: FilledButton(
                                 onPressed: _nextWord,
-                                style: ElevatedButton.styleFrom(
+                                style: FilledButton.styleFrom(
+                                  minimumSize: const Size(
+                                    kMinTapTarget,
+                                    kMinTapTarget,
+                                  ),
                                   backgroundColor: AppColors.primary,
                                   foregroundColor: AppColors.textInverted,
                                   padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
+                                    vertical: AppSpacing.lg,
                                   ),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.md,
+                                    ),
                                   ),
                                 ),
                                 child: Text(
                                   _wordIndex + 1 < game.words.length
                                       ? 'spellingBee.nextWordButton'.tr()
                                       : 'spellingBee.seeResultsButton'.tr(),
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
+                                  style: Theme.of(context).textTheme.bodyLarge
+                                      ?.copyWith(fontWeight: FontWeight.bold),
                                 ),
                               ),
                             ),

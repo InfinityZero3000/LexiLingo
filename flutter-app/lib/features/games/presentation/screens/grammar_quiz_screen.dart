@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:confetti/confetti.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -385,7 +386,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
               ),
               actions: [
                 Padding(
-                  padding: const EdgeInsets.only(right: 12),
+                  padding: const EdgeInsets.only(right: AppSpacing.md),
                   child: Center(
                     child: _TimerWidget(
                       timeLeft: _timeLeft,
@@ -412,7 +413,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                       Expanded(
                         child: SingleChildScrollView(
                           controller: _scroll,
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(AppSpacing.lg),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -423,22 +424,22 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                               ),
                               if (_luckyCloverActive)
                                 Padding(
-                                  padding: EdgeInsets.only(top: 6),
+                                  padding: EdgeInsets.only(top: AppSpacing.sm),
                                   child: ActivePowerUpBadge(
                                     itemType: ShopItemEntity.effectLuckyClover,
                                     label: 'games.luckyCloverActive'.tr(),
                                   ),
                                 ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: AppSpacing.md),
                               // Topic chip
                               Chip(
                                 label: Text(
                                   _formatTopic(game.topic),
-                                  style: const TextStyle(
-                                    color: AppColors.primary,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                 ),
                                 backgroundColor: AppColors.primary.withValues(
                                   alpha: 0.1,
@@ -447,7 +448,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                                   color: AppColors.primary,
                                 ),
                               ),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: AppSpacing.md),
                               // Timer bar
                               LinearProgressIndicator(
                                 value: _timeLeft / game.timerSecondsPerQuestion,
@@ -459,14 +460,16 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                                     : AppColors.errorBright,
                                 minHeight: 6,
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: AppSpacing.lg),
                               // Question
                               Container(
                                 width: double.infinity,
-                                padding: EdgeInsets.all(18),
+                                padding: EdgeInsets.all(AppSpacing.lg),
                                 decoration: BoxDecoration(
                                   color: Theme.of(context).colorScheme.surface,
-                                  borderRadius: BorderRadius.circular(14),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.md,
+                                  ),
                                   boxShadow: [
                                     BoxShadow(
                                       color: Theme.of(context)
@@ -479,17 +482,17 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                                 ),
                                 child: Text(
                                   q.question,
-                                  style: TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w600,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurface,
-                                    height: 1.5,
-                                  ),
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurface,
+                                        height: 1.5,
+                                      ),
                                 ),
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: AppSpacing.lg),
                               // Answer cards
                               ...List.generate(q.options.length, (i) {
                                 final eliminated = _eliminatedIndices.contains(
@@ -540,14 +543,18 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                                       : () => _selectAnswer(i),
                                   child: AnimatedContainer(
                                     duration: const Duration(milliseconds: 180),
-                                    margin: const EdgeInsets.only(bottom: 10),
+                                    margin: const EdgeInsets.only(
+                                      bottom: AppSpacing.sm,
+                                    ),
                                     padding: const EdgeInsets.symmetric(
-                                      horizontal: 16,
-                                      vertical: 14,
+                                      horizontal: AppSpacing.lg,
+                                      vertical: AppSpacing.lg,
                                     ),
                                     decoration: BoxDecoration(
                                       color: bg,
-                                      borderRadius: BorderRadius.circular(12),
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.md,
+                                      ),
                                       border: Border.all(
                                         color: border,
                                         width: 1.5,
@@ -557,16 +564,18 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                                       children: [
                                         if (icon != null) ...[
                                           Icon(icon, color: border, size: 18),
-                                          const SizedBox(width: 8),
+                                          const SizedBox(width: AppSpacing.sm),
                                         ],
                                         Expanded(
                                           child: Text(
                                             q.options[i],
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w500,
-                                              color: text,
-                                            ),
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.w500,
+                                                  color: text,
+                                                ),
                                           ),
                                         ),
                                       ],
@@ -575,7 +584,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                                 );
                               }),
                               if (_verdict != null) ...[
-                                const SizedBox(height: 8),
+                                const SizedBox(height: AppSpacing.sm),
                                 AnswerFeedbackPanel(
                                   verdict: _verdict!,
                                   chosen: _selectedIndex == null
@@ -609,7 +618,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                       gravity: 0.4,
                       colors: const [
                         AppColors.primary,
-                        Colors.yellow,
+                        AppColors.accentYellow,
                         AppColors.greenSuccessBright,
                         AppColors.orange,
                       ],
@@ -639,18 +648,20 @@ class _TimerWidget extends StatelessWidget {
         ? AppColors.orange
         : AppColors.errorBright;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(color: color),
       ),
       child: Text(
         '${timeLeft}s',
-        style: TextStyle(
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
           fontWeight: FontWeight.bold,
           color: color,
-          fontSize: 14,
         ),
       ),
     );

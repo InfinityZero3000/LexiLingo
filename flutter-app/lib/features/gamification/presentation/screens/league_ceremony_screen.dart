@@ -3,6 +3,8 @@ import 'dart:math' as math;
 
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/features/gamification/presentation/theme/reward_palette.dart';
 import 'package:flutter/services.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/gamification/presentation/widgets/rank_asset_icon.dart';
@@ -172,8 +174,8 @@ class _LeagueCeremonyScreenState extends State<LeagueCeremonyScreen>
                 radius: 1.3,
                 colors: [
                   leagueColor.withValues(alpha: isPromotion ? 0.35 : 0.12),
-                  const Color(0xFF0B0E14).withValues(alpha: 0.92),
-                  const Color(0xFF05070A),
+                  RewardPalette.nightTop.withValues(alpha: 0.92),
+                  RewardPalette.nightBottom,
                 ],
                 stops: const [0.0, 0.6, 1.0],
               ),
@@ -200,7 +202,7 @@ class _LeagueCeremonyScreenState extends State<LeagueCeremonyScreen>
 
           SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -214,7 +216,7 @@ class _LeagueCeremonyScreenState extends State<LeagueCeremonyScreen>
                           : Icons.arrow_downward_rounded,
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: AppSpacing.xxl),
 
                   SizedBox(
                     width: 160,
@@ -290,7 +292,7 @@ class _LeagueCeremonyScreenState extends State<LeagueCeremonyScreen>
                       ],
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: AppSpacing.xxl),
 
                   SlideTransition(
                     position: _titleSlide,
@@ -298,16 +300,16 @@ class _LeagueCeremonyScreenState extends State<LeagueCeremonyScreen>
                       opacity: _titleFade,
                       child: Text(
                         _leagueName(widget.newLeague),
-                        style: const TextStyle(
-                          fontSize: 36,
-                          fontWeight: FontWeight.w900,
-                          color: AppColors.surfaceLight,
-                          letterSpacing: -0.5,
-                        ),
+                        style: Theme.of(context).textTheme.displaySmall
+                            ?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              color: AppColors.surfaceLight,
+                              letterSpacing: -0.5,
+                            ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
 
                   FadeTransition(
                     opacity: _subtitleFade,
@@ -316,8 +318,7 @@ class _LeagueCeremonyScreenState extends State<LeagueCeremonyScreen>
                           ? _promotionSubtitle(widget.previousLeague)
                           : _demotionSubtitle(widget.newLeague),
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 15,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: AppColors.surfaceLight.withValues(alpha: 0.72),
                         height: 1.5,
                       ),
@@ -333,7 +334,7 @@ class _LeagueCeremonyScreenState extends State<LeagueCeremonyScreen>
                         width: double.infinity,
                         child: DecoratedBox(
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
                             gradient: LinearGradient(
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
@@ -341,9 +342,9 @@ class _LeagueCeremonyScreenState extends State<LeagueCeremonyScreen>
                                 leagueColor,
                                 Color.lerp(
                                   leagueColor,
-                                  Colors.black,
+                                  Theme.of(context).colorScheme.scrim,
                                   0.25,
-                                )!, // darken, not a token
+                                )!,
                               ],
                             ),
                             boxShadow: [
@@ -356,27 +357,27 @@ class _LeagueCeremonyScreenState extends State<LeagueCeremonyScreen>
                           ),
                           child: Material(
                             color: Colors.transparent,
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
                             child: InkWell(
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
                               onTap: () {
                                 Navigator.of(context).pop();
                                 widget.onContinue();
                               },
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
+                                  vertical: AppSpacing.lg,
                                 ),
                                 child: Center(
                                   child: Text(
                                     isPromotion
                                         ? 'gamification.league.claimSpot'.tr()
                                         : 'gamification.league.fightBack'.tr(),
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 16,
-                                      color: buttonTextColor,
-                                    ),
+                                    style: Theme.of(context).textTheme.bodyLarge
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w700,
+                                          color: buttonTextColor,
+                                        ),
                                   ),
                                 ),
                               ),
@@ -427,21 +428,23 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: 7,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 14, color: color),
-          const SizedBox(width: 6),
+          const SizedBox(width: AppSpacing.sm),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
               fontWeight: FontWeight.w700,
               color: color,
               letterSpacing: 1.2,

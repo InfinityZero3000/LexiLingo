@@ -3,6 +3,8 @@ library;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/features/achievements/presentation/theme/achievement_palette.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:confetti/confetti.dart';
@@ -427,7 +429,7 @@ class AchievementCard extends StatelessWidget {
     return Card(
       elevation: isUnlocked ? 4 : 1,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         side: BorderSide(
           color: isUnlocked ? rarityColor : AppColors.grey300,
           width: isUnlocked ? 2 : 1,
@@ -435,9 +437,9 @@ class AchievementCard extends StatelessWidget {
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: Padding(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(AppSpacing.sm),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
@@ -447,7 +449,7 @@ class AchievementCard extends StatelessWidget {
                 isUnlocked: isUnlocked,
                 size: 50,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.xs),
               Flexible(
                 child: Text(
                   achievement.name,
@@ -464,10 +466,13 @@ class AchievementCard extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: 2,
+                ),
                 decoration: BoxDecoration(
                   color: rarityColor.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Text(
                   achievement.rarityDisplayName,
@@ -551,22 +556,22 @@ class _AchievementUnlockPopupState extends State<AchievementUnlockPopup> {
           shouldLoop: false,
           colors: const [
             AppColors.greenSuccessBright,
-            Colors.blue,
-            Colors.pink,
+            AchievementPalette.blue,
+            AchievementPalette.pink,
             AppColors.orange,
             AppColors.purple,
-            Colors.yellow,
+            AppColors.accentYellow,
           ],
           numberOfParticles: 30,
         ),
         // Popup content
         Center(
           child: Container(
-            margin: const EdgeInsets.all(32),
-            padding: const EdgeInsets.all(24),
+            margin: const EdgeInsets.all(AppSpacing.xxl),
+            padding: const EdgeInsets.all(AppSpacing.xl),
             decoration: BoxDecoration(
               color: theme.cardColor,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               boxShadow: [
                 BoxShadow(
                   color: badgeColor.withValues(alpha: 0.3),
@@ -586,7 +591,7 @@ class _AchievementUnlockPopupState extends State<AchievementUnlockPopup> {
                     color: badgeColor,
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpacing.xl),
                 // Badge
                 Container(
                   width: 100,
@@ -611,7 +616,7 @@ class _AchievementUnlockPopupState extends State<AchievementUnlockPopup> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.lg),
                 // Name
                 Text(
                   achievement.name,
@@ -620,7 +625,7 @@ class _AchievementUnlockPopupState extends State<AchievementUnlockPopup> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 // Description
                 Text(
                   achievement.description,
@@ -629,7 +634,7 @@ class _AchievementUnlockPopupState extends State<AchievementUnlockPopup> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.lg),
                 // Rewards
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -640,29 +645,30 @@ class _AchievementUnlockPopupState extends State<AchievementUnlockPopup> {
                         value: '+${achievement.xpReward} XP',
                         color: AppColors.warning,
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSpacing.md),
                     ],
                     if (achievement.gemsReward > 0)
                       _RewardChip(
                         icon: Icons.diamond,
                         value: '+${achievement.gemsReward}',
-                        color: Colors.cyan,
+                        color: AchievementPalette.cyan,
                       ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpacing.xl),
                 // Close button
-                ElevatedButton(
+                FilledButton(
                   onPressed: widget.onDismiss,
-                  style: ElevatedButton.styleFrom(
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(kMinTapTarget, kMinTapTarget),
                     backgroundColor: badgeColor,
                     foregroundColor: AppColors.textInverted,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 12,
+                      horizontal: AppSpacing.xxl,
+                      vertical: AppSpacing.md,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
                     ),
                   ),
                   child: Text(
@@ -693,17 +699,20 @@ class _RewardChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 16, color: color),
-          const SizedBox(width: 4),
+          const SizedBox(width: AppSpacing.xs),
           Text(
             value,
             style: TextStyle(fontWeight: FontWeight.bold, color: color),
