@@ -66,12 +66,14 @@ class GrowthField extends StatelessWidget {
     required this.label,
     this.lines = 1,
     this.number = false,
+    this.errorText,
   });
 
   final TextEditingController controller;
   final String label;
   final int lines;
   final bool number;
+  final String? errorText;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -80,6 +82,7 @@ class GrowthField extends StatelessWidget {
       controller: controller,
       label: label,
       maxLines: lines,
+      errorText: errorText,
       keyboardType: number ? TextInputType.number : null,
     ),
   );
