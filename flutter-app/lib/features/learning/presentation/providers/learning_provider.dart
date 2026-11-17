@@ -16,6 +16,8 @@ import 'package:lexilingo_app/features/learning/domain/usecases/complete_lesson_
 import 'package:lexilingo_app/features/learning/domain/usecases/get_course_roadmap_usecase.dart';
 import 'package:lexilingo_app/features/learning/domain/usecases/get_lesson_content_usecase.dart';
 
+const String outOfHeartsCode = 'out_of_hearts';
+
 /// Learning Provider - Manages learning sessions, roadmap, and lesson progress
 class LearningProvider with ChangeNotifier {
   final StartLessonUseCase _startLessonUseCase;
@@ -87,6 +89,7 @@ class LearningProvider with ChangeNotifier {
   bool _isCompleting = false;
   int _xpEarned = 0;
   int _livesRemaining = 3;
+  int _outOfHeartsPromptCount = 0;
   int _hintsRemaining = 3;
   DateTime? _exerciseStartTime;
   LessonComplete? _lessonResult;
@@ -110,6 +113,12 @@ class LearningProvider with ChangeNotifier {
   bool get isCompleting => _isCompleting;
   int get xpEarned => _xpEarned;
   int get livesRemaining => _livesRemaining;
+  static const int maxLives = 3;
+  bool get isOutOfHearts => _currentAttempt != null && _livesRemaining <= 0;
+
+  /// Bumps whenever an answer was refused for lack of hearts, so the screen
+  /// can raise the out-of-hearts sheet again even though the count stayed 0.
+  int get outOfHeartsPromptCount => _outOfHeartsPromptCount;
   int get hintsRemaining => _hintsRemaining;
   LessonComplete? get lessonResult => _lessonResult;
 
@@ -207,6 +216,11 @@ class LearningProvider with ChangeNotifier {
     if (_currentLesson == null || isCurrentAnswered) return;
     final exercise = currentExercise;
     if (exercise == null) return;
+    if (isOutOfHearts) {
+      _outOfHeartsPromptCount++;
+      notifyListeners();
+      return;
+    }
 
     // The request is awaited while Skip stays tappable, so the result must
     // land on the question it answers, not wherever the index has moved to.
@@ -230,6 +244,13 @@ class LearningProvider with ChangeNotifier {
 
       result.fold(
         (failure) {
+          if (failure is ConflictFailure &&
+              failure.message == outOfHeartsCode) {
+            _userAnswers.remove(index);
+            _livesRemaining = 0;
+            _outOfHeartsPromptCount++;
+            return;
+          }
           final isCorrect = _checkAnswerLocally(exercise, answer);
           _answerResults[index] = isCorrect;
         },
@@ -244,7 +265,9 @@ class LearningProvider with ChangeNotifier {
     } else {
       final isCorrect = _checkAnswerLocally(exercise, answer);
       _answerResults[index] = isCorrect;
-      if (!isCorrect) _livesRemaining = (_livesRemaining - 1).clamp(0, 3);
+      if (!isCorrect) {
+        _livesRemaining = (_livesRemaining - 1).clamp(0, maxLives);
+      }
     }
     notifyListeners();
   }
@@ -284,6 +307,12 @@ class LearningProvider with ChangeNotifier {
     _userAnswers[_currentExerciseIndex] = '';
     _answerResults[_currentExerciseIndex] = false;
     nextExercise();
+  }
+
+  /// A refill was applied server-side to this attempt; play on with full hearts.
+  void heartsRefilled() {
+    _livesRemaining = maxLives;
+    notifyListeners();
   }
 
   void useHint() {
@@ -445,7 +474,7 @@ class LearningProvider with ChangeNotifier {
     _answerResults = {};
     _answerResponses = {};
     _xpEarned = 0;
-    _livesRemaining = 3;
+    _livesRemaining = maxLives;
     _hintsRemaining = 3;
     _lessonResult = null;
     _error = null;

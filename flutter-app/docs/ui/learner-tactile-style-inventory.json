@@ -79,6 +79,18 @@
       }
     },
     {
+      "id": "lib/features/learning/presentation/widgets/out_of_hearts_sheet.dart::OutOfHeartsChoice::showModalBottomSheet::0",
+      "path": "lib/features/learning/presentation/widgets/out_of_hearts_sheet.dart",
+      "entryPoint": "overlay",
+      "symbol": "OutOfHeartsChoice",
+      "callKind": "showModalBottomSheet",
+      "ordinal": 0,
+      "line": 8,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried"
+    },
+    {
       "id": "lib/features/learning/presentation/screens/learning_session_screen.dart::_LearningSessionScreenState::Card::0",
       "path": "lib/features/learning/presentation/screens/learning_session_screen.dart",
       "entryPoint": "surface",

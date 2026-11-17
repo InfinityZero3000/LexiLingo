@@ -10,6 +10,9 @@ import 'package:lexilingo_app/core/widgets/widgets.dart';
 import '../../domain/entities/lesson_entity.dart';
 import '../providers/learning_provider.dart';
 import '../widgets/quiz_widget.dart';
+import '../widgets/lesson_hearts_row.dart';
+import '../widgets/out_of_hearts_sheet.dart';
+import '../../../gamification/presentation/providers/gamification_provider.dart';
 import '../widgets/lesson_content_widget.dart';
 import '../widgets/premium_exercise_widgets.dart';
 import '../../../voice/presentation/widgets/tts_speed_selector.dart';
@@ -37,6 +40,8 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
   bool _wasAnswered = false;
   bool _wasCompleted = false;
   LearningProvider? _provider;
+  bool _heartsSheetOpen = false;
+  int _seenHeartsPrompts = 0;
 
   @override
   void initState() {
@@ -55,8 +60,57 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
     super.dispose();
   }
 
+  Future<void> _showHeartsSheet() async {
+    if (_heartsSheetOpen || !mounted) return;
+    _heartsSheetOpen = true;
+    try {
+      final learning = context.read<LearningProvider>();
+      final gamification = context.read<GamificationProvider>();
+      try {
+        await gamification.prepareHeartRefill();
+      } catch (_) {}
+      if (!mounted) return;
+      final choice = await showOutOfHeartsSheet(
+        context,
+        refillPrice: gamification.heartRefillItem?.priceGems,
+        gems: gamification.gems,
+        onRefill: () async {
+          final ok = await gamification.refillLessonHearts();
+          if (ok) learning.heartsRefilled();
+          return ok;
+        },
+      );
+      if (!mounted) return;
+      switch (choice) {
+        case OutOfHeartsChoice.refilled:
+          if (learning.isCurrentAnswered) learning.nextExercise();
+        case OutOfHeartsChoice.restart:
+          await learning.restartLesson();
+        case OutOfHeartsChoice.leave:
+          Navigator.of(context).pop();
+        case null:
+          break;
+      }
+    } finally {
+      _heartsSheetOpen = false;
+    }
+  }
+
+  bool _blockedByHearts(LearningProvider provider) {
+    final lastQuestion =
+        provider.currentExerciseIndex >= provider.totalExercises - 1;
+    if (!provider.isOutOfHearts || lastQuestion) return false;
+    _showHeartsSheet();
+    return true;
+  }
+
   void _onProviderChange() {
     final provider = context.read<LearningProvider>();
+
+    if (provider.outOfHeartsPromptCount != _seenHeartsPrompts) {
+      _seenHeartsPrompts = provider.outOfHeartsPromptCount;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _showHeartsSheet());
+    }
 
     // Lesson just completed
     if (!_wasCompleted && provider.isCompleted) {
@@ -160,20 +214,29 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                       horizontal: 20,
                       vertical: 10,
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(999),
-                      child: LinearProgressIndicator(
-                        value: provider.progress,
-                        minHeight: 10,
-                        backgroundColor: Theme.of(
-                          context,
-                        ).colorScheme.surfaceContainerHighest,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          AppColorRoles.primary(
-                            Theme.of(context).brightness == Brightness.dark,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(999),
+                            child: LinearProgressIndicator(
+                              value: provider.progress,
+                              minHeight: 10,
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHighest,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                AppColorRoles.primary(
+                                  Theme.of(context).brightness ==
+                                      Brightness.dark,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                        const SizedBox(width: 12),
+                        LessonHeartsRow(lives: provider.livesRemaining),
+                      ],
                     ),
                   ),
 
@@ -620,7 +683,9 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
           // Skip — always visible, outlined pill
           Expanded(
             child: OutlinedButton(
-              onPressed: () => provider.skipExercise(),
+              onPressed: () {
+                if (!_blockedByHearts(provider)) provider.skipExercise();
+              },
               style: OutlinedButton.styleFrom(
                 foregroundColor: primaryColor,
                 side: BorderSide(color: primaryColor, width: 1.5),
@@ -638,7 +703,9 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
             flex: 2,
             child: ElevatedButton.icon(
               onPressed: answered
-                  ? () => provider.nextExercise()
+                  ? () {
+                      if (!_blockedByHearts(provider)) provider.nextExercise();
+                    }
                   : canCheckDraft
                   ? () => provider.submitCurrentDraftAnswer()
                   : null,

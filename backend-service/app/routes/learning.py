@@ -68,6 +68,8 @@ from app.services.lesson_unlock import (
 
 logger = logging.getLogger(__name__)
 
+OUT_OF_HEARTS_DETAIL = "out_of_hearts"
+
 router = APIRouter(prefix="/learning", tags=["Learning Sessions"])
 
 
@@ -108,7 +110,13 @@ async def start_lesson(
         )
     )
     existing = result.scalar_one_or_none()
-    
+
+    if existing and existing.lives_remaining <= 0:
+        existing.finished_at = datetime.now(timezone.utc)
+        existing.passed = False
+        await db.flush()
+        existing = None
+
     if existing:
         return ApiResponse(
             success=True,
@@ -583,6 +591,8 @@ async def submit_answer(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Attempt not found")
     if attempt.finished_at is not None:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Lesson completed")
+    if attempt.lives_remaining <= 0:
+        raise HTTPException(status.HTTP_409_CONFLICT, OUT_OF_HEARTS_DETAIL)
     
     # Get lesson to validate answer
     lesson_result = await db.execute(select(Lesson).where(Lesson.id == attempt.lesson_id))

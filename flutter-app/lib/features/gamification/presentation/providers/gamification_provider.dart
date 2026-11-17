@@ -205,6 +205,48 @@ class GamificationProvider extends ChangeNotifier {
     }
   }
 
+  ShopItemEntity? get heartRefillItem {
+    for (final item in _shopItems) {
+      if (item.effectType == ShopItemEntity.effectHeartRefill) return item;
+    }
+    return null;
+  }
+
+  /// Loads whatever the out-of-hearts sheet needs to price a refill.
+  Future<void> prepareHeartRefill() async {
+    await Future.wait([
+      if (_shopItems.isEmpty) loadShopItems(),
+      if (_wallet == null) loadWallet(),
+      loadInventory(),
+    ]);
+  }
+
+  /// Uses a Heart Refill on the learner's unfinished attempt, buying one
+  /// first unless one is already owned (a failed earlier apply must not be
+  /// charged twice).
+  Future<bool> refillLessonHearts() async {
+    final refill = heartRefillItem;
+    if (refill == null) return false;
+    InventoryItemEntity? owned = _ownedHeartRefill();
+    if (owned == null) {
+      if (gems < refill.priceGems) return false;
+      if (!await purchaseItem(refill.id)) return false;
+      owned = _ownedHeartRefill();
+      if (owned == null) return false;
+    }
+    return useItem(owned.id);
+  }
+
+  InventoryItemEntity? _ownedHeartRefill() {
+    for (final entry in _inventory) {
+      if (entry.item.effectType == ShopItemEntity.effectHeartRefill &&
+          entry.quantity > 0) {
+        return entry;
+      }
+    }
+    return null;
+  }
+
   // ============== Inventory Methods ==============
   Future<void> loadInventory() async {
     _isLoadingInventory = true;
