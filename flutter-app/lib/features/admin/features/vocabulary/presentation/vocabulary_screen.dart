@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/api_endpoints.dart';
-import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/admin_colors.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/admin_shell.dart';
-import '../../../shared/widgets/admin_skeleton.dart';
-import '../../../shared/widgets/staggered_entrance.dart';
+import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
+import 'package:lexilingo_app/core/widgets/stagger_list.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class VocabularyScreen extends StatefulWidget {
@@ -117,9 +117,9 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
   Widget build(BuildContext context) {
     final words = _filtered;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AdminColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: AdminColors.background,
         leading: IconButton(
           icon: const Icon(Icons.menu_rounded),
           onPressed: AdminShell.openDrawer,
@@ -197,8 +197,8 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showForm(),
-        backgroundColor: AppColors.primaryBright,
-        foregroundColor: AppColors.surface,
+        backgroundColor: AdminColors.primaryBright,
+        foregroundColor: AdminColors.surface,
         icon: const Icon(Icons.add),
         label: Text(
           'New word',
@@ -212,7 +212,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
     final translation = word['translation'];
     final translated = translation is Map ? translation['vi'] : translation;
     return Material(
-      color: AppColors.surface,
+      color: AdminColors.surface,
       borderRadius: BorderRadius.circular(AppRadius.md),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppRadius.md),
@@ -243,28 +243,28 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                       Text(
                         '${word['pronunciation']}',
                         style: GoogleFonts.spaceGrotesk(
-                          color: AppColors.onSurfaceMuted,
+                          color: AdminColors.onSurfaceMuted,
                         ),
                       ),
                     const SizedBox(height: 6),
                     Text(
                       '${word['definition'] ?? 'No definition'}',
                       style: GoogleFonts.spaceGrotesk(
-                        color: AppColors.onSurfaceVariant,
+                        color: AdminColors.onSurfaceVariant,
                       ),
                     ),
                     if ((translated ?? '').toString().isNotEmpty)
                       Text(
                         '$translated',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.onSurfaceMuted,
+                          color: AdminColors.onSurfaceMuted,
                         ),
                       ),
                     const SizedBox(height: 6),
                     Text(
                       '${word['part_of_speech'] ?? '—'}',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: AppColors.primary,
+                        color: AdminColors.primary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -279,7 +279,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
                   onPressed: () => _delete(word),
                   icon: const Icon(
                     Icons.delete_outline,
-                    color: AppColors.error,
+                    color: AdminColors.error,
                   ),
                 ),
               ),
@@ -390,7 +390,7 @@ class _VocabularyFormState extends State<_VocabularyForm> {
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: Material(
-        color: AppColors.surface,
+        color: AdminColors.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         child: SafeArea(
           top: false,
@@ -495,13 +495,13 @@ class _LevelChip extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
     decoration: BoxDecoration(
-      color: AppColors.primaryContainer,
+      color: AdminColors.primaryContainer,
       borderRadius: BorderRadius.circular(6),
     ),
     child: Text(
       level,
       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-        color: AppColors.primary,
+        color: AdminColors.primary,
         fontWeight: FontWeight.w700,
       ),
     ),
@@ -520,12 +520,12 @@ class _MessageState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 40, color: AppColors.onSurfaceMuted),
+          Icon(icon, size: 40, color: AdminColors.onSurfaceMuted),
           const SizedBox(height: AppSpacing.md),
           Text(
             message,
             textAlign: TextAlign.center,
-            style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted),
+            style: GoogleFonts.spaceGrotesk(color: AdminColors.onSurfaceMuted),
           ),
           if (action != null) ...[
             const SizedBox(height: AppSpacing.md),

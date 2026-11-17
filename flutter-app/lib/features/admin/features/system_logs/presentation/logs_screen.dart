@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/admin_colors.dart';
 import '../../../shared/widgets/admin_shell.dart';
 import '../data/logs_repository.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
@@ -91,7 +91,7 @@ class _LogsScreenState extends State<LogsScreen> {
             'Không thể tải thêm nhật ký.',
             style: GoogleFonts.spaceGrotesk(),
           ),
-          backgroundColor: AppColors.error,
+          backgroundColor: AdminColors.error,
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -101,22 +101,22 @@ class _LogsScreenState extends State<LogsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AdminColors.background,
       body: RefreshIndicator(
-        color: AppColors.primary,
+        color: AdminColors.primary,
         onRefresh: _load,
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverAppBar(
               pinned: true,
-              backgroundColor: AppColors.background,
+              backgroundColor: AdminColors.background,
               elevation: 0,
               scrolledUnderElevation: 0,
               leading: IconButton(
                 icon: const Icon(
                   Icons.menu_rounded,
-                  color: AppColors.onSurface,
+                  color: AdminColors.onSurface,
                 ),
                 onPressed: AdminShell.openDrawer,
               ),
@@ -124,7 +124,7 @@ class _LogsScreenState extends State<LogsScreen> {
                 'Audit Logs',
                 style: GoogleFonts.spaceGrotesk(
                   fontWeight: FontWeight.w700,
-                  color: AppColors.onSurface,
+                  color: AdminColors.onSurface,
                 ),
               ),
             ),
@@ -136,14 +136,14 @@ class _LogsScreenState extends State<LogsScreen> {
                     'System activity',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.onSurface,
+                      color: AdminColors.onSurface,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     '$_total audit events • ${_logs.length} loaded',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.onSurfaceMuted,
+                      color: AdminColors.onSurfaceMuted,
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -182,7 +182,7 @@ class _LogsScreenState extends State<LogsScreen> {
                       padding: EdgeInsets.all(48),
                       child: Center(
                         child: CircularProgressIndicator(
-                          color: AppColors.primary,
+                          color: AdminColors.primary,
                         ),
                       ),
                     )
@@ -201,10 +201,10 @@ class _LogsScreenState extends State<LogsScreen> {
                         vertical: 12,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
+                        color: AdminColors.surface,
                         borderRadius: BorderRadius.circular(AppRadius.md),
                         border: Border.all(
-                          color: AppColors.outlineVariant,
+                          color: AdminColors.outlineVariant,
                           width: 0.5,
                         ),
                       ),
@@ -214,7 +214,7 @@ class _LogsScreenState extends State<LogsScreen> {
                           Text(
                             '${_logs.length} / $_total events',
                             style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: AppColors.onSurfaceMuted),
+                                ?.copyWith(color: AdminColors.onSurfaceMuted),
                           ),
                           if (_logs.length < _total)
                             TextButton(
@@ -224,7 +224,7 @@ class _LogsScreenState extends State<LogsScreen> {
                                       width: 16,
                                       height: 16,
                                       child: CircularProgressIndicator(
-                                        color: AppColors.primary,
+                                        color: AdminColors.primary,
                                         strokeWidth: 2,
                                       ),
                                     )
@@ -232,7 +232,7 @@ class _LogsScreenState extends State<LogsScreen> {
                                       'Load more',
                                       style: GoogleFonts.spaceGrotesk(
                                         fontWeight: FontWeight.w700,
-                                        color: AppColors.primary,
+                                        color: AdminColors.primary,
                                       ),
                                     ),
                             ),
@@ -270,12 +270,12 @@ class _FilterDropdown extends StatelessWidget {
       isExpanded: true,
       style: Theme.of(
         context,
-      ).textTheme.bodySmall?.copyWith(color: AppColors.onSurface),
+      ).textTheme.bodySmall?.copyWith(color: AdminColors.onSurface),
       decoration: InputDecoration(
         labelText: label,
         labelStyle: Theme.of(
           context,
-        ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+        ).textTheme.bodySmall?.copyWith(color: AdminColors.onSurfaceMuted),
         isDense: true,
       ),
       items: [
@@ -319,28 +319,28 @@ class _LogCard extends StatelessWidget {
   Color get _actionColor {
     switch (log.action) {
       case 'activate':
-        return AppColors.success;
+        return AdminColors.success;
       case 'deactivate':
       case 'delete':
-        return AppColors.error;
+        return AdminColors.error;
       case 'assign_role':
-        return AppColors.warning;
+        return AdminColors.warning;
       default:
-        return AppColors.primary;
+        return AdminColors.primary;
     }
   }
 
   Color get _actionBackground {
     switch (log.action) {
       case 'activate':
-        return AppColors.successContainer;
+        return AdminColors.successContainer;
       case 'deactivate':
       case 'delete':
-        return AppColors.errorContainer;
+        return AdminColors.errorContainer;
       case 'assign_role':
-        return AppColors.warningContainer;
+        return AdminColors.warningContainer;
       default:
-        return AppColors.primaryContainer;
+        return AdminColors.primaryContainer;
     }
   }
 
@@ -349,9 +349,9 @@ class _LogCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AdminColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.outlineVariant, width: 0.5),
+        border: Border.all(color: AdminColors.outlineVariant, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -376,13 +376,13 @@ class _LogCard extends StatelessWidget {
               const Icon(
                 Icons.schedule,
                 size: 14,
-                color: AppColors.onSurfaceMuted,
+                color: AdminColors.onSurfaceMuted,
               ),
               const SizedBox(width: 5),
               Text(
                 _timestamp,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AppColors.onSurfaceMuted,
+                  color: AdminColors.onSurfaceMuted,
                 ),
               ),
             ],
@@ -409,14 +409,14 @@ class _LogCard extends StatelessWidget {
             'DETAILS',
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w700,
-              color: AppColors.onSurfaceMuted,
+              color: AdminColors.onSurfaceMuted,
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
             log.details?.isNotEmpty == true ? log.details! : '—',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.onSurfaceVariant,
+              color: AdminColors.onSurfaceVariant,
               height: 1.35,
             ),
           ),
@@ -441,7 +441,7 @@ class _Meta extends StatelessWidget {
           label,
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
             fontWeight: FontWeight.w700,
-            color: AppColors.onSurfaceMuted,
+            color: AdminColors.onSurfaceMuted,
           ),
         ),
         const SizedBox(height: 3),
@@ -451,7 +451,7 @@ class _Meta extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
             fontWeight: FontWeight.w600,
-            color: AppColors.onSurface,
+            color: AdminColors.onSurface,
           ),
         ),
       ],
@@ -470,19 +470,19 @@ class _ErrorCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.errorContainer,
+        color: AdminColors.errorContainer,
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, color: AppColors.error),
+          const Icon(Icons.error_outline, color: AdminColors.error),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               message,
               style: Theme.of(
                 context,
-              ).textTheme.bodySmall?.copyWith(color: AppColors.error),
+              ).textTheme.bodySmall?.copyWith(color: AdminColors.error),
             ),
           ),
           TextButton(
@@ -491,7 +491,7 @@ class _ErrorCard extends StatelessWidget {
               'Retry',
               style: GoogleFonts.spaceGrotesk(
                 fontWeight: FontWeight.w700,
-                color: AppColors.error,
+                color: AdminColors.error,
               ),
             ),
           ),
@@ -510,23 +510,23 @@ class _EmptyState extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(40),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AdminColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.outlineVariant, width: 0.5),
+        border: Border.all(color: AdminColors.outlineVariant, width: 0.5),
       ),
       child: Column(
         children: [
           const Icon(
             Icons.manage_search_outlined,
             size: 36,
-            color: AppColors.onSurfaceMuted,
+            color: AdminColors.onSurfaceMuted,
           ),
           const SizedBox(height: 10),
           Text(
             'No audit logs found',
             style: GoogleFonts.spaceGrotesk(
               fontWeight: FontWeight.w700,
-              color: AppColors.onSurface,
+              color: AdminColors.onSurface,
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -535,7 +535,7 @@ class _EmptyState extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ).textTheme.bodySmall?.copyWith(color: AdminColors.onSurfaceMuted),
           ),
         ],
       ),

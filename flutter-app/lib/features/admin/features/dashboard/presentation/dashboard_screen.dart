@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/api_endpoints.dart';
-import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/admin_colors.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/admin_shell.dart';
-import '../../../shared/widgets/admin_skeleton.dart';
-import '../../../shared/widgets/kpi_count_card.dart';
-import '../../../shared/widgets/staggered_entrance.dart';
+import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
+import 'package:lexilingo_app/core/widgets/stat_card.dart';
+import 'package:lexilingo_app/core/widgets/stagger_list.dart';
 import '../../auth/presentation/auth_provider.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
@@ -105,21 +105,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final user = auth.user;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AdminColors.background,
       body: RefreshIndicator(
-        color: AppColors.primary,
+        color: AdminColors.primary,
         onRefresh: _load,
         child: CustomScrollView(
           slivers: [
             SliverAppBar(
               pinned: true,
-              backgroundColor: AppColors.background,
+              backgroundColor: AdminColors.background,
               elevation: 0,
               scrolledUnderElevation: 0,
               leading: IconButton(
                 icon: const Icon(
                   Icons.menu_rounded,
-                  color: AppColors.onSurface,
+                  color: AdminColors.onSurface,
                 ),
                 onPressed: AdminShell.openDrawer,
               ),
@@ -129,12 +129,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      color: AppColors.primary,
+                      color: AdminColors.primary,
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                     child: const Icon(
                       Icons.language,
-                      color: AppColors.surface,
+                      color: AdminColors.surface,
                       size: 18,
                     ),
                   ),
@@ -143,7 +143,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     'LingoAdmin',
                     style: Theme.of(context).textTheme.sectionTitle?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
+                      color: AdminColors.primary,
                     ),
                   ),
                 ],
@@ -153,7 +153,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   padding: const EdgeInsets.only(right: 12),
                   child: CircleAvatar(
                     radius: 16,
-                    backgroundColor: AppColors.primaryContainer,
+                    backgroundColor: AdminColors.primaryContainer,
                     // Initial is always the child so it still shows if the
                     // network avatar below fails to load — onBackgroundImageError
                     // only silences the exception, it can't swap in a fallback.
@@ -169,7 +169,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ? user!.displayName[0].toUpperCase()
                           : 'A',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.primary,
+                        color: AdminColors.primary,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -228,7 +228,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
           fontWeight: FontWeight.w700,
           letterSpacing: 0.08,
-          color: AppColors.onSurfaceMuted,
+          color: AdminColors.onSurfaceMuted,
         ),
       ),
       const SizedBox(height: AppSpacing.sm),
@@ -253,40 +253,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             StaggeredEntrance(
               index: 1,
-              child: KpiCountCard(
+              child: StatCard(
                 label: 'Active 7d',
-                value: _kpiVal('active_users_7d'),
+                value: _kpiVal('active_users_7d').round().toString(),
                 icon: Icons.trending_up_outlined,
-                change: 'Last 7 days',
+                note: 'Last 7 days',
               ),
             ),
             StaggeredEntrance(
               index: 2,
-              child: KpiCountCard(
+              child: StatCard(
                 label: 'Courses',
-                value: _kpiVal('total_courses'),
+                value: _kpiVal('total_courses').round().toString(),
                 icon: Icons.menu_book_outlined,
-                change: 'Published',
-                changePositive: true,
+                note: 'Published',
               ),
             ),
             StaggeredEntrance(
               index: 3,
-              child: KpiCountCard(
+              child: StatCard(
                 label: 'Avg DAU',
-                value: _kpiVal('avg_dau_30d'),
+                value: _kpiVal('avg_dau_30d').round().toString(),
                 icon: Icons.bar_chart_outlined,
-                change: '30-day avg',
-                changePositive: true,
+                note: '30-day avg',
               ),
             ),
             StaggeredEntrance(
               index: 4,
-              child: KpiCountCard(
+              child: StatCard(
                 label: 'Lessons Today',
-                value: _kpiVal('total_lessons_completed_today'),
+                value: _kpiVal(
+                  'total_lessons_completed_today',
+                ).round().toString(),
                 icon: Icons.task_alt_outlined,
-                change: 'Completed',
+                note: 'Completed',
               ),
             ),
           ],
@@ -365,7 +365,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           'Quick Actions',
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.w700,
-            color: AppColors.onSurface,
+            color: AdminColors.onSurface,
           ),
         ),
         const SizedBox(height: AppSpacing.sm),
@@ -421,7 +421,7 @@ class _PrimaryKpiCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.primary,
+        color: AdminColors.primary,
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Row(
@@ -434,7 +434,7 @@ class _PrimaryKpiCard extends StatelessWidget {
                   'TOTAL USERS',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.surface.withValues(alpha: 0.75),
+                    color: AdminColors.surface.withValues(alpha: 0.75),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
@@ -442,20 +442,24 @@ class _PrimaryKpiCard extends StatelessWidget {
                   _format(value),
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.surface,
+                    color: AdminColors.surface,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
                   '${_format(activeUsers)} active in the last 7 days',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.surface.withValues(alpha: 0.75),
+                    color: AdminColors.surface.withValues(alpha: 0.75),
                   ),
                 ),
               ],
             ),
           ),
-          const Icon(Icons.group_outlined, color: AppColors.surface, size: 32),
+          const Icon(
+            Icons.group_outlined,
+            color: AdminColors.surface,
+            size: 32,
+          ),
         ],
       ),
     );
@@ -477,7 +481,7 @@ class _EmptyState extends StatelessWidget {
           textAlign: TextAlign.center,
           style: Theme.of(
             context,
-          ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+          ).textTheme.bodySmall?.copyWith(color: AdminColors.onSurfaceMuted),
         ),
       ),
     );
@@ -511,7 +515,7 @@ class _DauLineChart extends StatelessWidget {
           drawVerticalLine: false,
           horizontalInterval: (max / 4).clamp(1, double.infinity),
           getDrawingHorizontalLine: (_) =>
-              const FlLine(color: AppColors.outline, strokeWidth: 0.5),
+              const FlLine(color: AdminColors.outline, strokeWidth: 0.5),
         ),
         borderData: FlBorderData(show: false),
         titlesData: FlTitlesData(
@@ -523,7 +527,7 @@ class _DauLineChart extends StatelessWidget {
               getTitlesWidget: (value, _) => Text(
                 _formatY(value),
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AppColors.onSurfaceMuted,
+                  color: AdminColors.onSurfaceMuted,
                 ),
               ),
             ),
@@ -542,7 +546,7 @@ class _DauLineChart extends StatelessWidget {
                 return Text(
                   '$labelPrefix${i + 1}',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: AppColors.onSurfaceMuted,
+                    color: AdminColors.onSurfaceMuted,
                   ),
                 );
               },
@@ -560,15 +564,15 @@ class _DauLineChart extends StatelessWidget {
             spots: spots,
             isCurved: true,
             curveSmoothness: 0.35,
-            color: AppColors.primaryBright,
+            color: AdminColors.primaryBright,
             barWidth: 2.5,
             dotData: FlDotData(
               show: true,
               getDotPainter: (spot, _, __, ___) => FlDotCirclePainter(
                 radius: 3,
-                color: AppColors.surface,
+                color: AdminColors.surface,
                 strokeWidth: 2,
-                strokeColor: AppColors.primaryBright,
+                strokeColor: AdminColors.primaryBright,
               ),
             ),
             belowBarData: BarAreaData(
@@ -577,8 +581,8 @@ class _DauLineChart extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  AppColors.primaryBright.withValues(alpha: 0.2),
-                  AppColors.primaryBright.withValues(alpha: 0.0),
+                  AdminColors.primaryBright.withValues(alpha: 0.2),
+                  AdminColors.primaryBright.withValues(alpha: 0.0),
                 ],
               ),
             ),
@@ -586,12 +590,12 @@ class _DauLineChart extends StatelessWidget {
         ],
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (_) => AppColors.navy,
+            getTooltipColor: (_) => AdminColors.navy,
             getTooltipItems: (spots) => spots.map((s) {
               return LineTooltipItem(
                 _formatY(s.y),
                 Theme.of(context).textTheme.bodySmall!.copyWith(
-                  color: AppColors.surface,
+                  color: AdminColors.surface,
                   fontWeight: FontWeight.w700,
                 ),
               );
@@ -630,17 +634,17 @@ class _QuickAction extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: filled
-              ? AppColors.primaryBright
-              : AppColors.surface.withValues(alpha: 0),
+              ? AdminColors.primaryBright
+              : AdminColors.surface.withValues(alpha: 0),
           borderRadius: BorderRadius.circular(AppRadius.md),
-          border: filled ? null : Border.all(color: AppColors.outline),
+          border: filled ? null : Border.all(color: AdminColors.outline),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icon,
-              color: filled ? AppColors.surface : AppColors.primary,
+              color: filled ? AdminColors.surface : AdminColors.primary,
               size: 16,
             ),
             const SizedBox(width: 6),
@@ -649,7 +653,7 @@ class _QuickAction extends StatelessWidget {
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.05,
-                color: filled ? AppColors.surface : AppColors.primary,
+                color: filled ? AdminColors.surface : AdminColors.primary,
               ),
             ),
           ],
@@ -677,9 +681,9 @@ class _SectionCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AdminColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.outlineVariant, width: 0.5),
+        border: Border.all(color: AdminColors.outlineVariant, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -695,14 +699,14 @@ class _SectionCard extends StatelessWidget {
                       title,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: AppColors.onSurface,
+                        color: AdminColors.onSurface,
                       ),
                     ),
                     if (subtitle != null)
                       Text(
                         subtitle!,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: AppColors.onSurfaceMuted,
+                          color: AdminColors.onSurfaceMuted,
                         ),
                       ),
                   ],
@@ -728,14 +732,14 @@ class _Chip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLow,
+        color: AdminColors.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
           fontWeight: FontWeight.w600,
-          color: AppColors.onSurfaceVariant,
+          color: AdminColors.onSurfaceVariant,
         ),
       ),
     );
@@ -759,13 +763,13 @@ class _LanguageBar extends StatelessWidget {
               lang,
               style: Theme.of(
                 context,
-              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurface),
+              ).textTheme.bodySmall?.copyWith(color: AdminColors.onSurface),
             ),
             Text(
               '${(pct * 100).toInt()}%',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w600,
-                color: AppColors.onSurface,
+                color: AdminColors.onSurface,
               ),
             ),
           ],
@@ -775,8 +779,8 @@ class _LanguageBar extends StatelessWidget {
           borderRadius: BorderRadius.circular(4),
           child: LinearProgressIndicator(
             value: pct,
-            backgroundColor: AppColors.surfaceContainerHigh,
-            valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+            backgroundColor: AdminColors.surfaceContainerHigh,
+            valueColor: const AlwaysStoppedAnimation(AdminColors.primary),
             minHeight: 6,
           ),
         ),
@@ -796,26 +800,26 @@ class _ErrorBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.errorContainer,
+        color: AdminColors.errorContainer,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+        border: Border.all(color: AdminColors.error.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, color: AppColors.error, size: 18),
+          const Icon(Icons.error_outline, color: AdminColors.error, size: 18),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               message,
               style: Theme.of(
                 context,
-              ).textTheme.bodySmall?.copyWith(color: AppColors.error),
+              ).textTheme.bodySmall?.copyWith(color: AdminColors.error),
             ),
           ),
           TextButton(
             onPressed: onRetry,
             style: TextButton.styleFrom(
-              foregroundColor: AppColors.error,
+              foregroundColor: AdminColors.error,
               minimumSize: const Size(44, 44),
             ),
             child: Text(

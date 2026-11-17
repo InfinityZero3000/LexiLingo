@@ -31353,6 +31353,58 @@
           "intermediateFill": null
         }
       }
+    },
+    {
+      "id": "lib/core/widgets/skeleton_loading.dart::StatCardSkeleton::BoxDecoration::0",
+      "path": "lib/core/widgets/skeleton_loading.dart",
+      "entryPoint": "surface",
+      "symbol": "StatCardSkeleton",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 342,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/core/widgets/skeleton_loading.dart::SectionCardSkeleton::BoxDecoration::0",
+      "path": "lib/core/widgets/skeleton_loading.dart",
+      "entryPoint": "surface",
+      "symbol": "SectionCardSkeleton",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 379,
+      "category": "eligible",
+      "group": 3,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
     }
   ],
   "boundaries": [

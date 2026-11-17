@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/admin_colors.dart';
 import '../../../shared/widgets/admin_shell.dart';
 import '../data/content_lab_repository.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
@@ -77,7 +77,7 @@ class _ContentLabScreenState extends State<ContentLabScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(text, style: GoogleFonts.spaceGrotesk()),
-        backgroundColor: error ? AppColors.error : AppColors.success,
+        backgroundColor: error ? AdminColors.error : AdminColors.success,
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -120,7 +120,7 @@ class _ContentLabScreenState extends State<ContentLabScreen>
     final payload = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: AdminColors.surface,
       builder: (_) => _QuestionForm(item: item),
     );
     if (payload == null) return;
@@ -139,7 +139,7 @@ class _ContentLabScreenState extends State<ContentLabScreen>
     final payload = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surface,
+      backgroundColor: AdminColors.surface,
       builder: (_) => _ExamForm(item: item),
     );
     if (payload == null) return;
@@ -156,26 +156,26 @@ class _ContentLabScreenState extends State<ContentLabScreen>
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.background,
+    backgroundColor: AdminColors.background,
     appBar: AppBar(
-      backgroundColor: AppColors.background,
+      backgroundColor: AdminColors.background,
       elevation: 0,
       leading: IconButton(
-        icon: const Icon(Icons.menu_rounded, color: AppColors.onSurface),
+        icon: const Icon(Icons.menu_rounded, color: AdminColors.onSurface),
         onPressed: AdminShell.openDrawer,
       ),
       title: Text(
         'Content Lab',
         style: GoogleFonts.spaceGrotesk(
           fontWeight: FontWeight.w700,
-          color: AppColors.onSurface,
+          color: AdminColors.onSurface,
         ),
       ),
       bottom: TabBar(
         controller: _tabs,
         labelStyle: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700),
-        labelColor: AppColors.primary,
-        indicatorColor: AppColors.primary,
+        labelColor: AdminColors.primary,
+        indicatorColor: AdminColors.primary,
         tabs: const [
           Tab(text: 'Questions'),
           Tab(text: 'Test Exams'),
@@ -183,14 +183,14 @@ class _ContentLabScreenState extends State<ContentLabScreen>
       ),
     ),
     floatingActionButton: FloatingActionButton.extended(
-      backgroundColor: AppColors.primary,
-      foregroundColor: AppColors.surface,
+      backgroundColor: AdminColors.primary,
+      foregroundColor: AdminColors.surface,
       onPressed: () => _tabs.index == 0 ? _questionForm() : _examForm(),
       icon: const Icon(Icons.add),
       label: const Text('Create'),
     ),
     body: RefreshIndicator(
-      color: AppColors.primary,
+      color: AdminColors.primary,
       onRefresh: _load,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -228,7 +228,7 @@ class _ContentLabScreenState extends State<ContentLabScreen>
             const Padding(
               padding: EdgeInsets.all(48),
               child: Center(
-                child: CircularProgressIndicator(color: AppColors.primary),
+                child: CircularProgressIndicator(color: AdminColors.primary),
               ),
             )
           else if (_error != null)
@@ -287,7 +287,7 @@ class _ContentLabScreenState extends State<ContentLabScreen>
                       child: Text(
                         e.tags.join(' • '),
                         style: GoogleFonts.spaceGrotesk(
-                          color: AppColors.onSurfaceMuted,
+                          color: AdminColors.onSurfaceMuted,
                         ),
                       ),
                     ),
@@ -501,7 +501,7 @@ class _ExamFormState extends State<_ExamForm> {
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Text(
             '${widget.item!.questionIds.length} questions (read-only)',
-            style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted),
+            style: GoogleFonts.spaceGrotesk(color: AdminColors.onSurfaceMuted),
           ),
         ),
       SwitchListTile(
@@ -623,9 +623,9 @@ class _Card extends StatelessWidget {
     margin: const EdgeInsets.only(bottom: 12),
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: AppColors.surface,
+      color: AdminColors.surface,
       borderRadius: BorderRadius.circular(AppRadius.md),
-      border: Border.all(color: AppColors.outline),
+      border: Border.all(color: AdminColors.outline),
     ),
     child: child,
   );
@@ -638,14 +638,14 @@ class _Chip extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
     decoration: BoxDecoration(
-      color: AppColors.surfaceContainerLow,
+      color: AdminColors.surfaceContainerLow,
       borderRadius: BorderRadius.circular(AppRadius.lg),
     ),
     child: Text(
       text,
       style: Theme.of(
         context,
-      ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+      ).textTheme.bodySmall?.copyWith(color: AdminColors.onSurfaceMuted),
     ),
   );
 }
@@ -667,7 +667,7 @@ class _Actions extends StatelessWidget {
         constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
         tooltip: 'Delete',
         onPressed: onDelete,
-        icon: const Icon(Icons.delete_outline, color: AppColors.error),
+        icon: const Icon(Icons.delete_outline, color: AdminColors.error),
       ),
     ],
   );
@@ -683,12 +683,12 @@ class _StateCard extends StatelessWidget {
     padding: const EdgeInsets.all(40),
     child: Column(
       children: [
-        Icon(icon, size: 48, color: AppColors.onSurfaceMuted),
+        Icon(icon, size: 48, color: AdminColors.onSurfaceMuted),
         const SizedBox(height: AppSpacing.md),
         Text(
           text,
           textAlign: TextAlign.center,
-          style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted),
+          style: GoogleFonts.spaceGrotesk(color: AdminColors.onSurfaceMuted),
         ),
         if (action != null)
           TextButton(onPressed: action, child: const Text('Retry')),

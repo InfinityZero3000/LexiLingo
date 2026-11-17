@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/api_endpoints.dart';
-import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/admin_colors.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/admin_shell.dart';
-import '../../../shared/widgets/admin_skeleton.dart';
-import '../../../shared/widgets/staggered_entrance.dart';
+import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
+import 'package:lexilingo_app/core/widgets/stagger_list.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class GrammarTestsScreen extends StatefulWidget {
@@ -116,9 +116,9 @@ class _GrammarTestsScreenState extends State<GrammarTestsScreen> {
   Widget build(BuildContext context) {
     final rules = _filtered;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AdminColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: AdminColors.background,
         leading: IconButton(
           icon: const Icon(Icons.menu_rounded),
           onPressed: AdminShell.openDrawer,
@@ -215,8 +215,8 @@ class _GrammarTestsScreenState extends State<GrammarTestsScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showForm(),
-        backgroundColor: AppColors.primaryBright,
-        foregroundColor: AppColors.surface,
+        backgroundColor: AdminColors.primaryBright,
+        foregroundColor: AdminColors.surface,
         icon: const Icon(Icons.add),
         label: Text(
           'New rule',
@@ -227,7 +227,7 @@ class _GrammarTestsScreenState extends State<GrammarTestsScreen> {
   }
 
   Widget _ruleCard(Map<String, dynamic> rule) => Material(
-    color: AppColors.surface,
+    color: AdminColors.surface,
     borderRadius: BorderRadius.circular(AppRadius.md),
     child: InkWell(
       borderRadius: BorderRadius.circular(AppRadius.md),
@@ -242,13 +242,13 @@ class _GrammarTestsScreenState extends State<GrammarTestsScreen> {
               height: 44,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: AppColors.primaryContainer,
+                color: AdminColors.primaryContainer,
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Text(
                 '${rule['level'] ?? rule['cefr_level'] ?? '?'}',
                 style: GoogleFonts.spaceGrotesk(
-                  color: AppColors.primary,
+                  color: AdminColors.primary,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -267,9 +267,9 @@ class _GrammarTestsScreenState extends State<GrammarTestsScreen> {
                   if ((rule['topic'] ?? '').toString().isNotEmpty)
                     Text(
                       '${rule['topic']}',
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.copyWith(color: AppColors.primary),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AdminColors.primary,
+                      ),
                     ),
                   if ((rule['summary'] ?? '').toString().isNotEmpty)
                     Padding(
@@ -279,7 +279,7 @@ class _GrammarTestsScreenState extends State<GrammarTestsScreen> {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.onSurfaceMuted,
+                          color: AdminColors.onSurfaceMuted,
                         ),
                       ),
                     ),
@@ -292,7 +292,10 @@ class _GrammarTestsScreenState extends State<GrammarTestsScreen> {
               child: IconButton(
                 tooltip: 'Delete',
                 onPressed: () => _delete(rule),
-                icon: const Icon(Icons.delete_outline, color: AppColors.error),
+                icon: const Icon(
+                  Icons.delete_outline,
+                  color: AdminColors.error,
+                ),
               ),
             ),
           ],
@@ -390,7 +393,7 @@ class _GrammarFormState extends State<_GrammarForm> {
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: Material(
-        color: AppColors.surface,
+        color: AdminColors.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         child: SafeArea(
           top: false,
@@ -487,13 +490,13 @@ class _GrammarMessage extends StatelessWidget {
           const Icon(
             Icons.rule_folder_outlined,
             size: 42,
-            color: AppColors.onSurfaceMuted,
+            color: AdminColors.onSurfaceMuted,
           ),
           const SizedBox(height: AppSpacing.md),
           Text(
             message,
             textAlign: TextAlign.center,
-            style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted),
+            style: GoogleFonts.spaceGrotesk(color: AdminColors.onSurfaceMuted),
           ),
           if (action != null) ...[
             const SizedBox(height: AppSpacing.md),

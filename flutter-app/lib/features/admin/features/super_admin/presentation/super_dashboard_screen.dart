@@ -5,11 +5,11 @@ import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 
 import '../../../core/constants/api_endpoints.dart';
-import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/admin_colors.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/admin_shell.dart';
-import '../../../shared/widgets/admin_skeleton.dart';
-import '../../../shared/widgets/stat_card.dart';
+import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
+import 'package:lexilingo_app/core/widgets/stat_card.dart';
 import '../../auth/presentation/auth_provider.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
@@ -76,7 +76,7 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
     }
     final totals = _info?['totals'] as Map?;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AdminColors.background,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.menu_rounded),
@@ -101,9 +101,9 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
               padding: EdgeInsets.all(20),
               child: Column(
                 children: [
-                  AdminSkeleton(height: 120, borderRadius: 16),
+                  SkeletonBox(height: 120, borderRadius: 16),
                   SizedBox(height: AppSpacing.md),
-                  AdminSkeleton(height: 220, borderRadius: 16),
+                  SkeletonBox(height: 220, borderRadius: 16),
                 ],
               ),
             )
@@ -120,7 +120,7 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.8,
-                      color: AppColors.primary,
+                      color: AdminColors.primary,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xs),
@@ -128,7 +128,7 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
                     'At-a-glance platform status',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.onSurface,
+                      color: AdminColors.onSurface,
                     ),
                   ),
                   if (_error != null) ...[
@@ -137,7 +137,7 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
                       'Some dashboard data could not be refreshed.',
                       style: Theme.of(
                         context,
-                      ).textTheme.bodySmall?.copyWith(color: AppColors.error),
+                      ).textTheme.bodySmall?.copyWith(color: AdminColors.error),
                     ),
                   ],
                   const SizedBox(height: 18),
@@ -228,9 +228,9 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
   Widget _panel(String title, List<Widget> children) => Container(
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
-      color: AppColors.surface,
+      color: AdminColors.surface,
       borderRadius: BorderRadius.circular(AppRadius.lg),
-      border: Border.all(color: AppColors.outlineVariant, width: 0.5),
+      border: Border.all(color: AdminColors.outlineVariant, width: 0.5),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -248,11 +248,11 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
   );
 
   Widget _restricted(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.background,
+    backgroundColor: AdminColors.background,
     appBar: AppBar(
       leading: AppBackButton(
         icon: Icons.arrow_back,
-        color: AppColors.onSurface,
+        color: AdminColors.onSurface,
         onPressed: () => context.pop(),
       ),
       title: Text(
@@ -266,7 +266,7 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.lock_outlined, color: AppColors.error, size: 48),
+            const Icon(Icons.lock_outlined, color: AdminColors.error, size: 48),
             const SizedBox(height: AppSpacing.lg),
             Text(
               'Access Restricted',
@@ -278,9 +278,9 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
             Text(
               'This section is only accessible to Super Administrators.',
               textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AdminColors.onSurfaceMuted,
+              ),
             ),
           ],
         ),
@@ -308,7 +308,7 @@ class _ServiceRow extends StatelessWidget {
           ),
           Icon(
             ok ? Icons.check_circle : Icons.warning_amber_rounded,
-            color: ok ? AppColors.success : AppColors.warning,
+            color: ok ? AdminColors.success : AdminColors.warning,
             size: 18,
           ),
           const SizedBox(width: 6),
@@ -316,7 +316,7 @@ class _ServiceRow extends StatelessWidget {
             status.replaceAll('_', ' ').toUpperCase(),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w700,
-              color: ok ? AppColors.success : AppColors.warning,
+              color: ok ? AdminColors.success : AdminColors.warning,
             ),
           ),
         ],
@@ -339,7 +339,7 @@ class _InfoRow extends StatelessWidget {
             label,
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ).textTheme.bodySmall?.copyWith(color: AdminColors.onSurfaceMuted),
           ),
         ),
         Text(
@@ -364,7 +364,7 @@ class _DashboardError extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline, color: AppColors.error, size: 40),
+          const Icon(Icons.error_outline, color: AdminColors.error, size: 40),
           const SizedBox(height: AppSpacing.md),
           Text(
             'Dashboard unavailable',
@@ -378,7 +378,7 @@ class _DashboardError extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ).textTheme.bodySmall?.copyWith(color: AdminColors.onSurfaceMuted),
           ),
           const SizedBox(height: AppSpacing.lg),
           SizedBox(

@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/features/admin/shared/admin_exit_scope.dart';
-import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/admin_colors.dart';
 import 'auth_provider.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart' show AppColors;
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -34,14 +35,18 @@ class LoginScreen extends StatelessWidget {
     final isLoading = auth.state == AuthState.loading;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFD4E9FF),
+      backgroundColor: AdminColors.primaryContainer,
       body: DecoratedBox(
         key: const Key('admin-login-background'),
         decoration: const BoxDecoration(
           gradient: RadialGradient(
             center: Alignment(-0.7, -0.8),
             radius: 1.4,
-            colors: [Color(0xFFFFF0E6), Color(0xFFE1F2FF), Color(0xFFD4E9FF)],
+            colors: [
+              AppColors.surfaceWarm,
+              AppColors.skyBackground,
+              AdminColors.primaryContainer,
+            ],
             stops: [0.0, 0.45, 1.0],
           ),
         ),
@@ -70,7 +75,7 @@ class LoginScreen extends StatelessWidget {
                               ),
                               label: const Text('Back to LexiLingo'),
                               style: TextButton.styleFrom(
-                                foregroundColor: AppColors.onSurfaceVariant,
+                                foregroundColor: AdminColors.onSurfaceVariant,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: AppSpacing.xs,
                                   vertical: AppSpacing.sm,
@@ -88,19 +93,18 @@ class LoginScreen extends StatelessWidget {
                                     gradient: const LinearGradient(
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
-                                      colors: [
-                                        Color(0xFFFF4D00),
-                                        Color(0xFFFF6F2A),
-                                      ],
+                                      colors: AppColors.primaryGradient,
                                     ),
                                     borderRadius: BorderRadius.circular(
                                       AppRadius.md,
                                     ),
-                                    boxShadow: const [
+                                    boxShadow: [
                                       BoxShadow(
-                                        color: Color(0x59FF4D00),
+                                        color: AppColors.primary.withValues(
+                                          alpha: 0.35,
+                                        ),
                                         blurRadius: 16,
-                                        offset: Offset(0, 4),
+                                        offset: const Offset(0, 4),
                                       ),
                                     ],
                                   ),
@@ -129,7 +133,7 @@ class LoginScreen extends StatelessWidget {
                                           ?.copyWith(
                                             fontWeight: FontWeight.w600,
                                             letterSpacing: 0.18,
-                                            color: AppColors.onSurfaceMuted,
+                                            color: AdminColors.onSurfaceMuted,
                                           ),
                                     ),
                                   ],
@@ -142,7 +146,7 @@ class LoginScreen extends StatelessWidget {
                               style: Theme.of(context).textTheme.headlineLarge
                                   ?.copyWith(
                                     fontWeight: FontWeight.w700,
-                                    color: AppColors.onSurface,
+                                    color: AdminColors.onSurface,
                                     letterSpacing: -0.02,
                                   ),
                             ),
@@ -150,7 +154,9 @@ class LoginScreen extends StatelessWidget {
                             Text(
                               'Đăng nhập bằng tài khoản Google admin của bạn.',
                               style: Theme.of(context).textTheme.bodyLarge
-                                  ?.copyWith(color: AppColors.onSurfaceVariant),
+                                  ?.copyWith(
+                                    color: AdminColors.onSurfaceVariant,
+                                  ),
                             ),
                             const SizedBox(height: 48),
                             // Google Sign-In button
@@ -162,16 +168,17 @@ class LoginScreen extends StatelessWidget {
                                     ? null
                                     : () => _signInWithGoogle(context),
                                 style: FilledButton.styleFrom(
-                                  backgroundColor: AppColors.surface,
-                                  foregroundColor: AppColors.onSurface,
+                                  backgroundColor: AdminColors.surface,
+                                  foregroundColor: AdminColors.onSurface,
                                   elevation: 2,
-                                  shadowColor: const Color(0x1A0A3256),
+                                  shadowColor: AppColors.surfaceDarkInk
+                                      .withValues(alpha: 0.1),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(
                                       AppRadius.md,
                                     ),
                                     side: const BorderSide(
-                                      color: AppColors.outline,
+                                      color: AdminColors.outline,
                                       width: 1.2,
                                     ),
                                   ),
@@ -182,7 +189,7 @@ class LoginScreen extends StatelessWidget {
                                         height: 22,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2.5,
-                                          color: AppColors.primary,
+                                          color: AdminColors.primary,
                                         ),
                                       )
                                     : Row(
@@ -203,7 +210,7 @@ class LoginScreen extends StatelessWidget {
                                                       fontWeight:
                                                           FontWeight.w600,
                                                       color:
-                                                          AppColors.onSurface,
+                                                          AdminColors.onSurface,
                                                     ),
                                               ),
                                             ),
@@ -217,7 +224,7 @@ class LoginScreen extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: AppColors.errorContainer,
+                                  color: AdminColors.errorContainer,
                                   borderRadius: BorderRadius.circular(
                                     AppRadius.md,
                                   ),
@@ -226,7 +233,7 @@ class LoginScreen extends StatelessWidget {
                                   children: [
                                     const Icon(
                                       Icons.error_outline,
-                                      color: AppColors.error,
+                                      color: AdminColors.error,
                                       size: 16,
                                     ),
                                     const SizedBox(width: AppSpacing.sm),
@@ -236,7 +243,9 @@ class LoginScreen extends StatelessWidget {
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodySmall
-                                            ?.copyWith(color: AppColors.error),
+                                            ?.copyWith(
+                                              color: AdminColors.error,
+                                            ),
                                       ),
                                     ),
                                   ],
@@ -251,11 +260,13 @@ class LoginScreen extends StatelessWidget {
                                   vertical: 10,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.surfaceContainerLow,
+                                  color: AdminColors.surfaceContainerLow,
                                   borderRadius: BorderRadius.circular(
                                     AppRadius.md,
                                   ),
-                                  border: Border.all(color: AppColors.outline),
+                                  border: Border.all(
+                                    color: AdminColors.outline,
+                                  ),
                                 ),
                                 child: FittedBox(
                                   fit: BoxFit.scaleDown,
@@ -265,7 +276,7 @@ class LoginScreen extends StatelessWidget {
                                       const Icon(
                                         Icons.shield_outlined,
                                         size: 14,
-                                        color: AppColors.onSurfaceMuted,
+                                        color: AdminColors.onSurfaceMuted,
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
@@ -274,7 +285,7 @@ class LoginScreen extends StatelessWidget {
                                             .textTheme
                                             .labelSmall
                                             ?.copyWith(
-                                              color: AppColors.onSurfaceMuted,
+                                              color: AdminColors.onSurfaceMuted,
                                             ),
                                       ),
                                     ],

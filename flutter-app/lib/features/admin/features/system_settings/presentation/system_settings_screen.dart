@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/admin_colors.dart';
 import '../../../core/constants/api_endpoints.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/admin_shell.dart';
-import '../../../shared/widgets/admin_skeleton.dart';
+import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class SystemSettingsScreen extends StatefulWidget {
@@ -102,7 +102,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
             'App name is required and expiry values must be positive.',
             style: GoogleFonts.spaceGrotesk(),
           ),
-          backgroundColor: AppColors.error,
+          backgroundColor: AdminColors.error,
         ),
       );
       return;
@@ -127,7 +127,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Settings saved', style: GoogleFonts.spaceGrotesk()),
-            backgroundColor: AppColors.success,
+            backgroundColor: AdminColors.success,
           ),
         );
       }
@@ -136,7 +136,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Save failed.', style: GoogleFonts.spaceGrotesk()),
-            backgroundColor: AppColors.error,
+            backgroundColor: AdminColors.error,
           ),
         );
       }
@@ -148,12 +148,12 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AdminColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: AdminColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.menu_rounded, color: AppColors.onSurface),
+          icon: const Icon(Icons.menu_rounded, color: AdminColors.onSurface),
           onPressed: AdminShell.openDrawer,
         ),
         title: Text(
@@ -164,7 +164,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
           IconButton(
             icon: const Icon(
               Icons.refresh_outlined,
-              color: AppColors.onSurface,
+              color: AdminColors.onSurface,
             ),
             onPressed: _loading ? null : _load,
           ),
@@ -173,7 +173,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
       body: _loading
           ? const Padding(
               padding: EdgeInsets.all(20),
-              child: AdminSkeleton(height: 320, borderRadius: 16),
+              child: SkeletonBox(height: 320, borderRadius: 16),
             )
           : _error != null && _config == null
           ? _SettingsError(message: _error!, onRetry: _load)
@@ -189,14 +189,14 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                       'System Configuration',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: AppColors.onSurface,
+                        color: AdminColors.onSurface,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.xs),
                     Text(
                       'Global app settings — changes apply immediately.',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.onSurfaceMuted,
+                        color: AdminColors.onSurfaceMuted,
                       ),
                     ),
                     const SizedBox(height: AppSpacing.xl),
@@ -238,7 +238,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                           DropdownButtonFormField<String>(
                             initialValue: _logLevel,
                             style: Theme.of(context).textTheme.bodyMedium
-                                ?.copyWith(color: AppColors.onSurface),
+                                ?.copyWith(color: AdminColors.onSurface),
                             decoration: const InputDecoration(isDense: true),
                             items: _logLevels
                                 .map(
@@ -283,7 +283,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                           Text(
                             'Current: $_tokenExpiry minutes',
                             style: Theme.of(context).textTheme.labelSmall
-                                ?.copyWith(color: AppColors.onSurfaceMuted),
+                                ?.copyWith(color: AdminColors.onSurfaceMuted),
                           ),
                         ],
                       ),
@@ -333,7 +333,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
                       child: FilledButton.icon(
                         onPressed: _saving ? null : _save,
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.primaryBright,
+                          backgroundColor: AdminColors.primaryBright,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
@@ -379,7 +379,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
           label,
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
             fontWeight: FontWeight.w700,
-            color: AppColors.onSurfaceMuted,
+            color: AdminColors.onSurfaceMuted,
             letterSpacing: 0.8,
           ),
         ),
@@ -388,9 +388,9 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: AdminColors.surface,
             borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: AppColors.outline, width: 0.5),
+            border: Border.all(color: AdminColors.outline, width: 0.5),
           ),
           child: child,
         ),
@@ -402,7 +402,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
     label,
     style: Theme.of(context).textTheme.labelSmall?.copyWith(
       fontWeight: FontWeight.w700,
-      color: AppColors.onSurfaceMuted,
+      color: AdminColors.onSurfaceMuted,
       letterSpacing: 0.5,
     ),
   );
@@ -414,13 +414,13 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
         key,
         style: Theme.of(
           context,
-        ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+        ).textTheme.bodySmall?.copyWith(color: AdminColors.onSurfaceMuted),
       ),
       Text(
         value,
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
           fontWeight: FontWeight.w600,
-          color: AppColors.onSurface,
+          color: AdminColors.onSurface,
         ),
       ),
     ],
@@ -441,14 +441,14 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
               title,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w600,
-                color: AppColors.onSurface,
+                color: AdminColors.onSurface,
               ),
             ),
             Text(
               subtitle,
-              style: Theme.of(
-                context,
-              ).textTheme.labelSmall?.copyWith(color: AppColors.onSurfaceMuted),
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: AdminColors.onSurfaceMuted,
+              ),
             ),
           ],
         ),
@@ -456,7 +456,7 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
       Switch(
         value: value,
         onChanged: onChanged,
-        activeThumbColor: AppColors.primary,
+        activeThumbColor: AdminColors.primary,
       ),
     ],
   );
@@ -473,7 +473,7 @@ class _SettingsError extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline, color: AppColors.error, size: 40),
+          const Icon(Icons.error_outline, color: AdminColors.error, size: 40),
           const SizedBox(height: AppSpacing.md),
           Text(
             'Could not load settings',
@@ -487,7 +487,7 @@ class _SettingsError extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: AppColors.onSurfaceMuted),
+            ).textTheme.bodySmall?.copyWith(color: AdminColors.onSurfaceMuted),
           ),
           const SizedBox(height: AppSpacing.lg),
           SizedBox(

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lexilingo_app/core/widgets/app_back_button.dart';
-import '../../../core/constants/app_colors.dart';
-import '../../../shared/widgets/admin_skeleton.dart';
+import '../../../core/constants/admin_colors.dart';
+import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
 import '../data/curriculum_repository.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
@@ -150,18 +150,18 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AdminColors.background,
       body: RefreshIndicator(
         onRefresh: _load,
         child: CustomScrollView(
           slivers: [
             SliverAppBar(
               pinned: true,
-              backgroundColor: AppColors.background,
+              backgroundColor: AdminColors.background,
               elevation: 0,
               leading: AppBackButton(
                 icon: Icons.arrow_back,
-                color: AppColors.onSurface,
+                color: AdminColors.onSurface,
                 onPressed: () => context.pop(),
               ),
               actions: [
@@ -194,7 +194,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.08,
-                      color: AppColors.primary,
+                      color: AdminColors.primary,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xs),
@@ -202,7 +202,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     'Course Detail',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.onSurface,
+                      color: AdminColors.onSurface,
                       letterSpacing: -0.02,
                     ),
                   ),
@@ -233,7 +233,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     'Unit Structure',
                     style: Theme.of(context).textTheme.sectionTitle?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.onSurface,
+                      color: AdminColors.onSurface,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -244,14 +244,14 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                         children: [
                           const Icon(
                             Icons.error_outline,
-                            color: AppColors.error,
+                            color: AdminColors.error,
                           ),
                           const SizedBox(width: AppSpacing.sm),
                           Expanded(
                             child: Text(
                               _error!,
                               style: GoogleFonts.spaceGrotesk(
-                                color: AppColors.error,
+                                color: AdminColors.error,
                               ),
                             ),
                           ),
@@ -265,9 +265,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                   if (_loading)
                     const Column(
                       children: [
-                        AdminSkeleton(height: 92),
+                        SkeletonBox(height: 92),
                         SizedBox(height: 10),
-                        AdminSkeleton(height: 92),
+                        SkeletonBox(height: 92),
                       ],
                     )
                   else if (_units.isEmpty)
@@ -275,7 +275,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                       child: Text(
                         'No units yet',
                         style: GoogleFonts.spaceGrotesk(
-                          color: AppColors.onSurfaceMuted,
+                          color: AdminColors.onSurfaceMuted,
                         ),
                       ),
                     )
@@ -307,7 +307,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.primaryBright,
+        backgroundColor: AdminColors.primaryBright,
         onPressed: _edit,
         child: Icon(Icons.add, color: Theme.of(context).colorScheme.onPrimary),
       ),
@@ -331,9 +331,9 @@ class _MiniStat extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AdminColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AppColors.outlineVariant, width: 0.5),
+        border: Border.all(color: AdminColors.outlineVariant, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -345,10 +345,10 @@ class _MiniStat extends StatelessWidget {
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: AppColors.primaryContainer,
+                  color: AdminColors.primaryContainer,
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
-                child: Icon(icon, color: AppColors.primary, size: 15),
+                child: Icon(icon, color: AdminColors.primary, size: 15),
               ),
             ],
           ),
@@ -358,14 +358,14 @@ class _MiniStat extends StatelessWidget {
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w700,
               letterSpacing: 0.06,
-              color: AppColors.onSurfaceMuted,
+              color: AdminColors.onSurfaceMuted,
             ),
           ),
           Text(
             value,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.w700,
-              color: AppColors.onSurface,
+              color: AdminColors.onSurface,
               letterSpacing: -0.02,
             ),
           ),
@@ -397,10 +397,12 @@ class _UnitCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: AdminColors.surface,
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
-            color: isExpanded ? AppColors.primary : AppColors.outlineVariant,
+            color: isExpanded
+                ? AdminColors.primary
+                : AdminColors.outlineVariant,
             width: isExpanded ? 1.5 : 0.5,
           ),
         ),
@@ -415,7 +417,7 @@ class _UnitCard extends StatelessWidget {
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.08,
-                      color: AppColors.primary,
+                      color: AdminColors.primary,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xs),
@@ -423,7 +425,7 @@ class _UnitCard extends StatelessWidget {
                     unit.title,
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.onSurface,
+                      color: AdminColors.onSurface,
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -432,13 +434,13 @@ class _UnitCard extends StatelessWidget {
                       const Icon(
                         Icons.book_outlined,
                         size: 12,
-                        color: AppColors.onSurfaceMuted,
+                        color: AdminColors.onSurfaceMuted,
                       ),
                       const SizedBox(width: AppSpacing.xs),
                       Text(
                         '${unit.lessonCount} Lessons',
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: AppColors.onSurfaceMuted,
+                          color: AdminColors.onSurfaceMuted,
                         ),
                       ),
                     ],

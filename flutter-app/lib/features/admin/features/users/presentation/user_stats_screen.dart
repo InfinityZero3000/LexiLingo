@@ -3,9 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/app_back_button.dart';
-import '../../../core/constants/app_colors.dart';
-import '../../../shared/widgets/admin_skeleton.dart';
-import '../../../shared/widgets/stat_card.dart';
+import '../../../core/constants/admin_colors.dart';
+import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
+import 'package:lexilingo_app/core/widgets/stat_card.dart';
 import '../../auth/presentation/auth_provider.dart';
 import '../data/users_repository.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
@@ -125,7 +125,7 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(text, style: GoogleFonts.spaceGrotesk()),
-        backgroundColor: error ? AppColors.error : AppColors.success,
+        backgroundColor: error ? AdminColors.error : AdminColors.success,
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -140,11 +140,11 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.background,
+    backgroundColor: AdminColors.background,
     appBar: AppBar(
       leading: AppBackButton(
         icon: Icons.arrow_back,
-        color: AppColors.onSurface,
+        color: AdminColors.onSurface,
         onPressed: context.pop,
       ),
       title: Text(
@@ -206,7 +206,7 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
       children: [
         CircleAvatar(
           radius: 38,
-          backgroundColor: AppColors.primaryContainer,
+          backgroundColor: AdminColors.primaryContainer,
           backgroundImage: _user?['avatar_url'] == null
               ? null
               : NetworkImage(_user!['avatar_url']),
@@ -216,7 +216,7 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
                       .toUpperCase(),
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
+                    color: AdminColors.primary,
                   ),
                 )
               : null,
@@ -230,7 +230,7 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
         ),
         Text(
           _user?['email'] ?? '',
-          style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted),
+          style: GoogleFonts.spaceGrotesk(color: AdminColors.onSurfaceMuted),
         ),
         const SizedBox(height: AppSpacing.md),
         Wrap(
@@ -241,16 +241,16 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
             _pill(
               _user?['is_verified'] == true ? 'Đã xác minh' : 'Chưa xác minh',
               _user?['is_verified'] == true
-                  ? AppColors.success
-                  : AppColors.warning,
+                  ? AdminColors.success
+                  : AdminColors.warning,
             ),
             _pill(
               _user?['is_active'] == true ? 'Hoạt động' : 'Tạm dừng',
               _user?['is_active'] == true
-                  ? AppColors.success
-                  : AppColors.onSurfaceMuted,
+                  ? AdminColors.success
+                  : AdminColors.onSurfaceMuted,
             ),
-            _pill(_roleLabel(_user?['role_level'] ?? 0), AppColors.primary),
+            _pill(_roleLabel(_user?['role_level'] ?? 0), AdminColors.primary),
           ],
         ),
       ],
@@ -341,8 +341,8 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
               onPressed: _acting ? null : _setActive,
               style: FilledButton.styleFrom(
                 backgroundColor: _user?['is_active'] == true
-                    ? AppColors.error
-                    : AppColors.success,
+                    ? AdminColors.error
+                    : AdminColors.success,
               ),
               icon: Icon(
                 _user?['is_active'] == true
@@ -381,7 +381,7 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
               child: Text(
                 'Chưa có hoạt động',
                 style: GoogleFonts.spaceGrotesk(
-                  color: AppColors.onSurfaceMuted,
+                  color: AdminColors.onSurfaceMuted,
                 ),
               ),
             ),
@@ -392,12 +392,12 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
               contentPadding: EdgeInsets.zero,
               minLeadingWidth: 44,
               leading: CircleAvatar(
-                backgroundColor: AppColors.primaryContainer,
+                backgroundColor: AdminColors.primaryContainer,
                 child: Icon(
                   item['activity_type'] == 'lesson_completed'
                       ? Icons.menu_book
                       : Icons.bolt,
-                  color: AppColors.primary,
+                  color: AdminColors.primary,
                 ),
               ),
               title: Text(
@@ -414,7 +414,7 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
                   ? Text(
                       '+${item['xp_earned']} XP',
                       style: GoogleFonts.spaceGrotesk(
-                        color: AppColors.primary,
+                        color: AdminColors.primary,
                         fontWeight: FontWeight.w700,
                       ),
                     )
@@ -426,9 +426,9 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
   );
 
   BoxDecoration _box() => BoxDecoration(
-    color: AppColors.surface,
+    color: AdminColors.surface,
     borderRadius: BorderRadius.circular(AppRadius.lg),
-    border: Border.all(color: AppColors.outlineVariant),
+    border: Border.all(color: AdminColors.outlineVariant),
   );
   Widget _pill(String text, Color color) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -451,7 +451,7 @@ class _UserStatsScreenState extends State<UserStatsScreen> {
         Expanded(
           child: Text(
             label,
-            style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted),
+            style: GoogleFonts.spaceGrotesk(color: AdminColors.onSurfaceMuted),
           ),
         ),
         Flexible(

@@ -6,8 +6,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 
-import '../../../core/constants/app_colors.dart';
-import '../../../shared/widgets/admin_skeleton.dart';
+import '../../../core/constants/admin_colors.dart';
+import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
 import '../data/lesson_exercises_repository.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
@@ -242,20 +242,20 @@ class _LessonExercisesScreenState extends State<LessonExercisesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AdminColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: AdminColors.background,
         elevation: 0,
         leading: AppBackButton(
           icon: Icons.arrow_back,
-          color: AppColors.onSurface,
+          color: AdminColors.onSurface,
           onPressed: () => context.pop(),
         ),
         title: Text(
           widget.lessonTitle,
           overflow: TextOverflow.ellipsis,
           style: GoogleFonts.spaceGrotesk(
-            color: AppColors.onSurface,
+            color: AdminColors.onSurface,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -277,8 +277,8 @@ class _LessonExercisesScreenState extends State<LessonExercisesScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _loading ? null : () => _editExercise(),
-        backgroundColor: AppColors.primaryBright,
-        foregroundColor: AppColors.surface,
+        backgroundColor: AdminColors.primaryBright,
+        foregroundColor: AdminColors.surface,
         icon: const Icon(Icons.add),
         label: Text(
           'Add exercise',
@@ -293,7 +293,7 @@ class _LessonExercisesScreenState extends State<LessonExercisesScreen> {
             Text(
               'LESSON CONTENT',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: AppColors.primary,
+                color: AdminColors.primary,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 1.2,
               ),
@@ -302,7 +302,7 @@ class _LessonExercisesScreenState extends State<LessonExercisesScreen> {
             Text(
               '${_exercises.length} exercises',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: AppColors.onSurface,
+                color: AdminColors.onSurface,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -314,9 +314,9 @@ class _LessonExercisesScreenState extends State<LessonExercisesScreen> {
             if (_loading)
               const Column(
                 children: [
-                  AdminSkeleton(height: 112),
+                  SkeletonBox(height: 112),
                   SizedBox(height: AppSpacing.md),
-                  AdminSkeleton(height: 112),
+                  SkeletonBox(height: 112),
                 ],
               )
             else if (_exercises.isEmpty)
@@ -368,9 +368,9 @@ class _ExerciseCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: AdminColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.outline),
+        border: Border.all(color: AdminColors.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -379,8 +379,8 @@ class _ExerciseCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 16,
-                backgroundColor: AppColors.surfaceDim,
-                foregroundColor: AppColors.onSurface,
+                backgroundColor: AdminColors.surfaceDim,
+                foregroundColor: AdminColors.onSurface,
                 child: Text('${index + 1}'),
               ),
               const SizedBox(width: 10),
@@ -391,14 +391,14 @@ class _ExerciseCard extends StatelessWidget {
                     vertical: 5,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.primaryContainer,
+                    color: AdminColors.primaryContainer,
                     borderRadius: BorderRadius.circular(AppRadius.lg),
                   ),
                   child: Text(
                     _uiTypeLabels[exercise.uiType] ?? exercise.uiType,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.primary,
+                      color: AdminColors.primary,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -408,7 +408,7 @@ class _ExerciseCard extends StatelessWidget {
               Text(
                 '${exercise.points} pts',
                 style: GoogleFonts.spaceGrotesk(
-                  color: AppColors.onSurfaceMuted,
+                  color: AdminColors.onSurfaceMuted,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -422,7 +422,7 @@ class _ExerciseCard extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: AppColors.onSurfaceVariant,
+              color: AdminColors.onSurfaceVariant,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -448,7 +448,7 @@ class _ExerciseCard extends StatelessWidget {
               _ActionButton(
                 tooltip: 'Delete',
                 icon: Icons.delete_outline,
-                color: AppColors.error,
+                color: AdminColors.error,
                 onPressed: onDelete,
               ),
             ],
@@ -477,7 +477,7 @@ class _ActionButton extends StatelessWidget {
     constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
     tooltip: tooltip,
     onPressed: onPressed,
-    color: color ?? AppColors.onSurfaceMuted,
+    color: color ?? AdminColors.onSurfaceMuted,
     icon: Icon(icon),
   );
 }
@@ -682,9 +682,9 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
   Widget build(BuildContext context) {
     final showOptions = _choiceTypes.contains(_uiType);
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: AdminColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: AdminColors.background,
         leading: IconButton(
           constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
           onPressed: () => Navigator.pop(context),
@@ -733,7 +733,7 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
               Text(
                 'Options',
                 style: Theme.of(context).textTheme.sectionTitle?.copyWith(
-                  color: AppColors.onSurface,
+                  color: AdminColors.onSurface,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -764,7 +764,7 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
                           minHeight: 48,
                         ),
                         tooltip: 'Remove option',
-                        color: AppColors.error,
+                        color: AdminColors.error,
                         onPressed: () => _removeOption(index),
                         icon: const Icon(Icons.remove_circle_outline),
                       ),
@@ -894,17 +894,17 @@ class _ErrorBanner extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
-      color: AppColors.errorContainer,
+      color: AdminColors.errorContainer,
       borderRadius: BorderRadius.circular(AppRadius.md),
     ),
     child: Row(
       children: [
-        const Icon(Icons.error_outline, color: AppColors.error),
+        const Icon(Icons.error_outline, color: AdminColors.error),
         const SizedBox(width: AppSpacing.sm),
         Expanded(
           child: Text(
             message,
-            style: GoogleFonts.spaceGrotesk(color: AppColors.error),
+            style: GoogleFonts.spaceGrotesk(color: AdminColors.error),
           ),
         ),
         if (onRetry != null)
@@ -926,22 +926,22 @@ class _EmptyState extends StatelessWidget {
       vertical: 56,
     ),
     decoration: BoxDecoration(
-      color: AppColors.surface,
+      color: AdminColors.surface,
       borderRadius: BorderRadius.circular(AppRadius.lg),
-      border: Border.all(color: AppColors.outline),
+      border: Border.all(color: AdminColors.outline),
     ),
     child: Column(
       children: [
         const Icon(
           Icons.quiz_outlined,
           size: 48,
-          color: AppColors.onSurfaceMuted,
+          color: AdminColors.onSurfaceMuted,
         ),
         const SizedBox(height: AppSpacing.md),
         Text(
           'No exercises yet',
           style: Theme.of(context).textTheme.sectionTitle?.copyWith(
-            color: AppColors.onSurface,
+            color: AdminColors.onSurface,
             fontWeight: FontWeight.w700,
           ),
         ),

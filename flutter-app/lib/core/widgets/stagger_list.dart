@@ -191,3 +191,69 @@ class _SliverStaggeredListState extends State<SliverStaggeredList>
     );
   }
 }
+
+/// Slide-up and fade for one item of a builder-made list or grid; item
+/// [index] starts `index * staggerMs` after the first. Shows its child at once
+/// when the platform asks for reduced motion.
+class StaggeredEntrance extends StatefulWidget {
+  const StaggeredEntrance({
+    super.key,
+    required this.child,
+    required this.index,
+    this.staggerMs = 80,
+    this.durationMs = 500,
+  });
+
+  final Widget child;
+  final int index;
+  final int staggerMs;
+  final int durationMs;
+
+  @override
+  State<StaggeredEntrance> createState() => _StaggeredEntranceState();
+}
+
+class _StaggeredEntranceState extends State<StaggeredEntrance>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl = AnimationController(
+    vsync: this,
+    duration: Duration(milliseconds: widget.durationMs),
+  );
+  late final Animation<double> _opacity = CurvedAnimation(
+    parent: _ctrl,
+    curve: Curves.easeOut,
+  );
+  late final Animation<Offset> _slide = Tween<Offset>(
+    begin: const Offset(0, 0.08),
+    end: Offset.zero,
+  ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
+  bool _started = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_started) return;
+    _started = true;
+    if (MediaQuery.maybeOf(context)?.disableAnimations ?? false) {
+      _ctrl.value = 1;
+      return;
+    }
+    Future.delayed(Duration(milliseconds: widget.index * widget.staggerMs), () {
+      if (mounted) _ctrl.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _opacity,
+      child: SlideTransition(position: _slide, child: widget.child),
+    );
+  }
+}
