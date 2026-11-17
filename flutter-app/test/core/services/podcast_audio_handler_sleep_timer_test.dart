@@ -10,6 +10,10 @@ import 'package:lexilingo_app/core/services/podcast_audio_handler.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test('speed reports the player speed so a reopened screen can show it', () {
+    expect(PodcastAudioHandler().speed, 1.0);
+  });
+
   group('PodcastAudioHandler sleep timer', () {
     test('setSleepTimer starts a countdown and elapsing clears it', () async {
       final handler = PodcastAudioHandler();

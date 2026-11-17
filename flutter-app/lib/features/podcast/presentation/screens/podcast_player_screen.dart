@@ -136,6 +136,7 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
     // Sleep timer — read the current value synchronously first (a timer may
     // already be running from before this screen was (re)opened), then
     // follow further ticks.
+    _playbackSpeed = _handler!.speed;
     _sleepTimerSecondsRemaining = _handler!.sleepTimerSecondsRemaining;
     _subs.add(
       _handler!.sleepTimerSecondsStream.listen((seconds) {

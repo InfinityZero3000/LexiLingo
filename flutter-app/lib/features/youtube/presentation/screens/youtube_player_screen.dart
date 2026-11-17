@@ -41,6 +41,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
   int _activeCaptionIndex = -1;
   double _playbackSpeed = 1.0;
   bool _streakUpdated = false;
+  bool _polling = false;
 
   /// Watch time, credited in idempotent chunks by the shared tracker.
   ///
@@ -103,6 +104,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
     _tabController.dispose();
     _ytController.close();
     _positionTimer?.cancel();
+    _watchTime.stop();
     _captionScrollController.dispose();
     super.dispose();
   }
@@ -111,6 +113,8 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
   /// already watched the video by the time this runs, and a failed award must
   /// never interrupt playback.
   Future<void> _syncPosition() async {
+    if (_polling) return;
+    _polling = true;
     try {
       final seconds = await _ytController.currentTime;
       final posMs = (seconds * 1000).round();
@@ -144,7 +148,10 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
       });
 
       if (changed && newIndex >= 0) _scrollToCaption(newIndex);
-    } catch (_) {}
+    } catch (_) {
+    } finally {
+      _polling = false;
+    }
   }
 
   /// Keeps the active line a third of the way down, like synced lyrics.
@@ -294,13 +301,12 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
           opacity: _fadeController,
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final tabs = Expanded(
-                child: TabBarView(
-                  controller: _tabController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [_buildCaptionsTab(isDark), _buildVocabTab(isDark)],
-                ),
+              final tabView = TabBarView(
+                controller: _tabController,
+                physics: const NeverScrollableScrollPhysics(),
+                children: [_buildCaptionsTab(isDark), _buildVocabTab(isDark)],
               );
+              final tabs = Expanded(child: tabView);
 
               // A full-width 16:9 player is taller than a landscape window,
               // so wide screens put the transcript beside the video.
@@ -343,25 +349,33 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                 );
               }
 
-              return Column(
+              // The stacked header, player and action rows need ~460px before
+              // the tabs get any room; a short window (landscape phone, large
+              // text) would overflow, so it scrolls as a whole instead.
+              final short = constraints.maxHeight < 600;
+              final stacked = Column(
                 children: [
                   _buildTopHeader(isDark),
-                  ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxHeight: constraints.maxHeight * 0.4,
+                  if (short)
+                    _buildPlayerArea(isDark)
+                  else
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: constraints.maxHeight * 0.4,
+                      ),
+                      child: Center(
+                        heightFactor: 1,
+                        child: _buildPlayerArea(isDark),
+                      ),
                     ),
-                    child: Center(
-                      heightFactor: 1,
-                      child: _buildPlayerArea(isDark),
-                    ),
-                  ),
                   _buildActiveSubtitleCard(isDark),
                   _buildInfoBar(isDark),
                   _buildActionBar(isDark),
                   _buildTabBar(isDark),
-                  tabs,
+                  if (short) SizedBox(height: 360, child: tabView) else tabs,
                 ],
               );
+              return short ? SingleChildScrollView(child: stacked) : stacked;
             },
           ),
         ),
@@ -578,13 +592,17 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
                 const SizedBox(height: 3),
                 Row(
                   children: [
-                    Text(
-                      widget.video.channelTitle,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: isDark
-                            ? AppColors.textOnDarkMuted
-                            : Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w500,
+                    Flexible(
+                      child: Text(
+                        widget.video.channelTitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: isDark
+                              ? AppColors.textOnDarkMuted
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                     if (widget.video.cefrLevel.isNotEmpty) ...[

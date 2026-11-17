@@ -107,6 +107,10 @@ class BookProvider extends ChangeNotifier {
   }
 
   Book? get currentBook => _currentBook;
+
+  /// True when the last [openBook] could not load the book's progress.
+  bool get openFailed => _openFailed;
+  bool _openFailed = false;
   String? get bookText => _bookText;
   List<String> get pages => _pages;
   int get currentPage => _currentPage;
@@ -257,14 +261,24 @@ class BookProvider extends ChangeNotifier {
     _currentProgress = null;
     _downloadedPath = null;
     _error = null;
+    _openFailed = false;
     notifyListeners();
 
     // Load saved progress and bookmarks in parallel
-    final results = await Future.wait([
-      _repository.getProgress(book.id),
-      _repository.getBookmarks(book.id),
-      _repository.getDownloadedPath(book.id),
-    ]);
+    final List<Object?> results;
+    try {
+      results = await Future.wait<Object?>([
+        _repository.getProgress(book.id),
+        _repository.getBookmarks(book.id),
+        _repository.getDownloadedPath(book.id),
+      ]);
+    } catch (e) {
+      if (_currentBook?.id != book.id) return;
+      _error = e.toString();
+      _openFailed = true;
+      notifyListeners();
+      return;
+    }
 
     if (_currentBook?.id != book.id) return;
     _currentProgress = results[0] as UserBook?;

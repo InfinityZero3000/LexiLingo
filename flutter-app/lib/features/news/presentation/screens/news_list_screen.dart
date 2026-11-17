@@ -427,8 +427,11 @@ class _NewsListScreenState extends State<NewsListScreen> {
                       Positioned(
                         bottom: 8,
                         left: 12,
+                        right: 12,
                         child: Text(
                           article.sourceName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.labelSmall
                               ?.copyWith(
                                 color: AppColors.onGradient.withValues(
