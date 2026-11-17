@@ -214,10 +214,7 @@ class _SittingViewState extends State<_SittingView> {
     }
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (_) => IeltsResultPage(
-          attemptId: result.attemptId,
-          existingProvider: provider,
-        ),
+        builder: (_) => IeltsResultPage(attemptId: result.attemptId),
       ),
     );
   }
@@ -349,6 +346,14 @@ class _AudioPlayerBarState extends State<_AudioPlayerBar> {
     }
   }
 
+  Future<void> _togglePlayback(bool playing) async {
+    if (playing) return _player.pause();
+    if (_player.processingState == ProcessingState.completed) {
+      await _player.seek(Duration.zero);
+    }
+    await _player.play();
+  }
+
   @override
   void dispose() {
     _player.dispose();
@@ -371,14 +376,16 @@ class _AudioPlayerBarState extends State<_AudioPlayerBar> {
         child: StreamBuilder<PlayerState>(
           stream: _player.playerStateStream,
           builder: (context, snapshot) {
-            final playing = snapshot.data?.playing ?? false;
+            final completed =
+                snapshot.data?.processingState == ProcessingState.completed;
+            final playing = (snapshot.data?.playing ?? false) && !completed;
             return Row(
               children: [
                 IconButton(
                   icon: Icon(playing ? Icons.pause : Icons.play_arrow),
                   onPressed: !_ready
                       ? null
-                      : () => playing ? _player.pause() : _player.play(),
+                      : () => _togglePlayback(playing),
                 ),
                 Expanded(
                   child: StreamBuilder<Duration>(

@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -928,6 +929,16 @@ class _SearchUsersSheetState extends State<_SearchUsersSheet> {
   final TextEditingController _controller = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    // The provider outlives the sheet; without this a reopened sheet shows the
+    // last query's results above an empty field.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<SocialProvider>().clearSearch();
+    });
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     super.dispose();
@@ -936,141 +947,149 @@ class _SearchUsersSheetState extends State<_SearchUsersSheet> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.8,
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      child: Column(
-        children: [
-          // Handle
-          Container(
-            margin: const EdgeInsets.only(top: 12),
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.outlineVariant,
-              borderRadius: BorderRadius.circular(2),
+    final media = MediaQuery.of(context);
+    final keyboard = media.viewInsets.bottom;
+    final available = media.size.height - keyboard - media.padding.top;
+    return Padding(
+      padding: EdgeInsets.only(bottom: keyboard),
+      child: Container(
+        height: math.min(media.size.height * 0.8, available),
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          children: [
+            // Handle
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.outlineVariant,
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
-          ),
 
-          // Header
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                Text(
-                  'social.findFriends'.tr(),
-                  style: Theme.of(context).textTheme.sectionTitle?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                // Search field
-                TextField(
-                  controller: _controller,
-                  decoration: InputDecoration(
-                    hintText: 'social.searchByUsername'.tr(),
-                    prefixIcon: const Icon(Icons.search),
-                    filled: true,
-                    fillColor: Theme.of(
-                      context,
-                    ).colorScheme.surfaceContainerHighest,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      borderSide: BorderSide.none,
+            // Header
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Text(
+                    'social.findFriends'.tr(),
+                    style: Theme.of(context).textTheme.sectionTitle?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
-                    suffixIcon: _controller.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () {
-                              _controller.clear();
-                              context.read<SocialProvider>().clearSearch();
-                            },
-                          )
-                        : null,
                   ),
-                  onChanged: (value) {
-                    context.read<SocialProvider>().searchUsers(value);
-                  },
-                ),
-              ],
+                  const SizedBox(height: AppSpacing.lg),
+                  // Search field
+                  TextField(
+                    controller: _controller,
+                    decoration: InputDecoration(
+                      hintText: 'social.searchByUsername'.tr(),
+                      prefixIcon: const Icon(Icons.search),
+                      filled: true,
+                      fillColor: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.md),
+                        borderSide: BorderSide.none,
+                      ),
+                      suffixIcon: _controller.text.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.close),
+                              onPressed: () {
+                                _controller.clear();
+                                setState(() {});
+                                context.read<SocialProvider>().clearSearch();
+                              },
+                            )
+                          : null,
+                    ),
+                    onChanged: (value) {
+                      setState(() {});
+                      context.read<SocialProvider>().searchUsers(value);
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          // Results
-          Expanded(
-            child: Consumer<SocialProvider>(
-              builder: (context, provider, child) {
-                if (provider.isSearching) {
-                  return const Center(child: LottieLoadingWidget.medium());
-                }
+            // Results
+            Expanded(
+              child: Consumer<SocialProvider>(
+                builder: (context, provider, child) {
+                  if (provider.isSearching) {
+                    return const Center(child: LottieLoadingWidget.medium());
+                  }
 
-                if (provider.searchError != null) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          provider.searchError!,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: AppColorRoles.textMuted(isDark),
+                  if (provider.searchError != null) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            provider.searchError!,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: AppColorRoles.textMuted(isDark),
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                if (provider.searchQuery.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'social.searchForFriends'.tr(),
-                          style: TextStyle(
-                            color: AppColorRoles.textMuted(isDark),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                if (provider.searchResults.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'social.noUsersFound'.tr(),
-                          style: TextStyle(
-                            color: AppColorRoles.textMuted(isDark),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return ListView.builder(
-                  padding: const EdgeInsets.only(bottom: 24),
-                  itemCount: provider.searchResults.length,
-                  itemBuilder: (context, index) {
-                    final user = provider.searchResults[index];
-                    return _UserProfileCard(
-                      user: user,
-                      onFollowToggle: () => widget.onFollow(user),
+                        ],
+                      ),
                     );
-                  },
-                );
-              },
+                  }
+
+                  if (provider.searchQuery.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'social.searchForFriends'.tr(),
+                            style: TextStyle(
+                              color: AppColorRoles.textMuted(isDark),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  if (provider.searchResults.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'social.noUsersFound'.tr(),
+                            style: TextStyle(
+                              color: AppColorRoles.textMuted(isDark),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    itemCount: provider.searchResults.length,
+                    itemBuilder: (context, index) {
+                      final user = provider.searchResults[index];
+                      return _UserProfileCard(
+                        user: user,
+                        onFollowToggle: () => widget.onFollow(user),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

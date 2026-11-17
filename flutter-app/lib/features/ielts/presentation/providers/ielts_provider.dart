@@ -47,6 +47,7 @@ class IeltsProvider extends ChangeNotifier {
   DateTime? _startedAt;
   Timer? _autosaveTimer;
   bool _dirty = false;
+  bool _disposed = false;
 
   List<IeltsTestSummary> get tests => _tests;
   List<Map<String, dynamic>> get history => _history;
@@ -68,8 +69,17 @@ class IeltsProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     _autosaveTimer?.cancel();
+    // Leaving mid-sitting must not drop the answers typed since the last tick.
+    unawaited(_flush());
     super.dispose();
+  }
+
+  @override
+  void notifyListeners() {
+    if (_disposed) return;
+    super.notifyListeners();
   }
 
   String _userMessage(Object e) => ieltsUserMessage(e);
@@ -167,7 +177,7 @@ class IeltsProvider extends ChangeNotifier {
 
   Future<IeltsResult?> submit() async {
     final attemptId = _attempt?.attemptId;
-    if (attemptId == null) return null;
+    if (attemptId == null || _submitting) return null;
     _submitting = true;
     _error = null;
     notifyListeners();
@@ -178,11 +188,13 @@ class IeltsProvider extends ChangeNotifier {
         Map<String, dynamic>.from(_answers),
         timeSpentSeconds: elapsedSeconds,
       );
+      _dirty = false;
       final result = await _dataSource.getResult(attemptId);
       _result = result;
       return result;
     } catch (e) {
       _error = _userMessage(e);
+      if (!_disposed) _beginAutosave();
       return null;
     } finally {
       _submitting = false;

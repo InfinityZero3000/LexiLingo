@@ -231,8 +231,13 @@ class SocialProvider extends ChangeNotifier {
   }
 
   // ============== Search Methods ==============
-  Future<void> searchUsers(String query) async {
+  int _searchSeq = 0;
+
+  Future<void> searchUsers(String rawQuery) async {
+    final query = rawQuery.trim();
+    final seq = ++_searchSeq;
     if (query.length < 2) {
+      _isSearching = false;
       _searchResults = [];
       _searchQuery = '';
       notifyListeners();
@@ -245,18 +250,25 @@ class SocialProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _searchResults = await _repo.searchUsers(query);
+      final results = await _repo.searchUsers(query);
+      if (seq != _searchSeq) return;
+      _searchResults = results;
     } catch (e) {
+      if (seq != _searchSeq) return;
       debugPrint('Error searching users: $e');
       _searchResults = [];
       _searchError = UiText.key('social.searchFailed');
     } finally {
-      _isSearching = false;
-      notifyListeners();
+      if (seq == _searchSeq) {
+        _isSearching = false;
+        notifyListeners();
+      }
     }
   }
 
   void clearSearch() {
+    _searchSeq++;
+    _isSearching = false;
     _searchResults = [];
     _searchQuery = '';
     _searchError = null;
