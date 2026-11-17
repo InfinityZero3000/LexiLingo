@@ -804,6 +804,48 @@ class TestProxyEndpoints:
         assert "max-age=86400" in response.headers["cache-control"]
 
     @pytest.mark.asyncio
+    async def test_proxy_text_falls_back_to_mirror_when_gutenberg_is_down(
+        self, no_db_client: AsyncClient
+    ):
+        target_url = "https://www.gutenberg.org/cache/epub/55/pg55.txt"
+        down = MagicMock(status_code=503)
+        up = MagicMock(status_code=200, content=b"Chapter 1", headers={})
+        up.headers = {"content-type": "text/plain; charset=utf-8"}
+
+        with patch("app.routes.books.httpx.AsyncClient") as client_class, patch(
+            "app.routes.books.safe_get", autospec=True, side_effect=[down, up]
+        ) as safe_get:
+            client_class.return_value.__aenter__.return_value = MagicMock()
+            response = await no_db_client.get(f"{BASE}/proxy/text?url={target_url}")
+
+        assert response.status_code == 200
+        assert response.content == b"Chapter 1"
+        assert safe_get.call_args_list[1].args[1] == (
+            "https://gutenberg.pglaf.org/cache/epub/55/pg55.txt"
+        )
+
+    @pytest.mark.asyncio
+    async def test_proxy_does_not_retry_other_hosts_or_client_errors(
+        self, no_db_client: AsyncClient
+    ):
+        missing = MagicMock(status_code=404)
+
+        with patch("app.routes.books.httpx.AsyncClient") as client_class, patch(
+            "app.routes.books.safe_get", autospec=True, return_value=missing
+        ) as safe_get:
+            client_class.return_value.__aenter__.return_value = MagicMock()
+            gone = await no_db_client.get(
+                f"{BASE}/proxy/text?url=https://www.gutenberg.org/cache/epub/1/pg1.txt"
+            )
+            other = await no_db_client.get(
+                f"{BASE}/proxy/image?url=https://covers.openlibrary.org/b/id/1-M.jpg"
+            )
+
+        assert gone.status_code == 404
+        assert other.status_code == 404
+        assert safe_get.await_count == 2
+
+    @pytest.mark.asyncio
     async def test_proxy_image_blocked_domain(self, no_db_client: AsyncClient):
         # A domain not in ALLOWED_PROXY_DOMAINS
         target_url = "https://malicious.com/virus.png"

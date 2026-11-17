@@ -13,7 +13,7 @@ import hashlib
 import logging
 import re
 from typing import Optional
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, status, Request, Response
@@ -642,10 +642,44 @@ async def _fetch_books(q: str, page: int, topic: Optional[str] = None) -> dict:
 ALLOWED_PROXY_DOMAINS = {
     "www.gutenberg.org",
     "gutenberg.org",
+    "gutenberg.pglaf.org",
     "gutendex.com",
     "openlibrary.org",
     "covers.openlibrary.org",
 }
+
+GUTENBERG_MIRROR = "gutenberg.pglaf.org"
+
+
+async def _get_with_mirror(
+    client: httpx.AsyncClient, url: str, headers: dict[str, str]
+) -> httpx.Response:
+    """www.gutenberg.org goes down for maintenance now and then, and its own
+    mirror serves the same /cache/epub/ files, so a 5xx or a failed connection
+    there is retried on the mirror."""
+    parts = urlsplit(url)
+    mirror = (
+        parts._replace(netloc=GUTENBERG_MIRROR).geturl()
+        if (parts.hostname or "").lower() in {"www.gutenberg.org", "gutenberg.org"}
+        and parts.path.startswith("/cache/epub/")
+        else None
+    )
+    try:
+        resp = await safe_get(
+            client, url, allowed_hosts=ALLOWED_PROXY_DOMAINS, headers=headers
+        )
+    except httpx.RequestError:
+        if mirror is None:
+            raise
+        return await safe_get(
+            client, mirror, allowed_hosts=ALLOWED_PROXY_DOMAINS, headers=headers
+        )
+    if resp.status_code >= 500 and mirror is not None:
+        return await safe_get(
+            client, mirror, allowed_hosts=ALLOWED_PROXY_DOMAINS, headers=headers
+        )
+    return resp
+
 
 def _proxy_book_urls(book: dict, request: Request) -> dict:
     """Rewrite book cover_url and download_url to go through backend proxy to avoid CORS."""
@@ -675,11 +709,10 @@ async def proxy_image(url: str = Query(..., description="The image URL to proxy"
     """
     async with httpx.AsyncClient(timeout=10.0) as client:
         try:
-            resp = await safe_get(
+            resp = await _get_with_mirror(
                 client,
                 url,
-                allowed_hosts=ALLOWED_PROXY_DOMAINS,
-                headers={"User-Agent": "LexiLingo/1.0 (English learning app; cover-proxy)"},
+                {"User-Agent": "LexiLingo/1.0 (English learning app; cover-proxy)"},
             )
             if resp.status_code != 200:
                 raise HTTPException(
@@ -710,11 +743,10 @@ async def proxy_text(url: str = Query(..., description="The text URL to proxy"))
     """
     async with httpx.AsyncClient(timeout=15.0) as client:
         try:
-            resp = await safe_get(
+            resp = await _get_with_mirror(
                 client,
                 url,
-                allowed_hosts=ALLOWED_PROXY_DOMAINS,
-                headers={"User-Agent": "LexiLingo/1.0 (English learning app; text-proxy)"},
+                {"User-Agent": "LexiLingo/1.0 (English learning app; text-proxy)"},
             )
             if resp.status_code != 200:
                 raise HTTPException(
