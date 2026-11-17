@@ -6,6 +6,7 @@ import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/flashcard_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/review_session_entity.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/widgets/flashcard_widget.dart';
+import 'package:lexilingo_app/features/vocabulary/presentation/widgets/review_deck.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/widgets/review_quality_buttons.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/widgets/session_header.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/screens/session_complete_screen.dart';
@@ -26,19 +27,14 @@ class FlashcardReviewScreen extends StatefulWidget {
 class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _slideController;
-  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
     _slideController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 320),
       vsync: this,
     );
-    _slideAnimation =
-        Tween<Offset>(begin: Offset.zero, end: const Offset(-1.5, 0)).animate(
-          CurvedAnimation(parent: _slideController, curve: Curves.easeInOut),
-        );
 
     // Start review session
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -228,14 +224,16 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
                   // Session Header (Progress, Stats)
                   SessionHeader(session: session),
 
-                  // Flashcard — fixed position, never shifts when buttons appear
+                  // Flashcard on its pile — fixed position, never shifts
+                  // when the buttons appear.
                   Expanded(
                     child: Align(
                       alignment: const Alignment(0, -0.15),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: SlideTransition(
-                          position: _slideAnimation,
+                        padding: const EdgeInsets.symmetric(horizontal: 28),
+                        child: ReviewDeck(
+                          behind: session.remainingCards - 1,
+                          exit: _slideController,
                           child: FlashcardWidget(
                             card: currentCard,
                             isFlipped: provider.isCardFlipped,
