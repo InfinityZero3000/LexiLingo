@@ -18,7 +18,7 @@ class AnimatedStarRating extends StatefulWidget {
     this.starCount = 5,
     this.size = 24,
     this.filledColor = AppColors.warning,
-    this.unfilledColor = Colors.grey,
+    this.unfilledColor = AppColors.grey400,
     this.animationDuration = const Duration(milliseconds: 500),
   });
 
@@ -206,7 +206,7 @@ class SpinningLoader extends StatefulWidget {
   const SpinningLoader({
     super.key,
     this.size = 40,
-    this.color = Colors.blue,
+    this.color = AppColors.primary,
     this.strokeWidth = 3,
     this.duration = const Duration(milliseconds: 1200),
   });
@@ -299,7 +299,7 @@ class BouncingDotsLoader extends StatefulWidget {
   const BouncingDotsLoader({
     super.key,
     this.dotSize = 10,
-    this.color = Colors.blue,
+    this.color = AppColors.primary,
     this.spacing = 4,
   });
 
@@ -485,8 +485,8 @@ class CountdownTimer extends StatefulWidget {
     super.key,
     required this.seconds,
     this.size = 80,
-    this.backgroundColor = Colors.grey,
-    this.progressColor = Colors.blue,
+    this.backgroundColor = AppColors.grey300,
+    this.progressColor = AppColors.primary,
     this.strokeWidth = 6,
     this.onComplete,
     this.textStyle,

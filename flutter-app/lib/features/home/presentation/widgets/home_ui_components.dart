@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -113,7 +114,12 @@ class PersonalizedGreetingHeader extends StatelessWidget {
     final meaning = dayPart.meaningKey.tr();
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        0,
+      ),
       child: Row(
         children: [
           Semantics(
@@ -246,10 +252,13 @@ class _XpPill extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final fg = isDark ? AppColors.orange : AppColors.warningDark;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: 4,
+      ),
       decoration: BoxDecoration(
         color: AppColors.accentYellow.withValues(alpha: isDark ? 0.18 : 0.28),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         border: Border.all(
           color: AppColors.orange.withValues(alpha: 0.4),
           width: 1.5,
@@ -384,7 +393,7 @@ class _NotificationBellState extends State<_NotificationBell>
                         padding: const EdgeInsets.symmetric(horizontal: 3),
                         decoration: BoxDecoration(
                           color: AppColors.errorBright,
-                          borderRadius: BorderRadius.circular(999),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
                           border: Border.all(
                             color: theme.scaffoldBackgroundColor,
                             width: 1.5,
@@ -394,7 +403,7 @@ class _NotificationBellState extends State<_NotificationBell>
                         child: Text(
                           widget.count > 9 ? '9+' : '${widget.count}',
                           style: theme.textTheme.labelMedium?.copyWith(
-                            color: Colors.white,
+                            color: AppColors.textInverted,
                             fontWeight: FontWeight.w800,
                             height: 1,
                           ),
@@ -494,7 +503,7 @@ class CardSkeleton extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -516,7 +525,7 @@ class CardSkeleton extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: const Row(
         children: [

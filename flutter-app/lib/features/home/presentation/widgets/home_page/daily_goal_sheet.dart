@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -31,11 +32,16 @@ Future<void> showDailyGoalSheet(
       return Consumer<SettingsProvider>(
         builder: (sheetContext, settingsProvider, _) {
           return Container(
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.xl,
+              AppSpacing.md,
+              AppSpacing.xl,
+              32,
+            ),
             decoration: BoxDecoration(
               color: Theme.of(sheetContext).scaffoldBackgroundColor,
               borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(24),
+                top: Radius.circular(AppRadius.xl),
               ),
             ),
             child: SingleChildScrollView(
@@ -50,7 +56,7 @@ Future<void> showDailyGoalSheet(
                       margin: const EdgeInsets.only(bottom: 20),
                       decoration: BoxDecoration(
                         color: colorScheme.outlineVariant,
-                        borderRadius: BorderRadius.circular(999),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
                     ),
                   ),
@@ -76,7 +82,7 @@ Future<void> showDailyGoalSheet(
                           primaryColor.withValues(alpha: 0.72),
                         ],
                       ),
-                      borderRadius: BorderRadius.circular(18),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -115,7 +121,7 @@ Future<void> showDailyGoalSheet(
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 10),
                       child: InkWell(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                         onTap: () async {
                           await settingsProvider.updateDailyGoal(xp);
                           if (!sheetContext.mounted) return;
@@ -141,14 +147,14 @@ Future<void> showDailyGoalSheet(
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 180),
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 14,
+                            horizontal: AppSpacing.lg,
+                            vertical: AppSpacing.lg,
                           ),
                           decoration: BoxDecoration(
                             color: isSelected
                                 ? primaryColor.withValues(alpha: 0.12)
                                 : colorScheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
                             border: Border.all(
                               color: isSelected
                                   ? primaryColor
@@ -165,7 +171,9 @@ Future<void> showDailyGoalSheet(
                                   color: isSelected
                                       ? primaryColor
                                       : primaryColor.withValues(alpha: 0.12),
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.md,
+                                  ),
                                 ),
                                 child: Icon(
                                   goal['icon'] as IconData,

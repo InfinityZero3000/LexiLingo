@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -72,7 +73,12 @@ class ProgressChipsRow extends StatelessWidget {
         ];
 
         return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.md,
+            AppSpacing.lg,
+            0,
+          ),
           child: Align(
             alignment: Alignment.centerLeft,
             child: Wrap(spacing: 8, runSpacing: 8, children: chips),
@@ -105,12 +111,12 @@ class _ProgressChip extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         onTap: onTap,
         child: Ink(
           decoration: BoxDecoration(
             color: tint.withValues(alpha: isDark ? 0.18 : 0.10),
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
             border: Border.all(color: tint.withValues(alpha: 0.45), width: 1.5),
           ),
           child: ConstrainedBox(

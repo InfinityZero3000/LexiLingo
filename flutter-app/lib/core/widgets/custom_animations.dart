@@ -20,7 +20,7 @@ class PulseAnimation extends StatefulWidget {
   const PulseAnimation({
     super.key,
     required this.child,
-    this.color = Colors.blue,
+    this.color = AppColors.primary,
     this.maxRadius = 30,
     this.duration = const Duration(milliseconds: 1500),
     this.enabled = true,
@@ -129,7 +129,7 @@ class ShimmerEffect extends StatefulWidget {
     super.key,
     required this.child,
     this.baseColor = AppColors.grey300,
-    this.highlightColor = const Color(0xFFF5F5F5),
+    this.highlightColor = AppColors.grey100,
     this.duration = const Duration(milliseconds: 1500),
   });
 
@@ -198,7 +198,7 @@ class WaveAnimation extends StatefulWidget {
 
   const WaveAnimation({
     super.key,
-    this.color = Colors.blue,
+    this.color = AppColors.primary,
     this.height = 100,
     this.waveCount = 3,
     this.duration = const Duration(seconds: 3),
@@ -427,8 +427,8 @@ class AnimatedProgressRing extends StatefulWidget {
     required this.progress,
     this.size = 100,
     this.strokeWidth = 8,
-    this.progressColor = Colors.blue,
-    this.backgroundColor = Colors.grey,
+    this.progressColor = AppColors.primary,
+    this.backgroundColor = AppColors.grey300,
     this.child,
     this.duration = const Duration(milliseconds: 800),
   });
@@ -663,7 +663,7 @@ class BreathingGlow extends StatefulWidget {
   const BreathingGlow({
     super.key,
     required this.child,
-    this.glowColor = Colors.blue,
+    this.glowColor = AppColors.primary,
     this.maxBlur = 20,
     this.duration = const Duration(milliseconds: 2000),
   });
@@ -733,10 +733,10 @@ class AnimatedGradientBorder extends StatefulWidget {
     this.borderWidth = 2,
     this.borderRadius = 12,
     this.colors = const [
-      Colors.blue,
+      AppColors.primary,
       AppColors.purple,
-      Colors.pink,
-      Colors.blue,
+      AppColors.purpleLight,
+      AppColors.primary,
     ],
     this.duration = const Duration(seconds: 3),
   });

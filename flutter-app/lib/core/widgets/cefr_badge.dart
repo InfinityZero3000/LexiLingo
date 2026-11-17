@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 
@@ -42,16 +43,16 @@ class CefrBadge extends StatelessWidget {
 
   EdgeInsetsGeometry get _padding => switch (size) {
     CefrBadgeSize.small => const EdgeInsets.symmetric(
-      horizontal: 6,
+      horizontal: AppSpacing.sm,
       vertical: 2,
     ),
     CefrBadgeSize.medium => const EdgeInsets.symmetric(
-      horizontal: 8,
+      horizontal: AppSpacing.sm,
       vertical: 3,
     ),
     CefrBadgeSize.large => const EdgeInsets.symmetric(
-      horizontal: 10,
-      vertical: 4,
+      horizontal: AppSpacing.md,
+      vertical: AppSpacing.xs,
     ),
   };
 
@@ -76,7 +77,7 @@ class CefrBadge extends StatelessWidget {
         color: outlined
             ? Colors.transparent
             : onColored
-            ? Colors.white
+            ? AppColors.surfaceLight
             : _bgForLevel(level, isDark),
         borderRadius: BorderRadius.circular(_borderRadius),
         border: outlined ? Border.all(color: color, width: 1) : null,

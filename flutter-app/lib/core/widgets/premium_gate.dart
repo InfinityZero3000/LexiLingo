@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/services/entitlement_service.dart';
@@ -90,7 +91,7 @@ class _PremiumGateState extends State<PremiumGate> {
                   right: 12,
                   child: Icon(
                     Icons.lock_rounded,
-                    color: Colors.white,
+                    color: AppColors.textInverted,
                     size: 20,
                   ),
                 ),

@@ -5,6 +5,15 @@ import 'package:lexilingo_app/features/level/domain/entities/proficiency_entity.
 import 'package:lexilingo_app/features/practice/presentation/widgets/practice_lab_models.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/daily_challenge_entity.dart';
 
+/// One accent per plan task; fixed hues so a task keeps its identity in both themes.
+abstract final class _TodayPlanColors {
+  static const vocabulary = Color(0xFFE85D9E);
+  static const course = Color(0xFF2687D9);
+  static const skill = Color(0xFF18A999);
+  static const challenge = Color(0xFFFFA319);
+  static const conversation = Color(0xFF7C5CFF);
+}
+
 enum TodayPlanDestination {
   vocabularyReview,
   courseList,
@@ -115,7 +124,7 @@ TodayPlanTask _buildVocabularyTask(int? dueCount) {
     type: TodayPlanTaskType.vocabulary,
     destination: TodayPlanDestination.vocabularyReview,
     icon: Icons.style_rounded,
-    color: const Color(0xFFE85D9E),
+    color: _TodayPlanColors.vocabulary,
     title: 'home.todayPlan.vocabularyTitle'.tr(),
     subtitle: dueCount == null
         ? 'home.todayPlan.vocabularyCheckSubtitle'.tr()
@@ -152,7 +161,7 @@ TodayPlanTask _buildCourseTask(List<CourseEntity> enrolledCourses) {
       type: TodayPlanTaskType.course,
       destination: TodayPlanDestination.courseList,
       icon: Icons.menu_book_rounded,
-      color: const Color(0xFF2687D9),
+      color: _TodayPlanColors.course,
       title: 'home.todayPlan.courseFallbackTitle'.tr(),
       subtitle: 'home.todayPlan.courseFallbackSubtitle'.tr(),
       actionLabel: 'home.todayPlan.browseAction'.tr(),
@@ -168,7 +177,7 @@ TodayPlanTask _buildCourseTask(List<CourseEntity> enrolledCourses) {
     type: TodayPlanTaskType.course,
     destination: TodayPlanDestination.courseList,
     icon: Icons.menu_book_rounded,
-    color: const Color(0xFF2687D9),
+    color: _TodayPlanColors.course,
     title: course.title,
     subtitle: isDone
         ? 'home.todayPlan.courseDoneSubtitle'.tr()
@@ -195,7 +204,7 @@ TodayPlanTask _buildSkillTask(List<SkillScore> weakestSkills) {
       type: TodayPlanTaskType.skill,
       destination: TodayPlanDestination.voice,
       icon: Icons.mic_rounded,
-      color: const Color(0xFF18A999),
+      color: _TodayPlanColors.skill,
       title: 'home.todayPlan.skillFallbackTitle'.tr(),
       subtitle: 'home.todayPlan.skillFallbackSubtitle'.tr(),
       actionLabel: 'home.todayPlan.practiceAction'.tr(),
@@ -210,7 +219,7 @@ TodayPlanTask _buildSkillTask(List<SkillScore> weakestSkills) {
     type: TodayPlanTaskType.skill,
     destination: destination,
     icon: skill.skill.icon,
-    color: const Color(0xFF18A999),
+    color: _TodayPlanColors.skill,
     title: 'home.todayPlan.skillTitle'.tr(
       namedArgs: {'skill': skill.skill.displayName},
     ),
@@ -264,7 +273,7 @@ TodayPlanTask _buildChallengeTask(List<DailyChallengeEntity> challenges) {
       type: TodayPlanTaskType.challenge,
       destination: TodayPlanDestination.games,
       icon: Icons.emoji_events_rounded,
-      color: const Color(0xFFFFA319),
+      color: _TodayPlanColors.challenge,
       title: 'home.todayPlan.challengeFallbackTitle'.tr(),
       subtitle: 'home.todayPlan.challengeFallbackSubtitle'.tr(),
       actionLabel: 'home.todayPlan.playAction'.tr(),
@@ -277,7 +286,7 @@ TodayPlanTask _buildChallengeTask(List<DailyChallengeEntity> challenges) {
     type: TodayPlanTaskType.challenge,
     destination: _destinationForChallenge(challenge),
     icon: Icons.emoji_events_rounded,
-    color: const Color(0xFFFFA319),
+    color: _TodayPlanColors.challenge,
     title: challenge.title,
     subtitle: challenge.description,
     actionLabel: challenge.isCompleted
@@ -311,7 +320,7 @@ TodayPlanTask _buildConversationTask() {
     type: TodayPlanTaskType.conversation,
     destination: TodayPlanDestination.lexi,
     icon: Icons.auto_awesome_rounded,
-    color: const Color(0xFF7C5CFF),
+    color: _TodayPlanColors.conversation,
     title: 'home.todayPlan.lexiTitle'.tr(),
     subtitle: 'home.todayPlan.lexiSubtitle'.tr(),
     actionLabel: 'home.todayPlan.chatAction'.tr(),

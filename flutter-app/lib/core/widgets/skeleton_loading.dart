@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -16,11 +17,15 @@ class ShimmerContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final scheme = Theme.of(context).colorScheme;
     return Shimmer.fromColors(
-      baseColor: baseColor ?? (isDark ? Colors.grey[700]! : Colors.grey[300]!),
+      baseColor: baseColor ?? scheme.surfaceContainerHighest,
       highlightColor:
-          highlightColor ?? (isDark ? Colors.grey[600]! : Colors.grey[100]!),
+          highlightColor ??
+          Color.alphaBlend(
+            scheme.onSurface.withValues(alpha: 0.06),
+            scheme.surfaceContainerHighest,
+          ),
       child: child,
     );
   }
@@ -104,11 +109,12 @@ class SkeletonCard extends StatelessWidget {
       child: Container(
         height: height ?? 120,
         margin:
-            margin ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            margin ??
+            const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 8),
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: Row(
           children: [
@@ -172,11 +178,14 @@ class SkeletonVocabCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return ShimmerContainer(
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        margin: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: 6,
+        ),
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: Row(
           children: [
@@ -213,7 +222,10 @@ class SkeletonHomeSection extends StatelessWidget {
         children: [
           // Section title
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: 12,
+            ),
             child: SkeletonText(width: 150, height: 22),
           ),
           // Horizontal cards
@@ -228,7 +240,7 @@ class SkeletonHomeSection extends StatelessWidget {
                 margin: EdgeInsets.symmetric(horizontal: 4),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
               ),
             ),
@@ -247,7 +259,10 @@ class SkeletonRoadmapNode extends StatelessWidget {
   Widget build(BuildContext context) {
     return ShimmerContainer(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xl,
+          vertical: 8,
+        ),
         child: Row(
           children: [
             const SkeletonCircle(size: 60),
@@ -284,7 +299,7 @@ class SkeletonProgressStats extends StatelessWidget {
         padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: Column(
           children: [

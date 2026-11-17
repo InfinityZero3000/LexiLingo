@@ -20,9 +20,8 @@ class SectionTitle extends StatelessWidget {
       title,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+      style: Theme.of(context).textTheme.titleMedium?.copyWith(
         fontWeight: FontWeight.bold,
-        fontSize: 18,
         color: AppColorRoles.textPrimary(isDark),
       ),
     );

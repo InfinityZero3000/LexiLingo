@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/navigation/learner_route.dart';
@@ -82,12 +83,15 @@ class QuickActionsGrid extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: 14,
+        ),
         decoration: BoxDecoration(
           color: isDark
               ? theme.colorScheme.surfaceContainerHighest
               : theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.06),
@@ -135,7 +139,12 @@ class QuickActionsGrid extends StatelessWidget {
               children: [
                 grid,
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 12, 8, 0),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.sm,
+                    AppSpacing.md,
+                    AppSpacing.sm,
+                    0,
+                  ),
                   child: Text(
                     'home.unlockHint'.tr(),
                     style: theme.textTheme.bodyMedium?.copyWith(
@@ -174,7 +183,10 @@ class _QuickActionTile extends StatelessWidget {
       onTap: onTap,
       radius: 48,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xs,
+          vertical: 2,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

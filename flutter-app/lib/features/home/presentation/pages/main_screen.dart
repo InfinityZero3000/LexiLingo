@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:http/http.dart' as http;
@@ -73,7 +74,8 @@ class _MainScreenState extends State<MainScreen> with RouteAware {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final route = ModalRoute.of(context);
-    if (route != null) AppNavigationService.routeObserver.subscribe(this, route);
+    if (route != null)
+      AppNavigationService.routeObserver.subscribe(this, route);
   }
 
   @override
@@ -250,11 +252,12 @@ class _MainScreenState extends State<MainScreen> with RouteAware {
 
   Widget _buildNavigationRail(BuildContext context, double width) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surface = Theme.of(context).colorScheme.surface;
     final extended = width >= 1100;
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
+        color: surface,
         border: Border(
           right: BorderSide(
             color: isDark ? AppColors.surfaceDarkMuted : AppColors.slate200,
@@ -286,11 +289,16 @@ class _MainScreenState extends State<MainScreen> with RouteAware {
   Widget _buildBottomNavigationBar(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return SafeArea(
-      minimum: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      minimum: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        0,
+        AppSpacing.md,
+        AppSpacing.md,
+      ),
       child: Container(
         decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark : Colors.white,
-          borderRadius: BorderRadius.circular(24),
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: AppRadius.xlAll,
           boxShadow: [
             BoxShadow(
               color: isDark
@@ -302,7 +310,7 @@ class _MainScreenState extends State<MainScreen> with RouteAware {
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           child: BottomNavigationBar(
             currentIndex: _currentIndex,
             type: BottomNavigationBarType.fixed,
