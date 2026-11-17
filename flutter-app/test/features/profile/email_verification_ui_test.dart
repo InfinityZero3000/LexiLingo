@@ -248,8 +248,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(repository.resendVerificationCalls, 1);
-      final resendButtonWidget = find.byWidgetPredicate(
-        (widget) => widget is FilledButton,
+      final resendButtonWidget = find.ancestor(
+        of: find.byIcon(Icons.outgoing_mail),
+        matching: find.byWidgetPredicate((widget) => widget is FilledButton),
       );
       final cooldownButton = tester.widget<FilledButton>(resendButtonWidget);
       expect(cooldownButton.onPressed, isNull);

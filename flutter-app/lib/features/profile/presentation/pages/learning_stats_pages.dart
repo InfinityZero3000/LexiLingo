@@ -7,6 +7,7 @@ import 'package:lexilingo_app/features/course/presentation/screens/course_detail
 import 'package:lexilingo_app/features/profile/presentation/providers/profile_provider.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/user_progress_entity.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/progress_provider.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class LearningStreakStatsPage extends StatelessWidget {
   const LearningStreakStatsPage({super.key});
@@ -112,7 +113,7 @@ class LearningCoursesStatsPage extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             if (courseProgressList.isEmpty)
               _singleCard(
                 context,
@@ -153,15 +154,17 @@ class LearningCoursesStatsPage extends StatelessWidget {
           ),
         );
       },
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppRadius.md),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDarkMuted : AppColors.surfaceLight,
-          borderRadius: BorderRadius.circular(14),
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
-            color: isDark ? AppColors.borderDarkSoft : AppColors.grey300,
+            color: isDark
+                ? Theme.of(context).colorScheme.outlineVariant
+                : Theme.of(context).colorScheme.outlineVariant,
           ),
         ),
         child: Column(
@@ -174,9 +177,8 @@ class LearningCoursesStatsPage extends StatelessWidget {
                     course.courseTitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w700,
-                      fontSize: 15,
                     ),
                   ),
                 ),
@@ -187,12 +189,13 @@ class LearningCoursesStatsPage extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             LinearProgressIndicator(
               value: (progress / 100).clamp(0.0, 1.0),
               minHeight: 7,
-              borderRadius: BorderRadius.circular(8),
-              backgroundColor: AppColors.grey300,
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              backgroundColor: Theme.of(context).colorScheme.outlineVariant,
+
               valueColor: AlwaysStoppedAnimation<Color>(primaryColor),
             ),
             const SizedBox(height: 6),
@@ -204,9 +207,8 @@ class LearningCoursesStatsPage extends StatelessWidget {
                   'total': '${course.totalLessons}',
                 },
               ),
-              style: TextStyle(
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppColorRoles.textMuted(isDark),
-                fontSize: 12,
               ),
             ),
           ],
@@ -316,7 +318,8 @@ class _StatsPageScaffoldState extends State<_StatsPageScaffold> {
       body: Consumer2<ProfileProvider, ProgressProvider>(
         builder: (context, profileProvider, progressProvider, _) {
           final isLoading =
-              (profileProvider.isLoadingStats && profileProvider.stats == null) ||
+              (profileProvider.isLoadingStats &&
+                  profileProvider.stats == null) ||
               (progressProvider.isLoading && progressProvider.summary == null);
 
           if (isLoading) {
@@ -332,7 +335,7 @@ class _StatsPageScaffoldState extends State<_StatsPageScaffold> {
             },
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppSpacing.lg),
               child: widget.builder(context, profileProvider, progressProvider),
             ),
           );
@@ -346,12 +349,14 @@ Widget _singleCard(BuildContext context, {required List<Widget> children}) {
   final isDark = Theme.of(context).brightness == Brightness.dark;
   return Container(
     width: double.infinity,
-    padding: const EdgeInsets.all(16),
+    padding: const EdgeInsets.all(AppSpacing.lg),
     decoration: BoxDecoration(
-      color: isDark ? AppColors.surfaceDarkMuted : AppColors.surfaceLight,
-      borderRadius: BorderRadius.circular(14),
+      color: Theme.of(context).colorScheme.surface,
+      borderRadius: BorderRadius.circular(AppRadius.md),
       border: Border.all(
-        color: isDark ? AppColors.borderDarkSoft : AppColors.grey300,
+        color: isDark
+            ? Theme.of(context).colorScheme.outlineVariant
+            : Theme.of(context).colorScheme.outlineVariant,
       ),
     ),
     child: Column(
@@ -370,8 +375,7 @@ Widget _detailRow(String label, String value) {
             final isDark = Theme.of(context).brightness == Brightness.dark;
             return Text(
               label,
-              style: TextStyle(
-                fontSize: 14,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: AppColorRoles.textMuted(isDark),
               ),
             );

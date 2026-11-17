@@ -1,6 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Animated gradient background for profile header
 class AnimatedProfileBackground extends StatefulWidget {
@@ -99,7 +100,7 @@ class GlassmorphicStatCard extends StatefulWidget {
     this.isAction = false,
     this.onTap,
     this.valueFontSize = 42,
-    this.contentPadding = const EdgeInsets.all(16),
+    this.contentPadding = const EdgeInsets.all(AppSpacing.lg),
     this.iconBoxSize = 48,
     this.iconSize = 22,
     this.titleFontSize = 14,
@@ -164,11 +165,14 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
         ? widget.color.withValues(alpha: 0.22)
         : widget.color.withValues(alpha: 0.16);
     final titleColor = isDark
-        ? AppColors.textInverted.withValues(alpha: 0.7)
-        : AppColors.textGrey;
-    final valueColor = isDark ? AppColors.textInverted : AppColors.textDark;
+        ? AppColors.onGradient.withValues(alpha: 0.7)
+        : Theme.of(context).colorScheme.onSurfaceVariant;
+
+    final valueColor = isDark
+        ? AppColors.textInverted
+        : Theme.of(context).colorScheme.onSurface;
     final subtitleColor = isDark
-        ? AppColors.textInverted.withValues(alpha: 0.6)
+        ? AppColors.onGradient.withValues(alpha: 0.6)
         : AppColors.textSlate;
     final valueCircleBg = isDark
         ? widget.color.withValues(alpha: 0.22)
@@ -189,7 +193,7 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
             scale: _scaleAnimation.value,
             child: Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 color: surfaceColor,
                 border: Border.all(color: borderColor, width: 1.2),
                 boxShadow: [
@@ -214,7 +218,9 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
                                 height: widget.iconBoxSize,
                                 decoration: BoxDecoration(
                                   color: iconBgColor,
-                                  borderRadius: BorderRadius.circular(14),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.md,
+                                  ),
                                 ),
                                 child: Icon(
                                   widget.icon,
@@ -235,7 +241,7 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: AppSpacing.sm),
                               Container(
                                 width: widget.valueCircleSize,
                                 height: widget.valueCircleSize,
@@ -304,7 +310,9 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
                                 height: widget.iconBoxSize,
                                 decoration: BoxDecoration(
                                   color: iconBgColor,
-                                  borderRadius: BorderRadius.circular(14),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.md,
+                                  ),
                                 ),
                                 child: Icon(
                                   widget.icon,
@@ -312,7 +320,7 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
                                   size: widget.iconSize,
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: AppSpacing.md),
                               Expanded(
                                 child: Text(
                                   widget.title,
@@ -338,7 +346,7 @@ class _GlassmorphicStatCardState extends State<GlassmorphicStatCard>
                             child: Text(widget.value),
                           ),
                           if (widget.subtitle != null) ...[
-                            const SizedBox(height: 8),
+                            const SizedBox(height: AppSpacing.sm),
                             Row(
                               children: [
                                 Expanded(
@@ -460,7 +468,7 @@ class _AnimatedProgressBarState extends State<AnimatedProgressBar>
                 decoration: BoxDecoration(
                   color: isDark
                       ? AppColors.surfaceDarkMuted
-                      : AppColors.slate200,
+                      : Theme.of(context).colorScheme.outlineVariant,
                 ),
               ),
               // Progress
@@ -483,7 +491,8 @@ class _AnimatedProgressBarState extends State<AnimatedProgressBar>
                               end: Alignment(_shimmerAnimation.value, 0),
                               colors: [
                                 Colors.transparent,
-                                Colors.white.withValues(alpha: 0.3),
+                                AppColors.onGradient.withValues(alpha: 0.3),
+
                                 Colors.transparent,
                               ],
                             ).createShader(bounds);
@@ -587,19 +596,17 @@ class _AnimatedSocialStatState extends State<AnimatedSocialStat>
                     const SizedBox(width: 6),
                     Text(
                       widget.value,
-                      style: TextStyle(
-                        fontSize: 20,
+                      style: Theme.of(context).textTheme.heading?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: widget.color,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
                   widget.label,
-                  style: TextStyle(
-                    fontSize: 12,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w500,
                   ),
@@ -670,13 +677,13 @@ class _GlassmorphicEditButtonState extends State<GlassmorphicEditButton>
           return Transform.scale(
             scale: _scaleAnimation.value,
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
+                    horizontal: AppSpacing.lg,
+                    vertical: AppSpacing.sm,
                   ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -685,7 +692,7 @@ class _GlassmorphicEditButtonState extends State<GlassmorphicEditButton>
                         AppColors.surfaceLight.withValues(alpha: 0.1),
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                     border: Border.all(
                       color: Theme.of(
                         context,
@@ -703,10 +710,9 @@ class _GlassmorphicEditButtonState extends State<GlassmorphicEditButton>
                       const SizedBox(width: 6),
                       Text(
                         widget.text,
-                        style: TextStyle(
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.surface,
                           fontWeight: FontWeight.w600,
-                          fontSize: 13,
                         ),
                       ),
                     ],
@@ -800,16 +806,16 @@ class _AnimatedActivityBarState extends State<AnimatedActivityBar>
                         child: Text(
                           '${widget.xpValue}',
                           textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: widget.color,
-                          ),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: widget.color,
+                              ),
                         ),
                       )
                     : const SizedBox.shrink(),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.xs),
               Container(
                 width: 32,
                 height: 80 * _heightAnimation.value.clamp(0.0, 1.0) + 4,
@@ -819,7 +825,7 @@ class _AnimatedActivityBarState extends State<AnimatedActivityBar>
                     end: Alignment.topCenter,
                     colors: [widget.color, widget.color.withValues(alpha: 0.6)],
                   ),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                   boxShadow: [
                     BoxShadow(
                       color: widget.color.withValues(alpha: 0.3),
@@ -849,8 +855,8 @@ class GlassmorphicContainer extends StatelessWidget {
   const GlassmorphicContainer({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(16),
-    this.margin = const EdgeInsets.symmetric(horizontal: 16),
+    this.padding = const EdgeInsets.all(AppSpacing.lg),
+    this.margin = const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
     this.borderRadius = 16,
     this.borderColor,
     this.blur = 10,

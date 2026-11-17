@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/news_entities.dart';
 import '../providers/news_provider.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// News Quiz Screen — comprehension quiz after reading an article.
 ///
@@ -88,14 +89,13 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                       Icon(
                         Icons.quiz_outlined,
                         size: 64,
-                        color: AppColors.grey400,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppSpacing.md),
                       Text(
                         'newsQuiz.quizNotAvailable'.tr(),
-                        style: TextStyle(
-                          color: AppColors.grey500,
-                          fontSize: 16,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -131,13 +131,12 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
             children: [
               Text(
                 '${provider.answers.length}/${quiz.totalQuestions}',
-                style: TextStyle(
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: cefrColor,
                   fontWeight: FontWeight.w700,
-                  fontSize: 14,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(4),
@@ -152,7 +151,7 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
             ],
           ),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.lg),
 
         // Questions
         Expanded(
@@ -188,14 +187,13 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
               style: FilledButton.styleFrom(
                 backgroundColor: cefrColor,
                 disabledBackgroundColor: cefrColor.withValues(alpha: 0.3),
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
-                textStyle: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                ),
+                textStyle: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
               ),
               child: Text('newsQuiz.submitAnswers'.tr()),
             ),
@@ -215,14 +213,19 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
 
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: isDark
+            ? AppColors.onGradient.withValues(alpha: 0.05)
+            : Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           if (!isDark)
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
+              color: Theme.of(
+                context,
+              ).colorScheme.shadow.withValues(alpha: 0.04),
+
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -233,17 +236,19 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
         children: [
           // Question type badge
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: 3,
+            ),
             decoration: BoxDecoration(
               color: _questionTypeColor(question.type).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: Text(
               question.type.toUpperCase(),
-              style: TextStyle(
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 color: _questionTypeColor(question.type),
                 fontWeight: FontWeight.w700,
-                fontSize: 10,
                 letterSpacing: 0.5,
               ),
             ),
@@ -253,9 +258,8 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
           // Question text
           Text(
             question.question,
-            style: const TextStyle(
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               fontWeight: FontWeight.w600,
-              fontSize: 15,
               height: 1.4,
             ),
           ),
@@ -268,7 +272,7 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
             final isSelected = selectedAnswer == index;
 
             return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
               child: GestureDetector(
                 onTap: () => provider.answerQuestion(question.id, index),
                 child: AnimatedContainer(
@@ -278,15 +282,16 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                     color: isSelected
                         ? cefrColor.withValues(alpha: 0.08)
                         : (isDark
-                              ? Colors.white.withValues(alpha: 0.03)
+                              ? AppColors.onGradient.withValues(alpha: 0.03)
                               : AppColors.grey50),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     border: Border.all(
                       color: isSelected
                           ? cefrColor
                           : (isDark
-                                ? Colors.white.withValues(alpha: 0.08)
-                                : AppColors.grey200),
+                                ? AppColors.onGradient.withValues(alpha: 0.08)
+                                : Theme.of(context).colorScheme.outlineVariant),
+
                       width: isSelected ? 2 : 1,
                     ),
                   ),
@@ -300,35 +305,41 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                           color: isSelected
                               ? cefrColor
                               : (isDark
-                                    ? Colors.white.withValues(alpha: 0.06)
+                                    ? AppColors.onGradient.withValues(
+                                        alpha: 0.06,
+                                      )
                                     : AppColors.grey100),
                           shape: BoxShape.circle,
                         ),
                         child: Center(
                           child: Text(
                             String.fromCharCode(65 + index), // A, B, C, D
-                            style: TextStyle(
-                              color: isSelected
-                                  ? Colors.white
-                                  : (isDark
-                                        ? Colors.white54
-                                        : AppColors.grey600),
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: isSelected
+                                      ? AppColors.onGradient
+                                      : (isDark
+                                            ? AppColors.onGradient.withValues(
+                                                alpha: 0.54,
+                                              )
+                                            : Theme.of(
+                                                context,
+                                              ).colorScheme.onSurfaceVariant),
+                                  fontWeight: FontWeight.w700,
+                                ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSpacing.md),
                       Expanded(
                         child: Text(
                           option,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: isSelected
-                                ? FontWeight.w600
-                                : FontWeight.normal,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                              ),
                         ),
                       ),
                     ],
@@ -391,8 +402,7 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                 ),
                 Text(
                   '$percentage%',
-                  style: TextStyle(
-                    fontSize: 14,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                     color: cefrColor.withValues(alpha: 0.7),
                   ),
@@ -411,43 +421,47 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             _resultSubMessage(percentage),
-            style: TextStyle(
-              color: isDark ? Colors.white54 : AppColors.textGrey,
-              fontSize: 14,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: isDark
+                  ? AppColors.onGradient.withValues(alpha: 0.54)
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
             ),
+
             textAlign: TextAlign.center,
           ),
 
           // XP reward
           const SizedBox(height: 20),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: AppSpacing.md,
+            ),
             decoration: BoxDecoration(
               color: cefrColor.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
               border: Border.all(color: cefrColor.withValues(alpha: 0.2)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.star_rounded, color: cefrColor, size: 24),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.sm),
                 Text(
                   '+${quiz.xpReward} XP',
-                  style: TextStyle(
+                  style: Theme.of(context).textTheme.sectionTitle?.copyWith(
                     color: cefrColor,
                     fontWeight: FontWeight.w800,
-                    fontSize: 18,
                   ),
                 ),
               ],
             ),
           ),
 
-          const SizedBox(height: 32),
+          const SizedBox(height: AppSpacing.xxl),
 
           // Question review
           ...quiz.questions.asMap().entries.map((entry) {
@@ -456,17 +470,20 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
             final isCorrect = userAnswer == q.correctIndex;
 
             return Container(
-              margin: const EdgeInsets.only(bottom: 12),
+              margin: const EdgeInsets.only(bottom: AppSpacing.md),
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: isDark
-                    ? Colors.white.withValues(alpha: 0.04)
-                    : Colors.white,
-                borderRadius: BorderRadius.circular(12),
+                    ? AppColors.onGradient.withValues(alpha: 0.04)
+                    : AppColors.onGradient,
+
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 border: Border.all(
                   color: isCorrect
-                      ? Colors.green.withValues(alpha: 0.3)
-                      : Colors.red.withValues(alpha: 0.3),
+                      ? context.status.success.withValues(alpha: 0.3)
+                      : Theme.of(
+                          context,
+                        ).colorScheme.error.withValues(alpha: 0.3),
                 ),
               ),
               child: Column(
@@ -479,31 +496,29 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                             ? Icons.check_circle_rounded
                             : Icons.cancel_rounded,
                         color: isCorrect
-                            ? AppColors.greenSuccessBright
-                            : AppColors.errorBright,
+                            ? context.status.success
+                            : Theme.of(context).colorScheme.error,
+
                         size: 20,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: Text(
                           q.question,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(fontWeight: FontWeight.w600),
                         ),
                       ),
                     ],
                   ),
                   if (!isCorrect) ...[
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpacing.sm),
                     Text(
                       'newsQuiz.correct'.tr(
                         namedArgs: {'answer': q.options[q.correctIndex]},
                       ),
-                      style: const TextStyle(
-                        color: AppColors.greenSuccessBright,
-                        fontSize: 12,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: context.status.success,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -512,9 +527,10 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                     const SizedBox(height: 6),
                     Text(
                       q.explanation,
-                      style: TextStyle(
-                        color: isDark ? Colors.white38 : AppColors.textGrey,
-                        fontSize: 12,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: isDark
+                            ? AppColors.onGradient.withValues(alpha: 0.38)
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
                         fontStyle: FontStyle.italic,
                       ),
                     ),
@@ -524,7 +540,7 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
             );
           }),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.xl),
 
           // Action buttons
           Row(
@@ -542,14 +558,14 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                     foregroundColor: cefrColor,
                     side: BorderSide(color: cefrColor),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                   child: Text('newsQuiz.retry'.tr()),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: FilledButton(
                   onPressed: () {
@@ -559,7 +575,7 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                   style: FilledButton.styleFrom(
                     backgroundColor: cefrColor,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
@@ -581,11 +597,11 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
   Color _cefrColor(String level) {
     switch (level) {
       case 'A1':
-        return AppColors.greenSuccessBright;
+        return context.status.success;
       case 'A2':
         return AppColors.greenSuccessSoft;
       case 'B1':
-        return AppColors.warning;
+        return context.status.warning;
       case 'B2':
         return AppColors.orange;
       case 'C1':
@@ -593,20 +609,20 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
       case 'C2':
         return AppColors.purple;
       default:
-        return AppColors.primary;
+        return Theme.of(context).colorScheme.primary;
     }
   }
 
   Color _questionTypeColor(String type) {
     switch (type) {
       case 'comprehension':
-        return AppColors.primary;
+        return Theme.of(context).colorScheme.primary;
       case 'vocabulary':
         return AppColors.purple;
       case 'grammar':
         return AppColors.orange;
       default:
-        return AppColors.primary;
+        return Theme.of(context).colorScheme.primary;
     }
   }
 

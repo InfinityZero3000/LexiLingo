@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// One CEFR level as the learner is asked about it — at onboarding and when
 /// they change it from their profile. One list, so both ask the same question.
@@ -54,7 +55,9 @@ class CefrLevelPicker extends StatelessWidget {
           for (final (index, option) in cefrLevelOptions.indexed)
             RadioListTile<String>(
               value: option.code,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+              ),
               secondary: Icon(option.icon, color: scheme.primary),
               title: Text(option.labelKey.tr()),
               subtitle: index == certified

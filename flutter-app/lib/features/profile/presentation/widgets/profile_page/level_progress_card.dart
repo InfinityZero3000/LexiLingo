@@ -4,6 +4,7 @@ import 'package:lexilingo_app/features/level/level.dart';
 import 'package:lexilingo_app/features/profile/presentation/widgets/profile_ui_components.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class ProfileLevelProgressCard extends StatelessWidget {
   const ProfileLevelProgressCard({super.key});
@@ -41,13 +42,13 @@ class ProfileLevelProgressCard extends StatelessWidget {
                     'profile.xpProgress'.tr(
                       namedArgs: {'current': '$xpIn', 'total': '$xpFor'},
                     ),
-                    style: const TextStyle(fontSize: 14),
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               ClipRRect(
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
                 child: LinearProgressIndicator(
                   value: progress,
                   backgroundColor: AppColorRoles.primary(
@@ -59,7 +60,7 @@ class ProfileLevelProgressCard extends StatelessWidget {
                   minHeight: 12,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -71,9 +72,8 @@ class ProfileLevelProgressCard extends StatelessWidget {
                           'level': '${level + 1}',
                         },
                       ),
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontSize: 12,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -85,9 +85,8 @@ class ProfileLevelProgressCard extends StatelessWidget {
                         'percent': (progress * 100).toStringAsFixed(0),
                       },
                     ),
-                    style: TextStyle(
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColorRoles.primary(isDark),
-                      fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

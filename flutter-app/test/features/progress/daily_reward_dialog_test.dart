@@ -170,10 +170,10 @@ void main() {
     final provider = await _pumpDialog(tester, rewardAvailable: false);
     addTearDown(provider.dispose);
 
-    final claimButton = tester.widget<ElevatedButton>(
+    final claimButton = tester.widget<FilledButton>(
       find.descendant(
         of: find.byType(Dialog),
-        matching: find.byType(ElevatedButton),
+        matching: find.byType(FilledButton),
       ),
     );
     expect(claimButton.onPressed, isNull);
@@ -188,7 +188,7 @@ void main() {
     await tester.tap(
       find.descendant(
         of: find.byType(Dialog),
-        matching: find.byType(ElevatedButton),
+        matching: find.byType(FilledButton),
       ),
     );
     await tester.pump();

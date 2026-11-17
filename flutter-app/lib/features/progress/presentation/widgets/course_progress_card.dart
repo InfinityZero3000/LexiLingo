@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/user_progress_entity.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Course Progress Card Widget
 /// Displays progress for a single course
@@ -23,12 +24,12 @@ class CourseProgressCard extends StatelessWidget {
 
     return Card(
       elevation: 1,
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: AppSpacing.md),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -46,11 +47,11 @@ class CourseProgressCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.sm),
                   Row(
                     children: [
                       Icon(Icons.star, size: 16, color: AppColors.goldDark),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: AppSpacing.xs),
                       Text(
                         '${courseProgress.totalXpEarned} XP',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -63,7 +64,7 @@ class CourseProgressCard extends StatelessWidget {
                 ],
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
 
               // Progress Bar
               Column(
@@ -92,7 +93,7 @@ class CourseProgressCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.sm),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(4),
                     child: TweenAnimationBuilder<double>(
@@ -117,7 +118,7 @@ class CourseProgressCard extends StatelessWidget {
                 ],
               ),
 
-              SizedBox(height: 12),
+              SizedBox(height: AppSpacing.md),
 
               // Last Activity
               Row(
@@ -127,7 +128,7 @@ class CourseProgressCard extends StatelessWidget {
                     size: 14,
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
-                  SizedBox(width: 4),
+                  SizedBox(width: AppSpacing.xs),
                   Flexible(
                     child: Text(
                       'progress.lastActivity'.tr(

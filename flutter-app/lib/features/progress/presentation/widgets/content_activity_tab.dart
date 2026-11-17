@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/content_activity_entity.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/content_activity_provider.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// The Content tab of the weekly overview.
 ///
@@ -58,7 +59,7 @@ class _ContentActivityTabState extends State<ContentActivityTab> {
           padding: EdgeInsets.zero,
           children: [
             _Summary(activity: provider.activity, isDark: isDark),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             for (final source in provider.activity.bySource)
               _SourceRow(source: source, isDark: isDark),
           ],
@@ -85,7 +86,9 @@ class _Summary extends StatelessWidget {
           'xp': '${activity.totalXp}',
         },
       ),
-      style: TextStyle(fontSize: 13, color: AppColorRoles.textMuted(isDark)),
+      style: Theme.of(
+        context,
+      ).textTheme.bodySmall?.copyWith(color: AppColorRoles.textMuted(isDark)),
     );
   }
 }
@@ -150,7 +153,9 @@ class _SourceRow extends StatelessWidget {
                 ),
                 Text(
                   source.hasActivity ? headline : 'contentActivity.notYet'.tr(),
-                  style: TextStyle(fontSize: 12, color: muted),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: muted),
                 ),
               ],
             ),
@@ -158,8 +163,7 @@ class _SourceRow extends StatelessWidget {
           if (source.xpEarned > 0)
             Text(
               '+${source.xpEarned} XP',
-              style: TextStyle(
-                fontSize: 13,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w700,
                 color: primary,
               ),
@@ -191,13 +195,15 @@ class _CenteredNote extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(icon, size: 28, color: muted),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
             child: Text(
               message,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: muted),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: muted),
             ),
           ),
           if (onRetry != null)

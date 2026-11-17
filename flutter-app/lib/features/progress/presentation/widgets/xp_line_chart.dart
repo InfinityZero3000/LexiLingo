@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/weekly_progress_entity.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// 7-day XP trend line chart using fl_chart.
 class XpLineChart extends StatelessWidget {
@@ -42,8 +43,11 @@ class XpLineChart extends StatelessWidget {
             ),
             getDrawingHorizontalLine: (_) => FlLine(
               color: isDark
-                  ? Colors.white.withValues(alpha: 0.07)
-                  : Colors.black.withValues(alpha: 0.06),
+                  ? AppColors.onGradient.withValues(alpha: 0.07)
+                  : Theme.of(
+                      context,
+                    ).colorScheme.shadow.withValues(alpha: 0.06),
+
               strokeWidth: 1,
             ),
           ),
@@ -69,8 +73,7 @@ class XpLineChart extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 6),
                     child: Text(
                       days[i].day,
-                      style: TextStyle(
-                        fontSize: 10,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: days[i].isToday
                             ? primary
                             : AppColorRoles.textMuted(isDark),
@@ -86,9 +89,7 @@ class XpLineChart extends StatelessWidget {
           ),
           lineTouchData: LineTouchData(
             touchTooltipData: LineTouchTooltipData(
-              getTooltipColor: (_) => isDark
-                  ? AppColors.surfaceDarkElevated
-                  : AppColors.surfaceLight,
+              getTooltipColor: (_) => Theme.of(context).colorScheme.surface,
               getTooltipItems: (spots) => spots.map((s) {
                 return LineTooltipItem(
                   '${s.y.toInt()} XP',
@@ -172,8 +173,11 @@ class LessonsBarChart extends StatelessWidget {
             horizontalInterval: 1,
             getDrawingHorizontalLine: (_) => FlLine(
               color: isDark
-                  ? Colors.white.withValues(alpha: 0.07)
-                  : Colors.black.withValues(alpha: 0.06),
+                  ? AppColors.onGradient.withValues(alpha: 0.07)
+                  : Theme.of(
+                      context,
+                    ).colorScheme.shadow.withValues(alpha: 0.06),
+
               strokeWidth: 1,
             ),
           ),
@@ -199,8 +203,7 @@ class LessonsBarChart extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 6),
                     child: Text(
                       days[i].day,
-                      style: TextStyle(
-                        fontSize: 10,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: days[i].isToday
                             ? primary
                             : AppColorRoles.textMuted(isDark),
@@ -216,9 +219,7 @@ class LessonsBarChart extends StatelessWidget {
           ),
           barTouchData: BarTouchData(
             touchTooltipData: BarTouchTooltipData(
-              getTooltipColor: (_) => isDark
-                  ? AppColors.surfaceDarkElevated
-                  : AppColors.surfaceLight,
+              getTooltipColor: (_) => Theme.of(context).colorScheme.surface,
               getTooltipItem: (group, groupIndex, rod, rodIndex) {
                 final count = rod.toY.toInt();
                 return BarTooltipItem(
@@ -297,9 +298,12 @@ class WeekActivityHeatmap extends StatelessWidget {
                             alpha: (0.2 + intensity * 0.7).clamp(0.2, 0.9),
                           )
                         : (isDark
-                              ? Colors.white.withValues(alpha: 0.07)
-                              : Colors.black.withValues(alpha: 0.05)),
-                    borderRadius: BorderRadius.circular(8),
+                              ? AppColors.onGradient.withValues(alpha: 0.07)
+                              : Theme.of(
+                                  context,
+                                ).colorScheme.shadow.withValues(alpha: 0.05)),
+
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                     border: day.isToday
                         ? Border.all(color: primary, width: 2)
                         : null,
@@ -308,11 +312,10 @@ class WeekActivityHeatmap extends StatelessWidget {
                       ? Icon(Icons.check_rounded, size: 14, color: primary)
                       : null,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
                   day.day.substring(0, 1),
-                  style: TextStyle(
-                    fontSize: 10,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     fontWeight: day.isToday
                         ? FontWeight.w700
                         : FontWeight.normal,
@@ -341,9 +344,8 @@ class _EmptyChart extends StatelessWidget {
       child: Center(
         child: Text(
           'progress.emptyChart'.tr(),
-          style: TextStyle(
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: AppColorRoles.textMuted(isDark),
-            fontSize: 13,
           ),
         ),
       ),

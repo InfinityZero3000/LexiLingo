@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/lottie_animation_widget.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Full-screen overlay shown when a streak milestone is reached (7, 14, 30, 60, 100, 365 days).
 class StreakMilestoneOverlay extends StatefulWidget {
@@ -27,7 +28,10 @@ class StreakMilestoneOverlay extends StatefulWidget {
       context: context,
       barrierDismissible: true,
       barrierLabel: 'progress.streakMilestoneMsg.label'.tr(),
-      barrierColor: Colors.black.withValues(alpha: 0.75),
+      barrierColor: Theme.of(
+        context,
+      ).colorScheme.shadow.withValues(alpha: 0.75),
+
       transitionDuration: const Duration(milliseconds: 350),
       transitionBuilder: (ctx, anim, _, child) =>
           FadeTransition(opacity: anim, child: child),
@@ -121,11 +125,11 @@ class _StreakMilestoneOverlayState extends State<StreakMilestoneOverlay>
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 40),
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
+                  horizontal: AppSpacing.xxl,
                   vertical: 36,
                 ),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.surfaceDarkElevated : Colors.white,
+                  color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(32),
                   boxShadow: [
                     BoxShadow(
@@ -145,14 +149,13 @@ class _StreakMilestoneOverlayState extends State<StreakMilestoneOverlay>
                     // Fire emoji header
                     Text(
                       'progress.streakMilestone'.tr(),
-                      style: TextStyle(
-                        fontSize: 16,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         fontWeight: FontWeight.w700,
                         color: fireOrange,
                         letterSpacing: 0.5,
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSpacing.xl),
 
                     // Badge image
                     if (assetPath != null)
@@ -190,32 +193,29 @@ class _StreakMilestoneOverlayState extends State<StreakMilestoneOverlay>
                     ),
                     Text(
                       'progress.daysInARow'.tr(),
-                      style: TextStyle(
-                        fontSize: 14,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppColorRoles.textMuted(isDark),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.lg),
 
                     // Motivational copy
                     Text(
                       _milestoneMessage(widget.streakDays),
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 15,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         fontWeight: FontWeight.w600,
                         color: AppColorRoles.textPrimary(isDark),
                         height: 1.4,
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSpacing.xl),
 
                     // Tap hint
                     Text(
                       'common.tapAnywhereToContinue'.tr(),
-                      style: TextStyle(
-                        fontSize: 11,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: AppColorRoles.textMuted(
                           isDark,
                         ).withValues(alpha: 0.6),
