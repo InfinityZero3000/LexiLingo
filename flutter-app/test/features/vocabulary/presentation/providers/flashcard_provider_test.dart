@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
+import 'package:lexilingo_app/features/vocabulary/domain/entities/review_session_entity.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/user_vocabulary_entity.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/vocabulary_item_entity.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/repositories/vocabulary_repository.dart';
@@ -13,6 +16,9 @@ class _RecordingVocabularyRepository extends Fake
   int? requestedCollectionLimit;
   List<UserVocabularyEntity> due = const [];
   bool failDueLookup = false;
+  Completer<void>? submitGate;
+  int failSubmits = 0;
+  final sent = <String>[];
 
   final vocabularyItem = VocabularyItemEntity(
     id: 'vocabulary-1',
@@ -56,6 +62,32 @@ class _RecordingVocabularyRepository extends Fake
   }) async {
     if (failDueLookup) throw StateError('socket closed: 10.0.0.5:8000');
     return Right(due);
+  }
+
+  @override
+  Future<Either<Failure, ReviewResultEntity>> submitReview(
+    String userVocabularyId,
+    ReviewQuality quality, {
+    int? timeSpentMs,
+  }) async {
+    await submitGate?.future;
+    if (failSubmits > 0) {
+      failSubmits--;
+      return const Left(ServerFailure('offline'));
+    }
+    sent.add(userVocabularyId);
+    return Right(
+      ReviewResultEntity(
+        userVocabularyId: userVocabularyId,
+        quality: quality,
+        xpEarned: 5,
+        newEaseFactor: 2.5,
+        newInterval: 1,
+        newRepetitions: 1,
+        nextReviewDate: DateTime.utc(2026, 6, 10),
+        reviewedAt: DateTime.utc(2026, 6, 9),
+      ),
+    );
   }
 
   @override
@@ -114,20 +146,109 @@ void main() {
     provider.dispose();
   });
 
-  test('an unexpected failure never leaks its details to the learner', () async {
-    final repository = _RecordingVocabularyRepository()..failDueLookup = true;
-    final provider = FlashcardProvider(
-      getDueVocabularyUseCase: GetDueVocabularyUseCase(repository),
-      submitReviewUseCase: SubmitReviewUseCase(repository),
-      vocabularyRepository: repository,
+  test(
+    'an unexpected failure never leaks its details to the learner',
+    () async {
+      final repository = _RecordingVocabularyRepository()..failDueLookup = true;
+      final provider = FlashcardProvider(
+        getDueVocabularyUseCase: GetDueVocabularyUseCase(repository),
+        submitReviewUseCase: SubmitReviewUseCase(repository),
+        vocabularyRepository: repository,
+      );
+
+      await provider.startReviewSession();
+
+      expect(provider.errorMessage, 'flashcard.unexpectedError');
+      expect(provider.errorMessage, isNot(contains('socket')));
+      expect(provider.nothingDue, isFalse);
+
+      provider.dispose();
+    },
+  );
+
+  group('rating a card', () {
+    UserVocabularyEntity due(String id) => UserVocabularyEntity(
+      id: id,
+      userId: 'user-1',
+      vocabularyId: 'vocabulary-1',
+      status: VocabularyStatus.learning,
+      nextReviewDate: DateTime.utc(2026, 6, 9),
+      addedAt: DateTime.utc(2026, 6, 8),
     );
 
-    await provider.startReviewSession();
+    FlashcardProvider build(_RecordingVocabularyRepository repository) =>
+        FlashcardProvider(
+          getDueVocabularyUseCase: GetDueVocabularyUseCase(repository),
+          submitReviewUseCase: SubmitReviewUseCase(repository),
+          vocabularyRepository: repository,
+        );
 
-    expect(provider.errorMessage, 'flashcard.unexpectedError');
-    expect(provider.errorMessage, isNot(contains('socket')));
-    expect(provider.nothingDue, isFalse);
+    test('shows the next card before the server has answered', () async {
+      final repository = _RecordingVocabularyRepository()
+        ..due = [due('a'), due('b'), due('c')]
+        ..submitGate = Completer<void>();
+      final provider = build(repository);
+      await provider.startReviewSession();
 
-    provider.dispose();
+      await provider.submitReview(ReviewQuality.good);
+
+      expect(provider.currentSession!.reviewedCards, 1);
+      expect(provider.currentSession!.currentCard!.userVocabulary.id, 'b');
+      expect(provider.isCardFlipped, isFalse);
+      expect(repository.sent, isEmpty);
+
+      repository.submitGate!.complete();
+      await provider.submitReview(ReviewQuality.good);
+      await provider.submitReview(ReviewQuality.good);
+
+      expect(repository.sent, ['a', 'b', 'c']);
+      expect(provider.currentSession!.totalXpEarned, 15);
+      expect(provider.currentSession!.completedAt, isNotNull);
+      provider.dispose();
+    });
+
+    test(
+      'the last card waits for delivery so the summary has its XP',
+      () async {
+        final repository = _RecordingVocabularyRepository()..due = [due('a')];
+        final provider = build(repository);
+        await provider.startReviewSession();
+
+        await provider.submitReview(ReviewQuality.easy);
+
+        expect(repository.sent, ['a']);
+        expect(provider.currentSession!.totalXpEarned, 5);
+        provider.dispose();
+      },
+    );
+
+    test('a rating that failed is sent again with the next one', () async {
+      final repository = _RecordingVocabularyRepository()
+        ..due = [due('a'), due('b')]
+        ..failSubmits = 1;
+      final provider = build(repository);
+      await provider.startReviewSession();
+
+      await provider.submitReview(ReviewQuality.good);
+      await provider.submitReview(ReviewQuality.good);
+
+      expect(repository.sent, ['a', 'b']);
+      provider.dispose();
+    });
+
+    test('leaving mid-delivery does not notify a disposed provider', () async {
+      final repository = _RecordingVocabularyRepository()
+        ..due = [due('a'), due('b')]
+        ..submitGate = Completer<void>();
+      final provider = build(repository);
+      await provider.startReviewSession();
+
+      await provider.submitReview(ReviewQuality.good);
+      provider.dispose();
+      repository.submitGate!.complete();
+      await Future<void>.delayed(Duration.zero);
+
+      expect(repository.sent, ['a']);
+    });
   });
 }
