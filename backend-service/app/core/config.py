@@ -347,6 +347,9 @@ class Settings(BaseSettings):
     NURTURE_START_ROUTE: str = "/courses"
     NURTURE_STREAK_LOCAL_HOUR: int = 20
     NURTURE_MAX_PER_RUN: int = 200
+    # Resend's free tier is 100 a day and shares it with verification and
+    # password-reset mail, so nurture may use only part of it.
+    NURTURE_DAILY_BUDGET: int = 60
     # Resend allows 2 requests a second by default.
     NURTURE_SEND_DELAY_SECONDS: float = 0.6
 
