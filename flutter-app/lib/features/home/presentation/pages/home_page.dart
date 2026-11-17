@@ -8,7 +8,7 @@ import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/home/domain/progressive_unlock.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/promo_banner_provider.dart';
-import 'package:lexilingo_app/features/home/presentation/widgets/home_page/discover_rail.dart';
+import 'package:lexilingo_app/features/home/presentation/widgets/home_page/discover_section.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/home_header.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/home_skeleton_loading.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/next_up_hero.dart';
@@ -184,7 +184,7 @@ class _HomePageNewState extends State<HomePageNew> {
                         ),
                         const WordOfDayCard(),
                         const PromoBannerSection(),
-                        const DiscoverRail(),
+                        const DiscoverSection(),
                       ],
                     ),
                   ),
