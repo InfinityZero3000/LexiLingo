@@ -224,7 +224,10 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
         correctAnswers: _correctCount,
         answers: [
           for (final pair in game.pairs)
-            {'id': pair.wordId, 'answer': _matchedIds.contains(pair.wordId) ? pair.matchText : ''},
+            {
+              'id': pair.wordId,
+              'answer': _matchedIds.contains(pair.wordId) ? pair.matchText : '',
+            },
         ],
       );
     }
@@ -288,179 +291,188 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
               body: Center(child: LottieLoadingWidget.medium()),
             );
           }
-        final game = provider.matching;
-        if (provider.error != null) {
-          return GameLoadState(
-            message: 'games.loadFailed'.tr(),
-            onRetry: () async {
-              await provider.loadMatchingGame();
-              if (mounted) _initGame();
-            },
-          );
-        }
-        if (game == null || game.pairs.isEmpty) {
-          return GameLoadState(
-            message: 'games.emptyGame'.tr(),
-            onRetry: () async {
-              await provider.loadMatchingGame();
-              if (mounted) _initGame();
-            },
-          );
-        }
-        if (!_gameLoaded) {
-          return const Scaffold(
-            body: Center(child: LottieLoadingWidget.medium()),
-          );
-        }
-        final remaining = game.pairs
-            .where((p) => !_matchedIds.contains(p.wordId))
-            .toList();
+          final game = provider.matching;
+          if (provider.error != null) {
+            return GameLoadState(
+              message: 'games.loadFailed'.tr(),
+              onRetry: () async {
+                await provider.loadMatchingGame();
+                if (mounted) _initGame();
+              },
+            );
+          }
+          if (game == null || game.pairs.isEmpty) {
+            return GameLoadState(
+              message: 'games.emptyGame'.tr(),
+              onRetry: () async {
+                await provider.loadMatchingGame();
+                if (mounted) _initGame();
+              },
+            );
+          }
+          if (!_gameLoaded) {
+            return const Scaffold(
+              body: Center(child: LottieLoadingWidget.medium()),
+            );
+          }
+          final remaining = game.pairs
+              .where((p) => !_matchedIds.contains(p.wordId))
+              .toList();
 
-        return Scaffold(
-          appBar: AppBar(
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            elevation: 0,
-            title: Text(
-              'matchingGame.title'.tr(),
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-            ),
-            actions: [
-              Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: _TimerChip(
-                  timeLeft: _timeLeft,
-                  total: game.timerSeconds,
+          return Scaffold(
+            appBar: AppBar(
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              elevation: 0,
+              title: Text(
+                'matchingGame.title'.tr(),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
-            ],
-          ),
-          body: ContentWidth(maxWidth: ContentWidth.reading, child: Stack(
-            children: [
-              Column(
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: _TimerChip(
+                    timeLeft: _timeLeft,
+                    total: game.timerSeconds,
+                  ),
+                ),
+              ],
+            ),
+            body: ContentWidth(
+              maxWidth: ContentWidth.reading,
+              child: Stack(
                 children: [
-                  LinearProgressIndicator(
-                    value: _matchedIds.length / game.pairs.length,
-                    backgroundColor: AppColors.grey200,
-                    color: AppColors.greenSuccess,
-                    minHeight: 4,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    child: GamePowerUpTray(
-                      availableTypes: _matchingPowerUps,
-                      onUse: _onPowerUpUsed,
-                    ),
-                  ),
-                  if (_luckyCloverActive)
-                    Padding(
-                      padding: EdgeInsets.only(bottom: 6),
-                      child: ActivePowerUpBadge(
-                        itemType: ShopItemEntity.effectLuckyClover,
-                        label: 'games.luckyCloverActive'.tr(),
+                  Column(
+                    children: [
+                      LinearProgressIndicator(
+                        value: _matchedIds.length / game.pairs.length,
+                        backgroundColor: AppColors.grey200,
+                        color: AppColors.greenSuccess,
+                        minHeight: 4,
                       ),
-                    ),
-                  Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Text(
-                      'matchingGame.matchedProgress'.tr(
-                        namedArgs: {
-                          'matched': '${_matchedIds.length}',
-                          'total': '${game.pairs.length}',
-                        },
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        child: GamePowerUpTray(
+                          availableTypes: _matchingPowerUps,
+                          onUse: _onPowerUpUsed,
+                        ),
                       ),
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontSize: 13,
+                      if (_luckyCloverActive)
+                        Padding(
+                          padding: EdgeInsets.only(bottom: 6),
+                          child: ActivePowerUpBadge(
+                            itemType: ShopItemEntity.effectLuckyClover,
+                            label: 'games.luckyCloverActive'.tr(),
+                          ),
+                        ),
+                      Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Text(
+                          'matchingGame.matchedProgress'.tr(
+                            namedArgs: {
+                              'matched': '${_matchedIds.length}',
+                              'total': '${game.pairs.length}',
+                            },
+                          ),
+                          style: TextStyle(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                            fontSize: 13,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Row(
-                        children: [
-                          // Words column
-                          Expanded(
-                            child: _ColumnList(
-                              items: remaining.map((p) => p.word).toList(),
-                              selectedItem: _selectedWord != null
-                                  ? game.pairs
-                                        .firstWhere(
-                                          (p) => p.wordId == _selectedWord,
-                                        )
-                                        .word
-                                  : null,
-                              pairStates: Map.fromEntries(
-                                remaining.map(
-                                  (p) =>
-                                      MapEntry(p.word, _matchState[p.wordId]),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Row(
+                            children: [
+                              // Words column
+                              Expanded(
+                                child: _ColumnList(
+                                  items: remaining.map((p) => p.word).toList(),
+                                  selectedItem: _selectedWord != null
+                                      ? game.pairs
+                                            .firstWhere(
+                                              (p) => p.wordId == _selectedWord,
+                                            )
+                                            .word
+                                      : null,
+                                  pairStates: Map.fromEntries(
+                                    remaining.map(
+                                      (p) => MapEntry(
+                                        p.word,
+                                        _matchState[p.wordId],
+                                      ),
+                                    ),
+                                  ),
+                                  onTap: (word) {
+                                    final p = game.pairs.firstWhere(
+                                      (p) => p.word == word,
+                                    );
+                                    _selectWord(p.wordId);
+                                  },
+                                  label: 'matchingGame.wordsColumnLabel'.tr(),
                                 ),
                               ),
-                              onTap: (word) {
-                                final p = game.pairs.firstWhere(
-                                  (p) => p.word == word,
-                                );
-                                _selectWord(p.wordId);
-                              },
-                              label: 'matchingGame.wordsColumnLabel'.tr(),
-                            ),
+                              const SizedBox(width: 10),
+                              // Matches column
+                              Expanded(
+                                child: _ColumnList(
+                                  items: game.definitionsColumn
+                                      .where(
+                                        (m) => !_matchedIds.any((id) {
+                                          try {
+                                            return game.pairs
+                                                    .firstWhere(
+                                                      (p) => p.wordId == id,
+                                                    )
+                                                    .matchText ==
+                                                m;
+                                          } catch (_) {
+                                            return false;
+                                          }
+                                        }),
+                                      )
+                                      .toList(),
+                                  selectedItem: _selectedMatch,
+                                  pairStates: const {},
+                                  onTap: _selectMatchItem,
+                                  label: game.variant == 'definition'
+                                      ? 'matchingGame.definitionsLabel'.tr()
+                                      : 'matchingGame.matchesLabel'.tr(),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 10),
-                          // Matches column
-                          Expanded(
-                            child: _ColumnList(
-                              items: game.definitionsColumn
-                                  .where(
-                                    (m) => !_matchedIds.any((id) {
-                                      try {
-                                        return game.pairs
-                                                .firstWhere(
-                                                  (p) => p.wordId == id,
-                                                )
-                                                .matchText ==
-                                            m;
-                                      } catch (_) {
-                                        return false;
-                                      }
-                                    }),
-                                  )
-                                  .toList(),
-                              selectedItem: _selectedMatch,
-                              pairStates: const {},
-                              onTap: _selectMatchItem,
-                              label: game.variant == 'definition'
-                                  ? 'matchingGame.definitionsLabel'.tr()
-                                  : 'matchingGame.matchesLabel'.tr(),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
+                    ],
+                  ),
+                  // Confetti overlay (skill: gamification-confetti-win)
+                  Align(
+                    alignment: Alignment.topCenter,
+                    child: ConfettiWidget(
+                      confettiController: _confettiController,
+                      blastDirectionality: BlastDirectionality.explosive,
+                      numberOfParticles: 20,
+                      gravity: 0.4,
+                      colors: const [
+                        AppColors.primary,
+                        Colors.yellow,
+                        AppColors.greenSuccessBright,
+                        AppColors.orange,
+                      ],
                     ),
                   ),
                 ],
               ),
-              // Confetti overlay (skill: gamification-confetti-win)
-              Align(
-                alignment: Alignment.topCenter,
-                child: ConfettiWidget(
-                  confettiController: _confettiController,
-                  blastDirectionality: BlastDirectionality.explosive,
-                  numberOfParticles: 20,
-                  gravity: 0.4,
-                  colors: const [
-                    AppColors.primary,
-                    Colors.yellow,
-                    AppColors.greenSuccessBright,
-                    AppColors.orange,
-                  ],
-                ),
-              ),
-            ],
-          ),),
-        );
+            ),
+          );
         },
       ),
     );
@@ -516,7 +528,7 @@ class _ColumnList extends StatelessWidget {
                 border = AppColors.greenSuccess;
               }
               if (state == _PairState.wrong) {
-                bg = Colors.red.withValues(alpha: 0.1);
+                bg = Theme.of(context).colorScheme.error.withValues(alpha: 0.1);
                 border = AppColors.errorBright;
               }
               return GestureDetector(

@@ -226,7 +226,9 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.16),
+                          color: Theme.of(
+                            context,
+                          ).shadowColor.withValues(alpha: 0.16),
                           blurRadius: 8,
                           offset: const Offset(0, 3),
                         ),
@@ -257,7 +259,9 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
+                      color: Theme.of(
+                        context,
+                      ).shadowColor.withValues(alpha: 0.08),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),

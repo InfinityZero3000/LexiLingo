@@ -282,7 +282,9 @@ class GamesProvider extends ChangeNotifier {
 
     _pendingCompletion = _PendingGameCompletion(
       sessionId: resolvedSessionId,
-      answers: answers.map((answer) => Map<String, String>.from(answer)).toList(),
+      answers: answers
+          .map((answer) => Map<String, String>.from(answer))
+          .toList(),
       durationSeconds: durationSeconds,
       hintsUsed: hintsUsed,
     );

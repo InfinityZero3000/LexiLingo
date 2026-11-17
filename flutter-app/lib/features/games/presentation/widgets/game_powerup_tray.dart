@@ -135,8 +135,8 @@ class _PowerUpButtonState extends State<_PowerUpButton> {
                           ),
                         )
                       : (icon != null
-                          ? AppGameIcon(icon, size: 26)
-                          : const Icon(Icons.bolt, size: 26)),
+                            ? AppGameIcon(icon, size: 26)
+                            : const Icon(Icons.bolt, size: 26)),
                 ),
                 Positioned(
                   right: -4,
@@ -155,7 +155,7 @@ class _PowerUpButtonState extends State<_PowerUpButton> {
                       style: const TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: AppColors.textInverted,
                       ),
                     ),
                   ),
@@ -176,7 +176,11 @@ class ActivePowerUpBadge extends StatelessWidget {
   final String itemType;
   final String label;
 
-  const ActivePowerUpBadge({super.key, required this.itemType, required this.label});
+  const ActivePowerUpBadge({
+    super.key,
+    required this.itemType,
+    required this.label,
+  });
 
   @override
   Widget build(BuildContext context) {

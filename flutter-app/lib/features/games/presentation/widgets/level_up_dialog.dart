@@ -415,7 +415,7 @@ class _LevelHero extends StatelessWidget {
               shape: BoxShape.circle,
               color: palette.surface,
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.72),
+                color: AppColors.textInverted.withValues(alpha: 0.72),
                 width: 4,
               ),
               boxShadow: [
@@ -757,7 +757,7 @@ class _ContinueButton extends StatelessWidget {
             ElevatedButton.styleFrom(
               minimumSize: const Size.fromHeight(58),
               backgroundColor: palette.primary,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.textInverted,
               elevation: 0,
               shadowColor: Colors.transparent,
               textStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -769,7 +769,7 @@ class _ContinueButton extends StatelessWidget {
               ),
             ).copyWith(
               overlayColor: WidgetStatePropertyAll(
-                Colors.white.withValues(alpha: 0.12),
+                AppColors.textInverted.withValues(alpha: 0.12),
               ),
             ),
       ),

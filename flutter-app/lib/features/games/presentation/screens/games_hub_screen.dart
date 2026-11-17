@@ -196,23 +196,31 @@ class _GamesHubScreenState extends State<GamesHubScreen>
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.red.shade50,
+          color: Theme.of(context).colorScheme.errorContainer,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.red.shade200),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.error.withValues(alpha: 0.4),
+          ),
         ),
         child: Row(
           children: [
-            Icon(Icons.error_outline_rounded, color: Colors.red.shade400),
+            Icon(
+              Icons.error_outline_rounded,
+              color: Theme.of(context).colorScheme.error,
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 'gamesHub.xpLoadError'.tr(),
-                style: TextStyle(color: Colors.red.shade700, fontSize: 13),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onErrorContainer,
+                  fontSize: 13,
+                ),
               ),
             ),
             IconButton(
               icon: const Icon(Icons.refresh_rounded),
-              color: Colors.red.shade400,
+              color: Theme.of(context).colorScheme.error,
               onPressed: () => provider.loadXPProfile(),
             ),
           ],
@@ -231,7 +239,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
+            color: Theme.of(context).shadowColor.withValues(alpha: 0.06),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -258,12 +266,17 @@ class _GamesHubScreenState extends State<GamesHubScreen>
               const SizedBox(width: 4),
               Flexible(
                 child: Text(
-                'games.dailyXpToday'.tr(namedArgs: {'current': '$dailyXp', 'cap': '$dailyCap'}),
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: AppColors.textGrey,
-                  fontWeight: FontWeight.w500,
-                ), maxLines: 1, overflow: TextOverflow.ellipsis),
+                  'games.dailyXpToday'.tr(
+                    namedArgs: {'current': '$dailyXp', 'cap': '$dailyCap'},
+                  ),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textGrey,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
@@ -356,7 +369,9 @@ class _GamesHubScreenState extends State<GamesHubScreen>
 
   Widget _buildLevelPicker(GamesProvider provider) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final titleColor = isDark ? Colors.white70 : AppColors.textGrey;
+    final titleColor = isDark
+        ? AppColors.textInverted.withValues(alpha: 0.7)
+        : AppColors.textGrey;
     final unselectedLabel = isDark
         ? AppColors.textInverted
         : AppColors.textDark;
@@ -385,7 +400,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
                   onSelected: (_) => provider.setLevel(level),
                   selectedColor: AppColors.primary,
                   labelStyle: TextStyle(
-                    color: selected ? Colors.white : unselectedLabel,
+                    color: selected ? AppColors.textInverted : unselectedLabel,
                     fontWeight: FontWeight.bold,
                   ),
                   backgroundColor: Theme.of(context).colorScheme.surface,
@@ -473,7 +488,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Theme.of(context).shadowColor.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -553,7 +568,9 @@ class _GamesHubScreenState extends State<GamesHubScreen>
                       ),
                     ),
                     Text(
-                      'games.weeklyXp'.tr(namedArgs: {'xp': '${user.weeklyXp}'}),
+                      'games.weeklyXp'.tr(
+                        namedArgs: {'xp': '${user.weeklyXp}'},
+                      ),
                       style: const TextStyle(
                         fontSize: 11,
                         color: AppColors.textGrey,
@@ -665,7 +682,9 @@ class _GamesHubScreenState extends State<GamesHubScreen>
                 fontSize: 15,
                 shadows: [
                   Shadow(
-                    color: Colors.black26,
+                    color: Theme.of(
+                      context,
+                    ).shadowColor.withValues(alpha: 0.26),
                     offset: Offset(0, 1),
                     blurRadius: 2,
                   ),

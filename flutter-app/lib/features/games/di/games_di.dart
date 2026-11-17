@@ -15,9 +15,8 @@ void registerGamesModule() {
 
   // Pronunciation service (Spelling Bee TTS/audio)
   sl.registerFactory<GamePronunciationService>(
-    () => GamePronunciationService(
-      voiceDataSource: sl<VoiceRemoteDataSource>(),
-    ),
+    () =>
+        GamePronunciationService(voiceDataSource: sl<VoiceRemoteDataSource>()),
   );
 
   // Provider

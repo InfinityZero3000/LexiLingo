@@ -215,7 +215,7 @@ class GameNextBar extends StatelessWidget {
             onPressed: onPressed,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.textInverted,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),

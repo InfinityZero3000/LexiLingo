@@ -38,7 +38,9 @@ class LeagueCeremonyScreen extends StatefulWidget {
     return Navigator.of(context, rootNavigator: true).push(
       PageRouteBuilder(
         opaque: false,
-        barrierColor: Colors.black.withValues(alpha: 0.85),
+        barrierColor: Theme.of(
+          context,
+        ).colorScheme.scrim.withValues(alpha: 0.85),
         transitionDuration: const Duration(milliseconds: 400),
         pageBuilder: (ctx, _, __) => LeagueCeremonyScreen(
           newLeague: newLeague,

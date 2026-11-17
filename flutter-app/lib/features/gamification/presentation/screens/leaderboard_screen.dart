@@ -508,7 +508,9 @@ class _RankHelpButton extends StatelessWidget {
           border: Border.all(color: accent.withValues(alpha: 0.42), width: 1.2),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.18 : 0.08),
+              color: Theme.of(
+                context,
+              ).shadowColor.withValues(alpha: isDark ? 0.18 : 0.08),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),

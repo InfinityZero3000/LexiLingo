@@ -68,7 +68,7 @@ class DailyChallengeCard extends StatelessWidget {
                 shape: BoxShape.circle,
                 color: completed
                     ? AppColors.grey300
-                    : Colors.white.withValues(alpha: 0.2),
+                    : AppColors.textInverted.withValues(alpha: 0.2),
               ),
               alignment: Alignment.center,
               child: completed
@@ -97,7 +97,9 @@ class DailyChallengeCard extends StatelessWidget {
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 13,
-                      color: completed ? AppColors.textGrey : Colors.white70,
+                      color: completed
+                          ? AppColors.textGrey
+                          : AppColors.textInverted.withValues(alpha: 0.7),
                     ),
                   ),
                   const SizedBox(height: 3),
@@ -106,7 +108,9 @@ class DailyChallengeCard extends StatelessWidget {
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
-                      color: completed ? AppColors.textDark : Colors.white,
+                      color: completed
+                          ? AppColors.textDark
+                          : AppColors.textInverted,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -118,7 +122,7 @@ class DailyChallengeCard extends StatelessWidget {
                       fontSize: 11,
                       color: completed
                           ? AppColors.textGrey
-                          : Colors.white.withValues(alpha: 0.7),
+                          : AppColors.textInverted.withValues(alpha: 0.7),
                     ),
                   ),
                 ],

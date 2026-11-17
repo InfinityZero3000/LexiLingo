@@ -2,6 +2,7 @@ import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart';
 import 'package:lexilingo_app/features/games/presentation/providers/games_provider.dart';
@@ -118,7 +119,9 @@ class _GameResultScreenState extends State<GameResultScreen>
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: Text(
-          'games.resultTitle'.tr(namedArgs: {'game': result.gameType.displayName}),
+          'games.resultTitle'.tr(
+            namedArgs: {'game': result.gameType.displayName},
+          ),
           style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
         ),
         backgroundColor: Theme.of(context).colorScheme.surface,
@@ -126,22 +129,25 @@ class _GameResultScreenState extends State<GameResultScreen>
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
-        child: ContentWidth(maxWidth: ContentWidth.reading, child: Column(
-          children: [
-            const SizedBox(height: 8),
-            _buildStarRow(result.stars),
-            const SizedBox(height: 24),
-            _buildScoreCard(result),
-            const SizedBox(height: 20),
-            _buildXpCard(xpResult),
-            if (xpResult != null && xpResult.multiplier > 1.0) ...[
-              const SizedBox(height: 12),
-              _buildMultiplierBadge(xpResult.multiplier),
+        child: ContentWidth(
+          maxWidth: ContentWidth.reading,
+          child: Column(
+            children: [
+              const SizedBox(height: 8),
+              _buildStarRow(result.stars),
+              const SizedBox(height: 24),
+              _buildScoreCard(result),
+              const SizedBox(height: 20),
+              _buildXpCard(xpResult),
+              if (xpResult != null && xpResult.multiplier > 1.0) ...[
+                const SizedBox(height: 12),
+                _buildMultiplierBadge(xpResult.multiplier),
+              ],
+              const SizedBox(height: 32),
+              _buildButtons(context),
             ],
-            const SizedBox(height: 32),
-            _buildButtons(context),
-          ],
-        ),),
+          ),
+        ),
       ),
     );
   }
@@ -294,7 +300,10 @@ class _GameResultScreenState extends State<GameResultScreen>
         children: [
           Text(
             'gameResult.xpEarnedLabel'.tr(),
-            style: TextStyle(color: Colors.white70, fontSize: 13),
+            style: TextStyle(
+              color: AppColors.textInverted.withValues(alpha: 0.7),
+              fontSize: 13,
+            ),
           ),
           const SizedBox(height: 6),
           AnimatedBuilder(
@@ -309,10 +318,7 @@ class _GameResultScreenState extends State<GameResultScreen>
             ),
           ),
           const SizedBox(height: 8),
-          _xpStatRow(
-            'gameResult.totalXpLabel'.tr(),
-            '${xpResult.newTotalXp}',
-          ),
+          _xpStatRow('gameResult.totalXpLabel'.tr(), '${xpResult.newTotalXp}'),
           _xpStatRow(
             'gameResult.dailyXpLabel'.tr(),
             '${xpResult.dailyXpToday}',
@@ -362,7 +368,10 @@ class _GameResultScreenState extends State<GameResultScreen>
         children: [
           Text(
             label,
-            style: const TextStyle(color: Colors.white70, fontSize: 13),
+            style: TextStyle(
+              color: AppColors.textInverted.withValues(alpha: 0.7),
+              fontSize: 13,
+            ),
           ),
           Text(
             value,
@@ -381,9 +390,11 @@ class _GameResultScreenState extends State<GameResultScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.orange.shade50,
+        color: context.status.warningContainer,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orange.shade300),
+        border: Border.all(
+          color: context.status.warning.withValues(alpha: 0.5),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -396,14 +407,17 @@ class _GameResultScreenState extends State<GameResultScreen>
           const SizedBox(width: 6),
           Flexible(
             child: Text(
-            'gameResult.streakBonusLabel'.tr(
-              namedArgs: {'multiplier': multiplier.toStringAsFixed(1)},
+              'gameResult.streakBonusLabel'.tr(
+                namedArgs: {'multiplier': multiplier.toStringAsFixed(1)},
+              ),
+              style: TextStyle(
+                color: context.status.warning,
+                fontWeight: FontWeight.bold,
+                fontSize: 13,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-            style: TextStyle(
-              color: Colors.orange.shade800,
-              fontWeight: FontWeight.bold,
-              fontSize: 13,
-            ), maxLines: 1, overflow: TextOverflow.ellipsis),
           ),
         ],
       ),
@@ -422,7 +436,7 @@ class _GameResultScreenState extends State<GameResultScreen>
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.textInverted,
               padding: const EdgeInsets.symmetric(vertical: 15),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),

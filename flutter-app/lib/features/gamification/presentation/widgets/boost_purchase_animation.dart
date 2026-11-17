@@ -26,7 +26,7 @@ class BoostPurchaseAnimation extends StatefulWidget {
       context: context,
       barrierDismissible: false,
       barrierLabel: 'shop.boost'.tr(),
-      barrierColor: Colors.black.withValues(alpha: 0.45),
+      barrierColor: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.45),
       transitionDuration: const Duration(milliseconds: 250),
       transitionBuilder: (ctx, anim, _, child) =>
           FadeTransition(opacity: anim, child: child),

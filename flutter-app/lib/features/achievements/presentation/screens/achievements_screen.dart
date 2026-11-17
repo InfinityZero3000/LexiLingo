@@ -4,6 +4,7 @@ library;
 import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
@@ -154,7 +155,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                       namedArgs: {'unlocked': '$unlocked', 'total': '$total'},
                     ),
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      color: Colors.white70,
+                      color: AppColors.textInverted.withValues(alpha: 0.7),
                     ),
                   ),
                 ],
@@ -163,8 +164,8 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 progress: percentage / 100,
                 size: 70,
                 strokeWidth: 8,
-                backgroundColor: Colors.white24,
-                progressColor: Colors.white,
+                backgroundColor: AppColors.textInverted.withValues(alpha: 0.24),
+                progressColor: AppColors.textInverted,
                 child: Text(
                   '${percentage.toStringAsFixed(0)}%',
                   style: TextStyle(
@@ -208,7 +209,9 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
               const Spacer(),
               Text(
                 '${achievements.where((a) => provider.isUnlocked(a.id)).length}/${achievements.length}',
-                style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
               ),
             ],
           ),
@@ -322,7 +325,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
               height: 4,
               margin: const EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: Theme.of(context).colorScheme.outline,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -361,7 +364,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
             Text(
               achievement.description,
               style: theme.textTheme.bodyLarge?.copyWith(
-                color: Colors.grey[600],
+                color: Theme.of(context).colorScheme.outline,
               ),
               textAlign: TextAlign.center,
             ),
@@ -392,13 +395,17 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.lock, size: 16, color: Colors.grey),
+                  Icon(
+                    Icons.lock,
+                    size: 16,
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
                       'achievements.completeToUnlock'.tr(),
                       style: TextStyle(
-                        color: Colors.grey[500],
+                        color: Theme.of(context).colorScheme.outline,
                         fontStyle: FontStyle.italic,
                       ),
                       maxLines: 2,
@@ -411,13 +418,17 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.check_circle, size: 16, color: Colors.green[600]),
+                  Icon(
+                    Icons.check_circle,
+                    size: 16,
+                    color: context.status.success,
+                  ),
                   const SizedBox(width: 4),
                   Flexible(
                     child: Text(
                       'achievements.achievementUnlocked'.tr(),
                       style: TextStyle(
-                        color: Colors.green[600],
+                        color: context.status.success,
                         fontWeight: FontWeight.bold,
                       ),
                       maxLines: 1,

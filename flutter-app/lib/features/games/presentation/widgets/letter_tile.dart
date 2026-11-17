@@ -63,12 +63,12 @@ class _LetterTileState extends State<LetterTile>
     if (widget.isCorrect) return AppColors.greenSuccess;
     if (widget.isWrong) return AppColors.errorDark;
     if (widget.isSelected) return AppColors.primary;
-    return Colors.white;
+    return AppColors.textInverted;
   }
 
   Color get _textColor {
     if (widget.isCorrect || widget.isWrong || widget.isSelected) {
-      return Colors.white;
+      return AppColors.textInverted;
     }
     return AppColors.textDark;
   }

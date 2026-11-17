@@ -157,25 +157,25 @@ class AchievementBadge extends StatelessWidget {
         if (badgeIcon != null &&
             badgeIcon.isNotEmpty &&
             _isNetworkUrl(badgeIcon)) {
-          return _buildNetworkBadge(badgeIcon);
+          return _buildNetworkBadge(context, badgeIcon);
         }
 
         final cdnUrl = BadgeNetworkImages.getBadgeUrl(lookupKey);
         if (cdnUrl != null) {
-          return _buildNetworkBadge(cdnUrl);
+          return _buildNetworkBadge(context, cdnUrl);
         }
       }
 
       // Local mapped asset (deterministic and offline-safe).
       if (mappedAssetPath != null) {
-        return _buildImageAssetBadge(mappedAssetPath);
+        return _buildImageAssetBadge(context, mappedAssetPath);
       }
 
       // Allow raw filenames in DB, e.g. "course-graduate.png".
       if (badgeIcon != null &&
           badgeIcon.isNotEmpty &&
           _looksLikeImageFileName(badgeIcon)) {
-        return _buildImageAssetBadge('assets/badges/$badgeIcon');
+        return _buildImageAssetBadge(context, 'assets/badges/$badgeIcon');
       }
 
       // If CDN-first is disabled, still allow explicit network URL from backend.
@@ -184,19 +184,19 @@ class AchievementBadge extends StatelessWidget {
           badgeIcon.isNotEmpty &&
           _isNetworkUrl(badgeIcon) &&
           !kIsWeb) {
-        return _buildNetworkBadge(badgeIcon);
+        return _buildNetworkBadge(context, badgeIcon);
       }
     }
 
     // Fall back to generated badge
     if (useNewStyle) {
-      return _buildNewStyleBadge();
+      return _buildNewStyleBadge(context);
     }
-    return _buildClassicBadge();
+    return _buildClassicBadge(context);
   }
 
   /// Build badge from network URL (CDN or backend)
-  Widget _buildNetworkBadge(String imageUrl) {
+  Widget _buildNetworkBadge(BuildContext context, String imageUrl) {
     final cacheSidePx = (size * 2).round();
 
     return GestureDetector(
@@ -209,7 +209,7 @@ class AchievementBadge extends StatelessWidget {
           boxShadow: isUnlocked
               ? [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
+                    color: Theme.of(context).shadowColor.withValues(alpha: 0.2),
                     blurRadius: 8,
                     spreadRadius: 1,
                     offset: const Offset(0, 4),
@@ -251,10 +251,11 @@ class AchievementBadge extends StatelessWidget {
                       width: size,
                       height: size,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _buildNewStyleBadge(),
+                      errorBuilder: (_, __, ___) =>
+                          _buildNewStyleBadge(context),
                     );
                   }
-                  return _buildNewStyleBadge();
+                  return _buildNewStyleBadge(context);
                 },
               ),
             ),
@@ -265,7 +266,7 @@ class AchievementBadge extends StatelessWidget {
                 height: size,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.black.withValues(alpha: 0.6),
+                  color: Theme.of(context).shadowColor.withValues(alpha: 0.6),
                 ),
                 child: Icon(
                   Icons.lock,
@@ -280,7 +281,7 @@ class AchievementBadge extends StatelessWidget {
   }
 
   /// Build badge from local image asset
-  Widget _buildImageAssetBadge(String assetPath) {
+  Widget _buildImageAssetBadge(BuildContext context, String assetPath) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -291,7 +292,7 @@ class AchievementBadge extends StatelessWidget {
           boxShadow: isUnlocked
               ? [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
+                    color: Theme.of(context).shadowColor.withValues(alpha: 0.2),
                     blurRadius: 8,
                     spreadRadius: 1,
                     offset: const Offset(0, 4),
@@ -311,7 +312,7 @@ class AchievementBadge extends StatelessWidget {
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   // Fallback to generated badge if image fails to load
-                  return _buildNewStyleBadge();
+                  return _buildNewStyleBadge(context);
                 },
               ),
             ),
@@ -322,7 +323,7 @@ class AchievementBadge extends StatelessWidget {
                 height: size,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.black.withValues(alpha: 0.6),
+                  color: Theme.of(context).shadowColor.withValues(alpha: 0.6),
                 ),
                 child: Icon(
                   Icons.lock,
@@ -337,7 +338,7 @@ class AchievementBadge extends StatelessWidget {
   }
 
   /// New generated badge with custom painting
-  Widget _buildNewStyleBadge() {
+  Widget _buildNewStyleBadge(BuildContext context) {
     return SmartAchievementBadge(
       category: achievement.category,
       badgeIcon: achievement.badgeIcon,
@@ -351,7 +352,7 @@ class AchievementBadge extends StatelessWidget {
   }
 
   /// Classic badge style (fallback)
-  Widget _buildClassicBadge() {
+  Widget _buildClassicBadge(BuildContext context) {
     final Color badgeColor = achievement.badgeColor != null
         ? Color(
             int.parse(
@@ -370,9 +371,11 @@ class AchievementBadge extends StatelessWidget {
           shape: BoxShape.circle,
           color: isUnlocked
               ? badgeColor.withValues(alpha: 0.2)
-              : Colors.grey.withValues(alpha: 0.2),
+              : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
           border: Border.all(
-            color: isUnlocked ? badgeColor : Colors.grey,
+            color: isUnlocked
+                ? badgeColor
+                : Theme.of(context).colorScheme.outline,
             width: 3,
           ),
           boxShadow: isUnlocked
@@ -392,7 +395,11 @@ class AchievementBadge extends StatelessWidget {
                   size: size * 0.4,
                   color: AppColors.surfaceLight,
                 )
-              : Icon(Icons.lock, size: size * 0.35, color: Colors.grey),
+              : Icon(
+                  Icons.lock,
+                  size: size * 0.35,
+                  color: Theme.of(context).colorScheme.outline,
+                ),
         ),
       ),
     );
@@ -446,7 +453,9 @@ class AchievementCard extends StatelessWidget {
                   achievement.name,
                   style: theme.textTheme.labelSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: isUnlocked ? null : Colors.grey,
+                    color: isUnlocked
+                        ? null
+                        : Theme.of(context).colorScheme.outline,
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 2,
@@ -531,7 +540,9 @@ class _AchievementUnlockPopupState extends State<AchievementUnlockPopup> {
         // Background overlay
         GestureDetector(
           onTap: widget.onDismiss,
-          child: Container(color: Colors.black54),
+          child: Container(
+            color: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.54),
+          ),
         ),
         // Confetti
         ConfettiWidget(
@@ -614,7 +625,7 @@ class _AchievementUnlockPopupState extends State<AchievementUnlockPopup> {
                 Text(
                   achievement.description,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
+                    color: Theme.of(context).colorScheme.outline,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -645,7 +656,7 @@ class _AchievementUnlockPopupState extends State<AchievementUnlockPopup> {
                   onPressed: widget.onDismiss,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: badgeColor,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.textInverted,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 32,
                       vertical: 12,

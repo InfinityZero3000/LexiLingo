@@ -30,20 +30,16 @@ class AchievementUnlockOverlay extends StatefulWidget {
     trackProductEvent(
       'achievement_unlock_overlay_shown',
       source: 'achievements',
-      properties: {
-        'achievement_count': achievements.length,
-      },
+      properties: {'achievement_count': achievements.length},
     );
     return showGeneralDialog<void>(
       context: context,
       barrierDismissible: true,
       barrierLabel: 'achievements.achievementUnlocked'.tr(),
-      barrierColor: Colors.black.withValues(alpha: 0.7),
+      barrierColor: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.7),
       transitionDuration: const Duration(milliseconds: 300),
-      transitionBuilder: (ctx, anim, _, child) => FadeTransition(
-        opacity: anim,
-        child: child,
-      ),
+      transitionBuilder: (ctx, anim, _, child) =>
+          FadeTransition(opacity: anim, child: child),
       pageBuilder: (ctx, _, __) => AchievementUnlockOverlay(
         achievements: achievements,
         onDismiss: onDismiss,
@@ -76,9 +72,10 @@ class _AchievementUnlockOverlayState extends State<AchievementUnlockOverlay>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    _scaleAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _badgeScale, curve: Curves.elasticOut),
-    );
+    _scaleAnim = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _badgeScale, curve: Curves.elasticOut));
     _playForCurrent();
   }
 
@@ -121,9 +118,7 @@ class _AchievementUnlockOverlayState extends State<AchievementUnlockOverlay>
           children: [
             // Lottie star-burst in background
             const Positioned.fill(
-              child: IgnorePointer(
-                child: LottieAnimationWidget.starBurst(),
-              ),
+              child: IgnorePointer(child: LottieAnimationWidget.starBurst()),
             ),
 
             // Achievement card
@@ -135,7 +130,7 @@ class _AchievementUnlockOverlayState extends State<AchievementUnlockOverlay>
                 decoration: BoxDecoration(
                   color: isDark
                       ? AppColors.surfaceDarkElevated
-                      : Colors.white,
+                      : AppColors.textInverted,
                   borderRadius: BorderRadius.circular(28),
                   boxShadow: [
                     BoxShadow(
@@ -263,7 +258,9 @@ class _AchievementUnlockOverlayState extends State<AchievementUnlockOverlay>
                             const SizedBox(width: 4),
                             Text(
                               'achievements.gemsReward'.tr(
-                                namedArgs: {'gems': '${achievement.gemsReward}'},
+                                namedArgs: {
+                                  'gems': '${achievement.gemsReward}',
+                                },
                               ),
                               style: const TextStyle(
                                 fontSize: 14,
@@ -288,9 +285,9 @@ class _AchievementUnlockOverlayState extends State<AchievementUnlockOverlay>
                           : 'achievements.tapToContinue'.tr(),
                       style: TextStyle(
                         fontSize: 11,
-                        color: AppColorRoles.textMuted(isDark).withValues(
-                          alpha: 0.6,
-                        ),
+                        color: AppColorRoles.textMuted(
+                          isDark,
+                        ).withValues(alpha: 0.6),
                       ),
                     ),
                   ],

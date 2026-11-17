@@ -43,7 +43,7 @@ class StarterRewardDialog extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Material(
-      color: Colors.black.withValues(alpha: 0.52),
+      color: Theme.of(context).shadowColor.withValues(alpha: 0.52),
       child: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -56,7 +56,9 @@ class StarterRewardDialog extends StatelessWidget {
                 borderRadius: BorderRadius.circular(28),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.22),
+                    color: Theme.of(
+                      context,
+                    ).shadowColor.withValues(alpha: 0.22),
                     blurRadius: 36,
                     offset: const Offset(0, 18),
                   ),

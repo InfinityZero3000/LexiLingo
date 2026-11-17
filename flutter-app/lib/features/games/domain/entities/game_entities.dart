@@ -235,7 +235,8 @@ class ScrambleWord {
       xpValue: xpValue ?? this.xpValue,
       letterCount: letterCount ?? this.letterCount,
       cefrLevel: cefrLevel ?? this.cefrLevel,
-      vietnameseTranslation: vietnameseTranslation ?? this.vietnameseTranslation,
+      vietnameseTranslation:
+          vietnameseTranslation ?? this.vietnameseTranslation,
     );
   }
 }
@@ -584,7 +585,8 @@ class SpellingBeeWord {
       xpFull: xpFull ?? this.xpFull,
       xpPartial: xpPartial ?? this.xpPartial,
       maxReplays: maxReplays ?? this.maxReplays,
-      vietnameseTranslation: vietnameseTranslation ?? this.vietnameseTranslation,
+      vietnameseTranslation:
+          vietnameseTranslation ?? this.vietnameseTranslation,
     );
   }
 }
@@ -845,7 +847,8 @@ class HangmanGame {
       maxLives: maxLives ?? this.maxLives,
       baseXp: baseXp ?? this.baseXp,
       availableCategories: availableCategories ?? this.availableCategories,
-      vietnameseTranslation: vietnameseTranslation ?? this.vietnameseTranslation,
+      vietnameseTranslation:
+          vietnameseTranslation ?? this.vietnameseTranslation,
     );
   }
 }

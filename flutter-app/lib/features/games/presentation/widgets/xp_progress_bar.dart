@@ -128,7 +128,9 @@ class _XPProgressBarState extends State<XPProgressBar>
                       ),
                     ),
                     Text(
-                      'gamification.totalXp'.tr(namedArgs: {'xp': '${widget.totalXp}'}),
+                      'gamification.totalXp'.tr(
+                        namedArgs: {'xp': '${widget.totalXp}'},
+                      ),
                       style: TextStyle(
                         fontSize: 12,
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -156,11 +158,18 @@ class _XPProgressBarState extends State<XPProgressBar>
           children: [
             Flexible(
               child: Text(
-              'games.percentToNextLevel'.tr(namedArgs: {'percent': widget.progressPercent.toStringAsFixed(0)}),
-              style: TextStyle(
-                fontSize: 11,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ), maxLines: 1, overflow: TextOverflow.ellipsis),
+                'games.percentToNextLevel'.tr(
+                  namedArgs: {
+                    'percent': widget.progressPercent.toStringAsFixed(0),
+                  },
+                ),
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
             Text(
               'games.levelNextShort'.tr(

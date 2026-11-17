@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Fire streak indicator showing consecutive days of activity.
@@ -20,12 +21,12 @@ class StreakIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (compact) {
-      return _buildCompact();
+      return _buildCompact(context);
     }
-    return _buildFull();
+    return _buildFull(context);
   }
 
-  Widget _buildCompact() {
+  Widget _buildCompact(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: _hasGlow
@@ -59,7 +60,7 @@ class StreakIndicator extends StatelessWidget {
               fontWeight: FontWeight.bold,
               fontSize: 13,
               color: streakDays > 0
-                  ? Colors.orange.shade800
+                  ? context.status.warning
                   : AppColors.textGrey,
             ),
           ),
@@ -68,8 +69,8 @@ class StreakIndicator extends StatelessWidget {
     );
   }
 
-  Widget _buildFull() {
-    final color = streakDays > 0 ? Colors.orange.shade800 : AppColors.textGrey;
+  Widget _buildFull(BuildContext context) {
+    final color = streakDays > 0 ? context.status.warning : AppColors.textGrey;
     final bgColor = streakDays > 0
         ? AppColors.orange.withValues(alpha: 0.1)
         : AppColors.grey200;

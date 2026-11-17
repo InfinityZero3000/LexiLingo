@@ -30,17 +30,23 @@ class GameCard extends StatelessWidget {
 
   static const Map<GameType, String> _bgImages = {
     // Scrabble letter tiles on wooden surface — word scramble game
-    GameType.wordScramble: 'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?auto=format&fit=crop&q=80&w=400&h=300',
+    GameType.wordScramble:
+        'https://images.unsplash.com/photo-1611532736597-de2d4265fba3?auto=format&fit=crop&q=80&w=400&h=300',
     // Open notebook with pen — fill-in-the-blank writing exercise
-    GameType.fillBlank: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&q=80&w=400&h=300',
+    GameType.fillBlank:
+        'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&q=80&w=400&h=300',
     // Playing cards spread out — matching/memory card game
-    GameType.matching: 'https://images.unsplash.com/photo-1606167668584-78701c57f13d?auto=format&fit=crop&q=80&w=400&h=300',
+    GameType.matching:
+        'https://images.unsplash.com/photo-1606167668584-78701c57f13d?auto=format&fit=crop&q=80&w=400&h=300',
     // Macro bee on flower — spelling bee game
-    GameType.spellingBee: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&q=80&w=400&h=300',
+    GameType.spellingBee:
+        'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&q=80&w=400&h=300',
     // Colorful books stacked — grammar quiz / study
-    GameType.grammarQuiz: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&q=80&w=400&h=300',
+    GameType.grammarQuiz:
+        'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&q=80&w=400&h=300',
     // Letter tiles on table — hangman word-guessing game
-    GameType.hangman: 'https://images.unsplash.com/photo-1517770413964-df8ca61194a6?auto=format&fit=crop&q=80&w=400&h=300',
+    GameType.hangman:
+        'https://images.unsplash.com/photo-1517770413964-df8ca61194a6?auto=format&fit=crop&q=80&w=400&h=300',
   };
 
   @override
@@ -51,8 +57,8 @@ class GameCard extends StatelessWidget {
     final foregroundColor = AppColors.textInverted;
     final secondaryForeground = foregroundColor.withValues(alpha: 0.85);
     final playChipBg = isDark
-        ? Colors.black.withValues(alpha: 0.30)
-        : Colors.white.withValues(alpha: 0.92);
+        ? Theme.of(context).shadowColor.withValues(alpha: 0.30)
+        : AppColors.textInverted.withValues(alpha: 0.92);
     final playChipFg = isDark ? AppColors.textInverted : AppColors.textDark;
 
     return GestureDetector(
@@ -107,7 +113,9 @@ class GameCard extends StatelessWidget {
                         if (bestScore != null)
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 6, vertical: 2),
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: foregroundColor.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(8),
@@ -115,8 +123,11 @@ class GameCard extends StatelessWidget {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.star,
-                                    color: foregroundColor, size: 11),
+                                Icon(
+                                  Icons.star,
+                                  color: foregroundColor,
+                                  size: 11,
+                                ),
                                 const SizedBox(width: 2),
                                 Text(
                                   '$bestScore',
@@ -147,7 +158,9 @@ class GameCard extends StatelessWidget {
                       child: Text(
                         gameType.description,
                         style: TextStyle(
-                            color: secondaryForeground, fontSize: 11),
+                          color: secondaryForeground,
+                          fontSize: 11,
+                        ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -158,7 +171,9 @@ class GameCard extends StatelessWidget {
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 4),
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: playChipBg,
                             borderRadius: BorderRadius.circular(12),
