@@ -1050,5 +1050,9 @@ abstract class  LocaleKeys {
   static const vocabulary_failedToSaveWord = 'vocabulary.failedToSaveWord';
   static const vocabulary_noDefinitionYet = 'vocabulary.noDefinitionYet';
   static const vocabulary = 'vocabulary';
+  static const coreKit_typeToConfirm = 'coreKit.typeToConfirm';
+  static const coreKit_loadMore = 'coreKit.loadMore';
+  static const coreKit_noResults = 'coreKit.noResults';
+  static const coreKit = 'coreKit';
 
 }

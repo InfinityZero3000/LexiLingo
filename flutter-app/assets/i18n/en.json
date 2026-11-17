@@ -2349,5 +2349,10 @@
     "gateNoQuestions": "The exam for your next level is not available yet.",
     "gateMaxLevel": "You are certified at the highest level.",
     "gateError": "Could not load the exam. Please try again."
+  },
+  "coreKit": {
+    "typeToConfirm": "Type \"{text}\" to confirm",
+    "loadMore": "Load more",
+    "noResults": "No results"
   }
 }
