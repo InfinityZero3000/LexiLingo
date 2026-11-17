@@ -108,8 +108,8 @@ class _LevelHistoryTimelineState extends State<LevelHistoryTimeline> {
           label: steps.map((s) => s.level).join(' → '),
           excludeSemantics: true,
           child: Wrap(
-            spacing: 4,
-            runSpacing: 6,
+            spacing: 6,
+            runSpacing: 8,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               if (steps.length > shown.length)
@@ -127,11 +127,10 @@ class _LevelHistoryTimelineState extends State<LevelHistoryTimeline> {
           ),
         ),
         const SizedBox(height: 10),
-        Text(
-          _lastChange(history, provider.assessedLevel),
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+        _LastChange(
+          text: _lastChange(history, provider.assessedLevel),
+          icon: _lastIcon(history),
+          color: _lastColor(theme.colorScheme, history),
         ),
         const SizedBox(height: 10),
         if (ready)
@@ -158,6 +157,23 @@ class _LevelHistoryTimelineState extends State<LevelHistoryTimeline> {
       );
     }
     return steps;
+  }
+
+  static IconData _lastIcon(List<LevelHistoryEntry> history) {
+    if (history.isEmpty) return Icons.flag_rounded;
+    final last = history.last;
+    if (last.isSelfSet) return Icons.person_rounded;
+    if (last.isInitial) return Icons.flag_rounded;
+    return last.isPromotion
+        ? Icons.trending_up_rounded
+        : Icons.trending_down_rounded;
+  }
+
+  static Color _lastColor(ColorScheme scheme, List<LevelHistoryEntry> history) {
+    if (history.isEmpty) return scheme.onSurfaceVariant;
+    final last = history.last;
+    if (last.isSelfSet || last.isInitial) return scheme.onSurfaceVariant;
+    return last.isPromotion ? scheme.primary : scheme.error;
   }
 
   static String _lastChange(List<LevelHistoryEntry> history, String assessed) {
@@ -206,21 +222,53 @@ class _StepChip extends StatelessWidget {
         : scheme.onPrimary;
 
     return Container(
-      constraints: const BoxConstraints(minWidth: 44, minHeight: 30),
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      alignment: Alignment.center,
+      constraints: const BoxConstraints(minWidth: 44),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: current ? tone : tone.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: tone, width: 1.5),
+        color: current ? tone : tone.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: current ? tone : tone.withValues(alpha: 0.5)),
       ),
       child: Text(
         step.level,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+        textAlign: TextAlign.center,
+        style: Theme.of(context).textTheme.labelLarge?.copyWith(
           color: current ? onTone : tone,
-          fontWeight: FontWeight.bold,
+          fontWeight: current ? FontWeight.w800 : FontWeight.w600,
         ),
       ),
+    );
+  }
+}
+
+class _LastChange extends StatelessWidget {
+  const _LastChange({
+    required this.text,
+    required this.icon,
+    required this.color,
+  });
+
+  final String text;
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
