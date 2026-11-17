@@ -39,6 +39,7 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
   late ConfettiController _confettiController;
   Timer? _timer;
   int _timeLeft = 45;
+  int _freezeLeft = 0;
   bool _gameLoaded = false;
   String? _selectedWord; // Word column selection (pair id)
   String? _selectedMatch; // Match column selection
@@ -76,6 +77,7 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
     setState(() {
       _gameLoaded = true;
       _timeLeft = game.timerSeconds;
+      _freezeLeft = 0;
       _matchedIds = {};
       _matchState = {};
       _selectedWord = null;
@@ -89,6 +91,10 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (!mounted) {
         t.cancel();
+        return;
+      }
+      if (_freezeLeft > 0) {
+        setState(() => _freezeLeft--);
         return;
       }
       setState(() => _timeLeft--);
@@ -160,6 +166,9 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
     if (game == null) return;
     switch (itemType) {
       case ShopItemEntity.effectTimeFreeze:
+        final seconds = (effects['seconds'] as num?)?.toInt() ?? 10;
+        setState(() => _freezeLeft += seconds);
+        break;
       case ShopItemEntity.effectExtraTime:
         final seconds = (effects['seconds'] as num?)?.toInt() ?? 10;
         setState(
@@ -340,6 +349,7 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
                   child: _TimerChip(
                     timeLeft: _timeLeft,
                     total: game.timerSeconds,
+                    frozen: _freezeLeft > 0,
                   ),
                 ),
               ],
@@ -572,7 +582,12 @@ class _ColumnList extends StatelessWidget {
 class _TimerChip extends StatelessWidget {
   final int timeLeft;
   final int total;
-  const _TimerChip({required this.timeLeft, required this.total});
+  final bool frozen;
+  const _TimerChip({
+    required this.timeLeft,
+    required this.total,
+    this.frozen = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -592,12 +607,21 @@ class _TimerChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(color: color),
       ),
-      child: Text(
-        '${timeLeft}s',
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          fontWeight: FontWeight.bold,
-          color: color,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (frozen) ...[
+            Icon(Icons.ac_unit_rounded, size: 14, color: color),
+            const SizedBox(width: AppSpacing.xs),
+          ],
+          Text(
+            '${timeLeft}s',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }

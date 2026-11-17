@@ -41,6 +41,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
   Timer? _timer;
   int _questionIndex = 0;
   int _timeLeft = 15;
+  int _freezeLeft = 0;
   int _correctCount = 0;
   int? _selectedIndex;
   bool _answered = false;
@@ -83,6 +84,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
     setState(() {
       _gameLoaded = true;
       _timeLeft = seconds;
+      _freezeLeft = 0;
       _selectedIndex = null;
       _answered = false;
       _verdict = null;
@@ -93,6 +95,10 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (!mounted) {
         t.cancel();
+        return;
+      }
+      if (_freezeLeft > 0) {
+        setState(() => _freezeLeft--);
         return;
       }
       setState(() => _timeLeft--);
@@ -110,6 +116,9 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
     final q = game.questions[_questionIndex];
     switch (itemType) {
       case ShopItemEntity.effectTimeFreeze:
+        final seconds = (effects['seconds'] as num?)?.toInt() ?? 10;
+        setState(() => _freezeLeft += seconds);
+        break;
       case ShopItemEntity.effectExtraTime:
         final seconds = (effects['seconds'] as num?)?.toInt() ?? 10;
         setState(
@@ -386,8 +395,10 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(
-                              Icons.timer_outlined,
+                            Icon(
+                              _freezeLeft > 0
+                                  ? Icons.ac_unit_rounded
+                                  : Icons.timer_outlined,
                               size: 16,
                               color: AppColors.primary,
                             ),

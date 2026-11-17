@@ -8604,13 +8604,13 @@
       }
     },
     {
-      "id": "lib/features/gamification/presentation/widgets/active_boosts_bar.dart::_BoostPillState::BoxDecoration::0",
+      "id": "lib/features/gamification/presentation/widgets/active_boosts_bar.dart::_BoostPill::BoxDecoration::0",
       "path": "lib/features/gamification/presentation/widgets/active_boosts_bar.dart",
       "entryPoint": "surface",
-      "symbol": "_BoostPillState",
+      "symbol": "_BoostPill",
       "callKind": "BoxDecoration",
       "ordinal": 0,
-      "line": 98,
+      "line": 110,
       "category": "eligible",
       "group": 3,
       "status": "inventoried",

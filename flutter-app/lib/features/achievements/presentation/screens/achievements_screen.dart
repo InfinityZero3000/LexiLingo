@@ -34,6 +34,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   Future<void> _loadData() async {
     final provider = context.read<AchievementProvider>();
     await provider.loadAll();
+    if (!mounted || provider.error != null) return;
     final newlyUnlocked = await provider.checkAchievements();
     if (newlyUnlocked.isNotEmpty && mounted) {
       await AchievementUnlockOverlay.show(
@@ -74,6 +75,29 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 description: provider.error!,
                 actionLabel: 'common.retry'.tr(),
                 onAction: _loadData,
+              );
+            }
+
+            if (provider.allAchievements.isEmpty) {
+              return RefreshIndicator(
+                onRefresh: _loadData,
+                child: LayoutBuilder(
+                  builder: (context, constraints) => SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: Center(
+                        child: EmptyStateWidget(
+                          title: 'common.noData'.tr(),
+                          actionLabel: 'achievements.refresh'.tr(),
+                          onAction: _loadData,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               );
             }
 

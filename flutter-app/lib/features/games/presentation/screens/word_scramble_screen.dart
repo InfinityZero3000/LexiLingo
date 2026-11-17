@@ -42,6 +42,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
 
   int _currentWordIndex = 0;
   int _timeLeft = 60;
+  int _freezeLeft = 0;
   int _correctCount = 0;
   bool _gameLoaded = false;
   bool _showHint = false;
@@ -98,6 +99,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
       _xpPopup = null;
       _translationReveal = null;
       _timeLeft = game.timerSeconds;
+      _freezeLeft = 0;
     });
     _startTimer(game.timerSeconds);
   }
@@ -108,6 +110,9 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
     final word = game.words[_currentWordIndex];
     switch (itemType) {
       case ShopItemEntity.effectTimeFreeze:
+        final seconds = (effects['seconds'] as num?)?.toInt() ?? 10;
+        setState(() => _freezeLeft += seconds);
+        break;
       case ShopItemEntity.effectExtraTime:
         final seconds = (effects['seconds'] as num?)?.toInt() ?? 10;
         setState(
@@ -151,6 +156,10 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (!mounted) {
         t.cancel();
+        return;
+      }
+      if (_freezeLeft > 0) {
+        setState(() => _freezeLeft--);
         return;
       }
       setState(() => _timeLeft--);
@@ -303,7 +312,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
     final game = provider.wordScramble;
     final xpResult = await provider.completeGame(
       gameType: GameType.wordScramble,
-      score: _correctCount,
+      score: _correctCount * _scoreMultiplier,
       totalQuestions: game?.words.length ?? 0,
       correctAnswers: _correctCount,
       answers: [
@@ -315,7 +324,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
     final result = GameResult(
       gameType: GameType.wordScramble,
       cefrLevel: provider.selectedLevel,
-      score: _correctCount,
+      score: _correctCount * _scoreMultiplier,
       totalQuestions: game?.words.length ?? 0,
       correctAnswers: _correctCount,
       xpEarned: xpResult?.xpAwarded ?? 0,
@@ -394,6 +403,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
                         child: _TimerDisplay(
                           timeLeft: _timeLeft,
                           total: game.timerSeconds,
+                          frozen: _freezeLeft > 0,
                         ),
                       ),
                     ),
@@ -643,7 +653,12 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
 class _TimerDisplay extends StatelessWidget {
   final int timeLeft;
   final int total;
-  const _TimerDisplay({required this.timeLeft, required this.total});
+  final bool frozen;
+  const _TimerDisplay({
+    required this.timeLeft,
+    required this.total,
+    this.frozen = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -663,12 +678,21 @@ class _TimerDisplay extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(color: color),
       ),
-      child: Text(
-        '${timeLeft}s',
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          fontWeight: FontWeight.bold,
-          color: color,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (frozen) ...[
+            Icon(Icons.ac_unit_rounded, size: 14, color: color),
+            const SizedBox(width: AppSpacing.xs),
+          ],
+          Text(
+            '${timeLeft}s',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }
