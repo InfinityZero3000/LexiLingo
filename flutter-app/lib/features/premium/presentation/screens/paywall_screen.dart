@@ -148,7 +148,9 @@ class _PaywallScreenState extends State<PaywallScreen> {
           children: [
             Icon(f.$2, color: const Color(0xFFFFD700), size: 20),
             const SizedBox(width: 12),
-            Text(f.$1.tr(), style: const TextStyle(color: Colors.white, fontSize: 15)),
+            Expanded(
+              child: Text(f.$1.tr(), style: const TextStyle(color: Colors.white, fontSize: 15)),
+            ),
           ],
         ),
       )).toList(),

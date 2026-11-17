@@ -562,7 +562,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                                 color: Color(int.parse('FF${colorHex.replaceAll('#', '')}', radix: 16)),
                                 shape: BoxShape.circle,
                                 border: selectedColor == colorHex
-                                    ? Border.all(color: AppColors.slate900, width: 3)
+                                    ? Border.all(color: Theme.of(context).colorScheme.onSurface, width: 3)
                                     : null,
                               ),
                               child: selectedColor == colorHex

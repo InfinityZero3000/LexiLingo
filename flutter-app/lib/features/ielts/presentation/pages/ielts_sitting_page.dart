@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:path_provider/path_provider.dart';
@@ -329,7 +330,7 @@ class _AudioPlayerBar extends StatefulWidget {
 class _AudioPlayerBarState extends State<_AudioPlayerBar> {
   final AudioPlayer _player = AudioPlayer();
   bool _ready = false;
-  String? _error;
+  UiText? _error;
 
   @override
   void initState() {
@@ -345,7 +346,7 @@ class _AudioPlayerBarState extends State<_AudioPlayerBar> {
       await _player.setUrl(url);
       if (mounted) setState(() => _ready = true);
     } catch (e) {
-      if (mounted) setState(() => _error = 'ielts.audioUnavailable'.tr());
+      if (mounted) setState(() => _error = const UiText.key('ielts.audioUnavailable'));
     }
   }
 
@@ -361,7 +362,7 @@ class _AudioPlayerBarState extends State<_AudioPlayerBar> {
     if (_error != null) {
       return Card(
         color: theme.colorScheme.errorContainer,
-        child: Padding(padding: const EdgeInsets.all(12), child: Text(_error!)),
+        child: Padding(padding: const EdgeInsets.all(12), child: Text(_error!.resolve())),
       );
     }
 
@@ -682,7 +683,7 @@ class _SpeakingPartState extends State<_SpeakingPart> {
   late final TextEditingController _transcriptController;
   bool _recording = false;
   bool _transcribing = false;
-  String? _error;
+  UiText? _error;
 
   String get _key =>
       widget.part.partKey ?? 'speaking_part_${widget.part.order}';
@@ -727,11 +728,11 @@ class _SpeakingPartState extends State<_SpeakingPart> {
           _transcriptController.text = transcript.trim();
           provider.setAnswer(_key, transcript.trim());
         } else {
-          setState(() => _error = 'ielts.nothingTranscribed'.tr());
+          setState(() => _error = const UiText.key('ielts.nothingTranscribed'));
         }
       } catch (e) {
         if (mounted) {
-          setState(() => _error = 'ielts.transcribeFailed'.tr());
+          setState(() => _error = const UiText.key('ielts.transcribeFailed'));
         }
       } finally {
         if (mounted) setState(() => _transcribing = false);
@@ -741,7 +742,7 @@ class _SpeakingPartState extends State<_SpeakingPart> {
 
     if (!await _recorder.hasPermission()) {
       if (mounted) {
-        setState(() => _error = 'ielts.micPermissionRequired'.tr());
+        setState(() => _error = const UiText.key('ielts.micPermissionRequired'));
       }
       return;
     }
@@ -814,7 +815,7 @@ class _SpeakingPartState extends State<_SpeakingPart> {
         ),
         if (_error != null) ...[
           const SizedBox(height: 8),
-          Text(_error!, style: TextStyle(color: theme.colorScheme.error)),
+          Text(_error!.resolve(), style: TextStyle(color: theme.colorScheme.error)),
         ],
         const SizedBox(height: 12),
         TextFormField(
