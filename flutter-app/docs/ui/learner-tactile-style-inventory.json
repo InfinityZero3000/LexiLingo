@@ -31225,6 +31225,68 @@
       }
     },
     {
+      "id": "lib/features/home/presentation/widgets/home_page/discover_rail.dart::_DiscoverRailState::Card::2",
+      "path": "lib/features/home/presentation/widgets/home_page/discover_rail.dart",
+      "entryPoint": "surface",
+      "symbol": "_DiscoverRailState",
+      "callKind": "Card",
+      "ordinal": 2,
+      "line": 69,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/discover_rail.dart::_DiscoverRailState::Navigator.pushNamed::0",
+      "path": "lib/features/home/presentation/widgets/home_page/discover_rail.dart",
+      "entryPoint": "imperativeRoute",
+      "symbol": "_DiscoverRailState",
+      "callKind": "Navigator.pushNamed",
+      "ordinal": 0,
+      "line": 120,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried"
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/discover_rail.dart::_DiscoverRailState::Navigator.pushNamed::1",
+      "path": "lib/features/home/presentation/widgets/home_page/discover_rail.dart",
+      "entryPoint": "imperativeRoute",
+      "symbol": "_DiscoverRailState",
+      "callKind": "Navigator.pushNamed",
+      "ordinal": 1,
+      "line": 120,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried"
+    },
+    {
+      "id": "lib/features/home/presentation/widgets/home_page/discover_rail.dart::_DiscoverRailState::Navigator.pushNamed::2",
+      "path": "lib/features/home/presentation/widgets/home_page/discover_rail.dart",
+      "entryPoint": "imperativeRoute",
+      "symbol": "_DiscoverRailState",
+      "callKind": "Navigator.pushNamed",
+      "ordinal": 2,
+      "line": 120,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried"
+    },
+    {
       "id": "lib/features/home/presentation/widgets/home_page/featured_courses_section.dart::FeaturedCourseCard::BoxDecoration::0",
       "path": "lib/features/home/presentation/widgets/home_page/featured_courses_section.dart",
       "entryPoint": "surface",
