@@ -9,6 +9,7 @@ import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/review_session_entity.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/streak_milestone_overlay.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Session Complete Screen (Presentation Layer)
 /// Shows review session results with celebration animation
@@ -92,11 +93,11 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                 emissionFrequency: 0.05,
                 numberOfParticles: 20,
                 gravity: 0.3,
-                colors: const [
-                  AppColors.primary,
-                  AppColors.accentYellow,
-                  AppColors.greenSuccess,
-                  AppColors.errorBright,
+                colors: [
+                  Theme.of(context).colorScheme.primary,
+                  context.status.warning,
+                  context.status.success,
+                  Theme.of(context).colorScheme.error,
                   AppColors.purple,
                 ],
               ),
@@ -105,7 +106,7 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
             // Content
             SafeArea(
               child: Padding(
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.all(AppSpacing.xl),
                 child: Column(
                   children: [
                     const SizedBox(height: 40),
@@ -115,12 +116,12 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                       width: 120,
                       height: 120,
                       decoration: BoxDecoration(
-                        color: AppColors.greenSuccess.withValues(alpha: 0.2),
+                        color: context.status.success.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                       ),
                       child: Center(
                         child: AnimatedCheckmark(
-                          color: AppColors.greenSuccess,
+                          color: context.status.success,
                           size: 70,
                         ),
                       ),
@@ -131,10 +132,8 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                     // Title
                     Text(
                       'flashcard.sessionCompleteTitle'.tr(),
-                      style: const TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.headlineLarge!
+                          .copyWith(fontWeight: FontWeight.bold),
                       textAlign: TextAlign.center,
                     ),
 
@@ -162,7 +161,7 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                               icon: Icons.assignment_turned_in,
                               label: 'flashcard.wordsReviewed'.tr(),
                               countTo: session.totalCards,
-                              color: AppColors.primary,
+                              color: Theme.of(context).colorScheme.primary,
                             ),
                             const SizedBox(height: 16),
                             _StatCard(
@@ -174,7 +173,7 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                                   'percent': accuracy.toStringAsFixed(1),
                                 },
                               ),
-                              color: AppColors.greenSuccess,
+                              color: context.status.success,
                             ),
                             const SizedBox(height: 16),
                             _StatCard(
@@ -182,7 +181,7 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                               label: 'flashcard.xpEarned'.tr(),
                               countTo: session.totalXpEarned,
                               countPrefix: '+',
-                              color: AppColors.accentYellow,
+                              color: context.status.warning,
                             ),
                             const SizedBox(height: 16),
                             _StatCard(
@@ -209,9 +208,13 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                               Navigator.of(context).pop();
                             },
                             style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: AppSpacing.lg,
+                              ),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.md,
+                                ),
                               ),
                             ),
                             child: Text('flashcard.backToLibrary'.tr()),
@@ -225,9 +228,13 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                               // Navigate to review again
                             },
                             style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: AppSpacing.lg,
+                              ),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.md,
+                                ),
                               ),
                             ),
                             child: Text('flashcard.reviewMore'.tr()),
@@ -294,7 +301,7 @@ class _StatCard extends StatelessWidget {
         color: Theme.of(context).brightness == Brightness.dark
             ? AppColors.surfaceDarkMuted
             : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -310,7 +317,7 @@ class _StatCard extends StatelessWidget {
             height: 56,
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Icon(icon, color: color, size: 28),
           ),
@@ -321,8 +328,7 @@ class _StatCard extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: TextStyle(
-                    fontSize: 14,
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
@@ -334,18 +340,14 @@ class _StatCard extends StatelessWidget {
                     curve: Curves.easeOutCubic,
                     builder: (_, count, __) => Text(
                       '$countPrefix$count',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: color,
-                      ),
+                      style: Theme.of(context).textTheme.headlineSmall!
+                          .copyWith(fontWeight: FontWeight.bold, color: color),
                     ),
                   )
                 else
                   Text(
                     value!,
-                    style: TextStyle(
-                      fontSize: 24,
+                    style: Theme.of(context).textTheme.headlineSmall!.copyWith(
                       fontWeight: FontWeight.bold,
                       color: color,
                     ),
@@ -354,8 +356,7 @@ class _StatCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     subtitle!,
-                    style: TextStyle(
-                      fontSize: 12,
+                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
                       color: Theme.of(
                         context,
                       ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),

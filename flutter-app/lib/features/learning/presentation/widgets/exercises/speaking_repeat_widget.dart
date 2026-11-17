@@ -4,6 +4,7 @@ import 'package:lexilingo_app/features/learning/domain/entities/lesson_entity.da
 import 'package:lexilingo_app/features/learning/presentation/widgets/lesson_speaking_recorder.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_palette.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_chrome.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 // ═══════════════════════════════════════════════════════════════
 // 17. Speaking Repeat
@@ -41,8 +42,7 @@ class _SpeakingRepeatWidgetState extends State<SpeakingRepeatWidget> {
       children: [
         Text(
           'lesson.exercise.speakingTitle'.tr(),
-          style: TextStyle(
-            fontSize: 12,
+          style: Theme.of(context).textTheme.bodySmall!.copyWith(
             fontWeight: FontWeight.w700,
             color: colors.primary,
             letterSpacing: 1.5,
@@ -52,8 +52,7 @@ class _SpeakingRepeatWidgetState extends State<SpeakingRepeatWidget> {
         const SizedBox(height: 8),
         Text(
           'lesson.exercise.speakingInstruction'.tr(),
-          style: TextStyle(
-            fontSize: 24,
+          style: Theme.of(context).textTheme.headlineSmall!.copyWith(
             fontWeight: FontWeight.w800,
             color: colors.textPrimary,
           ),
@@ -65,7 +64,7 @@ class _SpeakingRepeatWidgetState extends State<SpeakingRepeatWidget> {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: colors.card,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(color: colors.border),
           ),
           child: Column(
@@ -90,8 +89,7 @@ class _SpeakingRepeatWidgetState extends State<SpeakingRepeatWidget> {
                 const SizedBox(height: 8),
                 Text(
                   widget.exercise.explanation!,
-                  style: TextStyle(
-                    fontSize: 13,
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                     color: colors.textSecondary,
                     fontStyle: FontStyle.italic,
                     height: 1.4,

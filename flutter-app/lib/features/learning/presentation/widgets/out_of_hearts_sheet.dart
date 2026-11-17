@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 enum OutOfHeartsChoice { refilled, restart, leave }
 
@@ -73,7 +74,12 @@ class _OutOfHeartsSheetState extends State<OutOfHeartsSheet> {
 
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.xl,
+          AppSpacing.sm,
+          AppSpacing.xl,
+          AppSpacing.xl,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -119,7 +125,7 @@ class _OutOfHeartsSheetState extends State<OutOfHeartsSheet> {
               ),
               if (!canAfford)
                 Padding(
-                  padding: const EdgeInsets.only(top: 8),
+                  padding: const EdgeInsets.only(top: AppSpacing.sm),
                   child: Text(
                     'lesson.refillNotEnoughGems'.tr(
                       namedArgs: {'price': '$price', 'gems': '${widget.gems}'},
@@ -132,7 +138,7 @@ class _OutOfHeartsSheetState extends State<OutOfHeartsSheet> {
                 ),
               if (_failed)
                 Padding(
-                  padding: const EdgeInsets.only(top: 8),
+                  padding: const EdgeInsets.only(top: AppSpacing.sm),
                   child: Text(
                     'lesson.refillFailed'.tr(),
                     key: const Key('refill_error'),

@@ -17,9 +17,7 @@ class LearningRepositoryImpl implements LearningRepository {
     : _remoteDataSource = remoteDataSource;
 
   @override
-  Future<Either<Failure, LessonAttempt>> startLesson(
-    String lessonId,
-  ) async {
+  Future<Either<Failure, LessonAttempt>> startLesson(String lessonId) async {
     try {
       final response = await _remoteDataSource.startLesson(lessonId);
       return Right(response.data);

@@ -2,6 +2,7 @@ import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// The current flashcard on top of a fanned pile of the ones still to come.
 ///
@@ -54,7 +55,7 @@ class ReviewDeck extends StatelessWidget {
         color: layerColor(depth),
         elevation: 1,
         shadowColor: Colors.black12,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         child: SizedBox(width: double.infinity, height: cardHeight),
       ),
     );
@@ -148,7 +149,7 @@ class _FaceReveal extends StatelessWidget {
                       opacity: value,
                       child: Material(
                         color: cover,
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(AppRadius.xl),
                       ),
                     ),
             ),

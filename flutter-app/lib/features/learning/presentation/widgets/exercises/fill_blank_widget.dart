@@ -3,6 +3,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/features/learning/domain/entities/lesson_entity.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_palette.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_chrome.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 String formatFillBlankPrompt(String question, String correctAnswer) {
   if (!question.contains('{blank}')) return question;
@@ -54,7 +55,10 @@ class _FillBlankWidgetState extends State<FillBlankWidget> {
         })
         .join('   ');
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: 2,
+      ),
       child: Text(
         dashes,
         style: TextStyle(
@@ -99,11 +103,11 @@ class _FillBlankWidgetState extends State<FillBlankWidget> {
         ),
         if (selected != null)
           Container(
-            margin: const EdgeInsets.symmetric(horizontal: 4),
+            margin: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
             decoration: BoxDecoration(
               color: colors.primary,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: Text(
               selected,
@@ -149,14 +153,13 @@ class _FillBlankWidgetState extends State<FillBlankWidget> {
     final hasOptions = options != null && options.isNotEmpty;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+      padding: const EdgeInsets.fromLTRB(20, AppSpacing.xl, 20, AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             'lesson.exercise.fillBlankLabel'.tr(),
-            style: TextStyle(
-              fontSize: 13,
+            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
               fontWeight: FontWeight.w700,
               color: colors.primary,
               letterSpacing: 1.2,
@@ -165,7 +168,9 @@ class _FillBlankWidgetState extends State<FillBlankWidget> {
           const SizedBox(height: 4),
           Text(
             'lesson.exercise.fillBlankInstruction'.tr(),
-            style: TextStyle(fontSize: 13, color: colors.textSecondary),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium!.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: 20),
           // Sentence card
@@ -173,7 +178,7 @@ class _FillBlankWidgetState extends State<FillBlankWidget> {
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: colors.card,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(color: colors.border),
             ),
             child: _buildSentence(widget.userAnswer, hasOptions: hasOptions),
@@ -185,7 +190,7 @@ class _FillBlankWidgetState extends State<FillBlankWidget> {
               final sel = widget.userAnswer == opt;
               final corr = widget.exercise.correctAnswer == opt;
               return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.only(bottom: AppSpacing.md),
                 child: ExerciseOptionCard(
                   text: opt,
                   label: '${i + 1}',
@@ -205,15 +210,15 @@ class _FillBlankWidgetState extends State<FillBlankWidget> {
                 filled: true,
                 fillColor: colors.card,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   borderSide: BorderSide(color: colors.border),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   borderSide: BorderSide(color: colors.border, width: 1.5),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   borderSide: BorderSide(color: colors.primary, width: 2),
                 ),
               ),
@@ -233,13 +238,15 @@ class _FillBlankWidgetState extends State<FillBlankWidget> {
                   backgroundColor: colors.primary,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   padding: const EdgeInsets.symmetric(vertical: 15),
                 ),
                 child: Text(
                   'common.confirm'.tr(),
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
           ],

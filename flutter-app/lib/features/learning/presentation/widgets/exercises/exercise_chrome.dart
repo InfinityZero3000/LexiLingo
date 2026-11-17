@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_palette.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Small pill label (e.g. "MULTIPLE CHOICE")
 class ExerciseBadge extends StatelessWidget {
@@ -15,10 +16,13 @@ class ExerciseBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = ExercisePalette.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: 5,
+      ),
       decoration: BoxDecoration(
         color: colors.surface,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         border: Border.all(color: colors.border),
       ),
       child: Row(
@@ -30,8 +34,7 @@ class ExerciseBadge extends StatelessWidget {
           ],
           Text(
             label,
-            style: TextStyle(
-              fontSize: 11,
+            style: Theme.of(context).textTheme.labelSmall!.copyWith(
               fontWeight: FontWeight.w700,
               color: colors.primary,
               letterSpacing: 1.1,
@@ -101,13 +104,12 @@ class ExerciseOptionCard extends StatelessWidget {
                 color: isSelected ? fg.withValues(alpha: 0.5) : colors.border,
                 width: 1.5,
               ),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             alignment: Alignment.center,
             child: Text(
               label!,
-              style: TextStyle(
-                fontSize: 12,
+              style: Theme.of(context).textTheme.bodySmall!.copyWith(
                 fontWeight: FontWeight.w700,
                 color: isSelected ? fg : colors.textSecondary,
               ),
@@ -142,8 +144,7 @@ class ExerciseOptionCard extends StatelessWidget {
             Expanded(
               child: Text(
                 text,
-                style: TextStyle(
-                  fontSize: 16,
+                style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                   fontWeight: FontWeight.w600,
                   color: fg,
                 ),
@@ -165,7 +166,7 @@ class ExerciseOptionCard extends StatelessWidget {
             ],
             if (isAnswered && isSelected)
               Padding(
-                padding: const EdgeInsets.only(left: 8),
+                padding: const EdgeInsets.only(left: AppSpacing.sm),
                 child: Icon(
                   isCorrect
                       ? Icons.check_circle_outline
@@ -207,12 +208,12 @@ class ExerciseExplanationCard extends StatelessWidget {
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: isCorrect
             ? kCorrect.withValues(alpha: 0.08)
             : kError.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
           color: isCorrect
               ? kCorrect.withValues(alpha: 0.4)
@@ -235,8 +236,7 @@ class ExerciseExplanationCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     explanation!,
-                    style: TextStyle(
-                      fontSize: 14,
+                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                       color: isCorrect ? kCorrect : kError,
                       fontWeight: FontWeight.w500,
                       height: 1.5,
@@ -259,11 +259,11 @@ class ExerciseExplanationCard extends StatelessWidget {
                           children: [
                             Text(
                               'lesson.exercise.correctAnswerLabel'.tr(),
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: kCorrect,
-                                fontWeight: FontWeight.w700,
-                              ),
+                              style: Theme.of(context).textTheme.bodyMedium!
+                                  .copyWith(
+                                    color: kCorrect,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                             ),
                             const SizedBox(height: 8),
                             PairAnswerChips(
@@ -273,12 +273,12 @@ class ExerciseExplanationCard extends StatelessWidget {
                         )
                       : Text(
                           '${'lesson.exercise.correctAnswerLabel'.tr()}: $correctAnswer',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: kCorrect,
-                            fontWeight: FontWeight.w600,
-                            height: 1.5,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium!
+                              .copyWith(
+                                color: kCorrect,
+                                fontWeight: FontWeight.w600,
+                                height: 1.5,
+                              ),
                         ),
                 ),
               ],
@@ -362,7 +362,7 @@ class PairAnswerChips extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: kCorrect.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
                 border: Border.all(color: kCorrect.withValues(alpha: 0.35)),
               ),
               child: Row(
@@ -370,8 +370,7 @@ class PairAnswerChips extends StatelessWidget {
                 children: [
                   Text(
                     e.key,
-                    style: TextStyle(
-                      fontSize: 13,
+                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                       fontWeight: FontWeight.w700,
                       color: kCorrect,
                     ),
@@ -386,8 +385,7 @@ class PairAnswerChips extends StatelessWidget {
                   ),
                   Text(
                     e.value,
-                    style: TextStyle(
-                      fontSize: 13,
+                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                       fontWeight: FontWeight.w700,
                       color: kCorrect,
                     ),
@@ -408,7 +406,12 @@ class ExerciseScrollBody extends StatelessWidget {
   final List<Widget> children;
   const ExerciseScrollBody({super.key, required this.children});
 
-  static const _padding = EdgeInsets.fromLTRB(20, 24, 20, 16);
+  static const _padding = EdgeInsets.fromLTRB(
+    20,
+    AppSpacing.xl,
+    20,
+    AppSpacing.lg,
+  );
 
   @override
   Widget build(BuildContext context) {

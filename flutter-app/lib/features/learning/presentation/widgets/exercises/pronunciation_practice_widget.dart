@@ -4,6 +4,7 @@ import 'package:lexilingo_app/features/learning/domain/entities/lesson_entity.da
 import 'package:lexilingo_app/features/learning/presentation/widgets/lesson_speaking_recorder.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_palette.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_chrome.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 // ═══════════════════════════════════════════════════════════════
 // 14. Pronunciation Practice
@@ -43,8 +44,7 @@ class _PronunciationPracticeWidgetState
       children: [
         Text(
           'lesson.exercise.pronunciationTitle'.tr(),
-          style: TextStyle(
-            fontSize: 24,
+          style: Theme.of(context).textTheme.headlineSmall!.copyWith(
             fontWeight: FontWeight.w800,
             color: colors.textPrimary,
           ),
@@ -53,7 +53,9 @@ class _PronunciationPracticeWidgetState
         const SizedBox(height: 6),
         Text(
           'lesson.exercise.pronunciationInstruction'.tr(),
-          style: TextStyle(fontSize: 13, color: colors.textSecondary),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium!.copyWith(color: colors.textSecondary),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 24),
@@ -62,7 +64,7 @@ class _PronunciationPracticeWidgetState
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             color: colors.card,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(color: colors.border),
           ),
           child: Row(
@@ -79,8 +81,7 @@ class _PronunciationPracticeWidgetState
                   children: [
                     Text(
                       '"${widget.exercise.question}"',
-                      style: TextStyle(
-                        fontSize: 16,
+                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                         fontWeight: FontWeight.w600,
                         color: colors.textPrimary,
                         height: 1.4,
@@ -90,8 +91,7 @@ class _PronunciationPracticeWidgetState
                       const SizedBox(height: 4),
                       Text(
                         widget.exercise.explanation!,
-                        style: TextStyle(
-                          fontSize: 12,
+                        style: Theme.of(context).textTheme.bodySmall!.copyWith(
                           color: colors.textSecondary,
                           fontStyle: FontStyle.italic,
                         ),

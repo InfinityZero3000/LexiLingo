@@ -106,7 +106,9 @@ class UnitRoadmapModel extends UnitRoadmap {
       'completion_percentage': completionPercentage,
       'is_current': isCurrent,
       // invariant: lessons is always List<LessonProgressModel> when built via fromJson
-      'lessons': lessons.map((e) => (e as LessonProgressModel).toJson()).toList(),
+      'lessons': lessons
+          .map((e) => (e as LessonProgressModel).toJson())
+          .toList(),
       'icon_url': iconUrl,
       'background_color': backgroundColor,
     };
