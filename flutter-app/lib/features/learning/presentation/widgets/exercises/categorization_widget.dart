@@ -117,7 +117,9 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
           const SizedBox(height: 6),
           Text(
             'lesson.exercise.categorizationInstruction'.tr(),
-            style: TextStyle(fontSize: 13, color: colors.textSecondary),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium!.copyWith(color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 20),
@@ -194,14 +196,14 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
                                   cat.toUpperCase(),
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
-                                    color: ci == 0
-                                        ? colors.primary
-                                        : const Color(0xFF00A86B),
-                                    letterSpacing: 1.1,
-                                  ),
+                                  style: Theme.of(context).textTheme.bodySmall!
+                                      .copyWith(
+                                        fontWeight: FontWeight.w700,
+                                        color: ci == 0
+                                            ? colors.primary
+                                            : const Color(0xFF00A86B),
+                                        letterSpacing: 1.1,
+                                      ),
                                 ),
                               ),
                             ],
@@ -253,11 +255,13 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
                                         ],
                                         Text(
                                           w,
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w600,
-                                            color: graded ?? colors.primary,
-                                          ),
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium!
+                                              .copyWith(
+                                                fontWeight: FontWeight.w600,
+                                                color: graded ?? colors.primary,
+                                              ),
                                         ),
                                       ],
                                     ),
@@ -320,11 +324,11 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
                         const SizedBox(width: 4),
                         Text(
                           w,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: sel ? Colors.white : colors.textPrimary,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium!
+                              .copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: sel ? Colors.white : colors.textPrimary,
+                              ),
                         ),
                       ],
                     ),

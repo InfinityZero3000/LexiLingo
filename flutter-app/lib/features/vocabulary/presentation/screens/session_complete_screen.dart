@@ -9,6 +9,7 @@ import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/review_session_entity.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/streak_milestone_overlay.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Session Complete Screen (Presentation Layer)
 /// Shows review session results with celebration animation
@@ -92,11 +93,11 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                 emissionFrequency: 0.05,
                 numberOfParticles: 20,
                 gravity: 0.3,
-                colors: const [
-                  AppColors.primary,
-                  AppColors.accentYellow,
-                  AppColors.greenSuccess,
-                  AppColors.errorBright,
+                colors: [
+                  Theme.of(context).colorScheme.primary,
+                  context.status.warning,
+                  context.status.success,
+                  Theme.of(context).colorScheme.error,
                   AppColors.purple,
                 ],
               ),
@@ -115,12 +116,12 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                       width: 120,
                       height: 120,
                       decoration: BoxDecoration(
-                        color: AppColors.greenSuccess.withValues(alpha: 0.2),
+                        color: context.status.success.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                       ),
                       child: Center(
                         child: AnimatedCheckmark(
-                          color: AppColors.greenSuccess,
+                          color: context.status.success,
                           size: 70,
                         ),
                       ),
@@ -162,7 +163,7 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                               icon: Icons.assignment_turned_in,
                               label: 'flashcard.wordsReviewed'.tr(),
                               countTo: session.totalCards,
-                              color: AppColors.primary,
+                              color: Theme.of(context).colorScheme.primary,
                             ),
                             const SizedBox(height: 16),
                             _StatCard(
@@ -174,7 +175,7 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                                   'percent': accuracy.toStringAsFixed(1),
                                 },
                               ),
-                              color: AppColors.greenSuccess,
+                              color: context.status.success,
                             ),
                             const SizedBox(height: 16),
                             _StatCard(
@@ -182,7 +183,7 @@ class _SessionCompleteScreenState extends State<SessionCompleteScreen> {
                               label: 'flashcard.xpEarned'.tr(),
                               countTo: session.totalXpEarned,
                               countPrefix: '+',
-                              color: AppColors.accentYellow,
+                              color: context.status.warning,
                             ),
                             const SizedBox(height: 16),
                             _StatCard(
@@ -321,8 +322,7 @@ class _StatCard extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: TextStyle(
-                    fontSize: 14,
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
@@ -354,8 +354,7 @@ class _StatCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     subtitle!,
-                    style: TextStyle(
-                      fontSize: 12,
+                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
                       color: Theme.of(
                         context,
                       ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),

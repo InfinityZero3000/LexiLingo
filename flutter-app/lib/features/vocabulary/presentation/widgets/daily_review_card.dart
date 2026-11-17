@@ -104,7 +104,7 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                   _startQuiz();
                 },
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               _ReviewModeTile(
                 icon: Icons.style_rounded,
                 title: 'vocabQuiz.modeFlashcardTitle'.tr(),
@@ -131,14 +131,17 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('home.allCaughtUpMessage'.tr()),
-        duration: const Duration(seconds: 2),
+        duration: Duration(seconds: 2),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    const gradient = [AppColors.deepOrange, AppColors.errorDark];
+    final gradient = [
+      AppColors.deepOrange,
+      Theme.of(context).colorScheme.error,
+    ];
     const onColor = Colors.white;
     final hasDue = !_isLoading && _dueCount > 0;
     return Material(
@@ -171,11 +174,11 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                           'home.dailyReview'.tr(),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: onColor,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium!
+                              .copyWith(
+                                color: onColor,
+                                fontWeight: FontWeight.w800,
+                              ),
                         ),
                       ),
                       if (!_isLoading) ...[
@@ -190,8 +193,8 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                             ),
                             child: Text(
                               _dueCount > 99 ? '99+' : '$_dueCount',
-                              style: const TextStyle(
-                                color: AppColors.errorDark,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.error,
                                 fontSize: 10,
                                 fontWeight: FontWeight.w700,
                                 height: 1.2,
@@ -218,9 +221,8 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                           : 'home.allCaughtUpTapToCheck'.tr(),
                       maxLines: 3,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.labelSmall!.copyWith(
                         color: onColor.withValues(alpha: 0.9),
-                        fontSize: 11,
                         height: 1.4,
                       ),
                     ),
@@ -240,9 +242,8 @@ class _DailyReviewCardState extends State<DailyReviewCard> {
                     'home.startReview'.tr(),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: AppColors.errorDark,
-                      fontSize: 11,
+                    style: Theme.of(context).textTheme.labelSmall!.copyWith(
+                      color: Theme.of(context).colorScheme.error,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -304,16 +305,14 @@ class _ReviewModeTile extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
-                        fontSize: 16,
+                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: TextStyle(
-                        fontSize: 13,
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),

@@ -53,7 +53,9 @@ class _PronunciationPracticeWidgetState
         const SizedBox(height: 6),
         Text(
           'lesson.exercise.pronunciationInstruction'.tr(),
-          style: TextStyle(fontSize: 13, color: colors.textSecondary),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium!.copyWith(color: colors.textSecondary),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 24),
@@ -79,8 +81,7 @@ class _PronunciationPracticeWidgetState
                   children: [
                     Text(
                       '"${widget.exercise.question}"',
-                      style: TextStyle(
-                        fontSize: 16,
+                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                         fontWeight: FontWeight.w600,
                         color: colors.textPrimary,
                         height: 1.4,
@@ -90,8 +91,7 @@ class _PronunciationPracticeWidgetState
                       const SizedBox(height: 4),
                       Text(
                         widget.exercise.explanation!,
-                        style: TextStyle(
-                          fontSize: 12,
+                        style: Theme.of(context).textTheme.bodySmall!.copyWith(
                           color: colors.textSecondary,
                           fontStyle: FontStyle.italic,
                         ),

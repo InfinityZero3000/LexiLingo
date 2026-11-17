@@ -58,7 +58,9 @@ class _DictationWidgetState extends State<DictationWidget> {
           const SizedBox(height: 4),
           Text(
             'lesson.exercise.dictationInstruction'.tr(),
-            style: TextStyle(fontSize: 14, color: colors.textSecondary),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium!.copyWith(color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 28),
@@ -111,8 +113,7 @@ class _DictationWidgetState extends State<DictationWidget> {
                   'lesson.exercise.dictationWordCount'.tr(
                     namedArgs: {'count': '$_wordCount'},
                   ),
-                  style: TextStyle(
-                    fontSize: 13,
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                     fontWeight: FontWeight.w600,
                     color: colors.textSecondary,
                   ),
@@ -138,7 +139,9 @@ class _DictationWidgetState extends State<DictationWidget> {
               ),
               child: Text(
                 'common.confirm'.tr(),
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.w600),
               ),
             ),
           ],

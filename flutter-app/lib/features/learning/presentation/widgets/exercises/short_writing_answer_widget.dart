@@ -67,8 +67,7 @@ class _ShortWritingAnswerWidgetState extends State<ShortWritingAnswerWidget> {
               const SizedBox(width: 10),
               Text(
                 'lesson.exercise.shortWritingTitle'.tr(),
-                style: TextStyle(
-                  fontSize: 12,
+                style: Theme.of(context).textTheme.bodySmall!.copyWith(
                   fontWeight: FontWeight.w700,
                   color: colors.primary,
                   letterSpacing: 1.2,
@@ -113,7 +112,9 @@ class _ShortWritingAnswerWidgetState extends State<ShortWritingAnswerWidget> {
             maxLines: 4,
             decoration: InputDecoration(
               hintText: 'lesson.exercise.shortWritingHint'.tr(),
-              hintStyle: TextStyle(color: colors.textMuted, fontSize: 14),
+              hintStyle: Theme.of(
+                context,
+              ).textTheme.bodyMedium!.copyWith(color: colors.textMuted),
               filled: true,
               fillColor: colors.card,
               border: OutlineInputBorder(
@@ -148,7 +149,9 @@ class _ShortWritingAnswerWidgetState extends State<ShortWritingAnswerWidget> {
               ),
               child: Text(
                 'lesson.checkAnswer'.tr(),
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.w600),
               ),
             ),
           if (widget.isAnswered) ...[

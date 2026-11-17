@@ -147,7 +147,7 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
                       Text(
                         provider.errorMessage!,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 16),
+                        style: Theme.of(context).textTheme.bodyLarge!,
                       ),
                       const SizedBox(height: 24),
                       ElevatedButton(
@@ -306,7 +306,7 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
             },
             child: Text(
               'lesson.exit'.tr(),
-              style: TextStyle(color: AppColors.errorBright),
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           ),
         ],

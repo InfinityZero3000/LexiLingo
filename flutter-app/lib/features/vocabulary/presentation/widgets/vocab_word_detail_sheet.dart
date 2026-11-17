@@ -2,7 +2,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
-import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/vocab_word.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/vocab_provider.dart';
@@ -180,7 +179,7 @@ class _VocabWordDetailSheetState extends State<_VocabWordDetailSheet>
                                   ? 'vocabulary.showFront'.tr()
                                   : 'vocabulary.flipCard'.tr(),
                               onTap: _flip,
-                              color: AppColors.primary,
+                              color: Theme.of(context).colorScheme.primary,
                             ),
                           ),
                           if (widget.word.audioUrl != null &&
@@ -202,7 +201,7 @@ class _VocabWordDetailSheetState extends State<_VocabWordDetailSheet>
                           icon: Icons.bookmark_add_outlined,
                           label: 'vocabulary.addToDeck'.tr(),
                           onTap: () => _showAddToDeckOptions(context),
-                          color: AppColors.primary,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ],
                       const SizedBox(height: 32),
@@ -282,9 +281,9 @@ class _VocabWordDetailSheetState extends State<_VocabWordDetailSheet>
                   else
                     ListTile(
                       contentPadding: EdgeInsets.zero,
-                      leading: const Icon(
+                      leading: Icon(
                         Icons.add_circle,
-                        color: AppColors.primary,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                       title: Text('vocabulary.newCollection'.tr()),
                       onTap: () => setSheetState(() => composing = true),
@@ -314,16 +313,16 @@ class _VocabWordDetailSheetState extends State<_VocabWordDetailSheet>
                               ),
                             );
                           } catch (_) {
-                            deckColor = AppColors.primary;
+                            deckColor = Theme.of(context).colorScheme.primary;
                           }
 
                           return ListTile(
                             leading: Icon(Icons.bookmark, color: deckColor),
                             title: Text(deck.name),
                             trailing: IconButton(
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.add_circle_outline,
-                                color: AppColors.primary,
+                                color: Theme.of(context).colorScheme.primary,
                               ),
                               onPressed: () async {
                                 final success = await vocabProvider
@@ -383,7 +382,7 @@ class _CardFront extends StatelessWidget {
         border: Border.all(
           color: isDark
               ? Colors.white.withValues(alpha: 0.08)
-              : AppColors.primary.withValues(alpha: 0.12),
+              : Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
         ),
         boxShadow: [
           BoxShadow(
@@ -402,14 +401,15 @@ class _CardFront extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.12),
+                color: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
                 word.partOfSpeech!,
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 12,
+                style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -468,9 +468,8 @@ class _CardFront extends StatelessWidget {
               Flexible(
                 child: Text(
                   'vocabulary.tapToRevealDefinition'.tr(),
-                  style: TextStyle(
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                     color: cs.onSurfaceVariant.withValues(alpha: 0.6),
-                    fontSize: 13,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -506,7 +505,9 @@ class _CardBack extends StatelessWidget {
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.18)),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.18),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
@@ -527,14 +528,14 @@ class _CardBack extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
               const Spacer(),
               SpeakIconButton(
                 text: word.word,
                 size: 22,
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ],
           ),
@@ -551,10 +552,14 @@ class _CardBack extends StatelessWidget {
                     vertical: 12,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.06),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: AppColors.primary.withValues(alpha: 0.15),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.15),
                     ),
                   ),
                   child: Row(
@@ -562,18 +567,20 @@ class _CardBack extends StatelessWidget {
                       Icon(
                         Icons.info_outline,
                         size: 16,
-                        color: AppColors.primary.withValues(alpha: 0.6),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: 0.6),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'vocabulary.noDefinitionYet'.tr(),
-                          style: TextStyle(
-                            fontSize: 14,
-                            height: 1.5,
-                            fontStyle: FontStyle.italic,
-                            color: cs.onSurface.withValues(alpha: 0.5),
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium!
+                              .copyWith(
+                                height: 1.5,
+                                fontStyle: FontStyle.italic,
+                                color: cs.onSurface.withValues(alpha: 0.5),
+                              ),
                         ),
                       ),
                     ],
@@ -581,8 +588,7 @@ class _CardBack extends StatelessWidget {
                 )
               : Text(
                   word.definition,
-                  style: TextStyle(
-                    fontSize: 16,
+                  style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                     height: 1.6,
                     color: cs.onSurface,
                   ),
@@ -599,10 +605,14 @@ class _CardBack extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.07),
+                color: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.07),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AppColors.primary.withValues(alpha: 0.15),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.15),
                 ),
               ),
               child: Row(
@@ -613,7 +623,9 @@ class _CardBack extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 28,
                       height: 0.9,
-                      color: AppColors.primary.withValues(alpha: 0.5),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.5),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -621,8 +633,7 @@ class _CardBack extends StatelessWidget {
                   Expanded(
                     child: Text(
                       word.example!,
-                      style: TextStyle(
-                        fontSize: 14,
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                         height: 1.5,
                         color: cs.onSurfaceVariant,
                         fontStyle: FontStyle.italic,
@@ -655,15 +666,16 @@ class _CardBack extends StatelessWidget {
       if (gloss != null)
         Text(
           gloss,
-          style: TextStyle(fontSize: 16, height: 1.6, color: cs.onSurface),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyLarge!.copyWith(height: 1.6, color: cs.onSurface),
         ),
       if (definitionTr != null)
         Padding(
           padding: EdgeInsets.only(top: gloss != null ? 4 : 0),
           child: Text(
             definitionTr,
-            style: TextStyle(
-              fontSize: 14,
+            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
               height: 1.5,
               color: cs.onSurfaceVariant,
             ),
@@ -681,11 +693,10 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label.toUpperCase(),
-      style: TextStyle(
-        fontSize: 11,
+      style: Theme.of(context).textTheme.labelSmall!.copyWith(
         fontWeight: FontWeight.w700,
         letterSpacing: 1.2,
-        color: AppColors.primary,
+        color: Theme.of(context).colorScheme.primary,
       ),
     );
   }
@@ -700,15 +711,14 @@ class _FlipHintChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.1),
+        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
         showBack ? 'vocabulary.cardBack'.tr() : 'vocabulary.cardFront'.tr(),
-        style: TextStyle(
-          fontSize: 12,
+        style: Theme.of(context).textTheme.bodySmall!.copyWith(
           fontWeight: FontWeight.w600,
-          color: AppColors.primary,
+          color: Theme.of(context).colorScheme.primary,
         ),
       ),
     );
@@ -745,10 +755,9 @@ class _ActionButton extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               label,
-              style: TextStyle(
+              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                 color: color,
                 fontWeight: FontWeight.w600,
-                fontSize: 14,
               ),
             ),
           ],

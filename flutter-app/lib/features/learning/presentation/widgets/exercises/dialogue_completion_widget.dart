@@ -125,11 +125,8 @@ class _DialogueCompletionWidgetState extends State<DialogueCompletionWidget> {
                       ? _buildBlankedLine(lineA)
                       : Text(
                           '"$lineA"',
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: colors.textPrimary,
-                            height: 1.4,
-                          ),
+                          style: Theme.of(context).textTheme.bodyLarge!
+                              .copyWith(color: colors.textPrimary, height: 1.4),
                         ),
                 ),
               ),
@@ -159,11 +156,11 @@ class _DialogueCompletionWidgetState extends State<DialogueCompletionWidget> {
                       ? _buildBlankedLine(lineB)
                       : Text(
                           lineB.isEmpty ? '[_____]' : lineB,
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: colors.primary,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: Theme.of(context).textTheme.bodyLarge!
+                              .copyWith(
+                                color: colors.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
                         ),
                 ),
               ),
@@ -212,8 +209,7 @@ class _DialogueCompletionWidgetState extends State<DialogueCompletionWidget> {
       children: [
         Text(
           parts[0],
-          style: TextStyle(
-            fontSize: 15,
+          style: Theme.of(context).textTheme.bodyLarge!.copyWith(
             fontWeight: FontWeight.w600,
             color: colors.textPrimary,
           ),
@@ -240,8 +236,7 @@ class _DialogueCompletionWidgetState extends State<DialogueCompletionWidget> {
                 widget.onAnswer(value.trim());
               }
             },
-            style: TextStyle(
-              fontSize: 15,
+            style: Theme.of(context).textTheme.bodyLarge!.copyWith(
               fontWeight: FontWeight.w700,
               color: widget.isAnswered ? Colors.white : colors.textPrimary,
             ),
@@ -260,8 +255,7 @@ class _DialogueCompletionWidgetState extends State<DialogueCompletionWidget> {
         if (parts.length > 1)
           Text(
             parts[1],
-            style: TextStyle(
-              fontSize: 15,
+            style: Theme.of(context).textTheme.bodyLarge!.copyWith(
               fontWeight: FontWeight.w600,
               color: colors.textPrimary,
             ),

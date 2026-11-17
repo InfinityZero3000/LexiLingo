@@ -155,8 +155,7 @@ class _FillBlankWidgetState extends State<FillBlankWidget> {
         children: [
           Text(
             'lesson.exercise.fillBlankLabel'.tr(),
-            style: TextStyle(
-              fontSize: 13,
+            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
               fontWeight: FontWeight.w700,
               color: colors.primary,
               letterSpacing: 1.2,
@@ -165,7 +164,9 @@ class _FillBlankWidgetState extends State<FillBlankWidget> {
           const SizedBox(height: 4),
           Text(
             'lesson.exercise.fillBlankInstruction'.tr(),
-            style: TextStyle(fontSize: 13, color: colors.textSecondary),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium!.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: 20),
           // Sentence card
@@ -239,7 +240,9 @@ class _FillBlankWidgetState extends State<FillBlankWidget> {
                 ),
                 child: Text(
                   'common.confirm'.tr(),
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
           ],

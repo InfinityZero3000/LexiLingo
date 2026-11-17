@@ -55,7 +55,9 @@ class GrammarCorrectionWidget extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             'lesson.exercise.grammarCorrectionInstruction'.tr(),
-            style: TextStyle(fontSize: 13, color: colors.textSecondary),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium!.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: 20),
           // Error sentence card
@@ -101,8 +103,7 @@ class GrammarCorrectionWidget extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         '"$errorSentence"',
-                        style: TextStyle(
-                          fontSize: 16,
+                        style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                           fontWeight: FontWeight.w700,
                           color: colors.textPrimary,
                           fontStyle: FontStyle.italic,
@@ -216,7 +217,9 @@ class _GrammarTextInputState extends State<_GrammarTextInput> {
             ),
             child: Text(
               'common.confirm'.tr(),
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.w600),
             ),
           ),
         ],

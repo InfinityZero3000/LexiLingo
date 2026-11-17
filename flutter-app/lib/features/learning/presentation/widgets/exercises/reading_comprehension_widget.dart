@@ -63,7 +63,9 @@ class ReadingComprehensionWidget extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             'lesson.exercise.readingInstruction'.tr(),
-            style: TextStyle(fontSize: 13, color: colors.textSecondary),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium!.copyWith(color: colors.textSecondary),
           ),
           if (passage.isNotEmpty) ...[
             const SizedBox(height: 16),
@@ -78,8 +80,7 @@ class ReadingComprehensionWidget extends StatelessWidget {
               child: SingleChildScrollView(
                 child: Text(
                   passage,
-                  style: TextStyle(
-                    fontSize: 14,
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                     color: colors.textPrimary,
                     height: 1.6,
                   ),

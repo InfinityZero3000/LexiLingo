@@ -103,8 +103,7 @@ class _ArrangeSentenceWidgetState extends State<ArrangeSentenceWidget> {
           const SizedBox(height: 6),
           Text(
             exerciseQuote(widget.exercise.question),
-            style: TextStyle(
-              fontSize: 14,
+            style: Theme.of(context).textTheme.bodyMedium!.copyWith(
               color: colors.textSecondary,
               height: 1.4,
             ),
@@ -131,7 +130,9 @@ class _ArrangeSentenceWidgetState extends State<ArrangeSentenceWidget> {
                 ? Center(
                     child: Text(
                       'lesson.exercise.arrangeSentenceInstruction'.tr(),
-                      style: TextStyle(fontSize: 13, color: colors.textMuted),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium!.copyWith(color: colors.textMuted),
                     ),
                   )
                 : Column(
@@ -155,11 +156,11 @@ class _ArrangeSentenceWidgetState extends State<ArrangeSentenceWidget> {
                                 (widget.isCorrect ?? false)
                                     ? 'lesson.exercise.correctLabel'.tr()
                                     : 'lesson.exercise.incorrectLabel'.tr(),
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: gradedColor,
-                                ),
+                                style: Theme.of(context).textTheme.bodyMedium!
+                                    .copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      color: gradedColor,
+                                    ),
                               ),
                             ],
                           ),
@@ -185,11 +186,13 @@ class _ArrangeSentenceWidgetState extends State<ArrangeSentenceWidget> {
                                   ),
                                   child: Text(
                                     w,
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white,
-                                    ),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyLarge!
+                                        .copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                        ),
                                   ),
                                 ),
                               ),
@@ -228,11 +231,11 @@ class _ArrangeSentenceWidgetState extends State<ArrangeSentenceWidget> {
                         ),
                         child: Text(
                           w,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: colors.textPrimary,
-                          ),
+                          style: Theme.of(context).textTheme.bodyLarge!
+                              .copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: colors.textPrimary,
+                              ),
                         ),
                       ),
                     ),

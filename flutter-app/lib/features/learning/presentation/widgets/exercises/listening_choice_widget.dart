@@ -66,8 +66,7 @@ class ListeningChoiceWidget extends StatelessWidget {
                 const SizedBox(height: 14),
                 Text(
                   'lesson.exercise.tapToListen'.tr(),
-                  style: TextStyle(
-                    fontSize: 12,
+                  style: Theme.of(context).textTheme.bodySmall!.copyWith(
                     fontWeight: FontWeight.w700,
                     color: colors.textSecondary,
                     letterSpacing: 1.5,

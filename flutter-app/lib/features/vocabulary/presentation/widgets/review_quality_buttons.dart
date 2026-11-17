@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/review_session_entity.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Review Quality Buttons Widget
 /// Clean Code: Single responsibility - quality rating input
@@ -37,7 +38,9 @@ class ReviewQualityButtons extends StatelessWidget {
         children: [
           Text(
             'flashcard.howWellDidYouKnow'.tr(),
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 16),
 
@@ -48,7 +51,7 @@ class ReviewQualityButtons extends StatelessWidget {
                 child: _QualityButton(
                   label: 'flashcard.again'.tr(),
                   subLabel: 'flashcard.hardDifficulty'.tr(),
-                  color: AppColors.errorBright,
+                  color: Theme.of(context).colorScheme.error,
                   quality: ReviewQuality.hard,
                   onPressed: isLoading ? null : onQualitySelected,
                 ),
@@ -68,7 +71,7 @@ class ReviewQualityButtons extends StatelessWidget {
                 child: _QualityButton(
                   label: 'flashcard.easyDifficulty'.tr(),
                   subLabel: 'flashcard.perfectDifficulty'.tr(),
-                  color: AppColors.greenSuccessBright,
+                  color: context.status.success,
                   quality: ReviewQuality.easy,
                   onPressed: isLoading ? null : onQualitySelected,
                 ),
@@ -88,11 +91,10 @@ class ReviewQualityButtons extends StatelessWidget {
                     : () => onQualitySelected(ReviewQuality.blackout),
                 child: Text(
                   'flashcard.blackout'.tr(),
-                  style: TextStyle(
+                  style: Theme.of(context).textTheme.bodySmall!.copyWith(
                     color: Theme.of(
                       context,
                     ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                    fontSize: 12,
                   ),
                 ),
               ),
@@ -102,11 +104,10 @@ class ReviewQualityButtons extends StatelessWidget {
                     : () => onQualitySelected(ReviewQuality.perfect),
                 child: Text(
                   'flashcard.perfectFive'.tr(),
-                  style: TextStyle(
+                  style: Theme.of(context).textTheme.bodySmall!.copyWith(
                     color: Theme.of(
                       context,
                     ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                    fontSize: 12,
                   ),
                 ),
               ),
@@ -162,9 +163,8 @@ class _QualityButton extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 subLabel,
-                style: TextStyle(
+                style: Theme.of(context).textTheme.bodySmall!.copyWith(
                   color: color.withValues(alpha: 0.7),
-                  fontSize: 12,
                 ),
               ),
             ],

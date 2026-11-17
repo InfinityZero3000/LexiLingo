@@ -41,8 +41,7 @@ class _SpeakingRepeatWidgetState extends State<SpeakingRepeatWidget> {
       children: [
         Text(
           'lesson.exercise.speakingTitle'.tr(),
-          style: TextStyle(
-            fontSize: 12,
+          style: Theme.of(context).textTheme.bodySmall!.copyWith(
             fontWeight: FontWeight.w700,
             color: colors.primary,
             letterSpacing: 1.5,
@@ -90,8 +89,7 @@ class _SpeakingRepeatWidgetState extends State<SpeakingRepeatWidget> {
                 const SizedBox(height: 8),
                 Text(
                   widget.exercise.explanation!,
-                  style: TextStyle(
-                    fontSize: 13,
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                     color: colors.textSecondary,
                     fontStyle: FontStyle.italic,
                     height: 1.4,

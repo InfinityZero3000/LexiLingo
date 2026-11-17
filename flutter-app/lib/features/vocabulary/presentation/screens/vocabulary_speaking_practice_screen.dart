@@ -9,7 +9,6 @@ import 'package:just_audio/just_audio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:record/record.dart';
-import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/pronunciation_evaluation_entity.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/review_session_entity.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/flashcard_provider.dart';
@@ -295,7 +294,10 @@ class _VocabularySpeakingPracticeScreenState
   void _showError(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: AppColors.errorBright),
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      ),
     );
   }
 
@@ -475,7 +477,7 @@ class _VocabularySpeakingPracticeScreenState
               shape: BoxShape.circle,
               border: Border.all(
                 color: _isRecording
-                    ? AppColors.errorBright
+                    ? Theme.of(context).colorScheme.error
                     : const Color(0xFF2EAE5B),
                 width: 4,
               ),
@@ -490,7 +492,7 @@ class _VocabularySpeakingPracticeScreenState
             child: Icon(
               _isRecording ? Icons.stop_rounded : Icons.mic_rounded,
               color: _isRecording
-                  ? AppColors.errorBright
+                  ? Theme.of(context).colorScheme.error
                   : const Color(0xFF168348),
               size: 48,
             ),
@@ -647,7 +649,7 @@ class _VocabularySpeakingPracticeScreenState
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16),
+              style: Theme.of(context).textTheme.bodyLarge!,
             ),
             const SizedBox(height: 20),
             ElevatedButton(onPressed: onAction, child: Text(actionLabel)),

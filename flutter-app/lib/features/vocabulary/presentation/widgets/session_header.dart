@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/review_session_entity.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Session Header Widget
 /// Clean Code: Single responsibility - display session progress
@@ -32,8 +32,8 @@ class SessionHeader extends StatelessWidget {
                   value: value,
                   minHeight: 10,
                   backgroundColor: muted.withValues(alpha: 0.18),
-                  valueColor: const AlwaysStoppedAnimation<Color>(
-                    AppColors.primary,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    Theme.of(context).colorScheme.primary,
                   ),
                 ),
               ),
@@ -52,14 +52,14 @@ class SessionHeader extends StatelessWidget {
           _StatChip(
             icon: Icons.check_circle_rounded,
             value: '${session.correctCount}',
-            color: AppColors.greenSuccess,
+            color: context.status.success,
             semanticLabel: 'assessment.correct'.tr(),
           ),
           const SizedBox(width: 8),
           _StatChip(
             icon: Icons.star_rounded,
             value: '+${session.totalXpEarned}',
-            color: AppColors.accentYellow,
+            color: context.status.warning,
             semanticLabel: 'XP',
           ),
         ],

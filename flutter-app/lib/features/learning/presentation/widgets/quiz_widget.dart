@@ -4,6 +4,7 @@ import '../../domain/entities/lesson_entity.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/quick_save_selection_area.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Quiz Widget for Multiple Choice and True/False exercises
 class QuizWidget extends StatefulWidget {
@@ -86,8 +87,7 @@ class _QuizWidgetState extends State<QuizWidget>
                 children: [
                   Text(
                     _getQuestionTypeLabel(),
-                    style: TextStyle(
-                      fontSize: 12,
+                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
                       color: Colors.grey[600],
                       fontWeight: FontWeight.w600,
                       letterSpacing: 1,
@@ -146,10 +146,8 @@ class _QuizWidgetState extends State<QuizWidget>
                               contextSentence: widget.exercise.hint!,
                               child: Text(
                                 widget.exercise.hint!,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: accentColor,
-                                ),
+                                style: Theme.of(context).textTheme.bodyMedium!
+                                    .copyWith(color: accentColor),
                               ),
                             ),
                           ),
@@ -177,11 +175,11 @@ class _QuizWidgetState extends State<QuizWidget>
             if (showResult) {
               if (isCorrectAnswer) {
                 backgroundColor = Colors.green.withValues(alpha: 0.1);
-                borderColor = AppColors.greenSuccessBright;
+                borderColor = context.status.success;
                 icon = Icons.check_circle;
               } else if (isSelected && !isCorrectAnswer) {
                 backgroundColor = Colors.red.withValues(alpha: 0.1);
-                borderColor = AppColors.errorBright;
+                borderColor = Theme.of(context).colorScheme.error;
                 icon = Icons.cancel;
               }
             } else if (isSelected) {
@@ -217,20 +215,20 @@ class _QuizWidgetState extends State<QuizWidget>
                       Expanded(
                         child: Text(
                           option,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: isSelected
-                                ? FontWeight.w600
-                                : FontWeight.normal,
-                          ),
+                          style: Theme.of(context).textTheme.bodyLarge!
+                              .copyWith(
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                              ),
                         ),
                       ),
                       if (showResult && icon != null)
                         Icon(
                           icon,
                           color: isCorrectAnswer
-                              ? AppColors.greenSuccessBright
-                              : AppColors.errorBright,
+                              ? context.status.success
+                              : Theme.of(context).colorScheme.error,
                         ),
                     ],
                   ),
@@ -252,7 +250,7 @@ class _QuizWidgetState extends State<QuizWidget>
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(
                     color: widget.isCorrect!
-                        ? AppColors.greenSuccessBright
+                        ? context.status.success
                         : AppColors.orange,
                     width: 1,
                   ),
@@ -269,7 +267,7 @@ class _QuizWidgetState extends State<QuizWidget>
                                 ? Icons.check_circle
                                 : Icons.info_outline,
                             color: widget.isCorrect!
-                                ? AppColors.greenSuccessBright
+                                ? context.status.success
                                 : AppColors.orange,
                           ),
                           const SizedBox(width: 8),
@@ -277,13 +275,13 @@ class _QuizWidgetState extends State<QuizWidget>
                             widget.isCorrect!
                                 ? 'learning.correct'.tr()
                                 : 'vocabQuiz.incorrect'.tr(),
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: widget.isCorrect!
-                                  ? AppColors.greenSuccessBright
-                                  : AppColors.orange,
-                            ),
+                            style: Theme.of(context).textTheme.bodyLarge!
+                                .copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: widget.isCorrect!
+                                      ? context.status.success
+                                      : AppColors.orange,
+                                ),
                           ),
                         ],
                       ),
@@ -294,7 +292,9 @@ class _QuizWidgetState extends State<QuizWidget>
                         contextSentence: widget.exercise.explanation!,
                         child: Text(
                           widget.exercise.explanation!,
-                          style: const TextStyle(fontSize: 14, height: 1.5),
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium!.copyWith(height: 1.5),
                         ),
                       ),
                     ],

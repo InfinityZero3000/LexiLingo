@@ -19,6 +19,7 @@ import '../../../voice/presentation/widgets/tts_speed_selector.dart';
 import '../../../progress/presentation/providers/streak_provider.dart';
 import '../../../progress/presentation/widgets/streak_milestone_overlay.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Learning Session Screen
 /// Handles the lesson learning flow with interactive exercises
@@ -173,8 +174,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                   child: Center(
                     child: Text(
                       '${provider.currentExerciseIndex + 1}/${provider.totalExercises}',
-                      style: const TextStyle(
-                        fontSize: 16,
+                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -722,8 +722,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                 answered
                     ? 'lesson.continueButton'.tr()
                     : 'lesson.checkAnswer'.tr(),
-                style: TextStyle(
-                  fontSize: 16,
+                style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                   fontWeight: FontWeight.w700,
                   color: actionForeground,
                 ),
@@ -806,16 +805,16 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                       decoration: BoxDecoration(
                         color:
                             (percentage >= 80
-                                    ? AppColors.warning
-                                    : AppColors.greenSuccessBright)
+                                    ? context.status.warning
+                                    : context.status.success)
                                 .withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
                             color:
                                 (percentage >= 80
-                                        ? AppColors.warning
-                                        : AppColors.greenSuccessBright)
+                                        ? context.status.warning
+                                        : context.status.success)
                                     .withValues(alpha: 0.3),
                             blurRadius: 30,
                             spreadRadius: 10,
@@ -832,7 +831,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                       )
                     else
                       AnimatedCheckmark(
-                        color: AppColors.greenSuccessBright,
+                        color: context.status.success,
                         size: 80,
                       ),
                   ],
@@ -865,7 +864,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                               ? Icons.celebration
                               : Icons.auto_awesome,
                           color: percentage >= 80
-                              ? AppColors.warning
+                              ? context.status.warning
                               : AppColors.purple,
                           size: 28,
                         ),
@@ -883,7 +882,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                               ? Icons.celebration
                               : Icons.auto_awesome,
                           color: percentage >= 80
-                              ? AppColors.warning
+                              ? context.status.warning
                               : AppColors.purple,
                           size: 28,
                         ),
@@ -947,12 +946,12 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                     ),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        colors: [AppColors.warning, AppColors.orange],
+                        colors: [context.status.warning, AppColors.orange],
                       ),
                       borderRadius: BorderRadius.circular(30),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.warning.withValues(alpha: 0.4),
+                          color: context.status.warning.withValues(alpha: 0.4),
                           blurRadius: 15,
                           spreadRadius: 2,
                         ),
@@ -1001,7 +1000,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                     icon: const Icon(Icons.arrow_forward),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: AppColors.greenSuccessBright,
+                      backgroundColor: context.status.success,
                       foregroundColor: AppColors.textInverted,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -1040,7 +1039,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                     onPressed: () => Navigator.pop(context, true),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      backgroundColor: AppColors.greenSuccessBright,
+                      backgroundColor: context.status.success,
                       foregroundColor: AppColors.textInverted,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -1097,7 +1096,9 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.errorBright),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
             child: Text('lesson.exit'.tr()),
           ),
         ],

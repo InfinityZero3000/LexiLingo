@@ -134,21 +134,22 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
                       width: 90,
                       height: 90,
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: SpeakIconButton(
                         text: vocabulary.word,
                         size: 48,
-                        color: AppColors.primary,
+                        color: Theme.of(context).colorScheme.primary,
                         autoplay: true,
                       ),
                     ),
                     const SizedBox(height: 16),
                     Text(
                       'vocabulary.audioQuestionHint'.tr(),
-                      style: TextStyle(
-                        fontSize: 16,
+                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                         color: Theme.of(
                           context,
                         ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
@@ -194,7 +195,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
                 SpeakIconButton(
                   text: vocabulary.word,
                   size: 24,
-                  color: AppColors.primary,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ],
             ),
@@ -204,8 +205,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
             // Part of speech
             Text(
               vocabulary.partOfSpeech,
-              style: TextStyle(
-                fontSize: 14,
+              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w500,
               ),
@@ -229,11 +229,10 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
               Flexible(
                 child: Text(
                   'vocabulary.tapToReveal'.tr(),
-                  style: TextStyle(
+                  style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                     color: Theme.of(
                       context,
                     ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                    fontSize: 14,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -295,27 +294,26 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
                         if (vocabulary.pronunciation != null)
                           Text(
                             vocabulary.pronunciation!,
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurfaceVariant,
-                              fontStyle: FontStyle.italic,
-                            ),
+                            style: Theme.of(context).textTheme.bodyLarge!
+                                .copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                  fontStyle: FontStyle.italic,
+                                ),
                           ),
                         const SizedBox(width: 8),
                         SpeakIconButton(
                           text: vocabulary.word,
                           size: 20,
-                          color: AppColors.primary,
+                          color: Theme.of(context).colorScheme.primary,
                         ),
                       ],
                     ),
                     const SizedBox(height: 4),
                     Text(
                       vocabulary.partOfSpeech,
-                      style: TextStyle(
-                        fontSize: 13,
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w500,
                       ),
@@ -328,18 +326,16 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
             // Definition section
             Text(
               'vocabulary.definition'.tr(),
-              style: const TextStyle(
-                fontSize: 14,
+              style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                 fontWeight: FontWeight.w600,
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
             const SizedBox(height: 8),
             vocabulary.definition.isEmpty
                 ? Text(
                     'vocabulary.noDefinitionYet'.tr(),
-                    style: TextStyle(
-                      fontSize: 16,
+                    style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                       height: 1.5,
                       fontStyle: FontStyle.italic,
                       color: Theme.of(
@@ -358,10 +354,9 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
               const SizedBox(height: 24),
               Text(
                 'vocabulary.translationLabel'.tr(),
-                style: const TextStyle(
-                  fontSize: 14,
+                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
               const SizedBox(height: 8),
@@ -372,8 +367,7 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
                   padding: EdgeInsets.only(top: gloss != null ? 4 : 0),
                   child: Text(
                     definitionTr,
-                    style: TextStyle(
-                      fontSize: 15,
+                    style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                       height: 1.5,
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
@@ -386,10 +380,9 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
               const SizedBox(height: 24),
               Text(
                 'vocabulary.examples'.tr(),
-                style: const TextStyle(
-                  fontSize: 14,
+                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
               const SizedBox(height: 12),
@@ -401,23 +394,23 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             '• ',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: AppColors.primary,
-                            ),
+                            style: Theme.of(context).textTheme.bodyLarge!
+                                .copyWith(
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
                           ),
                           Expanded(
                             child: Text(
                               example,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant,
-                                height: 1.5,
-                              ),
+                              style: Theme.of(context).textTheme.bodyMedium!
+                                  .copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                                    height: 1.5,
+                                  ),
                             ),
                           ),
                           // Speak example sentence
@@ -440,11 +433,10 @@ class _FlashcardWidgetState extends State<FlashcardWidget>
             Center(
               child: Text(
                 'vocabulary.ratingQuestion'.tr(),
-                style: TextStyle(
+                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                   color: Theme.of(
                     context,
                   ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                  fontSize: 14,
                 ),
               ),
             ),

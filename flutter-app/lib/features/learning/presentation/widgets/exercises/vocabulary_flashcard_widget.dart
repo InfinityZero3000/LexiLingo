@@ -87,8 +87,7 @@ class _VocabularyFlashcardWidgetState extends State<VocabularyFlashcardWidget> {
                     const SizedBox(height: 6),
                     Text(
                       widget.exercise.explanation!,
-                      style: TextStyle(
-                        fontSize: 13,
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                         color: colors.textSecondary,
                         height: 1.4,
                       ),
@@ -134,8 +133,7 @@ class _VocabularyFlashcardWidgetState extends State<VocabularyFlashcardWidget> {
                 ),
                 child: Text(
                   'lesson.exercise.understood'.tr(),
-                  style: TextStyle(
-                    fontSize: 16,
+                  style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
                   ),

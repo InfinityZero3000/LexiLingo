@@ -52,7 +52,9 @@ class CollocationChoiceWidget extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             'lesson.exercise.collocationInstruction'.tr(),
-            style: TextStyle(fontSize: 13, color: colors.textSecondary),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium!.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: 20),
           if (mainWord.isNotEmpty) ...[
@@ -70,8 +72,7 @@ class CollocationChoiceWidget extends StatelessWidget {
                 children: [
                   Text(
                     'lesson.exercise.mainVerb'.tr(),
-                    style: TextStyle(
-                      fontSize: 11,
+                    style: Theme.of(context).textTheme.labelSmall!.copyWith(
                       fontWeight: FontWeight.w700,
                       color: colors.primary,
                       letterSpacing: 1.2,
@@ -127,8 +128,7 @@ class CollocationChoiceWidget extends StatelessWidget {
                       'lesson.exercise.hintLabel'.tr(
                         namedArgs: {'hint': exercise.hint!},
                       ),
-                      style: TextStyle(
-                        fontSize: 13,
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                         color: colors.textSecondary,
                         height: 1.4,
                       ),

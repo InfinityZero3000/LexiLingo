@@ -30,8 +30,7 @@ class ExerciseBadge extends StatelessWidget {
           ],
           Text(
             label,
-            style: TextStyle(
-              fontSize: 11,
+            style: Theme.of(context).textTheme.labelSmall!.copyWith(
               fontWeight: FontWeight.w700,
               color: colors.primary,
               letterSpacing: 1.1,
@@ -106,8 +105,7 @@ class ExerciseOptionCard extends StatelessWidget {
             alignment: Alignment.center,
             child: Text(
               label!,
-              style: TextStyle(
-                fontSize: 12,
+              style: Theme.of(context).textTheme.bodySmall!.copyWith(
                 fontWeight: FontWeight.w700,
                 color: isSelected ? fg : colors.textSecondary,
               ),
@@ -142,8 +140,7 @@ class ExerciseOptionCard extends StatelessWidget {
             Expanded(
               child: Text(
                 text,
-                style: TextStyle(
-                  fontSize: 16,
+                style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                   fontWeight: FontWeight.w600,
                   color: fg,
                 ),
@@ -235,8 +232,7 @@ class ExerciseExplanationCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     explanation!,
-                    style: TextStyle(
-                      fontSize: 14,
+                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                       color: isCorrect ? kCorrect : kError,
                       fontWeight: FontWeight.w500,
                       height: 1.5,
@@ -259,11 +255,11 @@ class ExerciseExplanationCard extends StatelessWidget {
                           children: [
                             Text(
                               'lesson.exercise.correctAnswerLabel'.tr(),
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: kCorrect,
-                                fontWeight: FontWeight.w700,
-                              ),
+                              style: Theme.of(context).textTheme.bodyMedium!
+                                  .copyWith(
+                                    color: kCorrect,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                             ),
                             const SizedBox(height: 8),
                             PairAnswerChips(
@@ -273,12 +269,12 @@ class ExerciseExplanationCard extends StatelessWidget {
                         )
                       : Text(
                           '${'lesson.exercise.correctAnswerLabel'.tr()}: $correctAnswer',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: kCorrect,
-                            fontWeight: FontWeight.w600,
-                            height: 1.5,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium!
+                              .copyWith(
+                                color: kCorrect,
+                                fontWeight: FontWeight.w600,
+                                height: 1.5,
+                              ),
                         ),
                 ),
               ],
@@ -370,8 +366,7 @@ class PairAnswerChips extends StatelessWidget {
                 children: [
                   Text(
                     e.key,
-                    style: TextStyle(
-                      fontSize: 13,
+                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                       fontWeight: FontWeight.w700,
                       color: kCorrect,
                     ),
@@ -386,8 +381,7 @@ class PairAnswerChips extends StatelessWidget {
                   ),
                   Text(
                     e.value,
-                    style: TextStyle(
-                      fontSize: 13,
+                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                       fontWeight: FontWeight.w700,
                       color: kCorrect,
                     ),

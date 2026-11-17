@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// A single multiple-choice option in the vocabulary quiz.
 /// Renders neutral / selected / correct / wrong states after answering.
@@ -36,19 +37,21 @@ class QuizOptionCard extends StatelessWidget {
 
     if (answered) {
       if (isCorrect) {
-        borderColor = AppColors.greenSuccessBright;
-        background = AppColors.greenSuccessBright.withValues(alpha: 0.12);
+        borderColor = context.status.success;
+        background = context.status.success.withValues(alpha: 0.12);
         numberColor = Colors.white;
-        numberBg = AppColors.greenSuccessBright;
+        numberBg = context.status.success;
         trailingIcon = Icons.check_circle_rounded;
-        trailingColor = AppColors.greenSuccessBright;
+        trailingColor = context.status.success;
       } else if (isSelected) {
-        borderColor = AppColors.errorBright;
-        background = AppColors.errorBright.withValues(alpha: 0.10);
+        borderColor = Theme.of(context).colorScheme.error;
+        background = Theme.of(
+          context,
+        ).colorScheme.error.withValues(alpha: 0.10);
         numberColor = Colors.white;
-        numberBg = AppColors.errorBright;
+        numberBg = Theme.of(context).colorScheme.error;
         trailingIcon = Icons.cancel_rounded;
-        trailingColor = AppColors.errorBright;
+        trailingColor = Theme.of(context).colorScheme.error;
       } else {
         borderColor = theme.colorScheme.outlineVariant.withValues(alpha: 0.4);
         background = baseSurface.withValues(alpha: 0.5);
@@ -88,10 +91,9 @@ class QuizOptionCard extends StatelessWidget {
                     ),
                     child: Text(
                       '$index',
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                         color: numberColor,
                         fontWeight: FontWeight.bold,
-                        fontSize: 14,
                       ),
                     ),
                   ),
@@ -99,8 +101,7 @@ class QuizOptionCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       text,
-                      style: TextStyle(
-                        fontSize: 16,
+                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                         height: 1.35,
                         fontWeight: FontWeight.w500,
                         color: theme.colorScheme.onSurface,

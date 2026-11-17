@@ -180,8 +180,7 @@ class _MatchWordMeaningWidgetState extends State<MatchWordMeaningWidget> {
           child: Text(
             text,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 15,
+            style: Theme.of(context).textTheme.bodyLarge!.copyWith(
               fontWeight: FontWeight.w600,
               color: filled ? Colors.white : colors.textPrimary,
             ),
@@ -279,8 +278,7 @@ class _MatchWordMeaningWidgetState extends State<MatchWordMeaningWidget> {
                 Expanded(
                   child: Text(
                     'lesson.exercise.matchPairsInstruction'.tr(),
-                    style: TextStyle(
-                      fontSize: 12,
+                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
                       color: colors.textSecondary,
                       height: 1.4,
                     ),
