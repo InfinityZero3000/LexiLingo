@@ -1,14 +1,20 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-
-import '../../../core/constants/admin_colors.dart';
-import '../../../shared/widgets/admin_shell.dart';
-import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
-import '../data/notification_campaign_repository.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/core/widgets/stat_card.dart';
+import 'package:provider/provider.dart';
+import '../../../core/network/admin_api_error.dart';
+import '../../../core/permissions/admin_permissions.dart';
+import '../../../shared/widgets/admin_shell.dart';
+import '../../../shared/widgets/growth_form.dart';
+import '../../../shared/widgets/growth_job_actions.dart';
+import '../../../shared/widgets/growth_state_body.dart';
+import '../data/notification_campaign_repository.dart';
 
 class NotificationCampaignScreen extends StatefulWidget {
-  const NotificationCampaignScreen({super.key});
+  const NotificationCampaignScreen({super.key, this.repository});
+
+  final NotificationCampaignRepository? repository;
 
   @override
   State<NotificationCampaignScreen> createState() =>
@@ -17,10 +23,11 @@ class NotificationCampaignScreen extends StatefulWidget {
 
 class _NotificationCampaignScreenState
     extends State<NotificationCampaignScreen> {
-  final _repository = NotificationCampaignRepository();
+  late final NotificationCampaignRepository _repository =
+      widget.repository ?? NotificationCampaignRepository();
   List<NotificationCampaignJob> _jobs = const [];
   bool _loading = true;
-  String? _error;
+  Object? _error;
 
   @override
   void initState() {
@@ -29,70 +36,69 @@ class _NotificationCampaignScreenState
   }
 
   Future<void> _load() async {
-    if (mounted) {
-      setState(() {
-        _loading = true;
-        _error = null;
-      });
-    }
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final jobs = await _repository.getJobs();
       if (mounted) setState(() => _jobs = jobs);
-    } catch (_) {
-      if (mounted) setState(() => _error = 'Could not load campaigns.');
+    } catch (e) {
+      if (mounted) setState(() => _error = e);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
+  void _toast(
+    Object error,
+    String fallbackKey, {
+    List<String> args = const [],
+  }) {
+    if (!mounted) return;
+    final api = AdminApiError.from(error);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          api.isForbidden || api.isFeatureOff
+              ? api.message.resolve()
+              : fallbackKey.tr(args: args),
+        ),
+      ),
+    );
+  }
+
   Future<void> _create() async {
-    final payload = await showDialog<Map<String, dynamic>>(
+    final payload = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
-      builder: (_) => const _CreateCampaignDialog(),
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) => const CreateCampaignSheet(),
     );
     if (payload == null) return;
     try {
       final job = await _repository.createJob(payload);
       if (mounted) setState(() => _jobs = [job, ..._jobs]);
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not create campaign.')),
-        );
-      }
+    } catch (e) {
+      _toast(e, 'adminGrowth.campaign.createFailed');
     }
   }
 
-  Future<bool> _confirm(String title, String message) async =>
-      await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(title),
-          content: Text(message),
-          actions: [
-            TextButton(
-              style: TextButton.styleFrom(
-                minimumSize: const Size(kMinTapTarget, kMinTapTarget),
-              ),
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Confirm'),
-            ),
-          ],
-        ),
-      ) ??
-      false;
-
   Future<void> _action(NotificationCampaignJob job, String action) async {
-    if (action != 'retry' &&
-        !await _confirm(
-          '${action == 'apply' ? 'Apply' : 'Cancel'} campaign?',
-          action == 'apply'
-              ? 'This will send the campaign to its audience.'
-              : 'This will stop the campaign.',
+    if (action == 'apply' &&
+        !await confirmApply(
+          context,
+          title: 'adminGrowth.campaign.applyTitle'.tr(),
+          body: 'adminGrowth.campaign.applyBody'.tr(),
+        )) {
+      return;
+    }
+    if (!mounted) return;
+    if (action == 'cancel' &&
+        !await confirmCancel(
+          context,
+          title: 'adminGrowth.campaign.cancelTitle'.tr(),
+          body: 'adminGrowth.campaign.cancelBody'.tr(),
         )) {
       return;
     }
@@ -104,128 +110,89 @@ class _NotificationCampaignScreenState
       };
       if (mounted) {
         setState(
-          () => _jobs = _jobs
-              .map((j) => j.id == updated.id ? updated : j)
-              .toList(),
+          () =>
+              _jobs = [for (final j in _jobs) j.id == updated.id ? updated : j],
         );
       }
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not $action this campaign.')),
-        );
-      }
+    } catch (e) {
+      _toast(
+        e,
+        'adminGrowth.jobs.actionFailed',
+        args: ['adminGrowth.jobs.$action'.tr().toLowerCase()],
+      );
     }
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AdminColors.background,
-    appBar: AppBar(
-      backgroundColor: AdminColors.background,
-      leading: IconButton(
-        icon: const Icon(Icons.menu_rounded),
-        onPressed: AdminShell.openDrawer,
-      ),
-      title: Text(
-        'Notification Campaigns',
-        style: GoogleFonts.spaceGrotesk(
-          fontWeight: FontWeight.w700,
-          color: AdminColors.onSurface,
+  Widget build(BuildContext context) {
+    final perms = context.watch<AdminPermissions>();
+    final canCreate = perms.can('notifications:create');
+    final canWrite = perms.can('notifications:update');
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: AdminShell.openDrawer,
         ),
+        title: Text('adminGrowth.campaign.title'.tr()),
       ),
-      actions: [
-        IconButton(
-          onPressed: _create,
-          tooltip: 'Create campaign',
-          icon: const Icon(Icons.add_rounded),
-        ),
-      ],
-    ),
-    floatingActionButton: FloatingActionButton(
-      onPressed: _create,
-      backgroundColor: AdminColors.primaryBright,
-      child: const Icon(Icons.add_rounded),
-    ),
-    body: RefreshIndicator(onRefresh: _load, child: _body()),
-  );
-
-  Widget _body() {
-    if (_loading && _jobs.isEmpty) {
-      return ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          SkeletonBox(height: 112),
-          const SizedBox(height: AppSpacing.md),
-          SkeletonBox(height: 112),
-        ],
-      );
-    }
-    if (_error != null && _jobs.isEmpty) {
-      return ListView(
-        children: [
-          SizedBox(height: 160),
-          Icon(Icons.error_outline, size: 44, color: AdminColors.error),
-          Center(
-            child: Text(
-              'Could not load campaigns',
-              style: GoogleFonts.spaceGrotesk(color: AdminColors.error),
+      floatingActionButton: canCreate
+          ? FloatingActionButton.extended(
+              onPressed: _create,
+              icon: const Icon(Icons.add_rounded),
+              label: Text('adminGrowth.campaign.create'.tr()),
+            )
+          : null,
+      body: RefreshIndicator(
+        onRefresh: _load,
+        child: GrowthStateBody(
+          isLoading: _loading,
+          hasData: _jobs.isNotEmpty,
+          error: _error,
+          onRetry: _load,
+          emptyTitleKey: 'adminGrowth.campaign.empty',
+          emptyIcon: Icons.campaign_outlined,
+          builder: (_) => ListView.separated(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.md,
+              AppSpacing.lg,
+              96,
+            ),
+            itemCount: _jobs.length,
+            separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.md),
+            itemBuilder: (_, i) => CampaignCard(
+              job: _jobs[i],
+              canWrite: canWrite,
+              onAction: (a) => _action(_jobs[i], a),
             ),
           ),
-          Center(
-            child: TextButton(onPressed: _load, child: const Text('Retry')),
-          ),
-        ],
-      );
-    }
-    if (_jobs.isEmpty) {
-      return ListView(
-        children: [
-          const SizedBox(height: 160),
-          const Icon(
-            Icons.campaign_outlined,
-            size: 48,
-            color: AdminColors.onSurfaceMuted,
-          ),
-          Center(
-            child: Text(
-              'No campaigns yet',
-              style: GoogleFonts.spaceGrotesk(
-                color: AdminColors.onSurfaceMuted,
-              ),
-            ),
-          ),
-        ],
-      );
-    }
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
-      itemCount: _jobs.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (_, index) => _CampaignCard(
-        job: _jobs[index],
-        onAction: (a) => _action(_jobs[index], a),
+        ),
       ),
     );
   }
 }
 
-class _CampaignCard extends StatelessWidget {
+class CampaignCard extends StatelessWidget {
+  const CampaignCard({
+    super.key,
+    required this.job,
+    required this.onAction,
+    this.canWrite = true,
+  });
+
   final NotificationCampaignJob job;
   final ValueChanged<String> onAction;
-  const _CampaignCard({required this.job, required this.onAction});
+  final bool canWrite;
 
   IconData get _icon => switch (job.jobType) {
     'in_app_broadcast' => Icons.message_outlined,
     'scheduled_push' => Icons.schedule_outlined,
     _ => Icons.notifications_outlined,
   };
-  Color get _statusColor => switch (job.status) {
-    'completed' => AdminColors.success,
-    'failed' => AdminColors.error,
-    'sending' || 'preview_ready' => AdminColors.warning,
-    _ => AdminColors.primary,
-  };
+
   String _date(String value) {
     final d = DateTime.tryParse(value)?.toLocal();
     return d == null
@@ -234,129 +201,102 @@ class _CampaignCard extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: AdminColors.surface,
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      border: Border.all(
-        color: job.needsAttention
-            ? AdminColors.primary
-            : AdminColors.outlineVariant,
-        width: 0.5,
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: scheme.surface,
+        borderRadius: AppRadius.lgAll,
+        border: Border.all(
+          color: job.needsAttention ? scheme.primary : scheme.outlineVariant,
+          width: 0.5,
+        ),
       ),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AdminColors.primaryContainer,
-                borderRadius: BorderRadius.circular(AppRadius.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: scheme.primaryContainer,
+                  borderRadius: AppRadius.mdAll,
+                ),
+                child: Icon(_icon, color: scheme.primary),
               ),
-              child: Icon(_icon, color: AdminColors.primary),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    job.jobType.replaceAll('_', ' '),
-                    style: GoogleFonts.spaceGrotesk(
-                      fontWeight: FontWeight.w700,
-                      color: AdminColors.onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text(
-                    'Created ${_date(job.createdAt)}',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AdminColors.onSurfaceMuted,
-                    ),
-                  ),
-                  if (job.scheduledAt != null)
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      'Scheduled ${_date(job.scheduledAt!)}',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: AdminColors.onSurfaceMuted,
+                      job.jobType.replaceAll('_', ' '),
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-              decoration: BoxDecoration(
-                color: _statusColor.withValues(alpha: .12),
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-              ),
-              child: Text(
-                job.status.replaceAll('_', ' '),
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: _statusColor,
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      'adminGrowth.jobs.created'.tr(
+                        args: [_date(job.createdAt)],
+                      ),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                    if (job.scheduledAt != null)
+                      Text(
+                        'adminGrowth.jobs.scheduled'.tr(
+                          args: [_date(job.scheduledAt!)],
+                        ),
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                  ],
                 ),
               ),
-            ),
-          ],
-        ),
-        if (job.needsAttention) ...[
-          const SizedBox(height: AppSpacing.md),
-          LinearProgressIndicator(
-            value: job.progressPercent / 100,
-            color: AdminColors.primary,
-          ),
-        ],
-        if (job.errorMessage != null) ...[
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            job.errorMessage!,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: AdminColors.error),
-          ),
-        ],
-        if (job.canApply || job.canCancel || job.canRetry) ...[
-          const SizedBox(height: AppSpacing.sm),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              if (job.canRetry)
-                TextButton(
-                  onPressed: () => onAction('retry'),
-                  child: const Text('Retry'),
-                ),
-              if (job.canCancel)
-                TextButton(
-                  onPressed: () => onAction('cancel'),
-                  child: const Text('Cancel'),
-                ),
-              if (job.canApply)
-                FilledButton(
-                  onPressed: () => onAction('apply'),
-                  child: const Text('Apply'),
-                ),
+              StatusPill(
+                label: job.status.replaceAll('_', ' '),
+                tone: jobStatusTone(job.status),
+              ),
             ],
           ),
+          if (job.needsAttention) ...[
+            const SizedBox(height: AppSpacing.md),
+            LinearProgressIndicator(value: job.progressPercent / 100),
+          ],
+          if (job.errorMessage != null) ...[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              job.errorMessage!,
+              style: theme.textTheme.bodySmall?.copyWith(color: scheme.error),
+            ),
+          ],
+          if (canWrite)
+            GrowthJobActions(
+              onRetry: job.canRetry ? () => onAction('retry') : null,
+              onCancel: job.canCancel ? () => onAction('cancel') : null,
+              onApply: job.canApply ? () => onAction('apply') : null,
+            ),
         ],
-      ],
-    ),
-  );
+      ),
+    );
+  }
 }
 
-class _CreateCampaignDialog extends StatefulWidget {
-  const _CreateCampaignDialog();
+class CreateCampaignSheet extends StatefulWidget {
+  const CreateCampaignSheet({super.key});
+
   @override
-  State<_CreateCampaignDialog> createState() => _CreateCampaignDialogState();
+  State<CreateCampaignSheet> createState() => _CreateCampaignSheetState();
 }
 
-class _CreateCampaignDialogState extends State<_CreateCampaignDialog> {
-  final _formKey = GlobalKey<FormState>();
+class _CreateCampaignSheetState extends State<CreateCampaignSheet> {
   final _title = TextEditingController(),
       _body = TextEditingController(),
       _type = TextEditingController(text: 'campaign'),
@@ -365,7 +305,7 @@ class _CreateCampaignDialogState extends State<_CreateCampaignDialog> {
       _inactiveDays = TextEditingController();
   NotificationCampaignJobType _jobType =
       NotificationCampaignJobType.targetedPush;
-  bool _segment = false, _ai = false;
+  bool _segment = false, _ai = false, _submitted = false;
   DateTime? _sendAt;
   final Set<String> _leagues = {}, _levels = {};
   static const leagues = [
@@ -388,8 +328,15 @@ class _CreateCampaignDialogState extends State<_CreateCampaignDialog> {
     super.dispose();
   }
 
-  InputDecoration _decoration(String label) =>
-      InputDecoration(labelText: label, border: const OutlineInputBorder());
+  String _typeLabel(NotificationCampaignJobType t) => switch (t) {
+    NotificationCampaignJobType.targetedPush =>
+      'adminGrowth.campaign.typeTargeted'.tr(),
+    NotificationCampaignJobType.inAppBroadcast =>
+      'adminGrowth.campaign.typeInApp'.tr(),
+    NotificationCampaignJobType.scheduledPush =>
+      'adminGrowth.campaign.typeScheduled'.tr(),
+  };
+
   void _toggle(Set<String> values, String value) => setState(
     () => values.contains(value) ? values.remove(value) : values.add(value),
   );
@@ -419,13 +366,30 @@ class _CreateCampaignDialogState extends State<_CreateCampaignDialog> {
     }
   }
 
+  String? _req(TextEditingController c) => _submitted && c.text.trim().isEmpty
+      ? 'adminGrowth.campaign.required'.tr()
+      : null;
+
+  String? _num(TextEditingController c) =>
+      _submitted && c.text.isNotEmpty && int.tryParse(c.text) == null
+      ? 'adminGrowth.campaign.numberRequired'.tr()
+      : null;
+
   void _submit() {
-    if (!_formKey.currentState!.validate()) return;
+    setState(() => _submitted = true);
+    if (_title.text.trim().isEmpty || _body.text.trim().isEmpty) return;
+    if (_segment &&
+        ((_minStreak.text.isNotEmpty &&
+                int.tryParse(_minStreak.text) == null) ||
+            (_inactiveDays.text.isNotEmpty &&
+                int.tryParse(_inactiveDays.text) == null))) {
+      return;
+    }
     if (_jobType == NotificationCampaignJobType.scheduledPush &&
         _sendAt == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Choose a schedule time.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('adminGrowth.campaign.needTime'.tr())),
+      );
       return;
     }
     final filters = <String, dynamic>{'has_fcm_token': true};
@@ -455,161 +419,116 @@ class _CreateCampaignDialogState extends State<_CreateCampaignDialog> {
     Navigator.pop(context, {'job_type': _jobType.value, 'config': config});
   }
 
-  @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: Text(
-      'Create campaign',
-      style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700),
-    ),
-    content: SizedBox(
-      width: 520,
-      child: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+  Widget _chips(String labelKey, List<String> values, Set<String> selected) =>
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(labelKey.tr(), style: Theme.of(context).textTheme.labelLarge),
+          const SizedBox(height: AppSpacing.xs),
+          Wrap(
+            spacing: AppSpacing.sm,
             children: [
-              DropdownButtonFormField(
-                initialValue: _jobType,
-                decoration: _decoration('Job type'),
-                items: NotificationCampaignJobType.values
-                    .map(
-                      (v) => DropdownMenuItem(value: v, child: Text(v.label)),
-                    )
-                    .toList(),
-                onChanged: (v) => setState(() => _jobType = v!),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              TextFormField(
-                controller: _title,
-                maxLength: 100,
-                decoration: _decoration('Title'),
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Required' : null,
-              ),
-              TextFormField(
-                controller: _body,
-                maxLength: 300,
-                maxLines: 3,
-                decoration: _decoration('Body'),
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Required' : null,
-              ),
-              TextFormField(
-                controller: _type,
-                decoration: _decoration('Notification type'),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              TextFormField(
-                controller: _link,
-                decoration: _decoration('Deep link (optional)'),
-              ),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Improve copy with AI'),
-                value: _ai,
-                onChanged: (v) => setState(() => _ai = v),
-              ),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Target a segment'),
-                value: _segment,
-                onChanged: (v) => setState(() => _segment = v),
-              ),
-              if (_segment) ...[
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Leagues',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                Wrap(
-                  spacing: 6,
-                  children: leagues
-                      .map(
-                        (v) => FilterChip(
-                          label: Text(v),
-                          selected: _leagues.contains(v),
-                          onSelected: (_) => _toggle(_leagues, v),
-                        ),
-                      )
-                      .toList(),
-                ),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'CEFR levels',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                Wrap(
-                  spacing: 6,
-                  children: levels
-                      .map(
-                        (v) => FilterChip(
-                          label: Text(v),
-                          selected: _levels.contains(v),
-                          onSelected: (_) => _toggle(_levels, v),
-                        ),
-                      )
-                      .toList(),
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _minStreak,
-                        keyboardType: TextInputType.number,
-                        decoration: _decoration('Min streak'),
-                        validator: (v) => v!.isEmpty || int.tryParse(v) != null
-                            ? null
-                            : 'Number required',
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _inactiveDays,
-                        keyboardType: TextInputType.number,
-                        decoration: _decoration('Inactive days'),
-                        validator: (v) => v!.isEmpty || int.tryParse(v) != null
-                            ? null
-                            : 'Number required',
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-              if (_jobType == NotificationCampaignJobType.scheduledPush)
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.schedule),
-                  title: Text(
-                    _sendAt == null
-                        ? 'Choose schedule time'
-                        : _sendAt.toString(),
-                  ),
-                  onTap: _pickSchedule,
+              for (final v in values)
+                FilterChip(
+                  label: Text(v),
+                  selected: selected.contains(v),
+                  onSelected: (_) => _toggle(selected, v),
                 ),
             ],
           ),
+          const SizedBox(height: AppSpacing.md),
+        ],
+      );
+
+  @override
+  Widget build(BuildContext context) => GrowthFormSheet(
+    title: 'adminGrowth.campaign.create'.tr(),
+    onSave: _submit,
+    children: [
+      Padding(
+        padding: const EdgeInsets.only(bottom: AppSpacing.md),
+        child: DropdownButtonFormField<NotificationCampaignJobType>(
+          initialValue: _jobType,
+          isExpanded: true,
+          decoration: InputDecoration(
+            labelText: 'adminGrowth.campaign.jobType'.tr(),
+          ),
+          items: [
+            for (final v in NotificationCampaignJobType.values)
+              DropdownMenuItem(value: v, child: Text(_typeLabel(v))),
+          ],
+          onChanged: (v) => setState(() => _jobType = v ?? _jobType),
         ),
       ),
-    ),
-    actions: [
-      TextButton(
-        style: TextButton.styleFrom(
-          minimumSize: const Size(kMinTapTarget, kMinTapTarget),
-        ),
-        onPressed: () => Navigator.pop(context),
-        child: const Text('Cancel'),
+      GrowthField(
+        controller: _title,
+        label: 'adminGrowth.campaign.fieldTitle'.tr(),
+        errorText: _req(_title),
       ),
-      FilledButton(onPressed: _submit, child: const Text('Create')),
+      GrowthField(
+        controller: _body,
+        label: 'adminGrowth.campaign.fieldBody'.tr(),
+        lines: 3,
+        errorText: _req(_body),
+      ),
+      GrowthField(
+        controller: _type,
+        label: 'adminGrowth.campaign.fieldType'.tr(),
+      ),
+      GrowthField(
+        controller: _link,
+        label: 'adminGrowth.campaign.fieldLink'.tr(),
+      ),
+      SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        title: Text('adminGrowth.campaign.useAi'.tr()),
+        value: _ai,
+        onChanged: (v) => setState(() => _ai = v),
+      ),
+      SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        title: Text('adminGrowth.campaign.segment'.tr()),
+        value: _segment,
+        onChanged: (v) => setState(() => _segment = v),
+      ),
+      if (_segment) ...[
+        _chips('adminGrowth.campaign.leagues', leagues, _leagues),
+        _chips('adminGrowth.campaign.levels', levels, _levels),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: GrowthField(
+                controller: _minStreak,
+                label: 'adminGrowth.campaign.minStreak'.tr(),
+                number: true,
+                errorText: _num(_minStreak),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: GrowthField(
+                controller: _inactiveDays,
+                label: 'adminGrowth.campaign.inactiveDays'.tr(),
+                number: true,
+                errorText: _num(_inactiveDays),
+              ),
+            ),
+          ],
+        ),
+      ],
+      if (_jobType == NotificationCampaignJobType.scheduledPush)
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          minVerticalPadding: AppSpacing.md,
+          leading: const Icon(Icons.schedule),
+          title: Text(
+            _sendAt == null
+                ? 'adminGrowth.campaign.chooseTime'.tr()
+                : _sendAt.toString(),
+          ),
+          onTap: _pickSchedule,
+        ),
     ],
   );
 }

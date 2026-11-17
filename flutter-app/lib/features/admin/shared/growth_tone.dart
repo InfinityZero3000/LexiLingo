@@ -17,4 +17,8 @@ extension GrowthTone on BuildContext {
   Color get toneDanger => _scheme.error;
   Color get toneSuccess => status.success;
   Color get toneWarning => status.warning;
+  Color get toneAccentBg => _scheme.primaryContainer;
+  Color get toneDangerBg => _scheme.errorContainer;
+  Color get toneSuccessBg => status.successContainer;
+  Color get toneWarningBg => status.warningContainer;
 }

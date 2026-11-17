@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/network/envelope.dart';
 import '../../../core/network/api_client.dart';
 
 enum NotificationCampaignJobType { targetedPush, inAppBroadcast, scheduledPush }
@@ -78,7 +79,7 @@ class NotificationCampaignJob {
 
 class NotificationCampaignRepository {
   static const _path = '/admin/notification-campaign/jobs';
-  final _api = ApiClient.instance;
+  ApiClient get _api => ApiClient.instance;
 
   NotificationCampaignJob _job(Map<String, dynamic> response) =>
       NotificationCampaignJob.fromJson(
@@ -89,15 +90,14 @@ class NotificationCampaignRepository {
     int limit = 50,
     int offset = 0,
   }) async {
-    final response = await _api.get(
+    final body = await _api.getData(
       _path,
       params: {'limit': limit, 'offset': offset},
     );
-    return ((response['data'] as List?) ?? const [])
+    return extractPage(body).items
+        .whereType<Map>()
         .map(
-          (e) => NotificationCampaignJob.fromJson(
-            (e as Map).cast<String, dynamic>(),
-          ),
+          (e) => NotificationCampaignJob.fromJson(Map<String, dynamic>.from(e)),
         )
         .toList();
   }
