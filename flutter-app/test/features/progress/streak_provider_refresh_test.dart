@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
@@ -7,20 +9,24 @@ import 'package:lexilingo_app/features/progress/presentation/providers/streak_pr
 
 class _Repository extends Fake implements ProgressRepository {
   bool fail = false;
+  Completer<void>? gate;
 
   @override
-  Future<Either<Failure, StreakEntity>> getMyStreak() async => fail
-      ? const Left(ServerFailure('offline'))
-      : const Right(
-          StreakEntity(
-            currentStreak: 12,
-            longestStreak: 20,
-            totalDaysActive: 40,
-            freezeCount: 1,
-            isActiveToday: true,
-            streakAtRisk: false,
-          ),
-        );
+  Future<Either<Failure, StreakEntity>> getMyStreak() async {
+    await gate?.future;
+    return fail
+        ? const Left(ServerFailure('offline'))
+        : const Right(
+            StreakEntity(
+              currentStreak: 12,
+              longestStreak: 20,
+              totalDaysActive: 40,
+              freezeCount: 1,
+              isActiveToday: true,
+              streakAtRisk: false,
+            ),
+          );
+  }
 }
 
 void main() {
@@ -48,5 +54,28 @@ void main() {
     expect(provider.hasStreak, isTrue);
     expect(provider.currentStreak, 0);
     provider.dispose();
+  });
+
+  test('a response that arrives after reset is dropped', () async {
+    final repository = _Repository()..gate = Completer<void>();
+    final provider = StreakProvider(repository: repository);
+
+    final pending = provider.loadStreak();
+    provider.reset();
+    repository.gate!.complete();
+    await pending;
+
+    expect(provider.hasStreak, isFalse);
+    provider.dispose();
+  });
+
+  test('a response that arrives after dispose does not notify', () async {
+    final repository = _Repository()..gate = Completer<void>();
+    final provider = StreakProvider(repository: repository);
+
+    final pending = provider.loadStreak();
+    provider.dispose();
+    repository.gate!.complete();
+    await pending;
   });
 }

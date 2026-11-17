@@ -38,35 +38,40 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
       body: ContentWidth(
         child: Consumer<ProgressProvider>(
           builder: (context, progressProvider, child) {
-            if (progressProvider.isLoading) {
+            if (progressProvider.isLoading &&
+                progressProvider.summary == null) {
               return LoadingScreen(message: 'progress.loadingProgress'.tr());
             }
 
-            if (progressProvider.errorMessage != null) {
+            if (progressProvider.errorMessage != null &&
+                progressProvider.summary == null) {
               return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      size: 64,
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    Text(
-                      progressProvider.errorMessage!,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-                    FilledButton(
-                      onPressed: () {
-                        progressProvider.fetchMyProgress();
-                        context.read<HomeProvider>().loadWeeklyProgress();
-                      },
-                      child: Text('common.retry'.tr()),
-                    ),
-                  ],
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(AppSpacing.xl),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 64,
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      Text(
+                        progressProvider.errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                      const SizedBox(height: AppSpacing.xl),
+                      FilledButton(
+                        onPressed: () {
+                          progressProvider.fetchMyProgress();
+                          context.read<HomeProvider>().loadWeeklyProgress();
+                        },
+                        child: Text('common.retry'.tr()),
+                      ),
+                    ],
+                  ),
                 ),
               );
             }
@@ -81,10 +86,19 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
             }
 
             return RefreshIndicator(
-              onRefresh: () => Future.wait([
-                progressProvider.fetchMyProgress(),
-                context.read<HomeProvider>().loadWeeklyProgress(),
-              ]),
+              onRefresh: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                await Future.wait([
+                  progressProvider.fetchMyProgress(),
+                  context.read<HomeProvider>().loadWeeklyProgress(),
+                ]);
+                final error = progressProvider.errorMessage;
+                if (mounted && error != null) {
+                  messenger
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(SnackBar(content: Text(error)));
+                }
+              },
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(AppSpacing.lg),

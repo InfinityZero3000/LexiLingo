@@ -73,15 +73,19 @@ class CourseProgressCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        'course.userProgressPercent'.tr(
-                          namedArgs: {
-                            'percent': courseProgress.progressPercentage
-                                .toStringAsFixed(1),
-                          },
+                      Flexible(
+                        child: Text(
+                          'course.userProgressPercent'.tr(
+                            namedArgs: {
+                              'percent': courseProgress.progressPercentage
+                                  .toStringAsFixed(1),
+                            },
+                          ),
+                          style: Theme.of(context).textTheme.bodySmall,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        style: Theme.of(context).textTheme.bodySmall,
                       ),
+                      const SizedBox(width: AppSpacing.sm),
                       Text(
                         'progress.lessonsOfTotal'.tr(
                           namedArgs: {

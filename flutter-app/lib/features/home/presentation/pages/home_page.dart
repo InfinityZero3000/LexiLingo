@@ -149,10 +149,21 @@ class _HomePageNewState extends State<HomePageNew> {
             );
 
             return RefreshIndicator(
-              onRefresh: () => Future.wait([
-                homeProvider.refreshData(),
-                context.read<StreakProvider>().loadStreak(),
-              ]),
+              onRefresh: () async {
+                final streakProvider = context.read<StreakProvider>();
+                final messenger = ScaffoldMessenger.of(context);
+                await Future.wait([
+                  homeProvider.refreshData(),
+                  streakProvider.loadStreak(),
+                ]);
+                final error =
+                    homeProvider.errorMessage ?? homeProvider.enrolledError;
+                if (mounted && error != null) {
+                  messenger
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(SnackBar(content: Text(error)));
+                }
+              },
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: EdgeInsets.only(

@@ -20,8 +20,17 @@ class StreakProvider extends ChangeNotifier {
     LocaleService.languageSwitches.addListener(_refreshCheckinReminders);
   }
 
+  int _generation = 0;
+  bool _disposed = false;
+
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
+
   @override
   void dispose() {
+    _disposed = true;
     LocaleService.languageSwitches.removeListener(_refreshCheckinReminders);
     super.dispose();
   }
@@ -73,7 +82,9 @@ class StreakProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    final generation = _generation;
     final result = await _repository.getMyStreak();
+    if (generation != _generation) return;
 
     result.fold(
       (failure) {
@@ -97,7 +108,9 @@ class StreakProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    final generation = _generation;
     final result = await _repository.updateStreak();
+    if (generation != _generation) return false;
 
     bool success = false;
     result.fold(
@@ -154,7 +167,9 @@ class StreakProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    final generation = _generation;
     final result = await _repository.useStreakFreeze();
+    if (generation != _generation) return false;
 
     bool success = false;
     result.fold(
@@ -195,7 +210,9 @@ class StreakProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    final generation = _generation;
     final result = await _repository.restoreStreak();
+    if (generation != _generation) return false;
 
     bool success = false;
     result.fold(
@@ -219,7 +236,9 @@ class StreakProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    final generation = _generation;
     final result = await _repository.claimDailyReward();
+    if (generation != _generation) return null;
 
     Map<String, dynamic>? successData;
     result.fold(
@@ -268,6 +287,7 @@ class StreakProvider extends ChangeNotifier {
 
   /// Reset state (for logout)
   void reset() {
+    _generation++;
     _streak = null;
     _isLoading = false;
     _errorMessage = null;
