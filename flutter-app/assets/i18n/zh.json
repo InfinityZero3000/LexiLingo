@@ -2349,5 +2349,10 @@
     "gateNoQuestions": "下一等级的考试暂不可用。",
     "gateMaxLevel": "你已被认证为最高等级。",
     "gateError": "无法加载考试，请重试。"
+  },
+  "coreKit": {
+    "typeToConfirm": "请输入“{text}”以确认",
+    "loadMore": "加载更多",
+    "noResults": "没有结果"
   }
 }

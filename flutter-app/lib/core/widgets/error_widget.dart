@@ -2,6 +2,8 @@ import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/error/failures.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 
 /// Types of errors that can be displayed
 enum ErrorType { network, server, timeout, unauthorized, notFound, unknown }
@@ -31,6 +33,28 @@ class ErrorDisplayWidget extends StatelessWidget {
     return ErrorDisplayWidget(
       errorType: errorType,
       customMessage: message,
+      onRetry: onRetry,
+      compact: compact,
+    );
+  }
+
+  /// Create from a [Failure]: its type picks the icon and title, its own
+  /// message (when it carries one) the description.
+  factory ErrorDisplayWidget.fromFailure(
+    Failure failure, {
+    VoidCallback? onRetry,
+    bool compact = false,
+  }) {
+    final type = switch (failure) {
+      NetworkFailure() => ErrorType.network,
+      ServerFailure() => ErrorType.server,
+      UnauthorizedFailure() || AuthFailure() => ErrorType.unauthorized,
+      NotFoundFailure() => ErrorType.notFound,
+      _ => ErrorType.unknown,
+    };
+    return ErrorDisplayWidget(
+      errorType: type,
+      customMessage: UiText.failure(failure).resolve(),
       onRetry: onRetry,
       compact: compact,
     );

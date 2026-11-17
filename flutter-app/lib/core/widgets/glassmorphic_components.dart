@@ -1,3 +1,4 @@
+// ignore_for_file: deprecated_member_use_from_same_package
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -5,6 +6,7 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Glassmorphic Card Widget
 /// Creates a frosted glass effect card with blur and gradient border
+@Deprecated('Legacy glassmorphism; use a plain Card on the surface tokens.')
 class GlassmorphicCard extends StatelessWidget {
   final Widget child;
   final double? width;
@@ -369,6 +371,9 @@ class _StreakFlameState extends State<StreakFlame>
 
 /// Shimmer Loading Widget
 /// Creates a shimmer effect for loading states
+@Deprecated(
+  'Use ShimmerContainer or the Skeleton* widgets in skeleton_loading.dart.',
+)
 class ShimmerLoading extends StatefulWidget {
   final Widget child;
   final bool isLoading;

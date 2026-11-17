@@ -2349,5 +2349,10 @@
     "gateNoQuestions": "次のレベルの試験はまだ利用できません。",
     "gateMaxLevel": "最高レベルに認定されています。",
     "gateError": "試験を読み込めませんでした。もう一度お試しください。"
+  },
+  "coreKit": {
+    "typeToConfirm": "確認のため「{text}」と入力してください",
+    "loadMore": "もっと見る",
+    "noResults": "結果がありません"
   }
 }

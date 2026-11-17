@@ -2349,5 +2349,10 @@
     "gateNoQuestions": "Bài thi cho trình độ tiếp theo chưa sẵn sàng.",
     "gateMaxLevel": "Bạn đã được chứng nhận ở trình độ cao nhất.",
     "gateError": "Không tải được bài thi. Vui lòng thử lại."
+  },
+  "coreKit": {
+    "typeToConfirm": "Gõ \"{text}\" để xác nhận",
+    "loadMore": "Tải thêm",
+    "noResults": "Không có kết quả"
   }
 }

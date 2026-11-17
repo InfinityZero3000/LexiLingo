@@ -2349,5 +2349,10 @@
     "gateNoQuestions": "다음 레벨 시험은 아직 준비되지 않았습니다.",
     "gateMaxLevel": "가장 높은 레벨로 인증되었습니다.",
     "gateError": "시험을 불러오지 못했습니다. 다시 시도해 주세요."
+  },
+  "coreKit": {
+    "typeToConfirm": "확인하려면 \"{text}\"을(를) 입력하세요",
+    "loadMore": "더 보기",
+    "noResults": "결과가 없습니다"
   }
 }
