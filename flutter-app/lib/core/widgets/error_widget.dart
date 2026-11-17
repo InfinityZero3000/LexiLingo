@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -85,7 +86,7 @@ class ErrorDisplayWidget extends StatelessWidget {
       case ErrorType.unauthorized:
         return AppColors.warning;
       case ErrorType.notFound:
-        return Colors.grey;
+        return AppColors.textGrey;
     }
   }
 
@@ -137,7 +138,7 @@ class ErrorDisplayWidget extends StatelessWidget {
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _iconColor.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: _iconColor.withValues(alpha: 0.3)),
       ),
       child: Row(
@@ -191,7 +192,7 @@ class ErrorDisplayWidget extends StatelessWidget {
             Text(
               _description,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: Colors.grey[600],
+                color: theme.colorScheme.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,
             ),
@@ -201,10 +202,10 @@ class ErrorDisplayWidget extends StatelessWidget {
                 onPressed: onRetry,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _iconColor,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.textInverted,
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
+                    horizontal: AppSpacing.xl,
+                    vertical: AppSpacing.md,
                   ),
                 ),
                 child: Text('common.tryAgain'.tr()),
@@ -237,18 +238,21 @@ class OfflineBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      color: Colors.orange.shade800,
+      padding: const EdgeInsets.symmetric(
+        vertical: AppSpacing.sm,
+        horizontal: 16,
+      ),
+      color: context.status.warning,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.wifi_off, color: AppColors.surfaceLight, size: 18),
-          SizedBox(width: 8),
+          Icon(Icons.wifi_off, color: context.status.onWarning, size: 18),
+          const SizedBox(width: AppSpacing.sm),
           Flexible(
             child: Text(
               'common.offline'.tr(),
               style: TextStyle(
-                color: Colors.white,
+                color: context.status.onWarning,
                 fontWeight: FontWeight.w500,
               ),
               maxLines: 2,

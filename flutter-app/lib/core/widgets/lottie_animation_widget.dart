@@ -1,5 +1,7 @@
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Available Lottie animations in the app
 enum LottieAnimation {
@@ -191,20 +193,20 @@ class LottieAnimationWidget extends StatelessWidget {
             fallback = Icon(
               Icons.check_circle_rounded,
               size: sz.shortestSide,
-              color: Colors.green,
+              color: AppColors.greenSuccess,
             );
           case LottieAnimation.heartbeat:
             fallback = Icon(
               Icons.favorite_rounded,
               size: sz.shortestSide,
-              color: Colors.red,
+              color: AppColors.error,
             );
           case LottieAnimation.starBurst:
           case LottieAnimation.levelUpOrbit:
             fallback = Icon(
               Icons.star_rounded,
               size: sz.shortestSide,
-              color: Colors.amber,
+              color: AppColors.warning,
             );
           default:
             fallback = const SizedBox.shrink();
@@ -265,7 +267,7 @@ class AnimatedSuccessDialog extends StatelessWidget {
         padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

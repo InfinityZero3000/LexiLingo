@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -114,7 +115,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                     expandedHeight: 200,
                     pinned: true,
                     backgroundColor: categoryColor,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.textInverted,
                     flexibleSpace: FlexibleSpaceBar(
                       title: Text(
                         category.name,
@@ -291,7 +292,10 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
   /// Build list view of courses
   Widget _buildCourseList(List<CourseEntity> courses) {
     return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: 8,
+      ),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate((context, index) {
           final course = courses[index];
@@ -317,7 +321,10 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
         final crossAxisCount = adaptiveColumns(width);
 
         return SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: 8,
+          ),
           sliver: SliverGrid(
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: crossAxisCount,
@@ -517,10 +524,12 @@ class _CourseCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Row(
@@ -528,7 +537,7 @@ class _CourseCard extends StatelessWidget {
             children: [
               // Thumbnail
               ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
                 child: SizedBox(
                   width: 100,
                   height: 100,
@@ -575,8 +584,8 @@ class _CourseCard extends StatelessWidget {
                     // Level badge
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                        horizontal: AppSpacing.sm,
+                        vertical: AppSpacing.xs,
                       ),
                       decoration: BoxDecoration(
                         color: _getLevelColor(
@@ -650,10 +659,12 @@ class _CourseGridCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -661,7 +672,7 @@ class _CourseGridCard extends StatelessWidget {
             Expanded(
               child: ClipRRect(
                 borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(12),
+                  top: Radius.circular(AppRadius.md),
                 ),
                 child: SizedBox(
                   width: double.infinity,
@@ -695,7 +706,7 @@ class _CourseGridCard extends StatelessWidget {
                   // Level badge
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
+                      horizontal: AppSpacing.sm,
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(

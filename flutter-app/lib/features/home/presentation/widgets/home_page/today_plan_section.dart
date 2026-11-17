@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/today_plan_models.dart';
@@ -20,7 +21,7 @@ class TodayPlanTaskTile extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.all(14),
@@ -28,7 +29,7 @@ class TodayPlanTaskTile extends StatelessWidget {
             color: task.isCompleted
                 ? task.color.withValues(alpha: 0.10)
                 : colorScheme.surface.withValues(alpha: isDark ? 0.36 : 0.92),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(
               color: task.isCompleted
                   ? task.color.withValues(alpha: 0.32)
@@ -42,7 +43,7 @@ class TodayPlanTaskTile extends StatelessWidget {
                 height: 48,
                 decoration: BoxDecoration(
                   color: task.color.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
                 child: Icon(task.icon, color: task.color, size: 25),
               ),
@@ -68,7 +69,7 @@ class TodayPlanTaskTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(999),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
                       child: LinearProgressIndicator(
                         minHeight: 5,
                         value: task.progress,

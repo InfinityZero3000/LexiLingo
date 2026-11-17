@@ -147,9 +147,8 @@ class _AnimatedNotificationBadgeState extends State<AnimatedNotificationBadge>
                   child: Center(
                     child: Text(
                       widget.count > 99 ? '99+' : widget.count.toString(),
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: Theme.of(context).colorScheme.surface,
-                        fontSize: 10,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -239,7 +238,7 @@ class AnimatedRatingStars extends StatelessWidget {
     this.maxRating = 5,
     this.size = 20,
     this.filledColor = AppColors.warning,
-    this.unfilledColor = Colors.grey,
+    this.unfilledColor = AppColors.grey400,
   });
 
   @override
@@ -268,7 +267,7 @@ class AnimatedActionButton extends StatefulWidget {
     required this.onTap,
     required this.icon,
     required this.label,
-    this.color = Colors.blue,
+    this.color = AppColors.primary,
     this.size = 56,
   });
 
@@ -323,9 +322,8 @@ class _AnimatedActionButtonState extends State<AnimatedActionButton> {
           const SizedBox(height: 8),
           Text(
             widget.label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -389,7 +387,7 @@ class _AnimatedFavoriteButtonState extends State<AnimatedFavoriteButton> {
             : Icon(
                 Icons.favorite_border,
                 size: widget.size,
-                color: Colors.grey,
+                color: Theme.of(context).colorScheme.outline,
               ),
       ),
     );

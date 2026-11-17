@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -90,7 +91,12 @@ class _TodayPlanPageState extends State<TodayPlanPage> {
                   },
                   child: ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.lg,
+                      AppSpacing.sm,
+                      AppSpacing.lg,
+                      28,
+                    ),
                     children: [
                       _TodayPlanHero(snapshot: snapshot, color: accent),
                       const SizedBox(height: 16),
@@ -109,7 +115,9 @@ class _TodayPlanPageState extends State<TodayPlanPage> {
                                 context,
                               ).colorScheme.surface,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.lg,
+                                ),
                               ),
                             ),
                           ),
@@ -160,7 +168,7 @@ class _TodayPlanHero extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
             color: color.withValues(alpha: isDark ? 0.24 : 0.20),
@@ -179,7 +187,7 @@ class _TodayPlanHero extends StatelessWidget {
                 height: 48,
                 decoration: BoxDecoration(
                   color: colorScheme.surface.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                 ),
                 child: Icon(
                   Icons.route_rounded,
@@ -209,7 +217,7 @@ class _TodayPlanHero extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           ClipRRect(
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
             child: LinearProgressIndicator(
               minHeight: 9,
               value: snapshot.progress,

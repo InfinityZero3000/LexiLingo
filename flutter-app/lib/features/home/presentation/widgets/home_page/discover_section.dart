@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -150,16 +151,21 @@ class _DiscoverSectionState extends State<DiscoverSection> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.lg,
+                      AppSpacing.sm,
+                      AppSpacing.lg,
+                      24,
+                    ),
                     child: Container(
                       clipBehavior: Clip.antiAlias,
                       decoration: tactile.decoration(
                         variant: TactileSurfaceVariant.elevated,
                         fill: isDark
                             ? theme.colorScheme.surfaceContainerHighest
-                            : Colors.white,
+                            : theme.colorScheme.surface,
                         accent: AppColorRoles.primary(isDark),
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(AppRadius.xl),
                         diagnosticId: 'home-discover',
                       ),
                       child: !hasContent
@@ -182,10 +188,10 @@ class _DiscoverSectionState extends State<DiscoverSection> {
                                 if (rows.isNotEmpty)
                                   Padding(
                                     padding: const EdgeInsets.fromLTRB(
-                                      8,
-                                      8,
-                                      8,
-                                      8,
+                                      AppSpacing.sm,
+                                      AppSpacing.sm,
+                                      AppSpacing.sm,
+                                      AppSpacing.sm,
                                     ),
                                     child: Column(children: rows),
                                   ),
@@ -315,10 +321,13 @@ class _DiscoverRow extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm,
+            vertical: 8,
+          ),
           child: Row(
             children: [
               Container(
@@ -326,7 +335,7 @@ class _DiscoverRow extends StatelessWidget {
                 height: 40,
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: isDark ? 0.22 : 0.14),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Icon(icon, color: color, size: 21),
               ),

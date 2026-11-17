@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
 
@@ -8,7 +9,12 @@ class HomeSkeletonLoading extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        24,
+      ),
       child: ShimmerContainer(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

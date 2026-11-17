@@ -4,7 +4,17 @@ import 'dart:ui' show ImageFilter;
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
+import '../theme/app_tokens.dart';
 import 'app_back_button.dart';
+
+/// Scrims and text laid over artwork: fixed in both themes, because the image
+/// underneath does not follow the theme.
+const _imageScrim = Color(0x99000000);
+const _imageFadeClear = Color(0x00000000);
+const _imageFadeDark = Color(0xD9000000);
+const _onImage = Colors.white;
+const _onImageMuted = Color(0xE6FFFFFF);
+const _onImageEyebrow = Color(0xCCFFFFFF);
 
 /// Page and hero titles: the theme's own face (Lexend), only heavier and larger.
 TextStyle contentDisplay(
@@ -93,7 +103,7 @@ class ContentBackdrop extends StatelessWidget {
               ),
             ),
           ),
-          const ColoredBox(color: Color(0x99000000)),
+          const ColoredBox(color: _imageScrim),
         ],
       ),
     );
@@ -120,7 +130,7 @@ class ContentTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final iconColor = collapsed ? scheme.onSurface : Colors.white;
+    final iconColor = collapsed ? scheme.onSurface : _onImage;
     return Positioned(
       top: 0,
       left: 0,
@@ -152,8 +162,7 @@ class ContentTopBar extends StatelessWidget {
                       title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 16,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -183,10 +192,10 @@ class ContentCta extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: scheme.primary,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: AppRadius.xlAll,
       ),
       child: SizedBox(
-        height: 44,
+        height: kMinTapTarget,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Row(
@@ -199,9 +208,8 @@ class ContentCta extends StatelessWidget {
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
                     color: scheme.onPrimary,
-                    fontSize: 14,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -263,7 +271,7 @@ class ContentHero extends StatelessWidget {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       stops: [0.2, 1],
-                      colors: [Color(0x00000000), Color(0xD9000000)],
+                      colors: [_imageFadeClear, _imageFadeDark],
                     ),
                   ),
                 ),
@@ -276,12 +284,12 @@ class ContentHero extends StatelessWidget {
                       if (eyebrow != null) ...[
                         Text(
                           eyebrow!.toUpperCase(),
-                          style: const TextStyle(
-                            color: Color(0xCCFFFFFF),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 1.6,
-                          ),
+                          style: Theme.of(context).textTheme.labelMedium
+                              ?.copyWith(
+                                color: _onImageEyebrow,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 1.6,
+                              ),
                         ),
                         const SizedBox(height: 8),
                       ],
@@ -289,7 +297,7 @@ class ContentHero extends StatelessWidget {
                         title,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: contentDisplay(context, color: Colors.white),
+                        style: contentDisplay(context, color: _onImage),
                       ),
                       if (subtitle != null && subtitle!.isNotEmpty) ...[
                         const SizedBox(height: 8),
@@ -297,11 +305,8 @@ class ContentHero extends StatelessWidget {
                           subtitle!,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Color(0xE6FFFFFF),
-                            fontSize: 14,
-                            height: 1.4,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(color: _onImageMuted, height: 1.4),
                         ),
                       ],
                       const SizedBox(height: 16),
@@ -476,7 +481,7 @@ class ContentSectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 12, 0),
+      padding: const EdgeInsets.fromLTRB(20, 0, AppSpacing.md, 0),
       child: Row(
         children: [
           Expanded(
@@ -486,10 +491,9 @@ class ContentSectionHeader extends StatelessWidget {
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
             ),
           ),
@@ -498,12 +502,15 @@ class ContentSectionHeader extends StatelessWidget {
               onPressed: onAction,
               style: TextButton.styleFrom(
                 foregroundColor: scheme.primary,
-                minimumSize: const Size(44, 44),
+                minimumSize: const Size(kMinTapTarget, kMinTapTarget),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(actionLabel!, style: const TextStyle(fontSize: 12)),
+                  Text(
+                    actionLabel!,
+                    style: Theme.of(context).textTheme.labelMedium,
+                  ),
                   const SizedBox(width: 4),
                   const Icon(PhosphorIconsBold.arrowRight, size: 14),
                 ],
@@ -547,7 +554,7 @@ class ContentChipBar extends StatelessWidget {
               color: Colors.transparent,
               child: InkWell(
                 onTap: () => onSelected(i),
-                borderRadius: BorderRadius.circular(22),
+                borderRadius: AppRadius.xlAll,
                 child: AnimatedContainer(
                   duration: _motion(context, 200),
                   curve: Curves.easeOut,
@@ -555,15 +562,14 @@ class ContentChipBar extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 18),
                   decoration: BoxDecoration(
                     color: on ? scheme.primary : scheme.surface,
-                    borderRadius: BorderRadius.circular(22),
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
                     border: Border.all(
                       color: on ? scheme.primary : scheme.outlineVariant,
                     ),
                   ),
                   child: Text(
                     labels[i],
-                    style: TextStyle(
-                      fontSize: 14,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w600,
                       color: on ? scheme.onPrimary : scheme.onSurface,
                     ),

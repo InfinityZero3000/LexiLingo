@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -261,7 +262,7 @@ class _CelebrationScreenState extends State<CelebrationScreen>
                       child: Text(
                         widget.subtitle!,
                         style: theme.textTheme.titleMedium?.copyWith(
-                          color: Colors.grey[600],
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -297,15 +298,14 @@ class _CelebrationScreenState extends State<CelebrationScreen>
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           backgroundColor: theme.primaryColor,
-                          foregroundColor: Colors.white,
+                          foregroundColor: theme.colorScheme.onPrimary,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: AppRadius.lgAll,
                           ),
                         ),
-                        child: const Text(
+                        child: Text(
                           'Continue',
-                          style: TextStyle(
-                            fontSize: 18,
+                          style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -325,15 +325,16 @@ class _CelebrationScreenState extends State<CelebrationScreen>
 
   Widget _buildXpBadge(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xl,
+        vertical: 12,
+      ),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.amber.shade400, Colors.orange.shade400],
-        ),
-        borderRadius: BorderRadius.circular(30),
+        gradient: LinearGradient(colors: AppColors.goldGradient),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
-            color: Colors.amber.withValues(alpha: 0.4),
+            color: AppColors.gold.withValues(alpha: 0.4),
             blurRadius: 15,
             spreadRadius: 2,
           ),
@@ -350,8 +351,7 @@ class _CelebrationScreenState extends State<CelebrationScreen>
           const SizedBox(width: 8),
           Text(
             '+${widget.xpEarned} XP',
-            style: TextStyle(
-              fontSize: 24,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.bold,
               color: Theme.of(context).colorScheme.surface,
             ),

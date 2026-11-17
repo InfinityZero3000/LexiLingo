@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/core/network/course_network_image.dart';
 import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -65,7 +66,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     Text(
                       provider.detailError!,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 16),
+                      style: Theme.of(context).textTheme.bodyLarge,
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
@@ -98,10 +99,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     course.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: Theme.of(context).colorScheme.surface,
                       fontWeight: FontWeight.w600,
-                      fontSize: 20,
                     ),
                   ),
                 ),
@@ -120,7 +120,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                         if (course.description != null) ...[
                           Text(
                             course.description!,
-                            style: const TextStyle(fontSize: 16),
+                            style: Theme.of(context).textTheme.bodyLarge,
                           ),
                           const SizedBox(height: 16),
                         ],
@@ -171,10 +171,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                 children: [
                                   Text(
                                     'course.yourProgress'.tr(),
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    style: Theme.of(context).textTheme.bodyLarge
+                                        ?.copyWith(fontWeight: FontWeight.bold),
                                   ),
                                   const SizedBox(height: 12),
                                   LinearProgressIndicator(
@@ -191,13 +189,15 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                             '0',
                                       },
                                     ),
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: AppColorRoles.textSecondary(
-                                        Theme.of(context).brightness ==
-                                            Brightness.dark,
-                                      ),
-                                    ),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color: AppColorRoles.textSecondary(
+                                            Theme.of(context).brightness ==
+                                                Brightness.dark,
+                                          ),
+                                        ),
                                   ),
                                 ],
                               ),
@@ -247,7 +247,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                   : () => _enrollInCourse(context, provider),
                               style: ElevatedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
+                                  vertical: AppSpacing.lg,
                                 ),
                               ),
                             ),
@@ -260,10 +260,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                         const SizedBox(height: 8),
                         Text(
                           'course.learningRoadmap'.tr(),
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 16),
                       ],
@@ -474,7 +472,10 @@ class _UnitCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: 8,
+      ),
       child: ExpansionTile(
         initiallyExpanded: unit.lessons.any((l) => l.id == nextLessonId),
         leading: CircleAvatar(

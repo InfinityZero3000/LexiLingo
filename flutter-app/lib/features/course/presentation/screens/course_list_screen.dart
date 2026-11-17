@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/core/widgets/tap_target.dart';
 // ignore: depend_on_referenced_packages
 import 'package:lexilingo_app/core/network/course_network_image.dart';
@@ -15,6 +16,18 @@ import 'package:lexilingo_app/features/course/domain/entities/course_category_en
 
 /// Course List Screen
 /// Displays courses in horizontal scrolling sections grouped by category
+/// Decorative cover gradients; picked by course-id hash, fixed in both themes.
+const _courseCardGradients = <List<Color>>[
+  [AppColors.primary, AppColors.purple],
+  [AppColors.purple, Color(0xFFf5576c)],
+  [Color(0xFF4facfe), Color(0xFF00f2fe)],
+  [Color(0xFF43e97b), Color(0xFF38f9d7)],
+  [Color(0xFFfa709a), Color(0xFFfee140)],
+  [Color(0xFF30cfd0), Color(0xFF330867)],
+  [Color(0xFFa8edea), Color(0xFFfed6e3)],
+  [Color(0xFFff9a9e), Color(0xFFfecfef)],
+];
+
 class CourseListScreen extends StatefulWidget {
   const CourseListScreen({super.key});
 
@@ -108,7 +121,12 @@ class _CourseListScreenState extends State<CourseListScreen> {
                     automaticallyImplyLeading: false,
                     titleSpacing: 0,
                     title: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                      padding: const EdgeInsets.fromLTRB(
+                        20,
+                        AppSpacing.md,
+                        20,
+                        0,
+                      ),
                       child: Row(
                         children: [
                           // A tab in MainScreen, but also pushed as a
@@ -121,7 +139,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
                               color: primaryAccent,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
                             ),
                             child: Icon(
                               Icons.explore,
@@ -144,7 +162,11 @@ class _CourseListScreenState extends State<CourseListScreen> {
                                   provider.courses.length,
                                 ),
                                 style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(color: AppColors.grey600),
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                    ),
                               ),
                             ],
                           ),
@@ -156,7 +178,9 @@ class _CourseListScreenState extends State<CourseListScreen> {
                                   color: provider.hasActiveFilters
                                       ? primaryAccent
                                       : primaryAccent.withValues(alpha: 0.14),
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.md,
+                                  ),
                                 ),
                                 child: IconButton(
                                   icon: Icon(
@@ -439,7 +463,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       builder: (context) => const _FilterSheet(),
     );
@@ -454,9 +478,14 @@ class _CourseBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.xs,
+        AppSpacing.lg,
+        12,
+      ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         child: Stack(
           children: [
             // Banner image
@@ -474,7 +503,7 @@ class _CourseBanner extends StatelessWidget {
                   begin: Alignment.centerRight,
                   end: Alignment.centerLeft,
                   colors: [
-                    (isDark ? AppColors.slate900 : const Color(0xFF0D47A1))
+                    (isDark ? AppColors.slate900 : AppColors.primaryDark)
                         .withValues(alpha: 0.55),
                     Colors.transparent,
                   ],
@@ -492,9 +521,9 @@ class _CourseBanner extends StatelessWidget {
                 children: [
                   Text(
                     'course.startLearning'.tr(),
-                    style: TextStyle(
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       color: AppColors.textInverted,
-                      fontSize: 18,
+
                       fontWeight: FontWeight.bold,
                       shadows: [
                         Shadow(
@@ -508,9 +537,9 @@ class _CourseBanner extends StatelessWidget {
                   Text(
                     'course.pickCoursePrompt'.tr(),
                     textAlign: TextAlign.right,
-                    style: TextStyle(
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.textInverted.withValues(alpha: 0.9),
-                      fontSize: 12,
+
                       height: 1.4,
                       shadows: [
                         Shadow(
@@ -569,8 +598,8 @@ class _CategorySection extends StatelessWidget {
         // Category Header
         Padding(
           padding: EdgeInsets.symmetric(
-            horizontal: isCompactMobile ? 14 : 16,
-            vertical: isCompactMobile ? 6 : 8,
+            horizontal: isCompactMobile ? 14 : AppSpacing.lg,
+            vertical: isCompactMobile ? 6 : AppSpacing.sm,
           ),
           child: Row(
             children: [
@@ -578,7 +607,7 @@ class _CategorySection extends StatelessWidget {
                 padding: EdgeInsets.all(isCompactMobile ? 7 : 8),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Icon(
                   icon,
@@ -599,9 +628,9 @@ class _CategorySection extends StatelessWidget {
                     ),
                     Text(
                       description,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.copyWith(color: AppColors.grey600),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -621,7 +650,7 @@ class _CategorySection extends StatelessWidget {
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: EdgeInsets.symmetric(
-              horizontal: isCompactMobile ? 10 : 12,
+              horizontal: isCompactMobile ? 10 : AppSpacing.md,
             ),
             itemCount: courses.length,
             itemExtent: (isCompactMobile ? 150.0 : 170.0) + 8,
@@ -682,7 +711,10 @@ class _HorizontalCourseCard extends StatelessWidget {
 
     return Container(
       width: cardWidth,
-      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: 4,
+      ),
       child: Card(
         elevation: 1.5,
         shadowColor: AppColors.slate900.withValues(alpha: 0.26),
@@ -730,18 +762,20 @@ class _HorizontalCourseCard extends StatelessWidget {
                           left: 8,
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
+                              horizontal: AppSpacing.sm,
+                              vertical: AppSpacing.xs,
                             ),
                             decoration: BoxDecoration(
                               color: _getLevelColor(
                                 course.level,
                                 isDark: isDark,
                               ).withValues(alpha: 0.9),
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.slate900.withValues(alpha: 0.2),
+                                  color: AppColors.slate900.withValues(
+                                    alpha: 0.2,
+                                  ),
                                   blurRadius: 4,
                                   offset: const Offset(0, 2),
                                 ),
@@ -749,11 +783,12 @@ class _HorizontalCourseCard extends StatelessWidget {
                             ),
                             child: Text(
                               course.level,
-                              style: TextStyle(
-                                color: AppColors.surfaceLight,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: Theme.of(context).textTheme.labelSmall
+                                  ?.copyWith(
+                                    color: AppColors.surfaceLight,
+
+                                    fontWeight: FontWeight.bold,
+                                  ),
                             ),
                           ),
                         ),
@@ -764,15 +799,17 @@ class _HorizontalCourseCard extends StatelessWidget {
                           right: 8,
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
+                              horizontal: AppSpacing.sm,
+                              vertical: AppSpacing.xs,
                             ),
                             decoration: BoxDecoration(
                               color: AppColors.warning.withValues(alpha: 0.9),
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
                               boxShadow: [
                                 BoxShadow(
-                                  color: AppColors.slate900.withValues(alpha: 0.2),
+                                  color: AppColors.slate900.withValues(
+                                    alpha: 0.2,
+                                  ),
                                   blurRadius: 4,
                                   offset: const Offset(0, 2),
                                 ),
@@ -789,11 +826,12 @@ class _HorizontalCourseCard extends StatelessWidget {
                                 const SizedBox(width: 4),
                                 Text(
                                   '${course.totalXp}',
-                                  style: TextStyle(
-                                    color: AppColors.surfaceLight,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  style: Theme.of(context).textTheme.labelSmall
+                                      ?.copyWith(
+                                        color: AppColors.surfaceLight,
+
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                 ),
                               ],
                             ),
@@ -840,14 +878,16 @@ class _HorizontalCourseCard extends StatelessWidget {
                                           .withValues(alpha: 0.5),
                                     ],
                                   ),
-                                  borderRadius: BorderRadius.circular(10),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.md,
+                                  ),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Container(
                                       padding: const EdgeInsets.symmetric(
-                                        horizontal: 4,
+                                        horizontal: AppSpacing.xs,
                                         vertical: 1,
                                       ),
                                       decoration: BoxDecoration(
@@ -859,25 +899,29 @@ class _HorizontalCourseCard extends StatelessWidget {
                                       ),
                                       child: Text(
                                         _getLanguageCode(course.language),
-                                        style: TextStyle(
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.bold,
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.primary,
-                                        ),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelSmall
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.primary,
+                                            ),
                                       ),
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
                                       _getLanguageLabel(course.language),
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onPrimaryContainer,
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onPrimaryContainer,
+                                          ),
                                     ),
                                   ],
                                 ),
@@ -894,25 +938,33 @@ class _HorizontalCourseCard extends StatelessWidget {
                                     ),
                                     decoration: BoxDecoration(
                                       color: isDark
-                                          ? AppColors.textInverted.withValues(alpha: 0.08)
+                                          ? AppColors.textInverted.withValues(
+                                              alpha: 0.08,
+                                            )
                                           : AppColors.grey100,
-                                      borderRadius: BorderRadius.circular(10),
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.md,
+                                      ),
                                       border: Border.all(
                                         color: isDark
-                                            ? AppColors.textInverted.withValues(alpha: 0.24)
+                                            ? AppColors.textInverted.withValues(
+                                                alpha: 0.24,
+                                              )
                                             : AppColors.grey300,
                                         width: 0.8,
                                       ),
                                     ),
                                     child: Text(
                                       tag,
-                                      style: TextStyle(
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.w600,
-                                        color: isDark
-                                            ? AppColors.textOnDarkSecondary
-                                            : AppColors.grey700,
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                            color: isDark
+                                                ? AppColors.textOnDarkSecondary
+                                                : AppColors.grey700,
+                                          ),
                                     ),
                                   ),
                                 ),
@@ -930,7 +982,9 @@ class _HorizontalCourseCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: titleFontSize,
                           fontWeight: FontWeight.bold,
-                          color: isDark ? AppColors.textOnDarkPrimary : AppColors.textDark,
+                          color: isDark
+                              ? AppColors.textOnDarkPrimary
+                              : AppColors.textDark,
                           height: 1.15,
                         ),
                         maxLines: 2,
@@ -943,6 +997,7 @@ class _HorizontalCourseCard extends StatelessWidget {
                       Row(
                         children: [
                           _buildStatChip(
+                            context,
                             icon: Icons.book_outlined,
                             value: '${course.totalLessons}',
                             color: AppColorRoles.primary(isDark),
@@ -1243,16 +1298,7 @@ class _HorizontalCourseCard extends StatelessWidget {
   }
 
   List<Color> _getGradientFromHash(int hash) {
-    final gradients = [
-      [AppColors.primary, AppColors.purple],
-      [AppColors.purple, const Color(0xFFf5576c)],
-      [const Color(0xFF4facfe), const Color(0xFF00f2fe)],
-      [const Color(0xFF43e97b), const Color(0xFF38f9d7)],
-      [const Color(0xFFfa709a), const Color(0xFFfee140)],
-      [const Color(0xFF30cfd0), const Color(0xFF330867)],
-      [const Color(0xFFa8edea), const Color(0xFFfed6e3)],
-      [const Color(0xFFff9a9e), const Color(0xFFfecfef)],
-    ];
+    final gradients = _courseCardGradients;
     return gradients[hash.abs() % gradients.length];
   }
 
@@ -1353,16 +1399,20 @@ class _HorizontalCourseCard extends StatelessWidget {
     return AppColorRoles.primary(isDark);
   }
 
-  Widget _buildStatChip({
+  Widget _buildStatChip(
+    BuildContext context, {
     required IconData icon,
     required String value,
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 3,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1371,8 +1421,7 @@ class _HorizontalCourseCard extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             value,
-            style: TextStyle(
-              fontSize: 10,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w600,
               color: color,
             ),
@@ -1384,13 +1433,16 @@ class _HorizontalCourseCard extends StatelessWidget {
 
   Widget _buildProgressChip(BuildContext context, double progress) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 3,
+      ),
       decoration: BoxDecoration(
         color: _getProgressColor(
           progress,
           isDark: Theme.of(context).brightness == Brightness.dark,
         ).withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1406,8 +1458,7 @@ class _HorizontalCourseCard extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             '${progress.toStringAsFixed(0)}%',
-            style: TextStyle(
-              fontSize: 10,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w600,
               color: _getProgressColor(
                 progress,
@@ -1442,7 +1493,11 @@ class _FilterSheetState extends State<_FilterSheet> {
     ('course.difficulty.elementary', 'Elementary', AppColors.greenSuccessSoft),
     ('course.difficulty.preIntermediate', 'Pre-Intermediate', AppColors.teal),
     ('course.difficulty.intermediate', 'Intermediate', AppColors.orange),
-    ('course.difficulty.upperIntermediate', 'Upper-Intermediate', AppColors.deepOrange),
+    (
+      'course.difficulty.upperIntermediate',
+      'Upper-Intermediate',
+      AppColors.deepOrange,
+    ),
     ('course.difficulty.advanced', 'Advanced', AppColors.errorBright),
   ];
 
@@ -1518,13 +1573,15 @@ class _FilterSheetState extends State<_FilterSheet> {
         return Container(
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppRadius.xl),
+            ),
           ),
           child: Column(
             children: [
               // Handle + header (fixed)
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                padding: const EdgeInsets.fromLTRB(20, AppSpacing.md, 20, 0),
                 child: Column(
                   children: [
                     Center(
@@ -1544,7 +1601,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             color: primaryAccent,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
                           child: Icon(
                             Icons.tune_rounded,
@@ -1555,11 +1612,12 @@ class _FilterSheetState extends State<_FilterSheet> {
                         const SizedBox(width: 12),
                         Flexible(
                           child: Text(
-                          'course.filterCourses'.tr(),
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ), maxLines: 1, overflow: TextOverflow.ellipsis),
+                            'course.filterCourses'.tr(),
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                         const Spacer(),
                         if (_hasAnyFilter)
@@ -1582,7 +1640,7 @@ class _FilterSheetState extends State<_FilterSheet> {
               Expanded(
                 child: ListView(
                   controller: scrollController,
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                  padding: const EdgeInsets.fromLTRB(20, AppSpacing.lg, 20, 16),
                   children: [
                     // ── Language ──────────────────────────────────────
                     _SectionHeader(label: 'common.language'.tr()),
@@ -1698,14 +1756,14 @@ class _FilterSheetState extends State<_FilterSheet> {
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
+                          horizontal: AppSpacing.lg,
+                          vertical: AppSpacing.md,
                         ),
                         decoration: BoxDecoration(
                           color: _enrolledOnly
                               ? AppColors.warningDark.withValues(alpha: 0.12)
                               : AppColors.grey500.withValues(alpha: 0.07),
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
                           border: Border.all(
                             color: _enrolledOnly
                                 ? AppColors.warningDark
@@ -1724,16 +1782,20 @@ class _FilterSheetState extends State<_FilterSheet> {
                             const SizedBox(width: 10),
                             Flexible(
                               child: Text(
-                              'course.showEnrolledOnly'.tr(),
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                                color: _enrolledOnly
-                                    ? AppColors.warningDark
-                                    : (isDark
-                                          ? AppColors.textOnDarkSecondary
-                                          : AppColors.textDark),
-                              ), maxLines: 2, overflow: TextOverflow.ellipsis),
+                                'course.showEnrolledOnly'.tr(),
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w600,
+
+                                      color: _enrolledOnly
+                                          ? AppColors.warningDark
+                                          : (isDark
+                                                ? AppColors.textOnDarkSecondary
+                                                : AppColors.textDark),
+                                    ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                             const Spacer(),
                             Switch.adaptive(
@@ -1741,9 +1803,8 @@ class _FilterSheetState extends State<_FilterSheet> {
                               onChanged: (v) =>
                                   setState(() => _enrolledOnly = v),
                               activeThumbColor: AppColors.warningDark,
-                              activeTrackColor: AppColors.warningDark.withValues(
-                                alpha: 0.4,
-                              ),
+                              activeTrackColor: AppColors.warningDark
+                                  .withValues(alpha: 0.4),
                             ),
                           ],
                         ),
@@ -1786,7 +1847,7 @@ class _FilterSheetState extends State<_FilterSheet> {
               Container(
                 padding: EdgeInsets.fromLTRB(
                   20,
-                  12,
+                  AppSpacing.md,
                   20,
                   12 + MediaQuery.of(context).padding.bottom,
                 ),
@@ -1794,7 +1855,9 @@ class _FilterSheetState extends State<_FilterSheet> {
                   color: Theme.of(context).colorScheme.surface,
                   border: Border(
                     top: BorderSide(
-                      color: isDark ? AppColors.borderDarkSoft : AppColors.grey300,
+                      color: isDark
+                          ? AppColors.borderDarkSoft
+                          : AppColors.grey300,
                     ),
                   ),
                 ),
@@ -1806,14 +1869,13 @@ class _FilterSheetState extends State<_FilterSheet> {
                     style: FilledButton.styleFrom(
                       backgroundColor: primaryAccent,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),
                     ),
                     child: Text(
                       'course.applyFilters'.tr(),
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         fontWeight: FontWeight.bold,
-                        fontSize: 15,
                       ),
                     ),
                   ),
@@ -1849,7 +1911,9 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+      style: Theme.of(
+        context,
+      ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
     );
   }
 }
@@ -1876,13 +1940,16 @@ class _Chip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: 8,
+        ),
         decoration: BoxDecoration(
           gradient: isSelected
               ? LinearGradient(colors: [color, color.withValues(alpha: 0.8)])
               : null,
           color: isSelected ? null : color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(
             color: isSelected ? color : color.withValues(alpha: 0.3),
             width: isSelected ? 0 : 1,
@@ -1903,10 +1970,9 @@ class _Chip extends StatelessWidget {
             if (prefix != null) ...[prefix!, const SizedBox(width: 6)],
             Text(
               label,
-              style: TextStyle(
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: isSelected ? AppColors.textInverted : color,
                 fontWeight: FontWeight.w600,
-                fontSize: 13,
               ),
             ),
             if (isSelected) ...[
@@ -1935,7 +2001,10 @@ class _LangBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: 1,
+      ),
       decoration: BoxDecoration(
         color: isSelected
             ? AppColors.textInverted.withValues(alpha: 0.2)
@@ -1944,8 +2013,7 @@ class _LangBadge extends StatelessWidget {
       ),
       child: Text(
         code,
-        style: TextStyle(
-          fontSize: 10,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
           fontWeight: FontWeight.bold,
           color: isSelected ? AppColors.textInverted : color,
         ),
