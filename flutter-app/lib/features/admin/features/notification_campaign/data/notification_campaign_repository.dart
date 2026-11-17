@@ -4,16 +4,16 @@ enum NotificationCampaignJobType { targetedPush, inAppBroadcast, scheduledPush }
 
 extension NotificationCampaignJobTypeValue on NotificationCampaignJobType {
   String get value => switch (this) {
-        NotificationCampaignJobType.targetedPush => 'targeted_push',
-        NotificationCampaignJobType.inAppBroadcast => 'in_app_broadcast',
-        NotificationCampaignJobType.scheduledPush => 'scheduled_push',
-      };
+    NotificationCampaignJobType.targetedPush => 'targeted_push',
+    NotificationCampaignJobType.inAppBroadcast => 'in_app_broadcast',
+    NotificationCampaignJobType.scheduledPush => 'scheduled_push',
+  };
 
   String get label => switch (this) {
-        NotificationCampaignJobType.targetedPush => 'Targeted Push',
-        NotificationCampaignJobType.inAppBroadcast => 'In-App Broadcast',
-        NotificationCampaignJobType.scheduledPush => 'Scheduled Push',
-      };
+    NotificationCampaignJobType.targetedPush => 'Targeted Push',
+    NotificationCampaignJobType.inAppBroadcast => 'In-App Broadcast',
+    NotificationCampaignJobType.scheduledPush => 'Scheduled Push',
+  };
 }
 
 class NotificationCampaignJob {
@@ -47,16 +47,32 @@ class NotificationCampaignJob {
       errorMessage: json['error_message']?.toString(),
       progressPercent: (progress['percent'] as num?)?.round() ?? 0,
       config: (json['config'] as Map?)?.cast<String, dynamic>() ?? const {},
-      warnings: ((json['warnings'] as List?) ?? const []).map((e) => e.toString()).toList(),
-      blockingErrors: ((json['blocking_errors'] as List?) ?? const []).map((e) => e.toString()).toList(),
+      warnings: ((json['warnings'] as List?) ?? const [])
+          .map((e) => e.toString())
+          .toList(),
+      blockingErrors: ((json['blocking_errors'] as List?) ?? const [])
+          .map((e) => e.toString())
+          .toList(),
     );
   }
 
   bool get needsAttention => const {
-        'queued', 'segmenting', 'generating', 'validating', 'sending', 'preview_ready'
-      }.contains(status);
+    'queued',
+    'segmenting',
+    'generating',
+    'validating',
+    'sending',
+    'preview_ready',
+  }.contains(status);
   bool get canApply => status == 'preview_ready' && blockingErrors.isEmpty;
-  bool get canCancel => const {'queued', 'segmenting', 'generating', 'validating', 'sending', 'preview_ready'}.contains(status);
+  bool get canCancel => const {
+    'queued',
+    'segmenting',
+    'generating',
+    'validating',
+    'sending',
+    'preview_ready',
+  }.contains(status);
   bool get canRetry => status == 'failed' || status == 'cancelled';
 }
 
@@ -65,18 +81,36 @@ class NotificationCampaignRepository {
   final _api = ApiClient.instance;
 
   NotificationCampaignJob _job(Map<String, dynamic> response) =>
-      NotificationCampaignJob.fromJson(response['data'] as Map<String, dynamic>);
+      NotificationCampaignJob.fromJson(
+        response['data'] as Map<String, dynamic>,
+      );
 
-  Future<List<NotificationCampaignJob>> getJobs({int limit = 50, int offset = 0}) async {
-    final response = await _api.get(_path, params: {'limit': limit, 'offset': offset});
+  Future<List<NotificationCampaignJob>> getJobs({
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    final response = await _api.get(
+      _path,
+      params: {'limit': limit, 'offset': offset},
+    );
     return ((response['data'] as List?) ?? const [])
-        .map((e) => NotificationCampaignJob.fromJson((e as Map).cast<String, dynamic>()))
+        .map(
+          (e) => NotificationCampaignJob.fromJson(
+            (e as Map).cast<String, dynamic>(),
+          ),
+        )
         .toList();
   }
 
-  Future<NotificationCampaignJob> getJob(String id) async => _job(await _api.get('$_path/$id'));
-  Future<NotificationCampaignJob> createJob(Map<String, dynamic> payload) async => _job(await _api.post(_path, data: payload));
-  Future<NotificationCampaignJob> apply(String id) async => _job(await _api.post('$_path/$id/apply'));
-  Future<NotificationCampaignJob> cancel(String id) async => _job(await _api.post('$_path/$id/cancel'));
-  Future<NotificationCampaignJob> retry(String id) async => _job(await _api.post('$_path/$id/retry'));
+  Future<NotificationCampaignJob> getJob(String id) async =>
+      _job(await _api.get('$_path/$id'));
+  Future<NotificationCampaignJob> createJob(
+    Map<String, dynamic> payload,
+  ) async => _job(await _api.post(_path, data: payload));
+  Future<NotificationCampaignJob> apply(String id) async =>
+      _job(await _api.post('$_path/$id/apply'));
+  Future<NotificationCampaignJob> cancel(String id) async =>
+      _job(await _api.post('$_path/$id/cancel'));
+  Future<NotificationCampaignJob> retry(String id) async =>
+      _job(await _api.post('$_path/$id/retry'));
 }

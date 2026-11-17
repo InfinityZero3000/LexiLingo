@@ -40,14 +40,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 const Icon(Icons.language, color: AppColors.primary, size: 22),
                 const SizedBox(width: 6),
-                Text('LingoAdmin',
-                    style: GoogleFonts.spaceGrotesk(
-                        fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.primary)),
+                Text(
+                  'LingoAdmin',
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                ),
               ],
             ),
             actions: [
               IconButton(
-                icon: const Icon(Icons.notifications_outlined, color: AppColors.onSurface),
+                icon: const Icon(
+                  Icons.notifications_outlined,
+                  color: AppColors.onSurface,
+                ),
                 onPressed: () {},
               ),
             ],
@@ -56,16 +64,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                Text('Settings',
-                    style: GoogleFonts.spaceGrotesk(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.onSurface,
-                        letterSpacing: -0.02)),
+                Text(
+                  'Settings',
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.onSurface,
+                    letterSpacing: -0.02,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text('Manage your administrator profile and platform configuration.',
-                    style: GoogleFonts.spaceGrotesk(
-                        fontSize: 13, color: AppColors.onSurfaceVariant)),
+                Text(
+                  'Manage your administrator profile and platform configuration.',
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 13,
+                    color: AppColors.onSurfaceVariant,
+                  ),
+                ),
                 const SizedBox(height: 24),
 
                 // Profile card
@@ -82,7 +97,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               height: 80,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                border: Border.all(color: AppColors.primary, width: 2.5),
+                                border: Border.all(
+                                  color: AppColors.primary,
+                                  width: 2.5,
+                                ),
                               ),
                               child: CircleAvatar(
                                 radius: 38,
@@ -102,9 +120,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                       ? user!.displayName[0].toUpperCase()
                                       : 'A',
                                   style: GoogleFonts.spaceGrotesk(
-                                      fontSize: 28,
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.primary),
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primary,
+                                  ),
                                 ),
                               ),
                             ),
@@ -117,29 +136,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 decoration: BoxDecoration(
                                   color: AppColors.primaryBright,
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.white, width: 2),
+                                  border: Border.all(
+                                    color: Colors.white,
+                                    width: 2,
+                                  ),
                                 ),
-                                child: const Icon(Icons.camera_alt, color: Colors.white, size: 12),
+                                child: const Icon(
+                                  Icons.camera_alt,
+                                  color: Colors.white,
+                                  size: 12,
+                                ),
                               ),
                             ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 12),
-                      Text(user?.displayName ?? 'Admin User',
-                          style: GoogleFonts.spaceGrotesk(
-                              fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.onSurface)),
                       Text(
-                        isSuperAdmin ? 'Super Administrator' : 'Senior Curriculum Director',
+                        user?.displayName ?? 'Admin User',
                         style: GoogleFonts.spaceGrotesk(
-                            fontSize: 13, color: AppColors.onSurfaceMuted),
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.onSurface,
+                        ),
+                      ),
+                      Text(
+                        isSuperAdmin
+                            ? 'Super Administrator'
+                            : 'Senior Curriculum Director',
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 13,
+                          color: AppColors.onSurfaceMuted,
+                        ),
                       ),
                       const SizedBox(height: 20),
-                      _FormField(label: 'FULL NAME', value: user?.displayName ?? ''),
+                      _FormField(
+                        label: 'FULL NAME',
+                        value: user?.displayName ?? '',
+                      ),
                       const SizedBox(height: 12),
-                      _FormField(label: 'EMAIL ADDRESS', value: user?.email ?? ''),
+                      _FormField(
+                        label: 'EMAIL ADDRESS',
+                        value: user?.email ?? '',
+                      ),
                       const SizedBox(height: 12),
-                      _DropdownField(label: 'TIMEZONE', value: 'GMT -05:00 (EST)'),
+                      _DropdownField(
+                        label: 'TIMEZONE',
+                        value: 'GMT -05:00 (EST)',
+                      ),
                       const SizedBox(height: 12),
                       _DropdownField(label: 'LANGUAGE', value: 'English (US)'),
                       const SizedBox(height: 20),
@@ -147,9 +191,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () {},
-                          child: Text('SAVE CHANGES',
-                              style: GoogleFonts.spaceGrotesk(
-                                  fontWeight: FontWeight.w700, letterSpacing: 0.05)),
+                          child: Text(
+                            'SAVE CHANGES',
+                            style: GoogleFonts.spaceGrotesk(
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.05,
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -171,13 +219,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               color: AppColors.primaryContainer,
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(Icons.notifications_outlined,
-                                color: AppColors.primary, size: 20),
+                            child: const Icon(
+                              Icons.notifications_outlined,
+                              color: AppColors.primary,
+                              size: 20,
+                            ),
                           ),
                           const SizedBox(width: 12),
-                          Text('Notifications',
-                              style: GoogleFonts.spaceGrotesk(
-                                  fontSize: 16, fontWeight: FontWeight.w700)),
+                          Text(
+                            'Notifications',
+                            style: GoogleFonts.spaceGrotesk(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 16),
@@ -220,13 +275,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               color: AppColors.primaryContainer,
                               borderRadius: BorderRadius.circular(10),
                             ),
-                            child: const Icon(Icons.shield_outlined,
-                                color: AppColors.primary, size: 20),
+                            child: const Icon(
+                              Icons.shield_outlined,
+                              color: AppColors.primary,
+                              size: 20,
+                            ),
                           ),
                           const SizedBox(width: 12),
-                          Text('Security & Access',
-                              style: GoogleFonts.spaceGrotesk(
-                                  fontSize: 16, fontWeight: FontWeight.w700)),
+                          Text(
+                            'Security & Access',
+                            style: GoogleFonts.spaceGrotesk(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 16),
@@ -242,12 +304,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         icon: Icons.security_outlined,
                       ),
                       const Divider(height: 16),
-                      Text('ACTIVE SESSIONS',
-                          style: GoogleFonts.spaceGrotesk(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.08,
-                              color: AppColors.onSurfaceMuted)),
+                      Text(
+                        'ACTIVE SESSIONS',
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.08,
+                          color: AppColors.onSurfaceMuted,
+                        ),
+                      ),
                       const SizedBox(height: 10),
                       _SessionRow(
                         device: 'MacBook Pro - San Francisco, USA',
@@ -333,12 +398,15 @@ class _FormFieldState extends State<_FormField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.label,
-            style: GoogleFonts.spaceGrotesk(
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.08,
-                color: AppColors.onSurfaceMuted)),
+        Text(
+          widget.label,
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: 9,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.08,
+            color: AppColors.onSurfaceMuted,
+          ),
+        ),
         const SizedBox(height: 4),
         TextField(
           controller: _ctrl,
@@ -360,18 +428,24 @@ class _DropdownField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: GoogleFonts.spaceGrotesk(
-                fontSize: 9,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.08,
-                color: AppColors.onSurfaceMuted)),
+        Text(
+          label,
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: 9,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.08,
+            color: AppColors.onSurfaceMuted,
+          ),
+        ),
         const SizedBox(height: 4),
         DropdownButtonFormField<String>(
           initialValue: value,
           items: [DropdownMenuItem(value: value, child: Text(value))],
           onChanged: (_) {},
-          style: GoogleFonts.spaceGrotesk(fontSize: 14, color: AppColors.onSurface),
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: 14,
+            color: AppColors.onSurface,
+          ),
           decoration: const InputDecoration(isDense: true),
         ),
       ],
@@ -400,12 +474,21 @@ class _ToggleRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title,
-                  style: GoogleFonts.spaceGrotesk(
-                      fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.onSurface)),
-              Text(subtitle,
-                  style: GoogleFonts.spaceGrotesk(
-                      fontSize: 11, color: AppColors.onSurfaceMuted)),
+              Text(
+                title,
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.onSurface,
+                ),
+              ),
+              Text(
+                subtitle,
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 11,
+                  color: AppColors.onSurfaceMuted,
+                ),
+              ),
             ],
           ),
         ),
@@ -424,7 +507,11 @@ class _SecurityRow extends StatelessWidget {
   final String subtitle;
   final IconData icon;
 
-  const _SecurityRow({required this.label, required this.subtitle, required this.icon});
+  const _SecurityRow({
+    required this.label,
+    required this.subtitle,
+    required this.icon,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -436,12 +523,21 @@ class _SecurityRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label,
-                  style: GoogleFonts.spaceGrotesk(
-                      fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.onSurface)),
-              Text(subtitle,
-                  style: GoogleFonts.spaceGrotesk(
-                      fontSize: 11, color: AppColors.onSurfaceMuted)),
+              Text(
+                label,
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.onSurface,
+                ),
+              ),
+              Text(
+                subtitle,
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 11,
+                  color: AppColors.onSurfaceMuted,
+                ),
+              ),
             ],
           ),
         ),
@@ -476,26 +572,40 @@ class _SessionRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(device,
-                  style: GoogleFonts.spaceGrotesk(
-                      fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.onSurface)),
-              Text(subtitle,
-                  style: GoogleFonts.spaceGrotesk(fontSize: 11, color: AppColors.onSurfaceMuted)),
+              Text(
+                device,
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.onSurface,
+                ),
+              ),
+              Text(
+                subtitle,
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 11,
+                  color: AppColors.onSurfaceMuted,
+                ),
+              ),
             ],
           ),
         ),
         if (!isCurrent)
           GestureDetector(
             onTap: () {},
-            child: Text('LOG OUT',
-                style: GoogleFonts.spaceGrotesk(
-                    fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.error)),
+            child: Text(
+              'LOG OUT',
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: AppColors.error,
+              ),
+            ),
           ),
       ],
     );
   }
 }
-
 
 // ─────────────────────────────────────────────
 // Switch to User Zone card + bottom sheet
@@ -538,23 +648,33 @@ class _UserZoneSwitchCard extends StatelessWidget {
                 color: Colors.white.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.swap_horiz_rounded,
-                  color: Colors.white, size: 22),
+              child: const Icon(
+                Icons.swap_horiz_rounded,
+                color: Colors.white,
+                size: 22,
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Switch to User Zone',
-                      style: GoogleFonts.spaceGrotesk(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white)),
+                  Text(
+                    'Switch to User Zone',
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
                   const SizedBox(height: 2),
-                  Text('Open LexiLingo as a learner',
-                      style: GoogleFonts.spaceGrotesk(
-                          fontSize: 11, color: Colors.white54)),
+                  Text(
+                    'Open LexiLingo as a learner',
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 11,
+                      color: Colors.white54,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -564,12 +684,15 @@ class _UserZoneSwitchCard extends StatelessWidget {
                 color: AppColors.primaryBright,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Text('SWITCH',
-                  style: GoogleFonts.spaceGrotesk(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      letterSpacing: 0.06)),
+              child: Text(
+                'SWITCH',
+                style: GoogleFonts.spaceGrotesk(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                  letterSpacing: 0.06,
+                ),
+              ),
             ),
           ],
         ),
@@ -587,7 +710,9 @@ class _UserZoneSheet extends StatelessWidget {
     final displayName = user?.displayName as String? ?? 'Admin';
     final email = user?.email as String? ?? '';
     final isSuperAdmin = (user?.isSuperAdmin as bool?) ?? false;
-    final initials = displayName.isNotEmpty ? displayName[0].toUpperCase() : 'A';
+    final initials = displayName.isNotEmpty
+        ? displayName[0].toUpperCase()
+        : 'A';
 
     return Container(
       decoration: const BoxDecoration(
@@ -601,7 +726,8 @@ class _UserZoneSheet extends StatelessWidget {
           const SizedBox(height: 12),
           Center(
             child: Container(
-              width: 40, height: 4,
+              width: 40,
+              height: 4,
               decoration: BoxDecoration(
                 color: AppColors.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(2),
@@ -628,11 +754,14 @@ class _UserZoneSheet extends StatelessWidget {
                     CircleAvatar(
                       radius: 28,
                       backgroundColor: AppColors.primaryContainer,
-                      child: Text(initials,
-                          style: GoogleFonts.spaceGrotesk(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.primary)),
+                      child: Text(
+                        initials,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
+                      ),
                     ),
                     Positioned(
                       bottom: -2,
@@ -642,10 +771,16 @@ class _UserZoneSheet extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: AppColors.primaryBright,
                           shape: BoxShape.circle,
-                          border: Border.all(color: const Color(0xFF0A192F), width: 2),
+                          border: Border.all(
+                            color: const Color(0xFF0A192F),
+                            width: 2,
+                          ),
                         ),
-                        child: const Icon(Icons.school_outlined,
-                            color: Colors.white, size: 10),
+                        child: const Icon(
+                          Icons.school_outlined,
+                          color: Colors.white,
+                          size: 10,
+                        ),
                       ),
                     ),
                   ],
@@ -655,19 +790,29 @@ class _UserZoneSheet extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(displayName,
-                          style: GoogleFonts.spaceGrotesk(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white)),
-                      Text(email,
-                          style: GoogleFonts.spaceGrotesk(
-                              fontSize: 11, color: Colors.white54),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis),
+                      Text(
+                        displayName,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                      Text(
+                        email,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 11,
+                          color: Colors.white54,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                       const SizedBox(height: 6),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.primaryBright,
                           borderRadius: BorderRadius.circular(6),
@@ -675,10 +820,11 @@ class _UserZoneSheet extends StatelessWidget {
                         child: Text(
                           isSuperAdmin ? 'SUPER ADMIN' : 'ADMIN',
                           style: GoogleFonts.spaceGrotesk(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                              letterSpacing: 0.06),
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            letterSpacing: 0.06,
+                          ),
                         ),
                       ),
                     ],
@@ -693,17 +839,24 @@ class _UserZoneSheet extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Your dual account',
-                    style: GoogleFonts.spaceGrotesk(
-                        fontSize: 16, fontWeight: FontWeight.w700,
-                        color: AppColors.onSurface)),
+                Text(
+                  'Your dual account',
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.onSurface,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 Text(
                   'Your admin account is linked to a LexiLingo learner profile with the same email. '
                   'Open the LexiLingo app on your device to continue as a learner — '
                   'you\'ll be logged in automatically if you use the same email.',
                   style: GoogleFonts.spaceGrotesk(
-                      fontSize: 13, color: AppColors.onSurfaceVariant, height: 1.5),
+                    fontSize: 13,
+                    color: AppColors.onSurfaceVariant,
+                    height: 1.5,
+                  ),
                 ),
                 const SizedBox(height: 20),
                 // Step cards
@@ -712,10 +865,7 @@ class _UserZoneSheet extends StatelessWidget {
                   text: 'Open the LexiLingo app on your device',
                 ),
                 const SizedBox(height: 10),
-                _StepRow(
-                  step: '2',
-                  text: 'Sign in with $email',
-                ),
+                _StepRow(step: '2', text: 'Sign in with $email'),
                 const SizedBox(height: 10),
                 _StepRow(
                   step: '3',
@@ -728,7 +878,11 @@ class _UserZoneSheet extends StatelessWidget {
           // Buttons
           Padding(
             padding: EdgeInsets.fromLTRB(
-                20, 0, 20, MediaQuery.of(context).padding.bottom + 20),
+              20,
+              0,
+              20,
+              MediaQuery.of(context).padding.bottom + 20,
+            ),
             child: Column(
               children: [
                 SizedBox(
@@ -737,23 +891,31 @@ class _UserZoneSheet extends StatelessWidget {
                   child: ElevatedButton.icon(
                     onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(Icons.open_in_new, size: 18),
-                    label: Text('Open LexiLingo App',
-                        style: GoogleFonts.spaceGrotesk(
-                            fontWeight: FontWeight.w700, fontSize: 14)),
+                    label: Text(
+                      'Open LexiLingo App',
+                      style: GoogleFonts.spaceGrotesk(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryBright,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14)),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 10),
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: Text('Dismiss',
-                      style: GoogleFonts.spaceGrotesk(
-                          color: AppColors.onSurfaceMuted,
-                          fontWeight: FontWeight.w600)),
+                  child: Text(
+                    'Dismiss',
+                    style: GoogleFonts.spaceGrotesk(
+                      color: AppColors.onSurfaceMuted,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -781,18 +943,25 @@ class _StepRow extends StatelessWidget {
             shape: BoxShape.circle,
           ),
           child: Center(
-            child: Text(step,
-                style: GoogleFonts.spaceGrotesk(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary)),
+            child: Text(
+              step,
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: AppColors.primary,
+              ),
+            ),
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: Text(text,
-              style: GoogleFonts.spaceGrotesk(
-                  fontSize: 13, color: AppColors.onSurface)),
+          child: Text(
+            text,
+            style: GoogleFonts.spaceGrotesk(
+              fontSize: 13,
+              color: AppColors.onSurface,
+            ),
+          ),
         ),
       ],
     );

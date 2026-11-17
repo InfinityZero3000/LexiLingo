@@ -102,8 +102,7 @@ class LessonExercisesScreen extends StatefulWidget {
   });
 
   @override
-  State<LessonExercisesScreen> createState() =>
-      _LessonExercisesScreenState();
+  State<LessonExercisesScreen> createState() => _LessonExercisesScreenState();
 }
 
 class _LessonExercisesScreenState extends State<LessonExercisesScreen> {
@@ -385,8 +384,10 @@ class _ExerciseCard extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.primaryContainer,
                     borderRadius: BorderRadius.circular(20),
@@ -473,12 +474,12 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => IconButton(
-        constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-        tooltip: tooltip,
-        onPressed: onPressed,
-        color: color ?? AppColors.onSurfaceMuted,
-        icon: Icon(icon),
-      );
+    constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+    tooltip: tooltip,
+    onPressed: onPressed,
+    color: color ?? AppColors.onSurfaceMuted,
+    icon: Icon(icon),
+  );
 }
 
 class _ExerciseEditor extends StatefulWidget {
@@ -526,10 +527,10 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
     _pairs = TextEditingController(
       text: _pairTypes.contains(_uiType)
           ? (exercise?.correctAnswer ?? '')
-              .split(',')
-              .map((p) => p.trim())
-              .where((p) => p.isNotEmpty)
-              .join('\n')
+                .split(',')
+                .map((p) => p.trim())
+                .where((p) => p.isNotEmpty)
+                .join('\n')
           : '',
     );
   }
@@ -565,9 +566,7 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
 
   String? _difficultyValidator(String? value) {
     final parsed = int.tryParse(value ?? '');
-    return parsed == null || parsed < 1 || parsed > 5
-        ? 'Enter 1 to 5'
-        : null;
+    return parsed == null || parsed < 1 || parsed > 5 ? 'Enter 1 to 5' : null;
   }
 
   void _changeType(String value) {
@@ -659,7 +658,8 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
     Navigator.pop(
       context,
       Exercise(
-        id: widget.exercise?.id ??
+        id:
+            widget.exercise?.id ??
             'ex_${DateTime.now().microsecondsSinceEpoch}',
         type: _uiTypeToType[_uiType] ?? _uiType,
         uiType: _uiType,
@@ -676,8 +676,7 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
     );
   }
 
-  String? _nullable(String value) =>
-      value.trim().isEmpty ? null : value.trim();
+  String? _nullable(String value) => value.trim().isEmpty ? null : value.trim();
 
   @override
   Widget build(BuildContext context) {
@@ -711,10 +710,12 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
               initialValue: _uiType,
               decoration: const InputDecoration(labelText: 'Exercise type'),
               items: _uiTypeLabels.entries
-                  .map((entry) => DropdownMenuItem(
-                        value: entry.key,
-                        child: Text(entry.value),
-                      ))
+                  .map(
+                    (entry) => DropdownMenuItem(
+                      value: entry.key,
+                      child: Text(entry.value),
+                    ),
+                  )
                   .toList(),
               onChanged: (value) {
                 if (value != null) _changeType(value);
@@ -759,8 +760,10 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
                         ),
                       ),
                       IconButton(
-                        constraints:
-                            const BoxConstraints(minWidth: 48, minHeight: 48),
+                        constraints: const BoxConstraints(
+                          minWidth: 48,
+                          minHeight: 48,
+                        ),
                         tooltip: 'Remove option',
                         color: AppColors.error,
                         onPressed: () => _removeOption(index),
@@ -796,16 +799,11 @@ class _ExerciseEditorState extends State<_ExerciseEditor> {
                 label: _uiType == 'arrange_the_sentence'
                     ? 'Correct sentence (the word bank is built from it)'
                     : 'Correct answer',
-                validator:
-                    _uiType == 'short_writing_answer' ? null : _required,
+                validator: _uiType == 'short_writing_answer' ? null : _required,
               ),
             ],
             const SizedBox(height: 16),
-            _Field(
-              controller: _explanation,
-              label: 'Explanation',
-              maxLines: 2,
-            ),
+            _Field(controller: _explanation, label: 'Explanation', maxLines: 2),
             const SizedBox(height: 16),
             _Field(controller: _hint, label: 'Hint'),
             const SizedBox(height: 16),
@@ -854,12 +852,10 @@ class _EditableOption {
   bool isCorrect;
 
   _EditableOption({String text = '', this.isCorrect = false})
-      : text = TextEditingController(text: text);
+    : text = TextEditingController(text: text);
 
-  factory _EditableOption.fromModel(ExerciseOption option) => _EditableOption(
-        text: option.text,
-        isCorrect: option.isCorrect,
-      );
+  factory _EditableOption.fromModel(ExerciseOption option) =>
+      _EditableOption(text: option.text, isCorrect: option.isCorrect);
 
   void dispose() => text.dispose();
 }
@@ -881,12 +877,12 @@ class _Field extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => TextFormField(
-        controller: controller,
-        maxLines: maxLines,
-        keyboardType: keyboardType,
-        validator: validator,
-        decoration: InputDecoration(labelText: label),
-      );
+    controller: controller,
+    maxLines: maxLines,
+    keyboardType: keyboardType,
+    validator: validator,
+    decoration: InputDecoration(labelText: label),
+  );
 }
 
 class _ErrorBanner extends StatelessWidget {
@@ -897,26 +893,26 @@ class _ErrorBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AppColors.errorContainer,
-          borderRadius: BorderRadius.circular(12),
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: AppColors.errorContainer,
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Row(
+      children: [
+        const Icon(Icons.error_outline, color: AppColors.error),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            message,
+            style: GoogleFonts.spaceGrotesk(color: AppColors.error),
+          ),
         ),
-        child: Row(
-          children: [
-            const Icon(Icons.error_outline, color: AppColors.error),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                message,
-                style: GoogleFonts.spaceGrotesk(color: AppColors.error),
-              ),
-            ),
-            if (onRetry != null)
-              TextButton(onPressed: onRetry, child: const Text('Retry')),
-          ],
-        ),
-      );
+        if (onRetry != null)
+          TextButton(onPressed: onRetry, child: const Text('Retry')),
+      ],
+    ),
+  );
 }
 
 class _EmptyState extends StatelessWidget {
@@ -926,35 +922,35 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 56),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.outline),
+    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 56),
+    decoration: BoxDecoration(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: AppColors.outline),
+    ),
+    child: Column(
+      children: [
+        const Icon(
+          Icons.quiz_outlined,
+          size: 48,
+          color: AppColors.onSurfaceMuted,
         ),
-        child: Column(
-          children: [
-            const Icon(
-              Icons.quiz_outlined,
-              size: 48,
-              color: AppColors.onSurfaceMuted,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'No exercises yet',
-              style: GoogleFonts.spaceGrotesk(
-                color: AppColors.onSurface,
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 8),
-            FilledButton.icon(
-              onPressed: onAdd,
-              icon: const Icon(Icons.add),
-              label: const Text('Add exercise'),
-            ),
-          ],
+        const SizedBox(height: 12),
+        Text(
+          'No exercises yet',
+          style: GoogleFonts.spaceGrotesk(
+            color: AppColors.onSurface,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
         ),
-      );
+        const SizedBox(height: 8),
+        FilledButton.icon(
+          onPressed: onAdd,
+          icon: const Icon(Icons.add),
+          label: const Text('Add exercise'),
+        ),
+      ],
+    ),
+  );
 }

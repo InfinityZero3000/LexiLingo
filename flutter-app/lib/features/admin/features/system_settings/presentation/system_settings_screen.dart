@@ -63,19 +63,26 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
           _appNameCtrl.text = (_config?['app_name'] ?? 'LexiLingo').toString();
           _logLevel = (_config?['log_level'] ?? 'INFO').toString();
           _debugMode = (_config?['debug'] as bool?) ?? false;
-          _tokenExpiry = (_config?['token_expire_minutes'] as num?)?.toInt() ?? 30;
+          _tokenExpiry =
+              (_config?['token_expire_minutes'] as num?)?.toInt() ?? 30;
           _refreshDays = (_config?['refresh_token_days'] as num?)?.toInt() ?? 7;
           _tokenExpiryCtrl.text = _tokenExpiry.toString();
           _refreshDaysCtrl.text = _refreshDays.toString();
           _aiUrlCtrl.text = (_config?['ai_service_url'] ?? '').toString();
           final origins = _config?['cors_origins'];
-          _corsCtrl.text = origins is List ? origins.join(', ') : (origins ?? '').toString();
+          _corsCtrl.text = origins is List
+              ? origins.join(', ')
+              : (origins ?? '').toString();
           _error = null;
           _loading = false;
         });
       }
     } catch (_) {
-      if (mounted) setState(() { _error = 'Could not load settings.'; _loading = false; });
+      if (mounted)
+        setState(() {
+          _error = 'Could not load settings.';
+          _loading = false;
+        });
     }
   }
 
@@ -89,8 +96,10 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
         refreshDays <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('App name is required and expiry values must be positive.',
-              style: GoogleFonts.spaceGrotesk()),
+          content: Text(
+            'App name is required and expiry values must be positive.',
+            style: GoogleFonts.spaceGrotesk(),
+          ),
           backgroundColor: AppColors.error,
         ),
       );
@@ -100,15 +109,18 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
     _refreshDays = refreshDays;
     setState(() => _saving = true);
     try {
-      await ApiClient.instance.put(ApiEndpoints.systemInfo, data: {
-        'app_name': _appNameCtrl.text.trim(),
-        'log_level': _logLevel,
-        'debug': _debugMode,
-        'token_expire_minutes': _tokenExpiry,
-        'refresh_token_days': _refreshDays,
-        'ai_service_url': _aiUrlCtrl.text.trim(),
-        'cors_origins': _corsCtrl.text.trim(),
-      });
+      await ApiClient.instance.put(
+        ApiEndpoints.systemInfo,
+        data: {
+          'app_name': _appNameCtrl.text.trim(),
+          'log_level': _logLevel,
+          'debug': _debugMode,
+          'token_expire_minutes': _tokenExpiry,
+          'refresh_token_days': _refreshDays,
+          'ai_service_url': _aiUrlCtrl.text.trim(),
+          'cors_origins': _corsCtrl.text.trim(),
+        },
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -142,11 +154,16 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
           icon: const Icon(Icons.menu_rounded, color: AppColors.onSurface),
           onPressed: AdminShell.openDrawer,
         ),
-        title: Text('System Config',
-            style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
+        title: Text(
+          'System Config',
+          style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700),
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_outlined, color: AppColors.onSurface),
+            icon: const Icon(
+              Icons.refresh_outlined,
+              color: AppColors.onSurface,
+            ),
             onPressed: _loading ? null : _load,
           ),
         ],
@@ -157,140 +174,200 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
               child: AdminSkeleton(height: 320, borderRadius: 16),
             )
           : _error != null && _config == null
-              ? _SettingsError(message: _error!, onRetry: _load)
+          ? _SettingsError(message: _error!, onRetry: _load)
           : RefreshIndicator(
               onRefresh: _load,
               child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('System Configuration',
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'System Configuration',
                       style: GoogleFonts.spaceGrotesk(
-                          fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.onSurface)),
-                  const SizedBox(height: 4),
-                  Text('Global app settings — changes apply immediately.',
-                      style: GoogleFonts.spaceGrotesk(fontSize: 12, color: AppColors.onSurfaceMuted)),
-                  const SizedBox(height: 24),
-
-                  // App info card
-                  _card(
-                    label: 'APP INFO',
-                    child: Column(
-                      children: [
-                        _fieldLabel('App Name'),
-                        const SizedBox(height: 6),
-                        TextField(
-                          controller: _appNameCtrl,
-                          style: GoogleFonts.spaceGrotesk(fontSize: 14),
-                          decoration: const InputDecoration(isDense: true),
-                        ),
-                        const SizedBox(height: 16),
-                        _infoRow('API prefix', (_config?['api_prefix'] ?? '—').toString()),
-                        const SizedBox(height: 8),
-                        _infoRow('Environment', (_config?['app_env'] ?? '—').toString()),
-                      ],
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.onSurface,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Logging card
-                  _card(
-                    label: 'LOGGING',
-                    child: Column(
-                      children: [
-                        _fieldLabel('Log Level'),
-                        const SizedBox(height: 6),
-                        DropdownButtonFormField<String>(
-                          initialValue: _logLevel,
-                          style: GoogleFonts.spaceGrotesk(fontSize: 14, color: AppColors.onSurface),
-                          decoration: const InputDecoration(isDense: true),
-                          items: _logLevels
-                              .map((l) => DropdownMenuItem(value: l, child: Text(l)))
-                              .toList(),
-                          onChanged: (v) => setState(() => _logLevel = v ?? _logLevel),
-                        ),
-                        const SizedBox(height: 16),
-                        _toggleRow(
-                          title: 'Debug Mode',
-                          subtitle: 'Enables verbose logging and debug endpoints',
-                          value: _debugMode,
-                          onChanged: (v) => setState(() => _debugMode = v),
-                        ),
-                      ],
+                    const SizedBox(height: 4),
+                    Text(
+                      'Global app settings — changes apply immediately.',
+                      style: GoogleFonts.spaceGrotesk(
+                        fontSize: 12,
+                        color: AppColors.onSurfaceMuted,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 24),
 
-                  // Auth card
-                  _card(
-                    label: 'AUTHENTICATION',
-                    child: Column(
-                      children: [
-                        _fieldLabel('Access Token Expiry (minutes)'),
-                        const SizedBox(height: 6),
-                        TextField(
-                          keyboardType: TextInputType.number,
-                          controller: _tokenExpiryCtrl,
-                          onChanged: (v) => _tokenExpiry = int.tryParse(v) ?? _tokenExpiry,
-                          style: GoogleFonts.spaceGrotesk(fontSize: 14),
-                          decoration: const InputDecoration(isDense: true),
-                        ),
-                        const SizedBox(height: 8),
-                        Text('Current: $_tokenExpiry minutes',
+                    // App info card
+                    _card(
+                      label: 'APP INFO',
+                      child: Column(
+                        children: [
+                          _fieldLabel('App Name'),
+                          const SizedBox(height: 6),
+                          TextField(
+                            controller: _appNameCtrl,
+                            style: GoogleFonts.spaceGrotesk(fontSize: 14),
+                            decoration: const InputDecoration(isDense: true),
+                          ),
+                          const SizedBox(height: 16),
+                          _infoRow(
+                            'API prefix',
+                            (_config?['api_prefix'] ?? '—').toString(),
+                          ),
+                          const SizedBox(height: 8),
+                          _infoRow(
+                            'Environment',
+                            (_config?['app_env'] ?? '—').toString(),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Logging card
+                    _card(
+                      label: 'LOGGING',
+                      child: Column(
+                        children: [
+                          _fieldLabel('Log Level'),
+                          const SizedBox(height: 6),
+                          DropdownButtonFormField<String>(
+                            initialValue: _logLevel,
                             style: GoogleFonts.spaceGrotesk(
-                                fontSize: 11, color: AppColors.onSurfaceMuted)),
-                      ],
+                              fontSize: 14,
+                              color: AppColors.onSurface,
+                            ),
+                            decoration: const InputDecoration(isDense: true),
+                            items: _logLevels
+                                .map(
+                                  (l) => DropdownMenuItem(
+                                    value: l,
+                                    child: Text(l),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (v) =>
+                                setState(() => _logLevel = v ?? _logLevel),
+                          ),
+                          const SizedBox(height: 16),
+                          _toggleRow(
+                            title: 'Debug Mode',
+                            subtitle:
+                                'Enables verbose logging and debug endpoints',
+                            value: _debugMode,
+                            onChanged: (v) => setState(() => _debugMode = v),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  _card(
-                    label: 'SERVICES & SECURITY',
-                    child: Column(children: [
-                      _fieldLabel('Refresh Token Expiry (days)'),
-                      const SizedBox(height: 6),
-                      TextField(controller: _refreshDaysCtrl, keyboardType: TextInputType.number,
-                          onChanged: (v) => _refreshDays = int.tryParse(v) ?? _refreshDays,
-                          style: GoogleFonts.spaceGrotesk(fontSize: 14),
-                          decoration: const InputDecoration(isDense: true)),
-                      const SizedBox(height: 16),
-                      _fieldLabel('AI Service URL'),
-                      const SizedBox(height: 6),
-                      TextField(controller: _aiUrlCtrl, keyboardType: TextInputType.url,
-                          style: GoogleFonts.spaceGrotesk(fontSize: 14),
-                          decoration: const InputDecoration(isDense: true)),
-                      const SizedBox(height: 16),
-                      _fieldLabel('Allowed CORS Origins'),
-                      const SizedBox(height: 6),
-                      TextField(controller: _corsCtrl, maxLines: 2,
-                          style: GoogleFonts.spaceGrotesk(fontSize: 14),
-                          decoration: const InputDecoration(isDense: true)),
-                    ]),
-                  ),
-                  const SizedBox(height: 32),
+                    const SizedBox(height: 16),
 
-                  // Save button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton.icon(
-                      onPressed: _saving ? null : _save,
-                      style: ElevatedButton.styleFrom(
+                    // Auth card
+                    _card(
+                      label: 'AUTHENTICATION',
+                      child: Column(
+                        children: [
+                          _fieldLabel('Access Token Expiry (minutes)'),
+                          const SizedBox(height: 6),
+                          TextField(
+                            keyboardType: TextInputType.number,
+                            controller: _tokenExpiryCtrl,
+                            onChanged: (v) =>
+                                _tokenExpiry = int.tryParse(v) ?? _tokenExpiry,
+                            style: GoogleFonts.spaceGrotesk(fontSize: 14),
+                            decoration: const InputDecoration(isDense: true),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Current: $_tokenExpiry minutes',
+                            style: GoogleFonts.spaceGrotesk(
+                              fontSize: 11,
+                              color: AppColors.onSurfaceMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _card(
+                      label: 'SERVICES & SECURITY',
+                      child: Column(
+                        children: [
+                          _fieldLabel('Refresh Token Expiry (days)'),
+                          const SizedBox(height: 6),
+                          TextField(
+                            controller: _refreshDaysCtrl,
+                            keyboardType: TextInputType.number,
+                            onChanged: (v) =>
+                                _refreshDays = int.tryParse(v) ?? _refreshDays,
+                            style: GoogleFonts.spaceGrotesk(fontSize: 14),
+                            decoration: const InputDecoration(isDense: true),
+                          ),
+                          const SizedBox(height: 16),
+                          _fieldLabel('AI Service URL'),
+                          const SizedBox(height: 6),
+                          TextField(
+                            controller: _aiUrlCtrl,
+                            keyboardType: TextInputType.url,
+                            style: GoogleFonts.spaceGrotesk(fontSize: 14),
+                            decoration: const InputDecoration(isDense: true),
+                          ),
+                          const SizedBox(height: 16),
+                          _fieldLabel('Allowed CORS Origins'),
+                          const SizedBox(height: 6),
+                          TextField(
+                            controller: _corsCtrl,
+                            maxLines: 2,
+                            style: GoogleFonts.spaceGrotesk(fontSize: 14),
+                            decoration: const InputDecoration(isDense: true),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Save button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton.icon(
+                        onPressed: _saving ? null : _save,
+                        style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primaryBright,
                           shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14))),
-                      icon: _saving
-                          ? const SizedBox(width: 16, height: 16,
-                              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                          : const Icon(Icons.save_outlined, color: Colors.white, size: 18),
-                      label: Text('Save Changes',
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        icon: _saving
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.save_outlined,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                        label: Text(
+                          'Save Changes',
                           style: GoogleFonts.spaceGrotesk(
-                              fontWeight: FontWeight.w700, color: Colors.white, fontSize: 14)),
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
               ),
             ),
     );
@@ -300,10 +377,15 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: GoogleFonts.spaceGrotesk(
-                fontSize: 10, fontWeight: FontWeight.w700,
-                color: AppColors.onSurfaceMuted, letterSpacing: 0.8)),
+        Text(
+          label,
+          style: GoogleFonts.spaceGrotesk(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: AppColors.onSurfaceMuted,
+            letterSpacing: 0.8,
+          ),
+        ),
         const SizedBox(height: 8),
         Container(
           width: double.infinity,
@@ -319,45 +401,73 @@ class _SystemSettingsScreenState extends State<SystemSettingsScreen> {
     );
   }
 
-  Widget _fieldLabel(String label) => Text(label,
-      style: GoogleFonts.spaceGrotesk(
-          fontSize: 10, fontWeight: FontWeight.w700,
-          color: AppColors.onSurfaceMuted, letterSpacing: 0.5));
+  Widget _fieldLabel(String label) => Text(
+    label,
+    style: GoogleFonts.spaceGrotesk(
+      fontSize: 10,
+      fontWeight: FontWeight.w700,
+      color: AppColors.onSurfaceMuted,
+      letterSpacing: 0.5,
+    ),
+  );
 
   Widget _infoRow(String key, String value) => Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(key,
-              style: GoogleFonts.spaceGrotesk(fontSize: 13, color: AppColors.onSurfaceMuted)),
-          Text(value,
-              style: GoogleFonts.spaceGrotesk(
-                  fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.onSurface)),
-        ],
-      );
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Text(
+        key,
+        style: GoogleFonts.spaceGrotesk(
+          fontSize: 13,
+          color: AppColors.onSurfaceMuted,
+        ),
+      ),
+      Text(
+        value,
+        style: GoogleFonts.spaceGrotesk(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: AppColors.onSurface,
+        ),
+      ),
+    ],
+  );
 
   Widget _toggleRow({
     required String title,
     required String subtitle,
     required bool value,
     required ValueChanged<bool> onChanged,
-  }) =>
-      Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: GoogleFonts.spaceGrotesk(
-                        fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.onSurface)),
-                Text(subtitle,
-                    style: GoogleFonts.spaceGrotesk(fontSize: 11, color: AppColors.onSurfaceMuted)),
-              ],
+  }) => Row(
+    children: [
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.onSurface,
+              ),
             ),
-          ),
-          Switch(value: value, onChanged: onChanged, activeThumbColor: AppColors.primary),
-        ],
-      );
+            Text(
+              subtitle,
+              style: GoogleFonts.spaceGrotesk(
+                fontSize: 11,
+                color: AppColors.onSurfaceMuted,
+              ),
+            ),
+          ],
+        ),
+      ),
+      Switch(
+        value: value,
+        onChanged: onChanged,
+        activeThumbColor: AppColors.primary,
+      ),
+    ],
+  );
 }
 
 class _SettingsError extends StatelessWidget {
@@ -365,17 +475,39 @@ class _SettingsError extends StatelessWidget {
   final VoidCallback onRetry;
   const _SettingsError({required this.message, required this.onRetry});
   @override
-  Widget build(BuildContext context) => Center(child: Padding(
-    padding: const EdgeInsets.all(24),
-    child: Column(mainAxisSize: MainAxisSize.min, children: [
-      const Icon(Icons.error_outline, color: AppColors.error, size: 40),
-      const SizedBox(height: 12),
-      Text('Could not load settings', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700)),
-      const SizedBox(height: 4),
-      Text(message, textAlign: TextAlign.center, maxLines: 3, overflow: TextOverflow.ellipsis,
-          style: GoogleFonts.spaceGrotesk(fontSize: 12, color: AppColors.onSurfaceMuted)),
-      const SizedBox(height: 16),
-      SizedBox(height: 44, child: OutlinedButton(onPressed: onRetry, child: const Text('Retry'))),
-    ]),
-  ));
+  Widget build(BuildContext context) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.error_outline, color: AppColors.error, size: 40),
+          const SizedBox(height: 12),
+          Text(
+            'Could not load settings',
+            style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.spaceGrotesk(
+              fontSize: 12,
+              color: AppColors.onSurfaceMuted,
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 44,
+            child: OutlinedButton(
+              onPressed: onRetry,
+              child: const Text('Retry'),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }

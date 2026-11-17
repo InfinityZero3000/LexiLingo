@@ -106,10 +106,7 @@ GoRouter createRouter(AuthProvider authProvider) {
               ),
             ],
           ),
-          GoRoute(
-            path: '/topics',
-            builder: (_, __) => const TopicsScreen(),
-          ),
+          GoRoute(path: '/topics', builder: (_, __) => const TopicsScreen()),
           GoRoute(
             path: '/vocabulary',
             builder: (_, __) => const VocabularyScreen(),
@@ -148,14 +145,8 @@ GoRouter createRouter(AuthProvider authProvider) {
           ),
 
           // ── System ────────────────────────────────────────────────────────
-          GoRoute(
-            path: '/ads',
-            builder: (_, __) => const AdsScreen(),
-          ),
-          GoRoute(
-            path: '/logs',
-            builder: (_, __) => const LogsScreen(),
-          ),
+          GoRoute(path: '/ads', builder: (_, __) => const AdsScreen()),
+          GoRoute(path: '/logs', builder: (_, __) => const LogsScreen()),
           GoRoute(
             path: '/content-qa',
             builder: (_, __) => const ContentQaScreen(),

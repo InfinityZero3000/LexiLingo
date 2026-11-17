@@ -27,7 +27,11 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
   Future<void> _loadOfferings() async {
     final packages = await PurchasesService.instance.getOfferings();
-    if (mounted) setState(() { _packages = packages; _loading = false; });
+    if (mounted)
+      setState(() {
+        _packages = packages;
+        _loading = false;
+      });
   }
 
   Future<void> _purchase(Package pkg) async {
@@ -38,14 +42,16 @@ class _PaywallScreenState extends State<PaywallScreen> {
       if (success) {
         await di.sl<EntitlementService>().sync();
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('premium.success'.tr())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('premium.success'.tr())));
         Navigator.of(context).pop(true);
       }
     } on PlatformException catch (e) {
       if (!mounted) return;
-      final msg = (e.message?.isNotEmpty == true) ? e.message! : 'premium.purchaseFailed'.tr();
+      final msg = (e.message?.isNotEmpty == true)
+          ? e.message!
+          : 'premium.purchaseFailed'.tr();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
     } finally {
       if (mounted) setState(() => _purchasing = false);
@@ -60,7 +66,9 @@ class _PaywallScreenState extends State<PaywallScreen> {
     setState(() => _purchasing = false);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(success ? 'premium.restored'.tr() : 'premium.no_purchases'.tr()),
+        content: Text(
+          success ? 'premium.restored'.tr() : 'premium.no_purchases'.tr(),
+        ),
       ),
     );
     if (success && mounted) Navigator.of(context).pop(true);
@@ -81,54 +89,65 @@ class _PaywallScreenState extends State<PaywallScreen> {
                 : [const Color(0xFF6C63FF), const Color(0xFF3B1F8C)],
           ),
         ),
-        child: ContentWidth(maxWidth: ContentWidth.reading, child: SafeArea(
-          child: Column(
-            children: [
-              Align(
-                alignment: Alignment.topRight,
-                child: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white70),
-                  onPressed: () => Navigator.of(context).pop(false),
+        child: ContentWidth(
+          maxWidth: ContentWidth.reading,
+          child: SafeArea(
+            child: Column(
+              children: [
+                Align(
+                  alignment: Alignment.topRight,
+                  child: IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white70),
+                    onPressed: () => Navigator.of(context).pop(false),
+                  ),
                 ),
-              ),
-              const Spacer(),
-              const Icon(Icons.workspace_premium_rounded, size: 80, color: Color(0xFFFFD700)),
-              const SizedBox(height: 16),
-              Text(
-                'premium.title'.tr(),
-                style: const TextStyle(
-                  fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white,
+                const Spacer(),
+                const Icon(
+                  Icons.workspace_premium_rounded,
+                  size: 80,
+                  color: Color(0xFFFFD700),
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'premium.subtitle'.tr(),
-                style: const TextStyle(fontSize: 16, color: Colors.white70),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 32),
-              _buildFeatureList(),
-              const Spacer(),
-              if (_loading)
-                const CircularProgressIndicator(color: Colors.white)
-              else if (_packages.isEmpty)
-                Text('premium.unavailable'.tr(),
-                    style: const TextStyle(color: Colors.white70))
-              else
-                ..._packages.map(_buildPackageTile),
-              const SizedBox(height: 12),
-              TextButton(
-                onPressed: _purchasing ? null : _restore,
-                child: Text(
-                  'premium.restore'.tr(),
-                  style: const TextStyle(color: Colors.white54),
+                const SizedBox(height: 16),
+                Text(
+                  'premium.title'.tr(),
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-              ),
-              const SizedBox(height: 24),
-            ],
+                const SizedBox(height: 12),
+                Text(
+                  'premium.subtitle'.tr(),
+                  style: const TextStyle(fontSize: 16, color: Colors.white70),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 32),
+                _buildFeatureList(),
+                const Spacer(),
+                if (_loading)
+                  const CircularProgressIndicator(color: Colors.white)
+                else if (_packages.isEmpty)
+                  Text(
+                    'premium.unavailable'.tr(),
+                    style: const TextStyle(color: Colors.white70),
+                  )
+                else
+                  ..._packages.map(_buildPackageTile),
+                const SizedBox(height: 12),
+                TextButton(
+                  onPressed: _purchasing ? null : _restore,
+                  child: Text(
+                    'premium.restore'.tr(),
+                    style: const TextStyle(color: Colors.white54),
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ],
+            ),
           ),
-        ),),
+        ),
       ),
     );
   }
@@ -142,18 +161,25 @@ class _PaywallScreenState extends State<PaywallScreen> {
     ];
 
     return Column(
-      children: features.map((f) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 4),
-        child: Row(
-          children: [
-            Icon(f.$2, color: const Color(0xFFFFD700), size: 20),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(f.$1.tr(), style: const TextStyle(color: Colors.white, fontSize: 15)),
+      children: features
+          .map(
+            (f) => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 4),
+              child: Row(
+                children: [
+                  Icon(f.$2, color: const Color(0xFFFFD700), size: 20),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      f.$1.tr(),
+                      style: const TextStyle(color: Colors.white, fontSize: 15),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ],
-        ),
-      )).toList(),
+          )
+          .toList(),
     );
   }
 
@@ -162,8 +188,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
     final title = pkg.packageType == PackageType.monthly
         ? 'premium.monthly'.tr(namedArgs: {'price': price})
         : pkg.packageType == PackageType.annual
-            ? 'premium.annual'.tr(namedArgs: {'price': price})
-            : price;
+        ? 'premium.annual'.tr(namedArgs: {'price': price})
+        : price;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
@@ -173,14 +199,25 @@ class _PaywallScreenState extends State<PaywallScreen> {
           backgroundColor: const Color(0xFFFFD700),
           foregroundColor: Colors.black87,
           minimumSize: const Size(double.infinity, 52),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
         ),
         child: _purchasing
             ? const SizedBox.square(
                 dimension: 20,
-                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black54),
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.black54,
+                ),
               )
-            : Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            : Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
       ),
     );
   }

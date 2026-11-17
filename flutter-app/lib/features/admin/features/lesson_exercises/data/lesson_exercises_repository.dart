@@ -13,16 +13,16 @@ class ExerciseOption {
   });
 
   factory ExerciseOption.fromJson(Map<String, dynamic> json) => ExerciseOption(
-        id: json['id']?.toString() ?? '',
-        text: json['text']?.toString() ?? '',
-        isCorrect: json['is_correct'] == true,
-      );
+    id: json['id']?.toString() ?? '',
+    text: json['text']?.toString() ?? '',
+    isCorrect: json['is_correct'] == true,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'text': text,
-        'is_correct': isCorrect,
-      };
+    'id': id,
+    'text': text,
+    'is_correct': isCorrect,
+  };
 }
 
 class Exercise {
@@ -55,39 +55,42 @@ class Exercise {
   });
 
   factory Exercise.fromJson(Map<String, dynamic> json) => Exercise(
-        id: json['id']?.toString() ?? '',
-        type: json['type']?.toString() ?? 'multiple_choice',
-        uiType: json['ui_type']?.toString() ?? 'multiple_choice',
-        question: json['question']?.toString() ?? '',
-        options: json['options'] is List
-            ? (json['options'] as List)
-                .map((item) => ExerciseOption.fromJson(
-                    Map<String, dynamic>.from(item as Map)))
-                .toList()
-            : null,
-        correctAnswer: json['correct_answer']?.toString() ?? '',
-        explanation: json['explanation']?.toString(),
-        hint: json['hint']?.toString(),
-        audioUrl: json['audio_url']?.toString(),
-        imageUrl: json['image_url']?.toString(),
-        difficulty: (json['difficulty'] as num?)?.toInt() ?? 1,
-        points: (json['points'] as num?)?.toInt() ?? 10,
-      );
+    id: json['id']?.toString() ?? '',
+    type: json['type']?.toString() ?? 'multiple_choice',
+    uiType: json['ui_type']?.toString() ?? 'multiple_choice',
+    question: json['question']?.toString() ?? '',
+    options: json['options'] is List
+        ? (json['options'] as List)
+              .map(
+                (item) => ExerciseOption.fromJson(
+                  Map<String, dynamic>.from(item as Map),
+                ),
+              )
+              .toList()
+        : null,
+    correctAnswer: json['correct_answer']?.toString() ?? '',
+    explanation: json['explanation']?.toString(),
+    hint: json['hint']?.toString(),
+    audioUrl: json['audio_url']?.toString(),
+    imageUrl: json['image_url']?.toString(),
+    difficulty: (json['difficulty'] as num?)?.toInt() ?? 1,
+    points: (json['points'] as num?)?.toInt() ?? 10,
+  );
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'type': type,
-        'ui_type': uiType,
-        'question': question,
-        'options': options?.map((option) => option.toJson()).toList(),
-        'correct_answer': correctAnswer,
-        'explanation': explanation,
-        'hint': hint,
-        'audio_url': audioUrl,
-        'image_url': imageUrl,
-        'difficulty': difficulty,
-        'points': points,
-      };
+    'id': id,
+    'type': type,
+    'ui_type': uiType,
+    'question': question,
+    'options': options?.map((option) => option.toJson()).toList(),
+    'correct_answer': correctAnswer,
+    'explanation': explanation,
+    'hint': hint,
+    'audio_url': audioUrl,
+    'image_url': imageUrl,
+    'difficulty': difficulty,
+    'points': points,
+  };
 }
 
 class LessonExercisesRepository {
@@ -98,20 +101,20 @@ class LessonExercisesRepository {
     final data = response['data'] as Map<String, dynamic>? ?? {};
     final content = data['content'] as Map<String, dynamic>?;
     return ((content?['exercises'] as List?) ?? [])
-        .map((item) => Exercise.fromJson(
-            Map<String, dynamic>.from(item as Map)))
+        .map(
+          (item) => Exercise.fromJson(Map<String, dynamic>.from(item as Map)),
+        )
         .toList();
   }
 
-  Future<void> saveLessonContent(
-    String lessonId,
-    List<Exercise> exercises,
-  ) =>
+  Future<void> saveLessonContent(String lessonId, List<Exercise> exercises) =>
       _api.put(
         '${ApiEndpoints.adminLessons}/$lessonId/content',
         data: {
           'content': {
-            'exercises': exercises.map((exercise) => exercise.toJson()).toList(),
+            'exercises': exercises
+                .map((exercise) => exercise.toJson())
+                .toList(),
           },
           'total_exercises': exercises.length,
         },

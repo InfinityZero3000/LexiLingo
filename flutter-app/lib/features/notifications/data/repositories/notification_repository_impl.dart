@@ -137,17 +137,27 @@ class NotificationRepositoryImpl implements NotificationRepository {
     final groups = <NotificationGroup>[];
 
     if (today.isNotEmpty) {
-      groups.add(NotificationGroup(title: 'datetime.today'.tr(), notifications: today));
+      groups.add(
+        NotificationGroup(title: 'datetime.today'.tr(), notifications: today),
+      );
     }
 
     if (yesterday.isNotEmpty) {
       groups.add(
-        NotificationGroup(title: 'datetime.yesterday'.tr(), notifications: yesterday),
+        NotificationGroup(
+          title: 'datetime.yesterday'.tr(),
+          notifications: yesterday,
+        ),
       );
     }
 
     if (earlier.isNotEmpty) {
-      groups.add(NotificationGroup(title: 'datetime.earlier'.tr(), notifications: earlier));
+      groups.add(
+        NotificationGroup(
+          title: 'datetime.earlier'.tr(),
+          notifications: earlier,
+        ),
+      );
     }
 
     return groups;

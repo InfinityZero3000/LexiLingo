@@ -93,8 +93,10 @@ class _KpiCountCardState extends State<KpiCountCard>
                 const Spacer(),
                 if (widget.change != null)
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: widget.changePositive
                           ? AppColors.successContainer

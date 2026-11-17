@@ -72,8 +72,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             .map<Map<String, dynamic>>(
               (e) => {
                 'lang': (e['language'] ?? e['lang'] ?? '').toString(),
-                'pct':
-                    ((e['percentage'] ?? e['pct'] ?? 0) as num) / 100.0,
+                'pct': ((e['percentage'] ?? e['pct'] ?? 0) as num) / 100.0,
               },
             )
             .toList();
@@ -98,8 +97,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  double _kpiVal(String key) =>
-      ((_kpis?[key] as num?) ?? 0).toDouble();
+  double _kpiVal(String key) => ((_kpis?[key] as num?) ?? 0).toDouble();
 
   @override
   Widget build(BuildContext context) {
@@ -160,8 +158,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     // Initial is always the child so it still shows if the
                     // network avatar below fails to load — onBackgroundImageError
                     // only silences the exception, it can't swap in a fallback.
-                    backgroundImage:
-                        user?.avatarUrl?.trim().isNotEmpty == true
+                    backgroundImage: user?.avatarUrl?.trim().isNotEmpty == true
                         ? NetworkImage(user!.avatarUrl!.trim())
                         : null,
                     onBackgroundImageError:
@@ -185,9 +182,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 80),
               sliver: SliverList(
-                delegate: SliverChildListDelegate(
-                  _buildBody(context),
-                ),
+                delegate: SliverChildListDelegate(_buildBody(context)),
               ),
             ),
           ],
@@ -310,11 +305,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           subtitle: 'Engagement over 10 weeks',
           trailing: _Chip(label: '10 Weeks'),
           child: _dauSeries.isEmpty
-              ? const _EmptyState(message: 'No engagement data for this period.')
-              : SizedBox(
-                  height: 130,
-                  child: _DauLineChart(values: _dauSeries),
-                ),
+              ? const _EmptyState(
+                  message: 'No engagement data for this period.',
+                )
+              : SizedBox(height: 130, child: _DauLineChart(values: _dauSeries)),
         ),
       ),
       const SizedBox(height: 12),
@@ -327,7 +321,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           subtitle: 'Total registered users over 30 days',
           trailing: const _Chip(label: '30 Days'),
           child: _growthSeries.isEmpty
-              ? const _EmptyState(message: 'No user growth data for this period.')
+              ? const _EmptyState(
+                  message: 'No user growth data for this period.',
+                )
               : SizedBox(
                   height: 130,
                   child: _DauLineChart(values: _growthSeries, labelPrefix: 'D'),
@@ -522,10 +518,8 @@ class _DauLineChart extends StatelessWidget {
           show: true,
           drawVerticalLine: false,
           horizontalInterval: (max / 4).clamp(1, double.infinity),
-          getDrawingHorizontalLine: (_) => const FlLine(
-            color: AppColors.outline,
-            strokeWidth: 0.5,
-          ),
+          getDrawingHorizontalLine: (_) =>
+              const FlLine(color: AppColors.outline, strokeWidth: 0.5),
         ),
         borderData: FlBorderData(show: false),
         titlesData: FlTitlesData(
@@ -547,7 +541,10 @@ class _DauLineChart extends StatelessWidget {
             sideTitles: SideTitles(
               showTitles: true,
               reservedSize: 22,
-              interval: (values.length / 5).ceilToDouble().clamp(1, double.infinity),
+              interval: (values.length / 5).ceilToDouble().clamp(
+                1,
+                double.infinity,
+              ),
               getTitlesWidget: (value, _) {
                 final i = value.toInt();
                 if (i < 0 || i >= values.length) return const SizedBox.shrink();
@@ -647,9 +644,7 @@ class _QuickAction extends StatelessWidget {
               ? AppColors.primaryBright
               : AppColors.surface.withValues(alpha: 0),
           borderRadius: BorderRadius.circular(10),
-          border: filled
-              ? null
-              : Border.all(color: AppColors.outline),
+          border: filled ? null : Border.all(color: AppColors.outline),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

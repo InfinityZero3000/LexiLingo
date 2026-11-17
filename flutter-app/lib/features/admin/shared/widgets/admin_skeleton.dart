@@ -31,9 +31,10 @@ class _AdminSkeletonState extends State<AdminSkeleton>
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     )..repeat();
-    _shimmer = Tween<double>(begin: -1.0, end: 2.0).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
-    );
+    _shimmer = Tween<double>(
+      begin: -1.0,
+      end: 2.0,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override

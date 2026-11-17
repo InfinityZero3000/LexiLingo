@@ -18,13 +18,13 @@ class AuditLogEntry {
   });
 
   factory AuditLogEntry.fromJson(Map<String, dynamic> j) => AuditLogEntry(
-        createdAt: j['created_at']?.toString() ?? '',
-        action: j['action']?.toString() ?? '',
-        resourceType: j['resource_type']?.toString() ?? '',
-        resourceId: j['resource_id']?.toString(),
-        details: j['details']?.toString(),
-        userId: j['user_id']?.toString(),
-      );
+    createdAt: j['created_at']?.toString() ?? '',
+    action: j['action']?.toString() ?? '',
+    resourceType: j['resource_type']?.toString() ?? '',
+    resourceId: j['resource_id']?.toString(),
+    details: j['details']?.toString(),
+    userId: j['user_id']?.toString(),
+  );
 }
 
 class LogsRepository {
@@ -35,13 +35,16 @@ class LogsRepository {
     String? action,
     String? resourceType,
   }) async {
-    final resp = await _api.get('/admin/rbac/audit-logs', params: {
-      'page': page,
-      'per_page': 30,
-      if (action != null && action.isNotEmpty) 'action': action,
-      if (resourceType != null && resourceType.isNotEmpty)
-        'resource_type': resourceType,
-    });
+    final resp = await _api.get(
+      '/admin/rbac/audit-logs',
+      params: {
+        'page': page,
+        'per_page': 30,
+        if (action != null && action.isNotEmpty) 'action': action,
+        if (resourceType != null && resourceType.isNotEmpty)
+          'resource_type': resourceType,
+      },
+    );
     return {
       'logs': ((resp['logs'] as List?) ?? [])
           .map((e) => AuditLogEntry.fromJson(e as Map<String, dynamic>))

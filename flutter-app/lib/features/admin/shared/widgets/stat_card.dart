@@ -48,7 +48,10 @@ class StatCard extends StatelessWidget {
                 const Spacer(),
                 if (change != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
                       color: changePositive
                           ? AppColors.successContainer
@@ -60,7 +63,9 @@ class StatCard extends StatelessWidget {
                       style: GoogleFonts.spaceGrotesk(
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
-                        color: changePositive ? AppColors.success : AppColors.error,
+                        color: changePositive
+                            ? AppColors.success
+                            : AppColors.error,
                       ),
                     ),
                   ),
@@ -129,7 +134,11 @@ class WideStatCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, color: backgroundColor != null ? Colors.white70 : AppColors.primary, size: 28),
+          Icon(
+            icon,
+            color: backgroundColor != null ? Colors.white70 : AppColors.primary,
+            size: 28,
+          ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -141,7 +150,9 @@ class WideStatCard extends StatelessWidget {
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     letterSpacing: 0.08,
-                    color: backgroundColor != null ? Colors.white60 : AppColors.onSurfaceMuted,
+                    color: backgroundColor != null
+                        ? Colors.white60
+                        : AppColors.onSurfaceMuted,
                   ),
                 ),
                 Text(
@@ -162,9 +173,7 @@ class WideStatCard extends StatelessWidget {
               style: GoogleFonts.spaceGrotesk(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: changePositive
-                    ? Colors.greenAccent
-                    : Colors.redAccent,
+                color: changePositive ? Colors.greenAccent : Colors.redAccent,
               ),
             ),
         ],
