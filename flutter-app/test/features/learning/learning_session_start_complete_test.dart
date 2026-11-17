@@ -136,6 +136,18 @@ void main() {
     expect(provider.isCompleted, isFalse);
   });
 
+  test('progress counts answered questions, not the one on screen', () async {
+    await provider.startLesson('course', 'lesson');
+    expect(provider.progress, 0);
+
+    await provider.submitAnswer('b');
+    expect(provider.progress, 1);
+
+    provider.nextExercise();
+    await pumpEventQueue();
+    expect(provider.progress, 1);
+  });
+
   test('advancing past the last question completes only once', () async {
     await finishLesson();
     provider.nextExercise();

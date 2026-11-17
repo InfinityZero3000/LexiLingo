@@ -49,6 +49,7 @@ class PlacementTestProvider with ChangeNotifier {
     Map<String, int> answers,
     int timeTakenSeconds,
   ) async {
+    if (_isLoading) return false;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();

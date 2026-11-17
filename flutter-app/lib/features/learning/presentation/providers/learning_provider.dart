@@ -140,8 +140,11 @@ class LearningProvider with ChangeNotifier {
   bool get isCompleted =>
       _currentLesson != null && _currentExerciseIndex >= totalExercises;
   int get score => _answerResults.values.where((result) => result).length;
-  double get progress =>
-      totalExercises == 0 ? 0 : (_currentExerciseIndex + 1) / totalExercises;
+  double get progress {
+    if (totalExercises == 0) return 0;
+    final done = _currentExerciseIndex + (isCurrentAnswered ? 1 : 0);
+    return (done / totalExercises).clamp(0.0, 1.0);
+  }
 
   void _applyBlockingFailure(Failure failure) {
     _error = failure.message;

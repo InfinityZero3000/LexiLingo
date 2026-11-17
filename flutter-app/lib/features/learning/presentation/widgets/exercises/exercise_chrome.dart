@@ -78,16 +78,18 @@ class ExerciseOptionCard extends StatelessWidget {
     Color border = colors.border;
     Color fg = colors.textPrimary;
 
-    if (isAnswered && isSelected) {
-      if (isCorrect) {
-        bg = kCorrect;
-        border = kCorrect;
-        fg = Colors.white;
-      } else {
-        bg = kError;
-        border = kError;
-        fg = Colors.white;
-      }
+    final status = context.status;
+    final scheme = Theme.of(context).colorScheme;
+    final revealCorrect = isAnswered && isCorrect;
+    final revealWrong = isAnswered && isSelected && !isCorrect;
+    if (revealCorrect) {
+      bg = status.success;
+      border = status.success;
+      fg = status.onSuccess;
+    } else if (revealWrong) {
+      bg = scheme.error;
+      border = scheme.error;
+      fg = scheme.onError;
     } else if (!isAnswered && isSelected) {
       bg = colors.primary;
       border = colors.primary;
@@ -164,7 +166,7 @@ class ExerciseOptionCard extends StatelessWidget {
                 color: isSelected ? fg : colors.border,
               ),
             ],
-            if (isAnswered && isSelected)
+            if (revealCorrect || revealWrong)
               Padding(
                 padding: const EdgeInsets.only(left: AppSpacing.sm),
                 child: Icon(
