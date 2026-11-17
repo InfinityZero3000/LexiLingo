@@ -139,8 +139,6 @@ abstract class  LocaleKeys {
   static const home_featuredCourses = 'home.featuredCourses';
   static const home_noEnrolledCoursesYet = 'home.noEnrolledCoursesYet';
   static const home_enrollCoursePrompt = 'home.enrollCoursePrompt';
-  static const home_noFeaturedCourses = 'home.noFeaturedCourses';
-  static const home_noFeaturedCoursesDescription = 'home.noFeaturedCoursesDescription';
   static const home_reload = 'home.reload';
   static const home_refreshData = 'home.refreshData';
   static const home_startLearning = 'home.startLearning';
@@ -170,6 +168,13 @@ abstract class  LocaleKeys {
   static const home_todayProgress = 'home.todayProgress';
   static const home_weeklyStats = 'home.weeklyStats';
   static const home_recommendations = 'home.recommendations';
+  static const home_discover = 'home.discover';
+  static const home_discoverSubtitle = 'home.discoverSubtitle';
+  static const home_bookOfWeek = 'home.bookOfWeek';
+  static const home_bookChapters = 'home.bookChapters';
+  static const home_readNow = 'home.readNow';
+  static const home_discoverPodcastMeta = 'home.discoverPodcastMeta';
+  static const home_discoverCourseMeta = 'home.discoverCourseMeta';
   static const home_loadingChallenges = 'home.loadingChallenges';
   static const home_dailyChallenges = 'home.dailyChallenges';
   static const home_challengesCompleted = 'home.challengesCompleted';
