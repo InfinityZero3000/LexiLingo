@@ -41,4 +41,17 @@ void main() {
       provider.dispose();
     },
   );
+
+  test('a load that finishes after dispose does not notify', () async {
+    final provider = NotificationProvider(
+      repository: _FailingRepository(),
+      listenToForegroundFcm: false,
+    );
+    provider.dispose();
+
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(provider.hasNotifications, isFalse);
+  });
 }

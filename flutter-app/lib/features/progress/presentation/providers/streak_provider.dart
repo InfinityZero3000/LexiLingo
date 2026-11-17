@@ -78,7 +78,7 @@ class StreakProvider extends ChangeNotifier {
     result.fold(
       (failure) {
         _errorMessage = UiText.failure(failure);
-        _streak = StreakEntity.empty();
+        _streak ??= StreakEntity.empty();
       },
       (streakData) {
         _streak = streakData;
@@ -112,7 +112,7 @@ class StreakProvider extends ChangeNotifier {
         final updatedWeekly = List<bool>.from(
           _streak?.weeklyActivity ?? List.filled(7, false),
         );
-        if (todayIndex >= 0 && todayIndex < 7) {
+        if (todayIndex >= 0 && todayIndex < updatedWeekly.length) {
           updatedWeekly[todayIndex] = true;
         }
         _streak = StreakEntity(

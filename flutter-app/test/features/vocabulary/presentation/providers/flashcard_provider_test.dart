@@ -18,6 +18,7 @@ class _RecordingVocabularyRepository extends Fake
   bool failDueLookup = false;
   Completer<void>? submitGate;
   int failSubmits = 0;
+  final missingItems = <String>{};
   final sent = <String>[];
 
   final vocabularyItem = VocabularyItemEntity(
@@ -54,7 +55,9 @@ class _RecordingVocabularyRepository extends Fake
   @override
   Future<Either<Failure, VocabularyItemEntity>> getVocabularyItem(
     String id,
-  ) async => Right(vocabularyItem);
+  ) async => missingItems.contains(id)
+      ? const Left(ServerFailure('gone'))
+      : Right(vocabularyItem);
 
   @override
   Future<Either<Failure, List<UserVocabularyEntity>>> getDueVocabulary({
@@ -167,10 +170,10 @@ void main() {
   );
 
   group('rating a card', () {
-    UserVocabularyEntity due(String id) => UserVocabularyEntity(
+    UserVocabularyEntity due(String id, {String? word}) => UserVocabularyEntity(
       id: id,
       userId: 'user-1',
-      vocabularyId: 'vocabulary-1',
+      vocabularyId: word ?? 'vocabulary-1',
       status: VocabularyStatus.learning,
       nextReviewDate: DateTime.utc(2026, 6, 9),
       addedAt: DateTime.utc(2026, 6, 8),
@@ -233,6 +236,24 @@ void main() {
       await provider.submitReview(ReviewQuality.good);
 
       expect(repository.sent, ['a', 'b']);
+      provider.dispose();
+    });
+
+    test('a word that cannot be loaded does not strand the session', () async {
+      final repository = _RecordingVocabularyRepository()
+        ..missingItems.add('gone')
+        ..due = [due('a'), due('b', word: 'gone'), due('c')];
+      final provider = build(repository);
+      await provider.startReviewSession();
+
+      expect(provider.currentSession!.cards.length, 2);
+      expect(provider.currentSession!.totalCards, 2);
+
+      await provider.submitReview(ReviewQuality.good);
+      await provider.submitReview(ReviewQuality.good);
+
+      expect(provider.currentSession!.isCompleted, isTrue);
+      expect(provider.currentSession!.completedAt, isNotNull);
       provider.dispose();
     });
 

@@ -107,15 +107,9 @@ class HomeProvider with ChangeNotifier {
 
     final result = await getWeeklyProgressUseCase!.call();
 
-    result.fold(
-      (failure) {
-        // Graceful degradation - keep empty data
-        _weeklyProgress = WeeklyProgressEntity.empty();
-      },
-      (data) {
-        _weeklyProgress = data;
-      },
-    );
+    result.fold((failure) {}, (data) {
+      _weeklyProgress = data;
+    });
 
     _isLoadingWeekly = false;
     notifyListeners();
@@ -220,11 +214,14 @@ class HomeProvider with ChangeNotifier {
       _currentUser = user;
 
       // Load today's goal (mock data for now)
+      final existing = _todayGoal;
       _todayGoal = DailyGoal(
         id: 1, // Mock ID
         userId: user.id,
         date: DateTime.now(),
-        targetXP: 50,
+        targetXP: existing != null && existing.userId == user.id
+            ? existing.targetXP
+            : 50,
         earnedXP: 20,
       );
 
@@ -284,6 +281,12 @@ class HomeProvider with ChangeNotifier {
 
     _weeklyProgress = WeeklyProgressEntity.empty();
     _isLoadingWeekly = false;
+
+    _enrolledCourses = [];
+    _enrolledError = null;
+    _isLoadingEnrolled = false;
+    _wordOfDay = null;
+    _isLoadingWordOfDay = false;
 
     notifyListeners();
   }

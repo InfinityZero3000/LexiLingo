@@ -100,11 +100,14 @@ class FlashcardProvider extends ChangeNotifier {
       final newCards = await _loadVocabCards(nextBatch);
       _loadedVocabCount += nextBatch.length;
 
-      if (_currentSession != null && newCards.isNotEmpty) {
-        _currentSession = _currentSession!.copyWith(
-          cards: [..._currentSession!.cards, ...newCards],
+      final dropped = nextBatch.length - newCards.length;
+      final session = _currentSession;
+      if (session != null && (newCards.isNotEmpty || dropped > 0)) {
+        _currentSession = session.copyWith(
+          cards: [...session.cards, ...newCards],
+          totalCards: session.totalCards - dropped,
         );
-        notifyListeners();
+        _notify();
       }
     } catch (e) {
       debugPrint('Error preloading cards: $e');
@@ -159,7 +162,8 @@ class FlashcardProvider extends ChangeNotifier {
           _currentSession = ReviewSessionEntity(
             cards: cards,
             startedAt: DateTime.now(),
-            totalCards: _pendingUserVocabs.length,
+            totalCards:
+                _pendingUserVocabs.length - (firstBatch.length - cards.length),
           );
 
           _cardStartTime = DateTime.now();
@@ -320,7 +324,8 @@ class FlashcardProvider extends ChangeNotifier {
           _currentSession = ReviewSessionEntity(
             cards: cards,
             startedAt: DateTime.now(),
-            totalCards: _pendingUserVocabs.length,
+            totalCards:
+                _pendingUserVocabs.length - (firstBatch.length - cards.length),
           );
 
           _cardStartTime = DateTime.now();

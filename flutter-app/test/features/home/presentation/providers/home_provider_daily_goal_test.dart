@@ -4,6 +4,7 @@ import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/features/course/domain/usecases/get_courses_usecase.dart';
 import 'package:lexilingo_app/features/course/domain/usecases/get_enrolled_courses_usecase.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
+import 'package:lexilingo_app/features/user/domain/entities/user.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/weekly_progress_entity.dart';
 import 'package:lexilingo_app/features/progress/domain/repositories/progress_repository.dart';
 import 'package:lexilingo_app/features/progress/domain/usecases/get_weekly_progress_usecase.dart';
@@ -26,9 +27,11 @@ class _Repo implements ProgressRepository {
 class _FakeWeekly extends GetWeeklyProgressUseCase {
   _FakeWeekly(this.xpToday) : super(_Repo());
   int xpToday;
+  bool fail = false;
 
   @override
   Future<Either<Failure, WeeklyProgressEntity>> call() async {
+    if (fail) return const Left(ServerFailure('offline'));
     final now = DateTime.now();
     return Right(
       WeeklyProgressEntity(
@@ -74,5 +77,39 @@ void main() {
     weekly.xpToday = 120;
     await provider.loadWeeklyProgress();
     expect(provider.dailyXP, 120);
+  });
+
+  test('refreshing the dashboard keeps the goal the learner chose', () async {
+    final provider = HomeProvider(
+      getCoursesUseCase: _Courses(),
+      getEnrolledCoursesUseCase: _Enrolled(),
+    );
+    final user = User(
+      id: 'u1',
+      name: 'Lan',
+      email: 'lan@example.com',
+      joinDate: DateTime.utc(2026, 1, 1),
+    );
+    await provider.loadDashboard(user);
+    provider.updateDailyGoalTarget(200);
+
+    await provider.loadDashboard(user);
+
+    expect(provider.dailyGoalXP, 200);
+  });
+
+  test('a failed weekly refresh keeps the streak already shown', () async {
+    final weekly = _FakeWeekly(80);
+    final provider = HomeProvider(
+      getCoursesUseCase: _Courses(),
+      getEnrolledCoursesUseCase: _Enrolled(),
+      getWeeklyProgressUseCase: weekly,
+    );
+    await provider.loadWeeklyProgress();
+    weekly.fail = true;
+
+    await provider.loadWeeklyProgress();
+
+    expect(provider.streakDays, 1);
   });
 }
