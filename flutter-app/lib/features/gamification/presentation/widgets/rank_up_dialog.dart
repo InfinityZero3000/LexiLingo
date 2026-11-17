@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/lottie_animation_widget.dart';
 import 'package:lexilingo_app/features/gamification/presentation/widgets/rank_asset_icon.dart';
@@ -126,10 +127,10 @@ class _RankUpDialogState extends State<RankUpDialog>
                       child: SingleChildScrollView(
                         physics: const BouncingScrollPhysics(),
                         padding: EdgeInsets.fromLTRB(
-                          24,
-                          compact ? 14 : 28,
-                          24,
-                          compact ? 18 : 28,
+                          AppSpacing.xl,
+                          compact ? AppSpacing.lg : 28,
+                          AppSpacing.xl,
+                          compact ? AppSpacing.lg : 28,
                         ),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
@@ -325,7 +326,7 @@ class _HeaderCopy extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         Text(
           'gamification.reachedRank'.tr(namedArgs: {'rank': rankName}),
           textAlign: TextAlign.center,
@@ -453,10 +454,13 @@ class _RankUpMessage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xl,
+        vertical: 20,
+      ),
       decoration: BoxDecoration(
         color: palette.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
           color: palette.primary.withValues(alpha: 0.2),
           width: 1.5,
@@ -472,7 +476,7 @@ class _RankUpMessage extends StatelessWidget {
       child: Column(
         children: [
           Icon(Icons.auto_awesome_rounded, color: palette.primary, size: 32),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           RichText(
             textAlign: TextAlign.center,
             text: TextSpan(
@@ -501,20 +505,20 @@ class _ContinueButton extends StatelessWidget {
       width: double.infinity,
       child: FilledButton(
         style: FilledButton.styleFrom(
+          minimumSize: const Size(kMinTapTarget, kMinTapTarget),
           backgroundColor: palette.primary,
           foregroundColor: AppColors.surfaceLight,
           padding: const EdgeInsets.symmetric(vertical: 20),
           elevation: 4,
           shadowColor: palette.primary.withValues(alpha: 0.4),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
         ),
         onPressed: onPressed,
-        child: const Text(
+        child: Text(
           'CONTINUE',
-          style: TextStyle(
-            fontSize: 18,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.w800,
             letterSpacing: 1.2,
           ),

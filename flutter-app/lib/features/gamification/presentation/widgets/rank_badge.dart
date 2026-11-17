@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/gamification/presentation/widgets/rank_asset_icon.dart';
 
@@ -43,7 +44,7 @@ class RankBadgeLabelled extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           RankBadge(rank: rank, size: iconSize, onTap: null),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.xs),
           rank == 'master'
               ? ShaderMask(
                   shaderCallback: (bounds) => const LinearGradient(
@@ -53,19 +54,17 @@ class RankBadgeLabelled extends StatelessWidget {
                   ).createShader(bounds),
                   child: Text(
                     rankDisplayNameFor(rank),
-                    style: const TextStyle(
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: AppColors.surfaceLight,
                       fontWeight: FontWeight.bold,
-                      fontSize: 12,
                     ),
                   ),
                 )
               : Text(
                   rankDisplayNameFor(rank),
-                  style: TextStyle(
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: data.color,
                     fontWeight: FontWeight.bold,
-                    fontSize: 12,
                   ),
                 ),
         ],
@@ -98,7 +97,7 @@ class RankCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
@@ -108,7 +107,7 @@ class RankCard extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
             color: data.color.withValues(alpha: 0.3),
             width: 1.5,
@@ -118,7 +117,7 @@ class RankCard extends StatelessWidget {
           children: [
             // Rank Icon
             RankAssetIcon(rank: rank, size: 56),
-            const SizedBox(width: 16),
+            const SizedBox(width: AppSpacing.lg),
             // Info
             Expanded(
               child: Column(
@@ -133,22 +132,22 @@ class RankCard extends StatelessWidget {
                           ).createShader(bounds),
                           child: Text(
                             rankDisplayNameFor(rank),
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.surfaceLight,
-                            ),
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.surfaceLight,
+                                ),
                           ),
                         )
                       : Text(
                           rankDisplayNameFor(rank),
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: data.color,
-                          ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: data.color,
+                              ),
                         ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     'gamification.levelProficiency'.tr(
                       namedArgs: {
@@ -156,8 +155,7 @@ class RankCard extends StatelessWidget {
                         'proficiency': proficiencyLevel,
                       },
                     ),
-                    style: TextStyle(
-                      fontSize: 13,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(
                         context,
                       ).colorScheme.onSurface.withValues(alpha: 0.7),
@@ -171,16 +169,14 @@ class RankCard extends StatelessWidget {
               children: [
                 Text(
                   rankScore.toStringAsFixed(0),
-                  style: TextStyle(
-                    fontSize: 22,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: data.color,
                   ),
                 ),
                 Text(
                   'gamification.score'.tr(),
-                  style: TextStyle(
-                    fontSize: 11,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: Theme.of(
                       context,
                     ).colorScheme.onSurface.withValues(alpha: 0.5),

@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:confetti/confetti.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -224,7 +225,10 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
         correctAnswers: _correctCount,
         answers: [
           for (final pair in game.pairs)
-            {'id': pair.wordId, 'answer': _matchedIds.contains(pair.wordId) ? pair.matchText : ''},
+            {
+              'id': pair.wordId,
+              'answer': _matchedIds.contains(pair.wordId) ? pair.matchText : '',
+            },
         ],
       );
     }
@@ -288,179 +292,190 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
               body: Center(child: LottieLoadingWidget.medium()),
             );
           }
-        final game = provider.matching;
-        if (provider.error != null) {
-          return GameLoadState(
-            message: 'games.loadFailed'.tr(),
-            onRetry: () async {
-              await provider.loadMatchingGame();
-              if (mounted) _initGame();
-            },
-          );
-        }
-        if (game == null || game.pairs.isEmpty) {
-          return GameLoadState(
-            message: 'games.emptyGame'.tr(),
-            onRetry: () async {
-              await provider.loadMatchingGame();
-              if (mounted) _initGame();
-            },
-          );
-        }
-        if (!_gameLoaded) {
-          return const Scaffold(
-            body: Center(child: LottieLoadingWidget.medium()),
-          );
-        }
-        final remaining = game.pairs
-            .where((p) => !_matchedIds.contains(p.wordId))
-            .toList();
+          final game = provider.matching;
+          if (provider.error != null) {
+            return GameLoadState(
+              message: 'games.loadFailed'.tr(),
+              onRetry: () async {
+                await provider.loadMatchingGame();
+                if (mounted) _initGame();
+              },
+            );
+          }
+          if (game == null || game.pairs.isEmpty) {
+            return GameLoadState(
+              message: 'games.emptyGame'.tr(),
+              onRetry: () async {
+                await provider.loadMatchingGame();
+                if (mounted) _initGame();
+              },
+            );
+          }
+          if (!_gameLoaded) {
+            return const Scaffold(
+              body: Center(child: LottieLoadingWidget.medium()),
+            );
+          }
+          final remaining = game.pairs
+              .where((p) => !_matchedIds.contains(p.wordId))
+              .toList();
 
-        return Scaffold(
-          appBar: AppBar(
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            elevation: 0,
-            title: Text(
-              'matchingGame.title'.tr(),
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-            ),
-            actions: [
-              Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: _TimerChip(
-                  timeLeft: _timeLeft,
-                  total: game.timerSeconds,
+          return Scaffold(
+            appBar: AppBar(
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              elevation: 0,
+              title: Text(
+                'matchingGame.title'.tr(),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
-            ],
-          ),
-          body: ContentWidth(maxWidth: ContentWidth.reading, child: Stack(
-            children: [
-              Column(
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.only(right: AppSpacing.md),
+                  child: _TimerChip(
+                    timeLeft: _timeLeft,
+                    total: game.timerSeconds,
+                  ),
+                ),
+              ],
+            ),
+            body: ContentWidth(
+              maxWidth: ContentWidth.reading,
+              child: Stack(
                 children: [
-                  LinearProgressIndicator(
-                    value: _matchedIds.length / game.pairs.length,
-                    backgroundColor: AppColors.grey200,
-                    color: AppColors.greenSuccess,
-                    minHeight: 4,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    child: GamePowerUpTray(
-                      availableTypes: _matchingPowerUps,
-                      onUse: _onPowerUpUsed,
-                    ),
-                  ),
-                  if (_luckyCloverActive)
-                    Padding(
-                      padding: EdgeInsets.only(bottom: 6),
-                      child: ActivePowerUpBadge(
-                        itemType: ShopItemEntity.effectLuckyClover,
-                        label: 'games.luckyCloverActive'.tr(),
+                  Column(
+                    children: [
+                      LinearProgressIndicator(
+                        value: _matchedIds.length / game.pairs.length,
+                        backgroundColor: AppColors.grey200,
+                        color: AppColors.greenSuccess,
+                        minHeight: 4,
                       ),
-                    ),
-                  Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Text(
-                      'matchingGame.matchedProgress'.tr(
-                        namedArgs: {
-                          'matched': '${_matchedIds.length}',
-                          'total': '${game.pairs.length}',
-                        },
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                          vertical: AppSpacing.sm,
+                        ),
+                        child: GamePowerUpTray(
+                          availableTypes: _matchingPowerUps,
+                          onUse: _onPowerUpUsed,
+                        ),
                       ),
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        fontSize: 13,
+                      if (_luckyCloverActive)
+                        Padding(
+                          padding: EdgeInsets.only(bottom: AppSpacing.sm),
+                          child: ActivePowerUpBadge(
+                            itemType: ShopItemEntity.effectLuckyClover,
+                            label: 'games.luckyCloverActive'.tr(),
+                          ),
+                        ),
+                      Padding(
+                        padding: const EdgeInsets.all(AppSpacing.md),
+                        child: Text(
+                          'matchingGame.matchedProgress'.tr(
+                            namedArgs: {
+                              'matched': '${_matchedIds.length}',
+                              'total': '${game.pairs.length}',
+                            },
+                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
+                        ),
                       ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Row(
-                        children: [
-                          // Words column
-                          Expanded(
-                            child: _ColumnList(
-                              items: remaining.map((p) => p.word).toList(),
-                              selectedItem: _selectedWord != null
-                                  ? game.pairs
-                                        .firstWhere(
-                                          (p) => p.wordId == _selectedWord,
-                                        )
-                                        .word
-                                  : null,
-                              pairStates: Map.fromEntries(
-                                remaining.map(
-                                  (p) =>
-                                      MapEntry(p.word, _matchState[p.wordId]),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                          ),
+                          child: Row(
+                            children: [
+                              // Words column
+                              Expanded(
+                                child: _ColumnList(
+                                  items: remaining.map((p) => p.word).toList(),
+                                  selectedItem: _selectedWord != null
+                                      ? game.pairs
+                                            .firstWhere(
+                                              (p) => p.wordId == _selectedWord,
+                                            )
+                                            .word
+                                      : null,
+                                  pairStates: Map.fromEntries(
+                                    remaining.map(
+                                      (p) => MapEntry(
+                                        p.word,
+                                        _matchState[p.wordId],
+                                      ),
+                                    ),
+                                  ),
+                                  onTap: (word) {
+                                    final p = game.pairs.firstWhere(
+                                      (p) => p.word == word,
+                                    );
+                                    _selectWord(p.wordId);
+                                  },
+                                  label: 'matchingGame.wordsColumnLabel'.tr(),
                                 ),
                               ),
-                              onTap: (word) {
-                                final p = game.pairs.firstWhere(
-                                  (p) => p.word == word,
-                                );
-                                _selectWord(p.wordId);
-                              },
-                              label: 'matchingGame.wordsColumnLabel'.tr(),
-                            ),
+                              const SizedBox(width: AppSpacing.sm),
+                              // Matches column
+                              Expanded(
+                                child: _ColumnList(
+                                  items: game.definitionsColumn
+                                      .where(
+                                        (m) => !_matchedIds.any((id) {
+                                          try {
+                                            return game.pairs
+                                                    .firstWhere(
+                                                      (p) => p.wordId == id,
+                                                    )
+                                                    .matchText ==
+                                                m;
+                                          } catch (_) {
+                                            return false;
+                                          }
+                                        }),
+                                      )
+                                      .toList(),
+                                  selectedItem: _selectedMatch,
+                                  pairStates: const {},
+                                  onTap: _selectMatchItem,
+                                  label: game.variant == 'definition'
+                                      ? 'matchingGame.definitionsLabel'.tr()
+                                      : 'matchingGame.matchesLabel'.tr(),
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 10),
-                          // Matches column
-                          Expanded(
-                            child: _ColumnList(
-                              items: game.definitionsColumn
-                                  .where(
-                                    (m) => !_matchedIds.any((id) {
-                                      try {
-                                        return game.pairs
-                                                .firstWhere(
-                                                  (p) => p.wordId == id,
-                                                )
-                                                .matchText ==
-                                            m;
-                                      } catch (_) {
-                                        return false;
-                                      }
-                                    }),
-                                  )
-                                  .toList(),
-                              selectedItem: _selectedMatch,
-                              pairStates: const {},
-                              onTap: _selectMatchItem,
-                              label: game.variant == 'definition'
-                                  ? 'matchingGame.definitionsLabel'.tr()
-                                  : 'matchingGame.matchesLabel'.tr(),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
+                    ],
+                  ),
+                  // Confetti overlay (skill: gamification-confetti-win)
+                  Align(
+                    alignment: Alignment.topCenter,
+                    child: ConfettiWidget(
+                      confettiController: _confettiController,
+                      blastDirectionality: BlastDirectionality.explosive,
+                      numberOfParticles: 20,
+                      gravity: 0.4,
+                      colors: const [
+                        AppColors.primary,
+                        AppColors.accentYellow,
+                        AppColors.greenSuccessBright,
+                        AppColors.orange,
+                      ],
                     ),
                   ),
                 ],
               ),
-              // Confetti overlay (skill: gamification-confetti-win)
-              Align(
-                alignment: Alignment.topCenter,
-                child: ConfettiWidget(
-                  confettiController: _confettiController,
-                  blastDirectionality: BlastDirectionality.explosive,
-                  numberOfParticles: 20,
-                  gravity: 0.4,
-                  colors: const [
-                    AppColors.primary,
-                    Colors.yellow,
-                    AppColors.greenSuccessBright,
-                    AppColors.orange,
-                  ],
-                ),
-              ),
-            ],
-          ),),
-        );
+            ),
+          );
         },
       ),
     );
@@ -491,13 +506,12 @@ class _ColumnList extends StatelessWidget {
       children: [
         Text(
           label,
-          style: TextStyle(
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
             fontWeight: FontWeight.bold,
-            fontSize: 13,
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: AppSpacing.sm),
         Expanded(
           child: ListView.builder(
             itemCount: items.length,
@@ -516,27 +530,26 @@ class _ColumnList extends StatelessWidget {
                 border = AppColors.greenSuccess;
               }
               if (state == _PairState.wrong) {
-                bg = Colors.red.withValues(alpha: 0.1);
+                bg = Theme.of(context).colorScheme.error.withValues(alpha: 0.1);
                 border = AppColors.errorBright;
               }
               return GestureDetector(
                 onTap: () => onTap(item),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 180),
-                  margin: const EdgeInsets.only(bottom: 8),
+                  margin: const EdgeInsets.only(bottom: AppSpacing.sm),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.md,
                   ),
                   decoration: BoxDecoration(
                     color: bg,
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                     border: Border.all(color: border, width: 1.5),
                   ),
                   child: Text(
                     item,
-                    style: TextStyle(
-                      fontSize: 13,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                     maxLines: 3,
@@ -566,18 +579,20 @@ class _TimerChip extends StatelessWidget {
         ? AppColors.orange
         : AppColors.errorBright;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(color: color),
       ),
       child: Text(
         '${timeLeft}s',
-        style: TextStyle(
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
           fontWeight: FontWeight.bold,
           color: color,
-          fontSize: 14,
         ),
       ),
     );

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:confetti/confetti.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -164,7 +165,10 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
     if (_wordAnswered) return;
     final game = context.read<GamesProvider>().wordScramble;
     if (game == null) return;
-    _submittedAnswers.putIfAbsent(game.words[_currentWordIndex].wordId, () => '');
+    _submittedAnswers.putIfAbsent(
+      game.words[_currentWordIndex].wordId,
+      () => '',
+    );
     setState(() {
       _wordAnswered = true;
       _verdict = AnswerVerdict.timeout;
@@ -304,10 +308,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
       correctAnswers: _correctCount,
       answers: [
         for (final word in game?.words ?? <ScrambleWord>[])
-          {
-            'id': word.wordId,
-            'answer': _submittedAnswers[word.wordId] ?? '',
-          },
+          {'id': word.wordId, 'answer': _submittedAnswers[word.wordId] ?? ''},
       ],
     );
     if (!mounted) return;
@@ -341,270 +342,306 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
         if (!didPop) _abandonGame();
       },
       child: Stack(
-      alignment: Alignment.topCenter,
-      children: [
-        Consumer<GamesProvider>(
-          builder: (context, provider, _) {
-            if (provider.isLoading) {
-              return const Scaffold(
-                body: Center(child: LottieLoadingWidget.medium()),
-              );
-            }
-            final game = provider.wordScramble;
-            if (provider.error != null) {
-              return GameLoadState(
-                message: 'games.loadFailed'.tr(),
-                onRetry: () async {
-                  await provider.loadWordScramble();
-                  if (mounted) _initWord();
-                },
-              );
-            }
-            if (game == null || game.words.isEmpty) {
-              return GameLoadState(
-                message: 'games.emptyGame'.tr(),
-                onRetry: () async {
-                  await provider.loadWordScramble();
-                  if (mounted) _initWord();
-                },
-              );
-            }
-            if (!_gameLoaded) {
-              return const Scaffold(
-                body: Center(child: LottieLoadingWidget.medium()),
-              );
-            }
-            final word = game.words[_currentWordIndex];
-            return Scaffold(
-              appBar: AppBar(
-                backgroundColor: Theme.of(context).colorScheme.surface,
-                elevation: 0,
-                title: Text(
-                  'wordScramble.wordProgress'.tr(
-                    namedArgs: {
-                      'current': '${_currentWordIndex + 1}',
-                      'total': '${game.words.length}',
-                    },
-                  ),
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-                actions: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: Center(
-                      child: _TimerDisplay(
-                        timeLeft: _timeLeft,
-                        total: game.timerSeconds,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              body: ContentWidth(maxWidth: ContentWidth.reading, child: Column(
-                children: [
-                  // Progress bar
-                  LinearProgressIndicator(
-                    value: (_currentWordIndex) / game.words.length,
-                    backgroundColor: Theme.of(
-                      context,
-                    ).colorScheme.surfaceContainerHighest,
-                    color: AppColors.primary,
-                    minHeight: 4,
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 16,
-                      ),
-                      child: Column(
-                        children: [
-                          GamePowerUpTray(
-                            availableTypes: _wordScramblePowerUps,
-                            enabled: !_wordAnswered,
-                            onUse: _onPowerUpUsed,
-                          ),
-                          const SizedBox(height: 8),
-                          // XP popup
-                          if (_xpPopup != null) _XpPopup(text: _xpPopup!),
-                          const SizedBox(height: 4),
-                          // Hint area
-                          _HintCard(word: word, showHint: _showHint),
-                          if (_translationReveal != null)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 8),
-                              child: _TranslationBanner(
-                                text: _translationReveal!,
-                              ),
-                            ),
-                          const SizedBox(height: 20),
-                          // Answer slots
-                          Text(
-                            'wordScramble.yourAnswerLabel'.tr(),
-                            style: TextStyle(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurfaceVariant,
-                              fontSize: 13,
-                            ),
-                          ),
-                          Wrap(
-                            alignment: WrapAlignment.center,
-                            children: List.generate(_answerSlots.length, (i) {
-                              return GestureDetector(
-                                onTap: () => _tapSlot(i),
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 150),
-                                  width: 42,
-                                  height: 48,
-                                  margin: const EdgeInsets.all(4),
-                                  decoration: BoxDecoration(
-                                    color: _slotCorrect[i]
-                                        ? AppColors.greenSuccess
-                                        : _slotWrong[i]
-                                        ? AppColors.errorDark
-                                        : Theme.of(context).colorScheme.surface,
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color: _answerSlots[i] != null
-                                          ? AppColors.primary
-                                          : Theme.of(
-                                              context,
-                                            ).colorScheme.outlineVariant,
-                                      width: 1.5,
-                                    ),
-                                  ),
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    _answerSlots[i]?.toUpperCase() ?? '',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 18,
-                                      color: (_slotCorrect[i] || _slotWrong[i])
-                                          ? Colors.white
-                                          : Theme.of(
-                                              context,
-                                            ).colorScheme.onSurface,
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }),
-                          ),
-                          if (_wordAnswered)
-                            Expanded(
-                              child: SingleChildScrollView(
-                                padding: const EdgeInsets.only(top: 20),
-                                child: AnswerFeedbackPanel(
-                                  verdict: _verdict ?? AnswerVerdict.correct,
-                                  correctAnswer: [
-                                    word.word,
-                                    if (word.ipaPronunciation?.isNotEmpty ??
-                                        false)
-                                      word.ipaPronunciation!,
-                                  ].join('  '),
-                                  explanation: word.definition,
-                                  explanationLabel:
-                                      'games.answerFeedback.meaningLabel'.tr(),
-                                  extra: word.vietnameseTranslation,
-                                ),
-                              ),
-                            )
-                          else ...[
-                          const SizedBox(height: 24),
-                          // Letter pool
-                          Text(
-                            'wordScramble.availableLettersLabel'.tr(),
-                            style: TextStyle(
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurfaceVariant,
-                              fontSize: 13,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Wrap(
-                            alignment: WrapAlignment.center,
-                            children: List.generate(_poolLetters.length, (i) {
-                              final letter = _poolLetters[i];
-                              if (letter.isEmpty) {
-                                return const SizedBox(width: 50, height: 56);
-                              }
-                              return LetterTile(
-                                key: ValueKey('pool_${i}_$letter'),
-                                letter: letter,
-                                onTap: () => _tapPool(i),
-                              );
-                            }),
-                          ),
-                          const Spacer(),
-                          // Hint & Skip
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              OutlinedButton.icon(
-                                onPressed: _wordAnswered
-                                    ? null
-                                    : () => setState(
-                                        () => _showHint = !_showHint,
-                                      ),
-                                icon: const Icon(
-                                  Icons.lightbulb_outline,
-                                  size: 16,
-                                ),
-                                label: Text('wordScramble.hintButton'.tr()),
-                                style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(
-                                    color: AppColors.primary,
-                                  ),
-                                  foregroundColor: AppColors.primary,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              TextButton(
-                                onPressed: _wordAnswered ? null : _skipWord,
-                                child: Text(
-                                  'wordScramble.skipButton'.tr(),
-                                  style: TextStyle(color: AppColors.primary),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                  if (_wordAnswered)
-                    GameNextBar(
-                      label: _currentWordIndex + 1 >= game.words.length
-                          ? 'games.answerFeedback.seeResults'.tr()
-                          : 'games.answerFeedback.nextWord'.tr(),
-                      onPressed: () {
-                        if (_wordAnswered) _nextWord();
+        alignment: Alignment.topCenter,
+        children: [
+          Consumer<GamesProvider>(
+            builder: (context, provider, _) {
+              if (provider.isLoading) {
+                return const Scaffold(
+                  body: Center(child: LottieLoadingWidget.medium()),
+                );
+              }
+              final game = provider.wordScramble;
+              if (provider.error != null) {
+                return GameLoadState(
+                  message: 'games.loadFailed'.tr(),
+                  onRetry: () async {
+                    await provider.loadWordScramble();
+                    if (mounted) _initWord();
+                  },
+                );
+              }
+              if (game == null || game.words.isEmpty) {
+                return GameLoadState(
+                  message: 'games.emptyGame'.tr(),
+                  onRetry: () async {
+                    await provider.loadWordScramble();
+                    if (mounted) _initWord();
+                  },
+                );
+              }
+              if (!_gameLoaded) {
+                return const Scaffold(
+                  body: Center(child: LottieLoadingWidget.medium()),
+                );
+              }
+              final word = game.words[_currentWordIndex];
+              return Scaffold(
+                appBar: AppBar(
+                  backgroundColor: Theme.of(context).colorScheme.surface,
+                  elevation: 0,
+                  title: Text(
+                    'wordScramble.wordProgress'.tr(
+                      namedArgs: {
+                        'current': '${_currentWordIndex + 1}',
+                        'total': '${game.words.length}',
                       },
                     ),
-                ],
-              ),),
-            );
-          },
-        ),
-        ConfettiWidget(
-          confettiController: _confettiController,
-          blastDirectionality: BlastDirectionality.explosive,
-          numberOfParticles: 20,
-          gravity: 0.4,
-          emissionFrequency: 0.05,
-          colors: const [
-            AppColors.primary,
-            AppColors.accentYellow,
-            AppColors.greenSuccess,
-          ],
-        ),
-      ],
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  actions: [
+                    Padding(
+                      padding: const EdgeInsets.only(right: AppSpacing.md),
+                      child: Center(
+                        child: _TimerDisplay(
+                          timeLeft: _timeLeft,
+                          total: game.timerSeconds,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                body: ContentWidth(
+                  maxWidth: ContentWidth.reading,
+                  child: Column(
+                    children: [
+                      // Progress bar
+                      LinearProgressIndicator(
+                        value: (_currentWordIndex) / game.words.length,
+                        backgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
+                        color: AppColors.primary,
+                        minHeight: 4,
+                      ),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: AppSpacing.lg,
+                          ),
+                          child: Column(
+                            children: [
+                              GamePowerUpTray(
+                                availableTypes: _wordScramblePowerUps,
+                                enabled: !_wordAnswered,
+                                onUse: _onPowerUpUsed,
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
+                              // XP popup
+                              if (_xpPopup != null) _XpPopup(text: _xpPopup!),
+                              const SizedBox(height: AppSpacing.xs),
+                              // Hint area
+                              _HintCard(word: word, showHint: _showHint),
+                              if (_translationReveal != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    top: AppSpacing.sm,
+                                  ),
+                                  child: _TranslationBanner(
+                                    text: _translationReveal!,
+                                  ),
+                                ),
+                              const SizedBox(height: 20),
+                              // Answer slots
+                              Text(
+                                'wordScramble.yourAnswerLabel'.tr(),
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                    ),
+                              ),
+                              Wrap(
+                                alignment: WrapAlignment.center,
+                                children: List.generate(_answerSlots.length, (
+                                  i,
+                                ) {
+                                  return GestureDetector(
+                                    onTap: () => _tapSlot(i),
+                                    child: AnimatedContainer(
+                                      duration: const Duration(
+                                        milliseconds: 150,
+                                      ),
+                                      width: 42,
+                                      height: 48,
+                                      margin: const EdgeInsets.all(
+                                        AppSpacing.xs,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: _slotCorrect[i]
+                                            ? AppColors.greenSuccess
+                                            : _slotWrong[i]
+                                            ? AppColors.errorDark
+                                            : Theme.of(
+                                                context,
+                                              ).colorScheme.surface,
+                                        borderRadius: BorderRadius.circular(
+                                          AppRadius.sm,
+                                        ),
+                                        border: Border.all(
+                                          color: _answerSlots[i] != null
+                                              ? AppColors.primary
+                                              : Theme.of(
+                                                  context,
+                                                ).colorScheme.outlineVariant,
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        _answerSlots[i]?.toUpperCase() ?? '',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              color:
+                                                  (_slotCorrect[i] ||
+                                                      _slotWrong[i])
+                                                  ? AppColors.textInverted
+                                                  : Theme.of(
+                                                      context,
+                                                    ).colorScheme.onSurface,
+                                            ),
+                                      ),
+                                    ),
+                                  );
+                                }),
+                              ),
+                              if (_wordAnswered)
+                                Expanded(
+                                  child: SingleChildScrollView(
+                                    padding: const EdgeInsets.only(top: 20),
+                                    child: AnswerFeedbackPanel(
+                                      verdict:
+                                          _verdict ?? AnswerVerdict.correct,
+                                      correctAnswer: [
+                                        word.word,
+                                        if (word.ipaPronunciation?.isNotEmpty ??
+                                            false)
+                                          word.ipaPronunciation!,
+                                      ].join('  '),
+                                      explanation: word.definition,
+                                      explanationLabel:
+                                          'games.answerFeedback.meaningLabel'
+                                              .tr(),
+                                      extra: word.vietnameseTranslation,
+                                    ),
+                                  ),
+                                )
+                              else ...[
+                                const SizedBox(height: AppSpacing.xl),
+                                // Letter pool
+                                Text(
+                                  'wordScramble.availableLettersLabel'.tr(),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurfaceVariant,
+                                      ),
+                                ),
+                                const SizedBox(height: AppSpacing.sm),
+                                Wrap(
+                                  alignment: WrapAlignment.center,
+                                  children: List.generate(_poolLetters.length, (
+                                    i,
+                                  ) {
+                                    final letter = _poolLetters[i];
+                                    if (letter.isEmpty) {
+                                      return const SizedBox(
+                                        width: 50,
+                                        height: 56,
+                                      );
+                                    }
+                                    return LetterTile(
+                                      key: ValueKey('pool_${i}_$letter'),
+                                      letter: letter,
+                                      onTap: () => _tapPool(i),
+                                    );
+                                  }),
+                                ),
+                                const Spacer(),
+                                // Hint & Skip
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    OutlinedButton.icon(
+                                      onPressed: _wordAnswered
+                                          ? null
+                                          : () => setState(
+                                              () => _showHint = !_showHint,
+                                            ),
+                                      icon: const Icon(
+                                        Icons.lightbulb_outline,
+                                        size: 16,
+                                      ),
+                                      label: Text(
+                                        'wordScramble.hintButton'.tr(),
+                                      ),
+                                      style: OutlinedButton.styleFrom(
+                                        minimumSize: const Size(
+                                          kMinTapTarget,
+                                          kMinTapTarget,
+                                        ),
+                                        side: const BorderSide(
+                                          color: AppColors.primary,
+                                        ),
+                                        foregroundColor: AppColors.primary,
+                                      ),
+                                    ),
+                                    const SizedBox(width: AppSpacing.md),
+                                    TextButton(
+                                      onPressed: _wordAnswered
+                                          ? null
+                                          : _skipWord,
+                                      child: Text(
+                                        'wordScramble.skipButton'.tr(),
+                                        style: TextStyle(
+                                          color: AppColors.primary,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: AppSpacing.md),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                      if (_wordAnswered)
+                        GameNextBar(
+                          label: _currentWordIndex + 1 >= game.words.length
+                              ? 'games.answerFeedback.seeResults'.tr()
+                              : 'games.answerFeedback.nextWord'.tr(),
+                          onPressed: () {
+                            if (_wordAnswered) _nextWord();
+                          },
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+          ConfettiWidget(
+            confettiController: _confettiController,
+            blastDirectionality: BlastDirectionality.explosive,
+            numberOfParticles: 20,
+            gravity: 0.4,
+            emissionFrequency: 0.05,
+            colors: const [
+              AppColors.primary,
+              AppColors.accentYellow,
+              AppColors.greenSuccess,
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -624,18 +661,20 @@ class _TimerDisplay extends StatelessWidget {
         ? AppColors.orange
         : AppColors.errorBright;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(color: color),
       ),
       child: Text(
         '${timeLeft}s',
-        style: TextStyle(
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
           fontWeight: FontWeight.bold,
           color: color,
-          fontSize: 14,
         ),
       ),
     );
@@ -650,10 +689,10 @@ class _TranslationBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: AppColors.purple.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: AppColors.purple.withValues(alpha: 0.4)),
       ),
       child: Row(
@@ -663,12 +702,11 @@ class _TranslationBanner extends StatelessWidget {
             size: 14,
             color: AppColors.purple,
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               text,
-              style: TextStyle(
-                fontSize: 13,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
@@ -691,10 +729,10 @@ class _HintCard extends StatelessWidget {
       child: showHint && word.hint.isNotEmpty
           ? Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(AppSpacing.md),
               decoration: BoxDecoration(
                 color: AppColors.accentYellow.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 border: Border.all(color: AppColors.accentYellow),
               ),
               child: Row(
@@ -704,12 +742,11 @@ class _HintCard extends StatelessWidget {
                     size: 14,
                     color: AppColors.accentYellow,
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
                       word.hint,
-                      style: TextStyle(
-                        fontSize: 13,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
@@ -729,17 +766,19 @@ class _XpPopup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: AppColors.greenSuccess,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Text(
         text,
-        style: TextStyle(
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
           color: AppColors.surfaceLight,
           fontWeight: FontWeight.bold,
-          fontSize: 14,
         ),
       ),
     );

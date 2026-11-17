@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:confetti/confetti.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -261,10 +262,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
       correctAnswers: _correctCount,
       answers: [
         for (final question in game.questions)
-          {
-            'id': question.id,
-            'answer': _submittedAnswers[question.id] ?? '',
-          },
+          {'id': question.id, 'answer': _submittedAnswers[question.id] ?? ''},
       ],
     );
     if (!mounted) return;
@@ -300,280 +298,301 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
           if (provider.isLoading) {
             return const Scaffold(
               body: Center(child: LottieLoadingWidget.medium()),
-          );
-        }
-        final game = provider.fillBlank;
-        if (provider.error != null) {
-          return GameLoadState(
-            message: 'games.loadFailed'.tr(),
-            onRetry: () async {
-              await provider.loadFillBlank();
-              if (mounted) _startQuestion();
-            },
-          );
-        }
-        if (game == null || game.questions.isEmpty) {
-          return GameLoadState(
-            message: 'games.emptyGame'.tr(),
-            onRetry: () async {
-              await provider.loadFillBlank();
-              if (mounted) _startQuestion();
-            },
-          );
-        }
-        if (!_gameLoaded) {
-          return const Scaffold(
-            body: Center(child: LottieLoadingWidget.medium()),
-          );
-        }
-        final q = game.questions[_questionIndex];
+            );
+          }
+          final game = provider.fillBlank;
+          if (provider.error != null) {
+            return GameLoadState(
+              message: 'games.loadFailed'.tr(),
+              onRetry: () async {
+                await provider.loadFillBlank();
+                if (mounted) _startQuestion();
+              },
+            );
+          }
+          if (game == null || game.questions.isEmpty) {
+            return GameLoadState(
+              message: 'games.emptyGame'.tr(),
+              onRetry: () async {
+                await provider.loadFillBlank();
+                if (mounted) _startQuestion();
+              },
+            );
+          }
+          if (!_gameLoaded) {
+            return const Scaffold(
+              body: Center(child: LottieLoadingWidget.medium()),
+            );
+          }
+          final q = game.questions[_questionIndex];
 
-        return Scaffold(
-          appBar: AppBar(
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            elevation: 0,
-            title: Text(
-              'fillBlank.questionProgress'.tr(
-                namedArgs: {
-                  'current': '${_questionIndex + 1}',
-                  'total': '${game.questions.length}',
-                },
+          return Scaffold(
+            appBar: AppBar(
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              elevation: 0,
+              title: Text(
+                'fillBlank.questionProgress'.tr(
+                  namedArgs: {
+                    'current': '${_questionIndex + 1}',
+                    'total': '${game.questions.length}',
+                  },
+                ),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                ),
               ),
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
             ),
-          ),
-          body: ContentWidth(maxWidth: ContentWidth.reading, child: Stack(
-            children: [
-              Column(
+            body: ContentWidth(
+              maxWidth: ContentWidth.reading,
+              child: Stack(
                 children: [
-                  // Progress bar
-                  LinearProgressIndicator(
-                    value: (_questionIndex) / game.questions.length,
-                    backgroundColor: Theme.of(
-                      context,
-                    ).colorScheme.surfaceContainerHighest,
-                    color: AppColors.primary,
-                    minHeight: 4,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 6,
-                    ),
-                    child: GamePowerUpTray(
-                      availableTypes: _fillBlankPowerUps,
-                      enabled: !_answered,
-                      onUse: _onPowerUpUsed,
-                    ),
-                  ),
-                  if (_luckyCloverActive)
-                    Padding(
-                      padding: EdgeInsets.only(bottom: 6),
-                      child: ActivePowerUpBadge(
-                        itemType: ShopItemEntity.effectLuckyClover,
-                        label: 'games.luckyCloverActive'.tr(),
+                  Column(
+                    children: [
+                      // Progress bar
+                      LinearProgressIndicator(
+                        value: (_questionIndex) / game.questions.length,
+                        backgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
+                        color: AppColors.primary,
+                        minHeight: 4,
                       ),
-                    ),
-                  // Timer bar
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.timer_outlined,
-                          size: 16,
-                          color: AppColors.primary,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.lg,
+                          vertical: AppSpacing.sm,
                         ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: LinearProgressIndicator(
-                            value: _timeLeft / game.timerSecondsPerQuestion,
-                            backgroundColor: Theme.of(
-                              context,
-                            ).colorScheme.surfaceContainerHighest,
-                            color: _timeLeft > 5
-                                ? AppColors.primary
-                                : AppColors.errorBright,
-                            minHeight: 6,
+                        child: GamePowerUpTray(
+                          availableTypes: _fillBlankPowerUps,
+                          enabled: !_answered,
+                          onUse: _onPowerUpUsed,
+                        ),
+                      ),
+                      if (_luckyCloverActive)
+                        Padding(
+                          padding: EdgeInsets.only(bottom: AppSpacing.sm),
+                          child: ActivePowerUpBadge(
+                            itemType: ShopItemEntity.effectLuckyClover,
+                            label: 'games.luckyCloverActive'.tr(),
                           ),
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'fillBlank.timerFormat'.tr(
-                            namedArgs: {'seconds': '$_timeLeft'},
-                          ),
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                            color: _timeLeft > 5
-                                ? Theme.of(context).colorScheme.onSurfaceVariant
-                                : AppColors.errorBright,
+                      // Timer bar
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.lg,
+                          vertical: AppSpacing.sm,
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.timer_outlined,
+                              size: 16,
+                              color: AppColors.primary,
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Expanded(
+                              child: LinearProgressIndicator(
+                                value: _timeLeft / game.timerSecondsPerQuestion,
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainerHighest,
+                                color: _timeLeft > 5
+                                    ? AppColors.primary
+                                    : AppColors.errorBright,
+                                minHeight: 6,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.sm),
+                            Text(
+                              'fillBlank.timerFormat'.tr(
+                                namedArgs: {'seconds': '$_timeLeft'},
+                              ),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: _timeLeft > 5
+                                        ? Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant
+                                        : AppColors.errorBright,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          controller: _scroll,
+                          padding: const EdgeInsets.all(AppSpacing.lg),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Question sentence
+                              Container(
+                                width: double.infinity,
+                                padding: EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).colorScheme.surface,
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.lg,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .shadow
+                                          .withValues(alpha: 0.06),
+                                      blurRadius: 8,
+                                    ),
+                                  ],
+                                ),
+                                child: Text(
+                                  q.sentence,
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurface,
+                                        height: 1.5,
+                                      ),
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              // Options grid
+                              GridView.count(
+                                physics: const NeverScrollableScrollPhysics(),
+                                shrinkWrap: true,
+                                crossAxisCount: 2,
+                                mainAxisSpacing: 12,
+                                crossAxisSpacing: 12,
+                                childAspectRatio: 2.4,
+                                children: List.generate(q.options.length, (i) {
+                                  final eliminated = _eliminatedIndices
+                                      .contains(i);
+                                  Color bg = Theme.of(
+                                    context,
+                                  ).colorScheme.surface;
+                                  Color border = Theme.of(
+                                    context,
+                                  ).colorScheme.outlineVariant;
+                                  Color text = Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface;
+                                  if (_answered) {
+                                    if (q.options[i] == q.correctAnswer) {
+                                      bg = AppColors.greenSuccess.withValues(
+                                        alpha: 0.1,
+                                      );
+                                      border = AppColors.greenSuccess;
+                                      text = AppColors.greenSuccess;
+                                    } else if (i == _selectedIndex) {
+                                      bg = Theme.of(context).colorScheme.error
+                                          .withValues(alpha: 0.1);
+                                      border = AppColors.errorBright;
+                                      text = AppColors.errorBright;
+                                    }
+                                  } else if (_selectedIndex == i) {
+                                    bg = AppColors.primary.withValues(
+                                      alpha: 0.1,
+                                    );
+                                    border = AppColors.primary;
+                                    text = AppColors.primary;
+                                  } else if (eliminated) {
+                                    bg = Theme.of(
+                                      context,
+                                    ).colorScheme.surfaceContainerHighest;
+                                    text = Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant
+                                        .withValues(alpha: 0.4);
+                                  }
+                                  return GestureDetector(
+                                    onTap: eliminated
+                                        ? null
+                                        : () => _selectAnswer(i),
+                                    child: AnimatedContainer(
+                                      duration: const Duration(
+                                        milliseconds: 200,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: AppSpacing.md,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: bg,
+                                        borderRadius: BorderRadius.circular(
+                                          AppRadius.md,
+                                        ),
+                                        border: Border.all(
+                                          color: border,
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      alignment: Alignment.center,
+                                      child: Text(
+                                        q.options[i],
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.w600,
+                                              color: text,
+                                            ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  );
+                                }),
+                              ),
+                              if (_verdict != null) ...[
+                                const SizedBox(height: AppSpacing.lg),
+                                AnswerFeedbackPanel(
+                                  verdict: _verdict!,
+                                  chosen: _selectedIndex == null
+                                      ? ''
+                                      : q.options[_selectedIndex!],
+                                  correctAnswer: q.correctAnswer,
+                                  completedText: q.sentence.replaceFirst(
+                                    RegExp(r'_{2,}'),
+                                    q.correctAnswer,
+                                  ),
+                                  explanation: q.explanation,
+                                  ruleTip: q.grammarTip,
+                                ),
+                              ],
+                            ],
                           ),
                         ),
+                      ),
+                      if (_answered)
+                        GameNextBar(
+                          label: _questionIndex + 1 >= game.questions.length
+                              ? 'games.answerFeedback.seeResults'.tr()
+                              : 'games.answerFeedback.next'.tr(),
+                          onPressed: _nextQuestion,
+                        ),
+                    ],
+                  ),
+                  // Confetti overlay — fires on win (skill: gamification-confetti-win)
+                  Align(
+                    alignment: Alignment.topCenter,
+                    child: ConfettiWidget(
+                      confettiController: _confettiController,
+                      blastDirectionality: BlastDirectionality.explosive,
+                      numberOfParticles: 20,
+                      gravity: 0.4,
+                      colors: const [
+                        AppColors.primary,
+                        AppColors.accentYellow,
+                        AppColors.greenSuccessBright,
+                        AppColors.orange,
                       ],
                     ),
                   ),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      controller: _scroll,
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Question sentence
-                          Container(
-                            width: double.infinity,
-                            padding: EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surface,
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.shadow.withValues(alpha: 0.06),
-                                  blurRadius: 8,
-                                ),
-                              ],
-                            ),
-                            child: Text(
-                              q.sentence,
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                                color: Theme.of(context).colorScheme.onSurface,
-                                height: 1.5,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          // Options grid
-                          GridView.count(
-                            physics: const NeverScrollableScrollPhysics(),
-                            shrinkWrap: true,
-                            crossAxisCount: 2,
-                            mainAxisSpacing: 12,
-                            crossAxisSpacing: 12,
-                            childAspectRatio: 2.4,
-                            children: List.generate(q.options.length, (i) {
-                              final eliminated = _eliminatedIndices.contains(
-                                i,
-                              );
-                              Color bg = Theme.of(context).colorScheme.surface;
-                              Color border = Theme.of(
-                                context,
-                              ).colorScheme.outlineVariant;
-                              Color text = Theme.of(
-                                context,
-                              ).colorScheme.onSurface;
-                              if (_answered) {
-                                if (q.options[i] == q.correctAnswer) {
-                                  bg = AppColors.greenSuccess.withValues(
-                                    alpha: 0.1,
-                                  );
-                                  border = AppColors.greenSuccess;
-                                  text = AppColors.greenSuccess;
-                                } else if (i == _selectedIndex) {
-                                  bg = Colors.red.withValues(alpha: 0.1);
-                                  border = AppColors.errorBright;
-                                  text = AppColors.errorBright;
-                                }
-                              } else if (_selectedIndex == i) {
-                                bg = AppColors.primary.withValues(alpha: 0.1);
-                                border = AppColors.primary;
-                                text = AppColors.primary;
-                              } else if (eliminated) {
-                                bg = Theme.of(
-                                  context,
-                                ).colorScheme.surfaceContainerHighest;
-                                text = Theme.of(
-                                  context,
-                                ).colorScheme.onSurfaceVariant.withValues(
-                                  alpha: 0.4,
-                                );
-                              }
-                              return GestureDetector(
-                                onTap: eliminated
-                                    ? null
-                                    : () => _selectAnswer(i),
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 200),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: bg,
-                                    borderRadius: BorderRadius.circular(12),
-                                    border: Border.all(
-                                      color: border,
-                                      width: 1.5,
-                                    ),
-                                  ),
-                                  alignment: Alignment.center,
-                                  child: Text(
-                                    q.options[i],
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 14,
-                                      color: text,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
-                              );
-                            }),
-                          ),
-                          if (_verdict != null) ...[
-                            const SizedBox(height: 16),
-                            AnswerFeedbackPanel(
-                              verdict: _verdict!,
-                              chosen: _selectedIndex == null
-                                  ? ''
-                                  : q.options[_selectedIndex!],
-                              correctAnswer: q.correctAnswer,
-                              completedText: q.sentence.replaceFirst(
-                                RegExp(r'_{2,}'),
-                                q.correctAnswer,
-                              ),
-                              explanation: q.explanation,
-                              ruleTip: q.grammarTip,
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
-                  ),
-                  if (_answered)
-                    GameNextBar(
-                      label: _questionIndex + 1 >= game.questions.length
-                          ? 'games.answerFeedback.seeResults'.tr()
-                          : 'games.answerFeedback.next'.tr(),
-                      onPressed: _nextQuestion,
-                    ),
                 ],
               ),
-              // Confetti overlay — fires on win (skill: gamification-confetti-win)
-              Align(
-                alignment: Alignment.topCenter,
-                child: ConfettiWidget(
-                  confettiController: _confettiController,
-                  blastDirectionality: BlastDirectionality.explosive,
-                  numberOfParticles: 20,
-                  gravity: 0.4,
-                  colors: const [
-                    AppColors.primary,
-                    Colors.yellow,
-                    AppColors.greenSuccessBright,
-                    AppColors.orange,
-                  ],
-                ),
-              ),
-            ],
-          ),),
-        );
+            ),
+          );
         },
       ),
     );

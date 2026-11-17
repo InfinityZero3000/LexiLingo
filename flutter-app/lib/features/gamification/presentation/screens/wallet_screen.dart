@@ -2,6 +2,8 @@ import 'package:lexilingo_app/core/l10n/relative_time.dart';
 import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/features/gamification/presentation/theme/reward_palette.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/features/gamification/presentation/providers/gamification_provider.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/wallet.dart';
@@ -44,11 +46,7 @@ class _WalletScreenState extends State<WalletScreen> {
                     background: Container(
                       decoration: const BoxDecoration(
                         gradient: LinearGradient(
-                          colors: [
-                            Color(0xFF6D28D9),
-                            Color(0xFF8B5CF6),
-                            Color(0xFFA78BFA),
-                          ],
+                          colors: RewardPalette.walletGradient,
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
@@ -83,7 +81,7 @@ class _WalletScreenState extends State<WalletScreen> {
                                   size: 34,
                                 ),
                               ),
-                              const SizedBox(height: 10),
+                              const SizedBox(height: AppSpacing.sm),
                               // Balance — animates to the new total on change
                               // (no key: lets it tween from the old value, not
                               // reset to 0, so top-ups read as a smooth count).
@@ -93,24 +91,26 @@ class _WalletScreenState extends State<WalletScreen> {
                                 curve: Curves.easeOutCubic,
                                 builder: (_, value, __) => Text(
                                   '$value',
-                                  style: const TextStyle(
-                                    fontSize: 40,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.surfaceLight,
-                                  ),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .displaySmall
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.surfaceLight,
+                                      ),
                                 ),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 'gamification.gems'.tr(),
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: AppColors.surfaceLight.withValues(
-                                    alpha: 0.75,
-                                  ),
-                                  fontWeight: FontWeight.w500,
-                                  letterSpacing: 1.2,
-                                ),
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: AppColors.surfaceLight.withValues(
+                                        alpha: 0.75,
+                                      ),
+                                      fontWeight: FontWeight.w500,
+                                      letterSpacing: 1.2,
+                                    ),
                               ),
                             ],
                           ),
@@ -123,7 +123,7 @@ class _WalletScreenState extends State<WalletScreen> {
                 // Stats Row
                 SliverToBoxAdapter(
                   child: Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(AppSpacing.lg),
                     child: Row(
                       children: [
                         Expanded(
@@ -134,7 +134,7 @@ class _WalletScreenState extends State<WalletScreen> {
                             value: '${provider.wallet?.totalEarned ?? 0}',
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: AppSpacing.md),
                         Expanded(
                           child: _buildStatCard(
                             icon: Icons.arrow_downward,
@@ -151,8 +151,10 @@ class _WalletScreenState extends State<WalletScreen> {
                 // How to earn section
                 SliverToBoxAdapter(
                   child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                    padding: const EdgeInsets.all(16),
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg,
+                    ),
+                    padding: const EdgeInsets.all(AppSpacing.lg),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
@@ -162,7 +164,7 @@ class _WalletScreenState extends State<WalletScreen> {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                       border: Border.all(
                         color: AppColors.purpleGradient[0].withValues(
                           alpha: 0.25,
@@ -175,12 +177,14 @@ class _WalletScreenState extends State<WalletScreen> {
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.all(8),
+                              padding: const EdgeInsets.all(AppSpacing.sm),
                               decoration: BoxDecoration(
                                 color: AppColors.purpleGradient[0].withValues(
                                   alpha: 0.18,
                                 ),
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
+                                ),
                               ),
                               child: Icon(
                                 Icons.diamond_rounded,
@@ -188,21 +192,19 @@ class _WalletScreenState extends State<WalletScreen> {
                                 size: 20,
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: AppSpacing.md),
                             Flexible(
                               child: Text(
                                 'gamification.howToEarnGems'.tr(),
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: Theme.of(context).textTheme.bodyLarge
+                                    ?.copyWith(fontWeight: FontWeight.bold),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: AppSpacing.md),
                         _buildEarnTip(
                           'gamification.earnTipCompleteLessons'.tr(),
                           '+5 gems',
@@ -231,17 +233,15 @@ class _WalletScreenState extends State<WalletScreen> {
                 // Transaction History Header
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(AppSpacing.lg),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Flexible(
                           child: Text(
                             'gamification.transactionHistory'.tr(),
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -261,7 +261,7 @@ class _WalletScreenState extends State<WalletScreen> {
                   SliverToBoxAdapter(
                     child: Center(
                       child: Padding(
-                        padding: const EdgeInsets.all(32),
+                        padding: const EdgeInsets.all(AppSpacing.xxl),
                         child: Column(
                           children: [
                             Icon(
@@ -269,7 +269,7 @@ class _WalletScreenState extends State<WalletScreen> {
                               size: 48,
                               color: AppColors.grey400,
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: AppSpacing.lg),
                             Text(
                               'gamification.noTransactions'.tr(),
                               style: TextStyle(color: AppColors.grey600),
@@ -304,13 +304,13 @@ class _WalletScreenState extends State<WalletScreen> {
     required String value,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Theme.of(context).shadowColor.withValues(alpha: 0.05),
             blurRadius: 8,
           ), // scrim, not brand color
         ],
@@ -318,14 +318,14 @@ class _WalletScreenState extends State<WalletScreen> {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(AppSpacing.sm),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: Icon(icon, color: color, size: 20),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.md),
           Flexible(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -333,15 +333,16 @@ class _WalletScreenState extends State<WalletScreen> {
               children: [
                 Text(
                   value,
-                  style: TextStyle(
-                    fontSize: 18,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: color,
                   ),
                 ),
                 Text(
                   label,
-                  style: TextStyle(fontSize: 12, color: AppColors.grey600),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: AppColors.grey600),
                 ),
               ],
             ),
@@ -353,7 +354,7 @@ class _WalletScreenState extends State<WalletScreen> {
 
   Widget _buildEarnTip(String label, String reward) {
     return Padding(
-      padding: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.only(top: AppSpacing.sm),
       child: Row(
         children: [
           Icon(
@@ -361,17 +362,18 @@ class _WalletScreenState extends State<WalletScreen> {
             color: AppColors.purpleGradient[0],
             size: 16,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               label,
-              style: TextStyle(fontSize: 13, color: AppColors.grey700),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.grey700),
             ),
           ),
           Text(
             reward,
-            style: TextStyle(
-              fontSize: 13,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
               fontWeight: FontWeight.bold,
               color: AppColors.purpleGradient[1],
             ),
@@ -394,7 +396,10 @@ class _TransactionRow extends StatelessWidget {
     final color = isEarning ? AppColors.greenSuccessBright : AppColors.orange;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.md,
+      ),
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(color: AppColors.grey500.withValues(alpha: 0.1)),
@@ -408,11 +413,11 @@ class _TransactionRow extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: Icon(_getTransactionIcon(), color: color, size: 20),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.md),
 
           // Details
           Expanded(
@@ -421,17 +426,18 @@ class _TransactionRow extends StatelessWidget {
               children: [
                 Text(
                   transaction.description,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
                   _formatDate(transaction.createdAt),
-                  style: TextStyle(fontSize: 12, color: AppColors.grey500),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: AppColors.grey500),
                 ),
               ],
             ),
@@ -439,10 +445,13 @@ class _TransactionRow extends StatelessWidget {
 
           // Amount
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.xs,
+            ),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: Row(
               children: [
@@ -454,13 +463,12 @@ class _TransactionRow extends StatelessWidget {
                 const SizedBox(width: 2),
                 Text(
                   '${transaction.amount}',
-                  style: TextStyle(
-                    fontSize: 14,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: color,
                   ),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: AppSpacing.xs),
                 Icon(Icons.diamond, size: 12, color: color),
               ],
             ),

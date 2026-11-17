@@ -1,6 +1,7 @@
 import 'package:lexilingo_app/core/l10n/relative_time.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/leaderboard_entry.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/gamification/presentation/widgets/rank_asset_icon.dart';
@@ -64,29 +65,29 @@ class LeagueCard extends StatelessWidget {
                                     ).createShader(bounds),
                                 child: Text(
                                   leagueData.name,
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.surfaceLight,
-                                  ),
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.surfaceLight,
+                                      ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               )
                             : Text(
                                 leagueData.name,
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: leagueData.color,
-                                ),
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: leagueData.color,
+                                    ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     'gamification.rankWeekly'.tr(
                       namedArgs: {
@@ -94,9 +95,11 @@ class LeagueCard extends StatelessWidget {
                         'xp': '${status.xpEarned}',
                       },
                     ),
-                    style: TextStyle(fontSize: 13, color: AppColors.grey600),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: AppColors.grey600),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
                   Wrap(
                     spacing: 8,
                     runSpacing: 6,
@@ -114,7 +117,7 @@ class LeagueCard extends StatelessWidget {
                     ],
                   ),
                   if (status.weekEndsInHours > 0) ...[
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppSpacing.xs),
                     Row(
                       children: [
                         Icon(
@@ -122,13 +125,11 @@ class LeagueCard extends StatelessWidget {
                           size: 14,
                           color: AppColors.grey500,
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: AppSpacing.xs),
                         Text(
                           _formatTimeRemaining(status.weekEndsInHours),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColors.grey500,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: AppColors.grey500),
                         ),
                       ],
                     ),
@@ -179,21 +180,21 @@ class LeagueCard extends StatelessWidget {
                           entry.displayName.isNotEmpty
                               ? entry.displayName
                               : entry.username,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: entry.isCurrentUser
-                                ? primaryColor
-                                : (isDark
-                                      ? AppColors.textInverted
-                                      : AppColors.textDark),
-                          ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: entry.isCurrentUser
+                                    ? primaryColor
+                                    : (isDark
+                                          ? AppColors.textInverted
+                                          : AppColors.textDark),
+                              ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       if (entry.isCurrentUser) ...[
-                        const SizedBox(width: 6),
+                        const SizedBox(width: AppSpacing.sm),
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 7,
@@ -201,15 +202,15 @@ class LeagueCard extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: primaryColor,
-                            borderRadius: BorderRadius.circular(999),
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
                           ),
-                          child: const Text(
+                          child: Text(
                             'YOU',
-                            style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.surfaceLight,
-                            ),
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.surfaceLight,
+                                ),
                           ),
                         ),
                       ],
@@ -226,22 +227,22 @@ class LeagueCard extends StatelessWidget {
                           ).createShader(bounds),
                           child: Text(
                             leagueData.name,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.surfaceLight,
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.surfaceLight,
+                                ),
                           ),
                         )
                       : Text(
                           leagueData.name,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: leagueData.color,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: leagueData.color,
+                              ),
                         ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     'gamification.rankWeekly'.tr(
                       namedArgs: {
@@ -249,9 +250,11 @@ class LeagueCard extends StatelessWidget {
                         'xp': '${entry.xpEarned}',
                       },
                     ),
-                    style: TextStyle(fontSize: 13, color: AppColors.grey600),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: AppColors.grey600),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
                   Wrap(
                     spacing: 8,
                     runSpacing: 6,
@@ -321,11 +324,14 @@ class _CardShell extends StatelessWidget {
         color: Theme.of(
           context,
         ).colorScheme.surface.withValues(alpha: isDark ? 0.44 : 0.74),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: color.withValues(alpha: 0.3), width: 1.5),
       ),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.lg,
+        ),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
@@ -335,7 +341,7 @@ class _CardShell extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: child,
       ),
@@ -357,16 +363,18 @@ class _RankMetricChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         border: Border.all(color: color.withValues(alpha: 0.24)),
       ),
       child: Text(
         '$label · $value',
-        style: TextStyle(
-          fontSize: 11,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
           fontWeight: FontWeight.w800,
           color: color,
         ),

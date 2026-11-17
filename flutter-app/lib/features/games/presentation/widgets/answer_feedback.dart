@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 enum AnswerVerdict { correct, wrong, timeout }
@@ -53,10 +54,10 @@ class AnswerFeedbackPanel extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: color),
       ),
       child: Column(
@@ -65,19 +66,18 @@ class AnswerFeedbackPanel extends StatelessWidget {
           Row(
             children: [
               Icon(icon, color: color, size: 22),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.sm),
               Text(
                 title,
-                style: TextStyle(
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   color: color,
-                  fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
           if (verdict != AnswerVerdict.correct && chosen != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             _Line(
               label: 'games.answerFeedback.yourAnswer'.tr(),
               value: chosen!.isEmpty
@@ -87,7 +87,7 @@ class AnswerFeedbackPanel extends StatelessWidget {
             ),
           ],
           if (correctAnswer != null && correctAnswer!.isNotEmpty) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             _Line(
               label: 'games.answerFeedback.correctAnswer'.tr(),
               value: correctAnswer!,
@@ -95,11 +95,10 @@ class AnswerFeedbackPanel extends StatelessWidget {
             ),
           ],
           if (completedText != null && completedText!.isNotEmpty) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               completedText!,
-              style: TextStyle(
-                fontSize: 15,
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 fontStyle: FontStyle.italic,
                 height: 1.4,
                 color: scheme.onSurface,
@@ -107,22 +106,21 @@ class AnswerFeedbackPanel extends StatelessWidget {
             ),
           ],
           if (why != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             _Section(
               label: explanationLabel ?? 'games.answerFeedback.whyLabel'.tr(),
               body: why,
             ),
           ],
           if (rule != null) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.sm),
             _Section(label: 'games.answerFeedback.ruleLabel'.tr(), body: rule),
           ],
           if (extra != null && extra!.trim().isNotEmpty) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               extra!,
-              style: TextStyle(
-                fontSize: 13,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 height: 1.4,
                 color: scheme.onSurfaceVariant,
               ),
@@ -161,7 +159,7 @@ class _Line extends StatelessWidget {
           ),
         ],
       ),
-      style: const TextStyle(fontSize: 14, height: 1.4),
+      style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.4),
     );
   }
 }
@@ -179,8 +177,7 @@ class _Section extends StatelessWidget {
       children: [
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
             fontWeight: FontWeight.bold,
             color: scheme.onSurfaceVariant,
           ),
@@ -188,7 +185,10 @@ class _Section extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           body,
-          style: TextStyle(fontSize: 14, height: 1.5, color: scheme.onSurface),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            height: 1.5,
+            color: scheme.onSurface,
+          ),
         ),
       ],
     );
@@ -207,22 +207,30 @@ class GameNextBar extends StatelessWidget {
     return SafeArea(
       top: false,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.sm,
+          AppSpacing.lg,
+          AppSpacing.md,
+        ),
         child: SizedBox(
           width: double.infinity,
           height: 48,
-          child: ElevatedButton(
+          child: FilledButton(
             onPressed: onPressed,
-            style: ElevatedButton.styleFrom(
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(kMinTapTarget, kMinTapTarget),
               backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.textInverted,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
             ),
             child: Text(
               label,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
           ),
         ),

@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/leaderboard_entry.dart';
@@ -226,7 +227,9 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.16),
+                          color: Theme.of(
+                            context,
+                          ).shadowColor.withValues(alpha: 0.16),
                           blurRadius: 8,
                           offset: const Offset(0, 3),
                         ),
@@ -247,17 +250,22 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
             const SizedBox(height: 13),
             if (entry != null)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: AppSpacing.sm,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.surfaceLight.withValues(alpha: 0.74),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   border: Border.all(
                     color: AppColors.surfaceLight.withValues(alpha: 0.72),
                     width: 1,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
+                      color: Theme.of(
+                        context,
+                      ).shadowColor.withValues(alpha: 0.08),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -287,17 +295,16 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
             else
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 5,
+                  horizontal: AppSpacing.sm,
+                  vertical: AppSpacing.xs,
                 ),
                 decoration: BoxDecoration(
                   color: AppColors.surfaceLight.withValues(alpha: 0.68),
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
                 child: Text(
                   '---',
-                  style: TextStyle(
-                    fontSize: 12,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: AppColorRoles.textMuted(isDark),
                     fontWeight: FontWeight.w700,
                   ),
@@ -325,8 +332,7 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
       child: Center(
         child: Text(
           fallback.toUpperCase(),
-          style: TextStyle(
-            fontSize: 20,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
             color: entry.isCurrentUser
                 ? AppColorRoles.primary(isDark)
@@ -350,7 +356,7 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
         : AppColors.surfaceLight.withValues(alpha: 0.94);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       child: ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         child: RepaintBoundary(
@@ -375,13 +381,20 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
                   // Drag Handle & League Info
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 14, 14, 10),
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lg,
+                        AppSpacing.lg,
+                        AppSpacing.lg,
+                        AppSpacing.sm,
+                      ),
                       child: Column(
                         children: [
                           Container(
                             width: 40,
                             height: 4,
-                            margin: const EdgeInsets.only(bottom: 12),
+                            margin: const EdgeInsets.only(
+                              bottom: AppSpacing.md,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.grey500.withValues(alpha: 0.5),
                               borderRadius: BorderRadius.circular(2),
@@ -394,11 +407,15 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
                   ),
                   // Ranking list items
                   SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.lg,
+                    ),
                     sliver: widget.entries.isEmpty
                         ? SliverToBoxAdapter(
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 18),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: AppSpacing.lg,
+                              ),
                               child: Text(
                                 'leaderboard.noRankingsYet'.tr(),
                                 textAlign: TextAlign.center,
@@ -424,7 +441,9 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
                           ),
                   ),
                   // Bottom spacing
-                  const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: AppSpacing.xl),
+                  ),
                 ],
               ),
             ),
@@ -440,7 +459,7 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
     return Row(
       children: [
         RankAssetIcon(rank: widget.league, size: 34),
-        const SizedBox(width: 10),
+        const SizedBox(width: AppSpacing.sm),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -465,8 +484,7 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
                         rankDisplayNameFor(widget.league),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 11,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           fontWeight: FontWeight.w800,
                           color: AppColors.surfaceLight,
                         ),
@@ -476,8 +494,7 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
                       rankDisplayNameFor(widget.league),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 11,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: rankVisualDataFor(widget.league).color,
                       ),
@@ -490,8 +507,7 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
             'leaderboard.participants'.tr(
               namedArgs: {'count': widget.totalParticipants.toString()},
             ),
-            style: TextStyle(
-              fontSize: 12,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
               fontWeight: FontWeight.w700,
               color: AppColorRoles.textMuted(isDark),
             ),
@@ -519,15 +535,18 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
       onTap: () => _onEntryTap(entry),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.symmetric(vertical: 5),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.sm,
+        ),
         decoration: BoxDecoration(
           color: isSelected
               ? primaryColor.withValues(alpha: isDark ? 0.28 : 0.16)
               : entry.isCurrentUser
               ? primaryColor.withValues(alpha: isDark ? 0.22 : 0.13)
               : AppColors.surfaceLight.withValues(alpha: isDark ? 0.08 : 0.48),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
             color: isSelected
                 ? primaryColor.withValues(alpha: 0.7)
@@ -550,14 +569,13 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
               ),
               child: Text(
                 '${entry.rank}',
-                style: TextStyle(
-                  fontSize: 13,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.w800,
                   color: rankColor,
                 ),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: AppSpacing.sm),
             Container(
               width: 42,
               height: 42,
@@ -579,7 +597,7 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -591,21 +609,21 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
                           name,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: entry.isCurrentUser
-                                ? FontWeight.w800
-                                : FontWeight.w700,
-                            color: entry.isCurrentUser
-                                ? primaryColor
-                                : (isDark
-                                      ? AppColors.textInverted
-                                      : AppColors.textDark),
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                fontWeight: entry.isCurrentUser
+                                    ? FontWeight.w800
+                                    : FontWeight.w700,
+                                color: entry.isCurrentUser
+                                    ? primaryColor
+                                    : (isDark
+                                          ? AppColors.textInverted
+                                          : AppColors.textDark),
+                              ),
                         ),
                       ),
                       if (entry.isCurrentUser) ...[
-                        const SizedBox(width: 6),
+                        const SizedBox(width: AppSpacing.sm),
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 7,
@@ -613,15 +631,15 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
                           ),
                           decoration: BoxDecoration(
                             color: primaryColor,
-                            borderRadius: BorderRadius.circular(999),
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
                           ),
-                          child: const Text(
+                          child: Text(
                             'YOU',
-                            style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.surfaceLight,
-                            ),
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.surfaceLight,
+                                ),
                           ),
                         ),
                       ],
@@ -635,7 +653,7 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
                         size: 18,
                         decorated: false,
                       ),
-                      const SizedBox(width: 5),
+                      const SizedBox(width: AppSpacing.xs),
                       Flexible(
                         child: Text(
                           'gamification.rankLessons'.tr(
@@ -646,11 +664,11 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColorRoles.textMuted(isDark),
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: AppColorRoles.textMuted(isDark),
+                                fontWeight: FontWeight.w600,
+                              ),
                         ),
                       ),
                     ],
@@ -658,13 +676,16 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
                 ],
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: AppSpacing.sm),
             Container(
               constraints: const BoxConstraints(minWidth: 64),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: AppSpacing.sm,
+              ),
               decoration: BoxDecoration(
                 color: AppColors.gold.withValues(alpha: isDark ? 0.22 : 0.18),
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
                 border: Border.all(
                   color: AppColors.gold.withValues(alpha: 0.3),
                 ),
@@ -674,8 +695,7 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 12,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.w800,
                   color: AppColors.goldDark,
                 ),
@@ -716,10 +736,16 @@ class LeaderboardEntryRow extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        margin: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.sm,
+        ),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.sm,
+        ),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           color: entry.isCurrentUser
               ? primaryColor.withValues(alpha: 0.08)
               : (isDark ? AppColors.surfaceDark : AppColors.surfaceLight),
@@ -743,15 +769,14 @@ class LeaderboardEntryRow extends StatelessWidget {
               ),
               child: Text(
                 '${entry.rank}',
-                style: TextStyle(
-                  fontSize: 13,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: _getRankColor(entry.rank),
                 ),
               ),
             ),
 
-            const SizedBox(width: 10),
+            const SizedBox(width: AppSpacing.sm),
 
             Container(
               width: 48,
@@ -772,7 +797,7 @@ class LeaderboardEntryRow extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.md),
 
             Expanded(
               child: Column(
@@ -783,39 +808,39 @@ class LeaderboardEntryRow extends StatelessWidget {
                       Flexible(
                         child: Text(
                           entry.displayName,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: entry.isCurrentUser
-                                ? FontWeight.bold
-                                : FontWeight.w500,
-                            color: entry.isCurrentUser
-                                ? primaryColor
-                                : (isDark
-                                      ? AppColors.textInverted
-                                      : AppColors.textDark),
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(
+                                fontWeight: entry.isCurrentUser
+                                    ? FontWeight.bold
+                                    : FontWeight.w500,
+                                color: entry.isCurrentUser
+                                    ? primaryColor
+                                    : (isDark
+                                          ? AppColors.textInverted
+                                          : AppColors.textDark),
+                              ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       if (entry.isCurrentUser) ...[
-                        const SizedBox(width: 6),
+                        const SizedBox(width: AppSpacing.sm),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
+                            horizontal: AppSpacing.sm,
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
                             color: primaryColor,
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
                           ),
                           child: Text(
                             'YOU',
-                            style: TextStyle(
-                              fontSize: 9,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.surfaceLight,
-                            ),
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.surfaceLight,
+                                ),
                           ),
                         ),
                       ],
@@ -825,8 +850,7 @@ class LeaderboardEntryRow extends StatelessWidget {
                     'gamification.lessonsCompletedCount'.tr(
                       namedArgs: {'count': '${entry.lessonsCompleted}'},
                     ),
-                    style: TextStyle(
-                      fontSize: 12,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
@@ -836,16 +860,18 @@ class LeaderboardEntryRow extends StatelessWidget {
 
             Container(
               constraints: const BoxConstraints(minWidth: 68),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm,
+              ),
               decoration: BoxDecoration(
                 color: AppColors.orange.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
               ),
               child: Text(
                 '${entry.xpEarned}',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 16,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: AppColors.deepOrange,
                 ),
@@ -866,8 +892,7 @@ class LeaderboardEntryRow extends StatelessWidget {
     return Center(
       child: Text(
         fallback.toUpperCase(),
-        style: TextStyle(
-          fontSize: 16,
+        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
           fontWeight: FontWeight.bold,
           color: entry.isCurrentUser
               ? AppColorRoles.primary(isDark)

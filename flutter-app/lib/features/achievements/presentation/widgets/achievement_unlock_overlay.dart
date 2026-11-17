@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/features/achievements/presentation/theme/achievement_palette.dart';
 import 'package:lexilingo_app/core/services/analytics_service.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/lottie_animation_widget.dart';
@@ -30,20 +32,16 @@ class AchievementUnlockOverlay extends StatefulWidget {
     trackProductEvent(
       'achievement_unlock_overlay_shown',
       source: 'achievements',
-      properties: {
-        'achievement_count': achievements.length,
-      },
+      properties: {'achievement_count': achievements.length},
     );
     return showGeneralDialog<void>(
       context: context,
       barrierDismissible: true,
       barrierLabel: 'achievements.achievementUnlocked'.tr(),
-      barrierColor: Colors.black.withValues(alpha: 0.7),
+      barrierColor: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.7),
       transitionDuration: const Duration(milliseconds: 300),
-      transitionBuilder: (ctx, anim, _, child) => FadeTransition(
-        opacity: anim,
-        child: child,
-      ),
+      transitionBuilder: (ctx, anim, _, child) =>
+          FadeTransition(opacity: anim, child: child),
       pageBuilder: (ctx, _, __) => AchievementUnlockOverlay(
         achievements: achievements,
         onDismiss: onDismiss,
@@ -76,9 +74,10 @@ class _AchievementUnlockOverlayState extends State<AchievementUnlockOverlay>
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    _scaleAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _badgeScale, curve: Curves.elasticOut),
-    );
+    _scaleAnim = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _badgeScale, curve: Curves.elasticOut));
     _playForCurrent();
   }
 
@@ -121,9 +120,7 @@ class _AchievementUnlockOverlayState extends State<AchievementUnlockOverlay>
           children: [
             // Lottie star-burst in background
             const Positioned.fill(
-              child: IgnorePointer(
-                child: LottieAnimationWidget.starBurst(),
-              ),
+              child: IgnorePointer(child: LottieAnimationWidget.starBurst()),
             ),
 
             // Achievement card
@@ -135,8 +132,8 @@ class _AchievementUnlockOverlayState extends State<AchievementUnlockOverlay>
                 decoration: BoxDecoration(
                   color: isDark
                       ? AppColors.surfaceDarkElevated
-                      : Colors.white,
-                  borderRadius: BorderRadius.circular(28),
+                      : AppColors.textInverted,
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
                   boxShadow: [
                     BoxShadow(
                       color: rarityColor.withValues(alpha: 0.3),
@@ -155,8 +152,8 @@ class _AchievementUnlockOverlayState extends State<AchievementUnlockOverlay>
                     // Rarity label
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 4,
+                        horizontal: AppSpacing.md,
+                        vertical: AppSpacing.xs,
                       ),
                       decoration: BoxDecoration(
                         color: rarityColor.withValues(alpha: 0.12),
@@ -164,8 +161,7 @@ class _AchievementUnlockOverlayState extends State<AchievementUnlockOverlay>
                       ),
                       child: Text(
                         achievement.rarity.toUpperCase(),
-                        style: TextStyle(
-                          fontSize: 11,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           fontWeight: FontWeight.w700,
                           color: rarityColor,
                           letterSpacing: 1.2,
@@ -192,38 +188,35 @@ class _AchievementUnlockOverlayState extends State<AchievementUnlockOverlay>
                         size: 40,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.lg),
 
                     // "Achievement Unlocked!" label
                     Text(
                       'achievements.achievementUnlocked'.tr(),
-                      style: TextStyle(
-                        fontSize: 13,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColorRoles.textMuted(isDark),
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: AppSpacing.sm),
 
                     // Achievement name
                     Text(
                       achievement.name,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 22,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.w800,
                         color: AppColorRoles.textPrimary(isDark),
                         height: 1.2,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpacing.sm),
 
                     // Description
                     Text(
                       achievement.description,
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 13,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColorRoles.textMuted(isDark),
                         height: 1.4,
                       ),
@@ -241,35 +234,37 @@ class _AchievementUnlockOverlayState extends State<AchievementUnlockOverlay>
                               color: AppColors.warning,
                               size: 18,
                             ),
-                            const SizedBox(width: 4),
+                            const SizedBox(width: AppSpacing.xs),
                             Text(
                               '+${achievement.xpReward} XP',
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.warning,
-                              ),
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.warning,
+                                  ),
                             ),
                           ],
                           if (achievement.xpReward > 0 &&
                               achievement.gemsReward > 0)
-                            const SizedBox(width: 16),
+                            const SizedBox(width: AppSpacing.lg),
                           if (achievement.gemsReward > 0) ...[
                             const Icon(
                               Icons.diamond_rounded,
                               color: AppColors.purple,
                               size: 18,
                             ),
-                            const SizedBox(width: 4),
+                            const SizedBox(width: AppSpacing.xs),
                             Text(
                               'achievements.gemsReward'.tr(
-                                namedArgs: {'gems': '${achievement.gemsReward}'},
+                                namedArgs: {
+                                  'gems': '${achievement.gemsReward}',
+                                },
                               ),
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.purple,
-                              ),
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.purple,
+                                  ),
                             ),
                           ],
                         ],
@@ -286,11 +281,10 @@ class _AchievementUnlockOverlayState extends State<AchievementUnlockOverlay>
                               },
                             )
                           : 'achievements.tapToContinue'.tr(),
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: AppColorRoles.textMuted(isDark).withValues(
-                          alpha: 0.6,
-                        ),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: AppColorRoles.textMuted(
+                          isDark,
+                        ).withValues(alpha: 0.6),
                       ),
                     ),
                   ],
@@ -304,7 +298,7 @@ class _AchievementUnlockOverlayState extends State<AchievementUnlockOverlay>
   }
 
   Color _rarityColor(String rarity) => switch (rarity.toLowerCase()) {
-    'legendary' => const Color(0xFFFF6B00),
+    'legendary' => AchievementPalette.legendary,
     'epic' => AppColors.purple,
     'rare' => AppColors.cefrB,
     _ => AppColors.cefrA,

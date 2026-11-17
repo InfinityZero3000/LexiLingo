@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// A tappable letter tile for the Word Scramble game.
@@ -63,12 +64,12 @@ class _LetterTileState extends State<LetterTile>
     if (widget.isCorrect) return AppColors.greenSuccess;
     if (widget.isWrong) return AppColors.errorDark;
     if (widget.isSelected) return AppColors.primary;
-    return Colors.white;
+    return AppColors.textInverted;
   }
 
   Color get _textColor {
     if (widget.isCorrect || widget.isWrong || widget.isSelected) {
-      return Colors.white;
+      return AppColors.textInverted;
     }
     return AppColors.textDark;
   }
@@ -89,10 +90,10 @@ class _LetterTileState extends State<LetterTile>
           duration: const Duration(milliseconds: 200),
           width: 42,
           height: 48,
-          margin: const EdgeInsets.all(4),
+          margin: const EdgeInsets.all(AppSpacing.xs),
           decoration: BoxDecoration(
             color: _tileColor,
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             border: Border.all(
               color: widget.isSelected
                   ? AppColors.primary.withValues(alpha: 0.6)
@@ -110,9 +111,8 @@ class _LetterTileState extends State<LetterTile>
           alignment: Alignment.center,
           child: Text(
             widget.letter.toUpperCase(),
-            style: TextStyle(
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.bold,
-              fontSize: 18,
               color: _textColor,
             ),
           ),

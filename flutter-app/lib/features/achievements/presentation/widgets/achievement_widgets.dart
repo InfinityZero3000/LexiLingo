@@ -3,6 +3,8 @@ library;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/features/achievements/presentation/theme/achievement_palette.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:confetti/confetti.dart';
@@ -157,25 +159,25 @@ class AchievementBadge extends StatelessWidget {
         if (badgeIcon != null &&
             badgeIcon.isNotEmpty &&
             _isNetworkUrl(badgeIcon)) {
-          return _buildNetworkBadge(badgeIcon);
+          return _buildNetworkBadge(context, badgeIcon);
         }
 
         final cdnUrl = BadgeNetworkImages.getBadgeUrl(lookupKey);
         if (cdnUrl != null) {
-          return _buildNetworkBadge(cdnUrl);
+          return _buildNetworkBadge(context, cdnUrl);
         }
       }
 
       // Local mapped asset (deterministic and offline-safe).
       if (mappedAssetPath != null) {
-        return _buildImageAssetBadge(mappedAssetPath);
+        return _buildImageAssetBadge(context, mappedAssetPath);
       }
 
       // Allow raw filenames in DB, e.g. "course-graduate.png".
       if (badgeIcon != null &&
           badgeIcon.isNotEmpty &&
           _looksLikeImageFileName(badgeIcon)) {
-        return _buildImageAssetBadge('assets/badges/$badgeIcon');
+        return _buildImageAssetBadge(context, 'assets/badges/$badgeIcon');
       }
 
       // If CDN-first is disabled, still allow explicit network URL from backend.
@@ -184,19 +186,19 @@ class AchievementBadge extends StatelessWidget {
           badgeIcon.isNotEmpty &&
           _isNetworkUrl(badgeIcon) &&
           !kIsWeb) {
-        return _buildNetworkBadge(badgeIcon);
+        return _buildNetworkBadge(context, badgeIcon);
       }
     }
 
     // Fall back to generated badge
     if (useNewStyle) {
-      return _buildNewStyleBadge();
+      return _buildNewStyleBadge(context);
     }
-    return _buildClassicBadge();
+    return _buildClassicBadge(context);
   }
 
   /// Build badge from network URL (CDN or backend)
-  Widget _buildNetworkBadge(String imageUrl) {
+  Widget _buildNetworkBadge(BuildContext context, String imageUrl) {
     final cacheSidePx = (size * 2).round();
 
     return GestureDetector(
@@ -209,7 +211,7 @@ class AchievementBadge extends StatelessWidget {
           boxShadow: isUnlocked
               ? [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
+                    color: Theme.of(context).shadowColor.withValues(alpha: 0.2),
                     blurRadius: 8,
                     spreadRadius: 1,
                     offset: const Offset(0, 4),
@@ -251,10 +253,11 @@ class AchievementBadge extends StatelessWidget {
                       width: size,
                       height: size,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => _buildNewStyleBadge(),
+                      errorBuilder: (_, __, ___) =>
+                          _buildNewStyleBadge(context),
                     );
                   }
-                  return _buildNewStyleBadge();
+                  return _buildNewStyleBadge(context);
                 },
               ),
             ),
@@ -265,7 +268,7 @@ class AchievementBadge extends StatelessWidget {
                 height: size,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.black.withValues(alpha: 0.6),
+                  color: Theme.of(context).shadowColor.withValues(alpha: 0.6),
                 ),
                 child: Icon(
                   Icons.lock,
@@ -280,7 +283,7 @@ class AchievementBadge extends StatelessWidget {
   }
 
   /// Build badge from local image asset
-  Widget _buildImageAssetBadge(String assetPath) {
+  Widget _buildImageAssetBadge(BuildContext context, String assetPath) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -291,7 +294,7 @@ class AchievementBadge extends StatelessWidget {
           boxShadow: isUnlocked
               ? [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
+                    color: Theme.of(context).shadowColor.withValues(alpha: 0.2),
                     blurRadius: 8,
                     spreadRadius: 1,
                     offset: const Offset(0, 4),
@@ -311,7 +314,7 @@ class AchievementBadge extends StatelessWidget {
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) {
                   // Fallback to generated badge if image fails to load
-                  return _buildNewStyleBadge();
+                  return _buildNewStyleBadge(context);
                 },
               ),
             ),
@@ -322,7 +325,7 @@ class AchievementBadge extends StatelessWidget {
                 height: size,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: Colors.black.withValues(alpha: 0.6),
+                  color: Theme.of(context).shadowColor.withValues(alpha: 0.6),
                 ),
                 child: Icon(
                   Icons.lock,
@@ -337,7 +340,7 @@ class AchievementBadge extends StatelessWidget {
   }
 
   /// New generated badge with custom painting
-  Widget _buildNewStyleBadge() {
+  Widget _buildNewStyleBadge(BuildContext context) {
     return SmartAchievementBadge(
       category: achievement.category,
       badgeIcon: achievement.badgeIcon,
@@ -351,7 +354,7 @@ class AchievementBadge extends StatelessWidget {
   }
 
   /// Classic badge style (fallback)
-  Widget _buildClassicBadge() {
+  Widget _buildClassicBadge(BuildContext context) {
     final Color badgeColor = achievement.badgeColor != null
         ? Color(
             int.parse(
@@ -370,9 +373,11 @@ class AchievementBadge extends StatelessWidget {
           shape: BoxShape.circle,
           color: isUnlocked
               ? badgeColor.withValues(alpha: 0.2)
-              : Colors.grey.withValues(alpha: 0.2),
+              : Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
           border: Border.all(
-            color: isUnlocked ? badgeColor : Colors.grey,
+            color: isUnlocked
+                ? badgeColor
+                : Theme.of(context).colorScheme.outline,
             width: 3,
           ),
           boxShadow: isUnlocked
@@ -392,7 +397,11 @@ class AchievementBadge extends StatelessWidget {
                   size: size * 0.4,
                   color: AppColors.surfaceLight,
                 )
-              : Icon(Icons.lock, size: size * 0.35, color: Colors.grey),
+              : Icon(
+                  Icons.lock,
+                  size: size * 0.35,
+                  color: Theme.of(context).colorScheme.outline,
+                ),
         ),
       ),
     );
@@ -420,7 +429,7 @@ class AchievementCard extends StatelessWidget {
     return Card(
       elevation: isUnlocked ? 4 : 1,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         side: BorderSide(
           color: isUnlocked ? rarityColor : AppColors.grey300,
           width: isUnlocked ? 2 : 1,
@@ -428,9 +437,9 @@ class AchievementCard extends StatelessWidget {
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: Padding(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(AppSpacing.sm),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
@@ -440,13 +449,15 @@ class AchievementCard extends StatelessWidget {
                 isUnlocked: isUnlocked,
                 size: 50,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.xs),
               Flexible(
                 child: Text(
                   achievement.name,
                   style: theme.textTheme.labelSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: isUnlocked ? null : Colors.grey,
+                    color: isUnlocked
+                        ? null
+                        : Theme.of(context).colorScheme.outline,
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 2,
@@ -455,10 +466,13 @@ class AchievementCard extends StatelessWidget {
               ),
               const SizedBox(height: 2),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: 2,
+                ),
                 decoration: BoxDecoration(
                   color: rarityColor.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Text(
                   achievement.rarityDisplayName,
@@ -531,7 +545,9 @@ class _AchievementUnlockPopupState extends State<AchievementUnlockPopup> {
         // Background overlay
         GestureDetector(
           onTap: widget.onDismiss,
-          child: Container(color: Colors.black54),
+          child: Container(
+            color: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.54),
+          ),
         ),
         // Confetti
         ConfettiWidget(
@@ -540,22 +556,22 @@ class _AchievementUnlockPopupState extends State<AchievementUnlockPopup> {
           shouldLoop: false,
           colors: const [
             AppColors.greenSuccessBright,
-            Colors.blue,
-            Colors.pink,
+            AchievementPalette.blue,
+            AchievementPalette.pink,
             AppColors.orange,
             AppColors.purple,
-            Colors.yellow,
+            AppColors.accentYellow,
           ],
           numberOfParticles: 30,
         ),
         // Popup content
         Center(
           child: Container(
-            margin: const EdgeInsets.all(32),
-            padding: const EdgeInsets.all(24),
+            margin: const EdgeInsets.all(AppSpacing.xxl),
+            padding: const EdgeInsets.all(AppSpacing.xl),
             decoration: BoxDecoration(
               color: theme.cardColor,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               boxShadow: [
                 BoxShadow(
                   color: badgeColor.withValues(alpha: 0.3),
@@ -575,7 +591,7 @@ class _AchievementUnlockPopupState extends State<AchievementUnlockPopup> {
                     color: badgeColor,
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpacing.xl),
                 // Badge
                 Container(
                   width: 100,
@@ -600,7 +616,7 @@ class _AchievementUnlockPopupState extends State<AchievementUnlockPopup> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.lg),
                 // Name
                 Text(
                   achievement.name,
@@ -609,16 +625,16 @@ class _AchievementUnlockPopupState extends State<AchievementUnlockPopup> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 // Description
                 Text(
                   achievement.description,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color: Colors.grey[600],
+                    color: Theme.of(context).colorScheme.outline,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.lg),
                 // Rewards
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -629,29 +645,30 @@ class _AchievementUnlockPopupState extends State<AchievementUnlockPopup> {
                         value: '+${achievement.xpReward} XP',
                         color: AppColors.warning,
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSpacing.md),
                     ],
                     if (achievement.gemsReward > 0)
                       _RewardChip(
                         icon: Icons.diamond,
                         value: '+${achievement.gemsReward}',
-                        color: Colors.cyan,
+                        color: AchievementPalette.cyan,
                       ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpacing.xl),
                 // Close button
-                ElevatedButton(
+                FilledButton(
                   onPressed: widget.onDismiss,
-                  style: ElevatedButton.styleFrom(
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size(kMinTapTarget, kMinTapTarget),
                     backgroundColor: badgeColor,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.textInverted,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 12,
+                      horizontal: AppSpacing.xxl,
+                      vertical: AppSpacing.md,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
                     ),
                   ),
                   child: Text(
@@ -682,17 +699,20 @@ class _RewardChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 16, color: color),
-          const SizedBox(width: 4),
+          const SizedBox(width: AppSpacing.xs),
           Text(
             value,
             style: TextStyle(fontWeight: FontWeight.bold, color: color),

@@ -1,5 +1,6 @@
 import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Animated Gem Counter Widget
@@ -78,7 +79,10 @@ class _GemCounterState extends State<GemCounter>
         },
         child: Container(
           padding: widget.showBackground
-              ? const EdgeInsets.symmetric(horizontal: 12, vertical: 6)
+              ? const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.sm,
+                )
               : EdgeInsets.zero,
           decoration: widget.showBackground
               ? BoxDecoration(
@@ -90,7 +94,7 @@ class _GemCounterState extends State<GemCounter>
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   border: Border.all(
                     color: AppColors.purple.withValues(alpha: 0.3),
                     width: 1,
@@ -101,7 +105,7 @@ class _GemCounterState extends State<GemCounter>
             mainAxisSize: MainAxisSize.min,
             children: [
               _buildGemIcon(),
-              const SizedBox(width: 6),
+              const SizedBox(width: AppSpacing.sm),
               Text(
                 _formatNumber(_displayedGems),
                 style: TextStyle(

@@ -1,5 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/features/games/presentation/theme/game_palette.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Animated gradient XP progress bar widget.
@@ -80,7 +82,7 @@ class _XPProgressBarState extends State<XPProgressBar>
       mainAxisSize: MainAxisSize.min,
       children: [
         _levelBadge(size: 28, fontSize: 11),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpacing.sm),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -90,8 +92,7 @@ class _XPProgressBarState extends State<XPProgressBar>
               const SizedBox(height: 2),
               Text(
                 '${widget.currentXpInLevel}/${widget.xpForNextLevel} XP',
-                style: TextStyle(
-                  fontSize: 10,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
@@ -113,7 +114,7 @@ class _XPProgressBarState extends State<XPProgressBar>
             Row(
               children: [
                 _levelBadge(size: 36, fontSize: 14),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.sm),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -121,16 +122,16 @@ class _XPProgressBarState extends State<XPProgressBar>
                       'games.levelDisplay'.tr(
                         namedArgs: {'level': '${widget.numericLevel}'},
                       ),
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         fontWeight: FontWeight.bold,
-                        fontSize: 15,
                         color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                     Text(
-                      'gamification.totalXp'.tr(namedArgs: {'xp': '${widget.totalXp}'}),
-                      style: TextStyle(
-                        fontSize: 12,
+                      'gamification.totalXp'.tr(
+                        namedArgs: {'xp': '${widget.totalXp}'},
+                      ),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
@@ -140,34 +141,38 @@ class _XPProgressBarState extends State<XPProgressBar>
             ),
             Text(
               '${widget.currentXpInLevel}/${widget.xpForNextLevel} XP',
-              style: TextStyle(
-                fontSize: 12,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
                 fontWeight: FontWeight.w500,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         _animatedBar(height: 10),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.xs),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Flexible(
               child: Text(
-              'games.percentToNextLevel'.tr(namedArgs: {'percent': widget.progressPercent.toStringAsFixed(0)}),
-              style: TextStyle(
-                fontSize: 11,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ), maxLines: 1, overflow: TextOverflow.ellipsis),
+                'games.percentToNextLevel'.tr(
+                  namedArgs: {
+                    'percent': widget.progressPercent.toStringAsFixed(0),
+                  },
+                ),
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
             Text(
               'games.levelNextShort'.tr(
                 namedArgs: {'level': '${widget.numericLevel + 1}'},
               ),
-              style: const TextStyle(
-                fontSize: 11,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 color: AppColors.primary,
                 fontWeight: FontWeight.bold,
               ),
@@ -185,7 +190,7 @@ class _XPProgressBarState extends State<XPProgressBar>
       decoration: const BoxDecoration(
         shape: BoxShape.circle,
         gradient: LinearGradient(
-          colors: [AppColors.primary, Color(0xFF5B9BF5)],
+          colors: GamePalette.skySoftGradient,
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -225,7 +230,7 @@ class _XPProgressBarState extends State<XPProgressBar>
                   width: fillWidth.clamp(0.0, barWidth),
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [AppColors.primary, Color(0xFF38B2FF)],
+                      colors: GamePalette.skyGradient,
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                     ),
