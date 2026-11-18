@@ -2388,7 +2388,8 @@
       "aiQuality": "AI quality",
       "roles": "Roles",
       "categories": "Categories",
-      "ielts": "IELTS"
+      "ielts": "IELTS",
+      "gemLedger": "Gem ledger"
     },
     "shell": {
       "logout": "Log out",
@@ -2578,6 +2579,111 @@
       "publishable": "Ready to publish",
       "blocked": "Not publishable",
       "problems": "Problems"
+    },
+    "users": {
+      "title": "Users",
+      "searchHint": "Search by name or email",
+      "total": "{count} users",
+      "filterAllRoles": "All roles",
+      "filterAllStatus": "All status",
+      "roleUser": "User",
+      "roleAdmin": "Admin",
+      "roleSuper": "Super admin",
+      "statusActive": "Active",
+      "statusSuspended": "Suspended",
+      "sortBy": "Sort by",
+      "sortNewest": "Newest",
+      "sortRecentLogin": "Recent login",
+      "sortTopXp": "Most XP",
+      "sortEmail": "Email A-Z",
+      "emptyTitle": "No users found",
+      "emptyBody": "Try a different search or filter.",
+      "rowMeta": "{xp} XP · {streak}-day streak",
+      "detail": {
+        "title": "User",
+        "tabOverview": "Overview",
+        "tabWallet": "Gems",
+        "tabXp": "XP",
+        "tabItems": "Items",
+        "verified": "Verified",
+        "unverified": "Not verified",
+        "joined": "Joined",
+        "lastLogin": "Last login",
+        "never": "Never",
+        "provider": "Sign-in",
+        "totalXp": "Total XP",
+        "coursesEnrolled": "Courses started",
+        "coursesCompleted": "Courses done",
+        "lessonsCompleted": "Lessons done",
+        "suspend": "Suspend",
+        "activate": "Reactivate",
+        "suspendTitle": "Suspend this account?",
+        "suspendBody": "{name} will not be able to sign in until you reactivate the account.",
+        "activateTitle": "Reactivate this account?",
+        "activateBody": "{name} will be able to sign in again.",
+        "suspended": "Account suspended",
+        "activated": "Account reactivated",
+        "activityTitle": "Recent activity (30 days)",
+        "activityEmpty": "No activity in the last 30 days.",
+        "webOnlyBody": "Deleting accounts, changing roles, adjusting a wallet and granting or revoking premium are done on the web admin."
+      },
+      "gift": {
+        "title": "Gift gems",
+        "to": "To {name}",
+        "amount": "Gems",
+        "reason": "Reason",
+        "reasonHint": "Why is this being given? At least {min} characters.",
+        "limit": "You can give up to {max} gems now. Left in today's budget: {left}.",
+        "limitUnknown": "Your gem limit could not be loaded. The server still enforces it.",
+        "amountInvalid": "Enter a whole number from 1 to {max}.",
+        "budgetUsed": "Today's gem budget is used up.",
+        "reasonShort": "Give a reason of at least {min} characters.",
+        "confirmTitle": "Send {amount} gems?",
+        "confirmBody": "To {name}. This is logged under your name.",
+        "send": "Send gift",
+        "sent": "Gems sent"
+      },
+      "wallet": {
+        "balance": "Gem balance",
+        "earnedSpent": "Earned {earned} · Spent {spent}",
+        "empty": "No gem transactions yet.",
+        "after": "Balance {balance}"
+      },
+      "xp": {
+        "total": "Total XP",
+        "empty": "No XP awards yet.",
+        "multiplier": "×{value}"
+      },
+      "items": {
+        "premium": "Premium",
+        "premiumActive": "Active",
+        "premiumInactive": "Not active",
+        "premiumNone": "No premium on record.",
+        "source": "Source: {source}",
+        "until": "Until {date}",
+        "forceEnabled": "Premium is forced on for everyone on this server.",
+        "inventory": "Shop inventory",
+        "empty": "No shop items.",
+        "equipped": "Equipped"
+      }
+    },
+    "gems": {
+      "title": "Gem ledger",
+      "filterAll": "All",
+      "kindGift": "Gift",
+      "kindAdjust": "Adjustment",
+      "remainingToday": "Left today",
+      "budgetNote": "Spent {spent} of {budget}",
+      "perGift": "Max per gift",
+      "limitsFailed": "Your gem limits could not be loaded.",
+      "emptyTitle": "No gem grants yet",
+      "emptyBody": "Gifts and corrections show up here. You only see your own unless you are a super admin.",
+      "by": "by {name}",
+      "webOnlyBody": "Changing the gem caps is done on the web admin."
+    },
+    "webOnly": {
+      "title": "On the web admin",
+      "open": "Open web admin"
     }
   }
 }

@@ -1,108 +1,131 @@
+import 'package:lexilingo_app/core/state/paginated_list_controller.dart';
 import '../../../core/constants/api_endpoints.dart';
 import '../../../core/network/api_client.dart';
+import 'user_models.dart';
 
-class AdminUserItem {
-  final String id, email, displayName, roleSlug, level, rank;
-  final String? avatarUrl, createdAt, lastLogin;
-  final bool isActive, isVerified;
-  final int roleLevel, totalXp, numericLevel, streakDays;
+export 'user_models.dart';
 
-  const AdminUserItem({
-    required this.id,
-    required this.email,
-    required this.displayName,
-    required this.roleSlug,
-    required this.level,
-    required this.rank,
-    this.avatarUrl,
-    this.createdAt,
-    this.lastLogin,
-    required this.isActive,
-    required this.isVerified,
-    required this.roleLevel,
-    required this.totalXp,
-    required this.numericLevel,
-    required this.streakDays,
-  });
+/// How `GET /admin/users` may be ordered.
+enum UserSort {
+  newest('created_at', 'desc'),
+  recentLogin('last_login', 'desc'),
+  topXp('total_xp', 'desc'),
+  email('email', 'asc');
 
-  factory AdminUserItem.fromJson(Map<String, dynamic> json) => AdminUserItem(
-    id: json['id']?.toString() ?? '',
-    email: json['email'] ?? '',
-    displayName: json['display_name'] ?? json['username'] ?? '',
-    avatarUrl: json['avatar_url'],
-    isActive: json['is_active'] == true,
-    isVerified: json['is_verified'] == true,
-    roleSlug: json['role_slug'] ?? 'user',
-    roleLevel: json['role_level'] ?? 0,
-    totalXp: json['total_xp'] ?? 0,
-    numericLevel: json['numeric_level'] ?? 1,
-    rank: json['rank'] ?? 'bronze',
-    level: json['cefr_level'] ?? 'A1',
-    streakDays: json['streak_days'] ?? 0,
-    createdAt: json['created_at']?.toString(),
-    lastLogin: json['last_login']?.toString(),
-  );
-
-  String get roleLabel =>
-      const ['User', 'Admin', 'Super Admin'][roleLevel.clamp(0, 2)];
+  const UserSort(this.field, this.order);
+  final String field;
+  final String order;
 }
 
+Map<String, dynamic> _asMap(dynamic body) =>
+    body is Map ? Map<String, dynamic>.from(body) : const {};
+
+List<T> _list<T>(dynamic body, T Function(Map<String, dynamic>) parse) =>
+    body is List
+    ? body
+          .whereType<Map>()
+          .map((e) => parse(Map<String, dynamic>.from(e)))
+          .toList()
+    : <T>[];
+
+/// Reads learners for support. Writes are limited to what a plain admin may do
+/// from a phone: switch one account on or off, and gift gems. Deleting an
+/// account, changing a role, bulk actions and anything that moves money or
+/// premium stay on the web admin.
 class UsersRepository {
-  final _api = ApiClient.instance;
+  UsersRepository({ApiClient? api}) : _api = api ?? ApiClient.instance;
 
-  Future<Map<String, dynamic>> getUsers({
-    int page = 1,
-    String? search,
-    int? role,
-    bool? isActive,
-  }) async {
-    final response = await _api.get(
-      ApiEndpoints.adminUsers,
-      params: {
-        'page': page,
-        'page_size': 20,
-        if (search?.isNotEmpty == true) 'search': search,
-        if (role != null) 'role': role,
-        if (isActive != null) 'is_active': isActive,
-      },
+  final ApiClient _api;
+
+  /// One page of learners. [filters] may hold `search`, `role` (0-2),
+  /// `is_active` (bool) and `sort` ([UserSort]).
+  Future<PageResult<AdminUserItem>> listUsers(
+    PageRequest request,
+    Map<String, Object?> filters,
+  ) async {
+    final search = (filters['search'] as String?)?.trim();
+    final sort = filters['sort'] as UserSort? ?? UserSort.newest;
+    final data = _asMap(
+      await _api.getData(
+        ApiEndpoints.adminUsers,
+        params: {
+          'page': request.page,
+          'page_size': request.size,
+          if (search != null && search.isNotEmpty) 'search': search,
+          if (filters['role'] != null) 'role': filters['role'],
+          if (filters['is_active'] != null) 'is_active': filters['is_active'],
+          'sort_by': sort.field,
+          'order': sort.order,
+        },
+      ),
     );
-    final data = response['data'] as Map<String, dynamic>? ?? {};
-    return {
-      'users': ((data['users'] as List?) ?? [])
-          .map((item) => AdminUserItem.fromJson(item as Map<String, dynamic>))
-          .toList(),
-      'total': data['total'] ?? 0,
-      'total_pages': data['total_pages'] ?? 1,
-    };
-  }
-
-  Future<Map<String, dynamic>> getUserStats(String userId) async {
-    final response = await _api.get('${ApiEndpoints.adminUsers}/$userId');
-    return response['data'] as Map<String, dynamic>? ?? {};
-  }
-
-  Future<List<Map<String, dynamic>>> getUserActivity(String userId) async {
-    final response = await _api.get(
-      '${ApiEndpoints.adminUsers}/$userId/activity',
+    final total = data['total'];
+    final pages = data['total_pages'];
+    return PageResult(
+      items: _list(data['users'], AdminUserItem.fromJson),
+      total: total is num ? total.toInt() : null,
+      hasMore: pages is num ? request.page < pages.toInt() : null,
     );
-    return ((response['data'] as List?) ?? []).cast<Map<String, dynamic>>();
   }
 
-  Future<void> updateUser(String userId, Map<String, dynamic> data) =>
-      _api.put('${ApiEndpoints.adminUsers}/$userId', data: data);
-
-  Future<void> updateRole(String userId, int level) => _api.put(
-    '${ApiEndpoints.adminUsers}/$userId/role',
-    data: {'level': level},
+  Future<AdminUserDetail> getUser(String id) async => AdminUserDetail.fromJson(
+    _asMap(await _api.getData('${ApiEndpoints.adminUsers}/$id')),
   );
 
-  Future<void> setUserActive(String userId, bool isActive) => _api.put(
-    '${ApiEndpoints.adminUsers}/$userId/status',
+  Future<List<UserActivityEntry>> getActivity(
+    String id, {
+    int days = 30,
+  }) async => _list(
+    await _api.getData(
+      '${ApiEndpoints.adminUsers}/$id/activity',
+      params: {'days': days},
+    ),
+    UserActivityEntry.fromJson,
+  );
+
+  Future<WalletPage> getWallet(String id, PageRequest request) async =>
+      WalletPage.fromJson(
+        _asMap(
+          await _api.getData(
+            '${ApiEndpoints.adminUsers}/$id/wallet',
+            params: {'limit': request.limit, 'offset': request.offset},
+          ),
+        ),
+      );
+
+  Future<XpPage> getXp(String id, PageRequest request) async => XpPage.fromJson(
+    _asMap(
+      await _api.getData(
+        '${ApiEndpoints.adminUsers}/$id/xp-transactions',
+        params: {'limit': request.limit, 'offset': request.offset},
+      ),
+    ),
+  );
+
+  Future<List<InventoryEntry>> getInventory(String id) async => _list(
+    _asMap(
+      await _api.getData('${ApiEndpoints.adminUsers}/$id/inventory'),
+    )['items'],
+    InventoryEntry.fromJson,
+  );
+
+  Future<PremiumStatus> getPremium(String id) async => PremiumStatus.fromJson(
+    _asMap(await _api.getData('${ApiEndpoints.adminUsers}/$id/entitlements')),
+  );
+
+  Future<void> setActive(String id, bool isActive) => _api.put(
+    '${ApiEndpoints.adminUsers}/$id/status',
     data: {'is_active': isActive},
   );
 
-  Future<void> bulkAction(Iterable<String> userIds, String action) => _api.post(
-    '${ApiEndpoints.adminUsers}/bulk-action',
-    data: {'user_ids': userIds.toList(), 'action': action},
+  /// Gems only; course, avatar and item gifts stay on the web admin. The
+  /// backend checks the per-action cap and today's budget.
+  Future<void> giftGems(
+    String id, {
+    required int amount,
+    required String reason,
+  }) => _api.post(
+    '${ApiEndpoints.adminUsers}/$id/gift',
+    data: {'gift_type': 'gems', 'amount': amount, 'reason': reason},
   );
 }
