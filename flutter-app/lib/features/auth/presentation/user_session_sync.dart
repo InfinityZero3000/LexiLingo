@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/level_provider.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/proficiency_provider.dart';
+import 'package:lexilingo_app/features/progress/presentation/providers/content_activity_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/daily_challenges_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/progress_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
@@ -18,6 +19,7 @@ abstract final class UserSessionSync {
     _maybe<LevelProvider>(context)?.reset();
     _maybe<ProficiencyProvider>(context)?.reset();
     _maybe<DailyChallengesProvider>(context)?.reset();
+    _maybe<ContentActivityProvider>(context)?.reset();
     _maybe<HomeProvider>(context)?.clear();
   }
 

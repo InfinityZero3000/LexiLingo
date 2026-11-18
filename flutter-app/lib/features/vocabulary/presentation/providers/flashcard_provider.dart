@@ -39,6 +39,7 @@ class FlashcardProvider extends ChangeNotifier {
   List<UserVocabularyEntity> _pendingUserVocabs = [];
   int _loadedVocabCount = 0;
   bool _isLoadingMore = false;
+  int _sessionGeneration = 0;
 
   // Ratings are delivered in the background, one after another
   Future<void> _delivery = Future<void>.value();
@@ -56,6 +57,7 @@ class FlashcardProvider extends ChangeNotifier {
   int get dueCount => _currentSession?.remainingCards ?? 0;
 
   void _resetLazyState() {
+    _sessionGeneration++;
     _pendingUserVocabs = [];
     _loadedVocabCount = 0;
     _isLoadingMore = false;
@@ -90,6 +92,7 @@ class FlashcardProvider extends ChangeNotifier {
     if (_loadedVocabCount >= _pendingUserVocabs.length) return;
 
     _isLoadingMore = true;
+    final generation = _sessionGeneration;
 
     try {
       final nextBatch = _pendingUserVocabs
@@ -98,6 +101,7 @@ class FlashcardProvider extends ChangeNotifier {
           .toList();
 
       final newCards = await _loadVocabCards(nextBatch);
+      if (generation != _sessionGeneration) return;
       _loadedVocabCount += nextBatch.length;
 
       final dropped = nextBatch.length - newCards.length;
@@ -112,7 +116,7 @@ class FlashcardProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error preloading cards: $e');
     } finally {
-      _isLoadingMore = false;
+      if (generation == _sessionGeneration) _isLoadingMore = false;
     }
   }
 

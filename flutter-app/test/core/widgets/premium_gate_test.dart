@@ -7,6 +7,9 @@ import 'package:lexilingo_app/core/widgets/premium_gate.dart';
 class _Free extends Fake implements EntitlementService {
   @override
   Future<bool> fetchCached({String entitlementId = 'premium'}) async => false;
+
+  @override
+  Future<bool?> fetchActive({String entitlementId = 'premium'}) async => false;
 }
 
 void main() {

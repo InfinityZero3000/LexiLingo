@@ -559,6 +559,11 @@ class _LexiChatPageState extends State<LexiChatPage>
         return;
       }
 
+      if (chatProvider.isSending) {
+        _showSnack('lexiChat.voice.busyBanner'.tr());
+        return;
+      }
+
       _controller.text = transcript;
       _controller.selection = TextSelection.collapsed(
         offset: transcript.length,

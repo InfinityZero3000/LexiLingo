@@ -29,6 +29,7 @@ class HomeProvider with ChangeNotifier {
   });
 
   int _generation = 0;
+  Future<void>? _weeklyLoad;
 
   // State: Featured Courses
   List<CourseEntity> _featuredCourses = [];
@@ -100,9 +101,18 @@ class HomeProvider with ChangeNotifier {
       _isLoadingCourses || _isLoadingDashboard || _isLoadingWeekly;
 
   /// Load weekly progress for home screen chart (Task 1.3)
-  Future<void> loadWeeklyProgress() async {
-    if (getWeeklyProgressUseCase == null) return;
+  Future<void> loadWeeklyProgress() {
+    if (getWeeklyProgressUseCase == null) return Future<void>.value();
+    final inFlight = _weeklyLoad;
+    if (inFlight != null) return inFlight;
+    final run = _loadWeeklyProgress();
+    _weeklyLoad = run;
+    return run.whenComplete(() {
+      if (identical(_weeklyLoad, run)) _weeklyLoad = null;
+    });
+  }
 
+  Future<void> _loadWeeklyProgress() async {
     _isLoadingWeekly = true;
     notifyListeners();
 
@@ -135,9 +145,11 @@ class HomeProvider with ChangeNotifier {
     _coursesError = null;
     notifyListeners();
 
+    final generation = _generation;
     final result = await getCoursesUseCase(
       const GetCoursesParams(page: 1, pageSize: 6),
     );
+    if (generation != _generation) return;
 
     result.fold(
       (failure) {
@@ -160,7 +172,9 @@ class HomeProvider with ChangeNotifier {
     _enrolledError = null;
     notifyListeners();
 
+    final generation = _generation;
     final result = await getEnrolledCoursesUseCase(page: 1, pageSize: 10);
+    if (generation != _generation) return;
 
     result.fold(
       (failure) {
@@ -211,7 +225,9 @@ class HomeProvider with ChangeNotifier {
     if (vocabularyRepository == null) return;
     _isLoadingWordOfDay = true;
     notifyListeners();
+    final generation = _generation;
     final result = await vocabularyRepository!.getWordOfDay();
+    if (generation != _generation) return;
     result.fold((_) {}, (word) => _wordOfDay = word);
     _isLoadingWordOfDay = false;
     notifyListeners();
@@ -230,6 +246,7 @@ class HomeProvider with ChangeNotifier {
   /// Clear all state
   void clear() {
     _generation++;
+    _weeklyLoad = null;
     _featuredCourses = [];
     _coursesError = null;
     _isLoadingCourses = false;

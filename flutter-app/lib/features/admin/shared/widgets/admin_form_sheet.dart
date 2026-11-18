@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/core/utils/dispose_after_route.dart';
 import '../../core/network/admin_api_error.dart';
 
 /// A bottom sheet with a form: [builder] lays out the fields and [onSubmit]
@@ -30,11 +31,7 @@ Future<bool> showAdminFormSheet(
   );
   // Dispose after the exit animation; callers read the controllers right after
   // the await, so disposing any earlier would hand them dead controllers.
-  Future<void>.delayed(const Duration(milliseconds: 500), () {
-    for (final c in controllers) {
-      c.dispose();
-    }
-  });
+  disposeAfterRoute(controllers);
   return saved == true;
 }
 

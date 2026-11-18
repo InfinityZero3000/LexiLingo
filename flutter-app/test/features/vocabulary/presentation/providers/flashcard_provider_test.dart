@@ -19,6 +19,7 @@ class _RecordingVocabularyRepository extends Fake
   Completer<void>? submitGate;
   int failSubmits = 0;
   final missingItems = <String>{};
+  Completer<void>? itemGate;
   final sent = <String>[];
 
   final vocabularyItem = VocabularyItemEntity(
@@ -55,9 +56,12 @@ class _RecordingVocabularyRepository extends Fake
   @override
   Future<Either<Failure, VocabularyItemEntity>> getVocabularyItem(
     String id,
-  ) async => missingItems.contains(id)
-      ? const Left(ServerFailure('gone'))
-      : Right(vocabularyItem);
+  ) async {
+    await itemGate?.future;
+    return missingItems.contains(id)
+        ? const Left(ServerFailure('gone'))
+        : Right(vocabularyItem);
+  }
 
   @override
   Future<Either<Failure, List<UserVocabularyEntity>>> getDueVocabulary({
@@ -271,5 +275,47 @@ void main() {
 
       expect(repository.sent, ['a']);
     });
+  });
+
+  test('a batch that lands after the session ended is not appended to the '
+      'next one', () async {
+    final repository = _RecordingVocabularyRepository();
+    repository.due = [
+      for (var i = 0; i < 12; i++)
+        UserVocabularyEntity(
+          id: 'uv-$i',
+          userId: 'user-1',
+          vocabularyId: 'vocabulary-1',
+          status: VocabularyStatus.learning,
+          nextReviewDate: DateTime.utc(2026, 6, 9),
+          addedAt: DateTime.utc(2026, 6, 8),
+        ),
+    ];
+    final provider = FlashcardProvider(
+      getDueVocabularyUseCase: GetDueVocabularyUseCase(repository),
+      submitReviewUseCase: SubmitReviewUseCase(repository),
+      vocabularyRepository: repository,
+    );
+
+    await provider.startReviewSession();
+    expect(provider.currentSession!.cards.length, 10);
+
+    final gate = Completer<void>();
+    repository.itemGate = gate;
+    for (var i = 0; i < 5; i++) {
+      await provider.submitReview(ReviewQuality.good);
+    }
+    provider.endSession();
+    repository.itemGate = null;
+    await provider.startReviewSession();
+    expect(provider.currentSession!.cards.length, 10);
+
+    gate.complete();
+    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(provider.currentSession!.cards.length, 10);
+    expect(provider.currentSession!.totalCards, 12);
+    provider.dispose();
   });
 }

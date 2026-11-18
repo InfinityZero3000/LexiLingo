@@ -115,7 +115,10 @@ class _SittingViewState extends State<_SittingView> {
                 children: [
                   for (var i = 0; i < sections.length; i++)
                     Padding(
-                      padding: const EdgeInsets.only(right: AppSpacing.sm, bottom: 8),
+                      padding: const EdgeInsets.only(
+                        right: AppSpacing.sm,
+                        bottom: 8,
+                      ),
                       child: ChoiceChip(
                         label: Text(_skillLabel(sections[i].skill)),
                         selected: i == index,
@@ -171,7 +174,11 @@ class _SittingViewState extends State<_SittingView> {
         title: Text('ielts.leaveTitle'.tr()),
         content: Text('ielts.leaveBody'.tr()),
         actions: [
-          TextButton(style: TextButton.styleFrom(minimumSize: const Size(kMinTapTarget, kMinTapTarget)), onPressed: () => Navigator.of(dialogContext).pop(false),
+          TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+            ),
+            onPressed: () => Navigator.of(dialogContext).pop(false),
             child: Text('ielts.stay'.tr()),
           ),
           FilledButton(
@@ -194,7 +201,11 @@ class _SittingViewState extends State<_SittingView> {
           ),
         ),
         actions: [
-          TextButton(style: TextButton.styleFrom(minimumSize: const Size(kMinTapTarget, kMinTapTarget)), onPressed: () => Navigator.of(dialogContext).pop(false),
+          TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+            ),
+            onPressed: () => Navigator.of(dialogContext).pop(false),
             child: Text('ielts.keepWorking'.tr()),
           ),
           FilledButton(
@@ -344,7 +355,8 @@ class _AudioPlayerBarState extends State<_AudioPlayerBar> {
       await _player.setUrl(url);
       if (mounted) setState(() => _ready = true);
     } catch (e) {
-      if (mounted) setState(() => _error = const UiText.key('ielts.audioUnavailable'));
+      if (mounted)
+        setState(() => _error = const UiText.key('ielts.audioUnavailable'));
     }
   }
 
@@ -368,13 +380,19 @@ class _AudioPlayerBarState extends State<_AudioPlayerBar> {
     if (_error != null) {
       return Card(
         color: theme.colorScheme.errorContainer,
-        child: Padding(padding: const EdgeInsets.all(12), child: Text(_error!.resolve())),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Text(_error!.resolve()),
+        ),
       );
     }
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: 4,
+        ),
         child: StreamBuilder<PlayerState>(
           stream: _player.playerStateStream,
           builder: (context, snapshot) {
@@ -385,9 +403,7 @@ class _AudioPlayerBarState extends State<_AudioPlayerBar> {
               children: [
                 IconButton(
                   icon: Icon(playing ? Icons.pause : Icons.play_arrow),
-                  onPressed: !_ready
-                      ? null
-                      : () => _togglePlayback(playing),
+                  onPressed: !_ready ? null : () => _togglePlayback(playing),
                 ),
                 Expanded(
                   child: StreamBuilder<Duration>(
@@ -458,6 +474,19 @@ class _ReadingSectionState extends State<_ReadingSection> {
     _passageKeys = [for (final _ in _parts) GlobalKey()];
     _questionKeys = [for (final _ in _parts) GlobalKey()];
     _scroll.addListener(_syncSegment);
+  }
+
+  @override
+  void didUpdateWidget(covariant _ReadingSection old) {
+    super.didUpdateWidget(old);
+    if (old.section != widget.section ||
+        old.section.parts.length != _parts.length) {
+      _passageKeys = [for (final _ in _parts) GlobalKey()];
+      _questionKeys = [for (final _ in _parts) GlobalKey()];
+      _onQuestions = false;
+      _widePart = 0;
+      if (_scroll.hasClients) _scroll.jumpTo(0);
+    }
   }
 
   @override
@@ -957,7 +986,9 @@ class _SpeakingPartState extends State<_SpeakingPart> {
     if (!mounted) return;
     if (!granted) {
       if (mounted) {
-        setState(() => _error = const UiText.key('ielts.micPermissionRequired'));
+        setState(
+          () => _error = const UiText.key('ielts.micPermissionRequired'),
+        );
       }
       return;
     }
@@ -1031,7 +1062,10 @@ class _SpeakingPartState extends State<_SpeakingPart> {
         ),
         if (_error != null) ...[
           const SizedBox(height: AppSpacing.sm),
-          Text(_error!.resolve(), style: TextStyle(color: theme.colorScheme.error)),
+          Text(
+            _error!.resolve(),
+            style: TextStyle(color: theme.colorScheme.error),
+          ),
         ],
         const SizedBox(height: AppSpacing.md),
         TextFormField(

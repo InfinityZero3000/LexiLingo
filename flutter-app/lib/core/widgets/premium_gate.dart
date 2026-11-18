@@ -1,8 +1,6 @@
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:lexilingo_app/core/di/service_locator.dart';
-import 'package:lexilingo_app/core/services/entitlement_service.dart';
-import 'package:lexilingo_app/core/services/purchases_service.dart';
+import 'package:lexilingo_app/core/services/premium_status.dart';
 import 'package:lexilingo_app/features/premium/presentation/screens/paywall_screen.dart';
 
 /// Wraps any widget that requires a premium subscription.
@@ -43,12 +41,7 @@ class _PremiumGateState extends State<PremiumGate> {
   /// through `require_premium`, so lying to this widget no longer buys access
   /// to a premium-gated endpoint — only to the UI around it.
   Future<void> _check() async {
-    bool value;
-    if (sl.isRegistered<EntitlementService>()) {
-      value = await sl<EntitlementService>().fetchCached();
-    } else {
-      value = await PurchasesService.instance.isPremium;
-    }
+    final value = await resolvePremium();
     if (mounted) setState(() => _isPremium = value);
   }
 
