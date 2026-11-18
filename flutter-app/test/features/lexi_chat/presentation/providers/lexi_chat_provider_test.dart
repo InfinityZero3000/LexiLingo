@@ -1,4 +1,8 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:typed_data';
+
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lexilingo_app/core/error/exceptions.dart';
@@ -21,6 +25,8 @@ class _FakeLexiChatRepository implements LexiChatRepository {
   String? lastStreamNativeLanguage;
   Object? pagedError;
   Object? sendError;
+  final List<String> pagedSessionIds = [];
+  Completer<List<LexiSession>>? sessionsGate;
   Stream<LexiStreamEvent> Function()? streamFactory;
   LexiSuggestedPractice? nextSuggestedPractice;
 
@@ -58,6 +64,7 @@ class _FakeLexiChatRepository implements LexiChatRepository {
     int limit = 50,
     String? cursor,
   }) async {
+    pagedSessionIds.add(sessionId);
     if (pagedError != null) throw pagedError!;
     return const LexiMessagesPage(
       messages: [],
@@ -69,6 +76,8 @@ class _FakeLexiChatRepository implements LexiChatRepository {
 
   @override
   Future<List<LexiSession>> getSessions({required String userId}) async {
+    final gate = sessionsGate;
+    if (gate != null) return gate.future;
     return const [];
   }
 
@@ -155,6 +164,104 @@ class _CapturingAiApiClient extends AiApiClient {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  group('LexiChatProvider restoreLatestSession', () {
+    final lastViewed = DateTime.parse('2026-11-18T08:00:00Z');
+
+    void seedSavedSession() {
+      FlutterSecureStorage.setMockInitialValues({
+        'lexi_saved_sessions': jsonEncode([
+          {
+            'session_id': 'cached',
+            'user_id': 'u1',
+            'title': 'Lexi Chat',
+            'created_at': lastViewed.toIso8601String(),
+            'updated_at': lastViewed.toIso8601String(),
+            'message_count': 3,
+          },
+        ]),
+      });
+    }
+
+    LexiSession remote(String id, DateTime updatedAt) => LexiSession(
+      sessionId: id,
+      userId: 'u1',
+      createdAt: updatedAt,
+      updatedAt: updatedAt,
+      title: 'Lexi Chat',
+      messageCount: 2,
+    );
+
+    test(
+      'loads the saved session without waiting for the session list',
+      () async {
+        seedSavedSession();
+        final repo = _FakeLexiChatRepository()
+          ..sessionsGate = Completer<List<LexiSession>>();
+        final provider = LexiChatProvider(
+          repository: repo,
+          aiClient: _CapturingAiApiClient(),
+        );
+        addTearDown(provider.dispose);
+
+        final restoring = provider.restoreLatestSession('u1');
+        await pumpEventQueue();
+
+        expect(repo.pagedSessionIds, ['cached']);
+        expect(repo.sessionsGate!.isCompleted, isFalse);
+
+        repo.sessionsGate!.complete([
+          remote('cached', lastViewed.subtract(const Duration(hours: 1))),
+        ]);
+        await restoring;
+        expect(provider.session?.sessionId, 'cached');
+        expect(repo.createSessionCalls, 0);
+      },
+    );
+
+    test('moves to a conversation another device continued since', () async {
+      seedSavedSession();
+      final repo = _FakeLexiChatRepository()
+        ..sessionsGate = Completer<List<LexiSession>>();
+      final provider = LexiChatProvider(
+        repository: repo,
+        aiClient: _CapturingAiApiClient(),
+      );
+      addTearDown(provider.dispose);
+
+      final restoring = provider.restoreLatestSession('u1');
+      await pumpEventQueue();
+      repo.sessionsGate!.complete([
+        remote('elsewhere', lastViewed.add(const Duration(hours: 2))),
+        remote('cached', lastViewed),
+      ]);
+      await restoring;
+
+      expect(repo.pagedSessionIds, ['cached', 'elsewhere']);
+      expect(provider.session?.sessionId, 'elsewhere');
+    });
+
+    test(
+      'without saved sessions it waits for the list, then opens the newest',
+      () async {
+        FlutterSecureStorage.setMockInitialValues({});
+        final repo = _FakeLexiChatRepository()
+          ..sessionsGate = (Completer<List<LexiSession>>()
+            ..complete([remote('r1', lastViewed)]));
+        final provider = LexiChatProvider(
+          repository: repo,
+          aiClient: _CapturingAiApiClient(),
+        );
+        addTearDown(provider.dispose);
+
+        await provider.restoreLatestSession('u1');
+
+        expect(repo.pagedSessionIds, ['r1']);
+        expect(provider.session?.sessionId, 'r1');
+        expect(repo.createSessionCalls, 0);
+      },
+    );
+  });
 
   group('LexiChatProvider', () {
     test(

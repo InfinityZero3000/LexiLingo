@@ -32,13 +32,6 @@ class ChatRepositoryImpl implements ChatRepository {
     this.apiDataSource,
   });
 
-  bool _isSessionNotFoundError(Object error) {
-    final msg = error.toString().toLowerCase();
-    return msg.contains('status 404') ||
-        msg.contains('404') ||
-        msg.contains('not found');
-  }
-
   // ===== Session Management =====
 
   @override
@@ -189,33 +182,6 @@ class ChatRepositoryImpl implements ChatRepository {
   }) async {
     try {
       if (apiDataSource != null && await networkInfo.isConnected) {
-        if (cursor == null || cursor.isEmpty) {
-          try {
-            final metadata = await apiDataSource!.getMessagesMetadata(
-              sessionId,
-            );
-            if (!metadata.hasMessages || metadata.totalCount == 0) {
-              return const Right(
-                ChatMessagesPage(
-                  messages: [],
-                  hasMore: false,
-                  nextCursor: null,
-                  returned: 0,
-                ),
-              );
-            }
-          } catch (e) {
-            if (_isSessionNotFoundError(e)) {
-              rethrow;
-            }
-            // Metadata endpoint is an optimization layer only.
-            logWarn(
-              _tag,
-              'getMessagesMetadata failed, continue paged fetch: $e',
-            );
-          }
-        }
-
         final page = await apiDataSource!.getMessagesPaged(
           sessionId: sessionId,
           limit: limit,
