@@ -9,6 +9,7 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/books/data/repositories/book_repository.dart';
 import 'package:lexilingo_app/features/books/domain/entities/book_entities.dart';
 import 'package:lexilingo_app/features/books/presentation/providers/book_provider.dart';
+import 'package:lexilingo_app/features/books/presentation/screens/book_quiz_screen.dart';
 import 'package:lexilingo_app/features/books/presentation/screens/book_reader_screen.dart';
 import 'package:lexilingo_app/features/books/presentation/widgets/reader_controls.dart';
 import 'package:provider/provider.dart';
@@ -154,6 +155,38 @@ void main() {
     await tester.tap(previous);
     await tester.pumpAndSettle();
     expect(find.text('Page 1 / ${_provider.totalPages}'), findsOneWidget);
+  });
+
+  testWidgets('reaching the end of a section offers its quiz, dismissibly', (
+    tester,
+  ) async {
+    await _pump(tester);
+    expect(find.text('Section 1 quiz is ready'), findsNothing);
+
+    for (var i = 0; i < _provider.totalPages - 1; i++) {
+      await tester.tap(find.byIcon(Icons.navigate_next_rounded));
+      await tester.pumpAndSettle();
+    }
+    expect(find.text('Section 1 quiz is ready'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Close'));
+    await tester.pumpAndSettle();
+    expect(find.text('Section 1 quiz is ready'), findsNothing);
+  });
+
+  testWidgets('the quiz offer starts that section\'s quiz', (tester) async {
+    await _pump(tester);
+    for (var i = 0; i < _provider.totalPages - 1; i++) {
+      await tester.tap(find.byIcon(Icons.navigate_next_rounded));
+      await tester.pumpAndSettle();
+    }
+    await tester.tap(find.text('Start quiz'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(
+      tester.widget<BookQuizScreen>(find.byType(BookQuizScreen)).section,
+      1,
+    );
   });
 
   testWidgets('tapping the page hides and shows the bars', (tester) async {

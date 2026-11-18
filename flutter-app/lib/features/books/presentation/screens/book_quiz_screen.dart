@@ -8,16 +8,16 @@ import '../../../../core/theme/app_theme.dart';
 import '../providers/book_provider.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
-/// Comprehension quiz screen for a book chapter.
+/// Comprehension quiz for one section of a book (see [QuizSections]).
 ///
 /// Loads quiz questions from the provider, lets user answer one at a time,
 /// then shows score + XP earned on completion.
 ///
 /// Phase 5: Book Reading — skill: gamification.
 class BookQuizScreen extends StatefulWidget {
-  final int chapter;
+  final int section;
 
-  const BookQuizScreen({super.key, required this.chapter});
+  const BookQuizScreen({super.key, required this.section});
 
   @override
   State<BookQuizScreen> createState() => _BookQuizScreenState();
@@ -27,13 +27,24 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
   int _currentQuestion = 0;
   int? _selectedAnswer;
   bool _answered = false;
+  bool _requested = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<BookProvider>().loadChapterQuiz(widget.chapter);
+      if (mounted) _load();
     });
+  }
+
+  void _load() {
+    setState(() {
+      _requested = true;
+      _currentQuestion = 0;
+      _selectedAnswer = null;
+      _answered = false;
+    });
+    context.read<BookProvider>().loadChapterQuiz(widget.section);
   }
 
   void _selectAnswer(int index) {
@@ -71,8 +82,8 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
           : AppColors.backgroundLight,
       appBar: AppBar(
         title: Text(
-          'books.chapterQuizTitle'.tr(
-            namedArgs: {'chapter': '${widget.chapter}'},
+          'books.sectionQuizTitle'.tr(
+            namedArgs: {'section': '${widget.section}'},
           ),
           style: Theme.of(
             context,
@@ -85,7 +96,9 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
         maxWidth: ContentWidth.reading,
         child: Consumer<BookProvider>(
           builder: (context, provider, _) {
-            if (provider.isLoading) {
+            // Until the load has begun the provider still holds the previous
+            // chapter's quiz, which would flash as this chapter's.
+            if (!_requested || provider.isLoading) {
               return const Center(child: LottieLoadingWidget.medium());
             }
 
@@ -96,13 +109,23 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
             final quiz = provider.currentQuiz;
             if (quiz == null || quiz.questions.isEmpty) {
               return Center(
-                child: Text(
-                  'books.quizNotAvailable'.tr(),
-                  style: TextStyle(
-                    color: isDark
-                        ? Colors.white54
-                        : Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'books.quizNotAvailable'.tr(),
+                      style: TextStyle(
+                        color: isDark
+                            ? Colors.white54
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    OutlinedButton(
+                      onPressed: _load,
+                      child: Text('common.retry'.tr()),
+                    ),
+                  ],
                 ),
               );
             }

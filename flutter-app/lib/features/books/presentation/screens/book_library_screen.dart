@@ -92,9 +92,32 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
     provider.loadSavedBooks();
   }
 
+  /// False when the book's progress could not be loaded; the learner is told
+  /// and can retry instead of landing on an empty detail screen.
+  Future<bool> _prepare(Book book) async {
+    final provider = context.read<BookProvider>();
+    await provider.openBook(book);
+    if (!mounted) return false;
+    if (provider.currentBook?.id != book.id || !provider.openFailed) {
+      return provider.currentBook?.id == book.id;
+    }
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text('bookReader.couldNotLoad'.tr()),
+          behavior: SnackBarBehavior.floating,
+          action: SnackBarAction(
+            label: 'common.retry'.tr(),
+            onPressed: () => _openBook(book),
+          ),
+        ),
+      );
+    return false;
+  }
+
   Future<void> _openBook(Book book) async {
-    await context.read<BookProvider>().openBook(book);
-    if (!mounted) return;
+    if (!await _prepare(book) || !mounted) return;
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => BookDetailScreen(book: book)),
@@ -104,8 +127,7 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
 
   /// Straight back into the reader, at the saved page.
   Future<void> _continue(Book book) async {
-    await context.read<BookProvider>().openBook(book);
-    if (!mounted) return;
+    if (!await _prepare(book) || !mounted) return;
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => BookReaderScreen(book: book)),

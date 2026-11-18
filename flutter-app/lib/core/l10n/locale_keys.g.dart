@@ -1007,8 +1007,12 @@ abstract class  LocaleKeys {
   static const books_loadError = 'books.loadError';
   static const books_about = 'books.about';
   static const books_readingProgress = 'books.readingProgress';
-  static const books_chapterQuiz = 'books.chapterQuiz';
-  static const books_chapterQuizTitle = 'books.chapterQuizTitle';
+  static const books_sectionQuiz = 'books.sectionQuiz';
+  static const books_sectionQuizTitle = 'books.sectionQuizTitle';
+  static const books_reviewSection = 'books.reviewSection';
+  static const books_quizLockedHint = 'books.quizLockedHint';
+  static const books_sectionQuizReady = 'books.sectionQuizReady';
+  static const books_startQuiz = 'books.startQuiz';
   static const books_quizNotAvailable = 'books.quizNotAvailable';
   static const books_backToBook = 'books.backToBook';
   static const books_readerSettings = 'books.readerSettings';

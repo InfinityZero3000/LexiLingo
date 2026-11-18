@@ -11,6 +11,96 @@ import 'package:lexilingo_app/features/mistakes/domain/mistake_notebook_entry.da
 import '../../data/repositories/book_repository.dart';
 import '../../domain/entities/book_entities.dart';
 
+/// Reader pages per quiz section; the last section may be shorter.
+const int kPagesPerQuizSection = 10;
+
+/// Longest excerpt sent to the quiz generator.
+const int kQuizExcerptChars = 1800;
+
+enum QuizAccessKind { locked, take, review }
+
+/// What the book detail's quiz button should do.
+class QuizAccess {
+  const QuizAccess(this.kind, [this.section]);
+
+  final QuizAccessKind kind;
+  final int? section;
+
+  @override
+  bool operator ==(Object other) =>
+      other is QuizAccess && other.kind == kind && other.section == section;
+
+  @override
+  int get hashCode => Object.hash(kind, section);
+}
+
+/// Pure section arithmetic. Section k (1-based) covers pages
+/// [(k-1)*kPagesPerQuizSection, k*kPagesPerQuizSection).
+abstract final class QuizSections {
+  static int count(int totalPages) => totalPages <= 0
+      ? 0
+      : (totalPages + kPagesPerQuizSection - 1) ~/ kPagesPerQuizSection;
+
+  static int sectionOfPage(int page) => page ~/ kPagesPerQuizSection + 1;
+
+  /// First page of section [k].
+  static int startPage(int k) => (k - 1) * kPagesPerQuizSection;
+
+  /// One past the last page of section [k].
+  static int endPage(int k, int totalPages) {
+    final end = k * kPagesPerQuizSection;
+    return end > totalPages ? totalPages : end;
+  }
+
+  /// The page that, once reached, completes section [k]: the first page of
+  /// the next section, or the final page for the last section.
+  static int unlockPage(int k, int totalPages) =>
+      k >= count(totalPages) ? totalPages - 1 : k * kPagesPerQuizSection;
+
+  static bool isUnlocked(int k, int furthestPage, int totalPages) =>
+      k >= 1 &&
+      k <= count(totalPages) &&
+      furthestPage >= unlockPage(k, totalPages);
+
+  static int unlockedCount(int furthestPage, int totalPages) {
+    var n = 0;
+    while (isUnlocked(n + 1, furthestPage, totalPages)) {
+      n++;
+    }
+    return n;
+  }
+
+  static QuizAccess access(int furthestPage, int totalPages, Set<int> done) {
+    final unlocked = unlockedCount(furthestPage, totalPages);
+    if (unlocked == 0) return const QuizAccess(QuizAccessKind.locked);
+    for (var k = unlocked; k >= 1; k--) {
+      if (!done.contains(k)) return QuizAccess(QuizAccessKind.take, k);
+    }
+    return QuizAccess(QuizAccessKind.review, unlocked);
+  }
+
+  /// Deterministic text for the generator: the whole section when it fits,
+  /// otherwise the opening of its first, middle and last pages so the quiz
+  /// spans what was read. Stable input keeps the quiz cache key stable.
+  static String excerpt(List<String> sectionPages) {
+    final pages = [
+      for (final p in sectionPages)
+        if (p.trim().isNotEmpty) p.trim(),
+    ];
+    if (pages.isEmpty) return '';
+    final joined = pages.join('\n\n');
+    if (joined.length <= kQuizExcerptChars) return joined;
+    final picks = <int>{0, pages.length ~/ 2, pages.length - 1}.toList()
+      ..sort();
+    final each = kQuizExcerptChars ~/ picks.length;
+    final parts = [
+      for (final i in picks)
+        pages[i].length > each ? pages[i].substring(0, each) : pages[i],
+    ];
+    return parts.join('\n\n');
+  }
+}
+
 /// State management for the Book Reading feature.
 ///
 /// Phase 5: Book Reading.
@@ -107,10 +197,29 @@ class BookProvider extends ChangeNotifier {
   }
 
   Book? get currentBook => _currentBook;
+
+  /// True when the last [openBook] could not load the book's progress.
+  bool get openFailed => _openFailed;
+  bool _openFailed = false;
   String? get bookText => _bookText;
   List<String> get pages => _pages;
   int get currentPage => _currentPage;
   int get totalPages => _pages.length;
+
+  /// Pages of the open book: the loaded text, else what progress recorded.
+  int get quizTotalPages =>
+      _pages.isNotEmpty ? _pages.length : (_currentProgress?.totalPages ?? 0);
+
+  int get furthestPage {
+    final saved = _currentProgress?.furthestPage ?? 0;
+    return _currentPage > saved ? _currentPage : saved;
+  }
+
+  Set<int> get completedQuizSections =>
+      (_currentProgress?.quizSectionsDone ?? const <int>[]).toSet();
+
+  QuizAccess get quizAccess =>
+      QuizSections.access(furthestPage, quizTotalPages, completedQuizSections);
 
   List<Bookmark> get bookmarks => _bookmarks;
   UserBook? get currentProgress => _currentProgress;
@@ -148,38 +257,50 @@ class BookProvider extends ChangeNotifier {
     }
   }
 
+  int _searchToken = 0;
+
   /// Search for books with a 400 ms debounce.
   void searchBooks(String query) {
     _searchDebounce?.cancel();
 
     if (query.length < 2) {
+      _searchToken++;
+      _isSearching = false;
       _searchResults = [];
       notifyListeners();
       return;
     }
 
     _searchDebounce = Timer(const Duration(milliseconds: 400), () async {
+      final token = ++_searchToken;
       _isSearching = true;
       _error = null;
       notifyListeners();
 
       try {
-        _searchResults = await _repository.searchBooks(
+        final results = await _repository.searchBooks(
           query: query,
           cefrLevel: _selectedCefrLevel,
         );
+        if (token != _searchToken) return;
+        _searchResults = results;
       } catch (e) {
+        if (token != _searchToken) return;
         _error = e.toString();
         _searchResults = [];
       } finally {
-        _isSearching = false;
-        notifyListeners();
+        if (token == _searchToken) {
+          _isSearching = false;
+          notifyListeners();
+        }
       }
     });
   }
 
   void clearSearch() {
     _searchDebounce?.cancel();
+    _searchToken++;
+    _isSearching = false;
     _searchResults = [];
     notifyListeners();
   }
@@ -208,13 +329,21 @@ class BookProvider extends ChangeNotifier {
     notifyListeners();
 
     final nextPage = (_levelPage[level] ?? 0) + 1;
+    final topic = _selectedTopic;
     try {
       final books = await _repository.browseByLevel(
         level: level,
         page: nextPage,
-        topic: _selectedTopic,
+        topic: topic,
       );
-      _levelBooks[level] = [...(_levelBooks[level] ?? []), ...books];
+      // The topic filter clears every level's pages; a reply for the old
+      // topic would otherwise be appended to the new topic's shelf.
+      if (topic != _selectedTopic) return;
+      final have = {for (final b in _levelBooks[level] ?? const <Book>[]) b.id};
+      _levelBooks[level] = [
+        ...(_levelBooks[level] ?? []),
+        ...books.where((b) => !have.contains(b.id)),
+      ];
       _levelPage[level] = nextPage;
       _levelHasMore[level] = books.isNotEmpty;
     } catch (_) {
@@ -237,15 +366,26 @@ class BookProvider extends ChangeNotifier {
     _currentProgress = null;
     _downloadedPath = null;
     _error = null;
+    _openFailed = false;
     notifyListeners();
 
     // Load saved progress and bookmarks in parallel
-    final results = await Future.wait([
-      _repository.getProgress(book.id),
-      _repository.getBookmarks(book.id),
-      _repository.getDownloadedPath(book.id),
-    ]);
+    final List<Object?> results;
+    try {
+      results = await Future.wait<Object?>([
+        _repository.getProgress(book.id),
+        _repository.getBookmarks(book.id),
+        _repository.getDownloadedPath(book.id),
+      ]);
+    } catch (e) {
+      if (_currentBook?.id != book.id) return;
+      _error = e.toString();
+      _openFailed = true;
+      notifyListeners();
+      return;
+    }
 
+    if (_currentBook?.id != book.id) return;
     _currentProgress = results[0] as UserBook?;
     _bookmarks = (results[1] as List<Bookmark>?) ?? [];
     _downloadedPath = results[2] as String?;
@@ -400,6 +540,7 @@ class BookProvider extends ChangeNotifier {
       totalPages: _pages.length,
       readingProgress: _currentPage / _pages.length,
       lastReadAt: DateTime.now(),
+      furthestPage: furthestPage,
     );
     _currentProgress = progress;
     await _repository.saveProgress(progress);
@@ -490,18 +631,17 @@ class BookProvider extends ChangeNotifier {
 
   // ── Quiz ───────────────────────────────────────────────────
 
-  String? _quizExcerptForChapter(int chapter) {
-    if (_pages.isEmpty) return null;
-    final index = (chapter - 1).clamp(0, _pages.length - 1);
-    final excerpt = _pages[index].trim();
-    if (excerpt.isEmpty) return null;
-    return excerpt.length > 1800 ? excerpt.substring(0, 1800) : excerpt;
-  }
+  int _quizLoadToken = 0;
+  int _quizSection = 1;
 
-  Future<void> loadChapterQuiz(int chapter) async {
+  /// Loads the quiz for [section], first loading the book text if it is not
+  /// here yet: a quiz is only ever built from what the section says.
+  Future<void> loadChapterQuiz(int section) async {
     final book = _currentBook;
     if (book == null) return;
 
+    final token = ++_quizLoadToken;
+    _quizSection = section;
     _isLoading = true;
     _currentQuiz = null;
     _quizCompleted = false;
@@ -510,17 +650,41 @@ class BookProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _currentQuiz = await _repository.getChapterQuiz(
-        bookId: book.id,
-        chapter: chapter,
-        book: book,
-        chapterExcerpt: _quizExcerptForChapter(chapter),
+      if (_pages.isEmpty) {
+        await loadBookText();
+        if (token != _quizLoadToken) return;
+        if (_pages.isEmpty) {
+          _error ??= 'Book text unavailable';
+          return;
+        }
+      }
+      final total = _pages.length;
+      final excerpt = QuizSections.excerpt(
+        _pages.sublist(
+          QuizSections.startPage(section).clamp(0, total),
+          QuizSections.endPage(section, total),
+        ),
       );
+      if (excerpt.isEmpty) {
+        _error = 'Section has no text';
+        return;
+      }
+      final quiz = await _repository.getChapterQuiz(
+        bookId: book.id,
+        chapter: section,
+        book: book,
+        chapterExcerpt: excerpt,
+      );
+      if (token != _quizLoadToken) return;
+      _currentQuiz = quiz;
     } catch (e) {
+      if (token != _quizLoadToken) return;
       _error = e.toString();
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      if (token == _quizLoadToken) {
+        _isLoading = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -566,8 +730,8 @@ class BookProvider extends ChangeNotifier {
           sourceType: 'book_quiz',
           sourceId: quiz.bookId,
           questionId: question.id.isEmpty
-              ? '${quiz.chapter}:$questionIndex'
-              : question.id,
+              ? 'part$_quizSection:$questionIndex'
+              : 'part$_quizSection:${question.id}',
         ),
         sourceType: 'book_quiz',
         sourceId: quiz.bookId,
@@ -587,9 +751,15 @@ class BookProvider extends ChangeNotifier {
     return options[index];
   }
 
+  /// One XP award per section, ever: /xp/award dedups on this id.
+  static String quizSourceId(String bookId, int section) =>
+      'book_quiz_${bookId}_part$section';
+
   void completeQuiz() {
+    if (_quizCompleted) return;
     _quizCompleted = true;
     notifyListeners();
+    unawaited(_markSectionDone(_quizSection));
 
     // Award XP proportional to score (fire-and-forget)
     final quiz = _currentQuiz;
@@ -597,11 +767,33 @@ class BookProvider extends ChangeNotifier {
       final xp = (quiz.xpReward * _quizScore / quiz.questions.length)
           .round()
           .clamp(5, quiz.xpReward);
-      _repository.awardXP(
-        baseXp: xp,
-        sourceId: 'book_quiz_${quiz.bookId}_ch${quiz.chapter}',
-        sourceDetail: 'chapter_quiz',
+      unawaited(
+        _repository.awardXP(
+          baseXp: xp,
+          sourceId: quizSourceId(quiz.bookId, _quizSection),
+          sourceDetail: 'chapter_quiz',
+        ),
       );
+    }
+  }
+
+  Future<void> _markSectionDone(int section) async {
+    final book = _currentBook;
+    if (book == null) return;
+    final base =
+        _currentProgress ??
+        UserBook(bookId: book.id, totalPages: quizTotalPages);
+    if (base.quizSectionsDone.contains(section)) return;
+    final updated = base.copyWith(
+      quizSectionsDone: [...base.quizSectionsDone, section]..sort(),
+      furthestPage: furthestPage,
+    );
+    _currentProgress = updated;
+    notifyListeners();
+    try {
+      await _repository.saveProgress(updated);
+    } catch (e) {
+      debugPrint('BookProvider: could not save quiz section: $e');
     }
   }
 
