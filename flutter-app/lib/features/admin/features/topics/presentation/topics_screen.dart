@@ -53,6 +53,16 @@ class _TopicsScreenState extends State<TopicsScreen> {
         : 'A2';
     final saved = await showAdminFormSheet(
       context,
+      controllers: [
+        titleEn,
+        titleVi,
+        category,
+        minutes,
+        icon,
+        opening,
+        prompts,
+        tags,
+      ],
       title: topic == null ? 'admin.topics.new'.tr() : 'admin.topics.edit'.tr(),
       validate: () =>
           titleEn.text.trim().isNotEmpty &&

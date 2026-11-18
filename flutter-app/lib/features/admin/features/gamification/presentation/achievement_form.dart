@@ -66,6 +66,7 @@ class _AchievementFormState extends State<AchievementForm> {
   late String _condition, _category, _rarity;
   late bool _hidden;
   bool _saving = false, _submitted = false;
+  String? _error;
 
   @override
   void initState() {
@@ -125,7 +126,10 @@ class _AchievementFormState extends State<AchievementForm> {
         int.tryParse(_gems.text.trim()) == null) {
       return;
     }
-    setState(() => _saving = true);
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
     try {
       await widget.repository.saveAchievement(widget.item?.id, {
         'name': _name.text.trim(),
@@ -144,16 +148,12 @@ class _AchievementFormState extends State<AchievementForm> {
     } catch (e) {
       if (!mounted) return;
       final api = AdminApiError.from(e);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            api.isForbidden
-                ? api.message.resolve()
-                : 'adminGrowth.common.saveFailed'.tr(),
-          ),
-        ),
-      );
-      setState(() => _saving = false);
+      setState(() {
+        _saving = false;
+        _error = api.isForbidden
+            ? api.message.resolve()
+            : 'adminGrowth.common.saveFailed'.tr();
+      });
     }
   }
 
@@ -163,6 +163,7 @@ class _AchievementFormState extends State<AchievementForm> {
         ? 'adminGrowth.gamify.newAchievement'.tr()
         : 'adminGrowth.gamify.editAchievement'.tr(),
     saving: _saving,
+    error: _error,
     onSave: _save,
     children: [
       GrowthField(

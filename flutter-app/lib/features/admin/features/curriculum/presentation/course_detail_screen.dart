@@ -47,6 +47,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     );
     final saved = await showAdminFormSheet(
       context,
+      controllers: [title, description, order],
       title: unit == null ? 'admin.units.new'.tr() : 'admin.units.edit'.tr(),
       validate: () =>
           title.text.trim().isNotEmpty &&

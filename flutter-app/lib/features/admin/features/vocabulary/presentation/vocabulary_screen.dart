@@ -45,6 +45,7 @@ class _VocabularyScreenState extends State<VocabularyScreen> {
     var level = word?.level ?? 'A1';
     final saved = await showAdminFormSheet(
       context,
+      controllers: [wordCtrl, definition, translation, pronunciation],
       title: word == null
           ? 'admin.vocabulary.new'.tr()
           : 'admin.vocabulary.edit'.tr(),

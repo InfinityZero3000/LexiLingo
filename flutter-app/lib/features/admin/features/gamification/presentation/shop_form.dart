@@ -46,6 +46,7 @@ class _ShopFormState extends State<ShopForm> {
   late String _type;
   late bool _available;
   bool _saving = false, _submitted = false;
+  String? _error;
   String? _effectsError;
 
   @override
@@ -101,6 +102,7 @@ class _ShopFormState extends State<ShopForm> {
     }
     setState(() {
       _saving = true;
+      _error = null;
       _effectsError = null;
     });
     try {
@@ -118,16 +120,12 @@ class _ShopFormState extends State<ShopForm> {
     } catch (e) {
       if (!mounted) return;
       final api = AdminApiError.from(e);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            api.isForbidden
-                ? api.message.resolve()
-                : 'adminGrowth.common.saveFailed'.tr(),
-          ),
-        ),
-      );
-      setState(() => _saving = false);
+      setState(() {
+        _saving = false;
+        _error = api.isForbidden
+            ? api.message.resolve()
+            : 'adminGrowth.common.saveFailed'.tr();
+      });
     }
   }
 
@@ -137,6 +135,7 @@ class _ShopFormState extends State<ShopForm> {
         ? 'adminGrowth.gamify.newShop'.tr()
         : 'adminGrowth.gamify.editShop'.tr(),
     saving: _saving,
+    error: _error,
     onSave: _save,
     children: [
       IgnorePointer(

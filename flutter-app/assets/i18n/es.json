@@ -2729,6 +2729,8 @@
       "to": "To: {}",
       "unlimited": "No limit",
       "needTitleImage": "A title and an image URL are required.",
+      "endBeforeStart": "La fecha de fin debe ser posterior a la de inicio.",
+      "minAboveMax": "El nivel mínimo no puede ser mayor que el máximo.",
       "anyLanguage": "any language",
       "anyLevel": "any level",
       "priorityChip": "priority {}",

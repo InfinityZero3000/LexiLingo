@@ -80,6 +80,7 @@ class _ContentLabScreenState extends State<ContentLabScreen>
     dynamic parsedAnswer;
     final saved = await showAdminFormSheet(
       context,
+      controllers: [prompt, options, answer, explanation, tags],
       title: item == null
           ? 'admin.contentLab.newQuestion'.tr()
           : 'admin.contentLab.editQuestion'.tr(),
@@ -186,6 +187,7 @@ class _ContentLabScreenState extends State<ContentLabScreen>
     var published = item?.isPublished ?? false;
     final saved = await showAdminFormSheet(
       context,
+      controllers: [title, description, duration, score],
       title: item == null
           ? 'admin.contentLab.newExam'.tr()
           : 'admin.contentLab.editExam'.tr(),

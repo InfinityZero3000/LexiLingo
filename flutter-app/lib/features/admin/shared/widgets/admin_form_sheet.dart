@@ -13,6 +13,7 @@ Future<bool> showAdminFormSheet(
   required Future<void> Function() onSubmit,
   bool Function()? validate,
   String? submitLabel,
+  List<TextEditingController> controllers = const [],
 }) async {
   final saved = await showModalBottomSheet<bool>(
     context: context,
@@ -27,6 +28,13 @@ Future<bool> showAdminFormSheet(
       submitLabel: submitLabel,
     ),
   );
+  // Dispose after the exit animation; callers read the controllers right after
+  // the await, so disposing any earlier would hand them dead controllers.
+  Future<void>.delayed(const Duration(milliseconds: 500), () {
+    for (final c in controllers) {
+      c.dispose();
+    }
+  });
   return saved == true;
 }
 

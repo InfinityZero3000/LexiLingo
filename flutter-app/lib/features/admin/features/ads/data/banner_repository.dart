@@ -29,6 +29,22 @@ class BannerItem {
     this.endAt,
   });
 
+  BannerItem copyWith({bool? isActive}) => BannerItem(
+    id: id,
+    title: title,
+    imageUrl: imageUrl,
+    position: position,
+    description: description,
+    linkUrl: linkUrl,
+    targetMinLevel: targetMinLevel,
+    targetMaxLevel: targetMaxLevel,
+    targetLanguage: targetLanguage,
+    priority: priority,
+    isActive: isActive ?? this.isActive,
+    startAt: startAt,
+    endAt: endAt,
+  );
+
   factory BannerItem.fromJson(Map<String, dynamic> json) => BannerItem(
     id: json['id']?.toString() ?? '',
     title: json['title'] ?? '',

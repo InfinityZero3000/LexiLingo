@@ -3,8 +3,11 @@ import 'package:easy_localization/easy_localization.dart';
 import '../../../ielts/presentation/pages/ielts_tests_page.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
-import 'package:lexilingo_app/core/widgets/premium_gate.dart';
+import 'package:lexilingo_app/core/di/service_locator.dart';
+import 'package:lexilingo_app/core/navigation/learner_route.dart';
+import 'package:lexilingo_app/core/services/entitlement_service.dart';
 import 'package:lexilingo_app/core/services/purchases_service.dart';
+import 'package:lexilingo_app/features/premium/presentation/screens/paywall_screen.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/proficiency_provider.dart';
 import 'package:lexilingo_app/features/practice/presentation/widgets/practice_lab_models.dart';
 import 'package:lexilingo_app/features/practice/presentation/widgets/practice_lab_navigation.dart';
@@ -40,7 +43,9 @@ class _PracticeLabPageState extends State<PracticeLabPage> {
 
   Future<void> _loadPremiumStatus() async {
     try {
-      final isPremium = await PurchasesService.instance.isPremium;
+      final isPremium = sl.isRegistered<EntitlementService>()
+          ? await sl<EntitlementService>().fetchCached()
+          : await PurchasesService.instance.isPremium;
       if (!mounted || isPremium == _hasPremium) return;
       setState(() => _hasPremium = isPremium);
     } catch (_) {
@@ -87,6 +92,7 @@ class _PracticeLabPageState extends State<PracticeLabPage> {
                 onRefresh: () => Future.wait([
                   proficiency.loadProfile(),
                   _loadDueVocabulary(),
+                  _loadPremiumStatus(),
                 ]),
                 child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
@@ -124,6 +130,8 @@ class _PracticeLabPageState extends State<PracticeLabPage> {
                       _PracticeLabCardGate(
                         item: item,
                         compact: true,
+                        hasPremium: _hasPremium,
+                        onUnlocked: _loadPremiumStatus,
                         onTap: () => openPracticeLabItem(context, item),
                       ),
                       const SizedBox(height: 10),
@@ -137,6 +145,8 @@ class _PracticeLabPageState extends State<PracticeLabPage> {
                     for (final item in items) ...[
                       _PracticeLabCardGate(
                         item: item,
+                        hasPremium: _hasPremium,
+                        onUnlocked: _loadPremiumStatus,
                         onTap: () => openPracticeLabItem(context, item),
                       ),
                       const SizedBox(height: 10),
@@ -156,26 +166,33 @@ class _PracticeLabCardGate extends StatelessWidget {
   const _PracticeLabCardGate({
     required this.item,
     required this.onTap,
+    required this.hasPremium,
+    required this.onUnlocked,
     this.compact = false,
   });
 
   final PracticeLabItem item;
   final VoidCallback onTap;
+  final bool hasPremium;
+  final VoidCallback onUnlocked;
   final bool compact;
 
   @override
   Widget build(BuildContext context) {
-    final card = _PracticeLabSkillCard(
-      item: item,
-      compact: compact,
-      onTap: onTap,
-    );
+    if (!item.premiumOnly || hasPremium) {
+      return _PracticeLabSkillCard(item: item, compact: compact, onTap: onTap);
+    }
 
-    if (!item.premiumOnly) return card;
-
-    return PremiumGate(
-      lockedChild: _LockedPracticeLabCard(item: item, compact: compact),
-      child: card,
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () async {
+        final unlocked = await LearnerRoute.push<bool>(
+          context,
+          (_) => const PaywallScreen(),
+        );
+        if (unlocked == true) onUnlocked();
+      },
+      child: _LockedPracticeLabCard(item: item, compact: compact),
     );
   }
 }

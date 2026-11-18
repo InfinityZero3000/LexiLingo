@@ -35,6 +35,7 @@ class _OfflineSyncCenterPageState extends State<OfflineSyncCenterPage> {
   }
 
   Future<void> _loadSnapshot() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -69,6 +70,11 @@ class _OfflineSyncCenterPageState extends State<OfflineSyncCenterPage> {
         _errorMessage = e.toString();
         _isLoading = false;
       });
+      if (_snapshot != null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('offlineSync.loadFailed'.tr())));
+      }
     }
   }
 
@@ -85,6 +91,12 @@ class _OfflineSyncCenterPageState extends State<OfflineSyncCenterPage> {
         ),
       );
       await _loadSnapshot();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('offlineSync.loadFailed'.tr())));
+      }
     } finally {
       if (mounted) setState(() => _isMutating = false);
     }
@@ -124,6 +136,12 @@ class _OfflineSyncCenterPageState extends State<OfflineSyncCenterPage> {
         SnackBar(content: Text('offlineSync.allCacheCleared'.tr())),
       );
       await _loadSnapshot();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('offlineSync.loadFailed'.tr())));
+      }
     } finally {
       if (mounted) setState(() => _isMutating = false);
     }

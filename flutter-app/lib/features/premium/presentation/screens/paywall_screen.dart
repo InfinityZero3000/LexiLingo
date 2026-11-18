@@ -33,7 +33,13 @@ class _PaywallScreenState extends State<PaywallScreen> {
   }
 
   Future<void> _loadOfferings() async {
-    final packages = await PurchasesService.instance.getOfferings();
+    if (!_loading) setState(() => _loading = true);
+    List<Package> packages;
+    try {
+      packages = await PurchasesService.instance.getOfferings();
+    } catch (_) {
+      packages = const [];
+    }
     if (mounted) {
       setState(() {
         _packages = packages;
@@ -61,6 +67,11 @@ class _PaywallScreenState extends State<PaywallScreen> {
           ? e.message!
           : 'premium.purchaseFailed'.tr();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('premium.purchaseFailed'.tr())));
     } finally {
       if (mounted) setState(() => _purchasing = false);
     }
@@ -68,8 +79,13 @@ class _PaywallScreenState extends State<PaywallScreen> {
 
   Future<void> _restore() async {
     setState(() => _purchasing = true);
-    final success = await PurchasesService.instance.restore();
-    if (success) await di.sl<EntitlementService>().sync();
+    var success = false;
+    try {
+      success = await PurchasesService.instance.restore();
+      if (success) await di.sl<EntitlementService>().sync();
+    } catch (_) {
+      success = false;
+    }
     if (!mounted) return;
     setState(() => _purchasing = false);
     ScaffoldMessenger.of(context).showSnackBar(
@@ -98,67 +114,101 @@ class _PaywallScreenState extends State<PaywallScreen> {
         child: ContentWidth(
           maxWidth: ContentWidth.reading,
           child: SafeArea(
-            child: Column(
-              children: [
-                Align(
-                  alignment: Alignment.topRight,
-                  child: IconButton(
-                    icon: Icon(
-                      Icons.close,
-                      color: AppColors.onGradient.withValues(alpha: 0.7),
+            child: LayoutBuilder(
+              builder: (context, constraints) => SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      children: [
+                        Align(
+                          alignment: Alignment.topRight,
+                          child: IconButton(
+                            icon: Icon(
+                              Icons.close,
+                              color: AppColors.onGradient.withValues(
+                                alpha: 0.7,
+                              ),
+                            ),
+                            onPressed: () => Navigator.of(context).pop(false),
+                          ),
+                        ),
+                        const Spacer(),
+                        const Icon(
+                          Icons.workspace_premium_rounded,
+                          size: 80,
+                          color: AppColors.gold,
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                        Text(
+                          'premium.title'.tr(),
+                          style: Theme.of(context).textTheme.headlineMedium
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.onGradient,
+                              ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        Text(
+                          'premium.subtitle'.tr(),
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(
+                                color: AppColors.onGradient.withValues(
+                                  alpha: 0.7,
+                                ),
+                              ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: AppSpacing.xxl),
+                        _buildFeatureList(),
+                        const Spacer(),
+                        if (_loading)
+                          const CircularProgressIndicator(
+                            color: AppColors.onGradient,
+                          )
+                        else if (_packages.isEmpty)
+                          Column(
+                            children: [
+                              Text(
+                                'premium.unavailable'.tr(),
+                                style: TextStyle(
+                                  color: AppColors.onGradient.withValues(
+                                    alpha: 0.7,
+                                  ),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: _loadOfferings,
+                                child: Text(
+                                  'common.retry'.tr(),
+                                  style: const TextStyle(
+                                    color: AppColors.onGradient,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
+                        else
+                          ..._packages.map(_buildPackageTile),
+                        const SizedBox(height: AppSpacing.md),
+                        TextButton(
+                          onPressed: _purchasing ? null : _restore,
+                          child: Text(
+                            'premium.restore'.tr(),
+                            style: TextStyle(
+                              color: AppColors.onGradient.withValues(
+                                alpha: 0.54,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.xl),
+                      ],
                     ),
-                    onPressed: () => Navigator.of(context).pop(false),
                   ),
                 ),
-                const Spacer(),
-                const Icon(
-                  Icons.workspace_premium_rounded,
-                  size: 80,
-                  color: Color(0xFFFFD700),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-                Text(
-                  'premium.title'.tr(),
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.onGradient,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Text(
-                  'premium.subtitle'.tr(),
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: AppColors.onGradient.withValues(alpha: 0.7),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: AppSpacing.xxl),
-                _buildFeatureList(),
-                const Spacer(),
-                if (_loading)
-                  const CircularProgressIndicator(color: AppColors.onGradient)
-                else if (_packages.isEmpty)
-                  Text(
-                    'premium.unavailable'.tr(),
-                    style: TextStyle(
-                      color: AppColors.onGradient.withValues(alpha: 0.7),
-                    ),
-                  )
-                else
-                  ..._packages.map(_buildPackageTile),
-                const SizedBox(height: AppSpacing.md),
-                TextButton(
-                  onPressed: _purchasing ? null : _restore,
-                  child: Text(
-                    'premium.restore'.tr(),
-                    style: TextStyle(
-                      color: AppColors.onGradient.withValues(alpha: 0.54),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xl),
-              ],
+              ),
             ),
           ),
         ),

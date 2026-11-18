@@ -353,7 +353,7 @@ class _CreateCampaignSheetState extends State<CreateCampaignSheet> {
       context: context,
       initialTime: TimeOfDay.fromDateTime(_sendAt ?? DateTime.now()),
     );
-    if (time != null) {
+    if (time != null && mounted) {
       setState(
         () => _sendAt = DateTime(
           date.year,
