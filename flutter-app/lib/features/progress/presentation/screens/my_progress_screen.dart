@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
+import 'package:lexilingo_app/features/level/presentation/providers/proficiency_provider.dart';
+import 'package:lexilingo_app/features/level/presentation/widgets/level_history_timeline.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/progress_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/progress_card.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/course_progress_card.dart';
@@ -21,14 +23,37 @@ class MyProgressScreen extends StatefulWidget {
   State<MyProgressScreen> createState() => _MyProgressScreenState();
 }
 
-class _MyProgressScreenState extends State<MyProgressScreen> {
+class _MyProgressScreenState extends State<MyProgressScreen>
+    with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ProgressProvider>().fetchMyProgress();
-      context.read<HomeProvider>().loadWeeklyProgress();
-    });
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refresh());
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) _refresh();
+  }
+
+  /// Stale numbers stay on screen while this runs; each provider only swaps
+  /// them when the new response arrives.
+  Future<void> _refresh() {
+    if (!mounted) return Future.value();
+    final proficiency = context.read<ProficiencyProvider>();
+    return Future.wait([
+      context.read<ProgressProvider>().fetchMyProgress(),
+      context.read<HomeProvider>().loadWeeklyProgress(),
+      proficiency.loadProfile(),
+      proficiency.loadHistory(force: true),
+    ]);
   }
 
   @override
@@ -64,10 +89,7 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
                       ),
                       const SizedBox(height: AppSpacing.xl),
                       FilledButton(
-                        onPressed: () {
-                          progressProvider.fetchMyProgress();
-                          context.read<HomeProvider>().loadWeeklyProgress();
-                        },
+                        onPressed: _refresh,
                         child: Text('common.retry'.tr()),
                       ),
                     ],
@@ -88,10 +110,7 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
             return RefreshIndicator(
               onRefresh: () async {
                 final messenger = ScaffoldMessenger.of(context);
-                await Future.wait([
-                  progressProvider.fetchMyProgress(),
-                  context.read<HomeProvider>().loadWeeklyProgress(),
-                ]);
+                await _refresh();
                 final error = progressProvider.errorMessage;
                 if (mounted && error != null) {
                   messenger
@@ -157,6 +176,10 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
                         ),
                       ],
                     ),
+
+                    const SizedBox(height: AppSpacing.xl),
+
+                    const LevelHistoryTimeline(),
 
                     const SizedBox(height: AppSpacing.xl),
 

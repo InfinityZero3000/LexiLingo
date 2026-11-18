@@ -26,6 +26,17 @@ class MainScreen extends StatefulWidget {
 
   const MainScreen({super.key, this.initialIndex = 0});
 
+  static const int learningTab = 1;
+  static const int lexiTab = 2;
+
+  /// Switches the enclosing MainScreen to [index]; false when there is none.
+  static bool switchTab(BuildContext context, int index) {
+    final state = context.findAncestorStateOfType<_MainScreenState>();
+    if (state == null) return false;
+    state._selectTab(index);
+    return true;
+  }
+
   @override
   State<MainScreen> createState() => _MainScreenState();
 }

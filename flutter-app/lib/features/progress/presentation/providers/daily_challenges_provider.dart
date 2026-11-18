@@ -12,6 +12,20 @@ class DailyChallengesProvider extends ChangeNotifier {
   DailyChallengesProvider({required ProgressRepository repository})
     : _repository = repository;
 
+  int _generation = 0;
+  bool _disposed = false;
+
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
   // State
   DailyChallengesResponse? _challengesResponse;
   bool _isLoading = false;
@@ -62,7 +76,9 @@ class DailyChallengesProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    final generation = _generation;
     final result = await _repository.getDailyChallenges();
+    if (generation != _generation) return;
 
     result.fold(
       (failure) {
@@ -106,7 +122,9 @@ class DailyChallengesProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
+    final generation = _generation;
     final result = await _repository.claimChallengeReward(challengeId);
+    if (generation != _generation) return false;
 
     bool success = false;
     result.fold(
@@ -131,7 +149,9 @@ class DailyChallengesProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
+    final generation = _generation;
     final result = await _repository.claimDailyBonus();
+    if (generation != _generation) return false;
 
     bool success = false;
     result.fold((failure) => _errorMessage = UiText.failure(failure), (_) {
@@ -157,6 +177,7 @@ class DailyChallengesProvider extends ChangeNotifier {
 
   /// Reset state (for logout)
   void reset() {
+    _generation++;
     _challengesResponse = null;
     _isLoading = false;
     _errorMessage = null;

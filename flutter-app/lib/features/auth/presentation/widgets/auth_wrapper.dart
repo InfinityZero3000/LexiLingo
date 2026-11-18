@@ -20,6 +20,7 @@ import '../pages/welcome_page.dart';
 import '../pages/onboarding_page.dart';
 import '../pages/pre_auth_questions_page.dart';
 import 'package:lexilingo_app/features/level/presentation/level_sync.dart';
+import '../user_session_sync.dart';
 import 'package:lexilingo_app/core/navigation/learner_route.dart';
 import 'package:lexilingo_app/features/onboarding/domain/entities/start_learning_target.dart';
 import 'package:lexilingo_app/features/onboarding/presentation/pages/start_learning_page.dart';
@@ -306,6 +307,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
         if (level != null) {
           context.read<LexiChatProvider>().setLearnerLevel(level);
         }
+        if (mounted) UserSessionSync.afterSignIn(context);
         _resolvePostAuthFlow(authProvider);
         _syncEntitlements(authProvider);
       });
@@ -314,6 +316,9 @@ class _AuthWrapperState extends State<AuthWrapper> {
     // Reset state when user logs out
     if (!authProvider.isAuthenticated && _wasAuthenticated) {
       _wasAuthenticated = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) UserSessionSync.afterSignOut(context);
+      });
       _showOnboarding = false;
       _startingLearning = false;
       _flowResolvedForUserId = null;

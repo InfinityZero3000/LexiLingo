@@ -15,6 +15,8 @@ class ProgressProvider with ChangeNotifier {
     required this.getCourseProgressUseCase,
   });
 
+  int _generation = 0;
+
   // State
   bool _isLoading = false;
   String? _errorMessage;
@@ -37,7 +39,9 @@ class ProgressProvider with ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    final generation = _generation;
     final result = await getMyProgressUseCase(NoParams());
+    if (generation != _generation) return;
 
     result.fold(
       (failure) {
@@ -59,7 +63,9 @@ class ProgressProvider with ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    final generation = _generation;
     final result = await getCourseProgressUseCase(courseId);
+    if (generation != _generation) return;
 
     result.fold(
       (failure) {
@@ -83,6 +89,7 @@ class ProgressProvider with ChangeNotifier {
 
   /// Reset state
   void reset() {
+    _generation++;
     _isLoading = false;
     _errorMessage = null;
     _progressStats = null;

@@ -367,12 +367,10 @@ class _LexiLingoAppState extends State<LexiLingoApp>
         ChangeNotifierProvider(
           create: (_) => di.sl<TtsSettingsProvider>()..init(),
         ),
-        ChangeNotifierProvider(
-          create: (_) => di.sl<StreakProvider>()..loadStreak(),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => di.sl<DailyChallengesProvider>()..loadChallenges(),
-        ),
+        // Loaded by UserSessionSync once someone is signed in; an eager load
+        // here ran with no token and 401'd on every cold start.
+        ChangeNotifierProvider(create: (_) => di.sl<StreakProvider>()),
+        ChangeNotifierProvider(create: (_) => di.sl<DailyChallengesProvider>()),
         // No eager load: the Content tab calls load() when first opened.
         ChangeNotifierProvider(create: (_) => di.sl<ContentActivityProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<AchievementProvider>()),
