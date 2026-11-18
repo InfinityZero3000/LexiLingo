@@ -24,6 +24,8 @@ class _Source extends ProficiencyDataSource {
     'target_level': 'A2',
   };
   Object? startError;
+  Object? submitError;
+  bool emptyPaper = false;
   Map<String, String>? submitted;
 
   @override
@@ -32,6 +34,13 @@ class _Source extends ProficiencyDataSource {
   @override
   Future<Map<String, dynamic>> startLevelExam() async {
     if (startError != null) throw startError!;
+    if (emptyPaper) {
+      return {
+        'attempt_id': 'att-1',
+        'expires_at': '2026-11-15T10:00:00Z',
+        'sections': [],
+      };
+    }
     return {
       'attempt_id': 'att-1',
       'expires_at': '2026-11-15T10:00:00Z',
@@ -71,6 +80,7 @@ class _Source extends ProficiencyDataSource {
     String attemptId,
     Map<String, String> answers,
   ) async {
+    if (submitError != null) throw submitError!;
     submitted = answers;
     return {
       'passed': true,
@@ -141,6 +151,47 @@ void main() {
       expect(source.submitted, {'q1': 'right', 'q2': 'wrong', 'q3': 'right'});
       expect(exam.sitting, isFalse);
       expect(exam.result?['certified_level'], 'B1');
+    },
+  );
+
+  test('a paper with no questions is not a sitting', () async {
+    final source = _Source()..emptyPaper = true;
+    final exam = LevelExamProvider(dataSource: source);
+
+    await exam.start();
+
+    expect(exam.sitting, isFalse);
+    expect(exam.blockedReason, 'no_questions');
+  });
+
+  test(
+    'a submit the server refuses ends the sitting instead of trapping it',
+    () async {
+      final source = _Source();
+      final exam = LevelExamProvider(dataSource: source);
+      await exam.start();
+      source.submitError = _refusal({'reason': 'expired'});
+
+      final promoted = await exam.submit();
+
+      expect(promoted, isFalse);
+      expect(exam.sitting, isFalse);
+      expect(exam.blockedReason, 'expired');
+    },
+  );
+
+  test(
+    'a submit that fails on the network keeps the sitting for a retry',
+    () async {
+      final source = _Source();
+      final exam = LevelExamProvider(dataSource: source);
+      await exam.start();
+      source.submitError = StateError('offline');
+
+      await exam.submit();
+
+      expect(exam.sitting, isTrue);
+      expect(exam.answers, isNotEmpty);
     },
   );
 }

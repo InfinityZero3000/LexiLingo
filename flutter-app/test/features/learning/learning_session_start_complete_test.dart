@@ -126,6 +126,38 @@ void main() {
     expect(provider.lessonResult?.totalXpEarned, 25);
   });
 
+  test('a lesson whose content has no exercises is not playable', () async {
+    repository.exercisesOverride = const [];
+
+    await provider.startLesson('course', 'lesson');
+
+    expect(provider.isContentUnavailable, isTrue);
+    expect(provider.currentLesson, isNull);
+    expect(provider.isCompleted, isFalse);
+  });
+
+  test('progress counts answered questions, not the one on screen', () async {
+    await provider.startLesson('course', 'lesson');
+    expect(provider.progress, 0);
+
+    await provider.submitAnswer('b');
+    expect(provider.progress, 1);
+
+    provider.nextExercise();
+    await pumpEventQueue();
+    expect(provider.progress, 1);
+  });
+
+  test('advancing past the last question completes only once', () async {
+    await finishLesson();
+    provider.nextExercise();
+    provider.skipExercise();
+    await pumpEventQueue();
+
+    expect(provider.currentExerciseIndex, 1);
+    expect(repository.completedAttemptIds, ['attempt']);
+  });
+
   test(
     'retry after an older server already saved it is not an error',
     () async {
@@ -159,14 +191,16 @@ class _FakeRepository implements LearningRepository {
   int startCalls = 0;
   String nextAttemptId = 'attempt';
 
-  final lesson = LessonEntity(
+  List<Exercise>? exercisesOverride;
+
+  LessonEntity get lesson => LessonEntity(
     id: 'lesson',
     title: 'One question',
     outcome: 'Can complete this task',
     orderIndex: 0,
     estimatedMinutes: 5,
     xpReward: 10,
-    exercises: [_mc('q1')],
+    exercises: exercisesOverride ?? [_mc('q1')],
   );
 
   @override

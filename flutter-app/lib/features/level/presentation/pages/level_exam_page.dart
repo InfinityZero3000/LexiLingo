@@ -41,6 +41,11 @@ class _LevelExamPageState extends State<LevelExamPage> {
 
   Future<void> _submit(LevelExamProvider exam) async {
     final promoted = await exam.submit();
+    if (mounted && exam.result == null && exam.sitting) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('levelExam.gateError'.tr())));
+    }
     if (promoted && mounted) {
       _promoted = true;
       await LevelSync.afterLevelChange(context);

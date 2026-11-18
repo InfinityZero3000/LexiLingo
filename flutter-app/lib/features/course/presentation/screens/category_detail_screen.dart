@@ -582,25 +582,31 @@ class _CourseCard extends StatelessWidget {
                     ],
 
                     // Level badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.sm,
-                        vertical: AppSpacing.xs,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _getLevelColor(
+                    Builder(
+                      builder: (context) {
+                        final (bg, fg) = _levelBadgeColors(
+                          context,
                           course.level,
-                          isDark,
-                        ).withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        course.level,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: _getLevelColor(course.level, isDark),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                        );
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm,
+                            vertical: AppSpacing.xs,
+                          ),
+                          decoration: BoxDecoration(
+                            color: bg,
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                          ),
+                          child: Text(
+                            course.level,
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: fg,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -626,25 +632,6 @@ class _CourseCard extends StatelessWidget {
       child: Icon(Icons.book, size: 40, color: AppColorRoles.textMuted(isDark)),
     );
   }
-
-  Color _getLevelColor(String level, bool isDark) {
-    switch (level.toLowerCase()) {
-      case 'beginner':
-      case 'a1':
-      case 'a2':
-        return AppColors.greenSuccessBright;
-      case 'intermediate':
-      case 'b1':
-      case 'b2':
-        return AppColors.orange;
-      case 'advanced':
-      case 'c1':
-      case 'c2':
-        return AppColors.errorBright;
-      default:
-        return AppColorRoles.primary(isDark);
-    }
-  }
 }
 
 /// Compact Course Card Widget for grid view
@@ -656,7 +643,6 @@ class _CourseGridCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
@@ -704,25 +690,28 @@ class _CourseGridCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   // Level badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.sm,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _getLevelColor(
-                        course.level,
-                        isDark,
-                      ).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      course.level,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: _getLevelColor(course.level, isDark),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                  Builder(
+                    builder: (context) {
+                      final (bg, fg) = _levelBadgeColors(context, course.level);
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.sm,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: bg,
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                        ),
+                        child: Text(
+                          course.level,
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: fg,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -746,23 +735,21 @@ class _CourseGridCard extends StatelessWidget {
       ),
     );
   }
+}
 
-  Color _getLevelColor(String level, bool isDark) {
-    switch (level.toLowerCase()) {
-      case 'beginner':
-      case 'a1':
-      case 'a2':
-        return AppColors.greenSuccessBright;
-      case 'intermediate':
-      case 'b1':
-      case 'b2':
-        return AppColors.orange;
-      case 'advanced':
-      case 'c1':
-      case 'c2':
-        return AppColors.errorBright;
-      default:
-        return AppColorRoles.primary(isDark);
-    }
-  }
+(Color, Color) _levelBadgeColors(BuildContext context, String level) {
+  final status = context.status;
+  final scheme = Theme.of(context).colorScheme;
+  return switch (level.toLowerCase()) {
+    'beginner' ||
+    'a1' ||
+    'a2' => (status.successContainer, status.onSuccessContainer),
+    'intermediate' ||
+    'b1' ||
+    'b2' => (status.warningContainer, status.onWarningContainer),
+    'advanced' ||
+    'c1' ||
+    'c2' => (scheme.errorContainer, scheme.onErrorContainer),
+    _ => (scheme.primaryContainer, scheme.onPrimaryContainer),
+  };
 }

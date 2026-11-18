@@ -64,6 +64,7 @@ class _ArrangeSentenceWidgetState extends State<ArrangeSentenceWidget> {
   }
 
   void _placeWord(String word) {
+    if (widget.isAnswered) return;
     setState(() {
       _bank.remove(word);
       _placed.add(word);

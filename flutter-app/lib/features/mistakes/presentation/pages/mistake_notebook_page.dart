@@ -24,6 +24,7 @@ class _MistakeNotebookPageState extends State<MistakeNotebookPage> {
   List<MistakeNotebookEntry> _entries = const [];
   _MistakeFilter _filter = _MistakeFilter.all;
   bool _isLoading = true;
+  bool _loadFailed = false;
 
   @override
   void initState() {
@@ -31,30 +32,41 @@ class _MistakeNotebookPageState extends State<MistakeNotebookPage> {
     _loadEntries();
   }
 
-  Future<void> _loadEntries() async {
-    setState(() => _isLoading = true);
+  Future<void> _loadEntries({bool showSpinner = true}) async {
+    if (showSpinner && _entries.isEmpty) setState(() => _isLoading = true);
+    var failed = false;
     var entries = _entries;
     try {
       entries = await widget.repository.getEntries();
     } catch (_) {
-      entries = const [];
+      failed = true;
     }
     if (!mounted) return;
     setState(() {
       _entries = entries;
+      _loadFailed = failed && entries.isEmpty;
       _isLoading = false;
     });
   }
 
-  Future<void> _markReviewed(String id) async {
-    await widget.repository.markReviewed(id);
-    await _loadEntries();
+  Future<void> _mutate(Future<void> Function() change) async {
+    try {
+      await change();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('errors.submitFailed'.tr())));
+    }
+    if (!mounted) return;
+    await _loadEntries(showSpinner: false);
   }
 
-  Future<void> _reopen(String id) async {
-    await widget.repository.reopen(id);
-    await _loadEntries();
-  }
+  Future<void> _markReviewed(String id) =>
+      _mutate(() => widget.repository.markReviewed(id));
+
+  Future<void> _reopen(String id) =>
+      _mutate(() => widget.repository.reopen(id));
 
   Future<void> _deleteEntry(MistakeNotebookEntry entry) async {
     final shouldDelete = await showDialog<bool>(
@@ -79,8 +91,7 @@ class _MistakeNotebookPageState extends State<MistakeNotebookPage> {
     );
     if (shouldDelete != true) return;
 
-    await widget.repository.delete(entry.id);
-    await _loadEntries();
+    await _mutate(() => widget.repository.delete(entry.id));
   }
 
   List<MistakeNotebookEntry> get _filteredEntries {
@@ -107,7 +118,7 @@ class _MistakeNotebookPageState extends State<MistakeNotebookPage> {
         actions: [
           IconButton(
             tooltip: 'common.refresh'.tr(),
-            onPressed: _loadEntries,
+            onPressed: () => _loadEntries(),
             icon: const Icon(Icons.refresh_rounded),
           ),
         ],
@@ -116,8 +127,10 @@ class _MistakeNotebookPageState extends State<MistakeNotebookPage> {
         maxWidth: ContentWidth.reading,
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
+            : _loadFailed
+            ? _NotebookError(onRetry: _loadEntries)
             : RefreshIndicator(
-                onRefresh: _loadEntries,
+                onRefresh: () => _loadEntries(showSpinner: false),
                 child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -148,6 +161,39 @@ class _MistakeNotebookPageState extends State<MistakeNotebookPage> {
                   ],
                 ),
               ),
+      ),
+    );
+  }
+}
+
+class _NotebookError extends StatelessWidget {
+  const _NotebookError({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.error_outline_rounded,
+              size: 42,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              'common.error'.tr(),
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            FilledButton(onPressed: onRetry, child: Text('common.retry'.tr())),
+          ],
+        ),
       ),
     );
   }
@@ -577,8 +623,8 @@ class _AnswerLine extends StatelessWidget {
         Icon(icon, color: iconColor, size: 18),
         const SizedBox(width: AppSpacing.sm),
         Expanded(
-          child: RichText(
-            text: TextSpan(
+          child: Text.rich(
+            TextSpan(
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppColorRoles.textSecondary(isDark),
                 height: 1.35,
