@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Theme-following colours for the growth screens, so they read correctly in
-/// light and dark instead of the light-only `AdminColors` constants.
+/// light and dark instead of the light-only constants.
 extension GrowthTone on BuildContext {
   ColorScheme get _scheme => Theme.of(this).colorScheme;
 

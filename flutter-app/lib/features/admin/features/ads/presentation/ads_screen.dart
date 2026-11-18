@@ -202,7 +202,9 @@ class BannerCard extends StatelessWidget {
             children: [
               GrowthChip(item.position),
               GrowthChip(
-                'adminGrowth.ads.priorityChip'.tr(args: ['${item.priority}']),
+                'adminGrowth.ads.priorityChip'.tr(
+                  args: [('${item.priority}').toString()],
+                ),
               ),
               GrowthChip(
                 item.targetLanguage ?? 'adminGrowth.ads.anyLanguage'.tr(),
@@ -366,7 +368,9 @@ class _BannerFormState extends State<BannerForm> {
                   minimumSize: const Size(kMinTapTarget, kMinTapTarget),
                 ),
                 onPressed: () => _pickDate(true),
-                child: Text('adminGrowth.ads.from'.tr(args: [_fmt(startAt)])),
+                child: Text(
+                  'adminGrowth.ads.from'.tr(args: [(_fmt(startAt)).toString()]),
+                ),
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
@@ -376,7 +380,9 @@ class _BannerFormState extends State<BannerForm> {
                   minimumSize: const Size(kMinTapTarget, kMinTapTarget),
                 ),
                 onPressed: () => _pickDate(false),
-                child: Text('adminGrowth.ads.to'.tr(args: [_fmt(endAt)])),
+                child: Text(
+                  'adminGrowth.ads.to'.tr(args: [(_fmt(endAt)).toString()]),
+                ),
               ),
             ),
           ],

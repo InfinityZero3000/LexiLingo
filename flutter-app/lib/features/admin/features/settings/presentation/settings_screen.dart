@@ -1,7 +1,7 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import '../../../core/constants/admin_colors.dart';
+import 'package:lexilingo_app/features/admin/core/theme/admin_palette.dart';
 import '../../../shared/widgets/admin_shell.dart';
 import '../../auth/presentation/auth_provider.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
@@ -26,33 +26,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final hasAvatar = user?.avatarUrl?.trim().isNotEmpty == true;
 
     return Scaffold(
-      backgroundColor: AdminColors.background,
+      backgroundColor: context.ac.background,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
             pinned: true,
-            backgroundColor: AdminColors.background,
+            backgroundColor: context.ac.background,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(
-                Icons.menu_rounded,
-                color: AdminColors.onSurface,
-              ),
+              icon: Icon(Icons.menu_rounded, color: context.ac.onSurface),
               onPressed: AdminShell.openDrawer,
             ),
             title: Row(
               children: [
-                const Icon(
-                  Icons.language,
-                  color: AdminColors.primary,
-                  size: 22,
-                ),
+                Icon(Icons.language, color: context.ac.primary, size: 22),
                 const SizedBox(width: 6),
                 Text(
                   'LingoAdmin',
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AdminColors.primary,
+                    color: context.ac.primary,
                   ),
                 ),
               ],
@@ -63,18 +56,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 Text(
-                  'Settings',
+                  'adminUi.settings.settings'.tr(),
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AdminColors.onSurface,
+                    color: context.ac.onSurface,
                     letterSpacing: -0.02,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  'Manage your administrator profile and platform configuration.',
+                  'adminUi.settings.manageYourAdministratorProfileAnd'.tr(),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AdminColors.onSurfaceVariant,
+                    color: context.ac.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xl),
@@ -94,13 +87,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: AdminColors.primary,
+                                  color: context.ac.primary,
                                   width: 2.5,
                                 ),
                               ),
                               child: CircleAvatar(
                                 radius: 38,
-                                backgroundColor: AdminColors.primaryContainer,
+                                backgroundColor: context.ac.primaryContainer,
                                 backgroundImage: hasAvatar
                                     ? NetworkImage(user!.avatarUrl!.trim())
                                     : null,
@@ -120,7 +113,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                       .headlineMedium
                                       ?.copyWith(
                                         fontWeight: FontWeight.w700,
-                                        color: AdminColors.primary,
+                                        color: context.ac.primary,
                                       ),
                                 ),
                               ),
@@ -132,7 +125,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 width: 26,
                                 height: 26,
                                 decoration: BoxDecoration(
-                                  color: AdminColors.primaryBright,
+                                  color: context.ac.primaryBright,
                                   shape: BoxShape.circle,
                                   border: Border.all(
                                     color: Theme.of(
@@ -159,7 +152,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         style: Theme.of(context).textTheme.sectionTitle
                             ?.copyWith(
                               fontWeight: FontWeight.w700,
-                              color: AdminColors.onSurface,
+                              color: context.ac.onSurface,
                             ),
                       ),
                       Text(
@@ -167,17 +160,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ? 'Super Administrator'
                             : 'Senior Curriculum Director',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AdminColors.onSurfaceMuted,
+                          color: context.ac.onSurfaceMuted,
                         ),
                       ),
                       const SizedBox(height: 20),
                       _FormField(
-                        label: 'FULL NAME',
+                        label: 'adminUi.settings.fullName'.tr(),
                         value: user?.displayName ?? '',
                       ),
                       const SizedBox(height: AppSpacing.md),
                       _FormField(
-                        label: 'EMAIL ADDRESS',
+                        label: 'adminUi.settings.emailAddress'.tr(),
                         value: user?.email ?? '',
                       ),
                     ],
@@ -196,18 +189,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             width: 36,
                             height: 36,
                             decoration: BoxDecoration(
-                              color: AdminColors.primaryContainer,
+                              color: context.ac.primaryContainer,
                               borderRadius: BorderRadius.circular(AppRadius.md),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.notifications_outlined,
-                              color: AdminColors.primary,
+                              color: context.ac.primary,
                               size: 20,
                             ),
                           ),
                           const SizedBox(width: AppSpacing.md),
                           Text(
-                            'Notifications',
+                            'adminUi.settings.notifications'.tr(),
                             style: Theme.of(context).textTheme.bodyLarge
                                 ?.copyWith(fontWeight: FontWeight.w700),
                           ),
@@ -215,22 +208,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       const SizedBox(height: AppSpacing.lg),
                       _ToggleRow(
-                        title: 'System Alerts',
-                        subtitle: 'Critical infrastructure updates',
+                        title: 'adminUi.settings.systemAlerts'.tr(),
+                        subtitle:
+                            'adminUi.settings.criticalInfrastructureUpdates'
+                                .tr(),
                         value: _systemAlerts,
                         onChanged: (v) => setState(() => _systemAlerts = v),
                       ),
                       const Divider(height: 20),
                       _ToggleRow(
-                        title: 'User Reports',
-                        subtitle: 'New curriculum feedback',
+                        title: 'adminUi.settings.userReports'.tr(),
+                        subtitle: 'adminUi.settings.newCurriculumFeedback'.tr(),
                         value: _userReports,
                         onChanged: (v) => setState(() => _userReports = v),
                       ),
                       const Divider(height: 20),
                       _ToggleRow(
-                        title: 'Email Digest',
-                        subtitle: 'Weekly performance analytics',
+                        title: 'adminUi.settings.emailDigest'.tr(),
+                        subtitle: 'adminUi.settings.weeklyPerformanceAnalytics'
+                            .tr(),
                         value: _emailDigest,
                         onChanged: (v) => setState(() => _emailDigest = v),
                       ),
@@ -250,18 +246,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             width: 36,
                             height: 36,
                             decoration: BoxDecoration(
-                              color: AdminColors.primaryContainer,
+                              color: context.ac.primaryContainer,
                               borderRadius: BorderRadius.circular(AppRadius.md),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.shield_outlined,
-                              color: AdminColors.primary,
+                              color: context.ac.primary,
                               size: 20,
                             ),
                           ),
                           const SizedBox(width: AppSpacing.md),
                           Text(
-                            'Security & Access',
+                            'adminUi.settings.securityAccess'.tr(),
                             style: Theme.of(context).textTheme.bodyLarge
                                 ?.copyWith(fontWeight: FontWeight.w700),
                           ),
@@ -269,35 +265,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                       const SizedBox(height: AppSpacing.lg),
                       _SecurityRow(
-                        label: 'Change Password',
-                        subtitle: 'Last updated 32 days ago',
+                        label: 'adminUi.settings.changePassword'.tr(),
+                        subtitle: 'adminUi.settings.lastUpdated32DaysAgo'.tr(),
                         icon: Icons.password_outlined,
                       ),
                       const Divider(height: 16),
                       _SecurityRow(
-                        label: 'Two-Factor Auth',
-                        subtitle: 'Authenticator app enabled',
+                        label: 'adminUi.settings.twoFactorAuth'.tr(),
+                        subtitle: 'adminUi.settings.authenticatorAppEnabled'
+                            .tr(),
                         icon: Icons.security_outlined,
                       ),
                       const Divider(height: 16),
                       Text(
-                        'ACTIVE SESSIONS',
+                        'adminUi.settings.activeSessions'.tr(),
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           fontWeight: FontWeight.w700,
                           letterSpacing: 0.08,
-                          color: AdminColors.onSurfaceMuted,
+                          color: context.ac.onSurfaceMuted,
                         ),
                       ),
                       const SizedBox(height: 10),
                       _SessionRow(
                         device: 'MacBook Pro - San Francisco, USA',
-                        subtitle: 'Current Session',
+                        subtitle: 'adminUi.settings.currentSession'.tr(),
                         isCurrent: true,
                       ),
                       const SizedBox(height: AppSpacing.sm),
                       _SessionRow(
                         device: 'iPhone 15 - San Francisco, USA',
-                        subtitle: 'Active 2 hours ago',
+                        subtitle: 'adminUi.settings.active2HoursAgo'.tr(),
                         isCurrent: false,
                       ),
                     ],
@@ -329,9 +326,9 @@ class _Card extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AdminColors.surface,
+        color: context.ac.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AdminColors.outlineVariant, width: 0.5),
+        border: Border.all(color: context.ac.outlineVariant, width: 0.5),
       ),
       child: child,
     );
@@ -378,7 +375,7 @@ class _FormFieldState extends State<_FormField> {
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
             fontWeight: FontWeight.w700,
             letterSpacing: 0.08,
-            color: AdminColors.onSurfaceMuted,
+            color: context.ac.onSurfaceMuted,
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
@@ -417,13 +414,13 @@ class _ToggleRow extends StatelessWidget {
                 title,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: AdminColors.onSurface,
+                  color: context.ac.onSurface,
                 ),
               ),
               Text(
                 subtitle,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AdminColors.onSurfaceMuted,
+                  color: context.ac.onSurfaceMuted,
                 ),
               ),
             ],
@@ -432,7 +429,7 @@ class _ToggleRow extends StatelessWidget {
         Switch(
           value: value,
           onChanged: onChanged,
-          activeThumbColor: AdminColors.primary,
+          activeThumbColor: context.ac.primary,
         ),
       ],
     );
@@ -454,7 +451,7 @@ class _SecurityRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: AdminColors.onSurfaceVariant),
+        Icon(icon, size: 20, color: context.ac.onSurfaceVariant),
         const SizedBox(width: AppSpacing.md),
         Expanded(
           child: Column(
@@ -464,19 +461,19 @@ class _SecurityRow extends StatelessWidget {
                 label,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: AdminColors.onSurface,
+                  color: context.ac.onSurface,
                 ),
               ),
               Text(
                 subtitle,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AdminColors.onSurfaceMuted,
+                  color: context.ac.onSurfaceMuted,
                 ),
               ),
             ],
           ),
         ),
-        const Icon(Icons.chevron_right, color: AdminColors.onSurfaceMuted),
+        Icon(Icons.chevron_right, color: context.ac.onSurfaceMuted),
       ],
     );
   }
@@ -500,7 +497,7 @@ class _SessionRow extends StatelessWidget {
         Icon(
           isCurrent ? Icons.laptop_mac_outlined : Icons.smartphone_outlined,
           size: 18,
-          color: AdminColors.onSurfaceVariant,
+          color: context.ac.onSurfaceVariant,
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -511,13 +508,13 @@ class _SessionRow extends StatelessWidget {
                 device,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: AdminColors.onSurface,
+                  color: context.ac.onSurface,
                 ),
               ),
               Text(
                 subtitle,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AdminColors.onSurfaceMuted,
+                  color: context.ac.onSurfaceMuted,
                 ),
               ),
             ],
@@ -553,8 +550,8 @@ class _UserZoneSwitchCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [AdminColors.navy, AdminColors.navyLight],
+          gradient: LinearGradient(
+            colors: [context.ac.navy, context.ac.navyLight],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -566,14 +563,12 @@ class _UserZoneSwitchCard extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: Theme.of(
-                  context,
-                ).colorScheme.onPrimary.withValues(alpha: 0.12),
+                color: context.ac.onNavy.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Icon(
                 Icons.swap_horiz_rounded,
-                color: Theme.of(context).colorScheme.onPrimary,
+                color: context.ac.onNavy,
                 size: 22,
               ),
             ),
@@ -583,19 +578,17 @@ class _UserZoneSwitchCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Switch to User Zone',
+                    'adminUi.settings.switchToUserZone'.tr(),
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: Theme.of(context).colorScheme.onPrimary,
+                      color: context.ac.onNavy,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'Open LexiLingo as a learner',
+                    'adminUi.settings.openLexilingoAsALearner'.tr(),
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onPrimary.withValues(alpha: 0.54),
+                      color: context.ac.onNavy.withValues(alpha: 0.54),
                     ),
                   ),
                 ],
@@ -604,14 +597,14 @@ class _UserZoneSwitchCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: AdminColors.primaryBright,
+                color: context.ac.primaryBright,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: Text(
-                'SWITCH',
+                'adminUi.settings.switch'.tr(),
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: Theme.of(context).colorScheme.onPrimary,
+                  color: context.ac.onNavy,
                   letterSpacing: 0.06,
                 ),
               ),
@@ -638,7 +631,7 @@ class _UserZoneSheet extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.onPrimary,
+        color: context.ac.onNavy,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
@@ -651,7 +644,7 @@ class _UserZoneSheet extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AdminColors.surfaceContainerHigh,
+                color: context.ac.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -661,8 +654,8 @@ class _UserZoneSheet extends StatelessWidget {
             margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [AdminColors.navy, AdminColors.navyLight],
+              gradient: LinearGradient(
+                colors: [context.ac.navy, context.ac.navyLight],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -675,12 +668,12 @@ class _UserZoneSheet extends StatelessWidget {
                   children: [
                     CircleAvatar(
                       radius: 28,
-                      backgroundColor: AdminColors.primaryContainer,
+                      backgroundColor: context.ac.primaryContainer,
                       child: Text(
                         initials,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w700,
-                          color: AdminColors.primary,
+                          color: context.ac.primary,
                         ),
                       ),
                     ),
@@ -690,13 +683,13 @@ class _UserZoneSheet extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(3),
                         decoration: BoxDecoration(
-                          color: AdminColors.primaryBright,
+                          color: context.ac.primaryBright,
                           shape: BoxShape.circle,
-                          border: Border.all(color: AdminColors.navy, width: 2),
+                          border: Border.all(color: context.ac.navy, width: 2),
                         ),
                         child: Icon(
                           Icons.school_outlined,
-                          color: Theme.of(context).colorScheme.onPrimary,
+                          color: context.ac.onNavy,
                           size: 10,
                         ),
                       ),
@@ -712,15 +705,13 @@ class _UserZoneSheet extends StatelessWidget {
                         displayName,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           fontWeight: FontWeight.w700,
-                          color: Theme.of(context).colorScheme.onPrimary,
+                          color: context.ac.onNavy,
                         ),
                       ),
                       Text(
                         email,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onPrimary.withValues(alpha: 0.54),
+                          color: context.ac.onNavy.withValues(alpha: 0.54),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -732,7 +723,7 @@ class _UserZoneSheet extends StatelessWidget {
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: AdminColors.primaryBright,
+                          color: context.ac.primaryBright,
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -740,7 +731,7 @@ class _UserZoneSheet extends StatelessWidget {
                           style: Theme.of(context).textTheme.labelSmall
                               ?.copyWith(
                                 fontWeight: FontWeight.w700,
-                                color: Theme.of(context).colorScheme.onPrimary,
+                                color: context.ac.onNavy,
                                 letterSpacing: 0.06,
                               ),
                         ),
@@ -758,19 +749,17 @@ class _UserZoneSheet extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Your dual account',
+                  'adminUi.settings.yourDualAccount'.tr(),
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AdminColors.onSurface,
+                    color: context.ac.onSurface,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
-                  'Your admin account is linked to a LexiLingo learner profile with the same email. '
-                  'Open the LexiLingo app on your device to continue as a learner — '
-                  'you\'ll be logged in automatically if you use the same email.',
+                  'adminUi.settings.yourAdminAccountIsLinked'.tr(),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AdminColors.onSurfaceVariant,
+                    color: context.ac.onSurfaceVariant,
                     height: 1.5,
                   ),
                 ),
@@ -814,7 +803,7 @@ class _UserZoneSheet extends StatelessWidget {
                       ),
                     ),
                     style: FilledButton.styleFrom(
-                      backgroundColor: AdminColors.primaryBright,
+                      backgroundColor: context.ac.primaryBright,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.md),
                       ),
@@ -825,9 +814,9 @@ class _UserZoneSheet extends StatelessWidget {
                 TextButton(
                   onPressed: () => Navigator.of(context).pop(),
                   child: Text(
-                    'Dismiss',
-                    style: GoogleFonts.spaceGrotesk(
-                      color: AdminColors.onSurfaceMuted,
+                    'adminUi.settings.dismiss'.tr(),
+                    style: context.adminStyle(
+                      color: context.ac.onSurfaceMuted,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -854,7 +843,7 @@ class _StepRow extends StatelessWidget {
           width: 28,
           height: 28,
           decoration: BoxDecoration(
-            color: AdminColors.primaryContainer,
+            color: context.ac.primaryContainer,
             shape: BoxShape.circle,
           ),
           child: Center(
@@ -862,7 +851,7 @@ class _StepRow extends StatelessWidget {
               step,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: AdminColors.primary,
+                color: context.ac.primary,
               ),
             ),
           ),
@@ -873,7 +862,7 @@ class _StepRow extends StatelessWidget {
             text,
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: AdminColors.onSurface),
+            ).textTheme.bodySmall?.copyWith(color: context.ac.onSurface),
           ),
         ),
       ],

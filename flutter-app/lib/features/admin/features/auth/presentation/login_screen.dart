@@ -1,8 +1,9 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/features/admin/shared/admin_exit_scope.dart';
-import '../../../core/constants/admin_colors.dart';
+import 'package:lexilingo_app/features/admin/core/theme/admin_palette.dart';
 import 'auth_provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart' show AppColors;
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
@@ -35,18 +36,24 @@ class LoginScreen extends StatelessWidget {
     final isLoading = auth.state == AuthState.loading;
 
     return Scaffold(
-      backgroundColor: AdminColors.primaryContainer,
+      backgroundColor: context.ac.primaryContainer,
       body: DecoratedBox(
         key: const Key('admin-login-background'),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: RadialGradient(
             center: Alignment(-0.7, -0.8),
             radius: 1.4,
-            colors: [
-              AppColors.surfaceWarm,
-              AppColors.skyBackground,
-              AdminColors.primaryContainer,
-            ],
+            colors: Theme.of(context).brightness == Brightness.dark
+                ? [
+                    AppColors.surfaceDarkElevated,
+                    AppColors.surfaceDark,
+                    context.ac.primaryContainer,
+                  ]
+                : [
+                    AppColors.surfaceWarm,
+                    AppColors.skyBackground,
+                    context.ac.primaryContainer,
+                  ],
             stops: [0.0, 0.45, 1.0],
           ),
         ),
@@ -75,7 +82,7 @@ class LoginScreen extends StatelessWidget {
                               ),
                               label: const Text('Back to LexiLingo'),
                               style: TextButton.styleFrom(
-                                foregroundColor: AdminColors.onSurfaceVariant,
+                                foregroundColor: context.ac.onSurfaceVariant,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: AppSpacing.xs,
                                   vertical: AppSpacing.sm,
@@ -110,52 +117,55 @@ class LoginScreen extends StatelessWidget {
                                   ),
                                   child: Icon(
                                     Icons.language,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onPrimary,
+                                    color: AppColors.onGradient,
                                     size: 26,
                                   ),
                                 ),
                                 const SizedBox(width: AppSpacing.md),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Image.asset(
-                                      'assets/out-app/lexilingo-text.png',
-                                      height: 36,
-                                      fit: BoxFit.contain,
-                                    ),
-                                    Text(
-                                      'ADMIN CONSOLE',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelSmall
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.w600,
-                                            letterSpacing: 0.18,
-                                            color: AdminColors.onSurfaceMuted,
-                                          ),
-                                    ),
-                                  ],
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Image.asset(
+                                        'assets/out-app/lexilingo-text.png',
+                                        height: 36,
+                                        fit: BoxFit.contain,
+                                      ),
+                                      Text(
+                                        'adminUi.login.adminConsole'.tr(),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelSmall
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.w600,
+                                              letterSpacing: 0.18,
+                                              color: context.ac.onSurfaceMuted,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),
                             const SizedBox(height: 56),
                             Text(
-                              'Admin Login',
+                              'adminUi.login.adminLogin'.tr(),
                               style: Theme.of(context).textTheme.headlineLarge
                                   ?.copyWith(
                                     fontWeight: FontWeight.w700,
-                                    color: AdminColors.onSurface,
+                                    color: context.ac.onSurface,
                                     letterSpacing: -0.02,
                                   ),
                             ),
                             const SizedBox(height: AppSpacing.sm),
                             Text(
-                              'Đăng nhập bằng tài khoản Google admin của bạn.',
+                              'adminUi.login.ngNhPBNg'.tr(),
                               style: Theme.of(context).textTheme.bodyLarge
                                   ?.copyWith(
-                                    color: AdminColors.onSurfaceVariant,
+                                    color: context.ac.onSurfaceVariant,
                                   ),
                             ),
                             const SizedBox(height: 48),
@@ -168,8 +178,8 @@ class LoginScreen extends StatelessWidget {
                                     ? null
                                     : () => _signInWithGoogle(context),
                                 style: FilledButton.styleFrom(
-                                  backgroundColor: AdminColors.surface,
-                                  foregroundColor: AdminColors.onSurface,
+                                  backgroundColor: context.ac.surface,
+                                  foregroundColor: context.ac.onSurface,
                                   elevation: 2,
                                   shadowColor: AppColors.surfaceDarkInk
                                       .withValues(alpha: 0.1),
@@ -177,19 +187,19 @@ class LoginScreen extends StatelessWidget {
                                     borderRadius: BorderRadius.circular(
                                       AppRadius.md,
                                     ),
-                                    side: const BorderSide(
-                                      color: AdminColors.outline,
+                                    side: BorderSide(
+                                      color: context.ac.outline,
                                       width: 1.2,
                                     ),
                                   ),
                                 ),
                                 child: isLoading
-                                    ? const SizedBox(
+                                    ? SizedBox(
                                         width: 22,
                                         height: 22,
                                         child: CircularProgressIndicator(
                                           strokeWidth: 2.5,
-                                          color: AdminColors.primary,
+                                          color: context.ac.primary,
                                         ),
                                       )
                                     : Row(
@@ -202,7 +212,7 @@ class LoginScreen extends StatelessWidget {
                                             child: FittedBox(
                                               fit: BoxFit.scaleDown,
                                               child: Text(
-                                                'Đăng nhập với Google',
+                                                'adminUi.login.ngNhPVI'.tr(),
                                                 style: Theme.of(context)
                                                     .textTheme
                                                     .bodyLarge
@@ -210,7 +220,7 @@ class LoginScreen extends StatelessWidget {
                                                       fontWeight:
                                                           FontWeight.w600,
                                                       color:
-                                                          AdminColors.onSurface,
+                                                          context.ac.onSurface,
                                                     ),
                                               ),
                                             ),
@@ -224,16 +234,16 @@ class LoginScreen extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: AdminColors.errorContainer,
+                                  color: context.ac.errorContainer,
                                   borderRadius: BorderRadius.circular(
                                     AppRadius.md,
                                   ),
                                 ),
                                 child: Row(
                                   children: [
-                                    const Icon(
+                                    Icon(
                                       Icons.error_outline,
-                                      color: AdminColors.error,
+                                      color: context.ac.error,
                                       size: 16,
                                     ),
                                     const SizedBox(width: AppSpacing.sm),
@@ -243,9 +253,7 @@ class LoginScreen extends StatelessWidget {
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodySmall
-                                            ?.copyWith(
-                                              color: AdminColors.error,
-                                            ),
+                                            ?.copyWith(color: context.ac.error),
                                       ),
                                     ),
                                   ],
@@ -260,32 +268,31 @@ class LoginScreen extends StatelessWidget {
                                   vertical: 10,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AdminColors.surfaceContainerLow,
+                                  color: context.ac.surfaceContainerLow,
                                   borderRadius: BorderRadius.circular(
                                     AppRadius.md,
                                   ),
-                                  border: Border.all(
-                                    color: AdminColors.outline,
-                                  ),
+                                  border: Border.all(color: context.ac.outline),
                                 ),
                                 child: FittedBox(
                                   fit: BoxFit.scaleDown,
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(
+                                      Icon(
                                         Icons.shield_outlined,
                                         size: 14,
-                                        color: AdminColors.onSurfaceMuted,
+                                        color: context.ac.onSurfaceMuted,
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
-                                        'Google OAuth · Admin only · Secured',
+                                        'adminUi.login.googleOauthAdminOnlySecured'
+                                            .tr(),
                                         style: Theme.of(context)
                                             .textTheme
                                             .labelSmall
                                             ?.copyWith(
-                                              color: AdminColors.onSurfaceMuted,
+                                              color: context.ac.onSurfaceMuted,
                                             ),
                                       ),
                                     ],

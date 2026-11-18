@@ -1,8 +1,8 @@
+import 'package:lexilingo_app/features/admin/core/theme/admin_palette.dart';
 import 'dart:convert';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:provider/provider.dart';
 
@@ -107,7 +107,7 @@ class _ContentQaScreenState extends State<ContentQaScreen> {
               ),
               title: Text(
                 'adminGrowth.qa.title'.tr(),
-                style: GoogleFonts.spaceGrotesk(
+                style: context.adminStyle(
                   fontWeight: FontWeight.w700,
                   color: context.toneText,
                 ),
@@ -225,7 +225,7 @@ class _QueueFilter extends StatelessWidget {
     onSelected: (_) => onSelected(value),
     label: Text(
       '$label  $count',
-      style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w600),
+      style: context.adminStyle(fontWeight: FontWeight.w600),
     ),
     selectedColor: context.toneAccentBg,
     checkmarkColor: context.toneAccent,
@@ -267,7 +267,7 @@ class _JobCard extends StatelessWidget {
                     job.title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.spaceGrotesk(
+                    style: context.adminStyle(
                       fontWeight: FontWeight.w700,
                       color: context.toneText,
                     ),
@@ -615,7 +615,7 @@ class _Validation extends StatelessWidget {
         children: [
           Text(
             'adminGrowth.qa.validation'.tr(),
-            style: GoogleFonts.spaceGrotesk(
+            style: context.adminStyle(
               fontWeight: FontWeight.w700,
               color: context.toneText,
             ),
@@ -624,7 +624,7 @@ class _Validation extends StatelessWidget {
           if (errors.isEmpty && warnings.isEmpty)
             Text(
               'adminGrowth.qa.noIssues'.tr(),
-              style: GoogleFonts.spaceGrotesk(
+              style: context.adminStyle(
                 color: context.toneSuccess,
                 fontWeight: FontWeight.w600,
               ),
@@ -680,7 +680,7 @@ class _LessonCard extends StatelessWidget {
     child: ExpansionTile(
       title: Text(
         lesson.title,
-        style: GoogleFonts.spaceGrotesk(
+        style: context.adminStyle(
           fontWeight: FontWeight.w700,
           color: context.toneText,
         ),
@@ -902,10 +902,7 @@ class _EditExerciseSheetState extends State<_EditExerciseSheet> {
             lines: 2,
           ),
           if (_error != null)
-            Text(
-              _error!,
-              style: GoogleFonts.spaceGrotesk(color: context.toneDanger),
-            ),
+            Text(_error!, style: context.adminStyle(color: context.toneDanger)),
           const SizedBox(height: AppSpacing.md),
           FilledButton(
             onPressed: _saving ? null : _save,
@@ -933,7 +930,7 @@ class _Field extends StatelessWidget {
     child: TextField(
       controller: controller,
       maxLines: lines,
-      style: GoogleFonts.spaceGrotesk(color: context.toneText),
+      style: context.adminStyle(color: context.toneText),
       decoration: InputDecoration(
         labelText: label,
         alignLabelWithHint: lines > 1,
