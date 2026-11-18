@@ -11,7 +11,10 @@ abstract class GamificationRemoteDataSource {
 
   /// Uses an inventory item; returns its `effects_applied` payload on
   /// success (e.g. `{"seconds": 10}` for a Time Freeze), or null on failure.
-  Future<Map<String, dynamic>?> useItem(String inventoryId);
+  Future<Map<String, dynamic>?> useItem(
+    String inventoryId, {
+    String? gameSessionId,
+  });
   Future<Map<String, dynamic>?> equipAvatar(String inventoryId);
   Future<Map<String, dynamic>> getLeaderboard(String league);
   Future<Map<String, dynamic>> getLeagueStatus();
@@ -82,10 +85,17 @@ class GamificationRemoteDataSourceImpl implements GamificationRemoteDataSource {
   }
 
   @override
-  Future<Map<String, dynamic>?> useItem(String inventoryId) async {
+  Future<Map<String, dynamic>?> useItem(
+    String inventoryId, {
+    String? gameSessionId,
+  }) async {
     final r = await _apiClient.post(
       '/gamification/inventory/use',
-      body: {'inventory_id': inventoryId},
+      body: {
+        'inventory_id': inventoryId,
+        if (gameSessionId != null && gameSessionId.isNotEmpty)
+          'game_session_id': gameSessionId,
+      },
     );
     if (!_ok(r)) return null;
     final d = _data(r);

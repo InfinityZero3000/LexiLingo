@@ -737,7 +737,7 @@ async def use_inventory_item(
     
     effects_service = ItemEffectsService(db)
     success, message, effects = await effects_service.use_item(
-        current_user.id, request.inventory_id
+        current_user.id, request.inventory_id, request.game_session_id
     )
     
     if not success:

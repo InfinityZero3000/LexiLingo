@@ -48,6 +48,11 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
   int _correctCount = 0;
   bool _isFinishing = false;
   bool _luckyCloverActive = false;
+  bool _luckyCloverRescue = false;
+  final List<String> _rescuedIds = [];
+  // A rescued pair submits the learner's real pick so the server grades it
+  // wrong; the clover only buys its XP.
+  final Map<String, String> _rescuedPicks = {};
   int _scoreMultiplier = 1;
   final _random = Random();
 
@@ -79,6 +84,8 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
       _timeLeft = game.timerSeconds;
       _freezeLeft = 0;
       _matchedIds = {};
+      _rescuedIds.clear();
+      _rescuedPicks.clear();
       _matchState = {};
       _selectedWord = null;
       _selectedMatch = null;
@@ -121,9 +128,14 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
     final correctMatch = pair.matchText;
 
     var matched = matchText == correctMatch;
-    if (!matched && _luckyCloverActive && _random.nextDouble() < 0.3) {
-      matched = true;
+    if (!matched && _luckyCloverActive) {
+      if (_luckyCloverRescue) {
+        matched = true;
+        _rescuedIds.add(wordId);
+        _rescuedPicks[wordId] = matchText;
+      }
       _luckyCloverActive = false;
+      _luckyCloverRescue = false;
     }
 
     if (matched) {
@@ -197,7 +209,12 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
         }
         break;
       case ShopItemEntity.effectLuckyClover:
-        setState(() => _luckyCloverActive = true);
+        final rescue = effects['rescue'] == true;
+        setState(() {
+          _luckyCloverRescue =
+              (_luckyCloverActive && _luckyCloverRescue) || rescue;
+          _luckyCloverActive = true;
+        });
         break;
       case ShopItemEntity.effectScoreMultiplier:
         final multiplier = (effects['multiplier'] as num?)?.toInt() ?? 2;
@@ -236,11 +253,14 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
         score: _correctCount,
         totalQuestions: game.pairs.length,
         correctAnswers: _correctCount,
+        rescuedIds: _rescuedIds,
         answers: [
           for (final pair in game.pairs)
             {
               'id': pair.wordId,
-              'answer': _matchedIds.contains(pair.wordId) ? pair.matchText : '',
+              'answer':
+                  _rescuedPicks[pair.wordId] ??
+                  (_matchedIds.contains(pair.wordId) ? pair.matchText : ''),
             },
         ],
       );
@@ -262,11 +282,14 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
       score: _correctCount * _scoreMultiplier,
       totalQuestions: total,
       correctAnswers: _correctCount,
+      rescuedIds: _rescuedIds,
       answers: [
         for (final pair in game.pairs)
           {
             'id': pair.wordId,
-            'answer': _matchedIds.contains(pair.wordId) ? pair.matchText : '',
+            'answer':
+                _rescuedPicks[pair.wordId] ??
+                (_matchedIds.contains(pair.wordId) ? pair.matchText : ''),
           },
       ],
     );
@@ -373,6 +396,9 @@ class _MatchingGameScreenState extends State<MatchingGameScreen> {
                         ),
                         child: GamePowerUpTray(
                           availableTypes: _matchingPowerUps,
+                          gameSessionId: context
+                              .read<GamesProvider>()
+                              .sessionIdFor(GameType.matching),
                           onUse: _onPowerUpUsed,
                         ),
                       ),

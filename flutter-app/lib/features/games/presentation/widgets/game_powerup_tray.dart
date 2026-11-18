@@ -18,12 +18,14 @@ class GamePowerUpTray extends StatelessWidget {
   final List<String> availableTypes;
   final void Function(String itemType, Map<String, dynamic> effects) onUse;
   final bool enabled;
+  final String? gameSessionId;
 
   const GamePowerUpTray({
     super.key,
     required this.availableTypes,
     required this.onUse,
     this.enabled = true,
+    this.gameSessionId,
   });
 
   @override
@@ -54,6 +56,7 @@ class GamePowerUpTray extends StatelessWidget {
                 itemName: entry.owned.first.item.name,
                 quantity: quantity,
                 enabled: enabled,
+                gameSessionId: gameSessionId,
                 onUsed: onUse,
               );
             },
@@ -70,6 +73,7 @@ class _PowerUpButton extends StatefulWidget {
   final String itemName;
   final int quantity;
   final bool enabled;
+  final String? gameSessionId;
   final void Function(String itemType, Map<String, dynamic> effects) onUsed;
 
   const _PowerUpButton({
@@ -78,6 +82,7 @@ class _PowerUpButton extends StatefulWidget {
     required this.itemName,
     required this.quantity,
     required this.enabled,
+    required this.gameSessionId,
     required this.onUsed,
   });
 
@@ -93,7 +98,10 @@ class _PowerUpButtonState extends State<_PowerUpButton> {
     setState(() => _isUsing = true);
     final effects = await context
         .read<GamificationProvider>()
-        .useItemWithEffects(widget.inventoryId);
+        .useItemWithEffects(
+          widget.inventoryId,
+          gameSessionId: widget.gameSessionId,
+        );
     if (!mounted) return;
     setState(() => _isUsing = false);
     if (effects != null) {

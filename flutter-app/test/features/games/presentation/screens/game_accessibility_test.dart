@@ -34,6 +34,7 @@ class _FakeGamesRepository extends GamesRepository {
     required List<Map<String, String>> answers,
     int? clientDurationSeconds,
     int hintsUsed = 0,
+    List<String> rescuedIds = const [],
   }) async => throw UnimplementedError();
 }
 

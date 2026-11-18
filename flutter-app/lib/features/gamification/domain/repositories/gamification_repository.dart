@@ -15,7 +15,10 @@ abstract class GamificationRepository {
 
   /// Uses an inventory item; returns its applied effects payload on
   /// success, or null on failure.
-  Future<Map<String, dynamic>?> useItem(String inventoryId);
+  Future<Map<String, dynamic>?> useItem(
+    String inventoryId, {
+    String? gameSessionId,
+  });
   Future<String?> equipAvatar(String inventoryId);
   Future<LeaderboardEntity> getLeaderboard(String league);
   Future<LeagueStatusEntity> getLeagueStatus();

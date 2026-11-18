@@ -8,6 +8,7 @@ Handles activation and effects of shop items like:
 - Heart Refill: Restore lives/hearts
 """
 
+import secrets
 from typing import Optional, Dict, Any, Tuple, List
 from uuid import UUID
 from datetime import datetime, timedelta, timezone
@@ -40,7 +41,8 @@ class ItemEffectsService:
     async def use_item(
         self, 
         user_id: UUID, 
-        inventory_id: UUID
+        inventory_id: UUID,
+        game_session_id: Optional[UUID] = None,
     ) -> Tuple[bool, str, Optional[Dict[str, Any]]]:
         """
         Use an item from inventory.
@@ -99,11 +101,18 @@ class ItemEffectsService:
             return False, "Item handler not implemented", None
         
         # Execute the handler
-        success, message, effects = await handler(
-            user_id=user_id,
-            inventory=inventory,
-            shop_item=shop_item,
-        )
+        if shop_item.item_type == "lucky_clover" and game_session_id is not None:
+            success, message, effects = await self._handle_lucky_clover(
+                user_id=user_id,
+                shop_item=shop_item,
+                game_session_id=game_session_id,
+            )
+        else:
+            success, message, effects = await handler(
+                user_id=user_id,
+                inventory=inventory,
+                shop_item=shop_item,
+            )
         
         if success:
             # Decrement quantity
@@ -241,6 +250,39 @@ class ItemEffectsService:
             **(shop_item.effects or {}),
         }
     
+    async def _handle_lucky_clover(
+        self,
+        user_id: UUID,
+        shop_item: ShopItem,
+        game_session_id: UUID,
+    ) -> Tuple[bool, str, Optional[Dict]]:
+        """Roll the clover on the server and record the outcome on the session.
+
+        The roll is stored in the same transaction that consumes the item, so a
+        refusal here leaves the item untouched. Completion reads the stored
+        count to cap how many wrong answers may be rescued.
+        """
+        from app.crud.games import get_game_session_for_update
+
+        session = await get_game_session_for_update(
+            self.db, session_id=game_session_id
+        )
+        if session is None or session.user_id != user_id:
+            return False, "Game session not found", None
+        if session.completed_at is not None:
+            return False, "Game session is already completed", None
+
+        chance = float((shop_item.effects or {}).get("chance", 0.3))
+        rescue = secrets.SystemRandom().random() < chance
+        data = dict(session.session_data or {})
+        data["lucky_clovers"] = [*(data.get("lucky_clovers") or []), rescue]
+        session.session_data = data
+        return True, f"{shop_item.name} ready!", {
+            "item_type": shop_item.item_type,
+            **(shop_item.effects or {}),
+            "rescue": rescue,
+        }
+
     async def get_active_boosts(self, user_id: UUID) -> List[Dict[str, Any]]:
         """
         Get all currently active boosts for a user.

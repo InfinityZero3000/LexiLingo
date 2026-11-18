@@ -36,7 +36,7 @@ class _Repo implements GamificationRepository {
   @override
   Future<bool> purchaseItem(String itemId, {int quantity = 1}) async => false;
   @override
-  Future<Map<String, dynamic>?> useItem(String inventoryId) async => null;
+  Future<Map<String, dynamic>?> useItem(String inventoryId, {String? gameSessionId}) async => null;
   @override
   Future<String?> equipAvatar(String inventoryId) async => null;
   @override

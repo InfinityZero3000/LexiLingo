@@ -199,6 +199,7 @@ class GamesRepository {
     required List<Map<String, String>> answers,
     int? clientDurationSeconds,
     int hintsUsed = 0,
+    List<String> rescuedIds = const [],
   }) async {
     final data = await _apiClient.post(
       '/games/sessions/$sessionId/complete',
@@ -207,6 +208,7 @@ class GamesRepository {
         if (clientDurationSeconds != null)
           'client_duration_seconds': clientDurationSeconds,
         'hints_used': hintsUsed,
+        if (rescuedIds.isNotEmpty) 'rescued_ids': rescuedIds,
       },
     );
     final xpData = data['xp_result'] as Map<String, dynamic>? ?? data;
