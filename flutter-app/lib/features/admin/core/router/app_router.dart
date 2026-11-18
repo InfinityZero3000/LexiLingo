@@ -7,7 +7,8 @@ import '../../features/curriculum/presentation/curriculum_screen.dart';
 import '../../features/curriculum/presentation/course_detail_screen.dart';
 import '../../features/curriculum/presentation/units_lessons_screen.dart';
 import '../../features/users/presentation/users_screen.dart';
-import '../../features/users/presentation/user_stats_screen.dart';
+import '../../features/users/presentation/user_detail_screen.dart';
+import '../../features/gem_ledger/presentation/gem_ledger_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/analytics/presentation/analytics_screen.dart';
 import '../../features/vocabulary/presentation/vocabulary_screen.dart';
@@ -153,12 +154,16 @@ GoRouter createRouter(AuthProvider authProvider, AdminPermissions permissions) {
             builder: (_, __) => const UsersScreen(),
             routes: [
               GoRoute(
-                path: ':id/stats',
+                path: ':id',
                 parentNavigatorKey: _rootNavigatorKey,
                 builder: (_, state) =>
-                    UserStatsScreen(userId: state.pathParameters['id']!),
+                    UserDetailScreen(userId: state.pathParameters['id']!),
               ),
             ],
+          ),
+          GoRoute(
+            path: '/gem-ledger',
+            builder: (_, __) => const GemLedgerScreen(),
           ),
 
           // ── Gamification ──────────────────────────────────────────────────

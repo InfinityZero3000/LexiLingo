@@ -60,8 +60,8 @@ void main() {
 
   test('a sub-route follows its parent permission', () {
     final noUsers = _perms(['ops:read']);
-    expect(_go('/users/42/stats', perms: noUsers), '/dashboard');
-    expect(_go('/users/42/stats'), isNull);
+    expect(_go('/users/42', perms: noUsers), '/dashboard');
+    expect(_go('/users/42'), isNull);
   });
 
   test('permissions that have not loaded do not block', () {

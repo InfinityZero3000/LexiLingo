@@ -1,497 +1,298 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../core/constants/admin_colors.dart';
-import '../../../shared/widgets/admin_shell.dart';
-import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
-import 'package:lexilingo_app/core/widgets/stat_card.dart';
-import 'package:lexilingo_app/core/widgets/stagger_list.dart';
-import '../data/users_repository.dart';
+import 'package:lexilingo_app/core/state/paginated_list_controller.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/core/widgets/debounced_search_field.dart';
+import 'package:lexilingo_app/core/widgets/filter_chip_bar.dart';
+import 'package:lexilingo_app/core/widgets/stat_card.dart';
+import '../../../shared/widgets/admin_paged_list_view.dart';
+import '../../../shared/widgets/admin_screen_scaffold.dart';
+import '../data/users_repository.dart';
+
+/// Role filter values: -1 is "all", 0-2 are the backend's role levels.
+const _anyRole = -1;
+const _anyStatus = 'all';
+
+String adminRoleLabelKey(int level) => switch (level) {
+  2 => 'admin.users.roleSuper',
+  1 => 'admin.users.roleAdmin',
+  _ => 'admin.users.roleUser',
+};
 
 class UsersScreen extends StatefulWidget {
-  const UsersScreen({super.key});
+  const UsersScreen({super.key, this.repository});
+
+  /// Replaces the real repository in tests.
+  final UsersRepository? repository;
+
   @override
   State<UsersScreen> createState() => _UsersScreenState();
 }
 
 class _UsersScreenState extends State<UsersScreen> {
-  final _repo = UsersRepository();
-  final _search = TextEditingController();
-  final _selected = <String>{};
-  List<AdminUserItem> _users = [];
-  int _page = 1, _total = 0;
-  int? _role;
-  bool? _active;
-  bool _loading = true, _more = false, _acting = false;
-  String? _error;
+  late final UsersRepository _repo = widget.repository ?? UsersRepository();
+  late final AdminPageFetcher<AdminUserItem> _fetcher = AdminPageFetcher(
+    _repo.listUsers,
+  );
+  late final PaginatedListController<AdminUserItem> _controller =
+      PaginatedListController(fetcher: _fetcher);
+
+  int _role = _anyRole;
+  String _status = _anyStatus;
+  UserSort _sort = UserSort.newest;
+  String _search = '';
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _controller.refresh();
   }
 
   @override
   void dispose() {
-    _search.dispose();
+    _controller.dispose();
+    _fetcher.total.dispose();
     super.dispose();
   }
 
-  Future<void> _load({bool append = false}) async {
-    if (append) {
-      setState(() => _more = true);
-    } else {
-      setState(() {
-        _loading = true;
-        _error = null;
-        _page = 1;
-      });
-    }
-    try {
-      final page = append ? _page + 1 : 1;
-      final result = await _repo.getUsers(
-        page: page,
-        search: _search.text.trim(),
-        role: _role,
-        isActive: _active,
-      );
-      if (!mounted) return;
-      setState(() {
-        final items = result['users'] as List<AdminUserItem>;
-        _users = append ? [..._users, ...items] : items;
-        _page = page;
-        _total = result['total'] as int;
-        _loading = false;
-        _more = false;
-        _selected.removeWhere((id) => !_users.any((user) => user.id == id));
-      });
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _loading = false;
-          _more = false;
-          _error = 'Không thể tải danh sách người dùng.';
-        });
-      }
-    }
-  }
+  void _apply() => _controller.setFilters({
+    if (_search.isNotEmpty) 'search': _search,
+    if (_role != _anyRole) 'role': _role,
+    if (_status != _anyStatus) 'is_active': _status == 'active',
+    'sort': _sort,
+  });
 
-  Future<void> _bulk(String action) async {
-    final count = _selected.length;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          action == 'activate'
-              ? 'Kích hoạt $count tài khoản?'
-              : 'Tạm dừng $count tài khoản?',
-        ),
-        content: Text(
-          action == 'activate'
-              ? 'Kích hoạt lại $count tài khoản đã chọn?'
-              : 'Tạm dừng $count tài khoản đã chọn? Họ sẽ không thể đăng nhập cho đến khi được kích hoạt lại.',
-        ),
-        actions: [
-          TextButton(
-            style: TextButton.styleFrom(
-              minimumSize: const Size(kMinTapTarget, kMinTapTarget),
-            ),
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Hủy'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Xác nhận'),
-          ),
-        ],
-      ),
-    );
-    if (ok != true) return;
-    setState(() => _acting = true);
-    try {
-      await _repo.bulkAction(_selected, action);
-      _selected.clear();
-      await _load();
-      _notice(
-        action == 'activate'
-            ? 'Đã kích hoạt người dùng'
-            : 'Đã hủy kích hoạt người dùng',
-        false,
-      );
-    } catch (_) {
-      _notice('Thao tác hàng loạt thất bại', true);
-    }
-    if (mounted) setState(() => _acting = false);
-  }
-
-  void _notice(String text, bool error) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text, style: GoogleFonts.spaceGrotesk()),
-        backgroundColor: error ? AdminColors.error : AdminColors.success,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
-
-  void _filters() => showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    builder: (context) => StatefulBuilder(
-      builder: (context, setSheet) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Bộ lọc người dùng',
-                style: Theme.of(
-                  context,
-                ).textTheme.heading?.copyWith(fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              Text(
-                'Vai trò',
-                style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w600),
-              ),
-              Wrap(
-                spacing: 8,
-                children: [null, 0, 1, 2]
-                    .map(
-                      (value) => ChoiceChip(
-                        label: Text(
-                          value == null
-                              ? 'Tất cả'
-                              : const ['User', 'Admin', 'Super Admin'][value],
-                        ),
-                        selected: _role == value,
-                        onSelected: (_) => setSheet(() => _role = value),
-                      ),
-                    )
-                    .toList(),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                'Trạng thái',
-                style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w600),
-              ),
-              Wrap(
-                spacing: 8,
-                children: [null, true, false]
-                    .map(
-                      (value) => ChoiceChip(
-                        label: Text(
-                          value == null
-                              ? 'Tất cả'
-                              : value
-                              ? 'Hoạt động'
-                              : 'Tạm dừng',
-                        ),
-                        selected: _active == value,
-                        onSelected: (_) => setSheet(() => _active = value),
-                      ),
-                    )
-                    .toList(),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: FilledButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _load();
-                  },
-                  child: const Text('Áp dụng'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
+  String _sortLabel(UserSort sort) => switch (sort) {
+    UserSort.newest => 'admin.users.sortNewest'.tr(),
+    UserSort.recentLogin => 'admin.users.sortRecentLogin'.tr(),
+    UserSort.topXp => 'admin.users.sortTopXp'.tr(),
+    UserSort.email => 'admin.users.sortEmail'.tr(),
+  };
 
   @override
   Widget build(BuildContext context) {
-    final activeCount = _users.where((user) => user.isActive).length;
-    final totalXp = _users.fold<int>(0, (sum, user) => sum + user.totalXp);
-    return Scaffold(
-      backgroundColor: AdminColors.background,
-      appBar: AppBar(
-        leading: IconButton(
-          onPressed: AdminShell.openDrawer,
-          icon: const Icon(Icons.menu_rounded),
-        ),
-        title: Text(
-          'Quản lý người dùng',
-          style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700),
-        ),
-      ),
-      body: RefreshIndicator(
-        onRefresh: _load,
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
-          children: [
-            if (_loading)
-              ...List.generate(
-                4,
-                (_) => const Padding(
-                  padding: EdgeInsets.only(bottom: 12),
-                  child: ListRowSkeleton(),
-                ),
-              )
-            else ...[
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                mainAxisSpacing: 10,
-                crossAxisSpacing: 10,
-                childAspectRatio: 1.35,
-                children: [
-                  StatCard(
-                    label: 'Tổng người dùng',
-                    value: '$_total',
-                    icon: Icons.people_outline,
-                  ),
-                  StatCard(
-                    label: 'Đang hoạt động',
-                    value: '$activeCount',
-                    icon: Icons.check_circle_outline,
-                  ),
-                  StatCard(
-                    label: 'Tạm dừng',
-                    value: '${_users.length - activeCount}',
-                    icon: Icons.pause_circle_outline,
-                  ),
-                  StatCard(
-                    label: 'XP trung bình',
-                    value: '${_users.isEmpty ? 0 : totalXp ~/ _users.length}',
-                    icon: Icons.star_outline,
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              TextField(
-                controller: _search,
-                textInputAction: TextInputAction.search,
-                onSubmitted: (_) => _load(),
-                decoration: InputDecoration(
-                  hintText: 'Tìm theo tên hoặc email',
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: IconButton(
-                    onPressed: _filters,
-                    icon: const Icon(Icons.tune),
+    final theme = Theme.of(context);
+    return AdminScreenScaffold(
+      title: 'admin.users.title'.tr(),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.sm,
+              AppSpacing.sm,
+              0,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: DebouncedSearchField(
+                    hint: 'admin.users.searchHint'.tr(),
+                    onChanged: (value) {
+                      _search = value;
+                      _apply();
+                    },
                   ),
                 ),
-              ),
-              if (_selected.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 12),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          '${_selected.length} đã chọn',
-                          style: GoogleFonts.spaceGrotesk(
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
+                PopupMenuButton<UserSort>(
+                  tooltip: 'admin.users.sortBy'.tr(),
+                  icon: const Icon(Icons.sort_rounded),
+                  constraints: const BoxConstraints(minHeight: kMinTapTarget),
+                  initialValue: _sort,
+                  onSelected: (value) {
+                    setState(() => _sort = value);
+                    _apply();
+                  },
+                  itemBuilder: (_) => [
+                    for (final sort in UserSort.values)
+                      CheckedPopupMenuItem(
+                        value: sort,
+                        checked: sort == _sort,
+                        child: Text(_sortLabel(sort)),
                       ),
-                      SizedBox(
-                        height: 44,
-                        child: OutlinedButton(
-                          onPressed: _acting ? null : () => _bulk('activate'),
-                          child: const Text('Kích hoạt'),
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.sm),
-                      SizedBox(
-                        height: 44,
-                        child: OutlinedButton(
-                          onPressed: _acting ? null : () => _bulk('deactivate'),
-                          child: const Text('Tạm dừng'),
-                        ),
-                      ),
-                    ],
-                  ),
+                  ],
                 ),
-              if (_error != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: ListTile(
-                    tileColor: AdminColors.errorContainer,
-                    leading: const Icon(
-                      Icons.error_outline,
-                      color: AdminColors.error,
-                    ),
-                    title: Text(_error!),
-                    trailing: TextButton(
-                      onPressed: _load,
-                      child: const Text('Thử lại'),
-                    ),
-                  ),
-                )
-              else if (_users.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 48),
-                  child: Column(
-                    children: [
-                      const Icon(
-                        Icons.people_outline,
-                        size: 48,
-                        color: AdminColors.onSurfaceMuted,
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      Text(
-                        'Không tìm thấy người dùng',
-                        style: GoogleFonts.spaceGrotesk(
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              else ...[
-                const SizedBox(height: AppSpacing.md),
-                ..._users.asMap().entries.map(
-                  (entry) => StaggeredEntrance(
-                    index: entry.key,
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: _UserCard(
-                        user: entry.value,
-                        selected: _selected.contains(entry.value.id),
-                        onSelect: (selected) => setState(
-                          () => selected
-                              ? _selected.add(entry.value.id)
-                              : _selected.remove(entry.value.id),
-                        ),
-                        onOpen: () => context
-                            .push('/users/${entry.value.id}/stats')
-                            .then((_) => _load()),
-                      ),
-                    ),
-                  ),
-                ),
-                if (_users.length < _total)
-                  Center(
-                    child: SizedBox(
-                      height: 44,
-                      child: TextButton(
-                        onPressed: _more ? null : () => _load(append: true),
-                        child: _more
-                            ? const CircularProgressIndicator()
-                            : const Text('Tải thêm'),
-                      ),
-                    ),
-                  ),
               ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          FilterChipBar<int>(
+            options: [
+              FilterOption(
+                value: _anyRole,
+                label: 'admin.users.filterAllRoles'.tr(),
+              ),
+              for (final level in const [0, 1, 2])
+                FilterOption(
+                  value: level,
+                  label: adminRoleLabelKey(level).tr(),
+                ),
             ],
-          ],
-        ),
+            selected: _role,
+            onSelected: (value) {
+              setState(() => _role = value ?? _anyRole);
+              _apply();
+            },
+          ),
+          FilterChipBar<String>(
+            options: [
+              FilterOption(
+                value: _anyStatus,
+                label: 'admin.users.filterAllStatus'.tr(),
+              ),
+              FilterOption(
+                value: 'active',
+                label: 'admin.users.statusActive'.tr(),
+              ),
+              FilterOption(
+                value: 'inactive',
+                label: 'admin.users.statusSuspended'.tr(),
+              ),
+            ],
+            selected: _status,
+            onSelected: (value) {
+              setState(() => _status = value ?? _anyStatus);
+              _apply();
+            },
+          ),
+          ValueListenableBuilder<int?>(
+            valueListenable: _fetcher.total,
+            builder: (context, total, _) => total == null
+                ? const SizedBox(height: AppSpacing.sm)
+                : Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.lg,
+                      AppSpacing.xs,
+                      AppSpacing.lg,
+                      AppSpacing.xs,
+                    ),
+                    child: Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: Text(
+                        'admin.users.total'.tr(namedArgs: {'count': '$total'}),
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ),
+          ),
+          Expanded(
+            child: AdminPagedListView<AdminUserItem>(
+              controller: _controller,
+              fetcher: _fetcher,
+              emptyIcon: Icons.people_outline,
+              emptyTitle: 'admin.users.emptyTitle'.tr(),
+              emptyDescription: 'admin.users.emptyBody'.tr(),
+              itemBuilder: (context, user, _) => UserTile(
+                user: user,
+                onTap: () => context.push('/users/${user.id}').then((_) {
+                  if (mounted) _controller.refresh();
+                }),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _UserCard extends StatelessWidget {
+class UserTile extends StatelessWidget {
+  const UserTile({super.key, required this.user, required this.onTap});
+
   final AdminUserItem user;
-  final bool selected;
-  final ValueChanged<bool> onSelect;
-  final VoidCallback onOpen;
-  const _UserCard({
-    required this.user,
-    required this.selected,
-    required this.onSelect,
-    required this.onOpen,
-  });
+  final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Material(
-    color: AdminColors.surface,
-    borderRadius: BorderRadius.circular(AppRadius.lg),
-    child: InkWell(
-      onTap: onOpen,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            Checkbox(
-              value: selected,
-              onChanged: (value) => onSelect(value ?? false),
-            ),
-            CircleAvatar(
-              radius: 22,
-              backgroundColor: AdminColors.primaryContainer,
-              backgroundImage: (user.avatarUrl?.trim().isNotEmpty ?? false)
-                  ? NetworkImage(user.avatarUrl!.trim())
-                  : null,
-              onBackgroundImageError:
-                  (user.avatarUrl?.trim().isNotEmpty ?? false)
-                  ? (_, __) {}
-                  : null,
-              // Initial is always the child so it still shows if the network
-              // avatar fails to load — onBackgroundImageError only silences the
-              // exception, it can't swap in a fallback.
-              child: Text(
-                (user.displayName.isEmpty ? user.email : user.displayName)[0]
-                    .toUpperCase(),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    user.displayName.isEmpty
-                        ? user.email.split('@').first
-                        : user.displayName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.spaceGrotesk(
-                      fontWeight: FontWeight.w700,
-                    ),
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final initial = user.shownName.isEmpty
+        ? '?'
+        : user.shownName.characters.first.toUpperCase();
+    final avatar = user.avatarUrl?.trim();
+    final hasAvatar = avatar != null && avatar.isNotEmpty;
+    return Material(
+      color: scheme.surface,
+      borderRadius: AppRadius.lgAll,
+      child: InkWell(
+        borderRadius: AppRadius.lgAll,
+        onTap: onTap,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: kMinTapTarget),
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 22,
+                  backgroundColor: scheme.primaryContainer,
+                  foregroundColor: scheme.onPrimaryContainer,
+                  foregroundImage: hasAvatar ? NetworkImage(avatar) : null,
+                  onForegroundImageError: hasAvatar ? (_, __) {} : null,
+                  child: Text(initial),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        user.shownName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleSmall,
+                      ),
+                      Text(
+                        user.email,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        'admin.users.rowMeta'.tr(
+                          namedArgs: {
+                            'xp': '${user.totalXp}',
+                            'streak': '${user.streakDays}',
+                          },
+                        ),
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Wrap(
+                        spacing: AppSpacing.sm,
+                        runSpacing: AppSpacing.xs,
+                        children: [
+                          StatusPill(
+                            label: user.isActive
+                                ? 'admin.users.statusActive'.tr()
+                                : 'admin.users.statusSuspended'.tr(),
+                            tone: user.isActive
+                                ? StatusTone.success
+                                : StatusTone.neutral,
+                          ),
+                          if (user.roleLevel > 0)
+                            StatusPill(
+                              label: adminRoleLabelKey(user.roleLevel).tr(),
+                              tone: StatusTone.info,
+                            ),
+                        ],
+                      ),
+                    ],
                   ),
-                  Text(
-                    user.email,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AdminColors.onSurfaceMuted,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '${user.roleLabel} • ${user.totalXp} XP • ${user.streakDays} ngày streak',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AdminColors.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-            const SizedBox(width: AppSpacing.sm),
-            Icon(
-              user.isActive ? Icons.check_circle : Icons.pause_circle,
-              color: user.isActive
-                  ? AdminColors.success
-                  : AdminColors.onSurfaceMuted,
-              size: 22,
-            ),
-          ],
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }

@@ -2388,7 +2388,8 @@
       "aiQuality": "Chất lượng AI",
       "roles": "Vai trò",
       "categories": "Danh mục",
-      "ielts": "IELTS"
+      "ielts": "IELTS",
+      "gemLedger": "Sổ gem"
     },
     "shell": {
       "logout": "Đăng xuất",
@@ -2578,6 +2579,111 @@
       "publishable": "Sẵn sàng xuất bản",
       "blocked": "Chưa thể xuất bản",
       "problems": "Vấn đề"
+    },
+    "users": {
+      "title": "Người dùng",
+      "searchHint": "Tìm theo tên hoặc email",
+      "total": "{count} người dùng",
+      "filterAllRoles": "Mọi vai trò",
+      "filterAllStatus": "Mọi trạng thái",
+      "roleUser": "Người dùng",
+      "roleAdmin": "Admin",
+      "roleSuper": "Super admin",
+      "statusActive": "Hoạt động",
+      "statusSuspended": "Tạm dừng",
+      "sortBy": "Sắp xếp",
+      "sortNewest": "Mới nhất",
+      "sortRecentLogin": "Đăng nhập gần đây",
+      "sortTopXp": "Nhiều XP nhất",
+      "sortEmail": "Email A-Z",
+      "emptyTitle": "Không tìm thấy người dùng",
+      "emptyBody": "Thử từ khoá hoặc bộ lọc khác.",
+      "rowMeta": "{xp} XP · streak {streak} ngày",
+      "detail": {
+        "title": "Người dùng",
+        "tabOverview": "Tổng quan",
+        "tabWallet": "Gem",
+        "tabXp": "XP",
+        "tabItems": "Vật phẩm",
+        "verified": "Đã xác minh",
+        "unverified": "Chưa xác minh",
+        "joined": "Tham gia",
+        "lastLogin": "Đăng nhập cuối",
+        "never": "Chưa từng",
+        "provider": "Đăng nhập bằng",
+        "totalXp": "Tổng XP",
+        "coursesEnrolled": "Khoá đã bắt đầu",
+        "coursesCompleted": "Khoá đã xong",
+        "lessonsCompleted": "Bài đã xong",
+        "suspend": "Tạm dừng",
+        "activate": "Kích hoạt lại",
+        "suspendTitle": "Tạm dừng tài khoản này?",
+        "suspendBody": "{name} sẽ không đăng nhập được cho đến khi bạn kích hoạt lại.",
+        "activateTitle": "Kích hoạt lại tài khoản này?",
+        "activateBody": "{name} sẽ đăng nhập được trở lại.",
+        "suspended": "Đã tạm dừng tài khoản",
+        "activated": "Đã kích hoạt lại tài khoản",
+        "activityTitle": "Hoạt động gần đây (30 ngày)",
+        "activityEmpty": "Không có hoạt động trong 30 ngày qua.",
+        "webOnlyBody": "Xoá tài khoản, đổi vai trò, chỉnh ví và cấp hoặc thu hồi premium được thực hiện trên web admin."
+      },
+      "gift": {
+        "title": "Tặng gem",
+        "to": "Cho {name}",
+        "amount": "Số gem",
+        "reason": "Lý do",
+        "reasonHint": "Vì sao tặng? Ít nhất {min} ký tự.",
+        "limit": "Bạn có thể tặng tối đa {max} gem lúc này. Ngân sách hôm nay còn: {left}.",
+        "limitUnknown": "Không tải được hạn mức gem của bạn. Máy chủ vẫn kiểm tra hạn mức.",
+        "amountInvalid": "Nhập số nguyên từ 1 đến {max}.",
+        "budgetUsed": "Ngân sách gem hôm nay đã hết.",
+        "reasonShort": "Nhập lý do ít nhất {min} ký tự.",
+        "confirmTitle": "Tặng {amount} gem?",
+        "confirmBody": "Cho {name}. Thao tác được ghi lại dưới tên bạn.",
+        "send": "Tặng",
+        "sent": "Đã tặng gem"
+      },
+      "wallet": {
+        "balance": "Số dư gem",
+        "earnedSpent": "Nhận {earned} · Tiêu {spent}",
+        "empty": "Chưa có giao dịch gem.",
+        "after": "Số dư {balance}"
+      },
+      "xp": {
+        "total": "Tổng XP",
+        "empty": "Chưa có XP nào.",
+        "multiplier": "×{value}"
+      },
+      "items": {
+        "premium": "Premium",
+        "premiumActive": "Đang bật",
+        "premiumInactive": "Chưa bật",
+        "premiumNone": "Chưa có premium.",
+        "source": "Nguồn: {source}",
+        "until": "Đến {date}",
+        "forceEnabled": "Máy chủ này đang bật premium cho mọi người.",
+        "inventory": "Kho vật phẩm",
+        "empty": "Chưa có vật phẩm.",
+        "equipped": "Đang dùng"
+      }
+    },
+    "gems": {
+      "title": "Sổ gem",
+      "filterAll": "Tất cả",
+      "kindGift": "Tặng",
+      "kindAdjust": "Điều chỉnh",
+      "remainingToday": "Còn lại hôm nay",
+      "budgetNote": "Đã tặng {spent}/{budget}",
+      "perGift": "Tối đa mỗi lần",
+      "limitsFailed": "Không tải được hạn mức gem của bạn.",
+      "emptyTitle": "Chưa có lần tặng gem nào",
+      "emptyBody": "Các lần tặng và điều chỉnh hiện ở đây. Bạn chỉ thấy của mình, trừ khi là super admin.",
+      "by": "bởi {name}",
+      "webOnlyBody": "Đổi hạn mức gem được thực hiện trên web admin."
+    },
+    "webOnly": {
+      "title": "Trên web admin",
+      "open": "Mở web admin"
     }
   }
 }

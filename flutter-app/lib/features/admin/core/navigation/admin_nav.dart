@@ -48,6 +48,14 @@ const adminNavItems = <AdminNavItem>[
     permission: 'users:read',
   ),
   AdminNavItem(
+    route: '/gem-ledger',
+    labelKey: 'admin.nav.gemLedger',
+    icon: Icons.diamond_outlined,
+    activeIcon: Icons.diamond,
+    group: AdminNavGroup.learners,
+    permission: 'gifts:read',
+  ),
+  AdminNavItem(
     route: '/curriculum',
     labelKey: 'admin.nav.courses',
     icon: Icons.menu_book_outlined,
