@@ -182,7 +182,7 @@ class _GamificationRepo implements GamificationRepository {
   }
 
   @override
-  Future<Map<String, dynamic>?> useItem(String inventoryId) async {
+  Future<Map<String, dynamic>?> useItem(String inventoryId, {String? gameSessionId}) async {
     uses++;
     if (!useOk) return null;
     inventory.clear();

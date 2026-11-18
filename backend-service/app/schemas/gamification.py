@@ -306,6 +306,7 @@ class InventoryResponse(BaseModel):
 class UseItemRequest(BaseModel):
     """Request to use/activate an item"""
     inventory_id: UUID
+    game_session_id: Optional[UUID] = None
 
 
 class UseItemResponse(BaseModel):

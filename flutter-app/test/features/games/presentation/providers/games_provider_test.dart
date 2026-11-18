@@ -9,6 +9,7 @@ class _FakeGamesRepository extends GamesRepository {
   int completionCalls = 0;
   final List<Object> outcomes;
   Completer<XPAwardResult>? pendingCompletion;
+  List<String>? lastRescuedIds;
 
   _FakeGamesRepository({List<Object> outcomes = const []})
     : outcomes = List<Object>.of(outcomes);
@@ -19,8 +20,10 @@ class _FakeGamesRepository extends GamesRepository {
     required List<Map<String, String>> answers,
     int? clientDurationSeconds,
     int hintsUsed = 0,
+    List<String> rescuedIds = const [],
   }) async {
     completionCalls++;
+    lastRescuedIds = rescuedIds;
     if (pendingCompletion != null) return pendingCompletion!.future;
     final outcome = outcomes.removeAt(0);
     if (outcome is Exception) throw outcome;
@@ -42,6 +45,28 @@ const _answers = [
 ];
 
 void main() {
+  test('rescued ids reach the repository and survive a retry', () async {
+    final repository = _FakeGamesRepository(
+      outcomes: [Exception('offline'), _award],
+    );
+    final provider = GamesProvider(repository: repository);
+
+    await provider.completeGame(
+      gameType: GameType.fillBlank,
+      score: 1,
+      totalQuestions: 1,
+      correctAnswers: 1,
+      answers: _answers,
+      sessionId: 'session-1',
+      rescuedIds: ['q1'],
+    );
+    expect(repository.lastRescuedIds, ['q1']);
+
+    repository.lastRescuedIds = null;
+    await provider.retryLastCompletion();
+    expect(repository.lastRescuedIds, ['q1']);
+  });
+
   test('successful completion applies server award', () async {
     final repository = _FakeGamesRepository(outcomes: [_award]);
     final provider = GamesProvider(repository: repository);

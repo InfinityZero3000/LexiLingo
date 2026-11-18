@@ -53,6 +53,8 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
   final Map<String, String> _submittedAnswers = {};
   final Set<int> _eliminatedIndices = {};
   bool _luckyCloverActive = false;
+  bool _luckyCloverRescue = false;
+  final List<String> _rescuedIds = [];
   int _scoreMultiplier = 1;
   final _random = Random();
 
@@ -152,7 +154,12 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
         });
         break;
       case ShopItemEntity.effectLuckyClover:
-        setState(() => _luckyCloverActive = true);
+        final rescue = effects['rescue'] == true;
+        setState(() {
+          _luckyCloverRescue =
+              (_luckyCloverActive && _luckyCloverRescue) || rescue;
+          _luckyCloverActive = true;
+        });
         break;
       case ShopItemEntity.effectScoreMultiplier:
         final multiplier = (effects['multiplier'] as num?)?.toInt() ?? 2;
@@ -192,9 +199,13 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
     final game = context.read<GamesProvider>().grammarQuiz!;
     final q = game.questions[_questionIndex];
     var correct = q.options[index] == q.correctAnswer;
-    if (!correct && _luckyCloverActive && _random.nextDouble() < 0.3) {
-      correct = true;
+    if (!correct && _luckyCloverActive) {
+      if (_luckyCloverRescue) {
+        correct = true;
+        _rescuedIds.add(q.id);
+      }
       _luckyCloverActive = false;
+      _luckyCloverRescue = false;
     }
     _submittedAnswers[q.id] = q.options[index];
     if (correct) _correctCount++;
@@ -285,6 +296,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
         score: _correctCount,
         totalQuestions: game.questions.length,
         correctAnswers: _correctCount,
+        rescuedIds: _rescuedIds,
         answers: [
           for (final q in game.questions)
             {'id': q.id, 'answer': _submittedAnswers[q.id] ?? ''},
@@ -312,6 +324,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
       score: _correctCount * _scoreMultiplier,
       totalQuestions: game.questions.length,
       correctAnswers: _correctCount,
+      rescuedIds: _rescuedIds,
       answers: [
         for (final question in game.questions)
           {'id': question.id, 'answer': _submittedAnswers[question.id] ?? ''},
@@ -429,6 +442,9 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                             children: [
                               GamePowerUpTray(
                                 availableTypes: _grammarQuizPowerUps,
+                                gameSessionId: context
+                                    .read<GamesProvider>()
+                                    .sessionIdFor(GameType.grammarQuiz),
                                 enabled: !_answered,
                                 onUse: _onPowerUpUsed,
                               ),

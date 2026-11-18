@@ -52,8 +52,10 @@ class GamificationRepositoryImpl implements GamificationRepository {
   }
 
   @override
-  Future<Map<String, dynamic>?> useItem(String inventoryId) =>
-      _remote.useItem(inventoryId);
+  Future<Map<String, dynamic>?> useItem(
+    String inventoryId, {
+    String? gameSessionId,
+  }) => _remote.useItem(inventoryId, gameSessionId: gameSessionId);
 
   @override
   Future<String?> equipAvatar(String inventoryId) async {

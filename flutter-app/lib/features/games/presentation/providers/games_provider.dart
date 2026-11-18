@@ -10,12 +10,14 @@ class _PendingGameCompletion {
   final List<Map<String, String>> answers;
   final int? durationSeconds;
   final int hintsUsed;
+  final List<String> rescuedIds;
 
   const _PendingGameCompletion({
     required this.sessionId,
     required this.answers,
     required this.durationSeconds,
     required this.hintsUsed,
+    required this.rescuedIds,
   });
 }
 
@@ -249,6 +251,7 @@ class GamesProvider extends ChangeNotifier {
     required List<Map<String, String>> answers,
     String? sessionId,
     int hintsUsed = 0,
+    List<String> rescuedIds = const [],
   }) async {
     if (_awardStatus == GameAwardStatus.submitting) return null;
     if (_awardStatus == GameAwardStatus.awarded && _lastXPResult != null) {
@@ -287,6 +290,7 @@ class GamesProvider extends ChangeNotifier {
           .toList(),
       durationSeconds: durationSeconds,
       hintsUsed: hintsUsed,
+      rescuedIds: List<String>.from(rescuedIds),
     );
     return _submitPendingCompletion();
   }
@@ -313,6 +317,7 @@ class GamesProvider extends ChangeNotifier {
         answers: pending.answers,
         clientDurationSeconds: pending.durationSeconds,
         hintsUsed: pending.hintsUsed,
+        rescuedIds: pending.rescuedIds,
       );
       _lastXPResult = result;
       _awardStatus = GameAwardStatus.awarded;
@@ -343,6 +348,8 @@ class GamesProvider extends ChangeNotifier {
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
+
+  String sessionIdFor(GameType gameType) => _sessionIdFor(gameType);
 
   String _sessionIdFor(GameType gameType) => switch (gameType) {
     GameType.wordScramble => _wordScramble?.sessionId ?? '',

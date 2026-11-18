@@ -1553,6 +1553,7 @@ async def complete_game_session(
             xp_awarded=existing_award.xp_awarded,
             award_status="already_awarded",
             duration_seconds=session.duration_seconds or 0,
+            rescued_count=len(score_result.get("rescued_ids") or []),
             xp_result=existing_award.to_dict(),
         )
     if session.completed_at is not None or session.xp_awarded:
@@ -1633,12 +1634,32 @@ async def complete_game_session(
                     topic=expected["topic"],
                 )
 
+    # A clover buys XP for a wrong answer, not evidence: the loop above has
+    # already filed the lapse. Extras, repeats and ids that were not wrong are
+    # ignored rather than refused.
+    rescue_budget = sum(
+        1 for rolled in (session_data.get("lucky_clovers") or []) if rolled is True
+    )
+    xp_by_id = {
+        str(item["id"]).strip(): int(item["xp_value"]) for item in expected_items
+    }
+    rescued_ids: list[str] = []
+    for raw_id in body.rescued_ids:
+        rescued_id = raw_id.strip()
+        if len(rescued_ids) >= rescue_budget:
+            break
+        if rescued_id in rescued_ids or rescued_id not in score.incorrect_ids:
+            continue
+        rescued_ids.append(rescued_id)
+    rescued_xp = sum(xp_by_id[rescued_id] for rescued_id in rescued_ids)
+    base_xp = score.final_base_xp + rescued_xp
+
     item_multiplier = await ItemEffectsService(db).get_xp_multiplier(current_user.id)
     xp_result = await award_xp_transaction(
         db=db,
         user=current_user,
         source="game",
-        base_xp=score.final_base_xp,
+        base_xp=base_xp,
         source_id=str(session.id),
         source_detail=session.game_type,
         # Computed above from the server's own start/finish times, not from
@@ -1665,7 +1686,9 @@ async def complete_game_session(
         "score_result": {
             "raw_xp": score.raw_xp,
             "penalties": score.penalties,
-            "base_xp": score.final_base_xp,
+            "base_xp": base_xp,
+            "rescued_ids": rescued_ids,
+            "rescued_xp": rescued_xp,
         },
     }
     try:
@@ -1731,12 +1754,13 @@ async def complete_game_session(
         total_count=score.total_count,
         raw_xp=score.raw_xp,
         penalties=score.penalties,
-        base_xp=score.final_base_xp,
+        base_xp=base_xp,
         xp_awarded=xp_result.xp_awarded,
         award_status=(
             "awarded" if xp_result.xp_awarded > 0 else "no_reward"
         ),
         duration_seconds=duration_seconds,
+        rescued_count=len(rescued_ids),
         xp_result=xp_result.to_dict(),
     )
 

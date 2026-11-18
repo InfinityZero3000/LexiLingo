@@ -272,9 +272,15 @@ class GamificationProvider extends ChangeNotifier {
   /// (e.g. `{"seconds": 10}` for a Time Freeze), or null on failure.
   /// Used by the games feature's power-up tray to apply the right
   /// gameplay effect after a successful consume.
-  Future<Map<String, dynamic>?> useItemWithEffects(String inventoryId) async {
+  Future<Map<String, dynamic>?> useItemWithEffects(
+    String inventoryId, {
+    String? gameSessionId,
+  }) async {
     try {
-      final effects = await _repository.useItem(inventoryId);
+      final effects = await _repository.useItem(
+        inventoryId,
+        gameSessionId: gameSessionId,
+      );
       if (effects != null) await loadInventory();
       return effects;
     } catch (e) {

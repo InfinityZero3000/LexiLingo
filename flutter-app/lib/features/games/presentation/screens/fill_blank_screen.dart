@@ -52,6 +52,8 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
   final Map<String, String> _submittedAnswers = {};
   final Set<int> _eliminatedIndices = {};
   bool _luckyCloverActive = false;
+  bool _luckyCloverRescue = false;
+  final List<String> _rescuedIds = [];
   int _scoreMultiplier = 1;
   final _random = Random();
 
@@ -148,7 +150,12 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
         });
         break;
       case ShopItemEntity.effectLuckyClover:
-        setState(() => _luckyCloverActive = true);
+        final rescue = effects['rescue'] == true;
+        setState(() {
+          _luckyCloverRescue =
+              (_luckyCloverActive && _luckyCloverRescue) || rescue;
+          _luckyCloverActive = true;
+        });
         break;
       case ShopItemEntity.effectScoreMultiplier:
         final multiplier = (effects['multiplier'] as num?)?.toInt() ?? 2;
@@ -186,9 +193,13 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
     final game = context.read<GamesProvider>().fillBlank!;
     final q = game.questions[_questionIndex];
     var correct = q.options[index] == q.correctAnswer;
-    if (!correct && _luckyCloverActive && _random.nextDouble() < 0.3) {
-      correct = true;
+    if (!correct && _luckyCloverActive) {
+      if (_luckyCloverRescue) {
+        correct = true;
+        _rescuedIds.add(q.id);
+      }
       _luckyCloverActive = false;
+      _luckyCloverRescue = false;
     }
     _submittedAnswers[q.id] = q.options[index];
     if (correct) _correctCount++;
@@ -242,6 +253,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
         score: _correctCount,
         totalQuestions: game.questions.length,
         correctAnswers: _correctCount,
+        rescuedIds: _rescuedIds,
         answers: [
           for (final q in game.questions)
             {'id': q.id, 'answer': _submittedAnswers[q.id] ?? ''},
@@ -269,6 +281,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
       score: _correctCount * _scoreMultiplier,
       totalQuestions: game.questions.length,
       correctAnswers: _correctCount,
+      rescuedIds: _rescuedIds,
       answers: [
         for (final question in game.questions)
           {'id': question.id, 'answer': _submittedAnswers[question.id] ?? ''},
@@ -373,6 +386,9 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
                         ),
                         child: GamePowerUpTray(
                           availableTypes: _fillBlankPowerUps,
+                          gameSessionId: context
+                              .read<GamesProvider>()
+                              .sessionIdFor(GameType.fillBlank),
                           enabled: !_answered,
                           onUse: _onPowerUpUsed,
                         ),
