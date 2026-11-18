@@ -9,27 +9,19 @@ import 'package:lexilingo_app/features/admin/core/storage/admin_session_store.da
 
 class _Store implements AdminSessionStore {
   String? access = 'old-access';
-  String? refresh = 'refresh-1';
-  int clears = 0;
+  int refreshes = 0;
+  bool refreshOk = true;
 
   @override
   Future<String?> accessToken() async => access;
-  @override
-  Future<String?> refreshToken() async => refresh;
-  @override
-  Future<void> saveTokens({
-    required String accessToken,
-    required String refreshToken,
-  }) async {
-    access = accessToken;
-    refresh = refreshToken;
-  }
 
   @override
-  Future<void> clear() async {
-    clears++;
-    access = null;
-    refresh = null;
+  Future<bool> refresh() async {
+    refreshes++;
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    if (!refreshOk) return false;
+    access = 'new-access';
+    return true;
   }
 }
 
@@ -56,33 +48,18 @@ ResponseBody _json(int status, Object body) => ResponseBody.fromString(
 
 void main() {
   late _Store store;
-  late int refreshCalls;
-  late List<String?> seenAuth;
 
-  ApiClient build({bool refreshOk = true}) {
-    refreshCalls = 0;
-    seenAuth = [];
+  ApiClient build() {
     final dio = Dio(BaseOptions(baseUrl: 'http://api.test'))
       ..httpClientAdapter = _Adapter((o) async {
-        final auth = o.headers['Authorization'] as String?;
-        seenAuth.add(auth);
-        if (auth == 'Bearer new-access') {
+        if (o.headers['Authorization'] == 'Bearer new-access') {
           return _json(200, {
             'data': {'ok': true},
           });
         }
         return _json(401, {'detail': 'expired'});
       });
-    final refreshDio = Dio()
-      ..httpClientAdapter = _Adapter((o) async {
-        refreshCalls++;
-        await Future<void>.delayed(const Duration(milliseconds: 20));
-        if (!refreshOk) return _json(401, {'detail': 'bad'});
-        return _json(200, {
-          'data': {'access_token': 'new-access', 'refresh_token': 'refresh-2'},
-        });
-      });
-    return ApiClient.forTesting(store: store, dio: dio, refreshDio: refreshDio);
+    return ApiClient.forTesting(store: store, dio: dio);
   }
 
   setUp(() => store = _Store());
@@ -94,30 +71,35 @@ void main() {
       api.get('/b'),
       api.get('/c'),
     ]);
-    expect(refreshCalls, 1);
+    expect(store.refreshes, 1);
     expect(results.every((r) => (r['data'] as Map)['ok'] == true), isTrue);
-    expect(store.refresh, 'refresh-2');
     expect(store.access, 'new-access');
   });
 
-  test(
-    'a refresh that fails clears the session and surfaces the 401',
-    () async {
-      final api = build(refreshOk: false);
-      await expectLater(
-        api.get('/a'),
-        throwsA(
-          isA<DioException>().having(
-            (e) => AdminApiError.from(e).kind,
-            'kind',
-            AdminErrorKind.unauthorized,
-          ),
+  test('a refresh that fails surfaces the 401 and keeps the tokens', () async {
+    store.refreshOk = false;
+    final api = build();
+    await expectLater(
+      api.get('/a'),
+      throwsA(
+        isA<DioException>().having(
+          (e) => AdminApiError.from(e).kind,
+          'kind',
+          AdminErrorKind.unauthorized,
         ),
-      );
-      expect(store.clears, 1);
-      expect(store.access, isNull);
-    },
-  );
+      ),
+    );
+    expect(store.refreshes, 1);
+    // The learner refresh owns clearing; the admin client leaves the session.
+    expect(store.access, 'old-access');
+  });
+
+  test('requests carry the learner access token', () async {
+    final api = build();
+    store.access = 'new-access';
+    expect(await api.getData('/a'), {'ok': true});
+    expect(store.refreshes, 0);
+  });
 
   test('getData removes the envelope', () async {
     final api = build();
@@ -130,7 +112,7 @@ void main() {
     final dio = api.dio;
     dio.httpClientAdapter = _Adapter((o) async => _json(401, {'detail': 'no'}));
     await expectLater(api.get('/a'), throwsA(isA<DioException>()));
-    expect(refreshCalls, 1);
+    expect(store.refreshes, 1);
   });
 
   group('AdminApiError', () {

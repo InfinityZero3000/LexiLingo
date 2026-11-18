@@ -2399,7 +2399,8 @@
       "logout": "Đăng xuất",
       "roleAdmin": "ADMIN",
       "roleSuper": "SUPER ADMIN",
-      "permissionsFailed": "Không tải được quyền của bạn."
+      "permissionsFailed": "Không tải được quyền của bạn.",
+      "exit": "Thoát quản trị"
     },
     "access": {
       "forbiddenTitle": "Không có quyền",
@@ -2688,6 +2689,14 @@
     "webOnly": {
       "title": "Trên web admin",
       "open": "Mở web admin"
+    },
+    "gate": {
+      "noAccessTitle": "Không có quyền quản trị",
+      "noAccessBody": "Tài khoản này không có vai trò quản trị.",
+      "loadErrorTitle": "Không kiểm tra được tài khoản",
+      "loadErrorBody": "Kiểm tra kết nối và thử lại.",
+      "retry": "Thử lại",
+      "exit": "Quay lại ứng dụng"
     }
   },
   "adminGrowth": {

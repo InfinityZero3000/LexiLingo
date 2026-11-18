@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lexilingo_app/features/admin/core/permissions/admin_permissions.dart';
 import 'package:lexilingo_app/features/admin/core/router/app_router.dart';
 import 'package:lexilingo_app/features/admin/features/auth/data/auth_repository.dart';
+import 'package:lexilingo_app/features/admin/features/auth/presentation/auth_provider.dart';
 
 AdminUser _user({required int level}) => AdminUser(
   id: '1',
@@ -19,29 +20,57 @@ AdminPermissions _perms(List<String> slugs, {bool all = false}) =>
 
 String? _go(
   String location, {
-  bool hasToken = true,
+  AuthState state = AuthState.authenticated,
   AdminUser? user,
   AdminPermissions? perms,
 }) => adminRedirect(
-  hasToken: hasToken,
+  state: state,
   location: location,
   user: user ?? _user(level: 1),
   permissions: perms ?? _perms(['users:read', 'ops:read']),
 );
 
 void main() {
-  test('signed out goes to login, and stays there', () {
-    expect(_go('/users', hasToken: false, user: null), '/login');
-    expect(_go('/login', hasToken: false, user: null), isNull);
+  test(
+    'while the account is checked, or there is no session, wait on splash',
+    () {
+      expect(_go('/users', state: AuthState.unknown, user: null), '/splash');
+      expect(_go('/splash', state: AuthState.unknown, user: null), isNull);
+      expect(
+        _go('/users', state: AuthState.unauthenticated, user: null),
+        '/splash',
+      );
+    },
+  );
+
+  test('there is no login route to land on', () {
+    expect(
+      _go('/login', state: AuthState.unauthenticated, user: null),
+      '/splash',
+    );
   });
 
-  test('signed in leaves the login page', () {
-    expect(_go('/login'), '/dashboard');
+  test('an account without an admin role gets the no-access page', () {
+    final user = _user(level: 0);
+    expect(
+      _go('/dashboard', state: AuthState.forbidden, user: user),
+      '/no-access',
+    );
+    expect(_go('/no-access', state: AuthState.forbidden, user: user), isNull);
   });
 
-  test('an account that is not an admin is sent back to login', () {
-    expect(_go('/dashboard', user: _user(level: 0)), '/login');
-    expect(_go('/login', user: _user(level: 0)), isNull);
+  test('a failed account check gets the retry page', () {
+    expect(
+      _go('/dashboard', state: AuthState.failed, user: null),
+      '/load-error',
+    );
+    expect(_go('/load-error', state: AuthState.failed, user: null), isNull);
+  });
+
+  test('an admin leaves the gate pages for the dashboard', () {
+    expect(_go('/splash'), '/dashboard');
+    expect(_go('/no-access'), '/dashboard');
+    expect(_go('/load-error'), '/dashboard');
   });
 
   test('super admin pages are closed to a plain admin', () {

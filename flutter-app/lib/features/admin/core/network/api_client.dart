@@ -10,34 +10,30 @@ import '../storage/admin_session_store.dart';
 
 const _retriedFlag = '__auth_retried';
 
-/// The admin app's HTTP client. It has its own session ([AdminSessionStore])
-/// so signing in here never touches the learner's tokens.
+/// The admin app's HTTP client. It signs requests with the learner's session
+/// ([AdminSessionStore]) and never owns or clears tokens: renewal and
+/// session-expiry handling belong to the learner app's shared refresh.
 ///
-/// Backend refresh tokens are single-use (rotated on every /auth/refresh), so
-/// concurrent refreshes would spend the same token twice and log the admin
-/// out. The first caller does the work; the rest await the same result.
+/// Backend refresh tokens are single-use, so concurrent refreshes would spend
+/// the same token twice. The first caller here does the work; the rest await
+/// the same result.
 ///
 /// Failures surface as [DioException]; `AdminApiError.from` turns one into
 /// something a screen can show.
 class ApiClient {
-  ApiClient._(this._store, Dio? dio, Dio? refreshDio)
-    : _dio = dio ?? _defaultDio(),
-      _refreshDio = refreshDio ?? Dio() {
+  ApiClient._(this._store, Dio? dio) : _dio = dio ?? _defaultDio() {
     _dio.interceptors.add(
       InterceptorsWrapper(onRequest: _onRequest, onError: _onError),
     );
   }
 
   @visibleForTesting
-  ApiClient.forTesting({
-    required AdminSessionStore store,
-    required Dio dio,
-    required Dio refreshDio,
-  }) : this._(store, dio, refreshDio);
+  ApiClient.forTesting({required AdminSessionStore store, required Dio dio})
+    : this._(store, dio);
 
   static ApiClient? _instance;
   static ApiClient get instance =>
-      _instance ??= ApiClient._(const TokenStorageSessionStore(), null, null);
+      _instance ??= ApiClient._(const LearnerSessionStore(), null);
 
   static Dio _defaultDio() => Dio(
     BaseOptions(
@@ -50,7 +46,6 @@ class ApiClient {
 
   final AdminSessionStore _store;
   final Dio _dio;
-  final Dio _refreshDio;
   Completer<bool>? _refreshCompleter;
 
   Dio get dio => _dio;
@@ -90,7 +85,6 @@ class ApiClient {
           return;
         }
       }
-      await _store.clear();
     }
     handler.next(error);
   }
@@ -103,21 +97,7 @@ class ApiClient {
     _refreshCompleter = completer;
     var ok = false;
     try {
-      final refreshToken = await _store.refreshToken();
-      if (refreshToken != null && refreshToken.isNotEmpty) {
-        final response = await _refreshDio.post(
-          '${ApiEndpoints.baseUrl}${ApiEndpoints.refreshToken}',
-          data: {'refresh_token': refreshToken},
-        );
-        final data = unwrapEnvelope(response.data);
-        if (response.statusCode == 200 && data is Map) {
-          await _store.saveTokens(
-            accessToken: data['access_token'].toString(),
-            refreshToken: (data['refresh_token'] ?? refreshToken).toString(),
-          );
-          ok = true;
-        }
-      }
+      ok = await _store.refresh();
     } catch (_) {
       ok = false;
     } finally {
