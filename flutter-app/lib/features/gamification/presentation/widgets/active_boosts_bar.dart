@@ -56,7 +56,10 @@ class _ActiveBoostsBarState extends State<ActiveBoostsBar> {
         if (boosts.isEmpty) return const SizedBox.shrink();
 
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.sm,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

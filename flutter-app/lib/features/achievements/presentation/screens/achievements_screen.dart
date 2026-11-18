@@ -90,9 +90,11 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                       ),
                       child: Center(
                         child: EmptyStateWidget(
-                          title: 'common.noData'.tr(),
-                          actionLabel: 'achievements.refresh'.tr(),
-                          onAction: _loadData,
+                          title: 'achievements.emptyTitle'.tr(),
+                          description: 'achievements.emptyBody'.tr(),
+                          actionLabel: 'achievements.emptyAction'.tr(),
+                          onAction: () =>
+                              Navigator.of(context).pushNamed('/courses'),
                         ),
                       ),
                     ),
