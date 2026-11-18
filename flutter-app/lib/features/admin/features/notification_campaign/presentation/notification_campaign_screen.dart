@@ -127,7 +127,7 @@ class _NotificationCampaignScreenState
   Widget build(BuildContext context) {
     final perms = context.watch<AdminPermissions>();
     final canCreate = perms.can('notifications:create');
-    final canWrite = perms.can('notifications:update');
+    final canWrite = perms.can('notifications:create');
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(

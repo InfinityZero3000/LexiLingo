@@ -128,7 +128,7 @@ class _RankingAgentScreenState extends State<RankingAgentScreen> {
   Widget build(BuildContext context) {
     final perms = context.watch<AdminPermissions>();
     final canCreate = perms.can('ranking:create');
-    final canWrite = perms.can('ranking:update');
+    final canWrite = perms.can('ranking:create');
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(

@@ -117,7 +117,7 @@ void main() {
       await _pump(
         tester,
         NotificationCampaignScreen(repository: repo),
-        perms: ['notifications:read', 'notifications:update'],
+        perms: ['notifications:read', 'notifications:create'],
       );
       await tester.tap(find.text('adminGrowth.jobs.apply'));
       await tester.pumpAndSettle();
@@ -176,7 +176,7 @@ void main() {
       await _pump(
         tester,
         RankingAgentScreen(repository: repo),
-        perms: ['ranking:read', 'ranking:update'],
+        perms: ['ranking:read', 'ranking:create'],
       );
       await tester.tap(find.text('adminGrowth.jobs.apply'));
       await tester.pumpAndSettle();
