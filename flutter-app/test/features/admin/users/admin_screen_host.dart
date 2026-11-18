@@ -15,6 +15,7 @@ Future<void> pumpAdminScreen(
   bool all = false,
   Size size = const Size(420, 900),
   Widget Function(String id)? detail,
+  ThemeMode themeMode = ThemeMode.light,
 }) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = size;
@@ -39,6 +40,8 @@ Future<void> pumpAdminScreen(
       value: permissions,
       child: MaterialApp.router(
         theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: themeMode,
         routerConfig: router,
       ),
     ),

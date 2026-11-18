@@ -1,11 +1,11 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 
 import '../../../core/constants/api_endpoints.dart';
-import '../../../core/constants/admin_colors.dart';
+import 'package:lexilingo_app/features/admin/core/theme/admin_palette.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/admin_shell.dart';
 import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
@@ -76,21 +76,21 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
     }
     final totals = _info?['totals'] as Map?;
     return Scaffold(
-      backgroundColor: AdminColors.background,
+      backgroundColor: context.ac.background,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.menu_rounded),
           onPressed: AdminShell.openDrawer,
         ),
         title: Text(
-          'Super Admin Dashboard',
+          'adminUi.superDash.superAdminDashboard'.tr(),
           style: Theme.of(
             context,
           ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
         actions: [
           IconButton(
-            tooltip: 'Refresh',
+            tooltip: 'adminUi.superDash.refresh'.tr(),
             onPressed: _loading ? null : _load,
             icon: const Icon(Icons.refresh_outlined),
           ),
@@ -116,28 +116,28 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
                 children: [
                   Text(
-                    'SYSTEM OVERSIGHT',
+                    'adminUi.superDash.systemOversight'.tr(),
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       fontWeight: FontWeight.w700,
                       letterSpacing: 0.8,
-                      color: AdminColors.primary,
+                      color: context.ac.primary,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    'At-a-glance platform status',
+                    'adminUi.superDash.atAGlancePlatformStatus'.tr(),
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AdminColors.onSurface,
+                      color: context.ac.onSurface,
                     ),
                   ),
                   if (_error != null) ...[
                     const SizedBox(height: AppSpacing.md),
                     Text(
-                      'Some dashboard data could not be refreshed.',
+                      'adminUi.superDash.someDashboardDataCouldNot'.tr(),
                       style: Theme.of(
                         context,
-                      ).textTheme.bodySmall?.copyWith(color: AdminColors.error),
+                      ).textTheme.bodySmall?.copyWith(color: context.ac.error),
                     ),
                   ],
                   const SizedBox(height: 18),
@@ -150,22 +150,22 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
                     childAspectRatio: 1.25,
                     children: [
                       StatCard(
-                        label: 'USERS',
+                        label: 'adminUi.superDash.users'.tr(),
                         value: totals?['users']?.toString() ?? '--',
                         icon: Icons.people_outline,
                       ),
                       StatCard(
-                        label: 'COURSES',
+                        label: 'adminUi.superDash.courses'.tr(),
                         value: totals?['courses']?.toString() ?? '--',
                         icon: Icons.school_outlined,
                       ),
                       StatCard(
-                        label: 'CPU / MEMORY',
+                        label: 'adminUi.superDash.cpuMemory'.tr(),
                         value: '${_percent('cpu')} / ${_percent('memory')}',
                         icon: Icons.memory_outlined,
                       ),
                       StatCard(
-                        label: 'DISK USAGE',
+                        label: 'adminUi.superDash.diskUsage'.tr(),
                         value: _percent('disk'),
                         icon: Icons.storage_outlined,
                       ),
@@ -173,7 +173,10 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   _panel('Service Status', [
-                    _ServiceRow(label: 'Backend API', status: 'healthy'),
+                    _ServiceRow(
+                      label: 'adminUi.superDash.backendApi'.tr(),
+                      status: 'healthy',
+                    ),
                     _ServiceRow(
                       label: 'PostgreSQL',
                       status: (_services?['postgres'] ?? 'unknown').toString(),
@@ -183,7 +186,7 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
                       status: (_services?['redis'] ?? 'unknown').toString(),
                     ),
                     _ServiceRow(
-                      label: 'AI Service',
+                      label: 'adminUi.superDash.aiService'.tr(),
                       status: (_services?['ai_service'] ?? 'unknown')
                           .toString(),
                     ),
@@ -191,7 +194,7 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
                   const SizedBox(height: AppSpacing.lg),
                   _panel('Quick Configuration', [
                     _InfoRow(
-                      label: 'Environment',
+                      label: 'adminUi.superDash.environment'.tr(),
                       value: (_info?['app_env'] ?? '--').toString(),
                     ),
                     _InfoRow(
@@ -199,11 +202,11 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
                       value: _info?['debug'] == true ? 'ON' : 'OFF',
                     ),
                     _InfoRow(
-                      label: 'Log level',
+                      label: 'adminUi.superDash.logLevel'.tr(),
                       value: (_info?['log_level'] ?? '--').toString(),
                     ),
                     _InfoRow(
-                      label: 'Access token',
+                      label: 'adminUi.superDash.accessToken'.tr(),
                       value: '${_info?['token_expire_minutes'] ?? '--'} min',
                     ),
                     _InfoRow(
@@ -228,9 +231,9 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
   Widget _panel(String title, List<Widget> children) => Container(
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
-      color: AdminColors.surface,
+      color: context.ac.surface,
       borderRadius: BorderRadius.circular(AppRadius.lg),
-      border: Border.all(color: AdminColors.outlineVariant, width: 0.5),
+      border: Border.all(color: context.ac.outlineVariant, width: 0.5),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -248,16 +251,16 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
   );
 
   Widget _restricted(BuildContext context) => Scaffold(
-    backgroundColor: AdminColors.background,
+    backgroundColor: context.ac.background,
     appBar: AppBar(
       leading: AppBackButton(
         icon: Icons.arrow_back,
-        color: AdminColors.onSurface,
+        color: context.ac.onSurface,
         onPressed: () => context.pop(),
       ),
       title: Text(
-        'Super Admin Dashboard',
-        style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700),
+        'adminUi.superDash.superAdminDashboard'.tr(),
+        style: context.adminStyle(fontWeight: FontWeight.w700),
       ),
     ),
     body: Center(
@@ -266,21 +269,21 @@ class _SuperDashboardScreenState extends State<SuperDashboardScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.lock_outlined, color: AdminColors.error, size: 48),
+            Icon(Icons.lock_outlined, color: context.ac.error, size: 48),
             const SizedBox(height: AppSpacing.lg),
             Text(
-              'Access Restricted',
+              'adminUi.superDash.accessRestricted'.tr(),
               style: Theme.of(
                 context,
               ).textTheme.heading?.copyWith(fontWeight: FontWeight.w700),
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'This section is only accessible to Super Administrators.',
+              'adminUi.superDash.thisSectionIsOnlyAccessible'.tr(),
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AdminColors.onSurfaceMuted,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: context.ac.onSurfaceMuted),
             ),
           ],
         ),
@@ -303,12 +306,12 @@ class _ServiceRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w600),
+              style: context.adminStyle(fontWeight: FontWeight.w600),
             ),
           ),
           Icon(
             ok ? Icons.check_circle : Icons.warning_amber_rounded,
-            color: ok ? AdminColors.success : AdminColors.warning,
+            color: ok ? context.ac.success : context.ac.warning,
             size: 18,
           ),
           const SizedBox(width: 6),
@@ -316,7 +319,7 @@ class _ServiceRow extends StatelessWidget {
             status.replaceAll('_', ' ').toUpperCase(),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w700,
-              color: ok ? AdminColors.success : AdminColors.warning,
+              color: ok ? context.ac.success : context.ac.warning,
             ),
           ),
         ],
@@ -339,7 +342,7 @@ class _InfoRow extends StatelessWidget {
             label,
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: AdminColors.onSurfaceMuted),
+            ).textTheme.bodySmall?.copyWith(color: context.ac.onSurfaceMuted),
           ),
         ),
         Text(
@@ -364,11 +367,11 @@ class _DashboardError extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline, color: AdminColors.error, size: 40),
+          Icon(Icons.error_outline, color: context.ac.error, size: 40),
           const SizedBox(height: AppSpacing.md),
           Text(
-            'Dashboard unavailable',
-            style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700),
+            'adminUi.superDash.dashboardUnavailable'.tr(),
+            style: context.adminStyle(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(
@@ -378,14 +381,14 @@ class _DashboardError extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: AdminColors.onSurfaceMuted),
+            ).textTheme.bodySmall?.copyWith(color: context.ac.onSurfaceMuted),
           ),
           const SizedBox(height: AppSpacing.lg),
           SizedBox(
             height: 44,
             child: OutlinedButton(
               onPressed: onRetry,
-              child: const Text('Retry'),
+              child: Text('adminUi.superDash.retry'.tr()),
             ),
           ),
         ],

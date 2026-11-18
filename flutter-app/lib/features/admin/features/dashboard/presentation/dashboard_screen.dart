@@ -1,9 +1,10 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/api_endpoints.dart';
-import '../../../core/constants/admin_colors.dart';
+import 'package:lexilingo_app/features/admin/core/theme/admin_palette.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/admin_shell.dart';
 import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
@@ -105,22 +106,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final user = auth.user;
 
     return Scaffold(
-      backgroundColor: AdminColors.background,
+      backgroundColor: context.ac.background,
       body: RefreshIndicator(
-        color: AdminColors.primary,
+        color: context.ac.primary,
         onRefresh: _load,
         child: CustomScrollView(
           slivers: [
             SliverAppBar(
               pinned: true,
-              backgroundColor: AdminColors.background,
+              backgroundColor: context.ac.background,
               elevation: 0,
               scrolledUnderElevation: 0,
               leading: IconButton(
-                icon: const Icon(
-                  Icons.menu_rounded,
-                  color: AdminColors.onSurface,
-                ),
+                icon: Icon(Icons.menu_rounded, color: context.ac.onSurface),
                 onPressed: AdminShell.openDrawer,
               ),
               title: Row(
@@ -129,12 +127,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      color: AdminColors.primary,
+                      color: context.ac.primary,
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.language,
-                      color: AdminColors.surface,
+                      color: context.ac.surface,
                       size: 18,
                     ),
                   ),
@@ -143,7 +141,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     'LingoAdmin',
                     style: Theme.of(context).textTheme.sectionTitle?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AdminColors.primary,
+                      color: context.ac.primary,
                     ),
                   ),
                 ],
@@ -153,7 +151,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   padding: const EdgeInsets.only(right: 12),
                   child: CircleAvatar(
                     radius: 16,
-                    backgroundColor: AdminColors.primaryContainer,
+                    backgroundColor: context.ac.primaryContainer,
                     // Initial is always the child so it still shows if the
                     // network avatar below fails to load — onBackgroundImageError
                     // only silences the exception, it can't swap in a fallback.
@@ -169,7 +167,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ? user!.displayName[0].toUpperCase()
                           : 'A',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AdminColors.primary,
+                        color: context.ac.primary,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -224,11 +222,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       // ── KPI Grid ────────────────────────────────────────────────────────
       Text(
-        'KEY METRICS',
+        'adminUi.dashboard.keyMetrics'.tr(),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
           fontWeight: FontWeight.w700,
           letterSpacing: 0.08,
-          color: AdminColors.onSurfaceMuted,
+          color: context.ac.onSurfaceMuted,
         ),
       ),
       const SizedBox(height: AppSpacing.sm),
@@ -254,7 +252,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             StaggeredEntrance(
               index: 1,
               child: StatCard(
-                label: 'Active 7d',
+                label: 'adminUi.dashboard.active7d'.tr(),
                 value: _kpiVal('active_users_7d').round().toString(),
                 icon: Icons.trending_up_outlined,
                 note: 'Last 7 days',
@@ -263,7 +261,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             StaggeredEntrance(
               index: 2,
               child: StatCard(
-                label: 'Courses',
+                label: 'adminUi.dashboard.courses'.tr(),
                 value: _kpiVal('total_courses').round().toString(),
                 icon: Icons.menu_book_outlined,
                 note: 'Published',
@@ -272,7 +270,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             StaggeredEntrance(
               index: 3,
               child: StatCard(
-                label: 'Avg DAU',
+                label: 'adminUi.dashboard.avgDau'.tr(),
                 value: _kpiVal('avg_dau_30d').round().toString(),
                 icon: Icons.bar_chart_outlined,
                 note: '30-day avg',
@@ -281,7 +279,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             StaggeredEntrance(
               index: 4,
               child: StatCard(
-                label: 'Lessons Today',
+                label: 'adminUi.dashboard.lessonsToday'.tr(),
                 value: _kpiVal(
                   'total_lessons_completed_today',
                 ).round().toString(),
@@ -298,9 +296,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       StaggeredEntrance(
         index: 5,
         child: _SectionCard(
-          title: 'Daily Active Users',
-          subtitle: 'Engagement over 10 weeks',
-          trailing: _Chip(label: '10 Weeks'),
+          title: 'adminUi.dashboard.dailyActiveUsers'.tr(),
+          subtitle: 'adminUi.dashboard.engagementOver10Weeks'.tr(),
+          trailing: _Chip(label: 'adminUi.dashboard.10Weeks'.tr()),
           child: _dauSeries.isEmpty
               ? const _EmptyState(
                   message: 'No engagement data for this period.',
@@ -314,9 +312,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       StaggeredEntrance(
         index: 6,
         child: _SectionCard(
-          title: 'User Growth',
-          subtitle: 'Total registered users over 30 days',
-          trailing: const _Chip(label: '30 Days'),
+          title: 'adminUi.dashboard.userGrowth'.tr(),
+          subtitle: 'adminUi.dashboard.totalRegisteredUsersOver30'.tr(),
+          trailing: _Chip(label: 'adminUi.dashboard.30Days'.tr()),
           child: _growthSeries.isEmpty
               ? const _EmptyState(
                   message: 'No user growth data for this period.',
@@ -333,8 +331,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       StaggeredEntrance(
         index: 7,
         child: _SectionCard(
-          title: 'Languages',
-          subtitle: 'Enrollment distribution',
+          title: 'adminUi.dashboard.languages'.tr(),
+          subtitle: 'adminUi.dashboard.enrollmentDistribution'.tr(),
           child: _languages.isEmpty
               ? const _EmptyState(message: 'No language enrollment data yet.')
               : Column(
@@ -362,10 +360,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Quick Actions',
+          'adminUi.dashboard.quickActions'.tr(),
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.w700,
-            color: AdminColors.onSurface,
+            color: context.ac.onSurface,
           ),
         ),
         const SizedBox(height: AppSpacing.sm),
@@ -375,21 +373,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               _QuickAction(
                 icon: Icons.add_circle_outline,
-                label: 'NEW LESSON',
+                label: 'adminUi.dashboard.newLesson'.tr(),
                 filled: true,
                 onTap: () => context.push('/curriculum'),
               ),
               const SizedBox(width: AppSpacing.sm),
               _QuickAction(
                 icon: Icons.group_outlined,
-                label: 'USERS',
+                label: 'adminUi.dashboard.users'.tr(),
                 filled: false,
                 onTap: () => context.push('/users'),
               ),
               const SizedBox(width: AppSpacing.sm),
               _QuickAction(
                 icon: Icons.bar_chart_outlined,
-                label: 'ANALYTICS',
+                label: 'adminUi.dashboard.analytics'.tr(),
                 filled: false,
                 onTap: () => context.push('/analytics'),
               ),
@@ -421,7 +419,7 @@ class _PrimaryKpiCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AdminColors.primary,
+        color: context.ac.primary,
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Row(
@@ -431,10 +429,10 @@ class _PrimaryKpiCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'TOTAL USERS',
+                  'adminUi.dashboard.totalUsers'.tr(),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AdminColors.surface.withValues(alpha: 0.75),
+                    color: context.ac.surface.withValues(alpha: 0.75),
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
@@ -442,24 +440,22 @@ class _PrimaryKpiCard extends StatelessWidget {
                   _format(value),
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AdminColors.surface,
+                    color: context.ac.surface,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  '${_format(activeUsers)} active in the last 7 days',
+                  'adminUi.dashboard.nActiveInTheLast'.tr(
+                    args: [_format(activeUsers)],
+                  ),
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AdminColors.surface.withValues(alpha: 0.75),
+                    color: context.ac.surface.withValues(alpha: 0.75),
                   ),
                 ),
               ],
             ),
           ),
-          const Icon(
-            Icons.group_outlined,
-            color: AdminColors.surface,
-            size: 32,
-          ),
+          Icon(Icons.group_outlined, color: context.ac.surface, size: 32),
         ],
       ),
     );
@@ -481,7 +477,7 @@ class _EmptyState extends StatelessWidget {
           textAlign: TextAlign.center,
           style: Theme.of(
             context,
-          ).textTheme.bodySmall?.copyWith(color: AdminColors.onSurfaceMuted),
+          ).textTheme.bodySmall?.copyWith(color: context.ac.onSurfaceMuted),
         ),
       ),
     );
@@ -515,7 +511,7 @@ class _DauLineChart extends StatelessWidget {
           drawVerticalLine: false,
           horizontalInterval: (max / 4).clamp(1, double.infinity),
           getDrawingHorizontalLine: (_) =>
-              const FlLine(color: AdminColors.outline, strokeWidth: 0.5),
+              FlLine(color: context.ac.outline, strokeWidth: 0.5),
         ),
         borderData: FlBorderData(show: false),
         titlesData: FlTitlesData(
@@ -527,7 +523,7 @@ class _DauLineChart extends StatelessWidget {
               getTitlesWidget: (value, _) => Text(
                 _formatY(value),
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AdminColors.onSurfaceMuted,
+                  color: context.ac.onSurfaceMuted,
                 ),
               ),
             ),
@@ -544,9 +540,11 @@ class _DauLineChart extends StatelessWidget {
                 final i = value.toInt();
                 if (i < 0 || i >= values.length) return const SizedBox.shrink();
                 return Text(
-                  '$labelPrefix${i + 1}',
+                  'adminUi.dashboard.labelprefixn'.tr(
+                    args: [(i + 1).toString()],
+                  ),
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: AdminColors.onSurfaceMuted,
+                    color: context.ac.onSurfaceMuted,
                   ),
                 );
               },
@@ -564,15 +562,15 @@ class _DauLineChart extends StatelessWidget {
             spots: spots,
             isCurved: true,
             curveSmoothness: 0.35,
-            color: AdminColors.primaryBright,
+            color: context.ac.primaryBright,
             barWidth: 2.5,
             dotData: FlDotData(
               show: true,
               getDotPainter: (spot, _, __, ___) => FlDotCirclePainter(
                 radius: 3,
-                color: AdminColors.surface,
+                color: context.ac.surface,
                 strokeWidth: 2,
-                strokeColor: AdminColors.primaryBright,
+                strokeColor: context.ac.primaryBright,
               ),
             ),
             belowBarData: BarAreaData(
@@ -581,8 +579,8 @@ class _DauLineChart extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  AdminColors.primaryBright.withValues(alpha: 0.2),
-                  AdminColors.primaryBright.withValues(alpha: 0.0),
+                  context.ac.primaryBright.withValues(alpha: 0.2),
+                  context.ac.primaryBright.withValues(alpha: 0.0),
                 ],
               ),
             ),
@@ -590,12 +588,12 @@ class _DauLineChart extends StatelessWidget {
         ],
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (_) => AdminColors.navy,
+            getTooltipColor: (_) => context.ac.navy,
             getTooltipItems: (spots) => spots.map((s) {
               return LineTooltipItem(
                 _formatY(s.y),
                 Theme.of(context).textTheme.bodySmall!.copyWith(
-                  color: AdminColors.surface,
+                  color: context.ac.onNavy,
                   fontWeight: FontWeight.w700,
                 ),
               );
@@ -634,17 +632,17 @@ class _QuickAction extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: filled
-              ? AdminColors.primaryBright
-              : AdminColors.surface.withValues(alpha: 0),
+              ? context.ac.primaryBright
+              : context.ac.surface.withValues(alpha: 0),
           borderRadius: BorderRadius.circular(AppRadius.md),
-          border: filled ? null : Border.all(color: AdminColors.outline),
+          border: filled ? null : Border.all(color: context.ac.outline),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icon,
-              color: filled ? AdminColors.surface : AdminColors.primary,
+              color: filled ? context.ac.surface : context.ac.primary,
               size: 16,
             ),
             const SizedBox(width: 6),
@@ -653,7 +651,7 @@ class _QuickAction extends StatelessWidget {
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.05,
-                color: filled ? AdminColors.surface : AdminColors.primary,
+                color: filled ? context.ac.surface : context.ac.primary,
               ),
             ),
           ],
@@ -681,9 +679,9 @@ class _SectionCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AdminColors.surface,
+        color: context.ac.surface,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AdminColors.outlineVariant, width: 0.5),
+        border: Border.all(color: context.ac.outlineVariant, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -699,14 +697,14 @@ class _SectionCard extends StatelessWidget {
                       title,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: AdminColors.onSurface,
+                        color: context.ac.onSurface,
                       ),
                     ),
                     if (subtitle != null)
                       Text(
                         subtitle!,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: AdminColors.onSurfaceMuted,
+                          color: context.ac.onSurfaceMuted,
                         ),
                       ),
                   ],
@@ -732,14 +730,14 @@ class _Chip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AdminColors.surfaceContainerLow,
+        color: context.ac.surfaceContainerLow,
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
           fontWeight: FontWeight.w600,
-          color: AdminColors.onSurfaceVariant,
+          color: context.ac.onSurfaceVariant,
         ),
       ),
     );
@@ -763,13 +761,15 @@ class _LanguageBar extends StatelessWidget {
               lang,
               style: Theme.of(
                 context,
-              ).textTheme.bodySmall?.copyWith(color: AdminColors.onSurface),
+              ).textTheme.bodySmall?.copyWith(color: context.ac.onSurface),
             ),
             Text(
-              '${(pct * 100).toInt()}%',
+              'adminUi.dashboard.n'.tr(
+                args: [((pct * 100).toInt()).toString()],
+              ),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w600,
-                color: AdminColors.onSurface,
+                color: context.ac.onSurface,
               ),
             ),
           ],
@@ -779,8 +779,8 @@ class _LanguageBar extends StatelessWidget {
           borderRadius: BorderRadius.circular(4),
           child: LinearProgressIndicator(
             value: pct,
-            backgroundColor: AdminColors.surfaceContainerHigh,
-            valueColor: const AlwaysStoppedAnimation(AdminColors.primary),
+            backgroundColor: context.ac.surfaceContainerHigh,
+            valueColor: AlwaysStoppedAnimation(context.ac.primary),
             minHeight: 6,
           ),
         ),
@@ -800,30 +800,30 @@ class _ErrorBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AdminColors.errorContainer,
+        color: context.ac.errorContainer,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AdminColors.error.withValues(alpha: 0.3)),
+        border: Border.all(color: context.ac.error.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, color: AdminColors.error, size: 18),
+          Icon(Icons.error_outline, color: context.ac.error, size: 18),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               message,
               style: Theme.of(
                 context,
-              ).textTheme.bodySmall?.copyWith(color: AdminColors.error),
+              ).textTheme.bodySmall?.copyWith(color: context.ac.error),
             ),
           ),
           TextButton(
             onPressed: onRetry,
             style: TextButton.styleFrom(
-              foregroundColor: AdminColors.error,
+              foregroundColor: context.ac.error,
               minimumSize: const Size(44, 44),
             ),
             child: Text(
-              'Retry',
+              'adminUi.dashboard.retry'.tr(),
               style: Theme.of(
                 context,
               ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),

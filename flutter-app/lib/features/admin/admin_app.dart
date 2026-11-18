@@ -7,11 +7,8 @@ import 'core/router/app_router.dart';
 import 'features/auth/presentation/auth_provider.dart';
 import 'shared/admin_exit_scope.dart';
 
-/// Light only until every admin screen has stopped reading the fixed colours
-/// in `AdminColors`; those do not follow a dark theme, so following the system
-/// here would put dark text on dark cards. Shell, login and the shared widgets
-/// already read the theme, and `AppTheme.darkTheme` is wired as `darkTheme`.
-const adminThemeMode = ThemeMode.light;
+/// Follows the system, like the rest of the app.
+const adminThemeMode = ThemeMode.system;
 
 /// Full-screen admin panel embedded in the main app. Opened with
 /// Navigator.push from the profile page when the user is an admin. It keeps
@@ -59,11 +56,13 @@ class _AdminAppState extends State<AdminApp> {
 
   @override
   Widget build(BuildContext context) {
+    final brightness = adminThemeMode == ThemeMode.system
+        ? MediaQuery.platformBrightnessOf(context)
+        : (adminThemeMode == ThemeMode.dark
+              ? Brightness.dark
+              : Brightness.light);
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-      ),
+      value: AppTheme.systemUiOverlayStyle(brightness),
       child: AdminExitScope(
         onExit: () => Navigator.of(context).maybePop(),
         child: MultiProvider(

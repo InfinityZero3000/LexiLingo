@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/admin/core/permissions/admin_permissions.dart';
 import 'package:lexilingo_app/features/admin/features/auth/data/auth_repository.dart';
 import 'package:lexilingo_app/features/admin/features/auth/presentation/auth_provider.dart';
@@ -36,6 +37,7 @@ void main() {
     required Size size,
     required List<String> slugs,
     bool superAdmin = false,
+    ThemeMode themeMode = ThemeMode.light,
   }) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = size;
@@ -67,7 +69,12 @@ void main() {
           ChangeNotifierProvider<AuthProvider>.value(value: auth),
           ChangeNotifierProvider<AdminPermissions>.value(value: perms),
         ],
-        child: MaterialApp.router(routerConfig: router),
+        child: MaterialApp.router(
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: themeMode,
+          routerConfig: router,
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -123,5 +130,18 @@ void main() {
       matching: find.byType(InkWell),
     );
     expect(tester.getSize(row.first).height, greaterThanOrEqualTo(44));
+  });
+
+  testWidgets('tablet and dark: lays out at 768 px without overflow', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      size: const Size(768, 1024),
+      slugs: ['users:read'],
+      themeMode: ThemeMode.dark,
+    );
+    expect(tester.takeException(), isNull);
+    expect(find.text('dashboard body'), findsOneWidget);
   });
 }

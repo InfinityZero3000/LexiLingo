@@ -604,6 +604,29 @@ This project has a code-review-graph knowledge graph. Prefer:
 - `detect_changes` + `get_review_context` for code review
 - `query_graph` for caller/callee/test relationships
 
+## Flutter shared UI modules and the admin mobile app
+
+Reuse these from `flutter-app/lib/core/` before writing a screen's own: `showConfirm`
+(bottom-sheet confirm, `requireText` for type-to-confirm), `ViewStateBody` (skeleton /
+empty / error-with-retry / data), `PaginatedListController` + `PaginatedListView` with a
+`PageFetcher` (`page/page_size`, `page/per_page` or `limit/offset`), `DebouncedSearchField`,
+`FilterChipBar` / `SegmentedTabs`, `StatCard`, `StatusPill`, `AppTextField`, and
+`unwrapEnvelope` / `extractPage` (the backend mixes `{data}`, `{success,data}` and bare
+bodies). Tokens: `AppSpacing`, `AppRadius`, `kMinTapTarget`, `context.status`, `AppTextRoles`.
+
+The admin mobile app (`features/admin`) is built on them plus `AdminPermissions`
+(permissions from `/admin/rbac/me/permissions`; it hides UI only, the backend enforces),
+`AdminPalette` (`context.ac`, follows light and dark) and the `Admin*` widgets in
+`features/admin/shared/`. **By design it has no delete, bulk, file-upload or money
+actions** (permanent delete, role changes, wallet adjust, premium grant, gem limits,
+partner keys, bulk import); those rows link to the web admin. It is no longer frozen:
+new admin screens go here when they fit that rule, otherwise to `admin-service`.
+
+Adding a widget with `Card(`, `BoxDecoration(` or `showModalBottomSheet(` under
+`flutter-app/lib/` needs a line in `docs/ui/learner-tactile-style-inventory.json`, or
+`learner_surface_inventory_test` fails. `locale_keys.g.dart` is hand-appended on `dev`;
+regenerating it would drop keys still in use.
+
 ## Code Style
 
 - No comments unless the WHY is non-obvious
