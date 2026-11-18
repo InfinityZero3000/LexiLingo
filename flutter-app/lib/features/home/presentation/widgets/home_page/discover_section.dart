@@ -278,14 +278,17 @@ class _BookOfWeek extends StatelessWidget {
                       ),
                       style: theme.textTheme.bodySmall?.copyWith(color: muted),
                     ),
-                  const SizedBox(height: 12),
-                  FilledButton(
-                    onPressed: onOpen,
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size(0, 44),
-                      shape: const StadiumBorder(),
+                  const SizedBox(height: 4),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: FilledButton(
+                      onPressed: onOpen,
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(0, 44),
+                        shape: const StadiumBorder(),
+                      ),
+                      child: Text('home.readNow'.tr()),
                     ),
-                    child: Text('home.readNow'.tr()),
                   ),
                 ],
               ),
