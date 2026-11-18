@@ -28,6 +28,8 @@ class HomeProvider with ChangeNotifier {
     this.vocabularyRepository,
   });
 
+  int _generation = 0;
+
   // State: Featured Courses
   List<CourseEntity> _featuredCourses = [];
   bool _isLoadingCourses = false;
@@ -104,7 +106,9 @@ class HomeProvider with ChangeNotifier {
     _isLoadingWeekly = true;
     notifyListeners();
 
+    final generation = _generation;
     final result = await getWeeklyProgressUseCase!.call();
+    if (generation != _generation) return;
 
     result.fold((failure) {}, (data) {
       _weeklyProgress = data;
@@ -116,7 +120,9 @@ class HomeProvider with ChangeNotifier {
 
   Future<void> refreshWeeklyProgressSilently() async {
     if (getWeeklyProgressUseCase == null) return;
+    final generation = _generation;
     final result = await getWeeklyProgressUseCase!.call();
+    if (generation != _generation) return;
     result.fold((_) {}, (data) {
       _weeklyProgress = data;
       notifyListeners();
@@ -223,6 +229,7 @@ class HomeProvider with ChangeNotifier {
 
   /// Clear all state
   void clear() {
+    _generation++;
     _featuredCourses = [];
     _coursesError = null;
     _isLoadingCourses = false;

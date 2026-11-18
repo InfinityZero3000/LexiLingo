@@ -67,13 +67,8 @@ class ProgressRemoteDataSourceImpl implements ProgressRemoteDataSource {
 
   @override
   Future<WeeklyProgressEntity> getWeeklyProgress() async {
-    try {
-      final response = await apiClient.get('/progress/weekly');
-      return WeeklyProgressModel.fromJson(response);
-    } catch (e) {
-      // Return empty data if API fails (graceful degradation)
-      return WeeklyProgressEntity.empty();
-    }
+    final response = await apiClient.get('/progress/weekly');
+    return WeeklyProgressModel.fromJson(response);
   }
 
   // ============================================================================

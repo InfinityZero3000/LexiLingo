@@ -8,6 +8,7 @@ class LevelProvider with ChangeNotifier {
 
   LevelProvider({required ApiClient apiClient}) : _apiClient = apiClient;
 
+  int _generation = 0;
   LevelStatus _levelStatus = LevelStatus.empty();
   bool _isLoading = false;
   String? _errorMessage;
@@ -213,6 +214,9 @@ class LevelProvider with ChangeNotifier {
 
   /// Reset to initial state
   void reset() {
+    _generation++;
+    _certifiedLevel = 'A1';
+    _levelVerified = true;
     _levelStatus = LevelStatus.empty();
     _isLoading = false;
     _errorMessage = null;
@@ -247,8 +251,10 @@ class LevelProvider with ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    final generation = _generation;
     try {
       final data = await _apiClient.get('/users/me/level-full');
+      if (generation != _generation) return;
       final bool isFirstLoad = _rawLevelFull.isEmpty;
 
       _rawLevelFull = data;
@@ -289,12 +295,12 @@ class LevelProvider with ChangeNotifier {
       // Keep CEFR LevelStatus in sync for legacy display (no extra notifyListeners).
       _levelStatus = LevelCalculator.calculateLevelStatus(_totalXp);
     } catch (e) {
+      if (generation != _generation) return;
       _errorMessage = e.toString();
       debugPrint('fetchLevelFull error: $e');
-    } finally {
-      _isLoading = false;
-      notifyListeners();
     }
+    _isLoading = false;
+    notifyListeners();
   }
 
   /// Set loading state

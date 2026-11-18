@@ -6,7 +6,6 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/home/presentation/pages/main_screen.dart';
 import 'package:lexilingo_app/features/level/domain/entities/proficiency_entity.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/proficiency_provider.dart';
-import 'package:lexilingo_app/features/level/presentation/widgets/level_history_timeline.dart';
 import 'package:lexilingo_app/features/level/presentation/widgets/proficiency_radar_chart.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
@@ -283,11 +282,6 @@ class ProficiencyCard extends StatelessWidget {
             ],
           ),
         ),
-        if (hasEnoughData)
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
-            child: LevelHistoryTimeline(),
-          ),
       ],
     );
   }

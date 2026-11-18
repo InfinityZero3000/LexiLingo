@@ -71,9 +71,7 @@ Future<void> _pumpCard(
       child: MaterialApp(
         theme: AppTheme.lightTheme,
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(
-            context,
-          ).copyWith(
+          data: MediaQuery.of(context).copyWith(
             disableAnimations: reduceMotion,
             textScaler: TextScaler.linear(textScale),
           ),

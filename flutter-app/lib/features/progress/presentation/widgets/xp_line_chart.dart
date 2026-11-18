@@ -27,12 +27,21 @@ class XpLineChart extends StatelessWidget {
       return FlSpot(e.key.toDouble(), e.value.xpEarned.toDouble());
     }).toList();
 
+    final maxY = (maxXP * 1.2).ceilToDouble();
+
     return SizedBox(
       height: 180,
       child: LineChart(
         LineChartData(
-          minY: 0,
-          maxY: (maxXP * 1.2).ceilToDouble(),
+          // Zero-XP days would sit on the bottom edge and have their dot and
+          // stroke clipped, so the axis starts a little below zero. No axis
+          // labels are drawn, so the negative range is never shown.
+          minY: -maxY * 0.06,
+          maxY: maxY,
+          // Half a day of room each side keeps the first and last label and
+          // dot inside the plot.
+          minX: -0.5,
+          maxX: days.length - 0.5,
           clipData: const FlClipData.all(),
           gridData: FlGridData(
             show: true,
@@ -66,9 +75,12 @@ class XpLineChart extends StatelessWidget {
               sideTitles: SideTitles(
                 showTitles: true,
                 reservedSize: 24,
+                interval: 1,
                 getTitlesWidget: (value, meta) {
                   final i = value.toInt();
-                  if (i < 0 || i >= days.length) return const SizedBox.shrink();
+                  if (value != i.toDouble() || i < 0 || i >= days.length) {
+                    return const SizedBox.shrink();
+                  }
                   return Padding(
                     padding: const EdgeInsets.only(top: 6),
                     child: Text(
@@ -107,6 +119,7 @@ class XpLineChart extends StatelessWidget {
               spots: spots,
               isCurved: true,
               curveSmoothness: 0.35,
+              preventCurveOverShooting: true,
               color: primary,
               barWidth: 2.5,
               dotData: FlDotData(
@@ -165,6 +178,7 @@ class LessonsBarChart extends StatelessWidget {
       height: 180,
       child: BarChart(
         BarChartData(
+          alignment: BarChartAlignment.spaceAround,
           minY: 0,
           maxY: (maxLessons + 2).toDouble(),
           gridData: FlGridData(
@@ -196,9 +210,12 @@ class LessonsBarChart extends StatelessWidget {
               sideTitles: SideTitles(
                 showTitles: true,
                 reservedSize: 24,
+                interval: 1,
                 getTitlesWidget: (value, meta) {
                   final i = value.toInt();
-                  if (i < 0 || i >= days.length) return const SizedBox.shrink();
+                  if (value != i.toDouble() || i < 0 || i >= days.length) {
+                    return const SizedBox.shrink();
+                  }
                   return Padding(
                     padding: const EdgeInsets.only(top: 6),
                     child: Text(

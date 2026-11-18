@@ -7,13 +7,14 @@ import 'package:lexilingo_app/features/auth/data/models/user_model.dart';
 import 'package:lexilingo_app/features/home/domain/progressive_unlock.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/quick_actions_grid.dart';
 
-const _secondary = [
-  'home.youtube',
-  'home.news',
+const _starters = [
+  'home.navLearning',
+  'home.navLexi',
+  'home.vocabulary',
   'home.games',
-  'home.podcast',
-  'home.books',
 ];
+
+const _secondary = ['home.youtube', 'home.news', 'home.podcast', 'home.books'];
 
 void main() {
   tearDown(() {
@@ -105,13 +106,18 @@ void main() {
       );
     }
 
-    testWidgets('locked: only Vocabulary and the hint remain', (tester) async {
+    testWidgets('locked: four starting tiles and the hint remain', (
+      tester,
+    ) async {
       await pump(tester, lock: true);
 
       for (final label in _secondary) {
         expect(find.text(label), findsNothing);
       }
-      expect(find.text('home.vocabulary'), findsOneWidget);
+      for (final label in _starters) {
+        expect(find.text(label), findsOneWidget);
+      }
+      expect(find.byType(InkResponse), findsNWidgets(_starters.length));
       expect(find.text('home.unlockHint'), findsOneWidget);
     });
 
@@ -120,10 +126,9 @@ void main() {
     ) async {
       await pump(tester, lock: false);
 
-      for (final label in _secondary) {
+      for (final label in [..._starters, ..._secondary]) {
         expect(find.text(label), findsOneWidget);
       }
-      expect(find.text('home.vocabulary'), findsOneWidget);
       expect(find.text('home.unlockHint'), findsNothing);
     });
 

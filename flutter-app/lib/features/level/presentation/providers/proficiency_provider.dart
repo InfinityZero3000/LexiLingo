@@ -25,6 +25,7 @@ class ProficiencyProvider with ChangeNotifier {
   bool _showLevelUpDialog = false;
   String? _previousLevel;
 
+  int _generation = 0;
   List<LevelHistoryEntry> _history = const [];
   bool _historyLoaded = false;
   bool _historyLoading = false;
@@ -92,11 +93,15 @@ class ProficiencyProvider with ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    final generation = _generation;
     try {
-      _profile = await dataSource.getProfile();
+      final loaded = await dataSource.getProfile();
+      if (generation != _generation) return;
+      _profile = loaded;
       _isLoading = false;
       notifyListeners();
     } catch (e) {
+      if (generation != _generation) return;
       _isLoading = false;
       _errorMessage = UiText.key('errors.loadFailed');
       notifyListeners();
@@ -141,16 +146,19 @@ class ProficiencyProvider with ChangeNotifier {
     _historyFailed = false;
     notifyListeners();
 
+    final generation = _generation;
     try {
-      _history = parseLevelHistory(await dataSource.getLevelHistory());
+      final loaded = parseLevelHistory(await dataSource.getLevelHistory());
+      if (generation != _generation) return;
+      _history = loaded;
       _historyLoaded = true;
     } catch (e) {
+      if (generation != _generation) return;
       _historyFailed = true;
       debugPrint('Error loading level history: $e');
-    } finally {
-      _historyLoading = false;
-      notifyListeners();
     }
+    _historyLoading = false;
+    notifyListeners();
   }
 
   /// Record exercise results and update proficiency
@@ -233,6 +241,11 @@ class ProficiencyProvider with ChangeNotifier {
 
   /// Reset provider state
   void reset() {
+    _generation++;
+    _history = const [];
+    _historyLoaded = false;
+    _historyLoading = false;
+    _historyFailed = false;
     _profile = ProficiencyProfile.empty();
     _isLoading = false;
     _errorMessage = null;
