@@ -2484,6 +2484,30 @@
       }
     },
     {
+      "id": "lib/features/books/presentation/screens/book_reader_screen.dart::_BookReaderScreenState::MaterialPageRoute::0",
+      "path": "lib/features/books/presentation/screens/book_reader_screen.dart",
+      "entryPoint": "imperativeRoute",
+      "symbol": "_BookReaderScreenState",
+      "callKind": "MaterialPageRoute",
+      "ordinal": 0,
+      "line": 315,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried"
+    },
+    {
+      "id": "lib/features/books/presentation/screens/book_reader_screen.dart::_BookReaderScreenState::Navigator.push::0",
+      "path": "lib/features/books/presentation/screens/book_reader_screen.dart",
+      "entryPoint": "imperativeRoute",
+      "symbol": "_BookReaderScreenState",
+      "callKind": "Navigator.push",
+      "ordinal": 0,
+      "line": 313,
+      "category": "eligible",
+      "group": 4,
+      "status": "inventoried"
+    },
+    {
       "id": "lib/features/books/presentation/screens/book_reader_screen.dart::_BookReaderScreenState::showModalBottomSheet::0",
       "path": "lib/features/books/presentation/screens/book_reader_screen.dart",
       "entryPoint": "overlay",

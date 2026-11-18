@@ -8,16 +8,16 @@ import '../../../../core/theme/app_theme.dart';
 import '../providers/book_provider.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
-/// Comprehension quiz screen for a book chapter.
+/// Comprehension quiz for one section of a book (see [QuizSections]).
 ///
 /// Loads quiz questions from the provider, lets user answer one at a time,
 /// then shows score + XP earned on completion.
 ///
 /// Phase 5: Book Reading — skill: gamification.
 class BookQuizScreen extends StatefulWidget {
-  final int chapter;
+  final int section;
 
-  const BookQuizScreen({super.key, required this.chapter});
+  const BookQuizScreen({super.key, required this.section});
 
   @override
   State<BookQuizScreen> createState() => _BookQuizScreenState();
@@ -44,7 +44,7 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
       _selectedAnswer = null;
       _answered = false;
     });
-    context.read<BookProvider>().loadChapterQuiz(widget.chapter);
+    context.read<BookProvider>().loadChapterQuiz(widget.section);
   }
 
   void _selectAnswer(int index) {
@@ -82,8 +82,8 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
           : AppColors.backgroundLight,
       appBar: AppBar(
         title: Text(
-          'books.chapterQuizTitle'.tr(
-            namedArgs: {'chapter': '${widget.chapter}'},
+          'books.sectionQuizTitle'.tr(
+            namedArgs: {'section': '${widget.section}'},
           ),
           style: Theme.of(
             context,

@@ -14,6 +14,7 @@ import '../../domain/entities/book_entities.dart';
 import '../providers/book_provider.dart';
 import '../widgets/bookmark_button.dart';
 import '../widgets/reader_controls.dart';
+import 'book_quiz_screen.dart';
 import 'package:lexilingo_app/core/services/content_time_tracker.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
@@ -38,6 +39,7 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
 
   bool _isCurrentPageBookmarked = false;
   bool _showControls = true;
+  final Set<int> _dismissedQuizSections = {};
 
   @override
   void initState() {
@@ -294,6 +296,32 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
                   child: _buildTopBar(context, provider, settings, textColor),
                 ),
 
+                // ── Section quiz offer ─────────────────────────
+                if (_quizOffer(provider) case final section?)
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 200),
+                    curve: Curves.easeOut,
+                    left: AppSpacing.lg,
+                    right: AppSpacing.lg,
+                    bottom:
+                        MediaQuery.of(context).padding.bottom +
+                        (_showControls ? 88 : AppSpacing.lg),
+                    child: _SectionQuizBanner(
+                      section: section,
+                      onStart: () {
+                        _readingTime.markActive();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => BookQuizScreen(section: section),
+                          ),
+                        );
+                      },
+                      onDismiss: () =>
+                          setState(() => _dismissedQuizSections.add(section)),
+                    ),
+                  ),
+
                 // ── Bottom bar ─────────────────────────────────
                 AnimatedPositioned(
                   duration: const Duration(milliseconds: 200),
@@ -313,6 +341,19 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
         );
       },
     );
+  }
+
+  /// The section whose quiz was just unlocked by reaching this page, if the
+  /// learner has not finished or dismissed it.
+  int? _quizOffer(BookProvider provider) {
+    if (provider.isLoading || provider.pages.isEmpty) return null;
+    final access = provider.quizAccess;
+    final section = access.section;
+    if (access.kind != QuizAccessKind.take || section == null) return null;
+    if (_dismissedQuizSections.contains(section)) return null;
+    final unlock = QuizSections.unlockPage(section, provider.totalPages);
+    final page = provider.currentPage;
+    return page >= unlock && page <= unlock + 1 ? section : null;
   }
 
   Widget _buildPage(
@@ -543,6 +584,65 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
       case ReaderTheme.dark:
         return AppColors.readingNightAlt;
     }
+  }
+}
+
+/// Slim, non-blocking prompt shown when a section's quiz unlocks.
+class _SectionQuizBanner extends StatelessWidget {
+  const _SectionQuizBanner({
+    required this.section,
+    required this.onStart,
+    required this.onDismiss,
+  });
+
+  final int section;
+  final VoidCallback onStart;
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Material(
+      color: scheme.surface,
+      elevation: 3,
+      shadowColor: scheme.shadow.withValues(alpha: 0.2),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.xs,
+          AppSpacing.xs,
+          AppSpacing.xs,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                'books.sectionQuizReady'.tr(namedArgs: {'section': '$section'}),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurface,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            FilledButton(
+              onPressed: onStart,
+              style: FilledButton.styleFrom(minimumSize: const Size(44, 44)),
+              child: Text('books.startQuiz'.tr()),
+            ),
+            IconButton(
+              onPressed: onDismiss,
+              tooltip: 'common.close'.tr(),
+              style: IconButton.styleFrom(minimumSize: const Size.square(44)),
+              icon: Icon(Icons.close_rounded, color: scheme.onSurfaceVariant),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

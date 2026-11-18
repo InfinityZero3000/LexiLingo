@@ -315,20 +315,47 @@ class _Actions extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.md),
         _downloadButton(context),
-        if (started) ...[
-          const SizedBox(height: AppSpacing.md),
-          OutlinedButton.icon(
-            icon: const Icon(PhosphorIconsBold.exam),
-            label: Text('books.chapterQuiz'.tr()),
-            style: _outlined(context),
-            onPressed: () => Navigator.push(
+        const SizedBox(height: AppSpacing.md),
+        _quizButton(context),
+      ],
+    );
+  }
+
+  Widget _quizButton(BuildContext context) {
+    final access = provider.quizAccess;
+    final section = access.section;
+    final locked = access.kind == QuizAccessKind.locked;
+    final button = OutlinedButton.icon(
+      icon: const Icon(PhosphorIconsBold.exam),
+      label: Text(
+        (access.kind == QuizAccessKind.review
+                ? 'books.reviewSection'
+                : 'books.sectionQuiz')
+            .tr(namedArgs: {'section': '${section ?? 1}'}),
+      ),
+      style: _outlined(context),
+      onPressed: locked
+          ? null
+          : () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => const BookQuizScreen(chapter: 1),
+                builder: (_) => BookQuizScreen(section: section!),
               ),
             ),
-          ),
-        ],
+    );
+    if (!locked) return button;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        button,
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          'books.quizLockedHint'.tr(),
+          textAlign: TextAlign.center,
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: contentMuted(context)),
+        ),
       ],
     );
   }

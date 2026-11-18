@@ -113,6 +113,12 @@ class UserBook {
   final double readingProgress; // 0.0 – 1.0
   final DateTime? lastReadAt;
 
+  /// Furthest page ever reached; going back a page must not re-lock a quiz.
+  final int furthestPage;
+
+  /// Quiz sections (1-based) the learner has finished.
+  final List<int> quizSectionsDone;
+
   const UserBook({
     required this.bookId,
     this.currentChapter = 1,
@@ -120,6 +126,8 @@ class UserBook {
     this.totalPages = 0,
     this.readingProgress = 0.0,
     this.lastReadAt,
+    this.furthestPage = 0,
+    this.quizSectionsDone = const [],
   });
 
   UserBook copyWith({
@@ -128,6 +136,8 @@ class UserBook {
     int? totalPages,
     double? readingProgress,
     DateTime? lastReadAt,
+    int? furthestPage,
+    List<int>? quizSectionsDone,
   }) => UserBook(
     bookId: bookId,
     currentChapter: currentChapter ?? this.currentChapter,
@@ -135,6 +145,8 @@ class UserBook {
     totalPages: totalPages ?? this.totalPages,
     readingProgress: readingProgress ?? this.readingProgress,
     lastReadAt: lastReadAt ?? this.lastReadAt,
+    furthestPage: furthestPage ?? this.furthestPage,
+    quizSectionsDone: quizSectionsDone ?? this.quizSectionsDone,
   );
 
   Map<String, dynamic> toJson() => {
@@ -144,6 +156,8 @@ class UserBook {
     'total_pages': totalPages,
     'reading_progress': readingProgress,
     'last_read_at': lastReadAt?.toIso8601String(),
+    'furthest_page': furthestPage,
+    'quiz_sections_done': quizSectionsDone,
   };
 
   factory UserBook.fromJson(Map<String, dynamic> json) => UserBook(
@@ -155,6 +169,15 @@ class UserBook {
     lastReadAt: json['last_read_at'] != null
         ? DateTime.tryParse(json['last_read_at'] as String)
         : null,
+    // Progress saved before furthestPage existed only knows its current page.
+    furthestPage:
+        (json['furthest_page'] as num?)?.toInt() ??
+        (json['current_page'] as num?)?.toInt() ??
+        0,
+    quizSectionsDone: [
+      for (final v in (json['quiz_sections_done'] as List<dynamic>? ?? []))
+        if (v is num) v.toInt(),
+    ],
   );
 }
 
