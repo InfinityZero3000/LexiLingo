@@ -2729,6 +2729,8 @@
       "to": "To: {}",
       "unlimited": "No limit",
       "needTitleImage": "A title and an image URL are required.",
+      "endBeforeStart": "结束日期必须晚于开始日期。",
+      "minAboveMax": "最低等级不能高于最高等级。",
       "anyLanguage": "any language",
       "anyLevel": "any level",
       "priorityChip": "priority {}",

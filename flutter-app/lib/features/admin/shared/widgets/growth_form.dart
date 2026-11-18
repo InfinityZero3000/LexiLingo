@@ -12,12 +12,17 @@ class GrowthFormSheet extends StatelessWidget {
     required this.children,
     required this.onSave,
     this.saving = false,
+    this.error,
   });
 
   final String title;
   final List<Widget> children;
   final VoidCallback onSave;
   final bool saving;
+
+  /// Shown above the save button: a SnackBar raised from inside a modal sheet
+  /// renders behind it.
+  final String? error;
 
   @override
   Widget build(BuildContext context) {
@@ -38,6 +43,16 @@ class GrowthFormSheet extends StatelessWidget {
               const SizedBox(height: AppSpacing.lg),
               ...children,
               const SizedBox(height: AppSpacing.sm),
+              if (error != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                  child: Text(
+                    error!,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.error,
+                    ),
+                  ),
+                ),
               SizedBox(
                 height: kMinTapTarget + 4,
                 child: FilledButton(

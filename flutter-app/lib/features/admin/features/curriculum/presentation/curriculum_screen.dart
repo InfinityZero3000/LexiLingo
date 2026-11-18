@@ -54,6 +54,7 @@ class _CurriculumScreenState extends State<CurriculumScreen> {
     var published = course?.isPublished ?? false;
     final saved = await showAdminFormSheet(
       context,
+      controllers: [title, description, language, tags, thumbnail],
       title: course == null
           ? 'admin.courses.new'.tr()
           : 'admin.courses.edit'.tr(),

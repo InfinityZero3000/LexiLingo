@@ -31,11 +31,24 @@ class GrowthStateBody extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!hasData && isLoading) return const SkeletonList();
     if (!hasData && error != null) {
-      return AdminErrorView(error: error!, onRetry: onRetry);
+      return _scrollable(AdminErrorView(error: error!, onRetry: onRetry));
     }
     if (!hasData) {
-      return EmptyStateWidget(icon: emptyIcon, title: emptyTitleKey.tr());
+      return _scrollable(
+        EmptyStateWidget(icon: emptyIcon, title: emptyTitleKey.tr()),
+      );
     }
     return builder(context);
   }
+
+  /// Keeps pull-to-refresh working when there is nothing to scroll.
+  Widget _scrollable(Widget child) => LayoutBuilder(
+    builder: (context, constraints) => SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minHeight: constraints.maxHeight),
+        child: Center(child: child),
+      ),
+    ),
+  );
 }

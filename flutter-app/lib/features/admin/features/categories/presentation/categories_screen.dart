@@ -45,6 +45,7 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
     var active = category?.isActive ?? true;
     final saved = await showAdminFormSheet(
       context,
+      controllers: [name, slug, description, icon, color, order],
       title: category == null
           ? 'admin.categories.new'.tr()
           : 'admin.categories.edit'.tr(),

@@ -80,6 +80,7 @@ class _UnitsLessonsScreenState extends State<UnitsLessonsScreen> {
     var skill = _skills.contains(lesson?.skill) ? (lesson?.skill ?? '') : '';
     final saved = await showAdminFormSheet(
       context,
+      controllers: [title, description, outcome, xp, threshold, minutes],
       title: lesson == null
           ? 'admin.lessons.new'.tr()
           : 'admin.lessons.edit'.tr(),

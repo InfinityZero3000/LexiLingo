@@ -64,10 +64,41 @@ class _AdsScreenState extends State<AdsScreen> {
     }
   }
 
-  Future<void> _toggle(BannerItem item) => _write(
-    () => _repo.setActive(item.id, !item.isActive),
-    'adminGrowth.common.updateFailed',
-  );
+  final _toggling = <String>{};
+
+  Future<void> _toggle(BannerItem item) async {
+    if (!_toggling.add(item.id)) return;
+    final next = !item.isActive;
+    _setActive(item.id, next);
+    try {
+      await _repo.setActive(item.id, next);
+    } catch (e) {
+      _setActive(item.id, !next);
+      final api = AdminApiError.from(e);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              api.isForbidden
+                  ? api.message.resolve()
+                  : 'adminGrowth.common.updateFailed'.tr(),
+            ),
+          ),
+        );
+      }
+    } finally {
+      _toggling.remove(item.id);
+    }
+  }
+
+  void _setActive(String id, bool active) {
+    if (!mounted) return;
+    setState(() {
+      _banners = [
+        for (final b in _banners) b.id == id ? b.copyWith(isActive: active) : b,
+      ];
+    });
+  }
 
   Future<void> _form([BannerItem? item]) async {
     final payload = await showModalBottomSheet<Map<String, dynamic>>(
@@ -249,7 +280,7 @@ class _BannerFormState extends State<BannerForm> {
   late String position, minLevel, maxLevel;
   late bool active;
   DateTime? startAt, endAt;
-  bool _missing = false;
+  String? _problem;
 
   @override
   void initState() {
@@ -285,13 +316,15 @@ class _BannerFormState extends State<BannerForm> {
   }
 
   Future<void> _pickDate(bool isStart) async {
+    final current = (isStart ? startAt : endAt) ?? DateTime.now();
+    final firstDate = DateTime(2020);
     final picked = await showDatePicker(
       context: context,
-      initialDate: (isStart ? startAt : endAt) ?? DateTime.now(),
-      firstDate: DateTime(2020),
+      initialDate: current.isBefore(firstDate) ? firstDate : current,
+      firstDate: firstDate,
       lastDate: DateTime(2100),
     );
-    if (picked == null) return;
+    if (picked == null || !mounted) return;
     setState(() => isStart ? startAt = picked : endAt = picked);
   }
 
@@ -303,8 +336,20 @@ class _BannerFormState extends State<BannerForm> {
       c.text.trim().isEmpty ? null : c.text.trim();
 
   void _save() {
+    final lo = _kLevels.indexOf(minLevel);
+    final hi = _kLevels.indexOf(maxLevel);
+    final String? problem;
     if (title.text.trim().isEmpty || imageUrl.text.trim().isEmpty) {
-      setState(() => _missing = true);
+      problem = 'adminGrowth.ads.needTitleImage'.tr();
+    } else if (startAt != null && endAt != null && endAt!.isBefore(startAt!)) {
+      problem = 'adminGrowth.ads.endBeforeStart'.tr();
+    } else if (lo > 0 && hi > 0 && lo > hi) {
+      problem = 'adminGrowth.ads.minAboveMax'.tr();
+    } else {
+      problem = null;
+    }
+    if (problem != null) {
+      setState(() => _problem = problem);
       return;
     }
     Navigator.pop(context, {
@@ -421,11 +466,11 @@ class _BannerFormState extends State<BannerForm> {
           value: active,
           onChanged: (v) => setState(() => active = v),
         ),
-        if (_missing)
+        if (_problem != null)
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.sm),
             child: Text(
-              'adminGrowth.ads.needTitleImage'.tr(),
+              _problem!,
               style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           ),

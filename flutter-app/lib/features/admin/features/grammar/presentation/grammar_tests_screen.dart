@@ -44,6 +44,7 @@ class _GrammarTestsScreenState extends State<GrammarTestsScreen> {
     var active = rule?.isActive ?? true;
     final saved = await showAdminFormSheet(
       context,
+      controllers: [title, topic, summary, content, tags],
       title: rule == null
           ? 'admin.grammar.new'.tr()
           : 'admin.grammar.edit'.tr(),

@@ -2729,6 +2729,8 @@
       "to": "Đến: {}",
       "unlimited": "Không giới hạn",
       "needTitleImage": "Cần có tiêu đề và URL hình ảnh.",
+      "endBeforeStart": "Ngày kết thúc phải sau ngày bắt đầu.",
+      "minAboveMax": "Trình độ tối thiểu không được cao hơn trình độ tối đa.",
       "anyLanguage": "mọi ngôn ngữ",
       "anyLevel": "mọi trình độ",
       "priorityChip": "ưu tiên {}",

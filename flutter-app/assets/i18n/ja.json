@@ -2729,6 +2729,8 @@
       "to": "To: {}",
       "unlimited": "No limit",
       "needTitleImage": "A title and an image URL are required.",
+      "endBeforeStart": "終了日は開始日より後にしてください。",
+      "minAboveMax": "最低レベルは最高レベルより高くできません。",
       "anyLanguage": "any language",
       "anyLevel": "any level",
       "priorityChip": "priority {}",
