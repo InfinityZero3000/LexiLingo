@@ -1,7 +1,9 @@
 {
   "version": 2,
   "framework": null,
-  "ignoreCommand": "exit 0",
+  "git": {
+    "deploymentEnabled": false
+  },
   "buildCommand": "cd flutter-app && npm run vercel-build",
   "outputDirectory": "flutter-app/build/web",
   "rewrites": [

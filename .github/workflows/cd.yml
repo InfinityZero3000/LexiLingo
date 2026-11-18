@@ -3,7 +3,11 @@ name: CD
 on:
   push:
     branches: [dev]
-  # Redeploy by hand, e.g. after Vercel's daily deployment limit held back earlier pushes.
+  # By hand: redeploy production after Vercel's daily limit held a push back, or build a
+  # preview of any branch (`gh workflow run cd.yml --ref <branch> -f environment=preview`).
+  # Vercel's Git integration is off (vercel.json `git.deploymentEnabled: false`): every PR
+  # push created a preview, cancelled or not, and those used up the Hobby plan's 100
+  # deployments a day. This workflow is the only deploy path.
   workflow_dispatch:
     inputs:
       target:
@@ -11,13 +15,18 @@ on:
         type: choice
         options: [both, web, admin]
         default: both
+      environment:
+        description: "production deploys only from dev; preview works from any branch"
+        type: choice
+        options: [production, preview]
+        default: production
 
 # Deploys go out through the Vercel CLI with repository secrets; the GITHUB_TOKEN only checks out.
 permissions:
   contents: read
 
 concurrency:
-  group: cd-${{ github.ref }}
+  group: cd-${{ github.ref }}-${{ inputs.environment || 'production' }}
   cancel-in-progress: true
 
 jobs:
@@ -30,6 +39,8 @@ jobs:
     outputs:
       web: ${{ steps.diff.outputs.web }}
       admin: ${{ steps.diff.outputs.admin }}
+      vercel_env: ${{ steps.diff.outputs.vercel_env }}
+      prod_flag: ${{ steps.diff.outputs.prod_flag }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -38,7 +49,14 @@ jobs:
         env:
           BEFORE: ${{ github.event.before }}
           TARGET: ${{ inputs.target }}
+          ENVIRONMENT: ${{ inputs.environment || 'production' }}
         run: |
+          if [ "$ENVIRONMENT" = production ] && [ "$GITHUB_REF" != refs/heads/dev ]; then
+            echo "::error::Production deploys only from dev (got $GITHUB_REF). Use environment=preview."
+            exit 1
+          fi
+          echo "vercel_env=$ENVIRONMENT" >> "$GITHUB_OUTPUT"
+          if [ "$ENVIRONMENT" = production ]; then echo "prod_flag=--prod" >> "$GITHUB_OUTPUT"; fi
           if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
             [ "$TARGET" != admin ] && echo "web=true" >> "$GITHUB_OUTPUT"
             [ "$TARGET" != web ] && echo "admin=true" >> "$GITHUB_OUTPUT"
@@ -152,21 +170,26 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FLUTTER }}
-        run: vercel pull --yes --environment=production --token "$VERCEL_TOKEN"
+          VERCEL_ENVIRONMENT: ${{ needs.changes.outputs.vercel_env }}
+        run: vercel pull --yes --environment="$VERCEL_ENVIRONMENT" --token "$VERCEL_TOKEN"
 
       - name: Build Vercel prebuilt output
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FLUTTER }}
-        run: vercel build --prod --token "$VERCEL_TOKEN"
+          PROD_FLAG: ${{ needs.changes.outputs.prod_flag }}
+        run: vercel build ${PROD_FLAG:+"$PROD_FLAG"} --token "$VERCEL_TOKEN"
 
       - name: Deploy to Vercel (prebuilt)
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FLUTTER }}
-        run: vercel deploy --prebuilt --prod --token "$VERCEL_TOKEN"
+          PROD_FLAG: ${{ needs.changes.outputs.prod_flag }}
+        run: |
+          url="$(vercel deploy --prebuilt ${PROD_FLAG:+"$PROD_FLAG"} --token "$VERCEL_TOKEN")"
+          echo "Deployed: $url" | tee -a "$GITHUB_STEP_SUMMARY"
 
   # ──────────────────────────────────────────────
   # Admin Dashboard → Vercel
@@ -207,21 +230,26 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
-        run: vercel pull --yes --environment=production --token "$VERCEL_TOKEN"
+          VERCEL_ENVIRONMENT: ${{ needs.changes.outputs.vercel_env }}
+        run: vercel pull --yes --environment="$VERCEL_ENVIRONMENT" --token "$VERCEL_TOKEN"
 
       - name: Build Vercel prebuilt output
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
-        run: vercel build --prod --token "$VERCEL_TOKEN"
+          PROD_FLAG: ${{ needs.changes.outputs.prod_flag }}
+        run: vercel build ${PROD_FLAG:+"$PROD_FLAG"} --token "$VERCEL_TOKEN"
 
       - name: Deploy to Vercel (prebuilt)
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
-        run: vercel deploy --prebuilt --prod --token "$VERCEL_TOKEN"
+          PROD_FLAG: ${{ needs.changes.outputs.prod_flag }}
+        run: |
+          url="$(vercel deploy --prebuilt ${PROD_FLAG:+"$PROD_FLAG"} --token "$VERCEL_TOKEN")"
+          echo "Deployed: $url" | tee -a "$GITHUB_STEP_SUMMARY"
 
   # Backend and ai-service images are built by the `images` job in ci.yml,
   # after the tests pass, and deployed by scripts/auto-deploy.sh on the VPS.
