@@ -2251,6 +2251,8 @@
     }
   },
   "ielts": {
+    "passageTab": "지문",
+    "questionsTab": "문제",
     "sourceLine": "출처:",
     "licensedUnder": "라이선스:",
     "adaptedNotice": "원문을 수정했습니다.",

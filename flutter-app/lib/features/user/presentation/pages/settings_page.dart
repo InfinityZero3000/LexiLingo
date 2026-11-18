@@ -40,6 +40,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _loadSettings() async {
+    if (!mounted) return;
     final authProvider = context.read<AuthProvider>();
     if (authProvider.currentUser != null) {
       await context.read<SettingsProvider>().loadSettings(
@@ -203,22 +204,24 @@ class _SettingsPageState extends State<SettingsPage> {
       padding: const EdgeInsets.only(left: AppSpacing.xs),
       child: Row(
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              Text(
-                subtitle,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColorRoles.textMuted(isDark),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-            ],
+                Text(
+                  subtitle,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColorRoles.textMuted(isDark),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -450,13 +453,14 @@ class _SettingsPageState extends State<SettingsPage> {
               const Divider(),
               InkWell(
                 onTap: () async {
+                  final parts = settings.notificationTime.split(':');
                   final time = await showTimePicker(
                     context: context,
                     initialTime: TimeOfDay(
-                      hour: int.parse(settings.notificationTime.split(':')[0]),
-                      minute: int.parse(
-                        settings.notificationTime.split(':')[1],
-                      ),
+                      hour: int.tryParse(parts.first) ?? 9,
+                      minute: parts.length > 1
+                          ? int.tryParse(parts[1]) ?? 0
+                          : 0,
                     ),
                   );
                   if (time != null) {

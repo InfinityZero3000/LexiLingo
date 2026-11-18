@@ -2251,6 +2251,8 @@
     }
   },
   "ielts": {
+    "passageTab": "Texte",
+    "questionsTab": "Questions",
     "sourceLine": "Source :",
     "licensedUnder": "Sous licence",
     "adaptedNotice": "Adapté du texte original.",

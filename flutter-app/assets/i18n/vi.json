@@ -2251,6 +2251,8 @@
     }
   },
   "ielts": {
+    "passageTab": "Bài đọc",
+    "questionsTab": "Câu hỏi",
     "sourceLine": "Nguồn:",
     "licensedUnder": "Cấp phép theo",
     "adaptedNotice": "Đã được chuyển thể từ văn bản gốc.",

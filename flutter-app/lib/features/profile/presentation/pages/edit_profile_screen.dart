@@ -777,7 +777,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     final urlController = TextEditingController(
       text: _avatarUrlController.text,
     );
-    showDialog(
+    final closed = showDialog<void>(
       context: context,
       builder: (context) {
         return AlertDialog(
@@ -830,6 +830,12 @@ class _EditProfileScreenState extends State<EditProfileScreen>
         );
       },
     );
+    // The route's future completes when pop starts; the field is still on
+    // screen for the exit transition, so dispose only after it has played.
+    closed.whenComplete(() async {
+      await Future<void>.delayed(const Duration(milliseconds: 400));
+      urlController.dispose();
+    });
   }
 
   Widget _buildSectionLabel(String label) {

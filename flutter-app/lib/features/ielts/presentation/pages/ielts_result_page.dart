@@ -37,31 +37,21 @@ String _criterionLabel(String key) => switch (key) {
 /// call each — so this screen shows partial results rather than waiting.
 class IeltsResultPage extends StatelessWidget {
   final String attemptId;
-  final IeltsProvider? existingProvider;
 
-  const IeltsResultPage({
-    super.key,
-    required this.attemptId,
-    this.existingProvider,
-  });
+  const IeltsResultPage({super.key, required this.attemptId});
 
   @override
   Widget build(BuildContext context) {
-    if (existingProvider != null) {
-      return ChangeNotifierProvider<IeltsProvider>.value(
-        value: existingProvider!,
-        child: const _ResultView(),
-      );
-    }
     return ChangeNotifierProvider<IeltsProvider>(
       create: (_) => sl<IeltsProvider>()..openResult(attemptId),
-      child: const _ResultView(),
+      child: _ResultView(attemptId: attemptId),
     );
   }
 }
 
 class _ResultView extends StatelessWidget {
-  const _ResultView();
+  final String attemptId;
+  const _ResultView({required this.attemptId});
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +73,28 @@ class _ResultView extends StatelessWidget {
       body: ContentWidth(
         maxWidth: ContentWidth.reading,
         child: result == null
-            ? const Center(child: CircularProgressIndicator())
+            ? (provider.error != null && !provider.isLoading
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(AppSpacing.xl),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              provider.error!,
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                            const SizedBox(height: AppSpacing.lg),
+                            FilledButton(
+                              onPressed: () => provider.openResult(attemptId),
+                              child: Text('common.retry'.tr()),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : const Center(child: CircularProgressIndicator()))
             : ListView(
                 padding: const EdgeInsets.all(16),
                 children: [

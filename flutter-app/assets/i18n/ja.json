@@ -2251,6 +2251,8 @@
     }
   },
   "ielts": {
+    "passageTab": "本文",
+    "questionsTab": "設問",
     "sourceLine": "出典:",
     "licensedUnder": "ライセンス:",
     "adaptedNotice": "原文を改変しています。",

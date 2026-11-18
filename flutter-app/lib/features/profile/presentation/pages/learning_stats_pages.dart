@@ -299,6 +299,7 @@ class _StatsPageScaffoldState extends State<_StatsPageScaffold> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       final profileProvider = context.read<ProfileProvider>();
       final progressProvider = context.read<ProgressProvider>();
 

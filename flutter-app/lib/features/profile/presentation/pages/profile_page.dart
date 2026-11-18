@@ -45,6 +45,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _loadData() async {
+    if (!mounted) return;
     final authProvider = context.read<AuthProvider>();
     final levelProvider = context.read<LevelProvider>();
     final progressProvider = context.read<ProgressProvider>();

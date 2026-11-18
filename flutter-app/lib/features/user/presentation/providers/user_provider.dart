@@ -1,4 +1,6 @@
+import 'package:dartz/dartz.dart';
 import 'package:flutter/foundation.dart';
+import 'package:lexilingo_app/core/error/failures.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/entities/settings.dart';
 import '../../domain/entities/daily_goal.dart';
@@ -83,13 +85,14 @@ class UserProvider with ChangeNotifier {
       ]);
 
       _user = results[0] as User?;
-      _settings = results[1] as Settings?;
-
-      // Extract DailyGoal from Either result
-      final goalResult = results[2];
-      if (goalResult is DailyGoal?) {
-        _todayGoal = goalResult;
-      }
+      (results[1] as Either<Failure, Settings>).fold(
+        (failure) => _errorMessage = failure.message,
+        (settings) => _settings = settings,
+      );
+      (results[2] as Either<Failure, DailyGoal?>).fold(
+        (failure) => _errorMessage = failure.message,
+        (goal) => _todayGoal = goal,
+      );
 
       _currentStreak = results[3] as int;
 
