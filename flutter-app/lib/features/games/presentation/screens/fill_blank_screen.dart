@@ -186,13 +186,11 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
     final game = context.read<GamesProvider>().fillBlank!;
     final q = game.questions[_questionIndex];
     var correct = q.options[index] == q.correctAnswer;
-    var rescued = false;
     if (!correct && _luckyCloverActive && _random.nextDouble() < 0.3) {
       correct = true;
-      rescued = true;
       _luckyCloverActive = false;
     }
-    _submittedAnswers[q.id] = rescued ? q.correctAnswer : q.options[index];
+    _submittedAnswers[q.id] = q.options[index];
     if (correct) _correctCount++;
     setState(() {
       _selectedIndex = index;

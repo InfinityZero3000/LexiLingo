@@ -98,7 +98,7 @@ class _BookQuizScreenState extends State<BookQuizScreen> {
           builder: (context, provider, _) {
             // Until the load has begun the provider still holds the previous
             // chapter's quiz, which would flash as this chapter's.
-            if (!_requested || provider.isLoading) {
+            if (!_requested || provider.isQuizLoading) {
               return const Center(child: LottieLoadingWidget.medium());
             }
 

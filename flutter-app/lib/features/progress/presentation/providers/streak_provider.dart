@@ -21,6 +21,7 @@ class StreakProvider extends ChangeNotifier {
   }
 
   int _generation = 0;
+  Future<void>? _streakLoad;
   bool _disposed = false;
 
   @override
@@ -77,7 +78,17 @@ class StreakProvider extends ChangeNotifier {
   bool get hasStreak => _streak != null;
 
   /// Load current user's streak
-  Future<void> loadStreak() async {
+  Future<void> loadStreak() {
+    final inFlight = _streakLoad;
+    if (inFlight != null) return inFlight;
+    final run = _loadStreak();
+    _streakLoad = run;
+    return run.whenComplete(() {
+      if (identical(_streakLoad, run)) _streakLoad = null;
+    });
+  }
+
+  Future<void> _loadStreak() async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -288,6 +299,7 @@ class StreakProvider extends ChangeNotifier {
   /// Reset state (for logout)
   void reset() {
     _generation++;
+    _streakLoad = null;
     _streak = null;
     _isLoading = false;
     _errorMessage = null;

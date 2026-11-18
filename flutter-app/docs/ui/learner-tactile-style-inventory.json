@@ -22397,6 +22397,32 @@
       "status": "inventoried"
     },
     {
+      "id": "lib/features/vocabulary/presentation/pages/vocab_library_page.dart::_CreateDeckDialogState::BoxDecoration::0",
+      "path": "lib/features/vocabulary/presentation/pages/vocab_library_page.dart",
+      "entryPoint": "surface",
+      "symbol": "_CreateDeckDialogState",
+      "callKind": "BoxDecoration",
+      "ordinal": 0,
+      "line": 1628,
+      "category": "eligible",
+      "group": 5,
+      "status": "inventoried",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
       "id": "lib/features/vocabulary/presentation/pages/vocab_library_page.dart::_AddWordSheetState::BoxDecoration::0",
       "path": "lib/features/vocabulary/presentation/pages/vocab_library_page.dart",
       "entryPoint": "surface",

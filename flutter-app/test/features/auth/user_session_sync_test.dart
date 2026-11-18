@@ -10,6 +10,7 @@ import 'package:lexilingo_app/features/course/domain/usecases/get_courses_usecas
 import 'package:lexilingo_app/features/course/domain/usecases/get_enrolled_courses_usecase.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/level_provider.dart';
+import 'package:lexilingo_app/features/progress/domain/entities/content_activity_entity.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/streak_entity.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/user_progress_entity.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/weekly_progress_entity.dart';
@@ -17,6 +18,7 @@ import 'package:lexilingo_app/features/progress/domain/repositories/progress_rep
 import 'package:lexilingo_app/features/progress/domain/usecases/get_my_progress_usecase.dart';
 import 'package:lexilingo_app/features/progress/domain/usecases/get_course_progress_usecase.dart';
 import 'package:lexilingo_app/features/progress/domain/usecases/get_weekly_progress_usecase.dart';
+import 'package:lexilingo_app/features/progress/presentation/providers/content_activity_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/progress_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
 import 'package:provider/provider.dart';
@@ -25,6 +27,19 @@ class _Repository extends Fake implements ProgressRepository {
   int weeklyCalls = 0;
   int streakCalls = 0;
   Completer<void>? gate;
+
+  @override
+  Future<Either<Failure, ContentActivityEntity>> getContentActivity({
+    int days = 7,
+  }) async => const Right(
+    ContentActivityEntity(
+      days: 7,
+      totalMinutes: 42,
+      totalSessions: 3,
+      totalXp: 30,
+      bySource: [],
+    ),
+  );
 
   @override
   Future<Either<Failure, WeeklyProgressEntity>> getWeeklyProgress() async {
@@ -102,6 +117,7 @@ void main() {
   late StreakProvider streak;
   late HomeProvider home;
   late LevelProvider level;
+  late ContentActivityProvider content;
   late BuildContext context;
 
   Future<void> pumpScope(WidgetTester tester) async {
@@ -112,6 +128,7 @@ void main() {
           ChangeNotifierProvider.value(value: streak),
           ChangeNotifierProvider.value(value: home),
           ChangeNotifierProvider.value(value: level),
+          ChangeNotifierProvider.value(value: content),
         ],
         child: Builder(
           builder: (c) {
@@ -137,6 +154,7 @@ void main() {
       getWeeklyProgressUseCase: GetWeeklyProgressUseCase(repository),
     );
     level = LevelProvider(apiClient: api);
+    content = ContentActivityProvider(repository: repository);
   });
 
   testWidgets('signing in loads streak, weekly progress and level', (
@@ -192,5 +210,45 @@ void main() {
     await pending;
 
     expect(progress.summary, isNull);
+  });
+
+  testWidgets('signing out clears the previous learner content minutes', (
+    tester,
+  ) async {
+    await pumpScope(tester);
+    await content.load();
+    expect(content.activity.totalMinutes, 42);
+
+    UserSessionSync.afterSignOut(context);
+
+    expect(content.activity.totalMinutes, 0);
+    expect(content.activity.isEmpty, isTrue);
+  });
+
+  testWidgets('a content response that lands after sign-out is dropped', (
+    tester,
+  ) async {
+    await pumpScope(tester);
+
+    final pending = content.load();
+    UserSessionSync.afterSignOut(context);
+    await pending;
+
+    expect(content.activity.totalMinutes, 0);
+  });
+
+  testWidgets('overlapping streak and level loads share one request', (
+    tester,
+  ) async {
+    await pumpScope(tester);
+
+    await Future.wait([
+      UserSessionSync.afterSignIn(context),
+      streak.loadStreak(),
+      level.fetchLevelFull(),
+    ]);
+
+    expect(repository.streakCalls, 1);
+    expect(api.calls, 1);
   });
 }

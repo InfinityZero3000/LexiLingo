@@ -18,6 +18,7 @@ class ContentActivityProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _errorMessage;
   int _days = 7;
+  int _generation = 0;
 
   ContentActivityEntity get activity => _activity;
   bool get isLoading => _isLoading;
@@ -41,7 +42,9 @@ class ContentActivityProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    final generation = _generation;
     final result = await _repository.getContentActivity(days: days);
+    if (generation != _generation) return;
     result.fold(
       (failure) {
         _errorMessage = failure.message;
@@ -54,5 +57,14 @@ class ContentActivityProvider extends ChangeNotifier {
         notifyListeners();
       },
     );
+  }
+
+  void reset() {
+    _generation++;
+    _activity = ContentActivityEntity.empty;
+    _isLoading = false;
+    _errorMessage = null;
+    _days = 7;
+    notifyListeners();
   }
 }

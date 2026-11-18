@@ -19,9 +19,13 @@ class PurchasesService {
     required String? androidApiKey,
   }) async {
     if (kIsWeb) return;
-    final key = defaultTargetPlatform == TargetPlatform.iOS ? iosApiKey : androidApiKey;
+    final key = defaultTargetPlatform == TargetPlatform.iOS
+        ? iosApiKey
+        : androidApiKey;
     if (key == null || key.isEmpty) {
-      debugPrint('PurchasesService: no API key for ${defaultTargetPlatform.name}; skipping init');
+      debugPrint(
+        'PurchasesService: no API key for ${defaultTargetPlatform.name}; skipping init',
+      );
       return;
     }
     try {

@@ -6,6 +6,7 @@ import 'dart:typed_data';
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/utils/dispose_after_route.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
@@ -832,10 +833,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
     );
     // The route's future completes when pop starts; the field is still on
     // screen for the exit transition, so dispose only after it has played.
-    closed.whenComplete(() async {
-      await Future<void>.delayed(const Duration(milliseconds: 400));
-      urlController.dispose();
-    });
+    closed.whenComplete(() => disposeAfterRoute([urlController]));
   }
 
   Widget _buildSectionLabel(String label) {

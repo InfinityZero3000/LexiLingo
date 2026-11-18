@@ -3,10 +3,8 @@ import 'package:easy_localization/easy_localization.dart';
 import '../../../ielts/presentation/pages/ielts_tests_page.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
-import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/core/navigation/learner_route.dart';
-import 'package:lexilingo_app/core/services/entitlement_service.dart';
-import 'package:lexilingo_app/core/services/purchases_service.dart';
+import 'package:lexilingo_app/core/services/premium_status.dart';
 import 'package:lexilingo_app/features/premium/presentation/screens/paywall_screen.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/proficiency_provider.dart';
 import 'package:lexilingo_app/features/practice/presentation/widgets/practice_lab_models.dart';
@@ -43,9 +41,7 @@ class _PracticeLabPageState extends State<PracticeLabPage> {
 
   Future<void> _loadPremiumStatus() async {
     try {
-      final isPremium = sl.isRegistered<EntitlementService>()
-          ? await sl<EntitlementService>().fetchCached()
-          : await PurchasesService.instance.isPremium;
+      final isPremium = await resolvePremium();
       if (!mounted || isPremium == _hasPremium) return;
       setState(() => _hasPremium = isPremium);
     } catch (_) {

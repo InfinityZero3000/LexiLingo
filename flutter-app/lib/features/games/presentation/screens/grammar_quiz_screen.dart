@@ -192,13 +192,11 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
     final game = context.read<GamesProvider>().grammarQuiz!;
     final q = game.questions[_questionIndex];
     var correct = q.options[index] == q.correctAnswer;
-    var rescued = false;
     if (!correct && _luckyCloverActive && _random.nextDouble() < 0.3) {
       correct = true;
-      rescued = true;
       _luckyCloverActive = false;
     }
-    _submittedAnswers[q.id] = rescued ? q.correctAnswer : q.options[index];
+    _submittedAnswers[q.id] = q.options[index];
     if (correct) _correctCount++;
     _recordTopic(q.topic, correct);
     final masteryMsg = _buildMasteryMessage(q.topic);

@@ -9,6 +9,7 @@ class LevelProvider with ChangeNotifier {
   LevelProvider({required ApiClient apiClient}) : _apiClient = apiClient;
 
   int _generation = 0;
+  Future<void>? _levelLoad;
   LevelStatus _levelStatus = LevelStatus.empty();
   bool _isLoading = false;
   String? _errorMessage;
@@ -215,6 +216,7 @@ class LevelProvider with ChangeNotifier {
   /// Reset to initial state
   void reset() {
     _generation++;
+    _levelLoad = null;
     _certifiedLevel = 'A1';
     _levelVerified = true;
     _levelStatus = LevelStatus.empty();
@@ -246,7 +248,17 @@ class LevelProvider with ChangeNotifier {
   ///
   /// Requires an [ApiClient] instance (passed in to keep provider loosely
   /// coupled from DI container).
-  Future<void> fetchLevelFull() async {
+  Future<void> fetchLevelFull() {
+    final inFlight = _levelLoad;
+    if (inFlight != null) return inFlight;
+    final run = _fetchLevelFull();
+    _levelLoad = run;
+    return run.whenComplete(() {
+      if (identical(_levelLoad, run)) _levelLoad = null;
+    });
+  }
+
+  Future<void> _fetchLevelFull() async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();

@@ -159,6 +159,8 @@ class BookProvider extends ChangeNotifier {
   int _quizScore = 0;
 
   bool _isLoading = false;
+  bool _isQuizLoading = false;
+  String? _quizError;
   bool _isSearching = false;
   bool _isDownloading = false;
   String? _downloadedPath;
@@ -230,6 +232,8 @@ class BookProvider extends ChangeNotifier {
   int get quizScore => _quizScore;
 
   bool get isLoading => _isLoading;
+  bool get isQuizLoading => _isQuizLoading;
+  String? get quizError => _quizError;
   bool get isSearching => _isSearching;
   bool get isDownloading => _isDownloading;
   String? get downloadedPath => _downloadedPath;
@@ -407,26 +411,30 @@ class BookProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      var text = await _repository.fetchBookText(book);
-
-      // Strip Project Gutenberg header/footer boilerplate
-      text = _stripGutenbergBoilerplate(text);
-
-      // Normalize Gutenberg's plain-text ALL CAPS convention to readable case
-      text = _normalizeGutenbergFormatting(text);
-
-      _bookText = text;
-      _pages = _paginateText(text, charsPerPage: charsPerPage);
-
-      // Restore reading position
-      if (_currentPage >= _pages.length) {
-        _currentPage = 0;
-      }
+      await _loadText(book, charsPerPage);
     } catch (e) {
       _error = e.toString();
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> _loadText(Book book, int charsPerPage) async {
+    var text = await _repository.fetchBookText(book);
+
+    // Strip Project Gutenberg header/footer boilerplate
+    text = _stripGutenbergBoilerplate(text);
+
+    // Normalize Gutenberg's plain-text ALL CAPS convention to readable case
+    text = _normalizeGutenbergFormatting(text);
+
+    _bookText = text;
+    _pages = _paginateText(text, charsPerPage: charsPerPage);
+
+    // Restore reading position
+    if (_currentPage >= _pages.length) {
+      _currentPage = 0;
     }
   }
 
@@ -642,19 +650,19 @@ class BookProvider extends ChangeNotifier {
 
     final token = ++_quizLoadToken;
     _quizSection = section;
-    _isLoading = true;
+    _isQuizLoading = true;
     _currentQuiz = null;
     _quizCompleted = false;
     _quizScore = 0;
-    _error = null;
+    _quizError = null;
     notifyListeners();
 
     try {
       if (_pages.isEmpty) {
-        await loadBookText();
+        await _loadText(book, 2000);
         if (token != _quizLoadToken) return;
         if (_pages.isEmpty) {
-          _error ??= 'Book text unavailable';
+          _quizError = 'Book text unavailable';
           return;
         }
       }
@@ -666,7 +674,7 @@ class BookProvider extends ChangeNotifier {
         ),
       );
       if (excerpt.isEmpty) {
-        _error = 'Section has no text';
+        _quizError = 'Section has no text';
         return;
       }
       final quiz = await _repository.getChapterQuiz(
@@ -679,10 +687,10 @@ class BookProvider extends ChangeNotifier {
       _currentQuiz = quiz;
     } catch (e) {
       if (token != _quizLoadToken) return;
-      _error = e.toString();
+      _quizError = e.toString();
     } finally {
       if (token == _quizLoadToken) {
-        _isLoading = false;
+        _isQuizLoading = false;
         notifyListeners();
       }
     }
@@ -751,9 +759,10 @@ class BookProvider extends ChangeNotifier {
     return options[index];
   }
 
-  /// One XP award per section, ever: /xp/award dedups on this id.
+  /// One XP award per section, ever: /xp/award dedups on this id. Keeps the
+  /// pre-sections `_ch<n>` format so earlier awards still dedup.
   static String quizSourceId(String bookId, int section) =>
-      'book_quiz_${bookId}_part$section';
+      'book_quiz_${bookId}_ch$section';
 
   void completeQuiz() {
     if (_quizCompleted) return;

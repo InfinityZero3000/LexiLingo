@@ -34,8 +34,8 @@ class GoogleSignInService {
             serverClientId: kIsWeb
                 ? null
                 : (dotenv.env['GOOGLE_SERVER_CLIENT_ID']?.isNotEmpty == true
-                    ? dotenv.env['GOOGLE_SERVER_CLIENT_ID']
-                    : null),
+                      ? dotenv.env['GOOGLE_SERVER_CLIENT_ID']
+                      : null),
           );
 
   /// Sign in with Google and return the Firebase ID token.

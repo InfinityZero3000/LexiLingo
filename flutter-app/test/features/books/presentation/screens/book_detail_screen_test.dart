@@ -36,6 +36,9 @@ class _Entitlements implements EntitlementService {
   Future<bool> fetchCached({String entitlementId = 'premium'}) async => premium;
 
   @override
+  Future<bool?> fetchActive({String entitlementId = 'premium'}) async => premium;
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 

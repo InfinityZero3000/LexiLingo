@@ -204,12 +204,31 @@ void main() {
 
       expect(repo.chapters, isEmpty);
       expect(provider.currentQuiz, isNull);
-      expect(provider.error, isNotNull);
+      expect(provider.quizError, isNotNull);
+      expect(provider.error, isNull);
+      expect(provider.isQuizLoading, isFalse);
       expect(provider.isLoading, isFalse);
     });
 
+    test('quiz loading leaves the reader flags alone', () async {
+      final repo = _Repo(text: 'word ' * 6000);
+      final provider = BookProvider(repository: repo);
+      await provider.openBook(_book);
+      final seen = <List<Object?>>[];
+      provider.addListener(
+        () => seen.add([provider.isLoading, provider.isQuizLoading]),
+      );
+
+      await provider.loadChapterQuiz(1);
+
+      expect(seen.every((s) => s[0] == false), isTrue);
+      expect(seen.first[1], isTrue);
+      expect(seen.last[1], isFalse);
+      expect(provider.currentQuiz, isNotNull);
+    });
+
     test('xp source id is per section and completion is remembered', () async {
-      expect(BookProvider.quizSourceId('b1', 2), 'book_quiz_b1_part2');
+      expect(BookProvider.quizSourceId('b1', 2), 'book_quiz_b1_ch2');
       final repo = _Repo(
         text: 'word ' * 6000,
         progress: const UserBook(
@@ -227,7 +246,7 @@ void main() {
       provider.completeQuiz();
       await Future<void>.delayed(Duration.zero);
 
-      expect(repo.awards, ['book_quiz_b1_part1|chapter_quiz']);
+      expect(repo.awards, ['book_quiz_b1_ch1|chapter_quiz']);
       expect(provider.completedQuizSections, {1});
       expect(repo.saved.last.quizSectionsDone, [1]);
     });

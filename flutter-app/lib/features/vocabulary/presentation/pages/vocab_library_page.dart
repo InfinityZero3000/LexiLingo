@@ -567,141 +567,10 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
     BuildContext context,
     VocabProvider vocabProvider,
   ) {
-    final nameController = TextEditingController();
-    final descController = TextEditingController();
-    final List<String> colors = [
-      '#2196F3', // Blue
-      '#4CAF50', // Green
-      '#FF9800', // Orange
-      '#E91E63', // Pink
-      '#9C27B0', // Purple
-      '#9E9E9E', // Grey
-    ];
-    String selectedColor = colors[Random().nextInt(colors.length)];
-    var creating = false;
-
-    showDialog(
+    showDialog<void>(
       context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: Text('vocabulary.createNewDeck'.tr()),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: nameController,
-                      decoration: InputDecoration(
-                        labelText: 'vocabulary.deckName'.tr(),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: descController,
-                      decoration: InputDecoration(
-                        labelText: 'vocabulary.deckDescription'.tr(),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'vocabulary.selectColor'.tr(),
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    // Wrap, not ListView: AlertDialog measures intrinsic width and a viewport cannot answer that.
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: [
-                        for (final colorHex in colors)
-                          GestureDetector(
-                            onTap: () =>
-                                setState(() => selectedColor = colorHex),
-                            child: Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                color: Color(
-                                  int.parse(
-                                    'FF${colorHex.replaceAll('#', '')}',
-                                    radix: 16,
-                                  ),
-                                ),
-                                shape: BoxShape.circle,
-                                border: selectedColor == colorHex
-                                    ? Border.all(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onSurface,
-                                        width: 3,
-                                      )
-                                    : null,
-                              ),
-                              child: selectedColor == colorHex
-                                  ? const Icon(
-                                      Icons.check,
-                                      color: AppColors.textInverted,
-                                      size: 18,
-                                    )
-                                  : null,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text('common.cancel'.tr()),
-                ),
-                ElevatedButton(
-                  onPressed: creating
-                      ? null
-                      : () async {
-                          if (nameController.text.trim().isEmpty) return;
-                          setState(() => creating = true);
-                          final success = await vocabProvider.createDeck(
-                            nameController.text.trim(),
-                            descController.text.trim().isEmpty
-                                ? null
-                                : descController.text.trim(),
-                            selectedColor,
-                          );
-                          if (context.mounted) {
-                            Navigator.pop(context);
-                            if (!success) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    vocabProvider.errorMessage ??
-                                        'vocabulary.createDeckFailed'.tr(),
-                                  ),
-                                  backgroundColor: Theme.of(
-                                    context,
-                                  ).colorScheme.error,
-                                ),
-                              );
-                            }
-                          }
-                        },
-                  child: Text('common.create'.tr()),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    ).whenComplete(() {
-      nameController.dispose();
-      descController.dispose();
-    });
+      builder: (_) => CreateDeckDialog(vocabProvider: vocabProvider),
+    );
   }
 
   void _showDeleteDeckConfirmation(
@@ -1682,3 +1551,145 @@ const List<_TopicConfig> _topics = [
     gradient: [Color(0xFF475569), Color(0xFF1E293B)],
   ),
 ];
+
+@visibleForTesting
+class CreateDeckDialog extends StatefulWidget {
+  const CreateDeckDialog({super.key, required this.vocabProvider});
+
+  final VocabProvider vocabProvider;
+
+  @override
+  State<CreateDeckDialog> createState() => _CreateDeckDialogState();
+}
+
+class _CreateDeckDialogState extends State<CreateDeckDialog> {
+  static const List<String> _colors = [
+    '#2196F3', // Blue
+    '#4CAF50', // Green
+    '#FF9800', // Orange
+    '#E91E63', // Pink
+    '#9C27B0', // Purple
+    '#9E9E9E', // Grey
+  ];
+
+  final _nameController = TextEditingController();
+  final _descController = TextEditingController();
+  late String _selectedColor = _colors[Random().nextInt(_colors.length)];
+  var _creating = false;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('vocabulary.createNewDeck'.tr()),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _nameController,
+              decoration: InputDecoration(
+                labelText: 'vocabulary.deckName'.tr(),
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _descController,
+              decoration: InputDecoration(
+                labelText: 'vocabulary.deckDescription'.tr(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'vocabulary.selectColor'.tr(),
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(height: 8),
+            // Wrap, not ListView: AlertDialog measures intrinsic width and a viewport cannot answer that.
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final colorHex in _colors)
+                  GestureDetector(
+                    onTap: () => setState(() => _selectedColor = colorHex),
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: Color(
+                          int.parse(
+                            'FF${colorHex.replaceAll('#', '')}',
+                            radix: 16,
+                          ),
+                        ),
+                        shape: BoxShape.circle,
+                        border: _selectedColor == colorHex
+                            ? Border.all(
+                                color: Theme.of(context).colorScheme.onSurface,
+                                width: 3,
+                              )
+                            : null,
+                      ),
+                      child: _selectedColor == colorHex
+                          ? const Icon(
+                              Icons.check,
+                              color: AppColors.textInverted,
+                              size: 18,
+                            )
+                          : null,
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('common.cancel'.tr()),
+        ),
+        ElevatedButton(
+          onPressed: _creating
+              ? null
+              : () async {
+                  if (_nameController.text.trim().isEmpty) return;
+                  setState(() => _creating = true);
+                  final success = await widget.vocabProvider.createDeck(
+                    _nameController.text.trim(),
+                    _descController.text.trim().isEmpty
+                        ? null
+                        : _descController.text.trim(),
+                    _selectedColor,
+                  );
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                    if (!success) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            widget.vocabProvider.errorMessage ??
+                                'vocabulary.createDeckFailed'.tr(),
+                          ),
+                          backgroundColor: Theme.of(context).colorScheme.error,
+                        ),
+                      );
+                    }
+                  }
+                },
+          child: Text('common.create'.tr()),
+        ),
+      ],
+    );
+  }
+}

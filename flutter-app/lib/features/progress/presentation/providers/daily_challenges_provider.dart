@@ -13,6 +13,7 @@ class DailyChallengesProvider extends ChangeNotifier {
     : _repository = repository;
 
   int _generation = 0;
+  Future<void>? _challengesLoad;
   bool _disposed = false;
 
   @override
@@ -71,7 +72,17 @@ class DailyChallengesProvider extends ChangeNotifier {
       challenges.any((c) => c.id == challengeId && c.isClaimed);
 
   /// Load daily challenges from API
-  Future<void> loadChallenges() async {
+  Future<void> loadChallenges() {
+    final inFlight = _challengesLoad;
+    if (inFlight != null) return inFlight;
+    final run = _loadChallenges();
+    _challengesLoad = run;
+    return run.whenComplete(() {
+      if (identical(_challengesLoad, run)) _challengesLoad = null;
+    });
+  }
+
+  Future<void> _loadChallenges() async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -178,6 +189,7 @@ class DailyChallengesProvider extends ChangeNotifier {
   /// Reset state (for logout)
   void reset() {
     _generation++;
+    _challengesLoad = null;
     _challengesResponse = null;
     _isLoading = false;
     _errorMessage = null;

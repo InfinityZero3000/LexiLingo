@@ -25,6 +25,20 @@ abstract final class AppRadius {
   static BorderRadius get pillAll => BorderRadius.circular(pill);
 }
 
+abstract final class AppShadows {
+  /// Soft card lift; dark surfaces get no shadow and rely on the lifted fill.
+  static List<BoxShadow> card(ThemeData theme) =>
+      theme.brightness == Brightness.dark
+      ? const []
+      : [
+          BoxShadow(
+            color: theme.colorScheme.shadow.withValues(alpha: 0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ];
+}
+
 /// Smallest comfortable touch target (>= 44 logical px).
 const double kMinTapTarget = 44;
 

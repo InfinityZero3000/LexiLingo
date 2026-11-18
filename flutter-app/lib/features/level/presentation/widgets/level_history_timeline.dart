@@ -49,13 +49,7 @@ class _LevelHistoryTimelineState extends State<LevelHistoryTimeline> {
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.shadow.withValues(alpha: 0.05),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: AppShadows.card(theme),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
@@ -26,12 +28,15 @@ final _course = CourseEntity(
 
 class _Courses implements GetCoursesUseCase {
   bool fail = false;
+  Completer<void>? gate;
 
   @override
   Future<Either<Failure, (List<CourseEntity>, int)>> call(
     GetCoursesParams params,
-  ) async =>
-      fail ? const Left(ServerFailure('offline')) : Right(([_course], 1));
+  ) async {
+    await gate?.future;
+    return fail ? const Left(ServerFailure('offline')) : Right(([_course], 1));
+  }
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -39,13 +44,16 @@ class _Courses implements GetCoursesUseCase {
 
 class _Enrolled implements GetEnrolledCoursesUseCase {
   bool fail = false;
+  Completer<void>? gate;
 
   @override
   Future<Either<Failure, (List<CourseEntity>, int)>> call({
     int page = 1,
     int pageSize = 20,
-  }) async =>
-      fail ? const Left(ServerFailure('offline')) : Right(([_course], 1));
+  }) async {
+    await gate?.future;
+    return fail ? const Left(ServerFailure('offline')) : Right(([_course], 1));
+  }
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -60,9 +68,12 @@ class _FakeWeekly extends GetWeeklyProgressUseCase {
   _FakeWeekly(this.xpToday) : super(_Repo());
   int xpToday;
   bool fail = false;
+  int calls = 0;
 
   @override
   Future<Either<Failure, WeeklyProgressEntity>> call() async {
+    calls++;
+    await Future<void>.delayed(Duration.zero);
     if (fail) return const Left(ServerFailure('offline'));
     final now = DateTime.now();
     return Right(
@@ -175,5 +186,43 @@ void main() {
     await provider.loadWeeklyProgress();
     expect(provider.hasDailyXP, isTrue);
     expect(provider.dailyXP, 30);
+  });
+
+  test('courses that land after clear() are dropped', () async {
+    final courses = _Courses()..gate = Completer<void>();
+    final enrolled = _Enrolled()..gate = Completer<void>();
+    final provider = HomeProvider(
+      getCoursesUseCase: courses,
+      getEnrolledCoursesUseCase: enrolled,
+    );
+
+    final featured = provider.loadFeaturedCourses();
+    final mine = provider.loadEnrolledCourses();
+    provider.clear();
+    courses.gate!.complete();
+    enrolled.gate!.complete();
+    await featured;
+    await mine;
+
+    expect(provider.featuredCourses, isEmpty);
+    expect(provider.enrolledCourses, isEmpty);
+  });
+
+  test('concurrent weekly loads share one request', () async {
+    final weekly = _FakeWeekly(80);
+    final provider = HomeProvider(
+      getCoursesUseCase: _Courses(),
+      getEnrolledCoursesUseCase: _Enrolled(),
+      getWeeklyProgressUseCase: weekly,
+    );
+
+    await Future.wait([
+      provider.loadWeeklyProgress(),
+      provider.loadWeeklyProgress(),
+    ]);
+    expect(weekly.calls, 1);
+
+    await provider.loadWeeklyProgress();
+    expect(weekly.calls, 2);
   });
 }

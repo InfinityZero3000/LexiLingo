@@ -35,6 +35,9 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
   late final TabController _tabController;
   final ScrollController _captionScrollController = ScrollController();
   final Map<int, GlobalKey> _captionRowKeys = {};
+  // Layouts re-arrange around the player; the key lets it be re-parented
+  // instead of rebuilt, so a rotate or resize does not reload the video.
+  final GlobalKey _playerKey = GlobalKey();
 
   int _currentPositionMs = 0;
   Timer? _positionTimer;
@@ -424,6 +427,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
 
   Widget _buildPlayerArea(bool isDark) {
     return AspectRatio(
+      key: _playerKey,
       aspectRatio: 16 / 9,
       child: Container(
         // Letterbox behind the video must be pure black in both themes.
