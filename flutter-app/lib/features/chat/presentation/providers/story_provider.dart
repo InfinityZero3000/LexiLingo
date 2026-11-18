@@ -427,6 +427,7 @@ class StoryProvider extends ChangeNotifier {
     required String userId,
     required String message,
   }) async {
+    if (_isSendingMessage) return false;
     if (_currentSession == null) {
       _sessionError = UiText.key('errors.noActiveSession');
       notifyListeners();
@@ -526,7 +527,9 @@ class StoryProvider extends ChangeNotifier {
         // Partial content already visible — the server may have finished
         // and persisted on its side, so don't retry (would risk a
         // duplicated turn). Keep what streamed in and stop the spinner.
-        debugPrint('[StoryProvider] stream closed without done; kept partial content');
+        debugPrint(
+          '[StoryProvider] stream closed without done; kept partial content',
+        );
       }
     } catch (e) {
       debugPrint('[StoryProvider] sendMessageStreaming exception: $e');

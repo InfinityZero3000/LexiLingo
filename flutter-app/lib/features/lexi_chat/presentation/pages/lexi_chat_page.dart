@@ -67,6 +67,7 @@ class _LexiChatPageState extends State<LexiChatPage>
 
   // Voice recording (mobile/desktop)
   final AudioRecorder _recorder = AudioRecorder();
+  String? _recordingPath;
   bool _isRecording = false;
   bool _isTranscribing = false;
   Timer? _recordingTimer;
@@ -187,6 +188,7 @@ class _LexiChatPageState extends State<LexiChatPage>
       () async => _webSpeechSub?.cancel(),
       () async {
         if (_isRecording) await _recorder.cancel();
+        _discardRecordingFile();
       },
       () async {
         await _duplexVoice?.stop();
@@ -206,6 +208,13 @@ class _LexiChatPageState extends State<LexiChatPage>
       _isWebSpeechActive = false;
       _voiceStarting = false;
     });
+  }
+
+  void _discardRecordingFile() {
+    final path = _recordingPath;
+    _recordingPath = null;
+    if (path == null || kIsWeb) return;
+    unawaited(File(path).delete().then<void>((_) {}).catchError((Object _) {}));
   }
 
   String get _userId {
@@ -244,6 +253,7 @@ class _LexiChatPageState extends State<LexiChatPage>
     _scrollController.dispose();
     _focusNode.dispose();
     _recorder.dispose();
+    _discardRecordingFile();
     _recordingTimer?.cancel();
     _webSpeechSub?.cancel();
     _webSpeech?.dispose();
@@ -396,6 +406,7 @@ class _LexiChatPageState extends State<LexiChatPage>
   Future<void> _sendMessage() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
+    if (context.read<LexiChatProvider>().isSending) return;
     _controller.clear();
 
     final provider = context.read<LexiChatProvider>();
@@ -406,6 +417,7 @@ class _LexiChatPageState extends State<LexiChatPage>
   }
 
   Future<void> _sendQuickReply(String text) async {
+    if (context.read<LexiChatProvider>().isSending) return;
     _controller.text = text;
     await _sendMessage();
   }
@@ -437,13 +449,14 @@ class _LexiChatPageState extends State<LexiChatPage>
         _controller.selection = TextSelection.collapsed(offset: display.length);
       },
       onError: (error) {
+        if (!mounted) return;
         setState(() => _isWebSpeechActive = false);
         _showSnack(
           'lexiChat.sttFailed'.tr(namedArgs: {'error': error.toString()}),
         );
       },
       onDone: () {
-        if (_isWebSpeechActive) {
+        if (mounted && _isWebSpeechActive) {
           setState(() => _isWebSpeechActive = false);
         }
       },
@@ -465,7 +478,7 @@ class _LexiChatPageState extends State<LexiChatPage>
     final epoch = _voiceEpoch;
     try {
       final hasPermission = await _recorder.hasPermission();
-      if (epoch != _voiceEpoch) return;
+      if (!mounted || epoch != _voiceEpoch) return;
       if (!hasPermission) {
         _showSnack('lexiChat.micPermissionRequired'.tr());
         return;
@@ -478,8 +491,10 @@ class _LexiChatPageState extends State<LexiChatPage>
         const RecordConfig(encoder: AudioEncoder.aacLc, numChannels: 1),
         path: recordingPath,
       );
-      if (epoch != _voiceEpoch) {
+      _recordingPath = recordingPath;
+      if (!mounted || epoch != _voiceEpoch) {
         await _recorder.cancel();
+        _discardRecordingFile();
         return;
       }
 
@@ -488,7 +503,9 @@ class _LexiChatPageState extends State<LexiChatPage>
         _recordingDuration = Duration.zero;
       });
 
+      _recordingTimer?.cancel();
       _recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (!mounted) return;
         setState(() => _recordingDuration += const Duration(seconds: 1));
       });
     } catch (e) {
@@ -504,24 +521,32 @@ class _LexiChatPageState extends State<LexiChatPage>
 
     try {
       final path = await _recorder.stop();
-      if (!mounted || epoch != _voiceEpoch) return;
+      if (!mounted || epoch != _voiceEpoch) {
+        _discardRecordingFile();
+        return;
+      }
       setState(() {
         _isRecording = false;
         _isTranscribing = true;
       });
 
       if (path == null) {
+        _discardRecordingFile();
         setState(() => _isTranscribing = false);
         return;
       }
 
       final file = File(path);
-      if (!await file.exists()) {
+      final exists = await file.exists();
+      if (!mounted) return;
+      if (!exists) {
+        _discardRecordingFile();
         _showSnack('lexiChat.audioReadError'.tr());
         setState(() => _isTranscribing = false);
         return;
       }
       final bytes = await file.readAsBytes();
+      _discardRecordingFile();
 
       if (!mounted) return;
       final chatProvider = context.read<LexiChatProvider>();
@@ -543,6 +568,7 @@ class _LexiChatPageState extends State<LexiChatPage>
       await _sendMessage();
       unawaited(_assessAndAttachPronunciation(bytes, transcript));
     } catch (e) {
+      _discardRecordingFile();
       if (!mounted) return;
       setState(() {
         _isRecording = false;
@@ -599,6 +625,7 @@ class _LexiChatPageState extends State<LexiChatPage>
   }
 
   void _showSnack(String msg) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(msg), duration: const Duration(seconds: 2)),
     );

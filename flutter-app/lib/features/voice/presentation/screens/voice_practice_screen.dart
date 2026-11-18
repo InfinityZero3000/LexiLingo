@@ -41,6 +41,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
 
   final TextEditingController _phraseController = TextEditingController();
   final AudioRecorder _recorder = AudioRecorder();
+  bool _isStartingRecording = false;
   final AudioPlayer _player = AudioPlayer();
 
   Timer? _recordingTimer;
@@ -110,7 +111,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
       return;
     }
 
-    if (_isBusy) return;
+    if (_isBusy || _isStartingRecording || _isRecording) return;
     if (_isPlaying) _stopPlaying();
 
     if (!_hasRecorderPermission) {
@@ -122,8 +123,9 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
       }
     }
 
+    _isStartingRecording = true;
+    String? recordingPath;
     try {
-      String? recordingPath;
       if (!kIsWeb) {
         final directory = await getTemporaryDirectory();
         recordingPath =
@@ -137,7 +139,10 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
             : recordingPath!,
       );
 
-      if (!mounted) return;
+      if (!mounted) {
+        await _discardUnmountedRecording(recordingPath);
+        return;
+      }
 
       setState(() {
         _isRecording = true;
@@ -161,7 +166,19 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
     } catch (e) {
       debugPrint('voice.failedToStartRecording: $e');
       _showError('voice.failedToStartRecording'.tr());
+    } finally {
+      _isStartingRecording = false;
     }
+  }
+
+  Future<void> _discardUnmountedRecording(String? path) async {
+    try {
+      await _recorder.cancel();
+    } catch (_) {}
+    if (path == null) return;
+    try {
+      await File(path).delete();
+    } catch (_) {}
   }
 
   Future<void> _stopRecording() async {
