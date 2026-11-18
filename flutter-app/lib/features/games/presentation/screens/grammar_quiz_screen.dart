@@ -41,6 +41,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
   Timer? _timer;
   int _questionIndex = 0;
   int _timeLeft = 12;
+  int _freezeLeft = 0;
   int _correctCount = 0;
   int? _selectedIndex;
   bool _answered = false;
@@ -86,6 +87,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
     setState(() {
       _gameLoaded = true;
       _timeLeft = game.timerSecondsPerQuestion;
+      _freezeLeft = 0;
       _selectedIndex = null;
       _answered = false;
       _verdict = null;
@@ -97,6 +99,10 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (!mounted) {
         t.cancel();
+        return;
+      }
+      if (_freezeLeft > 0) {
+        setState(() => _freezeLeft--);
         return;
       }
       setState(() => _timeLeft--);
@@ -114,6 +120,9 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
     final q = game.questions[_questionIndex];
     switch (itemType) {
       case ShopItemEntity.effectTimeFreeze:
+        final seconds = (effects['seconds'] as num?)?.toInt() ?? 10;
+        setState(() => _freezeLeft += seconds);
+        break;
       case ShopItemEntity.effectExtraTime:
         final seconds = (effects['seconds'] as num?)?.toInt() ?? 10;
         setState(
@@ -183,11 +192,13 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
     final game = context.read<GamesProvider>().grammarQuiz!;
     final q = game.questions[_questionIndex];
     var correct = q.options[index] == q.correctAnswer;
+    var rescued = false;
     if (!correct && _luckyCloverActive && _random.nextDouble() < 0.3) {
       correct = true;
+      rescued = true;
       _luckyCloverActive = false;
     }
-    _submittedAnswers[q.id] = q.options[index];
+    _submittedAnswers[q.id] = rescued ? q.correctAnswer : q.options[index];
     if (correct) _correctCount++;
     _recordTopic(q.topic, correct);
     final masteryMsg = _buildMasteryMessage(q.topic);
@@ -391,6 +402,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
                     child: _TimerWidget(
                       timeLeft: _timeLeft,
                       total: game.timerSecondsPerQuestion,
+                      frozen: _freezeLeft > 0,
                     ),
                   ),
                 ),
@@ -637,7 +649,12 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
 class _TimerWidget extends StatelessWidget {
   final int timeLeft;
   final int total;
-  const _TimerWidget({required this.timeLeft, required this.total});
+  final bool frozen;
+  const _TimerWidget({
+    required this.timeLeft,
+    required this.total,
+    this.frozen = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -657,12 +674,21 @@ class _TimerWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(color: color),
       ),
-      child: Text(
-        '${timeLeft}s',
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          fontWeight: FontWeight.bold,
-          color: color,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (frozen) ...[
+            Icon(Icons.ac_unit_rounded, size: 14, color: color),
+            const SizedBox(width: AppSpacing.xs),
+          ],
+          Text(
+            '${timeLeft}s',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }

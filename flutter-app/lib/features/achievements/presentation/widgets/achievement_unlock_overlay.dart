@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/features/achievements/presentation/theme/achievement_palette.dart';
@@ -64,6 +65,7 @@ class _AchievementUnlockOverlayState extends State<AchievementUnlockOverlay>
     with TickerProviderStateMixin {
   late final AnimationController _badgeScale;
   late final Animation<double> _scaleAnim;
+  Timer? _autoAdvance;
   int _current = 0;
   bool _dismissed = false;
 
@@ -84,7 +86,8 @@ class _AchievementUnlockOverlayState extends State<AchievementUnlockOverlay>
   void _playForCurrent() {
     _badgeScale.reset();
     _badgeScale.forward();
-    Future.delayed(widget.displayDuration, _next);
+    _autoAdvance?.cancel();
+    _autoAdvance = Timer(widget.displayDuration, _next);
   }
 
   void _next() {
@@ -101,6 +104,7 @@ class _AchievementUnlockOverlayState extends State<AchievementUnlockOverlay>
 
   @override
   void dispose() {
+    _autoAdvance?.cancel();
     _badgeScale.dispose();
     super.dispose();
   }

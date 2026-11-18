@@ -7,6 +7,7 @@ import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart';
 import 'package:lexilingo_app/features/games/presentation/providers/games_provider.dart';
+import 'package:lexilingo_app/features/games/presentation/screens/game_screen_factory.dart';
 import 'package:lexilingo_app/features/games/presentation/widgets/level_up_dialog.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/streak_milestone_overlay.dart';
@@ -428,8 +429,18 @@ class _GameResultScreenState extends State<GameResultScreen>
           width: double.infinity,
           child: FilledButton(
             onPressed: () {
-              Navigator.pop(context);
-              if (widget.onPlayAgain != null) widget.onPlayAgain!();
+              final onPlayAgain = widget.onPlayAgain;
+              if (onPlayAgain != null) {
+                Navigator.pop(context);
+                onPlayAgain();
+                return;
+              }
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => gameScreenFor(widget.result.gameType),
+                ),
+              );
             },
             style: FilledButton.styleFrom(
               minimumSize: const Size(kMinTapTarget, kMinTapTarget),

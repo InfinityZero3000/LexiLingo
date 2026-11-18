@@ -10,19 +10,56 @@ import 'package:lexilingo_app/features/gamification/presentation/providers/gamif
 import 'package:easy_localization/easy_localization.dart';
 
 /// Horizontal bar displaying all currently active boosts with live countdown.
-/// Returns [SizedBox.shrink] when there are no active boosts.
-class ActiveBoostsBar extends StatelessWidget {
+/// Returns [SizedBox.shrink] when there are no active boosts. A boost
+/// disappears the moment its countdown reaches zero and the inventory is
+/// refreshed in the background.
+class ActiveBoostsBar extends StatefulWidget {
   const ActiveBoostsBar({super.key});
+
+  @override
+  State<ActiveBoostsBar> createState() => _ActiveBoostsBarState();
+}
+
+class _ActiveBoostsBarState extends State<ActiveBoostsBar> {
+  Timer? _ticker;
+  int _lastCount = 0;
+
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    super.dispose();
+  }
+
+  void _syncTicker(int count) {
+    if (count > 0 && _ticker == null) {
+      _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted) setState(() {});
+      });
+    } else if (count == 0) {
+      _ticker?.cancel();
+      _ticker = null;
+    }
+    if (count < _lastCount) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.read<GamificationProvider>().loadInventory();
+      });
+    }
+    _lastCount = count;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<GamificationProvider>(
       builder: (context, provider, _) {
         final boosts = provider.activeBoosts;
+        _syncTicker(boosts.length);
         if (boosts.isEmpty) return const SizedBox.shrink();
 
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.sm,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -56,40 +93,14 @@ class ActiveBoostsBar extends StatelessWidget {
   }
 }
 
-class _BoostPill extends StatefulWidget {
+class _BoostPill extends StatelessWidget {
   final InventoryItemEntity boost;
   const _BoostPill({required this.boost});
 
   @override
-  State<_BoostPill> createState() => _BoostPillState();
-}
-
-class _BoostPillState extends State<_BoostPill> {
-  late Timer _timer;
-  late Duration _remaining;
-
-  @override
-  void initState() {
-    super.initState();
-    _remaining = widget.boost.remainingDuration ?? Duration.zero;
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) return;
-      final r = widget.boost.remainingDuration ?? Duration.zero;
-      setState(() => _remaining = r);
-      if (_remaining == Duration.zero) _timer.cancel();
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer.cancel();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final effectType = widget.boost.item.effectType ?? '';
+    final effectType = boost.item.effectType ?? '';
     final boostColor = _colorForEffect(effectType);
     final icon = _iconForEffect(effectType);
     final label = _labelForEffect(effectType);
@@ -130,7 +141,7 @@ class _BoostPillState extends State<_BoostPill> {
           ),
           const SizedBox(width: AppSpacing.xs),
           Text(
-            _formatDuration(_remaining),
+            _formatDuration(boost.remainingDuration ?? Duration.zero),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w600,
               color: boostColor.withValues(alpha: 0.9),
@@ -174,6 +185,6 @@ class _BoostPillState extends State<_BoostPill> {
     ShopItemEntity.effectStreakFreeze => 'Freeze',
     ShopItemEntity.effectUnlimitedHearts => '∞ Hearts',
     ShopItemEntity.effectHintRefill => 'Hints',
-    _ => widget.boost.item.name,
+    _ => boost.item.name,
   };
 }

@@ -7,7 +7,6 @@ import 'package:lexilingo_app/features/achievements/data/models/achievement_mode
 import 'package:lexilingo_app/features/achievements/domain/entities/achievement_entity.dart';
 import 'package:lexilingo_app/features/achievements/domain/entities/unlocked_achievement.dart';
 import 'package:lexilingo_app/features/achievements/domain/repositories/achievement_repository.dart';
-import 'package:lexilingo_app/features/achievements/data/sample_achievements.dart';
 
 class AchievementProvider with ChangeNotifier {
   final AchievementRepository repository;
@@ -20,7 +19,6 @@ class AchievementProvider with ChangeNotifier {
   List<UnlockedAchievement> _recentlyUnlocked = [];
   bool _isLoading = false;
   UiText? _error;
-  bool _usingSampleData = false;
 
   // Getters
   List<AchievementEntity> get allAchievements => _allAchievements;
@@ -28,7 +26,6 @@ class AchievementProvider with ChangeNotifier {
   List<UnlockedAchievement> get recentlyUnlocked => _recentlyUnlocked;
   bool get isLoading => _isLoading;
   String? get error => _error?.resolve();
-  bool get usingSampleData => _usingSampleData;
 
   List<AchievementEntity> _removeXpAchievements(
     List<AchievementEntity> achievements,
@@ -86,22 +83,9 @@ class AchievementProvider with ChangeNotifier {
       _allAchievements = _removeXpAchievements(
         await repository.getAllAchievements(),
       );
-
-      // Use sample data if API returns empty
-      if (_allAchievements.isEmpty) {
-        _allAchievements = _removeXpAchievements(SampleAchievements.getAll());
-        _usingSampleData = true;
-        debugPrint('Using sample achievements data (API returned empty)');
-      } else {
-        _usingSampleData = false;
-      }
     } catch (e) {
       _error = UiText.key('errors.loadFailed');
       debugPrint('Failed to load achievements: $e');
-      // Fallback to sample data on error
-      _allAchievements = _removeXpAchievements(SampleAchievements.getAll());
-      _usingSampleData = true;
-      debugPrint('Using sample achievements data (API error)');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -145,22 +129,9 @@ class AchievementProvider with ChangeNotifier {
       _myAchievements = _removeXpUserAchievements(
         results[1] as List<UserAchievementEntity>,
       );
-
-      // Use sample data if API returns empty
-      if (_allAchievements.isEmpty) {
-        _allAchievements = _removeXpAchievements(SampleAchievements.getAll());
-        _usingSampleData = true;
-        debugPrint('Using sample achievements data (API returned empty)');
-      } else {
-        _usingSampleData = false;
-      }
     } catch (e) {
       _error = UiText.key('errors.loadFailed');
       debugPrint('Failed to load achievements: $e');
-      // Fallback to sample data on error
-      _allAchievements = _removeXpAchievements(SampleAchievements.getAll());
-      _usingSampleData = true;
-      debugPrint('Using sample achievements data (API error)');
     } finally {
       _isLoading = false;
       notifyListeners();

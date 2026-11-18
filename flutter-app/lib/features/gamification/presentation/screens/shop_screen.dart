@@ -11,6 +11,7 @@ import 'package:lexilingo_app/features/gamification/presentation/widgets/shop_it
 import 'package:lexilingo_app/features/gamification/domain/entities/shop_item.dart';
 import 'package:lexilingo_app/features/gamification/presentation/screens/wallet_screen.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:lexilingo_app/features/gamification/presentation/widgets/active_boosts_bar.dart';
 import 'package:lexilingo_app/features/gamification/presentation/widgets/boost_purchase_animation.dart';
 
 /// Shop Screen
@@ -54,7 +55,13 @@ class _ShopScreenState extends State<ShopScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: _categories.length, vsync: this);
+    final selected = context.read<GamificationProvider>().selectedCategory;
+    final initialIndex = _categories.indexWhere((c) => c.id == selected);
+    _tabController = TabController(
+      length: _categories.length,
+      vsync: this,
+      initialIndex: initialIndex < 0 ? 0 : initialIndex,
+    );
     _tabController.addListener(_onTabChanged);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -78,6 +85,7 @@ class _ShopScreenState extends State<ShopScreen>
   }
 
   Future<void> _handlePurchase(ShopItemEntity item) async {
+    if (_purchasingItemId != null) return;
     final provider = context.read<GamificationProvider>();
 
     // Check if can afford
@@ -394,90 +402,100 @@ class _ShopScreenState extends State<ShopScreen>
             },
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          isScrollable: true,
-          labelColor: primaryColor,
-          unselectedLabelColor: AppColors.textGrey,
-          indicatorColor: primaryColor,
-          tabs: _categories.map((cat) {
-            return Tab(
-              child: Row(
-                children: [
-                  Icon(cat.icon, size: 18),
-                  const SizedBox(width: AppSpacing.sm),
-                  Text(cat.label.tr()),
-                ],
-              ),
-            );
-          }).toList(),
-        ),
       ),
       body: ContentWidth(
-        child: Consumer<GamificationProvider>(
-          builder: (context, provider, child) {
-            if (provider.isLoadingShop && provider.shopItems.isEmpty) {
-              return const Center(child: LottieLoadingWidget.medium());
-            }
+        child: Column(
+          children: [
+            const ActiveBoostsBar(),
+            TabBar(
+              controller: _tabController,
+              isScrollable: true,
+              labelColor: primaryColor,
+              unselectedLabelColor: AppColors.textGrey,
+              indicatorColor: primaryColor,
+              tabs: _categories.map((cat) {
+                return Tab(
+                  child: Row(
+                    children: [
+                      Icon(cat.icon, size: 18),
+                      const SizedBox(width: AppSpacing.sm),
+                      Text(cat.label.tr()),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+            Expanded(
+              child: Consumer<GamificationProvider>(
+                builder: (context, provider, child) {
+                  if (provider.isLoadingShop && provider.shopItems.isEmpty) {
+                    return const Center(child: LottieLoadingWidget.medium());
+                  }
 
-            if (provider.shopError != null && provider.shopItems.isEmpty) {
-              return ErrorDisplayWidget.fromMessage(
-                message: provider.shopError!,
-                onRetry: () => provider.loadShopItems(),
-              );
-            }
+                  if (provider.shopError != null &&
+                      provider.shopItems.isEmpty) {
+                    return ErrorDisplayWidget.fromMessage(
+                      message: provider.shopError!,
+                      onRetry: () => provider.loadShopItems(),
+                    );
+                  }
 
-            final items = provider.filteredShopItems;
+                  final items = provider.filteredShopItems;
 
-            if (items.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.shopping_bag_outlined,
-                      size: 64,
-                      color: AppColors.grey400,
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    Text(
-                      'shop.noItemsInCategory'.tr(),
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: AppColorRoles.textMuted(isDark),
+                  if (items.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.shopping_bag_outlined,
+                            size: 64,
+                            color: AppColors.grey400,
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                          Text(
+                            'shop.noItemsInCategory'.tr(),
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(
+                                  color: AppColorRoles.textMuted(isDark),
+                                ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-              );
-            }
+                    );
+                  }
 
-            return RefreshIndicator(
-              onRefresh: () async {
-                await provider.loadShopItems();
-                await provider.loadWallet();
-              },
-              child: GridView.builder(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 200,
-                  childAspectRatio: 0.68,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                ),
-                itemCount: items.length,
-                itemBuilder: (context, index) {
-                  final item = items[index];
-                  return ShopItemCard(
-                    item: item,
-                    userGems: provider.gems,
-                    isOwned: item.isAvatar && provider.ownsItem(item.id),
-                    isLoading: _purchasingItemId == item.id,
-                    onPurchase: () => _handlePurchase(item),
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      await provider.loadShopItems();
+                      await provider.loadWallet();
+                    },
+                    child: GridView.builder(
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      gridDelegate:
+                          const SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 200,
+                            childAspectRatio: 0.68,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                          ),
+                      itemCount: items.length,
+                      itemBuilder: (context, index) {
+                        final item = items[index];
+                        return ShopItemCard(
+                          item: item,
+                          userGems: provider.gems,
+                          isOwned: item.isAvatar && provider.ownsItem(item.id),
+                          isLoading: _purchasingItemId == item.id,
+                          onPurchase: () => _handlePurchase(item),
+                        );
+                      },
+                    ),
                   );
                 },
               ),
-            );
-          },
+            ),
+          ],
         ),
       ),
     );
