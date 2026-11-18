@@ -191,6 +191,7 @@ class _VocabularySpeakingPracticeScreenState
     try {
       if (_isPlayingRecording) {
         await _player.stop();
+        if (!mounted) return;
         setState(() => _isPlayingRecording = false);
         return;
       }
@@ -212,6 +213,7 @@ class _VocabularySpeakingPracticeScreenState
       if (mounted) setState(() => _isPlayingRecording = true);
     } catch (e) {
       debugPrint('Failed to play recording: $e');
+      if (!mounted) return;
       _showError('voice.playbackFailed'.tr());
     }
   }

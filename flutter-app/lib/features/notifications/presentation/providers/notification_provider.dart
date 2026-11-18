@@ -266,8 +266,16 @@ class NotificationProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  bool _disposed = false;
+
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
+
   @override
   void dispose() {
+    _disposed = true;
     LocaleService.languageSwitches.removeListener(_onLanguageSwitched);
     _notificationsSubscription?.cancel();
     _unreadCountSubscription?.cancel();

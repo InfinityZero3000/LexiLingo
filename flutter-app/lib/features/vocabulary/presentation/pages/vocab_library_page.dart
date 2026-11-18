@@ -578,6 +578,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
       '#9E9E9E', // Grey
     ];
     String selectedColor = colors[Random().nextInt(colors.length)];
+    var creating = false;
 
     showDialog(
       context: context,
@@ -661,32 +662,35 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
                   child: Text('common.cancel'.tr()),
                 ),
                 ElevatedButton(
-                  onPressed: () async {
-                    if (nameController.text.trim().isEmpty) return;
-                    final success = await vocabProvider.createDeck(
-                      nameController.text.trim(),
-                      descController.text.trim().isEmpty
-                          ? null
-                          : descController.text.trim(),
-                      selectedColor,
-                    );
-                    if (context.mounted) {
-                      Navigator.pop(context);
-                      if (!success) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              vocabProvider.errorMessage ??
-                                  'vocabulary.createDeckFailed'.tr(),
-                            ),
-                            backgroundColor: Theme.of(
-                              context,
-                            ).colorScheme.error,
-                          ),
-                        );
-                      }
-                    }
-                  },
+                  onPressed: creating
+                      ? null
+                      : () async {
+                          if (nameController.text.trim().isEmpty) return;
+                          setState(() => creating = true);
+                          final success = await vocabProvider.createDeck(
+                            nameController.text.trim(),
+                            descController.text.trim().isEmpty
+                                ? null
+                                : descController.text.trim(),
+                            selectedColor,
+                          );
+                          if (context.mounted) {
+                            Navigator.pop(context);
+                            if (!success) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    vocabProvider.errorMessage ??
+                                        'vocabulary.createDeckFailed'.tr(),
+                                  ),
+                                  backgroundColor: Theme.of(
+                                    context,
+                                  ).colorScheme.error,
+                                ),
+                              );
+                            }
+                          }
+                        },
                   child: Text('common.create'.tr()),
                 ),
               ],
@@ -694,7 +698,10 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
           },
         );
       },
-    );
+    ).whenComplete(() {
+      nameController.dispose();
+      descController.dispose();
+    });
   }
 
   void _showDeleteDeckConfirmation(
@@ -1322,7 +1329,7 @@ class _AddWordSheetState extends State<_AddWordSheet> {
     _debounce = Timer(const Duration(milliseconds: 700), () async {
       setState(() => _isLooking = true);
       final result = await widget.provider.lookupWord(text);
-      if (!mounted) return;
+      if (!mounted || _wordController.text.trim() != text) return;
       setState(() {
         _isLooking = false;
         _wordFound = result.found;
