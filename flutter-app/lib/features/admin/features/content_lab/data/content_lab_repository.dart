@@ -1,5 +1,7 @@
+import 'package:lexilingo_app/core/state/paginated_list_controller.dart';
 import '../../../core/constants/api_endpoints.dart';
 import '../../../core/network/api_client.dart';
+import '../../../shared/widgets/admin_paged_list.dart';
 
 class QuestionItem {
   final String id, prompt, questionType, difficultyLevel;
@@ -69,39 +71,35 @@ class TestExam {
 }
 
 class ContentLabRepository {
-  final _api = ApiClient.instance;
+  ContentLabRepository({ApiClient? api}) : _api = api ?? ApiClient.instance;
 
-  Future<List<QuestionItem>> listQuestions() async {
-    final response = await _api.get(
-      ApiEndpoints.adminQuestions,
-      params: {'limit': 100, 'offset': 0},
-    );
-    return ((response['data'] as List?) ?? const [])
-        .map((e) => QuestionItem.fromJson(e as Map<String, dynamic>))
-        .toList();
-  }
+  final ApiClient _api;
+
+  Future<PageResult<QuestionItem>> listQuestions(PageRequest request) async =>
+      adminPage(
+        await _api.getData(
+          ApiEndpoints.adminQuestions,
+          params: PaginationStyle.limitOffset.query(request),
+        ),
+        QuestionItem.fromJson,
+      );
 
   Future<void> createQuestion(Map<String, dynamic> data) =>
       _api.post(ApiEndpoints.adminQuestions, data: data);
   Future<void> updateQuestion(String id, Map<String, dynamic> data) =>
       _api.put('${ApiEndpoints.adminQuestions}/$id', data: data);
-  Future<void> deleteQuestion(String id) =>
-      _api.delete('${ApiEndpoints.adminQuestions}/$id');
 
-  Future<List<TestExam>> listTestExams() async {
-    final response = await _api.get(
-      ApiEndpoints.adminTestExams,
-      params: {'limit': 100, 'offset': 0},
-    );
-    return ((response['data'] as List?) ?? const [])
-        .map((e) => TestExam.fromJson(e as Map<String, dynamic>))
-        .toList();
-  }
+  Future<PageResult<TestExam>> listTestExams(PageRequest request) async =>
+      adminPage(
+        await _api.getData(
+          ApiEndpoints.adminTestExams,
+          params: PaginationStyle.limitOffset.query(request),
+        ),
+        TestExam.fromJson,
+      );
 
   Future<void> createTestExam(Map<String, dynamic> data) =>
       _api.post(ApiEndpoints.adminTestExams, data: data);
   Future<void> updateTestExam(String id, Map<String, dynamic> data) =>
       _api.put('${ApiEndpoints.adminTestExams}/$id', data: data);
-  Future<void> deleteTestExam(String id) =>
-      _api.delete('${ApiEndpoints.adminTestExams}/$id');
 }

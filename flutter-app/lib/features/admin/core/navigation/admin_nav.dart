@@ -56,6 +56,14 @@ const adminNavItems = <AdminNavItem>[
     permission: 'courses:read',
   ),
   AdminNavItem(
+    route: '/categories',
+    labelKey: 'admin.nav.categories',
+    icon: Icons.category_outlined,
+    activeIcon: Icons.category,
+    group: AdminNavGroup.content,
+    permission: 'categories:read',
+  ),
+  AdminNavItem(
     route: '/topics',
     labelKey: 'admin.nav.topics',
     icon: Icons.topic_outlined,
@@ -86,6 +94,14 @@ const adminNavItems = <AdminNavItem>[
     activeIcon: Icons.science,
     group: AdminNavGroup.content,
     permission: 'content:read',
+  ),
+  AdminNavItem(
+    route: '/ielts',
+    labelKey: 'admin.nav.ielts',
+    icon: Icons.school_outlined,
+    activeIcon: Icons.school,
+    group: AdminNavGroup.content,
+    permission: 'ielts:read',
   ),
   AdminNavItem(
     route: '/content-qa',

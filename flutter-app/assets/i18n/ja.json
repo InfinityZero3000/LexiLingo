@@ -2386,7 +2386,9 @@
       "adminManagement": "Admin management",
       "ops": "Operations",
       "aiQuality": "AI quality",
-      "roles": "Roles"
+      "roles": "Roles",
+      "categories": "Categories",
+      "ielts": "IELTS"
     },
     "shell": {
       "logout": "Log out",
@@ -2454,6 +2456,128 @@
       "admins": {
         "webOnly": "Granting or removing admin roles is done in the web admin."
       }
+    },
+    "content": {
+      "actions": "Actions",
+      "active": "Active",
+      "create": "Create",
+      "description": "Description",
+      "draft": "Draft",
+      "fillRequired": "Fill in the required fields correctly.",
+      "inactive": "Inactive",
+      "level": "Level",
+      "name": "Name",
+      "published": "Published",
+      "tags": "Tags",
+      "tagsHint": "Comma separated",
+      "title": "Title",
+      "webOnly": "Deleting and bulk import are on the web admin."
+    },
+    "vocabulary": {
+      "new": "New word",
+      "edit": "Edit word",
+      "word": "Word",
+      "definition": "Definition",
+      "translation": "Translation",
+      "pronunciation": "Pronunciation",
+      "partOfSpeech": "Part of speech",
+      "empty": "No vocabulary yet"
+    },
+    "grammar": {
+      "new": "New rule",
+      "edit": "Edit rule",
+      "topic": "Topic",
+      "summary": "Summary",
+      "content": "Content",
+      "empty": "No grammar rules yet"
+    },
+    "contentLab": {
+      "questions": "Questions",
+      "exams": "Test exams",
+      "newQuestion": "New question",
+      "editQuestion": "Edit question",
+      "newExam": "New test exam",
+      "editExam": "Edit test exam",
+      "prompt": "Prompt",
+      "type": "Type",
+      "options": "Options (JSON array)",
+      "answer": "Answer (JSON)",
+      "explanation": "Explanation",
+      "duration": "Duration (minutes)",
+      "passingScore": "Passing score (%)",
+      "questionsReadOnly": "{count} questions (read-only)",
+      "examMeta": "{minutes} min · {count} questions",
+      "noQuestions": "No questions yet",
+      "noExams": "No test exams yet"
+    },
+    "courses": {
+      "new": "New course",
+      "edit": "Edit course",
+      "empty": "No courses found",
+      "search": "Search courses",
+      "language": "Language",
+      "thumbnail": "Thumbnail URL",
+      "publish": "Publish",
+      "unpublish": "Unpublish",
+      "publishTitle": "Publish this course?",
+      "unpublishTitle": "Unpublish this course?",
+      "counts": "{units} units · {lessons} lessons"
+    },
+    "units": {
+      "title": "Units",
+      "new": "New unit",
+      "edit": "Edit unit",
+      "empty": "No units yet",
+      "lessons": "{count} lessons"
+    },
+    "lessons": {
+      "new": "New lesson",
+      "edit": "Edit lesson",
+      "empty": "No lessons yet",
+      "outcome": "Outcome",
+      "type": "Type",
+      "skill": "Skill scored",
+      "inheritSkill": "Inherit from course",
+      "xp": "XP",
+      "passPercent": "Pass %",
+      "minutes": "Minutes",
+      "exercises": "{count} exercises",
+      "xpValue": "{count} XP"
+    },
+    "categories": {
+      "new": "New category",
+      "edit": "Edit category",
+      "empty": "No categories yet",
+      "slug": "Slug",
+      "icon": "Icon",
+      "color": "Color",
+      "order": "Order",
+      "courses": "{count} courses"
+    },
+    "topics": {
+      "new": "New topic",
+      "edit": "Edit topic",
+      "empty": "No topics yet",
+      "titleEn": "Title (English)",
+      "titleVi": "Title (Vietnamese)",
+      "category": "Category",
+      "minutes": "Estimated minutes",
+      "icon": "Icon key",
+      "opening": "Opening prompt",
+      "suggested": "Suggested prompts",
+      "minutesShort": "{count} min"
+    },
+    "ielts": {
+      "tests": "Tests",
+      "attempts": "Attempts",
+      "noTests": "No IELTS tests yet",
+      "noAttempts": "No attempts yet",
+      "meta": "{questions} questions · {attempts} attempts",
+      "band": "Band {band}",
+      "noBand": "Not scored",
+      "publishable": "Ready to publish",
+      "blocked": "Not publishable",
+      "problems": "Problems"
     }
   }
 }
