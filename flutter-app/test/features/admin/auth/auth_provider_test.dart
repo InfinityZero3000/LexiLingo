@@ -4,99 +4,75 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:lexilingo_app/features/admin/features/auth/data/auth_repository.dart';
 import 'package:lexilingo_app/features/admin/features/auth/presentation/auth_provider.dart';
 
-AdminUser _admin({bool superAdmin = false}) => AdminUser(
+AdminUser _user({int level = 1}) => AdminUser(
   id: '1',
   email: 'a@b.c',
   displayName: 'A',
-  roleSlug: superAdmin ? 'super_admin' : 'admin',
-  roleLevel: superAdmin ? 2 : 1,
-  isSuperAdmin: superAdmin,
-  isAdmin: true,
+  roleSlug: level >= 2 ? 'super_admin' : (level == 1 ? 'admin' : 'user'),
+  roleLevel: level,
+  isSuperAdmin: level >= 2,
+  isAdmin: level >= 1,
   hasUserAccount: true,
-);
-
-DioException _http(int code, [Object? body]) => DioException(
-  requestOptions: RequestOptions(path: '/x'),
-  response: Response(
-    requestOptions: RequestOptions(path: '/x'),
-    statusCode: code,
-    data: body,
-  ),
 );
 
 class _FakeRepo implements AuthRepository {
   AdminUser? me;
-  Object? verifyError;
-  bool loggedOut = false;
+  Object? error;
+  int calls = 0;
 
   @override
-  Future<AdminUser?> getMe() async => me;
-  @override
-  Future<AdminUser> verifyOtp(String email, String otp) async {
-    if (verifyError != null) throw verifyError!;
-    return _admin();
+  Future<AdminUser?> getMe() async {
+    calls++;
+    if (error != null) throw error!;
+    return me;
   }
 
-  @override
-  Future<void> requestOtp(String email) async {}
-  @override
-  Future<AdminUser> loginWithGoogle(String idToken) async => _admin();
-  @override
-  Future<void> logout() async => loggedOut = true;
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 void main() {
-  setUpAll(() {
-    dotenv.loadFromString(isOptional: true);
-  });
+  setUpAll(() => dotenv.loadFromString(isOptional: true));
 
-  test('init reads the stored session', () async {
-    final repo = _FakeRepo()..me = _admin(superAdmin: true);
-    final auth = AuthProvider(repository: repo);
+  test('an admin account is let in', () async {
+    final auth = AuthProvider(repository: _FakeRepo()..me = _user(level: 2));
+    expect(auth.state, AuthState.unknown);
     await auth.init();
     expect(auth.state, AuthState.authenticated);
     expect(auth.isSuperAdmin, isTrue);
-
-    final empty = AuthProvider(repository: _FakeRepo());
-    await empty.init();
-    expect(empty.state, AuthState.unauthenticated);
   });
 
-  test('verifyOtp signs in', () async {
+  test('a learner without an admin role is forbidden', () async {
+    final auth = AuthProvider(repository: _FakeRepo()..me = _user(level: 0));
+    await auth.init();
+    expect(auth.state, AuthState.forbidden);
+    expect(auth.isAuthenticated, isFalse);
+  });
+
+  test('no learner session means unauthenticated', () async {
     final auth = AuthProvider(repository: _FakeRepo());
-    expect(await auth.verifyOtp('a@b.c', '123456'), isTrue);
-    expect(auth.isAuthenticated, isTrue);
-    expect(auth.error, isNull);
-  });
-
-  test('failures become keyed messages, not hard-coded text', () async {
-    final repo = _FakeRepo()..verifyError = _http(403);
-    final auth = AuthProvider(repository: repo);
-    expect(await auth.verifyOtp('a@b.c', '1'), isFalse);
+    await auth.init();
     expect(auth.state, AuthState.unauthenticated);
-    expect(auth.errorText, isNotNull);
-    expect(auth.error, 'admin.errors.notAdmin');
-
-    repo.verifyError = _http(401);
-    await auth.verifyOtp('a@b.c', '1');
-    expect(auth.error, 'admin.errors.notVerified');
-
-    repo.verifyError = _http(503, {
-      'detail': 'Admin Google OAuth not configured',
-    });
-    await auth.verifyOtp('a@b.c', '1');
-    expect(auth.error, 'admin.errors.oauthMissing');
+    expect(auth.user, isNull);
   });
 
-  test('logout clears the user', () async {
-    final repo = _FakeRepo()..me = _admin();
+  test('a network failure is an error with a retry that can recover', () async {
+    final repo = _FakeRepo()
+      ..error = DioException(
+        requestOptions: RequestOptions(path: '/users/me'),
+        type: DioExceptionType.connectionTimeout,
+      );
     final auth = AuthProvider(repository: repo);
     await auth.init();
-    await auth.logout();
-    expect(repo.loggedOut, isTrue);
-    expect(auth.user, isNull);
-    expect(auth.state, AuthState.unauthenticated);
+    expect(auth.state, AuthState.failed);
+    expect(auth.errorText, isNotNull);
+
+    repo
+      ..error = null
+      ..me = _user();
+    await auth.retry();
+    expect(repo.calls, 2);
+    expect(auth.state, AuthState.authenticated);
+    expect(auth.errorText, isNull);
   });
 }

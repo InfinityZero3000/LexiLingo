@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../features/auth/presentation/login_screen.dart';
+import '../../features/auth/presentation/admin_gate_screens.dart';
 import '../../features/auth/presentation/auth_provider.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/curriculum/presentation/curriculum_screen.dart';
@@ -34,30 +34,44 @@ import '../../features/system/presentation/screens/roles_screen.dart';
 import '../../shared/widgets/admin_shell.dart';
 import '../navigation/admin_access.dart';
 import '../permissions/admin_permissions.dart';
-import '../storage/token_storage.dart';
 import '../../features/auth/data/auth_repository.dart' show AdminUser;
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
+const _gatePaths = {'/splash', '/no-access', '/load-error'};
+
 /// Where to send the admin from [location], or null to let them stay.
 ///
-/// Signed out goes to /login; a signed-in account that is not an admin goes
-/// back to /login too; a route the role may not open (a super-admin page, a
-/// permission it lacks) goes to /dashboard.
+/// There is no login: the panel borrows the learner session. While the
+/// account is being checked (or the panel is closing, with no session) it
+/// waits on /splash; an account without an admin role gets /no-access; a
+/// failed check gets /load-error. Once signed in as an admin, a route the
+/// role may not open (a super-admin page, a permission it lacks) goes to
+/// /dashboard.
 @visibleForTesting
 String? adminRedirect({
-  required bool hasToken,
+  required AuthState state,
   required String location,
   required AdminUser? user,
   required AdminPermissions permissions,
 }) {
-  final onAuth = location.startsWith('/login');
-  if (!hasToken) return onAuth ? null : '/login';
-  if (user != null && !user.isAdmin && !user.isSuperAdmin) {
-    return onAuth ? null : '/login';
+  String gate(String path) => location == path ? '' : path;
+  switch (state) {
+    case AuthState.unknown:
+    case AuthState.unauthenticated:
+      final to = gate('/splash');
+      return to.isEmpty ? null : to;
+    case AuthState.forbidden:
+      final to = gate('/no-access');
+      return to.isEmpty ? null : to;
+    case AuthState.failed:
+      final to = gate('/load-error');
+      return to.isEmpty ? null : to;
+    case AuthState.authenticated:
+      break;
   }
-  if (onAuth) return '/dashboard';
+  if (_gatePaths.contains(location)) return '/dashboard';
   final allowed = adminMayOpen(
     location,
     isSuperAdmin: user?.isSuperAdmin ?? false,
@@ -69,19 +83,29 @@ String? adminRedirect({
 GoRouter createRouter(AuthProvider authProvider, AdminPermissions permissions) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/dashboard',
+    initialLocation: '/splash',
     refreshListenable: Listenable.merge([authProvider, permissions]),
-    redirect: (context, state) async => adminRedirect(
-      hasToken: await TokenStorage.hasToken(),
+    redirect: (context, state) => adminRedirect(
+      state: authProvider.state,
       location: state.matchedLocation,
       user: authProvider.user,
       permissions: permissions,
     ),
     routes: [
       GoRoute(
-        path: '/login',
+        path: '/splash',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (_, __) => const LoginScreen(),
+        builder: (_, __) => const AdminSplashScreen(),
+      ),
+      GoRoute(
+        path: '/no-access',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => const AdminNoAccessScreen(),
+      ),
+      GoRoute(
+        path: '/load-error',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => const AdminLoadErrorScreen(),
       ),
       ShellRoute(
         navigatorKey: _shellNavigatorKey,

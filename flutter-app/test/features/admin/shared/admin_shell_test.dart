@@ -6,6 +6,7 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/admin/core/permissions/admin_permissions.dart';
 import 'package:lexilingo_app/features/admin/features/auth/data/auth_repository.dart';
 import 'package:lexilingo_app/features/admin/features/auth/presentation/auth_provider.dart';
+import 'package:lexilingo_app/features/admin/shared/admin_exit_scope.dart';
 import 'package:lexilingo_app/features/admin/shared/widgets/admin_shell.dart';
 import 'package:provider/provider.dart';
 
@@ -38,6 +39,7 @@ void main() {
     required List<String> slugs,
     bool superAdmin = false,
     ThemeMode themeMode = ThemeMode.light,
+    VoidCallback? onExit,
   }) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = size;
@@ -64,16 +66,19 @@ void main() {
       ],
     );
     await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider<AuthProvider>.value(value: auth),
-          ChangeNotifierProvider<AdminPermissions>.value(value: perms),
-        ],
-        child: MaterialApp.router(
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: themeMode,
-          routerConfig: router,
+      AdminExitScope(
+        onExit: onExit ?? () {},
+        child: MultiProvider(
+          providers: [
+            ChangeNotifierProvider<AuthProvider>.value(value: auth),
+            ChangeNotifierProvider<AdminPermissions>.value(value: perms),
+          ],
+          child: MaterialApp.router(
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeMode,
+            routerConfig: router,
+          ),
         ),
       ),
     );
@@ -143,5 +148,23 @@ void main() {
     );
     expect(tester.takeException(), isNull);
     expect(find.text('dashboard body'), findsOneWidget);
+  });
+
+  testWidgets('there is no log-out: the shell offers Exit admin instead', (
+    tester,
+  ) async {
+    var exited = 0;
+    await pump(
+      tester,
+      size: const Size(1024, 768),
+      slugs: ['users:read'],
+      onExit: () => exited++,
+    );
+    expect(find.text('admin.shell.logout'), findsNothing);
+    expect(find.text('admin.shell.exit'), findsOneWidget);
+
+    await tester.tap(find.text('admin.shell.exit'));
+    await tester.pumpAndSettle();
+    expect(exited, 1);
   });
 }

@@ -9,14 +9,7 @@ class _Store implements AdminSessionStore {
   @override
   Future<String?> accessToken() async => 'token';
   @override
-  Future<String?> refreshToken() async => 'refresh';
-  @override
-  Future<void> saveTokens({
-    required String accessToken,
-    required String refreshToken,
-  }) async {}
-  @override
-  Future<void> clear() async {}
+  Future<bool> refresh() async => false;
 }
 
 class _Adapter implements HttpClientAdapter {
@@ -51,7 +44,7 @@ class FakeAdminApi {
         requests.add(o);
         return _handler(o);
       });
-    client = ApiClient.forTesting(store: _Store(), dio: dio, refreshDio: Dio());
+    client = ApiClient.forTesting(store: _Store(), dio: dio);
   }
 
   final (int, Object) Function(RequestOptions) _handler;

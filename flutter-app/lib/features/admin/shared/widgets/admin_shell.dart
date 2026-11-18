@@ -7,6 +7,7 @@ import '../../core/navigation/admin_nav.dart';
 import '../../core/permissions/admin_permissions.dart';
 import '../../features/auth/data/auth_repository.dart';
 import '../../features/auth/presentation/auth_provider.dart';
+import '../admin_exit_scope.dart';
 
 /// Width from which the navigation is a fixed sidebar instead of a drawer.
 const adminWideBreakpoint = 768.0;
@@ -123,7 +124,7 @@ class _AdminNav extends StatelessWidget {
           ),
         ),
         Divider(height: 1, color: scheme.outlineVariant),
-        _LogoutTile(auth: auth),
+        const _ExitTile(),
         const SizedBox(height: AppSpacing.xs),
       ],
     );
@@ -338,24 +339,23 @@ class _PermissionsBanner extends StatelessWidget {
   }
 }
 
-class _LogoutTile extends StatelessWidget {
-  const _LogoutTile({required this.auth});
-
-  final AuthProvider auth;
+class _ExitTile extends StatelessWidget {
+  const _ExitTile();
 
   @override
   Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.error;
+    final color = Theme.of(context).colorScheme.onSurfaceVariant;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
       child: InkWell(
         borderRadius: AppRadius.mdAll,
-        onTap: () async {
-          final router = GoRouter.of(context);
-          final scaffold = Scaffold.of(context);
-          if (scaffold.isDrawerOpen) Navigator.of(context).pop();
-          await auth.logout();
-          router.go('/login');
+        onTap: () {
+          final exit = AdminExitScope.maybeOf(context)?.onExit;
+          final scaffold = Scaffold.maybeOf(context);
+          if (scaffold != null && scaffold.isDrawerOpen) {
+            Navigator.of(context).pop();
+          }
+          exit?.call();
         },
         child: ConstrainedBox(
           constraints: const BoxConstraints(minHeight: kMinTapTarget),
@@ -363,11 +363,11 @@ class _LogoutTile extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
             child: Row(
               children: [
-                Icon(Icons.logout_rounded, size: 20, color: color),
+                Icon(Icons.exit_to_app_rounded, size: 20, color: color),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: Text(
-                    'admin.shell.logout'.tr(),
+                    'admin.shell.exit'.tr(),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: color,
                       fontWeight: FontWeight.w600,

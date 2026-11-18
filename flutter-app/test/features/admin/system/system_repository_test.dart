@@ -13,14 +13,7 @@ class _Store implements AdminSessionStore {
   @override
   Future<String?> accessToken() async => 't';
   @override
-  Future<String?> refreshToken() async => null;
-  @override
-  Future<void> saveTokens({
-    required String accessToken,
-    required String refreshToken,
-  }) async {}
-  @override
-  Future<void> clear() async {}
+  Future<bool> refresh() async => false;
 }
 
 class _Adapter implements HttpClientAdapter {
@@ -52,7 +45,6 @@ class _Adapter implements HttpClientAdapter {
 ApiClient _client(_Adapter adapter) => ApiClient.forTesting(
   store: _Store(),
   dio: Dio(BaseOptions(baseUrl: 'http://x'))..httpClientAdapter = adapter,
-  refreshDio: Dio(),
 );
 
 void main() {

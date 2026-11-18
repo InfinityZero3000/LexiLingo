@@ -2404,7 +2404,8 @@
       "logout": "Log out",
       "roleAdmin": "ADMIN",
       "roleSuper": "SUPER ADMIN",
-      "permissionsFailed": "Could not load your permissions."
+      "permissionsFailed": "Could not load your permissions.",
+      "exit": "Exit admin"
     },
     "access": {
       "forbiddenTitle": "No access",
@@ -2693,6 +2694,14 @@
     "webOnly": {
       "title": "On the web admin",
       "open": "Open web admin"
+    },
+    "gate": {
+      "noAccessTitle": "No admin access",
+      "noAccessBody": "This account does not have an admin role.",
+      "loadErrorTitle": "Couldn't check your account",
+      "loadErrorBody": "Check your connection and try again.",
+      "retry": "Try again",
+      "exit": "Back to the app"
     }
   },
   "adminGrowth": {

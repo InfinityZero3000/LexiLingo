@@ -622,6 +622,14 @@ actions** (permanent delete, role changes, wallet adjust, premium grant, gem lim
 partner keys, bulk import); those rows link to the web admin. It is no longer frozen:
 new admin screens go here when they fit that rule, otherwise to `admin-service`.
 
+**There is no admin login on mobile.** The panel opens from the profile of a signed-in
+learner whose role is admin, and borrows that session: `LearnerSessionStore` reads the
+learner tokens and renews them through the shared `refreshBackendToken` (refresh tokens
+are single-use, so a second session would race the learner app for them). `AuthProvider`
+only checks `/users/me` for an admin role; no session closes the panel, a non-admin sees
+`/no-access`, a failed check offers a retry. Exit leaves the panel; it never logs the
+learner out.
+
 Adding a widget with `Card(`, `BoxDecoration(` or `showModalBottomSheet(` under
 `flutter-app/lib/` needs a line in `docs/ui/learner-tactile-style-inventory.json`, or
 `learner_surface_inventory_test` fails. `locale_keys.g.dart` is hand-appended on `dev`;

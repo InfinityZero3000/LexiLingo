@@ -9,14 +9,7 @@ class _Store implements AdminSessionStore {
   @override
   Future<String?> accessToken() async => null;
   @override
-  Future<String?> refreshToken() async => null;
-  @override
-  Future<void> saveTokens({
-    required String accessToken,
-    required String refreshToken,
-  }) async {}
-  @override
-  Future<void> clear() async {}
+  Future<bool> refresh() async => false;
 }
 
 class _Adapter implements HttpClientAdapter {
@@ -64,7 +57,6 @@ class FakeAdminApi {
           );
           return jsonResponse(status, body);
         }),
-      refreshDio: Dio(),
     );
   }
 
