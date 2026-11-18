@@ -1,3 +1,5 @@
+import 'package:lexilingo_app/core/state/paginated_list_controller.dart';
+
 import '../../../core/network/api_client.dart';
 
 class AuditLogEntry {
@@ -27,29 +29,55 @@ class AuditLogEntry {
   );
 }
 
-class LogsRepository {
-  final _api = ApiClient.instance;
+class AuditFacets {
+  const AuditFacets({this.actions = const [], this.resourceTypes = const []});
 
-  Future<Map<String, dynamic>> getAuditLogs({
-    int page = 1,
-    String? action,
-    String? resourceType,
-  }) async {
-    final resp = await _api.get(
+  factory AuditFacets.fromJson(dynamic body) {
+    final map = body is Map ? body : const {};
+    List<String> read(String key) => [
+      for (final v in (map[key] is List ? map[key] as List : const []))
+        if (v != null) '$v',
+    ];
+    return AuditFacets(
+      actions: read('actions'),
+      resourceTypes: read('resource_types'),
+    );
+  }
+
+  final List<String> actions;
+  final List<String> resourceTypes;
+}
+
+/// Audit log reads only; the CSV export stays on the web admin.
+class LogsRepository {
+  LogsRepository({ApiClient? api}) : _api = api ?? ApiClient.instance;
+
+  final ApiClient _api;
+
+  /// `{logs, total, page, per_page}`: the audit endpoint's own page shape.
+  Future<PageResult<AuditLogEntry>> fetchPage(
+    PageRequest request,
+    Map<String, Object?> filters,
+  ) async {
+    final body = await _api.getData(
       '/admin/rbac/audit-logs',
       params: {
-        'page': page,
-        'per_page': 30,
-        if (action != null && action.isNotEmpty) 'action': action,
-        if (resourceType != null && resourceType.isNotEmpty)
-          'resource_type': resourceType,
+        ...PaginationStyle.perPage.query(request),
+        for (final e in filters.entries)
+          if (e.value != null && '${e.value}'.isNotEmpty) e.key: e.value,
       },
     );
-    return {
-      'logs': ((resp['logs'] as List?) ?? [])
-          .map((e) => AuditLogEntry.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      'total': resp['total'] ?? 0,
-    };
+    final map = body is Map ? body : const {};
+    final logs = map['logs'] is List ? map['logs'] as List : const [];
+    return PageResult(
+      items: [
+        for (final l in logs)
+          if (l is Map) AuditLogEntry.fromJson(Map<String, dynamic>.from(l)),
+      ],
+      total: (map['total'] as num?)?.toInt(),
+    );
   }
+
+  Future<AuditFacets> facets() async =>
+      AuditFacets.fromJson(await _api.getData('/admin/rbac/audit-logs/facets'));
 }
