@@ -6,9 +6,7 @@ typedef LearnerWidgetBuilder = Widget Function(BuildContext context);
 
 abstract final class LearnerRoute {
   static WidgetBuilder builder(LearnerWidgetBuilder child) =>
-      (context) => LearnerTheme(
-        child: AuthGate(child: Builder(builder: child)),
-      );
+      (context) => LearnerTheme(child: AuthGate(child: Builder(builder: child)));
 
   static Future<T?> push<T>(
     BuildContext context,
@@ -19,9 +17,8 @@ abstract final class LearnerRoute {
     MaterialPageRoute<T>(
       settings: settings,
       fullscreenDialog: fullscreenDialog,
-      builder: (context) => LearnerTheme(
-        child: AuthGate(child: Builder(builder: child)),
-      ),
+      builder: (context) =>
+          LearnerTheme(child: AuthGate(child: Builder(builder: child))),
     ),
   );
 
@@ -35,9 +32,8 @@ abstract final class LearnerRoute {
     MaterialPageRoute<T>(
       settings: settings,
       fullscreenDialog: fullscreenDialog,
-      builder: (context) => LearnerTheme(
-        child: AuthGate(child: Builder(builder: child)),
-      ),
+      builder: (context) =>
+          LearnerTheme(child: AuthGate(child: Builder(builder: child))),
     ),
     result: result,
   );

@@ -582,8 +582,7 @@ class ApiClient {
           retryRequest.headers.addAll(retryHeaders);
           if (body != null) retryRequest.body = jsonEncode(body);
           final retryResponse = await _client.send(retryRequest);
-          if (retryResponse.statusCode >= 200 &&
-              retryResponse.statusCode < 300) {
+          if (retryResponse.statusCode >= 200 && retryResponse.statusCode < 300) {
             yield* retryResponse.stream;
             return;
           }

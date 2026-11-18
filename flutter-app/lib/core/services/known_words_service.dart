@@ -38,14 +38,17 @@ class KnownWordsService {
     // "unknown" in reading/watching screens. Paginate here if that's ever
     // a real complaint.
     final result = await vocabularyRepository.getUserCollection(limit: 500);
-    return result.fold((_) => _cache ?? const {}, (items) {
-      _cache = items
-          .map((item) => item.word?.trim().toLowerCase())
-          .whereType<String>()
-          .where((word) => word.isNotEmpty)
-          .toSet();
-      return _cache!;
-    });
+    return result.fold(
+      (_) => _cache ?? const {},
+      (items) {
+        _cache = items
+            .map((item) => item.word?.trim().toLowerCase())
+            .whereType<String>()
+            .where((word) => word.isNotEmpty)
+            .toSet();
+        return _cache!;
+      },
+    );
   }
 
   void addKnownWord(String word) {

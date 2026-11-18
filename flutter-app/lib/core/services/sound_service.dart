@@ -17,9 +17,9 @@ class SoundService {
   void setEnabled(bool enabled) => _enabled = enabled;
 
   Future<void> playCorrect() => _play('assets/sounds/correct.wav');
-  Future<void> playWrong() => _play('assets/sounds/wrong.wav');
-  Future<void> playComplete() => _play('assets/sounds/complete.wav');
-  Future<void> playTap() => _play('assets/sounds/tap.wav');
+  Future<void> playWrong()   => _play('assets/sounds/wrong.wav');
+  Future<void> playComplete()=> _play('assets/sounds/complete.wav');
+  Future<void> playTap()     => _play('assets/sounds/tap.wav');
 
   Future<void> _play(String asset) async {
     if (!_enabled) return;

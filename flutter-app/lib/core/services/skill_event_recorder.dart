@@ -34,9 +34,7 @@ class SkillEventRecorder {
     try {
       await dataSource.recordExercises(results.map((r) => r.toJson()).toList());
     } catch (e) {
-      debugPrint(
-        'SkillEventRecorder: failed to record ${results.length} result(s): $e',
-      );
+      debugPrint('SkillEventRecorder: failed to record ${results.length} result(s): $e');
     }
   }
 }

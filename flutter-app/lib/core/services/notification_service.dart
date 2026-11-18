@@ -21,13 +21,7 @@ class NotificationService {
   static const int _checkinBaseId = 100;
   static const int checkinDays = 7;
   static const _milestones = [7, 14, 30, 60, 100, 365];
-  static const _rotation = [
-    'waiting',
-    'fiveMinutes',
-    'oneSentence',
-    'yourTime',
-    'fading',
-  ];
+  static const _rotation = ['waiting', 'fiveMinutes', 'oneSentence', 'yourTime', 'fading'];
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
@@ -146,7 +140,9 @@ class NotificationService {
           channelDescription: 'notifications.reviewChannelDescription'.tr(),
           importance: Importance.high,
         ),
-        iOS: DarwinNotificationDetails(categoryIdentifier: 'vocabulary_review'),
+        iOS: DarwinNotificationDetails(
+          categoryIdentifier: 'vocabulary_review',
+        ),
       ),
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
@@ -167,7 +163,9 @@ class NotificationService {
           channelDescription: 'notifications.reviewChannelDescription'.tr(),
           importance: Importance.high,
         ),
-        iOS: DarwinNotificationDetails(categoryIdentifier: 'vocabulary_review'),
+        iOS: DarwinNotificationDetails(
+          categoryIdentifier: 'vocabulary_review',
+        ),
       ),
       payload: _reviewRoute,
     );
@@ -189,13 +187,7 @@ class NotificationService {
   }) async {
     await cancelCheckinReminders();
     final clock = now ?? DateTime.now();
-    var day = DateTime(
-      clock.year,
-      clock.month,
-      clock.day,
-      time.hour,
-      time.minute,
-    );
+    var day = DateTime(clock.year, clock.month, clock.day, time.hour, time.minute);
     // Today's slot is already gone and nothing was done: by the time the next
     // one fires the streak has lapsed, so it must not quote it.
     final missedToday = !doneToday && !day.isAfter(clock);
@@ -205,31 +197,16 @@ class NotificationService {
     final quotedStreak = missedToday ? 0 : currentStreak;
 
     for (var i = 0; i < checkinDays; i++) {
-      final at = DateTime(
-        day.year,
-        day.month,
-        day.day + i,
-        time.hour,
-        time.minute,
-      );
+      final at = DateTime(day.year, day.month, day.day + i, time.hour, time.minute);
       // Only the first slot may quote the streak: later ones fire after days
       // we know nothing about, and a wrong count is worse than none.
       final m = i == 0
-          ? checkinLeadMessage(
-              quotedStreak,
-              longestStreak,
-              doneToday: doneToday,
-            )
-          : CheckinMessage(
-              _rotation[(at.difference(DateTime(at.year)).inDays) %
-                  _rotation.length],
-            );
+          ? checkinLeadMessage(quotedStreak, longestStreak, doneToday: doneToday)
+          : CheckinMessage(_rotation[(at.difference(DateTime(at.year)).inDays) % _rotation.length]);
       final title = 'notifications.checkin.${m.key}Title'.tr(namedArgs: m.args);
       final body = 'notifications.checkin.${m.key}Body'.tr(namedArgs: m.args);
       final summary = quotedStreak > 0 && i == 0
-          ? 'notifications.checkin.streakSummary'.tr(
-              namedArgs: {'count': '$quotedStreak'},
-            )
+          ? 'notifications.checkin.streakSummary'.tr(namedArgs: {'count': '$quotedStreak'})
           : null;
 
       await flutterLocalNotificationsPlugin.zonedSchedule(
