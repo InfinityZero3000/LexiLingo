@@ -1,25 +1,32 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
-
-import '../../../core/constants/admin_colors.dart';
-import '../../../shared/widgets/admin_shell.dart';
-import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
-import '../data/ranking_agent_repository.dart';
+import 'package:intl/intl.dart' as intl;
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/core/widgets/stat_card.dart';
+import 'package:provider/provider.dart';
+import '../../../core/network/admin_api_error.dart';
+import '../../../core/permissions/admin_permissions.dart';
+import '../../../shared/widgets/admin_shell.dart';
+import '../../../shared/widgets/growth_form.dart';
+import '../../../shared/widgets/growth_job_actions.dart';
+import '../../../shared/widgets/growth_state_body.dart';
+import '../data/ranking_agent_repository.dart';
 
 class RankingAgentScreen extends StatefulWidget {
-  const RankingAgentScreen({super.key});
+  const RankingAgentScreen({super.key, this.repository});
+
+  final RankingAgentRepository? repository;
 
   @override
   State<RankingAgentScreen> createState() => _RankingAgentScreenState();
 }
 
 class _RankingAgentScreenState extends State<RankingAgentScreen> {
-  final _repo = RankingAgentRepository();
-  List<RankingAgentJob> _jobs = [];
+  late final RankingAgentRepository _repo =
+      widget.repository ?? RankingAgentRepository();
+  List<RankingAgentJob> _jobs = const [];
   bool _loading = true;
-  String? _error;
+  Object? _error;
 
   @override
   void initState() {
@@ -35,26 +42,40 @@ class _RankingAgentScreenState extends State<RankingAgentScreen> {
     try {
       final jobs = await _repo.listJobs();
       if (mounted) setState(() => _jobs = jobs);
-    } catch (_) {
-      if (mounted) setState(() => _error = 'Không thể tải danh sách jobs.');
+    } catch (e) {
+      if (mounted) setState(() => _error = e);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  void _toast(Object error, String fallbackKey) {
+    if (!mounted) return;
+    final api = AdminApiError.from(error);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          api.isForbidden || api.isFeatureOff
+              ? api.message.resolve()
+              : fallbackKey.tr(),
+        ),
+      ),
+    );
   }
 
   Future<void> _create() async {
     final payload = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AdminColors.surface,
-      builder: (_) => const _CreateJobSheet(),
+      useSafeArea: true,
+      builder: (_) => const CreateRankingJobSheet(),
     );
     if (payload == null) return;
     try {
       await _repo.createJob(payload);
       await _load();
-    } catch (_) {
-      _message('Không thể tạo job.', error: true);
+    } catch (e) {
+      _toast(e, 'adminGrowth.ranking.createFailed');
     }
   }
 
@@ -62,195 +83,159 @@ class _RankingAgentScreenState extends State<RankingAgentScreen> {
     try {
       final preview = await _repo.getPreview(job.id);
       if (!mounted) return;
-      await showDialog<void>(
+      await showModalBottomSheet<void>(
         context: context,
-        builder: (_) => _PreviewDialog(job: job, preview: preview),
+        isScrollControlled: true,
+        useSafeArea: true,
+        builder: (_) => RankingPreviewSheet(job: job, preview: preview),
       );
-    } catch (_) {
-      _message('Preview chưa sẵn sàng.', error: true);
+    } catch (e) {
+      _toast(e, 'adminGrowth.ranking.previewMissing');
     }
   }
-
-  Future<bool> _confirm(String title, String message, String action) async =>
-      await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(
-            title,
-            style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700),
-          ),
-          content: Text(message, style: GoogleFonts.spaceGrotesk()),
-          actions: [
-            TextButton(
-              style: TextButton.styleFrom(
-                minimumSize: const Size(kMinTapTarget, kMinTapTarget),
-              ),
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Huỷ'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text(action),
-            ),
-          ],
-        ),
-      ) ??
-      false;
 
   Future<void> _action(RankingAgentJob job, String action) async {
     if (action == 'apply') {
       final impactful =
           job.jobType == 'league_reset' || job.jobType == 'xp_event';
-      final ok = await _confirm(
-        'Apply job vào dữ liệu thật?',
-        impactful
-            ? 'Hành động này sẽ ảnh hưởng trực tiếp đến người dùng thật và không thể hoàn tác an toàn.'
-            : 'Job sẽ ghi thay đổi vào dữ liệu người dùng thật.',
-        'Apply',
+      final ok = await confirmApply(
+        context,
+        title: 'adminGrowth.ranking.applyTitle'.tr(),
+        body: impactful
+            ? 'adminGrowth.ranking.applyImpact'.tr()
+            : 'adminGrowth.ranking.applyWrites'.tr(),
       );
       if (!ok) return;
     } else if (action == 'cancel') {
-      if (!await _confirm('Huỷ job?', 'Job đang chạy sẽ bị dừng.', 'Huỷ job')) {
-        return;
-      }
+      final ok = await confirmCancel(
+        context,
+        title: 'adminGrowth.ranking.cancelTitle'.tr(),
+        body: 'adminGrowth.ranking.cancelBody'.tr(),
+      );
+      if (!ok) return;
     }
     try {
       if (action == 'apply') await _repo.applyJob(job.id);
       if (action == 'cancel') await _repo.cancelJob(job.id);
       if (action == 'retry') await _repo.retryJob(job.id);
       await _load();
-    } catch (_) {
-      _message('Không thể thực hiện hành động.', error: true);
+    } catch (e) {
+      _toast(e, 'adminGrowth.common.actionFailed');
     }
   }
 
-  void _message(String text, {bool error = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(text, style: GoogleFonts.spaceGrotesk()),
-        backgroundColor: error ? AdminColors.error : AdminColors.success,
-      ),
-    );
-  }
-
   @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AdminColors.background,
-    floatingActionButton: FloatingActionButton.extended(
-      onPressed: _create,
-      icon: const Icon(Icons.add),
-      label: Text(
-        'Tạo job',
-        style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700),
-      ),
-    ),
-    body: RefreshIndicator(
-      color: AdminColors.primary,
-      onRefresh: _load,
-      child: CustomScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          SliverAppBar(
-            pinned: true,
-            backgroundColor: AdminColors.background,
-            elevation: 0,
-            scrolledUnderElevation: 0,
-            leading: IconButton(
-              icon: const Icon(
-                Icons.menu_rounded,
-                color: AdminColors.onSurface,
-              ),
-              onPressed: AdminShell.openDrawer,
-            ),
-            title: Text(
-              'Ranking Agent',
-              style: GoogleFonts.spaceGrotesk(
-                fontWeight: FontWeight.w700,
-                color: AdminColors.onSurface,
-              ),
-            ),
-            actions: [
-              IconButton(
-                onPressed: _load,
-                icon: const Icon(Icons.refresh_rounded),
-                tooltip: 'Làm mới',
-              ),
-            ],
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                Text(
-                  'Tự động hoá league reset, XP events và phát thành tích hàng loạt.',
-                  style: GoogleFonts.spaceGrotesk(
-                    color: AdminColors.onSurfaceMuted,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                if (_loading && _jobs.isEmpty)
-                  const Column(
-                    children: [
-                      SkeletonBox(height: 120),
-                      SizedBox(height: AppSpacing.md),
-                      SkeletonBox(height: 120),
-                    ],
-                  )
-                else if (_error != null)
-                  _StateCard(
-                    icon: Icons.error_outline,
-                    message: _error!,
-                    action: _load,
-                  )
-                else if (_jobs.isEmpty)
-                  const _StateCard(
-                    icon: Icons.emoji_events_outlined,
-                    message: 'Chưa có job nào. Tạo job đầu tiên để bắt đầu.',
-                  )
-                else
-                  ..._jobs.map(
-                    (job) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _JobCard(
-                        job: job,
-                        onPreview: () => _preview(job),
-                        onAction: (value) => _action(job, value),
-                      ),
-                    ),
-                  ),
-              ]),
-            ),
+  Widget build(BuildContext context) {
+    final perms = context.watch<AdminPermissions>();
+    final canCreate = perms.can('ranking:create');
+    final canWrite = perms.can('ranking:create');
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
+          icon: const Icon(Icons.menu_rounded),
+          onPressed: AdminShell.openDrawer,
+        ),
+        title: Text('adminGrowth.ranking.title'.tr()),
+        actions: [
+          IconButton(
+            onPressed: _load,
+            icon: const Icon(Icons.refresh_rounded),
+            tooltip: 'adminGrowth.common.refresh'.tr(),
           ),
         ],
       ),
-    ),
-  );
+      floatingActionButton: canCreate
+          ? FloatingActionButton.extended(
+              onPressed: _create,
+              icon: const Icon(Icons.add),
+              label: Text('adminGrowth.ranking.create'.tr()),
+            )
+          : null,
+      body: RefreshIndicator(
+        onRefresh: _load,
+        child: GrowthStateBody(
+          isLoading: _loading,
+          hasData: _jobs.isNotEmpty,
+          error: _error,
+          onRetry: _load,
+          emptyTitleKey: 'adminGrowth.ranking.empty',
+          emptyIcon: Icons.emoji_events_outlined,
+          builder: (context) => ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.lg,
+              AppSpacing.sm,
+              AppSpacing.lg,
+              100,
+            ),
+            children: [
+              Text(
+                'adminGrowth.ranking.subtitle'.tr(),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              for (final job in _jobs)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                  child: RankingJobCard(
+                    job: job,
+                    canWrite: canWrite,
+                    onPreview: () => _preview(job),
+                    onAction: (v) => _action(job, v),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
-class _JobCard extends StatelessWidget {
-  final RankingAgentJob job;
-  final VoidCallback onPreview;
-  final ValueChanged<String> onAction;
-  const _JobCard({
+String rankingTypeLabel(String value) => switch (value) {
+  'league_reset' => 'adminGrowth.ranking.typeLeague'.tr(),
+  'xp_event' => 'adminGrowth.ranking.typeXp'.tr(),
+  _ => 'adminGrowth.ranking.typeAchievement'.tr(),
+};
+
+String _date(String value) {
+  final date = DateTime.tryParse(value)?.toLocal();
+  return date == null ? '—' : intl.DateFormat('dd/MM/yyyy HH:mm').format(date);
+}
+
+class RankingJobCard extends StatelessWidget {
+  const RankingJobCard({
+    super.key,
     required this.job,
     required this.onPreview,
     required this.onAction,
+    this.canWrite = true,
   });
+
+  final RankingAgentJob job;
+  final VoidCallback onPreview;
+  final ValueChanged<String> onAction;
+  final bool canWrite;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final icon = switch (job.jobType) {
       'league_reset' => Icons.rotate_left_rounded,
       'xp_event' => Icons.bolt_rounded,
       _ => Icons.military_tech_rounded,
     };
+    const min = Size(kMinTapTarget, kMinTapTarget);
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AdminColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AdminColors.outline),
+        color: scheme.surface,
+        borderRadius: AppRadius.lgAll,
+        border: Border.all(color: scheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -261,10 +246,10 @@ class _JobCard extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: AdminColors.primaryContainer,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  color: scheme.primaryContainer,
+                  borderRadius: AppRadius.mdAll,
                 ),
-                child: Icon(icon, color: AdminColors.primary),
+                child: Icon(icon, color: scheme.primary),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
@@ -272,130 +257,96 @@ class _JobCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _typeLabel(job.jobType),
-                      style: GoogleFonts.spaceGrotesk(
+                      rankingTypeLabel(job.jobType),
+                      style: theme.textTheme.bodyLarge?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: AdminColors.onSurface,
                       ),
                     ),
                     Text(
                       _date(job.createdAt),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AdminColors.onSurfaceMuted,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
                       ),
                     ),
                   ],
                 ),
               ),
-              _StatusChip(status: job.status),
+              StatusPill(
+                label: job.status.replaceAll('_', ' '),
+                tone: jobStatusTone(job.status),
+              ),
             ],
           ),
           if (job.isActive) ...[
-            const SizedBox(height: 14),
-            LinearProgressIndicator(
-              value: job.progressPercent / 100,
-              color: AdminColors.primary,
-              backgroundColor: AdminColors.surfaceDim,
-            ),
+            const SizedBox(height: AppSpacing.md),
+            LinearProgressIndicator(value: job.progressPercent / 100),
             const SizedBox(height: AppSpacing.xs),
             Text(
               '${job.progress['stage'] ?? ''} • ${job.progressPercent}%',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AdminColors.onSurfaceMuted,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant,
               ),
             ),
           ],
           if (job.warnings.isNotEmpty || job.blockingErrors.isNotEmpty) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               job.blockingErrors.isNotEmpty
-                  ? '${job.blockingErrors.length} lỗi chặn'
-                  : '${job.warnings.length} cảnh báo',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  ? 'adminGrowth.ranking.blockingErrors'.tr(
+                      args: ['${job.blockingErrors.length}'],
+                    )
+                  : 'adminGrowth.ranking.warnings'.tr(
+                      args: ['${job.warnings.length}'],
+                    ),
+              style: theme.textTheme.bodySmall?.copyWith(
                 color: job.blockingErrors.isNotEmpty
-                    ? AdminColors.error
-                    : AdminColors.warning,
+                    ? scheme.error
+                    : context.statusWarning,
                 fontWeight: FontWeight.w700,
               ),
             ),
           ],
           const SizedBox(height: AppSpacing.sm),
           Wrap(
-            spacing: 8,
-            runSpacing: 4,
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.xs,
             children: [
               if (job.status == 'preview_ready')
                 TextButton.icon(
                   onPressed: onPreview,
                   icon: const Icon(Icons.visibility_outlined),
-                  label: const Text('Preview'),
-                  style: TextButton.styleFrom(minimumSize: const Size(44, 44)),
-                ),
-              if (job.canApply)
-                FilledButton(
-                  onPressed: () => onAction('apply'),
-                  child: const Text('Apply'),
-                ),
-              if (job.isActive && job.status != 'applying')
-                TextButton(
-                  onPressed: () => onAction('cancel'),
-                  style: TextButton.styleFrom(
-                    minimumSize: const Size(44, 44),
-                    foregroundColor: AdminColors.error,
-                  ),
-                  child: const Text('Huỷ'),
-                ),
-              if (job.status == 'failed')
-                TextButton.icon(
-                  onPressed: () => onAction('retry'),
-                  icon: const Icon(Icons.replay_rounded),
-                  label: const Text('Retry'),
-                  style: TextButton.styleFrom(minimumSize: const Size(44, 44)),
+                  label: Text('adminGrowth.ranking.preview'.tr()),
+                  style: TextButton.styleFrom(minimumSize: min),
                 ),
             ],
           ),
+          if (canWrite)
+            GrowthJobActions(
+              onApply: job.canApply ? () => onAction('apply') : null,
+              onCancel: job.isActive && job.status != 'applying'
+                  ? () => onAction('cancel')
+                  : null,
+              onRetry: job.status == 'failed' ? () => onAction('retry') : null,
+            ),
         ],
       ),
     );
   }
 }
 
-class _StatusChip extends StatelessWidget {
-  final String status;
-  const _StatusChip({required this.status});
-  @override
-  Widget build(BuildContext context) {
-    final color = switch (status) {
-      'completed' => AdminColors.success,
-      'failed' => AdminColors.error,
-      'preview_ready' => AdminColors.warning,
-      'cancelled' => AdminColors.onSurfaceMuted,
-      _ => AdminColors.primary,
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: .12),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-      ),
-      child: Text(
-        status.replaceAll('_', ' '),
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          fontWeight: FontWeight.w700,
-          color: color,
-        ),
-      ),
-    );
-  }
+extension on BuildContext {
+  Color get statusWarning =>
+      Theme.of(this).extension<AppStatusColors>()!.warning;
 }
 
-class _CreateJobSheet extends StatefulWidget {
-  const _CreateJobSheet();
+class CreateRankingJobSheet extends StatefulWidget {
+  const CreateRankingJobSheet({super.key});
+
   @override
-  State<_CreateJobSheet> createState() => _CreateJobSheetState();
+  State<CreateRankingJobSheet> createState() => _CreateRankingJobSheetState();
 }
 
-class _CreateJobSheetState extends State<_CreateJobSheet> {
+class _CreateRankingJobSheetState extends State<CreateRankingJobSheet> {
   static const _leagues = [
     'bronze',
     'silver',
@@ -411,26 +362,21 @@ class _CreateJobSheetState extends State<_CreateJobSheet> {
       target = 'all',
       targetLeague = 'gold',
       targetCefr = 'B1';
-  bool ai = false;
+  bool ai = false, _invalid = false;
   final week = TextEditingController(),
       name = TextEditingController(text: 'Weekend Boost'),
       multiplier = TextEditingController(text: '2'),
       duration = TextEditingController(text: '48'),
       slugs = TextEditingController(),
       streak = TextEditingController(),
-      vocab = TextEditingController(),
-      leagues = <String>{},
-      cefr = <String>{};
+      vocab = TextEditingController();
+  final leagues = <String>{}, cefr = <String>{};
 
   @override
   void dispose() {
-    week.dispose();
-    name.dispose();
-    multiplier.dispose();
-    duration.dispose();
-    slugs.dispose();
-    streak.dispose();
-    vocab.dispose();
+    for (final c in [week, name, multiplier, duration, slugs, streak, vocab]) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -491,342 +437,268 @@ class _CreateJobSheetState extends State<_CreateJobSheet> {
     return {'job_type': type, 'config': config, 'use_ai_insights': ai};
   }
 
+  void _submit() {
+    final value = _payload();
+    if (value == null) {
+      setState(() => _invalid = true);
+      return;
+    }
+    Navigator.pop(context, value);
+  }
+
+  @override
+  Widget build(BuildContext context) => GrowthFormSheet(
+    title: 'adminGrowth.ranking.createTitle'.tr(),
+    onSave: _submit,
+    children: [
+      GrowthDropdown(
+        label: 'adminGrowth.ranking.jobType'.tr(),
+        value: type,
+        options: const ['league_reset', 'xp_event', 'achievement_batch'],
+        optionLabel: rankingTypeLabel,
+        onChanged: (v) => setState(() => type = v),
+      ),
+      if (type == 'league_reset')
+        GrowthField(
+          controller: week,
+          label: 'adminGrowth.ranking.weekStart'.tr(),
+        ),
+      if (type == 'xp_event') ...[
+        GrowthField(
+          controller: name,
+          label: 'adminGrowth.ranking.eventName'.tr(),
+        ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: GrowthField(
+                controller: multiplier,
+                number: true,
+                label: 'adminGrowth.ranking.multiplier'.tr(),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: GrowthField(
+                controller: duration,
+                number: true,
+                label: 'adminGrowth.ranking.hours'.tr(),
+              ),
+            ),
+          ],
+        ),
+        GrowthDropdown(
+          label: 'adminGrowth.ranking.audience'.tr(),
+          value: target,
+          options: const ['all', 'league', 'cefr'],
+          optionLabel: (v) => switch (v) {
+            'league' => 'adminGrowth.ranking.audienceLeague'.tr(),
+            'cefr' => 'adminGrowth.ranking.audienceCefr'.tr(),
+            _ => 'adminGrowth.ranking.audienceAll'.tr(),
+          },
+          onChanged: (v) => setState(() => target = v),
+        ),
+        if (target == 'league')
+          GrowthDropdown(
+            label: 'adminGrowth.ranking.leagues'.tr(),
+            value: targetLeague,
+            options: _leagues,
+            onChanged: (v) => setState(() => targetLeague = v),
+          ),
+        if (target == 'cefr')
+          GrowthDropdown(
+            label: 'adminGrowth.ranking.cefr'.tr(),
+            value: targetCefr,
+            options: _cefr,
+            onChanged: (v) => setState(() => targetCefr = v),
+          ),
+      ],
+      if (type == 'achievement_batch') ...[
+        GrowthField(
+          controller: slugs,
+          lines: 2,
+          label: 'adminGrowth.ranking.slugs'.tr(),
+        ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: GrowthField(
+                controller: streak,
+                number: true,
+                label: 'adminGrowth.ranking.minStreak'.tr(),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: GrowthField(
+                controller: vocab,
+                number: true,
+                label: 'adminGrowth.ranking.minVocab'.tr(),
+              ),
+            ),
+          ],
+        ),
+        _Choices(
+          labelKey: 'adminGrowth.ranking.leagues',
+          values: _leagues,
+          selected: leagues,
+          changed: () => setState(() {}),
+        ),
+        _Choices(
+          labelKey: 'adminGrowth.ranking.cefr',
+          values: _cefr,
+          selected: cefr,
+          changed: () => setState(() {}),
+        ),
+      ],
+      SwitchListTile(
+        contentPadding: EdgeInsets.zero,
+        value: ai,
+        onChanged: (v) => setState(() => ai = v),
+        title: Text('adminGrowth.ranking.aiInsights'.tr()),
+        subtitle: Text('adminGrowth.ranking.aiInsightsBody'.tr()),
+      ),
+      if (_invalid)
+        Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+          child: Text(
+            'adminGrowth.ranking.checkFields'.tr(),
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
+        ),
+    ],
+  );
+}
+
+class _Choices extends StatelessWidget {
+  const _Choices({
+    required this.labelKey,
+    required this.values,
+    required this.selected,
+    required this.changed,
+  });
+
+  final String labelKey;
+  final List<String> values;
+  final Set<String> selected;
+  final VoidCallback changed;
+
   @override
   Widget build(BuildContext context) => Padding(
-    padding: EdgeInsets.fromLTRB(
-      20,
-      20,
-      20,
-      MediaQuery.viewInsetsOf(context).bottom + 20,
+    padding: const EdgeInsets.only(bottom: AppSpacing.md),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(labelKey.tr(), style: Theme.of(context).textTheme.labelLarge),
+        const SizedBox(height: AppSpacing.xs),
+        Wrap(
+          spacing: AppSpacing.sm,
+          children: [
+            for (final value in values)
+              FilterChip(
+                label: Text(value),
+                selected: selected.contains(value),
+                onSelected: (_) {
+                  selected.contains(value)
+                      ? selected.remove(value)
+                      : selected.add(value);
+                  changed();
+                },
+              ),
+          ],
+        ),
+      ],
     ),
-    child: SafeArea(
+  );
+}
+
+class RankingPreviewSheet extends StatelessWidget {
+  const RankingPreviewSheet({
+    super.key,
+    required this.job,
+    required this.preview,
+  });
+
+  final RankingAgentJob job;
+  final RankingAgentPreview preview;
+
+  @override
+  Widget build(BuildContext context) {
+    final a = preview.artifact;
+    final entries = switch (job.jobType) {
+      'league_reset' => {
+        'adminGrowth.ranking.pTotalParticipants': a['total_participants'] ?? 0,
+        'adminGrowth.ranking.pPromotions':
+            (a['promotions'] as List?)?.length ?? 0,
+        'adminGrowth.ranking.pDemotions':
+            (a['demotions'] as List?)?.length ?? 0,
+        'adminGrowth.ranking.pWeek': a['week'] ?? '—',
+      },
+      'xp_event' => {
+        'adminGrowth.ranking.pUsersAffected': a['target_user_count'] ?? 0,
+        'adminGrowth.ranking.pXpDelta': a['estimated_total_xp_delta'] ?? 0,
+        'adminGrowth.ranking.pMultiplier': a['multiplier'] ?? '—',
+        'adminGrowth.ranking.pDuration': '${a['duration_hours'] ?? '—'}h',
+      },
+      _ => {
+        'adminGrowth.ranking.pUsersAffected': a['total_users_affected'] ?? 0,
+        'adminGrowth.ranking.pXpAwarded': a['total_xp_to_award'] ?? 0,
+        'adminGrowth.ranking.pAchievements':
+            (a['achievements'] as List?)?.length ?? 0,
+      },
+    };
+    final scheme = Theme.of(context).colorScheme;
+    return SafeArea(
       child: SingleChildScrollView(
+        padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Tạo Ranking Agent job',
-              style: Theme.of(
-                context,
-              ).textTheme.heading?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            DropdownButtonFormField<String>(
-              initialValue: type,
-              decoration: const InputDecoration(labelText: 'Loại job'),
-              items: const [
-                DropdownMenuItem(
-                  value: 'league_reset',
-                  child: Text('League Reset'),
-                ),
-                DropdownMenuItem(value: 'xp_event', child: Text('XP Event')),
-                DropdownMenuItem(
-                  value: 'achievement_batch',
-                  child: Text('Achievement Batch'),
-                ),
-              ],
-              onChanged: (value) => setState(() => type = value!),
+              'adminGrowth.ranking.preview'.tr(),
+              style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: AppSpacing.md),
-            if (type == 'league_reset')
-              TextField(
-                controller: week,
-                decoration: const InputDecoration(
-                  labelText: 'Tuần bắt đầu (YYYY-MM-DD, tuỳ chọn)',
-                ),
-              ),
-            if (type == 'xp_event') ...[
-              TextField(
-                controller: name,
-                decoration: const InputDecoration(labelText: 'Tên event *'),
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: multiplier,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Multiplier *',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: TextField(
-                      controller: duration,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Số giờ *'),
-                    ),
-                  ),
-                ],
-              ),
-              DropdownButtonFormField<String>(
-                initialValue: target,
-                decoration: const InputDecoration(labelText: 'Đối tượng'),
-                items: const [
-                  DropdownMenuItem(value: 'all', child: Text('Tất cả')),
-                  DropdownMenuItem(value: 'league', child: Text('Theo league')),
-                  DropdownMenuItem(value: 'cefr', child: Text('Theo CEFR')),
-                ],
-                onChanged: (value) => setState(() => target = value!),
-              ),
-              if (target == 'league')
-                DropdownButtonFormField<String>(
-                  initialValue: targetLeague,
-                  items: _leagues
-                      .map(
-                        (value) =>
-                            DropdownMenuItem(value: value, child: Text(value)),
-                      )
-                      .toList(),
-                  onChanged: (value) => setState(() => targetLeague = value!),
-                ),
-              if (target == 'cefr')
-                DropdownButtonFormField<String>(
-                  initialValue: targetCefr,
-                  items: _cefr
-                      .map(
-                        (value) =>
-                            DropdownMenuItem(value: value, child: Text(value)),
-                      )
-                      .toList(),
-                  onChanged: (value) => setState(() => targetCefr = value!),
-                ),
-            ],
-            if (type == 'achievement_batch') ...[
-              TextField(
-                controller: slugs,
-                maxLines: 2,
-                decoration: const InputDecoration(
-                  labelText: 'Achievement slugs *',
-                  hintText: 'streak_30, vocab_master_100',
-                ),
-              ),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: streak,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Min streak',
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: TextField(
-                      controller: vocab,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(labelText: 'Min vocab'),
-                    ),
-                  ),
-                ],
-              ),
-              _Choices(
-                label: 'Leagues',
-                values: _leagues,
-                selected: leagues,
-                changed: () => setState(() {}),
-              ),
-              _Choices(
-                label: 'CEFR',
-                values: _cefr,
-                selected: cefr,
-                changed: () => setState(() {}),
-              ),
-            ],
-            SwitchListTile(
-              contentPadding: EdgeInsets.zero,
-              value: ai,
-              onChanged: (value) => setState(() => ai = value),
-              title: const Text('AI Insights'),
-              subtitle: const Text('Tạo nhận xét ngắn trong bước validating.'),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Huỷ'),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                FilledButton(
-                  onPressed: () {
-                    final value = _payload();
-                    if (value == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Vui lòng kiểm tra các trường bắt buộc.',
-                          ),
-                        ),
-                      );
-                      return;
-                    }
-                    Navigator.pop(context, value);
-                  },
-                  child: const Text('Tạo job'),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-}
-
-class _Choices extends StatelessWidget {
-  final String label;
-  final List<String> values;
-  final Set<String> selected;
-  final VoidCallback changed;
-  const _Choices({
-    required this.label,
-    required this.values,
-    required this.selected,
-    required this.changed,
-  });
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(top: 12),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label),
-        Wrap(
-          spacing: 6,
-          children: values
-              .map(
-                (value) => FilterChip(
-                  label: Text(value),
-                  selected: selected.contains(value),
-                  onSelected: (_) {
-                    selected.contains(value)
-                        ? selected.remove(value)
-                        : selected.add(value);
-                    changed();
-                  },
-                ),
-              )
-              .toList(),
-        ),
-      ],
-    ),
-  );
-}
-
-class _PreviewDialog extends StatelessWidget {
-  final RankingAgentJob job;
-  final RankingAgentPreview preview;
-  const _PreviewDialog({required this.job, required this.preview});
-  @override
-  Widget build(BuildContext context) {
-    final artifact = preview.artifact;
-    final entries = switch (job.jobType) {
-      'league_reset' => {
-        'Tổng người tham gia': artifact['total_participants'] ?? 0,
-        'Thăng hạng': (artifact['promotions'] as List?)?.length ?? 0,
-        'Xuống hạng': (artifact['demotions'] as List?)?.length ?? 0,
-        'Tuần': artifact['week'] ?? '—',
-      },
-      'xp_event' => {
-        'Người dùng ảnh hưởng': artifact['target_user_count'] ?? 0,
-        'XP tăng dự kiến': artifact['estimated_total_xp_delta'] ?? 0,
-        'Multiplier': artifact['multiplier'] ?? '—',
-        'Thời lượng': '${artifact['duration_hours'] ?? '—'}h',
-      },
-      _ => {
-        'Người dùng ảnh hưởng': artifact['total_users_affected'] ?? 0,
-        'Tổng XP trao': artifact['total_xp_to_award'] ?? 0,
-        'Achievements': (artifact['achievements'] as List?)?.length ?? 0,
-      },
-    };
-    return AlertDialog(
-      title: const Text('Preview'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ...entries.entries.map(
-              (entry) => ListTile(
+            for (final e in entries.entries)
+              ListTile(
                 contentPadding: EdgeInsets.zero,
-                title: Text(entry.key),
+                title: Text(e.key.tr()),
                 trailing: Text(
-                  '${entry.value}',
+                  '${e.value}',
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),
-            ),
             if (preview.warnings.isNotEmpty)
               Text(
-                'Cảnh báo:\n${preview.warnings.join('\n')}',
-                style: const TextStyle(color: AdminColors.warning),
+                'adminGrowth.ranking.warningsLabel'.tr(
+                  args: [preview.warnings.join('\n')],
+                ),
+                style: TextStyle(color: context.statusWarning),
               ),
             if (preview.blockingErrors.isNotEmpty)
               Text(
-                'Lỗi chặn:\n${preview.blockingErrors.join('\n')}',
-                style: const TextStyle(color: AdminColors.error),
+                'adminGrowth.ranking.blockingLabel'.tr(
+                  args: [preview.blockingErrors.join('\n')],
+                ),
+                style: TextStyle(color: scheme.error),
               ),
+            const SizedBox(height: AppSpacing.md),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+                ),
+                onPressed: () => Navigator.pop(context),
+                child: Text('adminGrowth.ranking.close'.tr()),
+              ),
+            ),
           ],
         ),
       ),
-      actions: [
-        TextButton(
-          style: TextButton.styleFrom(
-            minimumSize: const Size(kMinTapTarget, kMinTapTarget),
-          ),
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Đóng'),
-        ),
-      ],
     );
   }
-}
-
-class _StateCard extends StatelessWidget {
-  final IconData icon;
-  final String message;
-  final Future<void> Function()? action;
-  const _StateCard({required this.icon, required this.message, this.action});
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(40),
-      child: Column(
-        children: [
-          Icon(icon, size: 44, color: AdminColors.onSurfaceMuted),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            message,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.spaceGrotesk(color: AdminColors.onSurfaceMuted),
-          ),
-          if (action != null)
-            TextButton(
-              style: TextButton.styleFrom(
-                minimumSize: const Size(kMinTapTarget, kMinTapTarget),
-              ),
-              onPressed: () => action!(),
-              child: const Text('Thử lại'),
-            ),
-        ],
-      ),
-    ),
-  );
-}
-
-String _typeLabel(String value) => switch (value) {
-  'league_reset' => 'League Reset',
-  'xp_event' => 'XP Event',
-  _ => 'Achievement Batch',
-};
-String _date(String value) {
-  final date = DateTime.tryParse(value)?.toLocal();
-  return date == null ? '—' : DateFormat('dd/MM/yyyy HH:mm').format(date);
 }

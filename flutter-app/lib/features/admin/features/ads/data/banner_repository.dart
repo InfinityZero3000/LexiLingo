@@ -1,4 +1,5 @@
 import '../../../core/constants/api_endpoints.dart';
+import 'package:lexilingo_app/core/network/envelope.dart';
 import '../../../core/network/api_client.dart';
 
 class BannerItem {
@@ -48,15 +49,16 @@ class BannerItem {
 }
 
 class BannerRepository {
-  final _api = ApiClient.instance;
+  ApiClient get _api => ApiClient.instance;
 
   Future<List<BannerItem>> listBanners() async {
-    final response = await _api.get(
+    final body = await _api.getData(
       ApiEndpoints.adminBanners,
       params: {'limit': 200},
     );
-    return ((response['data'] as List?) ?? const [])
-        .map((e) => BannerItem.fromJson(e as Map<String, dynamic>))
+    return extractPage(body).items
+        .whereType<Map>()
+        .map((e) => BannerItem.fromJson(Map<String, dynamic>.from(e)))
         .toList();
   }
 
@@ -64,6 +66,6 @@ class BannerRepository {
       _api.post(ApiEndpoints.adminBanners, data: data);
   Future<void> updateBanner(String id, Map<String, dynamic> data) =>
       _api.put('${ApiEndpoints.adminBanners}/$id', data: data);
-  Future<void> deleteBanner(String id) =>
-      _api.delete('${ApiEndpoints.adminBanners}/$id');
+  Future<void> setActive(String id, bool active) =>
+      updateBanner(id, {'is_active': active});
 }

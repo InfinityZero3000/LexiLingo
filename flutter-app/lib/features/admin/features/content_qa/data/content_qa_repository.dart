@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/network/envelope.dart';
 import '../../../core/network/api_client.dart';
 
 class ContentQaJob {
@@ -174,30 +175,43 @@ class ContentQaQueue {
 
 class ContentQaRepository {
   static const _base = '/admin/content-agent/jobs';
-  final _api = ApiClient.instance;
+  ApiClient get _api => ApiClient.instance;
 
-  Map<String, dynamic> _data(Map<String, dynamic> response) =>
-      (response['data'] as Map?)?.cast<String, dynamic>() ?? {};
+  Future<Map<String, dynamic>> _read(String path) async {
+    final body = await _api.getData(path);
+    return body is Map ? Map<String, dynamic>.from(body) : <String, dynamic>{};
+  }
+
+  Map<String, dynamic> _data(Map<String, dynamic> response) {
+    final inner = unwrapEnvelope(response);
+    return inner is Map
+        ? Map<String, dynamic>.from(inner)
+        : <String, dynamic>{};
+  }
 
   Future<ContentQaQueue> getQueue() async {
-    final data = _data(await _api.get(_base));
-    final rawJobs = (data['jobs'] as List?) ?? (data['items'] as List?) ?? [];
-    final jobs = rawJobs
-        .map((e) => ContentQaJob.fromJson((e as Map).cast<String, dynamic>()))
+    final body = await _api.getData(_base);
+    final data = body is Map ? Map<String, dynamic>.from(body) : const {};
+    final page = extractPage(
+      data['jobs'] is List ? {'items': data['jobs']} : body,
+    );
+    final jobs = page.items
+        .whereType<Map>()
+        .map((e) => ContentQaJob.fromJson(Map<String, dynamic>.from(e)))
         .toList();
     return ContentQaQueue(
       reviewable: jobs.where((job) => job.status == 'preview_ready').toList(),
       failed: jobs.where((job) => job.status == 'failed').toList(),
       applied: jobs.where((job) => job.status == 'completed').toList(),
-      total: (data['total'] as num?)?.toInt() ?? jobs.length,
+      total: page.total ?? jobs.length,
     );
   }
 
   Future<ContentQaJob> getJob(String jobId) async =>
-      ContentQaJob.fromJson(_data(await _api.get('$_base/$jobId')));
+      ContentQaJob.fromJson(await _read('$_base/$jobId'));
 
   Future<ContentQaPreview> getPreview(String jobId) async {
-    final data = _data(await _api.get('$_base/$jobId/preview'));
+    final data = await _read('$_base/$jobId/preview');
     final raw = data.containsKey('courses')
         ? data
         : (data['artifact'] ?? data['preview']);

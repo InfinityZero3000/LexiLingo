@@ -1,10 +1,16 @@
 import 'dart:convert';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' as intl;
+import 'package:provider/provider.dart';
 
-import '../../../core/constants/admin_colors.dart';
+import '../../../core/network/admin_api_error.dart';
+import '../../../core/permissions/admin_permissions.dart';
+import '../../../shared/growth_tone.dart';
+import '../../../shared/widgets/admin_error_view.dart';
+import '../../../shared/widgets/growth_job_actions.dart';
 import '../../../shared/widgets/admin_shell.dart';
 import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
 import 'package:lexilingo_app/core/widgets/stagger_list.dart';
@@ -12,18 +18,21 @@ import '../data/content_qa_repository.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class ContentQaScreen extends StatefulWidget {
-  const ContentQaScreen({super.key});
+  const ContentQaScreen({super.key, this.repository});
+
+  final ContentQaRepository? repository;
 
   @override
   State<ContentQaScreen> createState() => _ContentQaScreenState();
 }
 
 class _ContentQaScreenState extends State<ContentQaScreen> {
-  final _repository = ContentQaRepository();
+  late final ContentQaRepository _repository =
+      widget.repository ?? ContentQaRepository();
   ContentQaQueue? _queue;
   String _filter = 'preview_ready';
   bool _loading = true;
-  String? _error;
+  Object? _error;
 
   @override
   void initState() {
@@ -43,10 +52,10 @@ class _ContentQaScreenState extends State<ContentQaScreen> {
         _queue = queue;
         _loading = false;
       });
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = 'Could not load the content QA queue.';
+        _error = e;
         _loading = false;
       });
     }
@@ -63,11 +72,16 @@ class _ContentQaScreenState extends State<ContentQaScreen> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: AdminColors.background,
+      backgroundColor: context.toneCanvas,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => _JobDetailSheet(job: job, repository: _repository),
+      builder: (_) => _JobDetailSheet(
+        job: job,
+        repository: _repository,
+        canAct: context.read<AdminPermissions>().can('content_agent:create'),
+        canEdit: context.read<AdminPermissions>().can('content_agent:update'),
+      ),
     );
     await _load();
   }
@@ -75,30 +89,27 @@ class _ContentQaScreenState extends State<ContentQaScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AdminColors.background,
+      backgroundColor: context.toneCanvas,
       body: RefreshIndicator(
-        color: AdminColors.primary,
+        color: context.toneAccent,
         onRefresh: _load,
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
             SliverAppBar(
               pinned: true,
-              backgroundColor: AdminColors.background,
+              backgroundColor: context.toneCanvas,
               elevation: 0,
               scrolledUnderElevation: 0,
               leading: IconButton(
-                icon: const Icon(
-                  Icons.menu_rounded,
-                  color: AdminColors.onSurface,
-                ),
+                icon: Icon(Icons.menu_rounded, color: context.toneText),
                 onPressed: AdminShell.openDrawer,
               ),
               title: Text(
-                'Content QA Queue',
+                'adminGrowth.qa.title'.tr(),
                 style: GoogleFonts.spaceGrotesk(
                   fontWeight: FontWeight.w700,
-                  color: AdminColors.onSurface,
+                  color: context.toneText,
                 ),
               ),
             ),
@@ -107,28 +118,28 @@ class _ContentQaScreenState extends State<ContentQaScreen> {
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
                   Text(
-                    'Review generated content',
+                    'adminGrowth.qa.headline'.tr(),
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AdminColors.onSurface,
+                      color: context.toneText,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    '${_queue?.total ?? 0} tracked jobs',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AdminColors.onSurfaceMuted,
+                    'adminGrowth.qa.tracked'.tr(
+                      args: ['${_queue?.total ?? 0}'],
                     ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: context.toneMuted),
                   ),
                   const SizedBox(height: 20),
                   if (_loading)
                     const _QueueSkeleton()
                   else if (_error != null)
-                    _MessageCard(
-                      icon: Icons.error_outline_rounded,
-                      message: _error!,
-                      actionLabel: 'Try again',
-                      onAction: _load,
+                    SizedBox(
+                      height: 360,
+                      child: AdminErrorView(error: _error!, onRetry: _load),
                     )
                   else ...[
                     SingleChildScrollView(
@@ -136,7 +147,7 @@ class _ContentQaScreenState extends State<ContentQaScreen> {
                       child: Row(
                         children: [
                           _QueueFilter(
-                            label: 'Needs approval',
+                            label: 'adminGrowth.qa.tabNeeds'.tr(),
                             count: _queue!.reviewable.length,
                             value: 'preview_ready',
                             selected: _filter,
@@ -144,7 +155,7 @@ class _ContentQaScreenState extends State<ContentQaScreen> {
                           ),
                           const SizedBox(width: AppSpacing.sm),
                           _QueueFilter(
-                            label: 'Needs repair',
+                            label: 'adminGrowth.qa.tabRepair'.tr(),
                             count: _queue!.failed.length,
                             value: 'failed',
                             selected: _filter,
@@ -152,7 +163,7 @@ class _ContentQaScreenState extends State<ContentQaScreen> {
                           ),
                           const SizedBox(width: AppSpacing.sm),
                           _QueueFilter(
-                            label: 'Published',
+                            label: 'adminGrowth.qa.tabPublished'.tr(),
                             count: _queue!.applied.length,
                             value: 'completed',
                             selected: _filter,
@@ -163,9 +174,9 @@ class _ContentQaScreenState extends State<ContentQaScreen> {
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     if (_jobs.isEmpty)
-                      const _MessageCard(
+                      _MessageCard(
                         icon: Icons.fact_check_outlined,
-                        message: 'Nothing is waiting in this bucket.',
+                        message: 'adminGrowth.qa.emptyBucket'.tr(),
                       )
                     else
                       ..._jobs.indexed.map(
@@ -216,10 +227,10 @@ class _QueueFilter extends StatelessWidget {
       '$label  $count',
       style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w600),
     ),
-    selectedColor: AdminColors.primaryContainer,
-    checkmarkColor: AdminColors.primary,
-    backgroundColor: AdminColors.surface,
-    side: const BorderSide(color: AdminColors.outlineVariant),
+    selectedColor: context.toneAccentBg,
+    checkmarkColor: context.toneAccent,
+    backgroundColor: context.toneCard,
+    side: BorderSide(color: context.toneLine),
     materialTapTargetSize: MaterialTapTargetSize.padded,
   );
 }
@@ -232,7 +243,7 @@ class _JobCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-    color: AdminColors.surface,
+    color: context.toneCard,
     borderRadius: BorderRadius.circular(AppRadius.lg),
     child: InkWell(
       onTap: onTap,
@@ -242,7 +253,7 @@ class _JobCard extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: AdminColors.outlineVariant, width: 0.5),
+          border: Border.all(color: context.toneLine, width: 0.5),
         ),
         child: Row(
           children: [
@@ -258,24 +269,21 @@ class _JobCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.spaceGrotesk(
                       fontWeight: FontWeight.w700,
-                      color: AdminColors.onSurface,
+                      color: context.toneText,
                     ),
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    '${job.id.length > 8 ? job.id.substring(0, 8) : job.id} · ${job.updatedAt == null ? 'Unknown date' : DateFormat.yMMMd().add_jm().format(job.updatedAt!.toLocal())}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AdminColors.onSurfaceMuted,
-                    ),
+                    '${job.id.length > 8 ? job.id.substring(0, 8) : job.id} · ${job.updatedAt == null ? 'adminGrowth.qa.unknownDate'.tr() : intl.DateFormat.yMMMd().add_jm().format(job.updatedAt!.toLocal())}',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: context.toneMuted),
                   ),
                 ],
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
-            const Icon(
-              Icons.chevron_right_rounded,
-              color: AdminColors.onSurfaceMuted,
-            ),
+            Icon(Icons.chevron_right_rounded, color: context.toneMuted),
           ],
         ),
       ),
@@ -291,18 +299,18 @@ class _StatusIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final (color, background, icon) = switch (status) {
       'preview_ready' => (
-        AdminColors.warning,
-        AdminColors.warningContainer,
+        context.toneWarning,
+        context.toneWarningBg,
         Icons.rate_review_outlined,
       ),
       'failed' => (
-        AdminColors.error,
-        AdminColors.errorContainer,
+        context.toneDanger,
+        context.toneDangerBg,
         Icons.error_outline_rounded,
       ),
       _ => (
-        AdminColors.success,
-        AdminColors.successContainer,
+        context.toneSuccess,
+        context.toneSuccessBg,
         Icons.check_circle_outline_rounded,
       ),
     };
@@ -321,7 +329,14 @@ class _StatusIcon extends StatelessWidget {
 class _JobDetailSheet extends StatefulWidget {
   final ContentQaJob job;
   final ContentQaRepository repository;
-  const _JobDetailSheet({required this.job, required this.repository});
+  final bool canAct;
+  final bool canEdit;
+  const _JobDetailSheet({
+    required this.job,
+    required this.repository,
+    this.canAct = true,
+    this.canEdit = true,
+  });
 
   @override
   State<_JobDetailSheet> createState() => _JobDetailSheetState();
@@ -333,6 +348,7 @@ class _JobDetailSheetState extends State<_JobDetailSheet> {
   bool _loading = true;
   bool _acting = false;
   String? _error;
+  Object? _loadError;
 
   @override
   void initState() {
@@ -352,44 +368,30 @@ class _JobDetailSheetState extends State<_JobDetailSheet> {
         _preview = results[1] as ContentQaPreview;
         _loading = false;
       });
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = 'Could not load this job preview.';
+        _loadError = e;
         _loading = false;
       });
     }
   }
 
   Future<void> _action(String action) async {
-    if (action == 'apply' || action == 'cancel') {
-      final ok = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(
-            action == 'apply' ? 'Approve & publish?' : 'Reject this job?',
-          ),
-          content: Text(
-            action == 'apply'
-                ? 'This will publish the generated content to production immediately.'
-                : 'This will discard the generated content for this job.',
-          ),
-          actions: [
-            TextButton(
-              style: TextButton.styleFrom(
-                minimumSize: const Size(kMinTapTarget, kMinTapTarget),
-              ),
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Confirm'),
-            ),
-          ],
-        ),
+    if (action == 'apply') {
+      final ok = await confirmApply(
+        context,
+        title: 'adminGrowth.qa.approveTitle'.tr(),
+        body: 'adminGrowth.qa.approveBody'.tr(),
       );
-      if (ok != true) return;
+      if (!ok || !mounted) return;
+    } else if (action == 'cancel') {
+      final ok = await confirmCancel(
+        context,
+        title: 'adminGrowth.qa.rejectTitle'.tr(),
+        body: 'adminGrowth.qa.rejectBody'.tr(),
+      );
+      if (!ok || !mounted) return;
     }
     setState(() => _acting = true);
     try {
@@ -397,11 +399,16 @@ class _JobDetailSheetState extends State<_JobDetailSheet> {
       if (action == 'retry') await widget.repository.retry(widget.job.id);
       if (action == 'cancel') await widget.repository.cancel(widget.job.id);
       if (mounted) Navigator.pop(context);
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
+      final api = AdminApiError.from(e);
       setState(() {
         _acting = false;
-        _error = 'Could not $action this job.';
+        _error = api.isForbidden || api.isFeatureOff
+            ? api.message.resolve()
+            : 'adminGrowth.qa.actionFailed'.tr(
+                args: ['adminGrowth.jobs.$action'.tr().toLowerCase()],
+              );
       });
     }
   }
@@ -411,7 +418,7 @@ class _JobDetailSheetState extends State<_JobDetailSheet> {
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
-      backgroundColor: AdminColors.surface,
+      backgroundColor: context.toneCard,
       builder: (_) => _EditExerciseSheet(
         repository: widget.repository,
         jobId: widget.job.id,
@@ -439,7 +446,7 @@ class _JobDetailSheetState extends State<_JobDetailSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AdminColors.outlineVariant,
+                color: context.toneLine,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -452,14 +459,14 @@ class _JobDetailSheetState extends State<_JobDetailSheet> {
                   job.title,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AdminColors.onSurface,
+                    color: context.toneText,
                   ),
                 ),
               ),
               IconButton(
                 onPressed: () => Navigator.pop(context),
                 icon: const Icon(Icons.close_rounded),
-                tooltip: 'Close',
+                tooltip: 'adminGrowth.qa.close'.tr(),
               ),
             ],
           ),
@@ -467,17 +474,24 @@ class _JobDetailSheetState extends State<_JobDetailSheet> {
             job.id,
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: AdminColors.onSurfaceMuted),
+            ).textTheme.bodySmall?.copyWith(color: context.toneMuted),
           ),
           const SizedBox(height: 18),
           if (_loading)
             const SectionCardSkeleton(contentHeight: 240)
-          else if (_error != null && _preview == null)
-            _MessageCard(
-              icon: Icons.error_outline_rounded,
-              message: _error!,
-              actionLabel: 'Try again',
-              onAction: _load,
+          else if (_loadError != null && _preview == null)
+            SizedBox(
+              height: 320,
+              child: AdminErrorView(
+                error: _loadError!,
+                onRetry: () {
+                  setState(() {
+                    _loading = true;
+                    _loadError = null;
+                  });
+                  _load();
+                },
+              ),
             )
           else ...[
             _Summary(preview: _preview!),
@@ -485,23 +499,23 @@ class _JobDetailSheetState extends State<_JobDetailSheet> {
             _Validation(job: job, preview: _preview!),
             const SizedBox(height: AppSpacing.lg),
             Text(
-              'Lessons & exercises',
+              'adminGrowth.qa.lessonsExercises'.tr(),
               style: Theme.of(context).textTheme.sectionTitle?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: AdminColors.onSurface,
+                color: context.toneText,
               ),
             ),
             const SizedBox(height: AppSpacing.sm),
             if (_preview!.lessons.isEmpty)
-              const _MessageCard(
+              _MessageCard(
                 icon: Icons.menu_book_outlined,
-                message: 'No lesson content in this preview.',
+                message: 'adminGrowth.qa.noLessons'.tr(),
               )
             else
               ..._preview!.lessons.map(
                 (lesson) => _LessonCard(
                   lesson: lesson,
-                  editable: job.status == 'preview_ready',
+                  editable: widget.canEdit && job.status == 'preview_ready',
                   onEdit: (exercise) => _edit(lesson, exercise),
                 ),
               ),
@@ -510,7 +524,8 @@ class _JobDetailSheetState extends State<_JobDetailSheet> {
               _MessageCard(icon: Icons.error_outline_rounded, message: _error!),
             ],
             const SizedBox(height: 20),
-            _Actions(status: job.status, busy: _acting, onAction: _action),
+            if (widget.canAct)
+              _Actions(status: job.status, busy: _acting, onAction: _action),
           ],
         ],
       ),
@@ -527,10 +542,19 @@ class _Summary extends StatelessWidget {
     spacing: 8,
     runSpacing: 8,
     children: [
-      _Metric(label: 'Courses', value: preview.courseCount),
-      _Metric(label: 'Lessons', value: preview.lessons.length),
-      _Metric(label: 'Vocabulary', value: preview.vocabularyCount),
-      _Metric(label: 'Exercises', value: preview.exerciseCount),
+      _Metric(label: 'adminGrowth.qa.courses'.tr(), value: preview.courseCount),
+      _Metric(
+        label: 'adminGrowth.qa.lessons'.tr(),
+        value: preview.lessons.length,
+      ),
+      _Metric(
+        label: 'adminGrowth.qa.vocabulary'.tr(),
+        value: preview.vocabularyCount,
+      ),
+      _Metric(
+        label: 'adminGrowth.qa.exercises'.tr(),
+        value: preview.exerciseCount,
+      ),
     ],
   );
 }
@@ -545,9 +569,9 @@ class _Metric extends StatelessWidget {
     width: (MediaQuery.sizeOf(context).width - 48) / 2,
     padding: const EdgeInsets.all(14),
     decoration: BoxDecoration(
-      color: AdminColors.surface,
+      color: context.toneCard,
       borderRadius: BorderRadius.circular(AppRadius.md),
-      border: Border.all(color: AdminColors.outlineVariant, width: 0.5),
+      border: Border.all(color: context.toneLine, width: 0.5),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -556,14 +580,14 @@ class _Metric extends StatelessWidget {
           '$value',
           style: Theme.of(context).textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w700,
-            color: AdminColors.onSurface,
+            color: context.toneText,
           ),
         ),
         Text(
           label,
           style: Theme.of(
             context,
-          ).textTheme.bodySmall?.copyWith(color: AdminColors.onSurfaceMuted),
+          ).textTheme.bodySmall?.copyWith(color: context.toneMuted),
         ),
       ],
     ),
@@ -582,26 +606,26 @@ class _Validation extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AdminColors.surface,
+        color: context.toneCard,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: AdminColors.outlineVariant, width: 0.5),
+        border: Border.all(color: context.toneLine, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Validation',
+            'adminGrowth.qa.validation'.tr(),
             style: GoogleFonts.spaceGrotesk(
               fontWeight: FontWeight.w700,
-              color: AdminColors.onSurface,
+              color: context.toneText,
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
           if (errors.isEmpty && warnings.isEmpty)
             Text(
-              '✓ No blocking issues',
+              'adminGrowth.qa.noIssues'.tr(),
               style: GoogleFonts.spaceGrotesk(
-                color: AdminColors.success,
+                color: context.toneSuccess,
                 fontWeight: FontWeight.w600,
               ),
             )
@@ -628,7 +652,7 @@ class _Issue extends StatelessWidget {
     child: Text(
       '• $message',
       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-        color: error ? AdminColors.error : AdminColors.warning,
+        color: error ? context.toneDanger : context.toneWarning,
       ),
     ),
   );
@@ -646,19 +670,19 @@ class _LessonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Card(
-    color: AdminColors.surface,
+    color: context.toneCard,
     elevation: 0,
     margin: const EdgeInsets.only(bottom: 10),
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(AppRadius.md),
-      side: const BorderSide(color: AdminColors.outlineVariant, width: 0.5),
+      side: BorderSide(color: context.toneLine, width: 0.5),
     ),
     child: ExpansionTile(
       title: Text(
         lesson.title,
         style: GoogleFonts.spaceGrotesk(
           fontWeight: FontWeight.w700,
-          color: AdminColors.onSurface,
+          color: context.toneText,
         ),
       ),
       subtitle: lesson.outcome == null
@@ -667,9 +691,9 @@ class _LessonCard extends StatelessWidget {
               lesson.outcome!,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AdminColors.onSurfaceMuted,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: context.toneMuted),
             ),
       children: lesson.exercises
           .map(
@@ -679,21 +703,21 @@ class _LessonCard extends StatelessWidget {
                 exercise.question,
                 style: Theme.of(
                   context,
-                ).textTheme.bodySmall?.copyWith(color: AdminColors.onSurface),
+                ).textTheme.bodySmall?.copyWith(color: context.toneText),
               ),
               subtitle: Text(
                 [
                   exercise.uiType,
                   if (exercise.phase != null) exercise.phase!,
                 ].join(' · '),
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AdminColors.onSurfaceMuted,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.labelSmall?.copyWith(color: context.toneMuted),
               ),
               trailing: IconButton(
                 onPressed: editable ? () => onEdit(exercise) : null,
                 icon: const Icon(Icons.edit_outlined),
-                tooltip: 'Edit exercise',
+                tooltip: 'adminGrowth.qa.editExercise'.tr(),
               ),
             ),
           )
@@ -721,27 +745,27 @@ class _Actions extends StatelessWidget {
         FilledButton.icon(
           onPressed: busy ? null : () => onAction('apply'),
           icon: const Icon(Icons.check_circle_outline),
-          label: const Text('Approve & publish'),
+          label: Text('adminGrowth.qa.approvePublish'.tr()),
         ),
       if (status == 'preview_ready' || status == 'failed')
         OutlinedButton.icon(
           onPressed: busy ? null : () => onAction('cancel'),
           icon: const Icon(Icons.cancel_outlined),
-          label: const Text('Reject'),
+          label: Text('adminGrowth.qa.reject'.tr()),
         ),
       if (status == 'failed')
         OutlinedButton.icon(
           onPressed: busy ? null : () => onAction('retry'),
           icon: const Icon(Icons.replay_rounded),
-          label: const Text('Retry'),
+          label: Text('adminGrowth.jobs.retry'.tr()),
         ),
       if (busy)
-        const SizedBox(
+        SizedBox(
           width: AppSpacing.xl,
           height: 24,
           child: CircularProgressIndicator(
             strokeWidth: 2,
-            color: AdminColors.primary,
+            color: context.toneAccent,
           ),
         ),
     ],
@@ -800,7 +824,7 @@ class _EditExerciseSheetState extends State<_EditExerciseSheet> {
     try {
       if (_options.text.trim().isNotEmpty) options = jsonDecode(_options.text);
     } on FormatException {
-      setState(() => _error = 'Options must be valid JSON.');
+      setState(() => _error = 'adminGrowth.qa.optionsInvalid'.tr());
       return;
     }
     setState(() {
@@ -821,7 +845,7 @@ class _EditExerciseSheetState extends State<_EditExerciseSheet> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = 'Could not save this edit.';
+          _error = 'adminGrowth.qa.saveFailed'.tr();
         });
       }
     }
@@ -840,41 +864,56 @@ class _EditExerciseSheetState extends State<_EditExerciseSheet> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Edit exercise',
+            'adminGrowth.qa.editExercise'.tr(),
             style: Theme.of(context).textTheme.heading?.copyWith(
               fontWeight: FontWeight.w700,
-              color: AdminColors.onSurface,
+              color: context.toneText,
             ),
           ),
           Text(
             widget.lesson.title,
             style: Theme.of(
               context,
-            ).textTheme.bodySmall?.copyWith(color: AdminColors.onSurfaceMuted),
+            ).textTheme.bodySmall?.copyWith(color: context.toneMuted),
           ),
           const SizedBox(height: AppSpacing.lg),
-          _Field(controller: _question, label: 'Question', lines: 2),
           _Field(
-            controller: _options,
-            label: 'Options (JSON, optional)',
-            lines: 3,
-          ),
-          _Field(controller: _answer, label: 'Correct answer'),
-          _Field(
-            controller: _explanation,
-            label: 'Explanation (optional)',
+            controller: _question,
+            label: 'adminGrowth.qa.question'.tr(),
             lines: 2,
           ),
-          _Field(controller: _outcome, label: 'Lesson outcome', lines: 2),
+          _Field(
+            controller: _options,
+            label: 'adminGrowth.qa.optionsJson'.tr(),
+            lines: 3,
+          ),
+          _Field(
+            controller: _answer,
+            label: 'adminGrowth.qa.correctAnswer'.tr(),
+          ),
+          _Field(
+            controller: _explanation,
+            label: 'adminGrowth.qa.explanation'.tr(),
+            lines: 2,
+          ),
+          _Field(
+            controller: _outcome,
+            label: 'adminGrowth.qa.outcome'.tr(),
+            lines: 2,
+          ),
           if (_error != null)
             Text(
               _error!,
-              style: GoogleFonts.spaceGrotesk(color: AdminColors.error),
+              style: GoogleFonts.spaceGrotesk(color: context.toneDanger),
             ),
           const SizedBox(height: AppSpacing.md),
           FilledButton(
             onPressed: _saving ? null : _save,
-            child: Text(_saving ? 'Saving…' : 'Save'),
+            child: Text(
+              _saving
+                  ? 'adminGrowth.qa.saving'.tr()
+                  : 'adminGrowth.common.save'.tr(),
+            ),
           ),
         ],
       ),
@@ -894,7 +933,7 @@ class _Field extends StatelessWidget {
     child: TextField(
       controller: controller,
       maxLines: lines,
-      style: GoogleFonts.spaceGrotesk(color: AdminColors.onSurface),
+      style: GoogleFonts.spaceGrotesk(color: context.toneText),
       decoration: InputDecoration(
         labelText: label,
         alignLabelWithHint: lines > 1,
@@ -906,34 +945,27 @@ class _Field extends StatelessWidget {
 class _MessageCard extends StatelessWidget {
   final IconData icon;
   final String message;
-  final String? actionLabel;
-  final VoidCallback? onAction;
-  const _MessageCard({
-    required this.icon,
-    required this.message,
-    this.actionLabel,
-    this.onAction,
-  });
+  const _MessageCard({required this.icon, required this.message});
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(20),
+    padding: const EdgeInsets.all(AppSpacing.xl),
     decoration: BoxDecoration(
-      color: AdminColors.surface,
+      color: context.toneCard,
       borderRadius: BorderRadius.circular(AppRadius.lg),
-      border: Border.all(color: AdminColors.outlineVariant, width: 0.5),
+      border: Border.all(color: context.toneLine, width: 0.5),
     ),
     child: Column(
       children: [
-        Icon(icon, size: 32, color: AdminColors.onSurfaceMuted),
+        Icon(icon, size: 32, color: context.toneMuted),
         const SizedBox(height: AppSpacing.sm),
         Text(
           message,
           textAlign: TextAlign.center,
-          style: GoogleFonts.spaceGrotesk(color: AdminColors.onSurfaceMuted),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: context.toneMuted),
         ),
-        if (onAction != null)
-          TextButton(onPressed: onAction, child: Text(actionLabel ?? 'Retry')),
       ],
     ),
   );

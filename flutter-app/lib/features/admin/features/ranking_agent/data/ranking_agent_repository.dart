@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/network/envelope.dart';
 import '../../../core/network/api_client.dart';
 
 class RankingAgentJob {
@@ -79,7 +80,7 @@ class RankingAgentPreview {
 
 class RankingAgentRepository {
   static const _jobs = '/admin/ranking-agent/jobs';
-  final _api = ApiClient.instance;
+  ApiClient get _api => ApiClient.instance;
 
   Map<String, dynamic> _data(Map<String, dynamic> response) =>
       response['data'] is Map
@@ -93,20 +94,16 @@ class RankingAgentRepository {
     int limit = 50,
     int offset = 0,
   }) async {
-    final response = await _api.get(
+    final body = await _api.getData(
       _jobs,
       params: {'limit': limit, 'offset': offset},
     );
-    final data = response['data'];
-    return data is List
-        ? data
-              .whereType<Map>()
-              .map(
-                (item) =>
-                    RankingAgentJob.fromJson(Map<String, dynamic>.from(item)),
-              )
-              .toList()
-        : <RankingAgentJob>[];
+    return extractPage(body).items
+        .whereType<Map>()
+        .map(
+          (item) => RankingAgentJob.fromJson(Map<String, dynamic>.from(item)),
+        )
+        .toList();
   }
 
   Future<RankingAgentJob> getJob(String id) async =>
