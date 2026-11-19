@@ -362,6 +362,9 @@ def context(source_id: str, evidence: str, confidence: float = 0.92) -> dict[str
     }
 
 
+_CONCEPT_ID_RE = re.compile(r"^[a-z_]+:[a-z0-9_]+$")
+
+
 def add_quad(
     quadruples: list[dict[str, Any]],
     edges: list[dict[str, Any]],
@@ -380,7 +383,8 @@ def add_quad(
             "context": context(source_id, evidence, confidence),
         }
     )
-    if ":" in obj and not obj.startswith(("http:", "https:")):
+    # Only concept ids become edges; literal text ("The gate closes at 2:45 PM.") stays a quad value.
+    if _CONCEPT_ID_RE.match(obj):
         edges.append(
             {
                 "source": subject,
@@ -462,7 +466,7 @@ def generate_tracecag_graph(stories: list[dict[str, Any]]) -> tuple[dict[str, An
                 kg_concept(concepts, collocation_id, f"{term.title()} Collocation", level, [term, "collocation", category])
             target_next = vocab_ids[index - 1] if index > 0 else scenario_cid
 
-            evidence = item["example_in_story"] or f"{term} in {title.lower()}"
+            evidence = item.get("example_in_story") or f"{term} in {title.lower()}"
             for src, rel, dst, conf in (
                 (topic_cid, "contains", vid, 0.96),
                 (vid, "belongs_to_domain", domain_cid, 0.93),
@@ -478,9 +482,9 @@ def generate_tracecag_graph(stories: list[dict[str, Any]]) -> tuple[dict[str, An
                 (vid, "related_to", target_next, 0.87),
             ):
                 add_quad(quadruples, raw_edges, src, rel, dst, evidence, source_id, conf)
-            if item["definition"]:
-                add_quad(quadruples, raw_edges, vid, "defined_as", item["definition"], evidence, source_id, 0.94)
-            if item["example_in_story"]:
+            if item.get("definition"):
+                add_quad(quadruples, raw_edges, vid, "defined_as", item.get("definition"), evidence, source_id, 0.94)
+            if item.get("example_in_story"):
                 add_quad(quadruples, raw_edges, vid, "example_sentence", evidence, evidence, source_id, 0.94)
             if mistake.get("wrong") and mistake.get("right"):
                 add_quad(quadruples, raw_edges, error_id, "corrected_as", mistake["right"], mistake["wrong"], source_id, 0.9)
@@ -490,12 +494,12 @@ def generate_tracecag_graph(stories: list[dict[str, Any]]) -> tuple[dict[str, An
                 add_quad(quadruples, raw_edges, collocation_id, "example_sentence", collocation, evidence, source_id, 0.9)
 
         grammar_ids: list[str] = []
-        for index, item in enumerate(story["grammar_points"]):
+        for index, item in enumerate(story.get("grammar_points") or []):
             grammar = item["grammar_structure"]
             gid = concept_id("grammar", f"{sid}_{grammar}")
             grammar_ids.append(gid)
             kg_concept(concepts, gid, grammar, level, [grammar, title, category])
-            evidence = item["usage_in_story"] or f"{grammar} in {title.lower()}"
+            evidence = item.get("usage_in_story") or f"{grammar} in {title.lower()}"
             linked_vocab = vocab_ids[index % len(vocab_ids)]
             for src, rel, dst, conf in (
                 (topic_cid, "practices", gid, 0.95),
@@ -507,9 +511,9 @@ def generate_tracecag_graph(stories: list[dict[str, Any]]) -> tuple[dict[str, An
                 (gid, "introduced_by", persona_cid, 0.85),
             ):
                 add_quad(quadruples, raw_edges, src, rel, dst, evidence, source_id, conf)
-            if item["explanation"]:
-                add_quad(quadruples, raw_edges, gid, "defined_as", item["explanation"], evidence, source_id, 0.93)
-            for example in item["examples"]:
+            if item.get("explanation"):
+                add_quad(quadruples, raw_edges, gid, "defined_as", item.get("explanation"), evidence, source_id, 0.93)
+            for example in item.get("examples") or []:
                 add_quad(quadruples, raw_edges, gid, "example_sentence", example, evidence, source_id, 0.93)
 
         functions = FUNCTIONS_BY_CATEGORY.get(category, FUNCTIONS_BY_CATEGORY["social"])
@@ -517,7 +521,7 @@ def generate_tracecag_graph(stories: list[dict[str, Any]]) -> tuple[dict[str, An
             fid = concept_id("function", f"{sid}_{function}")
             kg_concept(concepts, fid, function.title(), level, [function, category, title])
             linked_vocab = vocab_ids[index % len(vocab_ids)]
-            linked_grammar = grammar_ids[index % len(grammar_ids)]
+            linked_grammar = grammar_ids[index % len(grammar_ids)] if grammar_ids else None
             evidence = f"The learner needs {function} during {title.lower()}."
             for src, rel, dst, conf in (
                 (topic_cid, "requires_function", fid, 0.94),
@@ -528,6 +532,8 @@ def generate_tracecag_graph(stories: list[dict[str, Any]]) -> tuple[dict[str, An
                 (fid, "used_in_scenario", scenario_cid, 0.91),
                 (persona_cid, "models_function", fid, 0.88),
             ):
+                if dst is None:
+                    continue
                 add_quad(quadruples, raw_edges, src, rel, dst, evidence, source_id, conf)
             add_quad(quadruples, raw_edges, fid, "defined_as", f"Language used for {function} in {title.lower()}.", evidence, source_id)
 
@@ -722,8 +728,8 @@ def run(args: argparse.Namespace) -> dict[str, Any]:
     merged_stories = merge_stories(existing, generated)
     # The graph follows the stories as they are now (enriched where
     # enrich_topic_stories.py has run), not the blank blueprints.
-    topic_stories = [s for s in merged_stories if "topic_expansion" in (s.get("tags") or [])]
-    graph, quadruples, edges = generate_tracecag_graph(topic_stories)
+    # Every story, hand-written ones included: the topic chat KG covers all of them.
+    graph, quadruples, edges = generate_tracecag_graph(merged_stories)
     report = validate_outputs(merged_stories, graph, quadruples, edges, args.min_lines)
     report["blueprint_count"] = len(BLUEPRINTS)
     report["pipeline"] = "TraceCAG"

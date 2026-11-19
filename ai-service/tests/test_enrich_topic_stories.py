@@ -51,7 +51,7 @@ def good_output(story: dict) -> dict:
                 "usage_in_story": "You use it when you describe your problem to the dentist.",
                 "examples": [f"Example sentence number {i} at the clinic.", f"Another example {i} here."],
             }
-            for i, g in enumerate(story["grammar_points"])
+            for i, g in enumerate(story.get("grammar_points") or [])
         ],
     }
 
@@ -408,3 +408,46 @@ def test_kg_carries_the_enriched_content_on_the_same_ids():
     assert titles[f"errorpattern:{slug}_misuse"].startswith(f"Common mistake: 'WRONG sentence with {term}'")
     assert titles[f"phrase:{gen.slugify(story['story_id'])}_practice_phrase_1"] == "I have a toothache."
     assert not any("Learner may misuse" in str(q) for q in quads)
+
+
+def test_all_stories_also_selects_the_hand_written_ones():
+    stories = _stories()
+    tagged = ets.select_stories(stories, None)
+    everything = ets.select_stories(stories, None, all_stories=True)
+
+    assert all("topic_expansion" in s["tags"] for s in tagged)
+    assert {"story_airport_checkin", "story_weather_plans"} <= {s["story_id"] for s in everything}
+    assert len(everything) > len(tagged)
+
+
+@pytest.mark.asyncio
+async def test_a_story_without_grammar_points_can_be_enriched():
+    story = next(copy.deepcopy(s) for s in _stories() if s["story_id"] == "story_weather_plans")
+    out = good_output(story)
+    out["suggested_prompts"] = ["Will it rain this afternoon?", "Should I take an umbrella today?", "What will the weather be like tomorrow?"]
+
+    out["grammar_points"] = [
+        {"grammar_structure": "Future with will", "explanation": "Use will plus a base verb to predict the weather.",
+         "usage_in_story": "You use it to talk about tomorrow's weather.",
+         "examples": ["It will rain tomorrow.", "Will it be sunny on Saturday?"]},
+        {"grammar_structure": "Modal verbs for advice", "explanation": "Use should plus a base verb to give advice.",
+         "usage_in_story": "You use it to suggest what to bring.",
+         "examples": ["You should take an umbrella.", "Should I wear a coat?"]},
+    ]
+
+    new, problems = await ets.enrich_story(story, FakeLLM([out]), clean_diagnose)
+
+    assert problems == [] and ets.is_enriched(new)
+    assert [g["grammar_structure"] for g in new["grammar_points"]] == ["Future with will", "Modal verbs for advice"]
+    assert "none yet" in ets.build_prompt(story)
+
+
+@pytest.mark.asyncio
+async def test_a_story_without_grammar_points_must_get_two():
+    story = next(copy.deepcopy(s) for s in _stories() if s["story_id"] == "story_weather_plans")
+    out = good_output(story)
+    out["suggested_prompts"] = ["Will it rain this afternoon?", "Should I take an umbrella today?", "What will the weather be like tomorrow?"]
+
+    new, problems = await ets.enrich_story(story, FakeLLM([out, out]), clean_diagnose)
+
+    assert new is None and any("propose 2" in p for p in problems)

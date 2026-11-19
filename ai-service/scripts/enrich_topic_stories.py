@@ -56,6 +56,8 @@ PARTS_OF_SPEECH = {
     "adjective", "adverb", "preposition", "expression",
 }
 
+NEW_GRAMMAR_POINTS = 2
+
 LLM = Callable[[str], Awaitable[Any]]
 Diagnose = Callable[[str, str], Awaitable[list[dict[str, Any]]]]
 
@@ -84,9 +86,9 @@ def is_enriched(story: dict[str, Any]) -> bool:
 
 
 def select_stories(
-    stories: list[dict[str, Any]], only: list[str] | None, force: bool = False
+    stories: list[dict[str, Any]], only: list[str] | None, force: bool = False, all_stories: bool = False
 ) -> list[dict[str, Any]]:
-    tagged = [s for s in stories if TAG in (s.get("tags") or [])]
+    tagged = [s for s in stories if all_stories or TAG in (s.get("tags") or [])]
     if not only:
         return tagged if force else [s for s in tagged if not is_enriched(s)]
     wanted = set(only)
@@ -99,7 +101,13 @@ def select_stories(
 def build_prompt(story: dict[str, Any], problems: list[str] | None = None) -> str:
     level = story["difficulty_level"]
     terms = [v["term"] for v in story["vocabulary_list"]]
-    structures = [g["grammar_structure"] for g in story["grammar_points"]]
+    structures = [g["grammar_structure"] for g in (story.get("grammar_points") or [])]
+    grammar_line = (
+        f"Grammar structures (keep each exactly as written, same order): {json.dumps(structures)}"
+        if structures else
+        f"Grammar structures: none yet. Choose exactly {NEW_GRAMMAR_POINTS} structures a {level} learner "
+        "really needs in this scenario, and name each in \"grammar_structure\" (e.g. \"Modal verbs for requests\")."
+    )
     retry = ""
     if problems:
         listed = "\n".join(f"- {p}" for p in problems[:12])
@@ -110,7 +118,7 @@ Scenario: {story['title']['en']} (CEFR {level}). Setting: {story['context_descri
 The learner talks to: {story['role_persona']['name']}, {story['role_persona']['role']}.
 
 Vocabulary terms (keep each term exactly as written): {json.dumps(terms)}
-Grammar structures (keep each exactly as written, same order): {json.dumps(structures)}
+{grammar_line}
 
 Return one JSON object:
 {{
@@ -210,9 +218,20 @@ def parse_enrichment(raw: Any, story: dict[str, Any]) -> dict[str, Any]:
 
     grammar_in = raw.get("grammar_points")
     grammar: list[dict[str, Any]] = []
-    expected = story["grammar_points"]
+    expected = (story.get("grammar_points") or [])
+    if not expected and isinstance(grammar_in, list):
+        # The story had none: the model proposes them, named by itself.
+        expected = [
+            {"grammar_structure": str(g.get("grammar_structure") or "").strip()}
+            for g in grammar_in if isinstance(g, dict)
+        ]
+        if len(expected) != NEW_GRAMMAR_POINTS or not all(g["grammar_structure"] for g in expected):
+            problems.append(f"grammar_points must propose {NEW_GRAMMAR_POINTS} named structures")
+            expected = []
+            grammar_in = None
     if not isinstance(grammar_in, list) or len(grammar_in) != len(expected):
-        problems.append(f"grammar_points must have {len(expected)} entries")
+        if grammar_in is not None or story.get("grammar_points"):
+            problems.append(f"grammar_points must have {len(expected)} entries")
     else:
         for old, new in zip(expected, grammar_in):
             if not isinstance(new, dict) or _norm(str(new.get("grammar_structure", ""))) != _norm(old["grammar_structure"]):
@@ -258,7 +277,7 @@ def _sentences(enriched: dict[str, Any]) -> list[str]:
 def _old_sentences(story: dict[str, Any]) -> set[str]:
     old = set(story.get("suggested_prompts") or [])
     old |= {v.get("example_in_story", "") for v in story["vocabulary_list"]}
-    for g in story["grammar_points"]:
+    for g in (story.get("grammar_points") or []):
         old |= set(g.get("examples") or [])
     return {_norm(s) for s in old if s}
 
@@ -342,6 +361,7 @@ async def run(
     delay: float = 6.0,
     attempts: int = 2,
     force: bool = False,
+    all_stories: bool = False,
     log: Callable[[str], None] = print,
     on_pass: Callable[[list[dict[str, Any]]], None] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, list[str]]]:
@@ -350,7 +370,7 @@ async def run(
     ``on_pass`` gets the merged list after every passing story, so a long run
     that dies on a rate limit keeps what it already finished.
     """
-    targets = select_stories(stories, only, force)
+    targets = select_stories(stories, only, force, all_stories)
     log(f"{len(targets)} story(ies) to enrich")
     semaphore = asyncio.Semaphore(max(1, concurrency))
     results: dict[str, dict[str, Any]] = {}
@@ -449,6 +469,10 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--delay", type=float, default=6.0)
     parser.add_argument("--attempts", type=int, default=2)
     parser.add_argument("--force", action="store_true", help="also redo stories that are already enriched")
+    parser.add_argument(
+        "--all-stories", action="store_true",
+        help=f"include the hand-written stories, not only the {TAG} ones (they lack prompts and KG material)",
+    )
     return parser
 
 
@@ -465,7 +489,8 @@ async def amain(args: argparse.Namespace, llm: LLM = groq_llm, diagnose: Diagnos
         stories, llm, diagnose,
         only=[o for item in args.only for o in item.split(",") if o],
         concurrency=args.concurrency, delay=args.delay, attempts=args.attempts,
-        force=args.force, on_pass=save if args.write else None,
+        force=args.force, all_stories=getattr(args, "all_stories", False),
+        on_pass=save if args.write else None,
     )
     changed = sum(1 for a, b in zip(stories, merged) if a is not b)
     print(f"\n{changed} story(ies) passed the gate, {len(failures)} failed")
