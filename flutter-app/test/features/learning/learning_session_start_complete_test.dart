@@ -39,7 +39,7 @@ void main() {
   }
 
   test(
-    'a locked 409 on start sets the locked flag and loads no content',
+    'a locked 409 on start sets the locked flag and shows no content',
     () async {
       repository.startResult = const Left(
         ConflictFailure('Lesson is locked: complete the previous lesson first'),
@@ -51,7 +51,8 @@ void main() {
       expect(provider.isContentUnavailable, isFalse);
       expect(provider.error, isNotNull);
       expect(provider.currentLesson, isNull);
-      expect(repository.contentCalls, 0);
+      // Fetched alongside start to save a round trip, then discarded.
+      expect(repository.contentCalls, 1);
     },
   );
 
@@ -67,7 +68,8 @@ void main() {
       expect(provider.isContentUnavailable, isTrue);
       expect(provider.isLessonLocked, isFalse);
       expect(provider.currentLesson, isNull);
-      expect(repository.contentCalls, 0);
+      // Fetched alongside start to save a round trip, then discarded.
+      expect(repository.contentCalls, 1);
     },
   );
 

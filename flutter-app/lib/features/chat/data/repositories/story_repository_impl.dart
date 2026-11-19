@@ -23,7 +23,11 @@ import '../models/story_model.dart'
         ContextDescription,
         ConversationFlow;
 import '../models/topic_session_model.dart'
-    hide TopicSession, TopicChatResponse, TopicChatMessage, TopicMessagesPageResult;
+    hide
+        TopicSession,
+        TopicChatResponse,
+        TopicChatMessage,
+        TopicMessagesPageResult;
 
 const _tag = 'StoryRepositoryImpl';
 
@@ -201,30 +205,6 @@ class StoryRepositoryImpl implements StoryRepository {
     String? cursor,
   }) async {
     try {
-      if (cursor == null || cursor.isEmpty) {
-        try {
-          final metadata = await apiDataSource.getTopicMessagesMetadata(
-            sessionId,
-          );
-          if (!metadata.hasMessages || metadata.totalCount == 0) {
-            return const Right(
-              TopicMessagesPageResult(
-                messages: [],
-                hasMore: false,
-                nextCursor: null,
-                returned: 0,
-              ),
-            );
-          }
-        } catch (e) {
-          // Metadata endpoint is an optimization layer only.
-          logWarn(
-            _tag,
-            'getTopicMessagesMetadata failed, continue paged fetch: $e',
-          );
-        }
-      }
-
       final page = await apiDataSource.getTopicMessagesPaged(
         sessionId: sessionId,
         limit: limit,

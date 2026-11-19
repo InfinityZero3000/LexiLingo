@@ -171,6 +171,11 @@ class LearningProvider with ChangeNotifier {
     notifyListeners();
 
     try {
+      // Content is read-only and runs the same lock check as start, so both
+      // requests go out together instead of paying two round trips in a row.
+      final contentRequest = _getLessonContentUseCase(
+        GetLessonContentParams(lessonId: lessonId),
+      );
       final attemptResult = await _startLessonUseCase(
         StartLessonParams(lessonId: lessonId),
       );
@@ -179,6 +184,7 @@ class LearningProvider with ChangeNotifier {
         return null;
       }, (attempt) => attempt);
 
+      if (attempt == null) contentRequest.ignore();
       if (attempt != null) {
         _currentAttempt = attempt;
         _livesRemaining = attempt.livesRemaining;
@@ -190,9 +196,7 @@ class LearningProvider with ChangeNotifier {
           source: 'learning_session',
         );
 
-        final contentResult = await _getLessonContentUseCase(
-          GetLessonContentParams(lessonId: lessonId),
-        );
+        final contentResult = await contentRequest;
         contentResult.fold(_applyBlockingFailure, (lesson) {
           if (lesson.exercises.isEmpty) {
             _isContentUnavailable = true;

@@ -152,150 +152,27 @@ void main() {
     );
   });
 
-  group('getMessagesPaged metadata-first', () {
-    test(
-      'returns empty page immediately when metadata has no messages',
-      () async {
-        apiDataSource.metadataResult = const ChatMessagesMetadataResult(
-          totalCount: 0,
-          hasMessages: false,
-          latestCursor: null,
-          oldestCursor: null,
-          latestTs: null,
-          oldestTs: null,
-        );
-
-        final result = await repository.getMessagesPaged('session_1');
-
-        expect(result.isRight(), true);
-        result.fold(
-          (failure) => fail('Expected Right but got Left: $failure'),
-          (page) {
-            expect(page.messages, isEmpty);
-            expect(page.hasMore, false);
-            expect(page.nextCursor, isNull);
-            expect(page.returned, 0);
-          },
-        );
-        expect(apiDataSource.metadataCalls, 1);
-        expect(apiDataSource.lastMetadataSessionId, 'session_1');
-        expect(apiDataSource.pagedCalls, 0);
-      },
-    );
-
-    test(
-      'continues to paged endpoint when metadata indicates messages exist',
-      () async {
-        apiDataSource.metadataResult = const ChatMessagesMetadataResult(
-          totalCount: 10,
-          hasMessages: true,
-          latestCursor: 'latest',
-          oldestCursor: 'oldest',
-          latestTs: '2026-04-16T00:00:10Z',
-          oldestTs: '2026-04-16T00:00:00Z',
-        );
-        apiDataSource.pagedResult = ChatMessagesPageResult(
-          messages: [
-            ChatMessageModel(
-              id: 'm1',
-              sessionId: 'session_1',
-              content: 'hello',
-              role: MessageRole.user,
-              timestamp: DateTime.parse('2026-04-16T00:00:00Z'),
-              status: MessageStatus.sent,
-            ),
-          ],
-          hasMore: true,
-          nextCursor: 'next-cursor',
-          returned: 1,
-        );
-
-        final result = await repository.getMessagesPaged('session_1');
-
-        expect(result.isRight(), true);
-        result.fold(
-          (failure) => fail('Expected Right but got Left: $failure'),
-          (page) {
-            expect(page.messages.length, 1);
-            expect(page.messages.first.content, 'hello');
-            expect(page.hasMore, true);
-            expect(page.nextCursor, 'next-cursor');
-            expect(page.returned, 1);
-          },
-        );
-        expect(apiDataSource.metadataCalls, 1);
-        expect(apiDataSource.pagedCalls, 1);
-        expect(apiDataSource.lastPagedSessionId, 'session_1');
-        expect(apiDataSource.lastPagedLimit, 50);
-        expect(apiDataSource.lastPagedCursor, isNull);
-      },
-    );
-
-    test('still calls paged endpoint when metadata request fails', () async {
-      apiDataSource.metadataError = Exception('metadata endpoint unavailable');
-      apiDataSource.pagedResult = ChatMessagesPageResult(
-        messages: [
-          ChatMessageModel(
-            id: 'm2',
-            sessionId: 'session_1',
-            content: 'fallback path',
-            role: MessageRole.ai,
-            timestamp: DateTime.parse('2026-04-16T00:01:00Z'),
-            status: MessageStatus.sent,
-          ),
-        ],
-        hasMore: false,
-        nextCursor: null,
-        returned: 1,
-      );
-
+  group('getMessagesPaged', () {
+    test('first page is one paged request, no metadata probe', () async {
       final result = await repository.getMessagesPaged('session_1');
 
       expect(result.isRight(), true);
-      result.fold((failure) => fail('Expected Right but got Left: $failure'), (
-        page,
-      ) {
-        expect(page.messages.length, 1);
-        expect(page.messages.first.id, 'm2');
-        expect(page.returned, 1);
-      });
-      expect(apiDataSource.metadataCalls, 1);
+      expect(apiDataSource.metadataCalls, 0);
       expect(apiDataSource.pagedCalls, 1);
       expect(apiDataSource.lastPagedSessionId, 'session_1');
+      expect(apiDataSource.lastPagedCursor, isNull);
     });
 
-    test(
-      'skips metadata call when requesting an older page with cursor',
-      () async {
-        apiDataSource.pagedResult = const ChatMessagesPageResult(
-          messages: [],
-          hasMore: false,
-          nextCursor: null,
-          returned: 0,
-        );
+    test('older pages forward the cursor', () async {
+      await repository.getMessagesPaged(
+        'session_1',
+        limit: 20,
+        cursor: 'cursor_abc',
+      );
 
-        final result = await repository.getMessagesPaged(
-          'session_1',
-          limit: 20,
-          cursor: 'cursor-1',
-        );
-
-        expect(result.isRight(), true);
-        result.fold(
-          (failure) => fail('Expected Right but got Left: $failure'),
-          (page) {
-            expect(page.messages, isEmpty);
-            expect(page.returned, 0);
-            expect(page.hasMore, false);
-            expect(page.nextCursor, isNull);
-          },
-        );
-        expect(apiDataSource.metadataCalls, 0);
-        expect(apiDataSource.pagedCalls, 1);
-        expect(apiDataSource.lastPagedSessionId, 'session_1');
-        expect(apiDataSource.lastPagedLimit, 20);
-        expect(apiDataSource.lastPagedCursor, 'cursor-1');
-      },
-    );
+      expect(apiDataSource.metadataCalls, 0);
+      expect(apiDataSource.lastPagedLimit, 20);
+      expect(apiDataSource.lastPagedCursor, 'cursor_abc');
+    });
   });
 }

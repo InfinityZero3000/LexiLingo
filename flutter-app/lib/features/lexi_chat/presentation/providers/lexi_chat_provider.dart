@@ -42,10 +42,11 @@ class LexiChatProvider extends ChangeNotifier {
       BackgroundSyncQueueService.instance;
   StreamSubscription<SyncQueueItem>? _syncQueueSub;
   bool _isDisposed = false;
+  late final Future<void> _savedSessionsLoaded;
 
   LexiChatProvider({required this.repository, required AiApiClient aiClient})
     : _aiClient = aiClient {
-    _loadSavedSessions();
+    _savedSessionsLoaded = _loadSavedSessions();
     _syncQueueSub = _syncQueue.onItemProcessed.listen(_onQueueItemProcessed);
   }
 
@@ -247,13 +248,40 @@ class LexiChatProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await syncSessions(userId);
+      // Saved sessions come from local storage; a remote sync landing before
+      // them would otherwise be overwritten by the stale local list.
+      await _savedSessionsLoaded;
       await _removeSessionsForOtherUsers(userId);
 
+      // The session list and the shown session's messages are independent
+      // requests, so they go out together: on web each one also pays a CORS
+      // preflight to a server an ocean away, and doing them in series was most
+      // of the time this page took to open.
+      final sync = syncSessions(userId);
       if (_sessions.isNotEmpty) {
-        await selectSession(_sessions.first);
+        final shown = _sessions.first;
+        await selectSession(shown);
+        await sync;
+        await _removeSessionsForOtherUsers(userId);
+        final newest = _sessions.isEmpty ? null : _sessions.first;
+        // Only jump when another device was active after this one last
+        // looked; otherwise reopening an older conversation would be yanked
+        // away from the learner a second after it appeared.
+        if (newest != null &&
+            newest.sessionId != shown.sessionId &&
+            newest.updatedAt.isAfter(shown.updatedAt) &&
+            _session?.sessionId == shown.sessionId &&
+            !_isSending) {
+          await selectSession(newest);
+        }
       } else {
-        await startSession(userId);
+        await sync;
+        await _removeSessionsForOtherUsers(userId);
+        if (_sessions.isNotEmpty) {
+          await selectSession(_sessions.first);
+        } else {
+          await startSession(userId);
+        }
       }
     } catch (e) {
       _error = UiText.key('errors.sessionStartFailed');
