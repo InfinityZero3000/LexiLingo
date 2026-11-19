@@ -11,10 +11,13 @@ import 'package:flutter/services.dart';
 /// easy_localization re-reads and re-decodes both the target locale and the
 /// fallback on every `setLocale`; on web each read is a network fetch, so a
 /// language switch waited on two ~100 KB downloads before any text changed.
-/// Tables are loaded once and shared, and [preload] warms the rest in the
-/// background so a later switch resolves from memory.
+/// Tables are loaded once and shared. Startup loads only the active and
+/// fallback locales; [warmSupported] fetches the rest when a language picker
+/// opens so the switch that follows resolves from memory.
 class CachedTranslationLoader extends AssetLoader {
   const CachedTranslationLoader();
+
+  static const translationsPath = 'assets/i18n';
 
   static final Map<String, Future<Map<String, dynamic>>> _cache = {};
 
@@ -52,6 +55,9 @@ class CachedTranslationLoader extends AssetLoader {
       }
     }
   }
+
+  static Future<void> warmSupported(Iterable<Locale> locales) =>
+      preload(translationsPath, locales);
 
   @visibleForTesting
   static bool isCached(String path, Locale locale) =>

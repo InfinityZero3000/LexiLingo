@@ -234,16 +234,6 @@ void main() async {
     runApp(_localizedApp());
   }
 
-  // Warm the remaining translation tables so a language switch is instant.
-  WidgetsBinding.instance.addPostFrameCallback((_) {
-    unawaited(
-      CachedTranslationLoader.preload(
-        _translationsPath,
-        AppLocales.supportedLocales,
-      ),
-    );
-  });
-
   // Initialize Firebase Messaging and Deep Links after UI starts rendering
   WidgetsBinding.instance.addPostFrameCallback((_) async {
     try {
@@ -271,7 +261,7 @@ void main() async {
   });
 }
 
-const _translationsPath = 'assets/i18n';
+const _translationsPath = CachedTranslationLoader.translationsPath;
 
 Widget _localizedApp() => EasyLocalization(
   supportedLocales: AppLocales.supportedLocales,

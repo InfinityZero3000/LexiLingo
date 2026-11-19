@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/l10n/app_localizations.dart';
+import 'package:lexilingo_app/core/l10n/cached_translation_loader.dart';
 import 'package:lexilingo_app/core/services/locale_service.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/language_flag.dart';
@@ -22,6 +25,9 @@ class LanguageSwitcherButton extends StatelessWidget {
   const LanguageSwitcherButton({super.key});
 
   static void showLanguageSheet(BuildContext context) {
+    unawaited(
+      CachedTranslationLoader.warmSupported(AppLocales.supportedLocales),
+    );
     final currentCode = context.locale.languageCode;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
