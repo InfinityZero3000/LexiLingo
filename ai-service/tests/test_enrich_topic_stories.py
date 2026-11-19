@@ -518,3 +518,18 @@ async def test_a_hand_written_story_may_keep_its_own_sentences():
     new, problems = await ets.enrich_story(story, FakeLLM([out]), clean_diagnose)
 
     assert problems == [] and new["vocabulary_list"][0]["example_in_story"] == kept
+
+
+@pytest.mark.asyncio
+async def test_a_flag_inside_a_curated_term_is_not_held_against_the_story():
+    story = _story()
+    term = story["vocabulary_list"][0]["term"]
+
+    async def flags_the_term(text, level):
+        if term in text:
+            return [{"span": term, "correction": f"the {term}"}]
+        return await clean_diagnose(text, level)
+
+    new, problems = await ets.enrich_story(story, FakeLLM([good_output(story)]), flags_the_term)
+
+    assert problems == [] and new is not None

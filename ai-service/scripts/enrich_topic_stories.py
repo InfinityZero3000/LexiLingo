@@ -318,8 +318,14 @@ async def gate(story: dict[str, Any], enriched: dict[str, Any], diagnose: Diagno
         seen.add(key)
         if key in old:
             problems.append(f"unchanged from the old template: {text!r}")
+    # The story's own vocabulary is curated (e.g. the form label "purpose of visit"):
+    # an example must contain it verbatim, so a flag that sits inside a term is not held against it.
+    terms = [_norm(v["term"]) for v in vocab]
     for text in sentences:
         for err in await diagnose(text, level):
+            span = _norm(str(err.get("span") or ""))
+            if span and any(span in term for term in terms):
+                continue
             problems.append(
                 f"diagnosis flags {text!r}: {err.get('span')!r} -> {err.get('correction')!r}"
             )
