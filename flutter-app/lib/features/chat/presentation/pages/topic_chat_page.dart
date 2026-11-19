@@ -29,6 +29,7 @@ import '../../domain/entities/topic_session.dart';
 import '../helpers/chat_mistake_recorder.dart';
 import '../helpers/suggested_prompts.dart';
 import '../providers/story_provider.dart';
+import '../utils/topic_icon_resolver.dart';
 import '../widgets/educational_hints_widgets.dart';
 import '../widgets/markdown_message_content.dart';
 import '../widgets/session_summary_dialog.dart';
@@ -446,7 +447,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Icon(
-              _getCategoryIconData(widget.story.category),
+              TopicIconResolver.forCategory(widget.story.category),
               color: Theme.of(context).colorScheme.surface,
               size: 20,
             ),
@@ -501,28 +502,6 @@ class _TopicChatPageState extends State<TopicChatPage> {
         ),
       ],
     );
-  }
-
-  IconData _getCategoryIconData(String category) {
-    switch (category.toLowerCase()) {
-      case 'travel':
-        return Icons.flight_takeoff;
-      case 'business':
-      case 'work':
-        return Icons.work;
-      case 'daily_life':
-      case 'daily life':
-        return Icons.home;
-      case 'food':
-      case 'cafe':
-        return Icons.coffee;
-      case 'shopping':
-        return Icons.shopping_cart;
-      case 'health':
-        return Icons.local_hospital;
-      default:
-        return Icons.chat_bubble;
-    }
   }
 
   Widget _buildSrsReminderBanner(bool isDark) {
