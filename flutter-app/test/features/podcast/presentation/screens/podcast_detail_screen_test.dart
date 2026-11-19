@@ -183,6 +183,20 @@ void main() {
       expect(find.byType(EpisodeTile), findsNWidgets(3));
     });
 
+    testWidgets('the show-more toggle is light text on the dark header', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        _FakeRepo(episodes: threeEpisodes),
+        size: const Size(375, 1600),
+      );
+
+      final toggle = tester.widget<Text>(find.text('Show more'));
+
+      expect(toggle.style?.color, AppColors.onGradient);
+    });
+
     testWidgets('saved progress shows on the matching episodes', (
       tester,
     ) async {
