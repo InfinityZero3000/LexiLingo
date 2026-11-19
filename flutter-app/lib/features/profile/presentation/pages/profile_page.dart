@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/utils/freshness.dart';
 import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -56,12 +57,12 @@ class _ProfilePageState extends State<ProfilePage> {
     // Refresh the authoritative account state so email verification changes
     // are reflected in the profile badge after returning from the email link.
     if (authProvider.currentUser != null) {
-      await authProvider.refreshCurrentUser();
-      await levelProvider.fetchLevelFull();
+      await authProvider.refreshCurrentUser(maxAge: kPassiveReloadWindow);
+      await levelProvider.fetchLevelFull(maxAge: kPassiveReloadWindow);
     }
 
     // Load progress stats
-    await progressProvider.fetchMyProgress();
+    await progressProvider.fetchMyProgress(maxAge: kPassiveReloadWindow);
 
     // Load profile stats from backend
     await profileProvider.loadProfileData();

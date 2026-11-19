@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:lexilingo_app/core/l10n/ui_text.dart';
+import 'package:lexilingo_app/core/utils/freshness.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
 import 'package:lexilingo_app/features/course/domain/usecases/get_courses_usecase.dart';
 import 'package:lexilingo_app/features/course/domain/usecases/get_enrolled_courses_usecase.dart';
@@ -30,6 +31,7 @@ class HomeProvider with ChangeNotifier {
 
   int _generation = 0;
   Future<void>? _weeklyLoad;
+  final Freshness _weeklyFreshness = Freshness();
 
   // State: Featured Courses
   List<CourseEntity> _featuredCourses = [];
@@ -101,8 +103,9 @@ class HomeProvider with ChangeNotifier {
       _isLoadingCourses || _isLoadingDashboard || _isLoadingWeekly;
 
   /// Load weekly progress for home screen chart (Task 1.3)
-  Future<void> loadWeeklyProgress() {
+  Future<void> loadWeeklyProgress({Duration? maxAge}) {
     if (getWeeklyProgressUseCase == null) return Future<void>.value();
+    if (_weeklyFreshness.isFresh(maxAge)) return Future<void>.value();
     final inFlight = _weeklyLoad;
     if (inFlight != null) return inFlight;
     final run = _loadWeeklyProgress();
@@ -122,19 +125,24 @@ class HomeProvider with ChangeNotifier {
 
     result.fold((failure) {}, (data) {
       _weeklyProgress = data;
+      _weeklyFreshness.mark();
     });
 
     _isLoadingWeekly = false;
     notifyListeners();
   }
 
-  Future<void> refreshWeeklyProgressSilently() async {
+  Future<void> refreshWeeklyProgressSilently({Duration? maxAge}) async {
     if (getWeeklyProgressUseCase == null) return;
+    if (_weeklyFreshness.isFresh(maxAge)) return;
+    final inFlight = _weeklyLoad;
+    if (inFlight != null) return inFlight;
     final generation = _generation;
     final result = await getWeeklyProgressUseCase!.call();
     if (generation != _generation) return;
     result.fold((_) {}, (data) {
       _weeklyProgress = data;
+      _weeklyFreshness.mark();
       notifyListeners();
     });
   }
@@ -238,7 +246,7 @@ class HomeProvider with ChangeNotifier {
     await Future.wait([
       loadFeaturedCourses(),
       loadEnrolledCourses(),
-      loadWeeklyProgress(),
+      loadWeeklyProgress(maxAge: kPassiveReloadWindow),
       loadWordOfDay(),
     ]);
   }
@@ -247,6 +255,7 @@ class HomeProvider with ChangeNotifier {
   void clear() {
     _generation++;
     _weeklyLoad = null;
+    _weeklyFreshness.invalidate();
     _featuredCourses = [];
     _coursesError = null;
     _isLoadingCourses = false;

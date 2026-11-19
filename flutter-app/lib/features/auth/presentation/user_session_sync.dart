@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 
+import 'package:lexilingo_app/core/utils/freshness.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/level_provider.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/proficiency_provider.dart';
@@ -29,9 +30,9 @@ abstract final class UserSessionSync {
     final home = _maybe<HomeProvider>(context);
     final challenges = _maybe<DailyChallengesProvider>(context);
     await Future.wait([
-      if (streak != null) streak.loadStreak(),
-      if (level != null) level.fetchLevelFull(),
-      if (home != null) home.loadWeeklyProgress(),
+      if (streak != null) streak.loadStreak(maxAge: kPassiveReloadWindow),
+      if (level != null) level.fetchLevelFull(maxAge: kPassiveReloadWindow),
+      if (home != null) home.loadWeeklyProgress(maxAge: kPassiveReloadWindow),
       if (challenges != null) challenges.loadChallenges(),
     ]);
   }

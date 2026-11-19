@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:lexilingo_app/core/services/locale_service.dart';
 import 'package:lexilingo_app/core/l10n/ui_text.dart';
+import 'package:lexilingo_app/core/utils/freshness.dart';
 import 'package:lexilingo_app/core/services/notification_service.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/streak_entity.dart';
 import 'package:lexilingo_app/features/progress/domain/repositories/progress_repository.dart';
@@ -22,6 +23,7 @@ class StreakProvider extends ChangeNotifier {
 
   int _generation = 0;
   Future<void>? _streakLoad;
+  final Freshness _streakFreshness = Freshness();
   bool _disposed = false;
 
   @override
@@ -78,7 +80,10 @@ class StreakProvider extends ChangeNotifier {
   bool get hasStreak => _streak != null;
 
   /// Load current user's streak
-  Future<void> loadStreak() {
+  ///
+  /// [maxAge] lets passive callers skip a reload of data fetched that recently.
+  Future<void> loadStreak({Duration? maxAge}) {
+    if (_streakFreshness.isFresh(maxAge)) return Future<void>.value();
     final inFlight = _streakLoad;
     if (inFlight != null) return inFlight;
     final run = _loadStreak();
@@ -104,6 +109,7 @@ class StreakProvider extends ChangeNotifier {
       },
       (streakData) {
         _streak = streakData;
+        _streakFreshness.mark();
         _refreshCheckinReminders();
       },
     );
@@ -300,6 +306,7 @@ class StreakProvider extends ChangeNotifier {
   void reset() {
     _generation++;
     _streakLoad = null;
+    _streakFreshness.invalidate();
     _streak = null;
     _isLoading = false;
     _errorMessage = null;

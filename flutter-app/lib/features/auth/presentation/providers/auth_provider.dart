@@ -14,6 +14,7 @@ import 'package:lexilingo_app/core/services/purchases_service.dart';
 import 'package:lexilingo_app/core/services/session_expired_service.dart';
 import 'package:lexilingo_app/core/services/user_scope_service.dart';
 import 'package:lexilingo_app/core/usecase/usecase.dart';
+import 'package:lexilingo_app/core/utils/freshness.dart';
 import 'package:lexilingo_app/features/auth/domain/entities/user_entity.dart';
 import 'package:lexilingo_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:lexilingo_app/features/auth/domain/usecases/get_current_user_usecase.dart';
@@ -40,6 +41,9 @@ class AuthProvider extends ChangeNotifier {
   final FacebookSignInService facebookSignInService;
 
   UserEntity? _user;
+  Future<void>? _userRefresh;
+  final Freshness _userFreshness = Freshness();
+  String? _userFreshFor;
   bool _isLoading = false;
   bool _isCheckingAuth = true;
   bool _isJustLoggedIn = false;
@@ -92,15 +96,42 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> refreshCurrentUser() async {
+  /// Concurrent calls share one `/users/me`. [maxAge] lets passive callers skip
+  /// a reload for the same user fetched that recently.
+  Future<void> refreshCurrentUser({Duration? maxAge}) {
+    final current = _user;
+    if (current != null &&
+        current.id == _userFreshFor &&
+        _userFreshness.isFresh(maxAge)) {
+      return Future<void>.value();
+    }
+    final inFlight = _userRefresh;
+    if (inFlight != null) return inFlight;
+    final run = _refreshCurrentUser();
+    _userRefresh = run;
+    return run.whenComplete(() {
+      if (identical(_userRefresh, run)) _userRefresh = null;
+    });
+  }
+
+  Future<void> _refreshCurrentUser() async {
     final result = await getCurrentUserUseCase(NoParams());
     result.fold((failure) => _errorMessage = _getFailureMessage(failure), (
       user,
     ) {
       _user = user;
       _errorMessage = null;
+      _markUserFresh(user);
     });
     notifyListeners();
+  }
+
+  /// The next passive [refreshCurrentUser] refetches; call after learning activity.
+  void invalidateFreshness() => _userFreshness.invalidate();
+
+  void _markUserFresh(UserEntity user) {
+    _userFreshFor = user.id;
+    _userFreshness.mark();
   }
 
   // Check current user on app start
@@ -145,6 +176,7 @@ class AuthProvider extends ChangeNotifier {
         (user) {
           _user = user;
           _errorMessage = null;
+          _markUserFresh(user);
           if (sl.isRegistered<ApiClient>()) {
             unawaited(
               FirebaseMessagingService.instance.registerTokenWithBackend(
