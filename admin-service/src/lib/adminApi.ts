@@ -123,8 +123,15 @@ export type QuestionItem = {
   is_active: boolean;
 };
 
-export const listQuestions = async () =>
-  apiFetch<AdminResponse<QuestionItem[]>>(`${ENV.backendUrl}/admin/questions?limit=100&offset=0`);
+export type QuestionFilter = { level?: string; q?: string; question_type?: string; limit?: number };
+
+export const listQuestions = async (filter: QuestionFilter = {}) => {
+  const params = new URLSearchParams({ limit: String(filter.limit ?? 100), offset: "0" });
+  if (filter.level) params.set("level", filter.level);
+  if (filter.q) params.set("q", filter.q);
+  if (filter.question_type) params.set("question_type", filter.question_type);
+  return apiFetch<AdminResponse<QuestionItem[]>>(`${ENV.backendUrl}/admin/questions?${params}`);
+};
 
 export const createQuestion = async (payload: Partial<QuestionItem>) =>
   apiFetch<AdminResponse<QuestionItem>>(`${ENV.backendUrl}/admin/questions`, {
