@@ -63,4 +63,65 @@ void main() {
       );
     }
   }
+
+  group('scrolling into view', () {
+    Future<ScrollController> pumpTall(
+      WidgetTester tester, {
+      bool disableAnimations = false,
+    }) async {
+      final controller = ScrollController();
+      addTearDown(controller.dispose);
+      tester.view.physicalSize = const Size(375, 500);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: AppTheme.lightTheme,
+          home: MediaQuery(
+            data: MediaQueryData(
+              size: const Size(375, 500),
+              disableAnimations: disableAnimations,
+            ),
+            child: Scaffold(
+              body: SingleChildScrollView(
+                controller: controller,
+                child: Column(
+                  children: [
+                    const SizedBox(height: 700),
+                    ExerciseExplanationCard(
+                      explanation: 'Good morning is used early in the day.',
+                      isCorrect: true,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      return controller;
+    }
+
+    testWidgets('an explanation that appears below the fold is scrolled to', (
+      tester,
+    ) async {
+      final controller = await pumpTall(tester);
+      expect(controller.offset, 0, reason: 'not scrolled before the first frame ends');
+
+      await tester.pumpAndSettle();
+
+      expect(controller.offset, greaterThan(0));
+      final card = tester.getRect(find.byType(ExerciseExplanationCard));
+      expect(card.bottom, lessThanOrEqualTo(500));
+    });
+
+    testWidgets('reduced motion jumps instead of animating', (tester) async {
+      final controller = await pumpTall(tester, disableAnimations: true);
+
+      await tester.pump();
+      await tester.pump();
+
+      expect(controller.offset, greaterThan(0));
+    });
+  });
 }

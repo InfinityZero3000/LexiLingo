@@ -216,82 +216,116 @@ class ExerciseExplanationCard extends StatelessWidget {
     final bg = isCorrect ? status.successContainer : scheme.errorContainer;
     final fg = isCorrect ? status.onSuccessContainer : scheme.onErrorContainer;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: fg.withValues(alpha: 0.25)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (hasExplanation)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  isCorrect ? Icons.check_circle : Icons.info_outline,
-                  color: fg,
-                  size: 20,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    explanation!,
-                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                      color: fg,
-                      fontWeight: FontWeight.w500,
-                      height: 1.5,
+    return _ScrollIntoView(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: fg.withValues(alpha: 0.25)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (hasExplanation)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    isCorrect ? Icons.check_circle : Icons.info_outline,
+                    color: fg,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      explanation!,
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                        color: fg,
+                        fontWeight: FontWeight.w500,
+                        height: 1.5,
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          if (showCorrectAnswer) ...[
-            if (hasExplanation) const SizedBox(height: 10),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.lightbulb_outline, color: fg, size: 20),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: pairAnswer
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'lesson.exercise.correctAnswerLabel'.tr(),
-                              style: Theme.of(context).textTheme.bodyMedium!
-                                  .copyWith(
-                                    color: fg,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                            ),
-                            const SizedBox(height: 8),
-                            PairAnswerChips(
-                              pairs: parsePairAnswer(correctAnswer!),
-                            ),
-                          ],
-                        )
-                      : Text(
-                          '${'lesson.exercise.correctAnswerLabel'.tr()}: $correctAnswer',
-                          style: Theme.of(context).textTheme.bodyMedium!
-                              .copyWith(
-                                color: fg,
-                                fontWeight: FontWeight.w600,
-                                height: 1.5,
+                ],
+              ),
+            if (showCorrectAnswer) ...[
+              if (hasExplanation) const SizedBox(height: 10),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.lightbulb_outline, color: fg, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: pairAnswer
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'lesson.exercise.correctAnswerLabel'.tr(),
+                                style: Theme.of(context).textTheme.bodyMedium!
+                                    .copyWith(
+                                      color: fg,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                               ),
-                        ),
-                ),
-              ],
-            ),
+                              const SizedBox(height: 8),
+                              PairAnswerChips(
+                                pairs: parsePairAnswer(correctAnswer!),
+                              ),
+                            ],
+                          )
+                        : Text(
+                            '${'lesson.exercise.correctAnswerLabel'.tr()}: $correctAnswer',
+                            style: Theme.of(context).textTheme.bodyMedium!
+                                .copyWith(
+                                  color: fg,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.5,
+                                ),
+                          ),
+                  ),
+                ],
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
+}
+
+/// Brings its child into view once, when it first appears: after an answer the
+/// explanation lands below the fold on a phone with long options, behind the
+/// action bar, and the learner had to scroll to find out why they were wrong.
+class _ScrollIntoView extends StatefulWidget {
+  const _ScrollIntoView({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_ScrollIntoView> createState() => _ScrollIntoViewState();
+}
+
+class _ScrollIntoViewState extends State<_ScrollIntoView> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final still = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+      Scrollable.ensureVisible(
+        context,
+        duration: still ? Duration.zero : const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+        alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 /// Circular blue button that plays TTS audio
