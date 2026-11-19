@@ -1,46 +1,30 @@
 """
-Educational Hints Parser (Enhanced v2.0)
+Educational Hints Parser
 
-Parses AI responses to extract educational hints:
-- Grammar corrections with explanations
-- Vocabulary hints with contextual definitions
-- Pronunciation tips
-- Encouragement messages
-
-Supports both:
-- Bracket-based format: [💡 Tip: ...] and [📘 ...]
-- JSON-structured output
+Extracts vocabulary hints from AI responses and strips hint markers from the
+text the learner sees. Grammar corrections are NOT read from the model's prose:
+the only source is the TRACE-CAG diagnosis, accepted by
+``corrections_from_diagnosis`` only when its span really occurs in the
+learner's own message.
 """
 
 import re
 import json
 import logging
-from typing import Optional, List, Tuple
+import unicodedata
+from typing import Any, Optional, List, Tuple
 from dataclasses import dataclass, field
-from enum import Enum
 
 logger = logging.getLogger(__name__)
 
 
-class GrammarErrorType(str, Enum):
-    """Types of grammar errors"""
-    SUBJECT_VERB = "subject_verb_agreement"
-    TENSE = "tense_error"
-    ARTICLE = "article_error"
-    PREPOSITION = "preposition_error"
-    PLURAL = "plural_error"
-    WORD_ORDER = "word_order"
-    PRONOUN = "pronoun_error"
-    OTHER = "other"
-
-
 @dataclass
 class GrammarCorrection:
-    """A grammar correction with explanation"""
+    """A grammar correction with explanation; ``label`` is a closed DIAGNOSIS_LABELS code."""
     original: str
     corrected: str
     explanation: str
-    error_type: GrammarErrorType = GrammarErrorType.OTHER
+    label: str = "other"
     rule: Optional[str] = None
 
 
@@ -61,11 +45,11 @@ class EducationalHints:
     vocabulary_hints: List[VocabularyHint] = field(default_factory=list)
     encouragement: Optional[str] = None
     detected_errors: List[str] = field(default_factory=list)
-    
+
     def has_hints(self) -> bool:
         """Check if there are any hints."""
         return bool(self.grammar_corrections or self.vocabulary_hints)
-    
+
     def to_dict(self) -> dict:
         """Convert to dictionary for JSON serialization."""
         return {
@@ -74,7 +58,9 @@ class EducationalHints:
                     "original": gc.original,
                     "corrected": gc.corrected,
                     "explanation": gc.explanation,
-                    "error_type": gc.error_type.value,
+                    # `error_type` keeps the key older clients read.
+                    "error_type": gc.label,
+                    "label": gc.label,
                     "rule": gc.rule,
                 }
                 for gc in self.grammar_corrections
@@ -96,14 +82,12 @@ class EducationalHints:
 
 class EducationalHintsParser:
     """
-    Parser for extracting educational hints from AI responses.
-    
-    Supports two formats:
-    1. Bracket format: [💡 Tip: ...] and [📘 ...]
-    2. JSON format: structured JSON output
+    Parser for extracting vocabulary hints from AI responses.
+
+    Reads [📘 ...] brackets or a JSON block. [💡 Tip] brackets are removed from
+    the visible text but never become corrections.
     """
-    
-    # Regex patterns for bracket format.
+
     # The model doesn't always emit the exact emoji from the prompt (e.g. 📜 instead
     # of 📘), so match on the marker keyword instead of a hardcoded emoji glyph.
     _EMOJI_PREFIX = r'[^\w\[\]]{0,2}\s*'
@@ -118,144 +102,115 @@ class EducationalHintsParser:
         re.IGNORECASE | re.UNICODE
     )
 
-    # Alternative vocab pattern for simpler format (no explicit "means").
     # Excludes Tip brackets so a generic emoji doesn't get miscategorized as vocab.
     VOCAB_PATTERN_SIMPLE = re.compile(
         r"\[" + _EMOJI_PREFIX + r"(?!(?:Tip|Mẹo)\b)([^\]]+)\]",
         re.IGNORECASE | re.UNICODE
     )
-    
-    # Grammar error type detection patterns
-    GRAMMAR_TYPE_PATTERNS = {
-        GrammarErrorType.SUBJECT_VERB: [
-            r"subject.?verb", r"she/he/it", r"has\s+not\s+have",
-            r"is\s+not\s+are", r"was\s+not\s+were"
-        ],
-        GrammarErrorType.TENSE: [
-            r"past\s+tense", r"present\s+tense", r"future",
-            r"went\s+not\s+go", r"did\s+not\s+do"
-        ],
-        GrammarErrorType.ARTICLE: [
-            r"article", r"a/an", r"the", r"uncountable",
-            r"no\s+article", r"definite\s+article"
-        ],
-        GrammarErrorType.PREPOSITION: [
-            r"preposition", r"at/in/on", r"to\s+not\s+at",
-            r"arrive\s+at", r"depend\s+on"
-        ],
-        GrammarErrorType.PLURAL: [
-            r"plural", r"singular", r"many/much",
-            r"few/little", r"countable"
-        ],
+
+    # Types emitted by the rule-based diagnosis (topic chat runs with
+    # diagnosis_policy="rules"); they predate the closed label set.
+    _RULE_TYPE_LABELS = {
+        "third_person_s": "subject_verb_agreement",
+        "past_tense": "verb_tense",
+        "present_perfect": "verb_form",
     }
-    
+
+    @staticmethod
+    def _norm(text: Any) -> str:
+        return " ".join(unicodedata.normalize("NFKC", str(text or "")).casefold().split())
+
     @classmethod
-    def merge_diagnosis_errors(
+    def corrections_from_diagnosis(
         cls,
         hints: Optional[EducationalHints],
-        diagnosis_errors: Optional[List[dict]],
-    ) -> Optional[EducationalHints]:
+        errors: Optional[List[dict]],
+        user_text: str,
+    ) -> Tuple[Optional[EducationalHints], List[dict]]:
         """
-        Supplement grammar_corrections with the pipeline's own structured
-        diagnosis (state["diagnosis_errors"]) — computed independently of
-        whether the model remembered to format a [Tip] bracket. Skips any
-        correction that already has the same "corrected" text so a bracket
-        tip and its underlying diagnosis don't both show up as duplicate cards.
+        Turn diagnosis errors into correction cards, keeping only those the
+        learner's own message backs up: the span occurs in ``user_text`` and the
+        correction differs from it. Returns ``(hints, accepted_errors)`` so the
+        caller records exactly what was shown.
         """
-        if not diagnosis_errors:
-            return hints
-        existing = {
-            gc.corrected.strip().lower()
-            for gc in (hints.grammar_corrections if hints else [])
-            if gc.corrected
-        }
+        if not errors:
+            return hints, []
+        from api.services.trace_cag.nodes_v2 import (
+            DIAGNOSIS_LABELS,
+            DIAGNOSIS_LABEL_ALIASES,
+            normalize_diagnosis_label,
+        )
+
+        text = cls._norm(user_text)
+        accepted: List[dict] = []
         added: List[GrammarCorrection] = []
-        for err in diagnosis_errors:
+        seen: set = set()
+        for err in errors:
+            span = str(err.get("span") or "").strip()
             corrected = str(err.get("correction") or "").strip()
-            if not corrected or corrected.lower() in existing:
+            span_n, corrected_n = cls._norm(span), cls._norm(corrected)
+            if not span_n or not corrected_n or span_n == corrected_n:
                 continue
-            raw_type = str(err.get("type") or "").strip().lower()
-            try:
-                error_type = GrammarErrorType(raw_type)
-            except ValueError:
-                error_type = cls._detect_error_type(
-                    f"{raw_type} {err.get('explanation', '')}"
-                )
+            if span_n not in text or (span_n, corrected_n) in seen:
+                continue
+            raw = normalize_diagnosis_label(err.get("type"))
+            label = DIAGNOSIS_LABEL_ALIASES.get(raw, cls._RULE_TYPE_LABELS.get(raw, raw))
+            if label not in DIAGNOSIS_LABELS:
+                label = "other"
+            seen.add((span_n, corrected_n))
+            accepted.append(err)
             added.append(GrammarCorrection(
-                original=str(err.get("span") or ""),
+                original=span,
                 corrected=corrected,
-                explanation=str(err.get("explanation") or ""),
-                error_type=error_type,
-                rule=raw_type or None,
+                explanation=str(err.get("explanation") or "").strip(),
+                label=label,
+                rule=raw or None,
             ))
-            existing.add(corrected.lower())
 
         if not added:
-            return hints
+            return hints, accepted
         if hints is None:
             hints = EducationalHints()
         hints.grammar_corrections.extend(added)
-        return hints
+        return hints, accepted
 
     @classmethod
     def parse(cls, response: str) -> Tuple[str, Optional[EducationalHints]]:
         """
-        Parse AI response to extract educational hints.
-        
-        Args:
-            response: The AI response text
-            
-        Returns:
-            Tuple of (clean_response, educational_hints)
-            - clean_response: Response with hints removed
-            - educational_hints: Extracted hints or None
+        Parse AI response to extract vocabulary hints.
+
+        Returns (clean_response, hints). The clean response has hint markers
+        removed.
         """
-        # Try JSON parsing first
         hints = cls._try_parse_json(response)
         if hints:
-            # Extract clean response from JSON
             try:
                 data = json.loads(response)
                 clean = data.get("character_response", response)
                 return clean, hints
             except json.JSONDecodeError:
                 pass
-        
-        # Fall back to bracket parsing
+
         hints = cls._parse_brackets(response)
         clean_response = cls._remove_brackets(response)
-        
+
         return clean_response, hints if hints and hints.has_hints() else None
-    
+
     @classmethod
     def _try_parse_json(cls, response: str) -> Optional[EducationalHints]:
-        """Try to parse response as JSON-structured output."""
+        """Try to parse response as JSON-structured output (vocabulary only)."""
         try:
-            # Look for JSON block in response
             json_match = re.search(r'```json\s*(\{.*?\})\s*```', response, re.DOTALL)
             if json_match:
                 data = json.loads(json_match.group(1))
             else:
-                # Try direct JSON parse
                 data = json.loads(response)
-            
+
             if not isinstance(data, dict):
                 return None
-            
+
             hints = EducationalHints()
-            
-            # Parse grammar corrections
             ed_hints = data.get("educational_hints", {})
-            for gc in ed_hints.get("grammar_corrections", []):
-                hints.grammar_corrections.append(GrammarCorrection(
-                    original=gc.get("error", ""),
-                    corrected=gc.get("correction", ""),
-                    explanation=gc.get("explanation", ""),
-                    error_type=cls._detect_error_type(gc.get("rule", "")),
-                    rule=gc.get("rule"),
-                ))
-            
-            # Parse vocabulary hints
             for vh in ed_hints.get("vocabulary_hints", []):
                 hints.vocabulary_hints.append(VocabularyHint(
                     term=vh.get("term", ""),
@@ -263,125 +218,67 @@ class EducationalHintsParser:
                     example=vh.get("example"),
                     pronunciation=vh.get("pronunciation"),
                 ))
-            
-            hints.detected_errors = data.get("detected_errors", [])
+
             hints.encouragement = data.get("encouragement")
-            
+
             return hints if hints.has_hints() else None
-            
-        except (json.JSONDecodeError, TypeError, KeyError):
+
+        except (json.JSONDecodeError, TypeError, KeyError, AttributeError):
             return None
-    
+
     @classmethod
     def _parse_brackets(cls, response: str) -> EducationalHints:
-        """Parse bracket-format hints from response."""
+        """Parse bracket-format vocabulary hints from response."""
         hints = EducationalHints()
-        
-        # Extract grammar tips
-        for match in cls.TIP_PATTERN.finditer(response):
-            tip_text = match.group(1).strip()
-            
-            # Try to extract original/corrected from tip
-            correction = cls._parse_tip_text(tip_text)
-            hints.grammar_corrections.append(correction)
-        
-        # Extract vocabulary hints (full pattern)
+
         for match in cls.VOCAB_PATTERN.finditer(response):
             term = match.group(1).strip().strip("'\"")
             definition_part = match.group(2).strip()
-            
-            # Try to extract example from definition
+
             example = None
             if "Example:" in definition_part or "Ví dụ:" in definition_part:
                 parts = re.split(r'Example:|Ví dụ:', definition_part, maxsplit=1)
                 definition_part = parts[0].strip().rstrip('.')
                 if len(parts) > 1:
                     example = parts[1].strip().strip('"\'')
-            
+
             hints.vocabulary_hints.append(VocabularyHint(
                 term=term,
                 definition=definition_part,
                 example=example,
             ))
-        
-        # Try simple vocab pattern if no matches
+
         if not hints.vocabulary_hints:
             for match in cls.VOCAB_PATTERN_SIMPLE.finditer(response):
                 full_text = match.group(1).strip()
-                
-                # Try to parse "word means definition" format
+
                 parts = re.split(r'\s+means?\s+|\s+nghĩa là\s+', full_text, maxsplit=1)
                 if len(parts) == 2:
                     hints.vocabulary_hints.append(VocabularyHint(
                         term=parts[0].strip().strip("'\""),
                         definition=parts[1].strip(),
                     ))
-        
+
         return hints
-    
-    @classmethod
-    def _parse_tip_text(cls, tip_text: str) -> GrammarCorrection:
-        """Parse a tip text to extract correction details."""
-        original = ""
-        corrected = ""
-        explanation = tip_text
-        
-        # Try patterns like "We say X not Y" or "Use X instead of Y"
-        patterns = [
-            r"(?:We say|Use)\s+['\"]?(\w+)['\"]?\s+(?:not|instead of)\s+['\"]?(\w+)['\"]?",
-            r"['\"]?(\w+)['\"]?\s+(?:not)\s+['\"]?(\w+)['\"]?",
-        ]
-        
-        for pattern in patterns:
-            match = re.search(pattern, tip_text, re.IGNORECASE)
-            if match:
-                corrected = match.group(1)
-                original = match.group(2)
-                break
-        
-        # Detect error type
-        error_type = cls._detect_error_type(tip_text)
-        
-        return GrammarCorrection(
-            original=original,
-            corrected=corrected,
-            explanation=explanation,
-            error_type=error_type,
-        )
-    
-    @classmethod
-    def _detect_error_type(cls, text: str) -> GrammarErrorType:
-        """Detect the type of grammar error from explanation text."""
-        text_lower = text.lower()
-        
-        for error_type, patterns in cls.GRAMMAR_TYPE_PATTERNS.items():
-            for pattern in patterns:
-                if re.search(pattern, text_lower):
-                    return error_type
-        
-        return GrammarErrorType.OTHER
-    
+
     @classmethod
     def _remove_brackets(cls, response: str) -> str:
         """Remove educational hint brackets from response."""
-        # Remove tip brackets
         clean = cls.TIP_PATTERN.sub('', response)
-        
-        # Remove vocab brackets
+
         clean = cls.VOCAB_PATTERN.sub('', clean)
         clean = cls.VOCAB_PATTERN_SIMPLE.sub('', clean)
-        
-        # Clean up extra whitespace
+
         clean = re.sub(r'\s{2,}', ' ', clean)
         clean = re.sub(r'\s+([.,!?])', r'\1', clean)
-        
+
         return clean.strip()
-    
+
     @classmethod
     def format_for_display(cls, hints: EducationalHints) -> dict:
         """
         Format hints for frontend display.
-        
+
         Returns a dictionary optimized for UI rendering.
         """
         result = {
@@ -390,16 +287,16 @@ class EducationalHintsParser:
             "grammar_cards": [],
             "vocabulary_cards": [],
         }
-        
+
         for gc in hints.grammar_corrections:
             result["grammar_cards"].append({
                 "icon": "💡",
-                "title": f"Grammar: {gc.error_type.value.replace('_', ' ').title()}",
+                "title": f"Grammar: {gc.label.replace('_', ' ').title()}",
                 "content": gc.explanation,
                 "before": gc.original,
                 "after": gc.corrected,
             })
-        
+
         for vh in hints.vocabulary_hints:
             result["vocabulary_cards"].append({
                 "icon": "📘",
@@ -408,8 +305,8 @@ class EducationalHintsParser:
                 "example": vh.example,
                 "pronunciation": vh.pronunciation,
             })
-        
+
         if hints.encouragement:
             result["encouragement"] = hints.encouragement
-        
+
         return result
