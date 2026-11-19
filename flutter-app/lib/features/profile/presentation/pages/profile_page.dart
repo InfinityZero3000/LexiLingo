@@ -1,7 +1,9 @@
 import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:lexilingo_app/features/admin/admin_app.dart';
+import 'package:lexilingo_app/core/navigation/deferred_page.dart';
+import 'package:lexilingo_app/features/admin/admin_app.dart'
+    deferred as admin_app;
 import 'package:lexilingo_app/features/auth/domain/entities/user_entity.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/gamification/gamification.dart';
@@ -80,7 +82,10 @@ class _ProfilePageState extends State<ProfilePage> {
   void _openAdminPanel() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => const AdminApp(),
+        builder: (_) => DeferredPage(
+          loadLibrary: admin_app.loadLibrary,
+          builder: (_) => admin_app.AdminApp(),
+        ),
         fullscreenDialog: true,
       ),
     );
