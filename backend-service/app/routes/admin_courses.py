@@ -8,7 +8,7 @@ from typing import List, Optional
 from uuid import UUID
 
 import anyio
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile, status
 from pydantic import BaseModel, Field
 from pypdf import PdfReader
 from sqlalchemy import desc, func, insert, or_, select
@@ -17,6 +17,7 @@ from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.cache import invalidate_cache
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.dependencies import require_resource
 from app.crud.course import CourseCRUD, LessonCRUD, UnitCRUD
@@ -989,16 +990,8 @@ async def extract_pdf_text(
 # Badge Image Upload
 # ============================================================================
 
-@router.post("/upload/badge", response_model=ApiResponse[dict])
-async def upload_badge_image(
-    file: UploadFile = File(...),
-    admin_user: User = Depends(require_content)
-):
-    """
-    Upload a badge image. Returns the URL path to the uploaded file.
-    Accepts PNG, JPG, WEBP images up to 2MB.
-    """
-    # Validate file type — SVG excluded to prevent XSS
+async def _save_uploaded_image(file: UploadFile, subdir: str) -> tuple[str, str]:
+    """Validate and store an admin image upload; returns (relative url path, filename)."""
     allowed_types = ["image/png", "image/jpeg", "image/webp"]
     if file.content_type not in allowed_types:
         raise HTTPException(
@@ -1006,7 +999,6 @@ async def upload_badge_image(
             detail=f"Invalid file type: {file.content_type}. Allowed: {', '.join(allowed_types)}"
         )
 
-    # Read file and check size (2MB limit)
     contents = await file.read()
     if len(contents) > 2 * 1024 * 1024:
         raise HTTPException(
@@ -1015,34 +1007,50 @@ async def upload_badge_image(
         )
 
     if os.path.isdir(_MEDIA_DIR):
-        target_dir = _MEDIA_DIR / "badges"
-        url_prefix = "/media/badges"
+        target_dir = _MEDIA_DIR / subdir
+        url_prefix = f"/media/{subdir}"
     else:
-        target_dir = Path(__file__).resolve().parent.parent.parent / "static" / "badges"
-        url_prefix = "/static/badges"
+        target_dir = Path(__file__).resolve().parent.parent.parent / "static" / subdir
+        url_prefix = f"/static/{subdir}"
     target_dir.mkdir(parents=True, exist_ok=True)
 
-    # Generate UUID-based filename to prevent path traversal and name collisions
     import uuid
     allowed_extensions = {".png", ".jpg", ".jpeg", ".webp"}
-    original_ext = Path(file.filename or "badge.png").suffix.lower()
+    original_ext = Path(file.filename or "image.png").suffix.lower()
     if original_ext not in allowed_extensions:
         original_ext = ".png"
-    safe_name = f"{uuid.uuid4().hex}{original_ext}"
-    filepath = target_dir / safe_name
+    filepath = target_dir / f"{uuid.uuid4().hex}{original_ext}"
+    filepath.write_bytes(contents)
+    return f"{url_prefix}/{filepath.name}", filepath.name
 
-    with open(filepath, "wb") as f:
-        f.write(contents)
 
-    badge_url = f"{url_prefix}/{filepath.name}"
-
+@router.post("/upload/badge", response_model=ApiResponse[dict])
+async def upload_badge_image(
+    file: UploadFile = File(...),
+    admin_user: User = Depends(require_content)
+):
+    """Upload a badge image (PNG, JPG, WEBP, up to 2MB); returns its relative URL path."""
+    url, filename = await _save_uploaded_image(file, "badges")
     return ApiResponse(
         success=True,
         message="Badge image uploaded successfully",
-        data={
-            "url": badge_url,
-            "filename": filepath.name,
-        }
+        data={"url": url, "filename": filename},
+    )
+
+
+@router.post("/upload/banner", response_model=ApiResponse[dict])
+async def upload_banner_image(
+    request: Request,
+    file: UploadFile = File(...),
+    admin_user: User = Depends(require_resource("banners")),
+) -> ApiResponse[dict]:
+    """Upload a banner image; the URL is absolute because the app renders it without a base URL."""
+    path, filename = await _save_uploaded_image(file, "banners")
+    origin = settings.MEDIA_PUBLIC_BASE_URL.rstrip("/") or str(request.base_url).rstrip("/")
+    return ApiResponse(
+        success=True,
+        message="Banner image uploaded successfully",
+        data={"url": f"{origin}{path}", "filename": filename},
     )
 
 

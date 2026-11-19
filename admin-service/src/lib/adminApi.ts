@@ -850,3 +850,16 @@ export const uploadIeltsAudio = async (file: File) => {
     { method: "POST", body: formData }
   );
 };
+
+// ============================================================================
+// Banner image upload
+// ============================================================================
+
+export const uploadBannerImage = async (file: File): Promise<AdminResponse<{ url: string; filename: string }>> => {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiFetch<AdminResponse<{ url: string; filename: string }>>(
+    `${ENV.backendUrl}/admin/upload/banner`,
+    { method: "POST", body: formData }
+  );
+};

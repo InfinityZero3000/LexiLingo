@@ -4777,3 +4777,44 @@ textarea:focus {
 .cohort-cell-muted {
   color: var(--muted);
 }
+
+.banner-drop {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px dashed var(--line-strong);
+}
+
+.banner-drop.dragging {
+  border-color: var(--accent);
+  background: var(--tint-orange);
+}
+
+.banner-preview {
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  overflow: hidden;
+  background: var(--panel-soft-2);
+}
+
+.banner-preview img,
+.banner-preview-empty {
+  display: block;
+  width: 100%;
+  /* Matches the learner app's hero banner (AspectRatio 16/7 in promo_banner_section.dart). */
+  aspect-ratio: 16 / 7;
+  object-fit: cover;
+}
+
+.banner-preview-empty {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.banner-preview-text {
+  padding: 10px 12px;
+}
