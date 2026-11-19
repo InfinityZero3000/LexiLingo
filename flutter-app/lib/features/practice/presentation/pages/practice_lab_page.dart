@@ -1,6 +1,8 @@
 import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
-import '../../../ielts/presentation/pages/ielts_tests_page.dart';
+import '../../../ielts/presentation/pages/ielts_tests_page.dart'
+    deferred as ielts_tests;
+import 'package:lexilingo_app/core/navigation/deferred_page.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/navigation/learner_route.dart';
@@ -672,9 +674,14 @@ class _IeltsEntryCard extends StatelessWidget {
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const IeltsTestsPage())),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => DeferredPage(
+              loadLibrary: ielts_tests.loadLibrary,
+              builder: (_) => ielts_tests.IeltsTestsPage(),
+            ),
+          ),
+        ),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(

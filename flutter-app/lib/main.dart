@@ -25,6 +25,7 @@ import 'package:lexilingo_app/core/services/app_navigation_service.dart';
 import 'package:lexilingo_app/core/services/notification_service.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/navigation/learner_route.dart';
+import 'package:lexilingo_app/core/navigation/deferred_page.dart';
 import 'package:lexilingo_app/core/di/injection_container.dart' as di;
 import 'package:lexilingo_app/core/network/api_config.dart';
 import 'package:lexilingo_app/core/utils/app_logger.dart';
@@ -47,8 +48,10 @@ import 'package:lexilingo_app/features/chat/presentation/providers/story_provide
 import 'package:lexilingo_app/features/course/presentation/providers/course_provider.dart';
 import 'package:lexilingo_app/features/gamification/presentation/providers/gamification_provider.dart';
 import 'package:lexilingo_app/features/learning/presentation/providers/learning_provider.dart';
-import 'package:lexilingo_app/features/level/presentation/pages/placement_test_page.dart';
-import 'package:lexilingo_app/features/level/presentation/pages/level_exam_page.dart';
+import 'package:lexilingo_app/features/level/presentation/pages/placement_test_page.dart'
+    deferred as placement;
+import 'package:lexilingo_app/features/level/presentation/pages/level_exam_page.dart'
+    deferred as level_exam;
 import 'package:lexilingo_app/features/level/presentation/providers/level_exam_provider.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/level_provider.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/placement_test_provider.dart';
@@ -60,14 +63,16 @@ import 'package:lexilingo_app/features/social/presentation/providers/social_prov
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/vocab_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/flashcard_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/screens/flashcard_review_screen.dart';
-import 'package:lexilingo_app/features/vocabulary/presentation/screens/word_of_day_screen.dart';
+import 'package:lexilingo_app/features/vocabulary/presentation/screens/word_of_day_screen.dart'
+    deferred as word_of_day;
 import 'package:lexilingo_app/features/vocabulary/vocabulary_di.dart'
     as vocab_di;
 import 'package:lexilingo_app/features/user/presentation/providers/user_provider.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/promo_banner_provider.dart';
-import 'package:lexilingo_app/features/home/presentation/pages/today_plan_page.dart';
+import 'package:lexilingo_app/features/home/presentation/pages/today_plan_page.dart'
+    deferred as today_plan;
 import 'package:lexilingo_app/features/voice/presentation/providers/voice_provider.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/tts_settings_provider.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/speech_recognition_provider.dart';
@@ -76,25 +81,37 @@ import 'package:lexilingo_app/features/progress/presentation/providers/content_a
 import 'package:lexilingo_app/features/progress/presentation/providers/daily_challenges_provider.dart';
 import 'package:lexilingo_app/features/social/presentation/screens/social_screen.dart';
 import 'package:lexilingo_app/features/youtube/presentation/providers/youtube_provider.dart';
-import 'package:lexilingo_app/features/youtube/presentation/screens/youtube_explore_screen.dart';
-import 'package:lexilingo_app/features/youtube/presentation/screens/youtube_player_screen.dart';
+import 'package:lexilingo_app/features/youtube/presentation/screens/youtube_explore_screen.dart'
+    deferred as yt_explore;
+import 'package:lexilingo_app/features/youtube/presentation/screens/youtube_player_screen.dart'
+    deferred as yt_player;
 import 'package:lexilingo_app/features/youtube/domain/entities/youtube_entities.dart';
 import 'package:lexilingo_app/features/news/presentation/providers/news_provider.dart';
-import 'package:lexilingo_app/features/news/presentation/screens/news_list_screen.dart';
-import 'package:lexilingo_app/features/news/presentation/screens/news_detail_screen.dart';
-import 'package:lexilingo_app/features/news/presentation/screens/news_quiz_screen.dart';
+import 'package:lexilingo_app/features/news/presentation/screens/news_list_screen.dart'
+    deferred as news_list;
+import 'package:lexilingo_app/features/news/presentation/screens/news_detail_screen.dart'
+    deferred as news_detail;
+import 'package:lexilingo_app/features/news/presentation/screens/news_quiz_screen.dart'
+    deferred as news_quiz;
 import 'package:lexilingo_app/features/news/domain/entities/news_entities.dart';
 import 'package:lexilingo_app/features/games/presentation/providers/games_provider.dart';
-import 'package:lexilingo_app/features/games/presentation/screens/games_hub_screen.dart';
+import 'package:lexilingo_app/features/games/presentation/screens/games_hub_screen.dart'
+    deferred as games_hub;
 import 'package:lexilingo_app/features/podcast/presentation/providers/podcast_provider.dart';
-import 'package:lexilingo_app/features/podcast/presentation/screens/podcast_explore_screen.dart';
-import 'package:lexilingo_app/features/podcast/presentation/screens/podcast_detail_screen.dart';
-import 'package:lexilingo_app/features/podcast/presentation/screens/podcast_player_screen.dart';
+import 'package:lexilingo_app/features/podcast/presentation/screens/podcast_explore_screen.dart'
+    deferred as pod_explore;
+import 'package:lexilingo_app/features/podcast/presentation/screens/podcast_detail_screen.dart'
+    deferred as pod_detail;
+import 'package:lexilingo_app/features/podcast/presentation/screens/podcast_player_screen.dart'
+    deferred as pod_player;
 import 'package:lexilingo_app/features/podcast/domain/entities/podcast_entities.dart';
 import 'package:lexilingo_app/features/books/presentation/providers/book_provider.dart';
-import 'package:lexilingo_app/features/books/presentation/screens/book_library_screen.dart';
-import 'package:lexilingo_app/features/mistakes/presentation/pages/mistake_notebook_page.dart';
-import 'package:lexilingo_app/features/offline/presentation/pages/offline_sync_center_page.dart';
+import 'package:lexilingo_app/features/books/presentation/screens/book_library_screen.dart'
+    deferred as book_library;
+import 'package:lexilingo_app/features/mistakes/presentation/pages/mistake_notebook_page.dart'
+    deferred as mistakes;
+import 'package:lexilingo_app/features/offline/presentation/pages/offline_sync_center_page.dart'
+    deferred as offline_sync;
 import 'package:lexilingo_app/features/premium/presentation/screens/paywall_screen.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/providers/lexi_chat_provider.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/pages/lexi_chat_page.dart';
@@ -411,37 +428,65 @@ class _LexiLingoAppState extends State<LexiLingoApp>
         builder: (context, settings, child) {
           final routes = <String, WidgetBuilder>{
             '/youtube': LearnerRoute.builder(
-              (context) => const YouTubeExploreScreen(),
+              (context) => DeferredPage(
+                loadLibrary: yt_explore.loadLibrary,
+                builder: (_) => yt_explore.YouTubeExploreScreen(),
+              ),
             ),
             '/youtube/player': LearnerRoute.builder((context) {
               final video =
                   ModalRoute.of(context)!.settings.arguments as YouTubeVideo;
-              return YouTubePlayerScreen(video: video);
+              return DeferredPage(
+                loadLibrary: yt_player.loadLibrary,
+                builder: (_) => yt_player.YouTubePlayerScreen(video: video),
+              );
             }),
-            '/news': LearnerRoute.builder((context) => const NewsListScreen()),
+            '/news': LearnerRoute.builder(
+              (context) => DeferredPage(
+                loadLibrary: news_list.loadLibrary,
+                builder: (_) => news_list.NewsListScreen(),
+              ),
+            ),
             '/news/detail': LearnerRoute.builder((context) {
               final article =
                   ModalRoute.of(context)!.settings.arguments as NewsArticle;
-              return NewsDetailScreen(article: article);
+              return DeferredPage(
+                loadLibrary: news_detail.loadLibrary,
+                builder: (_) => news_detail.NewsDetailScreen(article: article),
+              );
             }),
             '/news/quiz': LearnerRoute.builder((context) {
               final article =
                   ModalRoute.of(context)!.settings.arguments as NewsArticle;
-              return NewsQuizScreen(article: article);
+              return DeferredPage(
+                loadLibrary: news_quiz.loadLibrary,
+                builder: (_) => news_quiz.NewsQuizScreen(article: article),
+              );
             }),
             // Phase 3: English Games
-            '/games': LearnerRoute.builder((context) => const GamesHubScreen()),
+            '/games': LearnerRoute.builder(
+              (context) => DeferredPage(
+                loadLibrary: games_hub.loadLibrary,
+                builder: (_) => games_hub.GamesHubScreen(),
+              ),
+            ),
             '/courses': LearnerRoute.builder(
               (context) => const MainScreen(initialIndex: 1),
             ),
             '/today-plan': LearnerRoute.builder(
-              (context) => const TodayPlanPage(),
+              (context) => DeferredPage(
+                loadLibrary: today_plan.loadLibrary,
+                builder: (_) => today_plan.TodayPlanPage(),
+              ),
             ),
             '/practice-lab': LearnerRoute.builder(
               (context) => const MainScreen(initialIndex: 3),
             ),
             '/mistake-notebook': LearnerRoute.builder(
-              (context) => const MistakeNotebookPage(),
+              (context) => DeferredPage(
+                loadLibrary: mistakes.loadLibrary,
+                builder: (_) => mistakes.MistakeNotebookPage(),
+              ),
             ),
             '/profile': LearnerRoute.builder(
               (context) => const MainScreen(initialIndex: 4),
@@ -454,18 +499,27 @@ class _LexiLingoAppState extends State<LexiLingoApp>
               (context) => const PaywallScreen(),
             ),
             '/offline-sync': LearnerRoute.builder(
-              (context) => const OfflineSyncCenterPage(),
+              (context) => DeferredPage(
+                loadLibrary: offline_sync.loadLibrary,
+                builder: (_) => offline_sync.OfflineSyncCenterPage(),
+              ),
             ),
             '/placement-test': LearnerRoute.builder(
-              (context) => ChangeNotifierProvider(
-                create: (_) => di.sl<PlacementTestProvider>(),
-                child: const PlacementTestPage(),
+              (context) => DeferredPage(
+                loadLibrary: placement.loadLibrary,
+                builder: (_) => ChangeNotifierProvider(
+                  create: (_) => di.sl<PlacementTestProvider>(),
+                  child: placement.PlacementTestPage(),
+                ),
               ),
             ),
             '/level-exam': LearnerRoute.builder(
-              (context) => ChangeNotifierProvider(
-                create: (_) => di.sl<LevelExamProvider>(),
-                child: const LevelExamPage(),
+              (context) => DeferredPage(
+                loadLibrary: level_exam.loadLibrary,
+                builder: (_) => ChangeNotifierProvider(
+                  create: (_) => di.sl<LevelExamProvider>(),
+                  child: level_exam.LevelExamPage(),
+                ),
               ),
             ),
             '/vocabulary/review': LearnerRoute.builder(
@@ -475,16 +529,25 @@ class _LexiLingoAppState extends State<LexiLingoApp>
               ),
             ),
             '/vocabulary/word-of-day': LearnerRoute.builder(
-              (context) => const WordOfDayScreen(),
+              (context) => DeferredPage(
+                loadLibrary: word_of_day.loadLibrary,
+                builder: (_) => word_of_day.WordOfDayScreen(),
+              ),
             ),
             // Phase 4: Podcast
             '/podcast': LearnerRoute.builder(
-              (context) => const PodcastExploreScreen(),
+              (context) => DeferredPage(
+                loadLibrary: pod_explore.loadLibrary,
+                builder: (_) => pod_explore.PodcastExploreScreen(),
+              ),
             ),
             '/podcast/detail': LearnerRoute.builder((context) {
               final args = ModalRoute.of(context)?.settings.arguments;
               if (args is! Podcast) return const _MissingRouteArgs();
-              return PodcastDetailScreen(podcast: args);
+              return DeferredPage(
+                loadLibrary: pod_detail.loadLibrary,
+                builder: (_) => pod_detail.PodcastDetailScreen(podcast: args),
+              );
             }),
             '/podcast/player': LearnerRoute.builder((context) {
               final args = ModalRoute.of(context)?.settings.arguments;
@@ -493,14 +556,20 @@ class _LexiLingoAppState extends State<LexiLingoApp>
                   args['artworkUrl'] is! String) {
                 return const _MissingRouteArgs();
               }
-              return PodcastPlayerScreen(
-                episode: args['episode'] as PodcastEpisode,
-                artworkUrl: args['artworkUrl'] as String,
+              return DeferredPage(
+                loadLibrary: pod_player.loadLibrary,
+                builder: (_) => pod_player.PodcastPlayerScreen(
+                  episode: args['episode'] as PodcastEpisode,
+                  artworkUrl: args['artworkUrl'] as String,
+                ),
               );
             }),
             // Phase 5: Books
             '/books': LearnerRoute.builder(
-              (context) => const BookLibraryScreen(),
+              (context) => DeferredPage(
+                loadLibrary: book_library.loadLibrary,
+                builder: (_) => book_library.BookLibraryScreen(),
+              ),
             ),
             // Phase 6: Lexi Chat
             '/lexi': LearnerRoute.builder((context) => const LexiChatPage()),
