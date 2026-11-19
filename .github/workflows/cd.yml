@@ -138,11 +138,15 @@ jobs:
           FCM_VAPID_KEY: ${{ vars.FCM_VAPID_KEY }}
         run: |
           : "${GOOGLE_SERVER_CLIENT_ID:?Set GOOGLE_SERVER_CLIENT_ID repository variable}"
+          # Same origin as the page: the Cloudflare Worker route
+          # www.lexilingo.me/api/* proxies to api.lexilingo.me. Calling api.
+          # directly made every new URL pay a CORS preflight (~0.4-1.2 s from
+          # VN to the origin in DE). Mobile builds keep api.lexilingo.me.
           cat > assets/env/prod_config <<'EOF'
           ENVIRONMENT=production
-          API_BASE_URL=https://api.lexilingo.me/api/v1
+          API_BASE_URL=https://www.lexilingo.me/api/v1
           API_BASE_URL_FALLBACK=
-          AI_SERVICE_URL=https://api.lexilingo.me/api/v1
+          AI_SERVICE_URL=https://www.lexilingo.me/api/v1
           AI_SERVICE_URL_FALLBACK=
           ENABLE_VOICE_FEATURE=true
           ENABLE_GAMIFICATION=true
