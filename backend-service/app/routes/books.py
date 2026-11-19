@@ -21,7 +21,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.safe_http import image_proxy_response, safe_get
+from app.core.proxy_cache import (
+    MAX_CACHED_TEXT_BYTES,
+    get_cached_body,
+    get_cached_image,
+    put_cached_body,
+    put_cached_image,
+)
+from app.core.safe_http import image_proxy_response, safe_get, validate_public_url
 from app.services.api_cache_service import (
     APICacheService,
     QuotaExhaustedError,
@@ -649,6 +656,7 @@ ALLOWED_PROXY_DOMAINS = {
 }
 
 GUTENBERG_MIRROR = "gutenberg.pglaf.org"
+_TEXT_PROXY_HEADERS = {"Cache-Control": "public, max-age=86400"}
 
 
 async def _get_with_mirror(
@@ -707,6 +715,10 @@ async def proxy_image(url: str = Query(..., description="The image URL to proxy"
     """
     Proxy book cover images from Gutenberg or Open Library to bypass browser CORS.
     """
+    validate_public_url(url, allowed_hosts=ALLOWED_PROXY_DOMAINS)
+    cached = await get_cached_image(url)
+    if cached is not None:
+        return cached
     async with httpx.AsyncClient(timeout=10.0) as client:
         try:
             resp = await _get_with_mirror(
@@ -719,7 +731,9 @@ async def proxy_image(url: str = Query(..., description="The image URL to proxy"
                     status_code=resp.status_code,
                     detail=f"Failed to fetch image: HTTP {resp.status_code}"
                 )
-            return image_proxy_response(resp)
+            out = image_proxy_response(resp)
+            await put_cached_image(url, out)
+            return out
         except HTTPException:
             raise
         except httpx.RequestError as e:
@@ -741,6 +755,10 @@ async def proxy_text(url: str = Query(..., description="The text URL to proxy"))
     """
     Proxy book plain-text content from Gutenberg to bypass browser CORS.
     """
+    validate_public_url(url, allowed_hosts=ALLOWED_PROXY_DOMAINS)
+    cached = await get_cached_body("txt", url, _TEXT_PROXY_HEADERS)
+    if cached is not None:
+        return cached
     async with httpx.AsyncClient(timeout=15.0) as client:
         try:
             resp = await _get_with_mirror(
@@ -756,13 +774,13 @@ async def proxy_text(url: str = Query(..., description="The text URL to proxy"))
             
             content_type = resp.headers.get("content-type", "text/plain; charset=utf-8")
             
-            return Response(
+            out = Response(
                 content=resp.content,
                 media_type=content_type,
-                headers={
-                    "Cache-Control": "public, max-age=86400",  # Cache for 24h
-                }
+                headers=dict(_TEXT_PROXY_HEADERS),
             )
+            await put_cached_body("txt", url, out, max_bytes=MAX_CACHED_TEXT_BYTES)
+            return out
         except HTTPException:
             raise
         except httpx.RequestError as e:
