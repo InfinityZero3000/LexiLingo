@@ -1,6 +1,7 @@
 from api.models.story_schemas import Story
 from scripts.generate_tracecag_topic_corpus import (
     BLUEPRINTS,
+    GENERIC_SUGGESTED_PROMPTS,
     generate_tracecag_graph,
     merge_stories,
     story_from_blueprint,
@@ -75,3 +76,32 @@ def test_merge_stories_appends_generated_topics_without_replacing_existing():
 
     assert merged[0]["story_id"] == "story_existing"
     assert len(merged) == 61
+
+
+def test_generated_stories_carry_no_template_filler():
+    for story in _generated_stories():
+        for item in story["vocabulary_list"]:
+            assert item["definition"] == ""
+            assert item["example_in_story"] == ""
+        for point in story["grammar_points"]:
+            assert point["explanation"] == ""
+            assert point["usage_in_story"] == ""
+            assert point["examples"] == []
+
+
+def test_generated_suggested_prompts_do_not_depend_on_the_vocabulary_term():
+    for story in _generated_stories():
+        prompts = story["suggested_prompts"]
+        assert len(prompts) == 3 and len(set(prompts)) == 3
+        assert prompts == list(GENERIC_SUGGESTED_PROMPTS)
+
+
+def test_merge_stories_keeps_an_existing_story_instead_of_the_blank_blueprint():
+    generated = _generated_stories()
+    enriched = dict(generated[0])
+    enriched["suggested_prompts"] = ["I have a reservation under Kim."]
+
+    merged = merge_stories([enriched], generated)
+
+    assert merged[0]["suggested_prompts"] == ["I have a reservation under Kim."]
+    assert len(merged) == len(generated)

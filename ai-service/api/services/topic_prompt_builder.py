@@ -10,7 +10,10 @@ Implements the "Master System Prompt" with:
 - Adaptive difficulty instructions per CEFR level
 """
 
+from typing import Any
+
 from api.models.story_schemas import Story, DifficultyLevel
+from api.services.story_filler import is_placeholder_definition, is_template_grammar_explanation
 
 # Few-shot examples: natural recasts for errors, [📘] only for vocabulary questions.
 FEW_SHOT_EXAMPLES = '''
@@ -162,19 +165,24 @@ class TopicPromptBuilder:
         )
         
         # Format vocabulary list (top 10)
-        vocab_section = "\n".join([
-            f"- **{TopicPromptBuilder._get_value(v, 'term', 'word', default='Vocabulary item')}** "
-            f"({TopicPromptBuilder._get_value(v, 'part_of_speech', 'partOfSpeech', default='word')}): "
-            f"{TopicPromptBuilder._get_value(v, 'definition', 'meaning', default='') }"
-            for v in vocab[:10]
-        ]) if vocab else "No specific vocabulary focus."
-        
-        # Format grammar points
-        grammar_section = "\n".join([
-            f"- {TopicPromptBuilder._get_value(g, 'grammar_structure', 'grammarStructure', 'pattern', default='Grammar point')}: "
-            f"{TopicPromptBuilder._get_value(g, 'explanation', default='') }"
-            for g in grammar
-        ]) if grammar else "No specific grammar focus."
+        def _vocab_line(v: Any) -> str:
+            term = TopicPromptBuilder._get_value(v, 'term', 'word', default='Vocabulary item')
+            pos = TopicPromptBuilder._get_value(v, 'part_of_speech', 'partOfSpeech', default='word')
+            definition = TopicPromptBuilder._get_value(v, 'definition', 'meaning', default='')
+            line = f"- **{term}** ({pos})"
+            return line if is_placeholder_definition(definition) else f"{line}: {definition}"
+
+        def _grammar_line(g: Any) -> str:
+            structure = TopicPromptBuilder._get_value(
+                g, 'grammar_structure', 'grammarStructure', 'pattern', default='Grammar point'
+            )
+            explanation = TopicPromptBuilder._get_value(g, 'explanation', default='')
+            line = f"- {structure}"
+            return line if is_template_grammar_explanation(explanation) else f"{line}: {explanation}"
+
+        vocab_section = "\n".join(_vocab_line(v) for v in vocab[:10]) if vocab else "No specific vocabulary focus."
+
+        grammar_section = "\n".join(_grammar_line(g) for g in grammar) if grammar else "No specific grammar focus."
         
         # Format objectives
         objectives_section = "\n".join([

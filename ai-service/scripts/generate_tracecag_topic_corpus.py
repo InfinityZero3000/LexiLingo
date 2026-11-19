@@ -206,12 +206,21 @@ def atomic_write_json(path: Path, payload: Any) -> None:
     atomic_write_text(path, json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
 
 
+GENERIC_SUGGESTED_PROMPTS = (
+    "Can you help me with this?",
+    "What should I do first?",
+    "Could you say that again, please?",
+)
+
+
 def make_term_definition(term: str, title: str) -> str:
-    return f"A useful expression or concept for handling '{term}' in the {title.lower()} scenario"
+    # Left empty on purpose: a templated definition reads like content, reaches
+    # the model, and says nothing. scripts/enrich_topic_stories.py writes real ones.
+    return ""
 
 
 def make_example(term: str, title: str) -> str:
-    return f"Could you help me with the {term} during this {title.lower()}?"
+    return ""
 
 
 def unique_terms(blueprint: TopicBlueprint, count: int = 10) -> list[str]:
@@ -287,13 +296,9 @@ def story_from_blueprint(blueprint: TopicBlueprint) -> dict[str, Any]:
         "grammar_points": [
             {
                 "grammar_structure": grammar,
-                "explanation": f"Use {grammar.lower()} to keep the {title.lower()} conversation clear and accurate.",
-                "usage_in_story": f"This structure helps the learner ask, explain, or respond during {title.lower()}.",
-                "examples": [
-                    f"Could you explain the {terms[0]}?",
-                    f"I need to confirm the {terms[1]}.",
-                    f"If there is a problem, I will ask about the {terms[2]}.",
-                ],
+                "explanation": "",
+                "usage_in_story": "",
+                "examples": [],
             }
             for grammar in grammar_points
         ],
@@ -312,11 +317,9 @@ def story_from_blueprint(blueprint: TopicBlueprint) -> dict[str, Any]:
                 "Could you send me the details in writing?",
             ],
         },
-        "suggested_prompts": [
-            f"I need help with the {terms[0]}.",
-            f"Can you explain the {terms[1]}?",
-            f"What should I do next in this {title.lower()}?",
-        ],
+        # Term-free, so grammatical for every story; enrich_topic_stories.py
+        # replaces them with prompts that fit the situation.
+        "suggested_prompts": list(GENERIC_SUGGESTED_PROMPTS),
         "tags": [
             blueprint.category,
             blueprint.level,
@@ -445,7 +448,7 @@ def generate_tracecag_graph(stories: list[dict[str, Any]]) -> tuple[dict[str, An
             kg_concept(concepts, collocation_id, f"{term.title()} Collocation", level, [term, "collocation", category])
             target_next = vocab_ids[index - 1] if index > 0 else scenario_cid
 
-            evidence = item["example_in_story"]
+            evidence = item["example_in_story"] or f"{term} in {title.lower()}"
             for src, rel, dst, conf in (
                 (topic_cid, "contains", vid, 0.96),
                 (vid, "belongs_to_domain", domain_cid, 0.93),
@@ -461,8 +464,10 @@ def generate_tracecag_graph(stories: list[dict[str, Any]]) -> tuple[dict[str, An
                 (vid, "related_to", target_next, 0.87),
             ):
                 add_quad(quadruples, raw_edges, src, rel, dst, evidence, source_id, conf)
-            add_quad(quadruples, raw_edges, vid, "defined_as", item["definition"], evidence, source_id, 0.94)
-            add_quad(quadruples, raw_edges, vid, "example_sentence", evidence, evidence, source_id, 0.94)
+            if item["definition"]:
+                add_quad(quadruples, raw_edges, vid, "defined_as", item["definition"], evidence, source_id, 0.94)
+            if item["example_in_story"]:
+                add_quad(quadruples, raw_edges, vid, "example_sentence", evidence, evidence, source_id, 0.94)
             add_quad(quadruples, raw_edges, error_id, "example_sentence", f"Learner may misuse '{term}' without enough context.", evidence, source_id, 0.84)
 
         grammar_ids: list[str] = []
@@ -471,7 +476,7 @@ def generate_tracecag_graph(stories: list[dict[str, Any]]) -> tuple[dict[str, An
             gid = concept_id("grammar", f"{sid}_{grammar}")
             grammar_ids.append(gid)
             kg_concept(concepts, gid, grammar, level, [grammar, title, category])
-            evidence = item["usage_in_story"]
+            evidence = item["usage_in_story"] or f"{grammar} in {title.lower()}"
             linked_vocab = vocab_ids[index % len(vocab_ids)]
             for src, rel, dst, conf in (
                 (topic_cid, "practices", gid, 0.95),
@@ -483,7 +488,8 @@ def generate_tracecag_graph(stories: list[dict[str, Any]]) -> tuple[dict[str, An
                 (gid, "introduced_by", persona_cid, 0.85),
             ):
                 add_quad(quadruples, raw_edges, src, rel, dst, evidence, source_id, conf)
-            add_quad(quadruples, raw_edges, gid, "defined_as", item["explanation"], evidence, source_id, 0.93)
+            if item["explanation"]:
+                add_quad(quadruples, raw_edges, gid, "defined_as", item["explanation"], evidence, source_id, 0.93)
             for example in item["examples"]:
                 add_quad(quadruples, raw_edges, gid, "example_sentence", example, evidence, source_id, 0.93)
 
@@ -610,9 +616,11 @@ def load_existing_stories(path: Path) -> list[dict[str, Any]]:
 
 
 def merge_stories(existing: list[dict[str, Any]], generated: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    # An existing story wins over its regenerated blueprint: the blueprint is
+    # blank where enrich_topic_stories.py has since written real content.
     by_id = {story["story_id"]: story for story in existing}
     for story in generated:
-        by_id[story["story_id"]] = story
+        by_id.setdefault(story["story_id"], story)
     existing_ids = [story["story_id"] for story in existing]
     merged = [by_id[sid] for sid in existing_ids if sid in by_id]
     for story in generated:
