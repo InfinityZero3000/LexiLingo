@@ -15,7 +15,23 @@ DATA = Path(__file__).resolve().parents[1] / "data" / "sample_stories.json"
 
 
 def _stories() -> list[dict]:
-    return json.loads(DATA.read_text(encoding="utf-8"))["stories"]
+    """The bundled stories as the script first meets them: without the KG material it adds.
+
+    The data file itself is enriched now, so tests strip that material instead of
+    depending on whether the last run has been committed.
+    """
+    stories = json.loads(DATA.read_text(encoding="utf-8"))["stories"]
+    for story in stories:
+        for item in story["vocabulary_list"]:
+            item.pop("collocations", None)
+            item.pop("common_error", None)
+    return stories
+
+
+def _without_grammar(story_id: str) -> dict:
+    story = _story(story_id)
+    story.pop("grammar_points", None)
+    return story
 
 
 def _story(story_id: str = "story_dental_appointment") -> dict:
@@ -206,7 +222,7 @@ def test_prompt_demands_articles_and_forbids_filler():
 
 def _copy_data(tmp_path: Path) -> Path:
     path = tmp_path / "stories.json"
-    path.write_text(DATA.read_text(encoding="utf-8"), encoding="utf-8")
+    path.write_text(json.dumps({"stories": _stories()}, ensure_ascii=False), encoding="utf-8")
     return path
 
 
@@ -435,7 +451,7 @@ def test_all_stories_also_selects_the_hand_written_ones():
 
 @pytest.mark.asyncio
 async def test_a_story_without_grammar_points_can_be_enriched():
-    story = next(copy.deepcopy(s) for s in _stories() if s["story_id"] == "story_weather_plans")
+    story = _without_grammar("story_weather_plans")
     out = good_output(story)
     out["suggested_prompts"] = ["Will it rain this afternoon?", "Should I take an umbrella today?", "What will the weather be like tomorrow?"]
 
@@ -457,7 +473,7 @@ async def test_a_story_without_grammar_points_can_be_enriched():
 
 @pytest.mark.asyncio
 async def test_a_story_without_grammar_points_must_get_two():
-    story = next(copy.deepcopy(s) for s in _stories() if s["story_id"] == "story_weather_plans")
+    story = _without_grammar("story_weather_plans")
     out = good_output(story)
     out["suggested_prompts"] = ["Will it rain this afternoon?", "Should I take an umbrella today?", "What will the weather be like tomorrow?"]
 
@@ -487,7 +503,7 @@ async def test_a_malformed_common_error_is_dropped_and_the_kg_says_how_the_word_
 
 @pytest.mark.asyncio
 async def test_a_small_story_needs_floor_of_seventy_percent_verified():
-    story = next(copy.deepcopy(s) for s in _stories() if s["story_id"] == "story_apartment_renting")
+    story = _without_grammar("story_apartment_renting")
     out = good_output(story)
     out["suggested_prompts"] = ["Is the apartment still available?", "How much is the rent each month?", "Can I see the kitchen first?"]
     out["grammar_points"] = [
