@@ -1302,6 +1302,25 @@ const en: Translations = {
     problemForbidden: "{license} does not cover passage text. Publishing is refused.",
     problemField: "{license} needs a non-empty {field}. Publishing is refused.",
   },
+  // ============== AI exercise generation ==============
+  aiGenerate: {
+    button: "Generate with AI",
+    running: "Generating… (can take up to 2 minutes)",
+    added: "{count} exercises added — review them, then Save",
+    unavailable: "AI is not configured or the provider rejected the request. Check the AI keys.",
+    couldNotProduce: "The AI could not produce a valid lesson. Retrying may work.",
+    retry: "Retry",
+    bulkButton: "Generate for {count} empty lessons",
+    bulkConfirmTitle: "Generate exercises with AI?",
+    bulkConfirm: "The AI will write exercises and save them directly into {count} empty lessons. You can edit them afterwards. Lessons run one at a time and this can take several minutes.",
+    bulkConfirmLabel: "Generate and save",
+    bulkProgress: "{current} / {total} — {title}",
+    stop: "Stop",
+    stopping: "Stopping after the current lesson…",
+    bulkDone: "Exercises generated for {count} lessons.",
+    bulkStopped: "Stopped — {count} lessons were generated.",
+    bulkFailedTitle: "Could not generate for {count} lessons:",
+  },
 };
 
 export default en;

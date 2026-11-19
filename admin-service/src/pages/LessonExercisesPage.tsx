@@ -1,9 +1,10 @@
 import { useConfirm } from "../components/ConfirmDialog";
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   getLessonDetail,
   updateLessonContent,
+  generateLessonExercises,
   type LessonDetail,
   type Exercise,
   type UiType,
@@ -12,6 +13,7 @@ import {
   UI_TYPE_TO_TYPE,
 } from "../lib/adminApi";
 import { ExerciseTypeForm } from "../components/ExerciseTypeForm";
+import { useI18n } from "../lib/i18n";
 import {
   ArrowLeft,
   Plus,
@@ -23,6 +25,7 @@ import {
   Loader2,
   BookOpen,
   Clock,
+  Sparkles,
   GripVertical,
   X,
 } from "lucide-react";
@@ -318,6 +321,7 @@ const ExerciseRow = ({
 
 export const LessonExercisesPage = () => {
   const confirm = useConfirm();
+  const { t } = useI18n();
   const { courseId, unitId, lessonId } = useParams<{
     courseId: string;
     unitId: string;
@@ -333,6 +337,10 @@ export const LessonExercisesPage = () => {
   const [isDirty, setIsDirty] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const generatingRef = useRef(false);
+  const [genError, setGenError] = useState<{ message: string; retry: boolean } | null>(null);
+  const [genNotice, setGenNotice] = useState<string | null>(null);
 
   // Modal states
   const [showTypeSelector, setShowTypeSelector] = useState(false);
@@ -420,6 +428,29 @@ export const LessonExercisesPage = () => {
     }
   };
 
+  // Draft only: the exercises are appended and marked dirty, never saved here.
+  const handleGenerate = async () => {
+    if (!lessonId || generatingRef.current) return;
+    generatingRef.current = true;
+    setGenerating(true);
+    setGenError(null);
+    setGenNotice(null);
+    try {
+      const res = await generateLessonExercises(lessonId);
+      const drafts = res.data?.exercises ?? [];
+      setExercises((prev) => [...prev, ...drafts]);
+      if (drafts.length > 0) markDirty();
+      setGenNotice(t.aiGenerate.added.replace("{count}", String(drafts.length)));
+    } catch (err: any) {
+      if (err?.status === 503) setGenError({ message: t.aiGenerate.unavailable, retry: false });
+      else if (err?.status === 502) setGenError({ message: t.aiGenerate.couldNotProduce, retry: true });
+      else setGenError({ message: err?.message || t.aiGenerate.couldNotProduce, retry: false });
+    } finally {
+      generatingRef.current = false;
+      setGenerating(false);
+    }
+  };
+
   const goBack = () => {
     if (courseId && unitId && courseId !== "_") {
       navigate(`/admin/courses/${courseId}/units/${unitId}/lessons`);
@@ -504,14 +535,46 @@ export const LessonExercisesPage = () => {
         <h2>
           Danh sách bài tập ({exercises.length})
         </h2>
-        <button
-          type="button"
-          onClick={() => setShowTypeSelector(true)}
-          className="primary-button"
-        >
-          <Plus size={15} /> Thêm bài tập
-        </button>
+        <div className="table-actions">
+          <button
+            type="button"
+            onClick={handleGenerate}
+            disabled={generating}
+            className="ghost-button"
+          >
+            {generating ? (
+              <Loader2 size={15} className="is-spinning" aria-hidden="true" />
+            ) : (
+              <Sparkles size={15} aria-hidden="true" />
+            )}
+            {generating ? t.aiGenerate.running : t.aiGenerate.button}
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowTypeSelector(true)}
+            className="primary-button"
+          >
+            <Plus size={15} /> Thêm bài tập
+          </button>
+        </div>
       </div>
+
+      <div role="status" aria-live="polite">
+        {genNotice && <div className="form-success">{genNotice}</div>}
+      </div>
+      {genError && (
+        <div className="form-error" role="alert">
+          {genError.message}
+          {genError.retry && (
+            <>
+              {" "}
+              <button type="button" className="ghost-button small" onClick={handleGenerate} disabled={generating}>
+                {t.aiGenerate.retry}
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Exercise list */}
       {exercises.length === 0 ? (

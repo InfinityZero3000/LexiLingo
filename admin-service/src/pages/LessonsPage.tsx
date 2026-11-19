@@ -1,6 +1,6 @@
 import { useConfirm } from "../components/ConfirmDialog";
 import { Dialog } from "../components/Dialog";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { BookOpen } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import { DataTable } from "../components/DataTable";
@@ -15,11 +15,14 @@ import {
   createLesson,
   updateLesson,
   deleteLesson,
+  generateLessonExercises,
+  updateLessonContent,
   type LessonItem,
   type CourseItem,
   type UnitItem,
 } from "../lib/adminApi";
 import { useI18n } from "../lib/i18n";
+import { runSequential, type SequentialFailure } from "../lib/runSequential";
 
 const LESSON_TYPES = ["lesson", "practice", "review", "test", "vocabulary", "grammar"];
 
@@ -54,6 +57,17 @@ export const LessonsPage = () => {
   const isStandalone = !paramUnitId;
   const activeUnitId = paramUnitId || selectedUnitId || undefined;
   const activeCourseId = paramCourseId || selectedCourseId || undefined;
+
+  // Bulk AI generation
+  const [bulk, setBulk] = useState<{ current: number; total: number; title: string } | null>(null);
+  const [bulkResult, setBulkResult] = useState<{
+    succeeded: number;
+    failed: SequentialFailure<LessonItem>[];
+    stopped: boolean;
+  } | null>(null);
+  const stopRef = useRef(false);
+  const [stopping, setStopping] = useState(false);
+  const emptyLessons = lessons.filter((l) => l.exercise_count === 0);
 
   // Form
   const [showForm, setShowForm] = useState(false);
@@ -209,6 +223,38 @@ export const LessonsPage = () => {
     }
   };
 
+  const handleBulkGenerate = async () => {
+    if (bulk || emptyLessons.length === 0) return;
+    const targets = emptyLessons;
+    const ok = await confirm({
+      title: t.aiGenerate.bulkConfirmTitle,
+      message: t.aiGenerate.bulkConfirm.replace("{count}", String(targets.length)),
+      confirmLabel: t.aiGenerate.bulkConfirmLabel,
+    });
+    if (!ok) return;
+    stopRef.current = false;
+    setStopping(false);
+    setBulkResult(null);
+    setBulk({ current: 0, total: targets.length, title: "" });
+    const res = await runSequential(
+      targets,
+      async (lesson) => {
+        const gen = await generateLessonExercises(lesson.id);
+        const exercises = gen.data?.exercises ?? [];
+        // An empty draft would "succeed" while leaving the lesson unplayable.
+        if (exercises.length === 0) throw new Error(t.aiGenerate.couldNotProduce);
+        await updateLessonContent(lesson.id, exercises, lesson.estimated_minutes ?? 10);
+      },
+      {
+        shouldStop: () => stopRef.current,
+        onProgress: (i, lesson) => setBulk({ current: i + 1, total: targets.length, title: lesson.title }),
+      },
+    );
+    setBulk(null);
+    setBulkResult({ succeeded: res.succeeded.length, failed: res.failed, stopped: res.stopped });
+    await loadLessons();
+  };
+
   return (
     <div className="stack">
       <SectionHeader
@@ -240,9 +286,54 @@ export const LessonsPage = () => {
               </select>
             </div>
           )}
+          {emptyLessons.length > 0 && (
+            <button className="ghost-button" onClick={handleBulkGenerate} disabled={bulk !== null}>
+              {t.aiGenerate.bulkButton.replace("{count}", String(emptyLessons.length))}
+            </button>
+          )}
           <button className="primary-button" onClick={() => { resetForm(); setShowForm(true); }}>
             {t.lessons.createLesson}
           </button>
+        </div>
+        <div role="status" aria-live="polite">
+          {bulk && (
+            <div className="form-hint">
+              {t.aiGenerate.bulkProgress
+                .replace("{current}", String(bulk.current))
+                .replace("{total}", String(bulk.total))
+                .replace("{title}", bulk.title)}
+              {" "}
+              <button
+                type="button"
+                className="ghost-button small"
+                disabled={stopping}
+                onClick={() => { stopRef.current = true; setStopping(true); }}
+              >
+                {t.aiGenerate.stop}
+              </button>
+              {stopping && <div>{t.aiGenerate.stopping}</div>}
+            </div>
+          )}
+          {bulkResult && (
+            <div className={bulkResult.failed.length ? "form-hint" : "form-success"}>
+              {(bulkResult.stopped ? t.aiGenerate.bulkStopped : t.aiGenerate.bulkDone).replace(
+                "{count}",
+                String(bulkResult.succeeded),
+              )}
+              {bulkResult.failed.length > 0 && (
+                <div className="form-error">
+                  {t.aiGenerate.bulkFailedTitle.replace("{count}", String(bulkResult.failed.length))}
+                  <ul>
+                    {bulkResult.failed.map((f) => (
+                      <li key={f.item.id}>
+                        {f.item.title}: {f.message}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

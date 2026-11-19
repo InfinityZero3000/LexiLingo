@@ -870,3 +870,14 @@ export const uploadBannerImage = async (file: File): Promise<AdminResponse<{ url
     { method: "POST", body: formData }
   );
 };
+
+// ============================================================================
+// AI exercise drafts
+// ============================================================================
+
+// Returns a draft only — nothing is saved until updateLessonContent is called.
+export const generateLessonExercises = async (lessonId: string) =>
+  apiFetch<AdminResponse<{ exercises: Exercise[] }>>(
+    `${ENV.backendUrl}/admin/lessons/${lessonId}/generate-exercises`,
+    { method: "POST" }
+  );

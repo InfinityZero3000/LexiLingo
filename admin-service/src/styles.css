@@ -831,7 +831,8 @@ tbody tr:hover {
   box-shadow: 0 8px 16px rgba(255, 77, 0, 0.2);
 }
 
-.primary-button:disabled {
+.primary-button:disabled,
+.ghost-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }

@@ -1300,6 +1300,25 @@ const vi = {
     problemForbidden: "{license} không áp dụng cho văn bản bài đọc. Không thể xuất bản.",
     problemField: "{license} cần {field} không rỗng. Không thể xuất bản.",
   },
+  // ============== AI exercise generation ==============
+  aiGenerate: {
+    button: "Tạo bằng AI",
+    running: "Đang tạo… (có thể mất tới 2 phút)",
+    added: "Đã thêm {count} bài tập — hãy xem lại rồi bấm Lưu",
+    unavailable: "AI chưa được cấu hình hoặc nhà cung cấp từ chối yêu cầu. Hãy kiểm tra khóa AI.",
+    couldNotProduce: "AI chưa tạo được bài học hợp lệ. Thử lại có thể thành công.",
+    retry: "Thử lại",
+    bulkButton: "Tạo cho {count} bài học trống",
+    bulkConfirmTitle: "Tạo bài tập bằng AI?",
+    bulkConfirm: "AI sẽ tạo bài tập và lưu thẳng vào {count} bài học trống. Bạn có thể chỉnh sửa sau đó. Quá trình chạy lần lượt và có thể mất vài phút.",
+    bulkConfirmLabel: "Tạo và lưu",
+    bulkProgress: "{current} / {total} — {title}",
+    stop: "Dừng",
+    stopping: "Đang dừng sau bài học hiện tại…",
+    bulkDone: "Đã tạo bài tập cho {count} bài học.",
+    bulkStopped: "Đã dừng — {count} bài học đã được tạo.",
+    bulkFailedTitle: "Không tạo được cho {count} bài học:",
+  },
 };
 
 export default vi;
