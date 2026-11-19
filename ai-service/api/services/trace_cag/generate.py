@@ -238,6 +238,22 @@ def _is_asking(user_input: str, intent: str) -> bool:
     return intent == "ask" or "?" in text or bool(_ASK_OPENER.match(text))
 
 
+def _role_play_errors_directive(has_errors: bool) -> str:
+    """Topic role-play: the app shows its own correction card, so the persona never corrects."""
+    base = (
+        "\nStay fully in character and answer what the learner said. The app shows "
+        "the learner a separate correction card for any mistakes, so do NOT correct, "
+        "explain grammar, or say 'we say ...' in your reply."
+    )
+    if has_errors:
+        base += (
+            " Their sentence had a slip; understand what they meant and reply to that. "
+            "Use the correct form naturally only where it fits your own sentence, and "
+            "never repeat their situation as if it were yours."
+        )
+    return base + "\n"
+
+
 def _errors_directive(
     errors: List[Dict[str, Any]], strategy: str, asked: bool
 ) -> str:
@@ -305,7 +321,9 @@ def build_generation_prompt(
     if context:
         system_prompt += f"\n--- Knowledge Graph Context ---\n{context}\n"
 
-    if strategy == "socratic":
+    if str(state.get("topic_system_prompt") or "").strip():
+        system_prompt += _role_play_errors_directive(bool(errors))
+    elif strategy == "socratic":
         system_prompt += (
             "\nStrategy: SOCRATIC. Guide through short questions, don't reveal answer.\n"
         )
@@ -610,7 +628,9 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
     if context:
         system_prompt += f"\n--- Knowledge Graph Context ---\n{context}\n"
 
-    if strategy == "socratic":
+    if str(state.get("topic_system_prompt") or "").strip():
+        system_prompt += _role_play_errors_directive(bool(errors))
+    elif strategy == "socratic":
         system_prompt += (
             "\nStrategy: SOCRATIC. The learner asked for an explanation and is fairly fluent.\n"
             "Guide them through a chain of short questions so they discover the answer themselves.\n"
