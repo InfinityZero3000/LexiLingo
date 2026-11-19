@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../../../chat/presentation/providers/story_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import 'package:lexilingo_app/core/navigation/deferred_prefetch.dart';
 import 'home_page.dart';
 import '../../../course/presentation/screens/course_list_screen.dart';
 import '../../../practice/presentation/pages/practice_lab_page.dart';
@@ -149,6 +150,9 @@ class _MainScreenState extends State<MainScreen> with RouteAware {
       _warmupAiModels();
     }
     _triggerPreWarming();
+    prefetchDeferredFeatures(
+      isSignedIn: () => mounted && context.read<AuthProvider>().isAuthenticated,
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _showPendingStarterReward();
     });
