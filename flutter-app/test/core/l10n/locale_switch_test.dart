@@ -141,6 +141,25 @@ void main() {
       expect(hits, {'assets/i18n/en.json': 1, 'assets/i18n/vi.json': 1});
     });
 
+    test('warmSupported loads the given locales from the i18n path', () async {
+      final hits = <String, int>{};
+      _mockAssets(hits);
+
+      await CachedTranslationLoader.warmSupported(const [
+        Locale('en'),
+        Locale('vi'),
+      ]);
+
+      expect(hits, {'assets/i18n/en.json': 1, 'assets/i18n/vi.json': 1});
+      expect(
+        CachedTranslationLoader.isCached(
+          CachedTranslationLoader.translationsPath,
+          const Locale('vi'),
+        ),
+        isTrue,
+      );
+    });
+
     test('a failed read is retried instead of cached', () async {
       final hits = <String, int>{};
       _mockAssets(hits, failOnce: {'assets/i18n/en.json'});

@@ -4,33 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'app_tactile_theme.dart';
 import 'app_tokens.dart';
 
-/// Applies CJK font fallbacks to every style in a [TextTheme].
-/// Lexend has no Chinese/Japanese/Korean glyphs; these fallbacks prevent □ boxes.
-TextTheme _withCjkFallback(TextTheme base) {
-  const fallbacks = ['NotoSansCJK'];
-  return TextTheme(
-    displayLarge: base.displayLarge?.copyWith(fontFamilyFallback: fallbacks),
-    displayMedium: base.displayMedium?.copyWith(fontFamilyFallback: fallbacks),
-    displaySmall: base.displaySmall?.copyWith(fontFamilyFallback: fallbacks),
-    headlineLarge: base.headlineLarge?.copyWith(fontFamilyFallback: fallbacks),
-    headlineMedium: base.headlineMedium?.copyWith(
-      fontFamilyFallback: fallbacks,
-    ),
-    headlineSmall: base.headlineSmall?.copyWith(
-      fontSize: 22,
-      fontFamilyFallback: fallbacks,
-    ),
-    titleLarge: base.titleLarge?.copyWith(fontFamilyFallback: fallbacks),
-    titleMedium: base.titleMedium?.copyWith(fontFamilyFallback: fallbacks),
-    titleSmall: base.titleSmall?.copyWith(fontFamilyFallback: fallbacks),
-    labelLarge: base.labelLarge?.copyWith(fontFamilyFallback: fallbacks),
-    labelMedium: base.labelMedium?.copyWith(fontFamilyFallback: fallbacks),
-    labelSmall: base.labelSmall?.copyWith(fontFamilyFallback: fallbacks),
-    bodyLarge: base.bodyLarge?.copyWith(fontFamilyFallback: fallbacks),
-    bodyMedium: base.bodyMedium?.copyWith(fontFamilyFallback: fallbacks),
-    bodySmall: base.bodySmall?.copyWith(fontFamilyFallback: fallbacks),
-  );
-}
+TextTheme _withHeadlineSmall(TextTheme base) =>
+    base.copyWith(headlineSmall: base.headlineSmall?.copyWith(fontSize: 22));
 
 class AppColors {
   // ── Brand / Primary ───────────────────────────────────────────────────────
@@ -344,7 +319,7 @@ class AppTheme {
         surfaceContainer: AppColors.backgroundLight,
         surfaceContainerHighest: AppColors.grey200,
       ),
-      textTheme: _withCjkFallback(
+      textTheme: _withHeadlineSmall(
         GoogleFonts.lexendTextTheme().apply(
           bodyColor: AppColors.textDark,
           displayColor: AppColors.textDark,
@@ -399,7 +374,7 @@ class AppTheme {
         surfaceContainerHighest: AppColors.surfaceDarkMuted,
         brightness: Brightness.dark,
       ),
-      textTheme: _withCjkFallback(
+      textTheme: _withHeadlineSmall(
         GoogleFonts.lexendTextTheme().apply(
           bodyColor: AppColors.textOnDarkPrimary,
           displayColor: AppColors.textOnDarkPrimary,
