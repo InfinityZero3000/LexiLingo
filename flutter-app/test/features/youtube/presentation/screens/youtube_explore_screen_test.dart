@@ -9,6 +9,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/content_kit.dart';
+import 'package:lexilingo_app/core/widgets/empty_state_widget.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:lexilingo_app/features/youtube/data/repositories/youtube_repository.dart';
 import 'package:lexilingo_app/features/youtube/domain/entities/youtube_entities.dart';
@@ -62,6 +63,7 @@ class _FakeRepo extends YouTubeRepository {
     this.channelVideos = const [],
     this.hangChannels,
     this.searchError,
+    this.recommendedError,
   });
 
   final List<YouTubeChannel> channels;
@@ -70,6 +72,7 @@ class _FakeRepo extends YouTubeRepository {
   final List<YouTubeVideo> channelVideos;
   final Completer<List<YouTubeChannel>>? hangChannels;
   final Exception? searchError;
+  final Exception? recommendedError;
   final categoryCalls = <String?>[];
 
   @override
@@ -94,6 +97,7 @@ class _FakeRepo extends YouTubeRepository {
         totalResults: searchHits.length,
       );
     }
+    if (recommendedError != null) throw recommendedError!;
     return YouTubeSearchResult(
       videos: recommended,
       totalResults: recommended.length,
@@ -234,6 +238,24 @@ void main() {
       expect(find.byType(YouTubeShelfCard), findsNothing);
       expect(find.byType(YouTubeChannelAvatar), findsNWidgets(2));
     });
+
+    testWidgets(
+      'a failed recommendations call says so and offers a retry, not a blank page',
+      (tester) async {
+        await _pump(
+          tester,
+          _FakeRepo(
+            channels: channels,
+            recommendedError: Exception('503 YouTube API key not configured'),
+          ),
+        );
+
+        expect(find.byType(ContentHero), findsNothing);
+        expect(find.byType(YouTubeChannelAvatar), findsNWidgets(2));
+        expect(find.byType(EmptyStateWidget), findsOneWidget);
+        expect(find.text('Retry'), findsOneWidget);
+      },
+    );
 
     testWidgets('hero advances on its own', (tester) async {
       await _pump(
