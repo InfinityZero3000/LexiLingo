@@ -15,7 +15,23 @@ DATA = Path(__file__).resolve().parents[1] / "data" / "sample_stories.json"
 
 
 def _stories() -> list[dict]:
-    return json.loads(DATA.read_text(encoding="utf-8"))["stories"]
+    """The bundled stories as the script first meets them: without the KG material it adds.
+
+    The data file itself is enriched now, so tests strip that material instead of
+    depending on whether the last run has been committed.
+    """
+    stories = json.loads(DATA.read_text(encoding="utf-8"))["stories"]
+    for story in stories:
+        for item in story["vocabulary_list"]:
+            item.pop("collocations", None)
+            item.pop("common_error", None)
+    return stories
+
+
+def _without_grammar(story_id: str) -> dict:
+    story = _story(story_id)
+    story.pop("grammar_points", None)
+    return story
 
 
 def _story(story_id: str = "story_dental_appointment") -> dict:
@@ -51,7 +67,7 @@ def good_output(story: dict) -> dict:
                 "usage_in_story": "You use it when you describe your problem to the dentist.",
                 "examples": [f"Example sentence number {i} at the clinic.", f"Another example {i} here."],
             }
-            for i, g in enumerate(story["grammar_points"])
+            for i, g in enumerate(story.get("grammar_points") or [])
         ],
     }
 
@@ -206,7 +222,7 @@ def test_prompt_demands_articles_and_forbids_filler():
 
 def _copy_data(tmp_path: Path) -> Path:
     path = tmp_path / "stories.json"
-    path.write_text(DATA.read_text(encoding="utf-8"), encoding="utf-8")
+    path.write_text(json.dumps({"stories": _stories()}, ensure_ascii=False), encoding="utf-8")
     return path
 
 
@@ -335,15 +351,29 @@ async def test_diagnosis_counts_only_grounded_errors():
 # ── KG material: collocations and a verified common error ───────────────────
 
 @pytest.mark.asyncio
-async def test_a_common_error_the_diagnosis_does_not_flag_blocks_the_story():
+async def test_an_unflagged_common_error_is_dropped_not_fatal():
     story = _story()
     out = good_output(story)
     out["vocabulary"][0]["common_error"]["wrong"] = "This sentence is fine."
 
-    new, problems = await ets.enrich_story(story, FakeLLM([out, out]), clean_diagnose)
+    new, problems = await ets.enrich_story(story, FakeLLM([out]), clean_diagnose)
 
-    assert new is None
-    assert any("not flagged as a mistake" in p for p in problems)
+    assert problems == []
+    assert new["vocabulary_list"][0]["common_error"] is None
+    assert new["vocabulary_list"][1]["common_error"]["right"].startswith("A right sentence")
+    assert ets.is_enriched(new)
+
+
+@pytest.mark.asyncio
+async def test_too_few_verified_common_errors_blocks_the_story():
+    story = _story()
+    out = good_output(story)
+    for v in out["vocabulary"][:4]:
+        v["common_error"]["wrong"] = f"Fine sentence about {v['term']}."
+
+    new, problems = await ets.enrich_story(story, FakeLLM([out, out, out]), clean_diagnose)
+
+    assert new is None and any("common errors are real mistakes" in p for p in problems)
 
 
 @pytest.mark.asyncio
@@ -363,8 +393,6 @@ async def test_a_flagged_corrected_sentence_blocks_the_story():
     [
         lambda v: v.update(collocations=["one"]),
         lambda v: v.update(collocations=["no term here", "nor here"]),
-        lambda v: v["common_error"].update(right=v["common_error"]["wrong"]),
-        lambda v: v["common_error"].update(why=""),
     ],
 )
 async def test_bad_kg_material_is_rejected(mutate):
@@ -408,3 +436,116 @@ def test_kg_carries_the_enriched_content_on_the_same_ids():
     assert titles[f"errorpattern:{slug}_misuse"].startswith(f"Common mistake: 'WRONG sentence with {term}'")
     assert titles[f"phrase:{gen.slugify(story['story_id'])}_practice_phrase_1"] == "I have a toothache."
     assert not any("Learner may misuse" in str(q) for q in quads)
+    assert titles[f"phrase:{slug}_request"] == new["vocabulary_list"][0]["example_in_story"]
+
+
+def test_all_stories_also_selects_the_hand_written_ones():
+    stories = _stories()
+    tagged = ets.select_stories(stories, None)
+    everything = ets.select_stories(stories, None, all_stories=True)
+
+    assert all("topic_expansion" in s["tags"] for s in tagged)
+    assert {"story_airport_checkin", "story_weather_plans"} <= {s["story_id"] for s in everything}
+    assert len(everything) > len(tagged)
+
+
+@pytest.mark.asyncio
+async def test_a_story_without_grammar_points_can_be_enriched():
+    story = _without_grammar("story_weather_plans")
+    out = good_output(story)
+    out["suggested_prompts"] = ["Will it rain this afternoon?", "Should I take an umbrella today?", "What will the weather be like tomorrow?"]
+
+    out["grammar_points"] = [
+        {"grammar_structure": "Future with will", "explanation": "Use will plus a base verb to predict the weather.",
+         "usage_in_story": "You use it to talk about tomorrow's weather.",
+         "examples": ["It will rain tomorrow.", "Will it be sunny on Saturday?"]},
+        {"grammar_structure": "Modal verbs for advice", "explanation": "Use should plus a base verb to give advice.",
+         "usage_in_story": "You use it to suggest what to bring.",
+         "examples": ["You should take an umbrella.", "Should I wear a coat?"]},
+    ]
+
+    new, problems = await ets.enrich_story(story, FakeLLM([out]), clean_diagnose)
+
+    assert problems == [] and ets.is_enriched(new)
+    assert [g["grammar_structure"] for g in new["grammar_points"]] == ["Future with will", "Modal verbs for advice"]
+    assert "none yet" in ets.build_prompt(story)
+
+
+@pytest.mark.asyncio
+async def test_a_story_without_grammar_points_must_get_two():
+    story = _without_grammar("story_weather_plans")
+    out = good_output(story)
+    out["suggested_prompts"] = ["Will it rain this afternoon?", "Should I take an umbrella today?", "What will the weather be like tomorrow?"]
+
+    new, problems = await ets.enrich_story(story, FakeLLM([out, out]), clean_diagnose)
+
+    assert new is None and any("propose 2" in p for p in problems)
+
+
+@pytest.mark.asyncio
+async def test_a_malformed_common_error_is_dropped_and_the_kg_says_how_the_word_is_used():
+    from scripts import generate_tracecag_topic_corpus as gen
+
+    story = _story()
+    out = good_output(story)
+    out["vocabulary"][0]["common_error"].update(right=out["vocabulary"][0]["common_error"]["wrong"])
+
+    new, problems = await ets.enrich_story(story, FakeLLM([out]), clean_diagnose)
+    graph, _, _ = gen.generate_tracecag_graph([new])
+    term = new["vocabulary_list"][0]["term"]
+    title = {c["id"]: c["title"] for c in graph["concepts"]}[
+        f"errorpattern:{gen.slugify(story['story_id'] + '_' + term)}_misuse"
+    ]
+
+    assert problems == [] and new["vocabulary_list"][0]["common_error"] is None
+    assert title.startswith(f"Using '{term}' correctly: what people mean by {term} here")
+
+
+@pytest.mark.asyncio
+async def test_a_small_story_needs_floor_of_seventy_percent_verified():
+    story = _without_grammar("story_apartment_renting")
+    out = good_output(story)
+    out["suggested_prompts"] = ["Is the apartment still available?", "How much is the rent each month?", "Can I see the kitchen first?"]
+    out["grammar_points"] = [
+        {"grammar_structure": "Modal verbs for requests", "explanation": "Use can or could plus a base verb to ask politely.",
+         "usage_in_story": "You use it to ask the landlord for things.", "examples": ["Could I see the bedroom?", "Can I pay by card?"]},
+        {"grammar_structure": "Present simple for facts", "explanation": "Use the present simple for things that are generally true.",
+         "usage_in_story": "You use it to describe the flat.", "examples": ["The flat has two bedrooms.", "The rent includes water."]},
+    ]
+    out["vocabulary"][0]["common_error"]["wrong"] = "A fine sentence here."  # 2 of 3 verified
+
+    new, problems = await ets.enrich_story(story, FakeLLM([out]), clean_diagnose)
+
+    assert problems == [] and new is not None
+
+
+@pytest.mark.asyncio
+async def test_a_hand_written_story_may_keep_its_own_sentences():
+    story = next(copy.deepcopy(s) for s in _stories() if s["story_id"] == "story_airport_checkin")
+    out = good_output(story)
+    out["suggested_prompts"] = ["Can I check in for my flight here?", "Is my bag too heavy?", "Which gate do I go to?"]
+    kept = story["vocabulary_list"][0]["example_in_story"]
+    out["vocabulary"][0]["example_in_story"] = kept
+    out["grammar_points"] = [
+        {**g, "examples": [f"Grammar example {i} one.", f"Grammar example {i} two."]}
+        for i, g in enumerate(out["grammar_points"])
+    ]
+
+    new, problems = await ets.enrich_story(story, FakeLLM([out]), clean_diagnose)
+
+    assert problems == [] and new["vocabulary_list"][0]["example_in_story"] == kept
+
+
+@pytest.mark.asyncio
+async def test_a_flag_inside_a_curated_term_is_not_held_against_the_story():
+    story = _story()
+    term = story["vocabulary_list"][0]["term"]
+
+    async def flags_the_term(text, level):
+        if term in text:
+            return [{"span": term, "correction": f"the {term}"}]
+        return await clean_diagnose(text, level)
+
+    new, problems = await ets.enrich_story(story, FakeLLM([good_output(story)]), flags_the_term)
+
+    assert problems == [] and new is not None

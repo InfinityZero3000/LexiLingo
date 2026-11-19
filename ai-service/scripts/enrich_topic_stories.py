@@ -26,6 +26,7 @@ import argparse
 import asyncio
 import copy
 import json
+import math
 import os
 import re
 import sys
@@ -56,6 +57,9 @@ PARTS_OF_SPEECH = {
     "adjective", "adverb", "preposition", "expression",
 }
 
+NEW_GRAMMAR_POINTS = 2
+MIN_VERIFIED_ERRORS = 0.7
+
 LLM = Callable[[str], Awaitable[Any]]
 Diagnose = Callable[[str, str], Awaitable[list[dict[str, Any]]]]
 
@@ -77,16 +81,16 @@ def is_enriched(story: dict[str, Any]) -> bool:
     """Already has real content: every term carries collocations, a common error and a real definition."""
     vocab = story.get("vocabulary_list") or []
     return bool(vocab) and all(
-        v.get("collocations") and (v.get("common_error") or {}).get("right")
+        v.get("collocations") and "common_error" in v
         and v.get("definition") and not is_placeholder_definition(v["definition"])
         for v in vocab
     )
 
 
 def select_stories(
-    stories: list[dict[str, Any]], only: list[str] | None, force: bool = False
+    stories: list[dict[str, Any]], only: list[str] | None, force: bool = False, all_stories: bool = False
 ) -> list[dict[str, Any]]:
-    tagged = [s for s in stories if TAG in (s.get("tags") or [])]
+    tagged = [s for s in stories if all_stories or TAG in (s.get("tags") or [])]
     if not only:
         return tagged if force else [s for s in tagged if not is_enriched(s)]
     wanted = set(only)
@@ -99,7 +103,13 @@ def select_stories(
 def build_prompt(story: dict[str, Any], problems: list[str] | None = None) -> str:
     level = story["difficulty_level"]
     terms = [v["term"] for v in story["vocabulary_list"]]
-    structures = [g["grammar_structure"] for g in story["grammar_points"]]
+    structures = [g["grammar_structure"] for g in (story.get("grammar_points") or [])]
+    grammar_line = (
+        f"Grammar structures (keep each exactly as written, same order): {json.dumps(structures)}"
+        if structures else
+        f"Grammar structures: none yet. Choose exactly {NEW_GRAMMAR_POINTS} structures a {level} learner "
+        "really needs in this scenario, and name each in \"grammar_structure\" (e.g. \"Modal verbs for requests\")."
+    )
     retry = ""
     if problems:
         listed = "\n".join(f"- {p}" for p in problems[:12])
@@ -110,7 +120,7 @@ Scenario: {story['title']['en']} (CEFR {level}). Setting: {story['context_descri
 The learner talks to: {story['role_persona']['name']}, {story['role_persona']['role']}.
 
 Vocabulary terms (keep each term exactly as written): {json.dumps(terms)}
-Grammar structures (keep each exactly as written, same order): {json.dumps(structures)}
+{grammar_line}
 
 Return one JSON object:
 {{
@@ -180,17 +190,20 @@ def parse_enrichment(raw: Any, story: dict[str, Any]) -> dict[str, Any]:
         wrong = right = why = ""
         if isinstance(error, dict):
             wrong, right, why = (str(error.get(k) or "").strip() for k in ("wrong", "right", "why"))
-        if not wrong or not right or _norm(wrong) == _norm(right) or not why:
-            problems.append(f"common_error of {term!r} needs a different wrong/right pair and a why")
-        elif _words(why) > 15 or not 2 <= _words(wrong) <= 16 or not 2 <= _words(right) <= 16:
-            problems.append(f"common_error of {term!r}: wrong/right at most 16 words, why at most 15")
+        # A malformed common error is dropped, not fatal: the gate keeps only verified ones.
+        common_error = (
+            {"wrong": wrong, "right": right, "why": why}
+            if wrong and right and why and _norm(wrong) != _norm(right)
+            and _words(why) <= 15 and 2 <= _words(wrong) <= 16 and 2 <= _words(right) <= 16
+            else None
+        )
         vocabulary.append({
             "term": term,
             "definition": definition,
             "example_in_story": example,
             "part_of_speech": pos if pos in PARTS_OF_SPEECH else item.get("part_of_speech", "noun"),
             "collocations": [c.strip() for c in collocations],
-            "common_error": {"wrong": wrong, "right": right, "why": why},
+            "common_error": common_error,
         })
 
     prompts_in = raw.get("suggested_prompts")
@@ -210,9 +223,20 @@ def parse_enrichment(raw: Any, story: dict[str, Any]) -> dict[str, Any]:
 
     grammar_in = raw.get("grammar_points")
     grammar: list[dict[str, Any]] = []
-    expected = story["grammar_points"]
+    expected = (story.get("grammar_points") or [])
+    if not expected and isinstance(grammar_in, list):
+        # The story had none: the model proposes them, named by itself.
+        expected = [
+            {"grammar_structure": str(g.get("grammar_structure") or "").strip()}
+            for g in grammar_in if isinstance(g, dict)
+        ]
+        if len(expected) != NEW_GRAMMAR_POINTS or not all(g["grammar_structure"] for g in expected):
+            problems.append(f"grammar_points must propose {NEW_GRAMMAR_POINTS} named structures")
+            expected = []
+            grammar_in = None
     if not isinstance(grammar_in, list) or len(grammar_in) != len(expected):
-        problems.append(f"grammar_points must have {len(expected)} entries")
+        if grammar_in is not None or story.get("grammar_points"):
+            problems.append(f"grammar_points must have {len(expected)} entries")
     else:
         for old, new in zip(expected, grammar_in):
             if not isinstance(new, dict) or _norm(str(new.get("grammar_structure", ""))) != _norm(old["grammar_structure"]):
@@ -249,7 +273,7 @@ def parse_enrichment(raw: Any, story: dict[str, Any]) -> dict[str, Any]:
 def _sentences(enriched: dict[str, Any]) -> list[str]:
     out = list(enriched["suggested_prompts"])
     out += [v["example_in_story"] for v in enriched["vocabulary"]]
-    out += [v["common_error"]["right"] for v in enriched["vocabulary"]]
+    out += [v["common_error"]["right"] for v in enriched["vocabulary"] if v.get("common_error")]
     for g in enriched["grammar_points"]:
         out += g["examples"]
     return out
@@ -258,17 +282,35 @@ def _sentences(enriched: dict[str, Any]) -> list[str]:
 def _old_sentences(story: dict[str, Any]) -> set[str]:
     old = set(story.get("suggested_prompts") or [])
     old |= {v.get("example_in_story", "") for v in story["vocabulary_list"]}
-    for g in story["grammar_points"]:
+    for g in (story.get("grammar_points") or []):
         old |= set(g.get("examples") or [])
     return {_norm(s) for s in old if s}
 
 
 async def gate(story: dict[str, Any], enriched: dict[str, Any], diagnose: Diagnose) -> list[str]:
-    """Problems that keep a story from being written; empty means it passed."""
+    """Problems that keep a story from being written; empty means it passed.
+
+    A common error whose "wrong" sentence the diagnosis does not flag is dropped
+    (set to None) rather than failing the story, so the KG never teaches a
+    non-error; the story still needs MIN_VERIFIED_ERRORS of its terms covered.
+    """
     problems: list[str] = []
+    level = story["difficulty_level"]
+    vocab = enriched["vocabulary"]
+    for item in vocab:
+        error = item.get("common_error")
+        if error and not await diagnose(error["wrong"], level):
+            item["common_error"] = None
+    verified = sum(1 for item in vocab if item.get("common_error"))
+    if vocab and verified < max(1, math.floor(MIN_VERIFIED_ERRORS * len(vocab))):
+        problems.append(
+            f"only {verified} of {len(vocab)} common errors are real mistakes the diagnosis flags; "
+            "write clearer, typical learner mistakes"
+        )
     sentences = _sentences(enriched)
     seen: set[str] = set()
-    old = _old_sentences(story)
+    # Only template stories have filler to get rid of; a hand-written story may keep its good lines.
+    old = _old_sentences(story) if TAG in (story.get("tags") or []) else set()
     for text in sentences:
         key = _norm(text)
         if key in seen:
@@ -276,17 +318,17 @@ async def gate(story: dict[str, Any], enriched: dict[str, Any], diagnose: Diagno
         seen.add(key)
         if key in old:
             problems.append(f"unchanged from the old template: {text!r}")
-    level = story["difficulty_level"]
+    # The story's own vocabulary is curated (e.g. the form label "purpose of visit"):
+    # an example must contain it verbatim, so a flag that sits inside a term is not held against it.
+    terms = [_norm(v["term"]) for v in vocab]
     for text in sentences:
         for err in await diagnose(text, level):
+            span = _norm(str(err.get("span") or ""))
+            if span and any(span in term for term in terms):
+                continue
             problems.append(
                 f"diagnosis flags {text!r}: {err.get('span')!r} -> {err.get('correction')!r}"
             )
-    for item in enriched["vocabulary"]:
-        # The "wrong" sentence must really be wrong, or the KG would teach a non-error.
-        wrong = item["common_error"]["wrong"]
-        if not await diagnose(wrong, level):
-            problems.append(f"common_error of {item['term']!r}: {wrong!r} is not flagged as a mistake")
     return problems
 
 
@@ -298,7 +340,7 @@ def apply_enrichment(story: dict[str, Any], enriched: dict[str, Any]) -> dict[st
             example_in_story=fresh["example_in_story"],
             part_of_speech=fresh["part_of_speech"],
             collocations=list(fresh["collocations"]),
-            common_error=dict(fresh["common_error"]),
+            common_error=dict(fresh["common_error"]) if fresh.get("common_error") else None,
         )
     new["suggested_prompts"] = list(enriched["suggested_prompts"])
     new["grammar_points"] = copy.deepcopy(enriched["grammar_points"])
@@ -342,6 +384,7 @@ async def run(
     delay: float = 6.0,
     attempts: int = 2,
     force: bool = False,
+    all_stories: bool = False,
     log: Callable[[str], None] = print,
     on_pass: Callable[[list[dict[str, Any]]], None] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, list[str]]]:
@@ -350,7 +393,7 @@ async def run(
     ``on_pass`` gets the merged list after every passing story, so a long run
     that dies on a rate limit keeps what it already finished.
     """
-    targets = select_stories(stories, only, force)
+    targets = select_stories(stories, only, force, all_stories)
     log(f"{len(targets)} story(ies) to enrich")
     semaphore = asyncio.Semaphore(max(1, concurrency))
     results: dict[str, dict[str, Any]] = {}
@@ -417,7 +460,9 @@ async def groq_llm(prompt: str) -> Any:
     # Reasoning stays on for generation (CLAUDE.md); json_object keeps the output clean.
     effort = os.getenv("STORY_ENRICH_REASONING", "medium")
     return await _groq_json(
-        [{"role": "user", "content": prompt}], max_tokens=7000, temperature=0.6, effort=effort
+        [{"role": "user", "content": prompt}],
+        # 7000 leaves room for medium reasoning; a lower cap fits per-key token limits when Groq is busy.
+        max_tokens=int(os.getenv("STORY_ENRICH_MAX_TOKENS", "7000")), temperature=0.6, effort=effort
     )
 
 
@@ -447,8 +492,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--only", action="append", default=[], help="story id; repeatable")
     parser.add_argument("--concurrency", type=int, default=2)
     parser.add_argument("--delay", type=float, default=6.0)
-    parser.add_argument("--attempts", type=int, default=2)
+    parser.add_argument("--attempts", type=int, default=3)
     parser.add_argument("--force", action="store_true", help="also redo stories that are already enriched")
+    parser.add_argument(
+        "--all-stories", action="store_true",
+        help=f"include the hand-written stories, not only the {TAG} ones (they lack prompts and KG material)",
+    )
     return parser
 
 
@@ -465,7 +514,8 @@ async def amain(args: argparse.Namespace, llm: LLM = groq_llm, diagnose: Diagnos
         stories, llm, diagnose,
         only=[o for item in args.only for o in item.split(",") if o],
         concurrency=args.concurrency, delay=args.delay, attempts=args.attempts,
-        force=args.force, on_pass=save if args.write else None,
+        force=args.force, all_stories=getattr(args, "all_stories", False),
+        on_pass=save if args.write else None,
     )
     changed = sum(1 for a, b in zip(stories, merged) if a is not b)
     print(f"\n{changed} story(ies) passed the gate, {len(failures)} failed")
