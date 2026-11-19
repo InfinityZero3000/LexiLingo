@@ -756,13 +756,24 @@ async def generate_lesson_exercises_draft(
     course = await CourseCRUD.get_course(db, lesson.course_id)
     unit = await UnitCRUD.get_unit(db, lesson.unit_id) if lesson.unit_id else None
 
+    course_title = course.title if course else ""
+    level = course.level if course else ""
+    unit_title = unit.title if unit else ""
+    lesson_title = lesson.title
+    lesson_uuid = lesson.id
+    existing = (lesson.content or {}).get("exercises") if isinstance(lesson.content, dict) else None
+    taken = {str(e["id"]) for e in existing or [] if isinstance(e, dict) and e.get("id")}
+    # Nothing was written; release the pooled connection before the ~90s AI call.
+    # ORM objects are expired after this, so only the locals above may be used.
+    await db.rollback()
+
     try:
         exercises = await exercise_generation.generate_lesson_exercises(
-            course_title=course.title if course else "",
-            level=course.level if course else "",
-            unit_title=unit.title if unit else "",
-            lesson_title=lesson.title,
-            lesson_id=str(lesson.id),
+            course_title=course_title,
+            level=level,
+            unit_title=unit_title,
+            lesson_title=lesson_title,
+            lesson_id=str(lesson_uuid),
         )
     except exercise_generation.ExerciseGenerationUnavailable:
         raise HTTPException(
@@ -775,9 +786,7 @@ async def generate_lesson_exercises_draft(
             detail="AI could not produce a valid lesson, try again",
         )
 
-    existing = (lesson.content or {}).get("exercises") if isinstance(lesson.content, dict) else None
-    taken = {str(e["id"]) for e in existing or [] if isinstance(e, dict) and e.get("id")}
-    _unique_exercise_ids(exercises, taken, lesson.id)
+    _unique_exercise_ids(exercises, taken, lesson_uuid)
     return ApiResponse(success=True, message="Draft generated", data={"exercises": exercises})
 
 

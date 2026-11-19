@@ -8,7 +8,7 @@ import time
 
 import httpx
 
-from app.models.course import arrange_bank_matches, base_type_for
+from app.models.course import arrange_bank_matches, base_type_for, exercise_shape_problems
 from app.services.vocabulary_translation import groq_keys
 
 logger = logging.getLogger(__name__)
@@ -17,9 +17,10 @@ GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 # llama-3.3-70b-versatile and openai/gpt-oss-120b are gone/quota-bound on Groq.
 GROQ_MODEL = os.getenv("EXERCISE_GEN_MODEL", "qwen/qwen3.8-27b")
 
-# One admin request must finish inside the gateway's 300s read timeout.
+# One admin request must finish inside the gateway's 300s read timeout, and
+# under 100s so a Cloudflare-style proxy in front of the API does not cut it first.
 ADMIN_ATTEMPT_CAP = 4
-ADMIN_BUDGET_SECONDS = 110.0
+ADMIN_BUDGET_SECONDS = 90.0
 CALL_TIMEOUT_SECONDS = 45.0
 
 
@@ -108,6 +109,11 @@ def sanitize_exercises(exercises: list) -> list:
             if not arrange_bank_matches(options, exercise["correct_answer"]):
                 return []
         elif options and exercise["correct_answer"] not in options:
+            return []
+
+        # The save path (_assert_exercises_playable) enforces this same check with a
+        # 422, so a draft that fails it here could never be saved by the editor.
+        if exercise_shape_problems(exercise):
             return []
 
         cleaned.append(exercise)

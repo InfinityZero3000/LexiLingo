@@ -115,3 +115,25 @@ async def test_non_admin_is_forbidden(async_client: AsyncClient, auth_headers: d
         response = await async_client.post(_url(lesson.id), headers=auth_headers)
     assert response.status_code == 403
     gen.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_transaction_ends_before_the_ai_call(
+    async_client: AsyncClient, admin_headers: dict, lesson: Lesson
+):
+    order: list[str] = []
+    real_rollback = AsyncSession.rollback
+
+    async def rollback(self):
+        order.append("rollback")
+        return await real_rollback(self)
+
+    async def generate(**_):
+        order.append("generate")
+        return [_ex("g1")]
+
+    with patch.object(AsyncSession, "rollback", rollback), patch(PATCH, side_effect=generate):
+        response = await async_client.post(_url(lesson.id), headers=admin_headers)
+
+    assert response.status_code == 200
+    assert order.index("rollback") < order.index("generate")
