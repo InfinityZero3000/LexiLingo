@@ -88,6 +88,36 @@ describe("AdsPage", () => {
     expect(api.uploadBannerImage).toHaveBeenCalledWith(file);
   });
 
+  it("drops an upload that finishes after the form was cancelled and another banner opened", async () => {
+    let finish: (v: unknown) => void = () => {};
+    api.uploadBannerImage.mockReturnValue(new Promise((r) => { finish = r; }));
+    mount();
+    fireEvent.click(await screen.findByRole("button", { name: "+ Create Banner" }));
+    const file = new File(["x"], "b.png", { type: "image/png" });
+    fireEvent.change(screen.getByLabelText("Upload image"), { target: { files: [file] } });
+    await waitFor(() => expect(api.uploadBannerImage).toHaveBeenCalled());
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    fireEvent.click(within(await rowOf("Spring sale")).getByRole("button", { name: "Edit" }));
+    finish({ success: true, data: { url: "https://cdn.test/late.png", filename: "late.png" } });
+    await new Promise((r) => setTimeout(r, 20));
+    expect((screen.getByLabelText(/Image URL/) as HTMLInputElement).value).toBe("https://x.test/a.png");
+  });
+
+  it("adds preset days by calendar, not by 24h blocks, across a DST change", async () => {
+    vi.stubEnv("TZ", "America/New_York");
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 2, 5, 10, 30));
+    try {
+      mount();
+      fireEvent.click(await screen.findByRole("button", { name: "+ Create Banner" }));
+      fireEvent.click(screen.getByRole("button", { name: "7 days" }));
+      expect((screen.getByLabelText("End Date") as HTMLInputElement).value).toBe("2026-03-12T10:30");
+    } finally {
+      vi.useRealTimers();
+      vi.unstubAllEnvs();
+    }
+  });
+
   it("rejects an svg and an oversized file without calling the API", async () => {
     mount();
     fireEvent.click(await screen.findByRole("button", { name: "+ Create Banner" }));

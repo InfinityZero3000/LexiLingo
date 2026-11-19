@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isChoiceType, loadChoiceState, loadPlainAnswer, normaliseOption, pickRandom, validateChoices } from "./questionForm";
+import { isChoiceType, isGradableQuestion, loadChoiceState, loadPlainAnswer, normaliseOption, pickRandom, validateChoices } from "./questionForm";
 
 describe("validateChoices", () => {
   it("needs two options", () => {
@@ -57,5 +57,22 @@ describe("helpers", () => {
     expect(pickRandom(pool, 3, rng)).toEqual(got);
     expect(pickRandom([1, 2], 5).sort()).toEqual([1, 2]);
     expect(pool).toEqual([1, 2, 3, 4, 5]);
+  });
+});
+
+describe("isGradableQuestion", () => {
+  const base = { is_active: true, question_type: "MCQ", options: ["Cat", "Dog"], answer: " dog " };
+  it("accepts an active choice question whose answer matches one option", () => {
+    expect(isGradableQuestion(base)).toBe(true);
+  });
+  it("rejects inactive, non-choice, short or unmatched questions", () => {
+    expect(isGradableQuestion({ ...base, is_active: false })).toBe(false);
+    expect(isGradableQuestion({ ...base, question_type: "fill_blank" })).toBe(false);
+    expect(isGradableQuestion({ ...base, options: ["Cat"], answer: "Cat" })).toBe(false);
+    expect(isGradableQuestion({ ...base, answer: "Fish" })).toBe(false);
+    expect(isGradableQuestion({ ...base, answer: null })).toBe(false);
+  });
+  it("rejects options that collide after normalisation (answer would match two)", () => {
+    expect(isGradableQuestion({ ...base, options: ["Dog", " dog ", "Cat"], answer: "dog" })).toBe(false);
   });
 });

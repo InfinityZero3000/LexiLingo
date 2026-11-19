@@ -714,6 +714,8 @@ const en: Translations = {
     randomNone: "No unselected questions left to pick from.",
     randomPartial: "Added {added} of {requested}: no more questions match this filter.",
     selectedCount: "Selected ({count})",
+    notUsedByExam: "Not used by the exam",
+    selectedUngradableWarning: "The exam ignores this selection and uses the whole bank for this level when fewer than 5 selected questions are gradable.",
     selectedEmpty: "No questions selected yet.",
     removeQuestion: "Remove selected question {n}",
   },
@@ -1320,6 +1322,7 @@ const en: Translations = {
     bulkDone: "Exercises generated for {count} lessons.",
     bulkStopped: "Stopped — {count} lessons were generated.",
     bulkFailedTitle: "Could not generate for {count} lessons:",
+    bulkSkipped: "Skipped {count} lessons that already have exercises.",
   },
 };
 

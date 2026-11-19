@@ -15,6 +15,7 @@ const api = vi.hoisted(() => ({
   deleteLesson: vi.fn(),
   generateLessonExercises: vi.fn(),
   updateLessonContent: vi.fn(),
+  getLessonDetail: vi.fn(),
 }));
 vi.mock("../lib/adminApi", async (orig) => ({ ...(await orig<object>()), ...api }));
 
@@ -39,6 +40,7 @@ beforeEach(() => {
     data: [lesson("a", "Alpha", 0, { estimated_minutes: 25 }), lesson("b", "Beta", 3), lesson("c", "Gamma", 0), lesson("d", "Delta", 0)],
   });
   api.updateLessonContent.mockResolvedValue({ success: true });
+  api.getLessonDetail.mockResolvedValue({ data: { content: { exercises: [] } } });
 });
 afterEach(cleanup);
 
@@ -99,6 +101,47 @@ describe("LessonsPage bulk AI generation", () => {
     await screen.findByText(/Stopped — 1 lessons were generated/);
     expect(api.generateLessonExercises).toHaveBeenCalledTimes(1);
     expect(api.updateLessonContent).toHaveBeenCalledTimes(1);
+  });
+
+  it("skips a lesson that was filled after the page loaded", async () => {
+    api.getLessonDetail.mockImplementation(async (id: string) => ({
+      data: { content: { exercises: id === "c" ? [{ id: "someone-else" }] : [] } },
+    }));
+    api.generateLessonExercises.mockImplementation(async (id: string) => drafts(id));
+    mount();
+    fireEvent.click(await bulkButton());
+    fireEvent.click(await screen.findByRole("button", { name: "Generate and save" }));
+
+    await screen.findByText(/Exercises generated for 2 lessons/);
+    expect(screen.getByText("Skipped 1 lessons that already have exercises.")).toBeTruthy();
+    expect(api.generateLessonExercises.mock.calls.map((c) => c[0])).toEqual(["a", "d"]);
+    expect(api.updateLessonContent.mock.calls.map((c) => c[0])).toEqual(["a", "d"]);
+  });
+
+  it("starts one run when the button is clicked twice", async () => {
+    api.generateLessonExercises.mockImplementation(async (id: string) => drafts(id));
+    mount();
+    const button = await bulkButton();
+    fireEvent.click(button);
+    fireEvent.click(button);
+    fireEvent.click(await screen.findByRole("button", { name: "Generate and save" }));
+    await screen.findByText(/Exercises generated for 3 lessons/);
+    expect(api.generateLessonExercises).toHaveBeenCalledTimes(3);
+    expect(screen.queryByRole("button", { name: "Generate and save" })).toBeNull();
+  });
+
+  it("stops spending AI quota once the page unmounts", async () => {
+    let release: (v: unknown) => void = () => {};
+    api.generateLessonExercises.mockImplementationOnce(() => new Promise((r) => { release = r; }));
+    const view = mount();
+    fireEvent.click(await bulkButton());
+    fireEvent.click(await screen.findByRole("button", { name: "Generate and save" }));
+    await screen.findByText(/1 \/ 3 — Alpha/);
+    view.unmount();
+    release(drafts("a"));
+    await waitFor(() => expect(api.updateLessonContent).toHaveBeenCalledTimes(1));
+    await new Promise((r) => setTimeout(r, 20));
+    expect(api.generateLessonExercises).toHaveBeenCalledTimes(1);
   });
 
   it("hides the button when no lesson is empty", async () => {

@@ -195,6 +195,27 @@ describe("test exam picker", () => {
     expect(screen.getByRole("status").textContent).toContain("Added 2 of 9");
   });
 
+  it("flags ungradable questions, excludes them from random pick and warns under 5 gradable", async () => {
+    const mixed = [
+      question({ id: "g1", prompt: "Good one" }),
+      question({ id: "g2", prompt: "Good two" }),
+      question({ id: "off", prompt: "Switched off", is_active: false }),
+      question({ id: "fb", prompt: "Fill it", question_type: "fill_blank", options: null }),
+    ];
+    api.listQuestions.mockResolvedValue({ data: mixed });
+    mount();
+    await openTab("Test Exams");
+    await screen.findByLabelText(/Good one/);
+    expect(screen.getAllByText("Not used by the exam")).toHaveLength(2);
+    expect(within(screen.getByLabelText(/Switched off/).closest("label") as HTMLElement).getByText("Not used by the exam")).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText("How many"), { target: { value: "9" } });
+    fireEvent.click(screen.getByRole("button", { name: "Pick 9 random" }));
+    expect(screen.getByText("Selected (2)")).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toContain("Added 2 of 9");
+    expect(screen.getByRole("alert").textContent).toContain("fewer than 5 selected questions are gradable");
+  });
+
   it("loads an existing exam's question ids, showing known prompts", async () => {
     mount();
     await openTab("Test Exams");

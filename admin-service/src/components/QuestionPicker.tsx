@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useI18n } from "../lib/i18n";
 import { listQuestions, type QuestionItem } from "../lib/adminApi";
-import { pickRandom } from "../lib/questionForm";
+import { isGradableQuestion, pickRandom } from "../lib/questionForm";
 
 const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
 const DEBOUNCE_MS = 300;
+const MIN_GRADABLE = 5;
 
 type Props = {
   examLevel: string;
@@ -53,10 +54,15 @@ export const QuestionPicker = ({ examLevel, selected, onChange, known = [], rand
   }, [level, query]);
 
   const lookup = (id: string) => seen.current.get(id) ?? known.find((q) => q.id === id);
+  const gradableSelected = selected.filter((id) => {
+    const q = lookup(id);
+    // Not loaded yet: no evidence either way, so do not raise a false alarm.
+    return q ? isGradableQuestion(q) : true;
+  }).length;
   const toggle = (id: string) => onChange(selected.includes(id) ? selected.filter((x) => x !== id) : [...selected, id]);
 
   const handleRandom = () => {
-    const pool = results.filter((q) => !selected.includes(q.id));
+    const pool = results.filter((q) => !selected.includes(q.id) && isGradableQuestion(q));
     const picked = pickRandom(pool, count, random).map((q) => q.id);
     onChange([...selected, ...picked]);
     setNotice(
@@ -95,6 +101,7 @@ export const QuestionPicker = ({ examLevel, selected, onChange, known = [], rand
           <label className="picker-item" key={q.id}>
             <input type="checkbox" checked={selected.includes(q.id)} onChange={() => toggle(q.id)} />
             <span className="picker-item-text">{q.prompt}</span>
+            {!isGradableQuestion(q) && <span className="status-pill warning">{c.notUsedByExam}</span>}
             <span className="table-meta">{q.difficulty_level} · {q.question_type}</span>
           </label>
         ))}
@@ -119,6 +126,9 @@ export const QuestionPicker = ({ examLevel, selected, onChange, known = [], rand
       {notice && <div className="form-hint" role="status">{notice}</div>}
 
       <strong>{c.selectedCount.replace("{count}", String(selected.length))}</strong>
+      {selected.length > 0 && gradableSelected < MIN_GRADABLE && (
+        <div className="form-error" role="alert">{c.selectedUngradableWarning}</div>
+      )}
       {selected.length === 0 ? (
         <div className="form-hint">{c.selectedEmpty}</div>
       ) : (

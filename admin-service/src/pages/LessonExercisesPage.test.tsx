@@ -82,6 +82,50 @@ describe("LessonExercisesPage AI generation", () => {
     expect(api.generateLessonExercises).toHaveBeenCalledTimes(1);
   });
 
+  it("re-ids drafts whose ids repeat saved, unsaved or same-batch exercises", async () => {
+    api.generateLessonExercises.mockResolvedValue({
+      success: true, data: { exercises: [ex("e1", "Clash one"), ex("e1", "Clash two")] },
+    });
+    api.updateLessonContent.mockResolvedValue({ success: true });
+    mount();
+    await screen.findByText("Existing question");
+    fireEvent.click(screen.getByRole("button", { name: "Generate with AI" }));
+    await screen.findByText("Clash two");
+    await waitFor(() => expect(screen.getByRole("button", { name: "Generate with AI" })).toBeTruthy());
+    fireEvent.click(screen.getByRole("button", { name: "Generate with AI" }));
+    await waitFor(() => expect(document.querySelectorAll(".exercise-question")).toHaveLength(5));
+    fireEvent.click(saveBtn());
+    await waitFor(() => expect(api.updateLessonContent).toHaveBeenCalled());
+    const ids = (api.updateLessonContent.mock.calls[0][1] as { id: string }[]).map((e) => e.id);
+    expect(ids).toEqual(["e1", "ex_l1_1", "ex_l1_2", "ex_l1_3", "ex_l1_4"]);
+  });
+
+  it("disables Save while generating and Generate while saving", async () => {
+    api.generateLessonExercises.mockResolvedValueOnce({ success: true, data: { exercises: [ex("g1", "Draft one")] } });
+    mount();
+    await screen.findByText("Existing question");
+    fireEvent.click(screen.getByRole("button", { name: "Generate with AI" }));
+    await screen.findByText("Draft one");
+    expect(saveBtn().disabled).toBe(false);
+
+    let resolveGen: (v: unknown) => void = () => {};
+    api.generateLessonExercises.mockReturnValueOnce(new Promise((r) => { resolveGen = r; }));
+    fireEvent.click(screen.getByRole("button", { name: "Generate with AI" }));
+    await screen.findByRole("button", { name: /Generating/ });
+    expect(saveBtn().disabled).toBe(true);
+    resolveGen({ success: true, data: { exercises: [] } });
+    await waitFor(() => expect(saveBtn().disabled).toBe(false));
+
+    let resolveSave: (v: unknown) => void = () => {};
+    api.updateLessonContent.mockReturnValueOnce(new Promise((r) => { resolveSave = r; }));
+    fireEvent.click(saveBtn());
+    await waitFor(() => expect((screen.getByRole("button", { name: "Generate with AI" }) as HTMLButtonElement).disabled).toBe(true));
+    fireEvent.click(screen.getByRole("button", { name: "Generate with AI" }));
+    expect(api.generateLessonExercises).toHaveBeenCalledTimes(2);
+    resolveSave({ success: true });
+    await waitFor(() => expect((screen.getByRole("button", { name: "Generate with AI" }) as HTMLButtonElement).disabled).toBe(false));
+  });
+
   it("shows a friendly 502 message with Retry, and the backend message otherwise", async () => {
     api.generateLessonExercises.mockRejectedValueOnce(Object.assign(new Error("raw"), { status: 502 }));
     mount();

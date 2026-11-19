@@ -712,6 +712,8 @@ const vi = {
     randomNone: "Không còn câu hỏi chưa chọn để lấy ngẫu nhiên.",
     randomPartial: "Đã thêm {added}/{requested} câu: không còn câu hỏi nào khớp bộ lọc.",
     selectedCount: "Đã chọn ({count})",
+    notUsedByExam: "Đề thi không dùng",
+    selectedUngradableWarning: "Đề thi sẽ bỏ qua lựa chọn này và dùng toàn bộ ngân hàng câu hỏi của cấp độ khi có ít hơn 5 câu được chọn chấm điểm được.",
     selectedEmpty: "Chưa chọn câu hỏi nào.",
     removeQuestion: "Bỏ câu hỏi đã chọn số {n}",
   },
@@ -1318,6 +1320,7 @@ const vi = {
     bulkDone: "Đã tạo bài tập cho {count} bài học.",
     bulkStopped: "Đã dừng — {count} bài học đã được tạo.",
     bulkFailedTitle: "Không tạo được cho {count} bài học:",
+    bulkSkipped: "Đã bỏ qua {count} bài học vì đã có bài tập.",
   },
 };
 

@@ -34,6 +34,22 @@ import {
 
 const makeId = () => `ex_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 
+// The model numbers its ids from 1 each call, so a second unsaved draft repeats them.
+const appendWithFreshIds = (prev: Exercise[], drafts: Exercise[], lessonId: string): Exercise[] => {
+  const used = new Set(prev.map((e) => e.id));
+  let n = 1;
+  const added = drafts.map((d) => {
+    let id = d.id;
+    if (!id || used.has(id)) {
+      while (used.has(`ex_${lessonId}_${n}`)) n += 1;
+      id = `ex_${lessonId}_${n}`;
+    }
+    used.add(id);
+    return id === d.id ? d : { ...d, id };
+  });
+  return [...prev, ...added];
+};
+
 const defaultExercise = (uiType: UiType, index: number): Exercise => ({
   id: makeId(),
   type: UI_TYPE_TO_TYPE[uiType],
@@ -339,6 +355,7 @@ export const LessonExercisesPage = () => {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [generating, setGenerating] = useState(false);
   const generatingRef = useRef(false);
+  const savingRef = useRef(false);
   const [genError, setGenError] = useState<{ message: string; retry: boolean } | null>(null);
   const [genNotice, setGenNotice] = useState<string | null>(null);
 
@@ -405,7 +422,8 @@ export const LessonExercisesPage = () => {
   };
 
   const handleSaveAll = async () => {
-    if (!lessonId) return;
+    if (!lessonId || generatingRef.current) return;
+    savingRef.current = true;
     setSaving(true);
     setError(null);
     try {
@@ -424,13 +442,14 @@ export const LessonExercisesPage = () => {
       // Server rejects e.g. emptying exercises of a live lesson — show why.
       setError(err?.message || "Lỗi kết nối server.");
     } finally {
+      savingRef.current = false;
       setSaving(false);
     }
   };
 
   // Draft only: the exercises are appended and marked dirty, never saved here.
   const handleGenerate = async () => {
-    if (!lessonId || generatingRef.current) return;
+    if (!lessonId || generatingRef.current || savingRef.current) return;
     generatingRef.current = true;
     setGenerating(true);
     setGenError(null);
@@ -438,7 +457,7 @@ export const LessonExercisesPage = () => {
     try {
       const res = await generateLessonExercises(lessonId);
       const drafts = res.data?.exercises ?? [];
-      setExercises((prev) => [...prev, ...drafts]);
+      setExercises((prev) => appendWithFreshIds(prev, drafts, lessonId));
       if (drafts.length > 0) markDirty();
       setGenNotice(t.aiGenerate.added.replace("{count}", String(drafts.length)));
     } catch (err: any) {
@@ -539,7 +558,7 @@ export const LessonExercisesPage = () => {
           <button
             type="button"
             onClick={handleGenerate}
-            disabled={generating}
+            disabled={generating || saving}
             className="ghost-button"
           >
             {generating ? (
@@ -568,7 +587,7 @@ export const LessonExercisesPage = () => {
           {genError.retry && (
             <>
               {" "}
-              <button type="button" className="ghost-button small" onClick={handleGenerate} disabled={generating}>
+              <button type="button" className="ghost-button small" onClick={handleGenerate} disabled={generating || saving}>
                 {t.aiGenerate.retry}
               </button>
             </>
@@ -604,7 +623,7 @@ export const LessonExercisesPage = () => {
       <div className="lesson-save-bar">
         <button
           type="button"
-          disabled={!isDirty || saving}
+          disabled={!isDirty || saving || generating}
           onClick={handleSaveAll}
           className="primary-button lesson-save-button"
         >

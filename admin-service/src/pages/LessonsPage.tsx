@@ -17,6 +17,7 @@ import {
   deleteLesson,
   generateLessonExercises,
   updateLessonContent,
+  getLessonDetail,
   type LessonItem,
   type CourseItem,
   type UnitItem,
@@ -64,8 +65,11 @@ export const LessonsPage = () => {
     succeeded: number;
     failed: SequentialFailure<LessonItem>[];
     stopped: boolean;
+    skipped: number;
   } | null>(null);
   const stopRef = useRef(false);
+  const bulkRunningRef = useRef(false);
+  useEffect(() => () => { stopRef.current = true; }, []);
   const [stopping, setStopping] = useState(false);
   const emptyLessons = lessons.filter((l) => l.exercise_count === 0);
 
@@ -224,8 +228,17 @@ export const LessonsPage = () => {
   };
 
   const handleBulkGenerate = async () => {
-    if (bulk || emptyLessons.length === 0) return;
-    const targets = emptyLessons;
+    // Set synchronously: `bulk` state only appears after the confirm resolves.
+    if (bulkRunningRef.current || emptyLessons.length === 0) return;
+    bulkRunningRef.current = true;
+    try {
+      await runBulk(emptyLessons);
+    } finally {
+      bulkRunningRef.current = false;
+    }
+  };
+
+  const runBulk = async (targets: LessonItem[]) => {
     const ok = await confirm({
       title: t.aiGenerate.bulkConfirmTitle,
       message: t.aiGenerate.bulkConfirm.replace("{count}", String(targets.length)),
@@ -236,9 +249,16 @@ export const LessonsPage = () => {
     setStopping(false);
     setBulkResult(null);
     setBulk({ current: 0, total: targets.length, title: "" });
+    let skipped = 0;
     const res = await runSequential(
       targets,
       async (lesson) => {
+        // The target list is a page-load snapshot; someone may have filled the lesson since.
+        const current = await getLessonDetail(lesson.id);
+        if ((current.data?.content?.exercises?.length ?? 0) > 0) {
+          skipped += 1;
+          return;
+        }
         const gen = await generateLessonExercises(lesson.id);
         const exercises = gen.data?.exercises ?? [];
         // An empty draft would "succeed" while leaving the lesson unplayable.
@@ -251,7 +271,12 @@ export const LessonsPage = () => {
       },
     );
     setBulk(null);
-    setBulkResult({ succeeded: res.succeeded.length, failed: res.failed, stopped: res.stopped });
+    setBulkResult({
+      succeeded: res.succeeded.length - skipped,
+      failed: res.failed,
+      stopped: res.stopped,
+      skipped,
+    });
     await loadLessons();
   };
 
@@ -319,6 +344,9 @@ export const LessonsPage = () => {
               {(bulkResult.stopped ? t.aiGenerate.bulkStopped : t.aiGenerate.bulkDone).replace(
                 "{count}",
                 String(bulkResult.succeeded),
+              )}
+              {bulkResult.skipped > 0 && (
+                <div>{t.aiGenerate.bulkSkipped.replace("{count}", String(bulkResult.skipped))}</div>
               )}
               {bulkResult.failed.length > 0 && (
                 <div className="form-error">

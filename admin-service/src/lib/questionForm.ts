@@ -61,3 +61,17 @@ export const pickRandom = <T,>(pool: T[], count: number, rng: () => number = Mat
   }
   return copy.slice(0, Math.max(0, count));
 };
+
+// Mirrors what the promotion exam can grade: active, a choice type, 2+ options and an
+// answer that matches exactly one of them. Anything else is silently left out of the paper.
+export const isGradableQuestion = (q: {
+  is_active: boolean;
+  question_type: string;
+  options?: unknown;
+  answer?: unknown;
+}): boolean => {
+  if (!q.is_active || !isChoiceType(q.question_type)) return false;
+  const { options, correct } = loadChoiceState(q.options, q.answer);
+  if (options.length < 2 || correct === null) return false;
+  return new Set(options.map(normaliseOption)).size === options.length;
+};

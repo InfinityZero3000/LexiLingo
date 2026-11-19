@@ -1,6 +1,6 @@
 import { useConfirm } from "../components/ConfirmDialog";
 import { Dialog } from "../components/Dialog";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { DataTable } from "../components/DataTable";
 import { SectionHeader } from "../components/SectionHeader";
 import { EmptyState } from "../components/EmptyState";
@@ -18,7 +18,6 @@ import { useI18n } from "../lib/i18n";
 
 const IMAGE_TYPES = ["image/png", "image/jpeg", "image/webp"];
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
-const DAY_MS = 24 * 60 * 60 * 1000;
 const CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
 type BannerForm = {
@@ -135,7 +134,20 @@ export const AdsPage = () => {
   // Only hero is shown by the app; an existing banner on another position stays selectable.
   const [legacyPosition, setLegacyPosition] = useState<BannerPosition | null>(null);
 
+  // Bumped whenever the form is reopened or closed, so a late upload cannot land in a different banner.
+  const uploadSeq = useRef(0);
+  const invalidateUpload = () => {
+    uploadSeq.current += 1;
+    setUploading(false);
+  };
+
+  const closeForm = () => {
+    invalidateUpload();
+    setShowForm(false);
+  };
+
   const resetForm = () => {
+    invalidateUpload();
     setForm(EMPTY_FORM);
     setEditingId(null);
     setLegacyPosition(null);
@@ -143,6 +155,7 @@ export const AdsPage = () => {
   };
 
   const openWith = (next: BannerForm, id: string | null) => {
+    invalidateUpload();
     setEditingId(id);
     setForm(next);
     setLegacyPosition(next.position === "hero" ? null : next.position);
@@ -161,7 +174,7 @@ export const AdsPage = () => {
     if (days === "now") return setForm((f) => ({ ...f, start_at }));
     const end = days === "month"
       ? new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59)
-      : new Date(now.getTime() + days * DAY_MS);
+      : new Date(now.getFullYear(), now.getMonth(), now.getDate() + days, now.getHours(), now.getMinutes());
     setForm((f) => ({ ...f, start_at, end_at: toLocalInput(end) }));
   };
 
@@ -170,16 +183,17 @@ export const AdsPage = () => {
     if (!IMAGE_TYPES.includes(file.type)) return setUploadError(t.ads.uploadBadType);
     if (file.size > MAX_IMAGE_BYTES) return setUploadError(t.ads.uploadTooLarge);
     setUploadError(null);
+    const seq = uploadSeq.current;
     setUploading(true);
     try {
       const res = await uploadBannerImage(file);
       const url = res.data?.url;
       if (!url) throw new Error(t.ads.uploadFailed);
-      setForm((f) => ({ ...f, image_url: url }));
+      if (seq === uploadSeq.current) setForm((f) => ({ ...f, image_url: url }));
     } catch (err: any) {
-      setUploadError(err?.message || t.ads.uploadFailed);
+      if (seq === uploadSeq.current) setUploadError(err?.message || t.ads.uploadFailed);
     } finally {
-      setUploading(false);
+      if (seq === uploadSeq.current) setUploading(false);
     }
   };
 
@@ -362,7 +376,7 @@ export const AdsPage = () => {
       </div>
 
       {showForm && (
-        <Dialog onClose={() => setShowForm(false)} maxWidth={560}>
+        <Dialog onClose={closeForm} maxWidth={560}>
           <h3>{editingId ? t.ads.editBanner : t.ads.createNew}</h3>
           <form className="form" onSubmit={handleSave}>
             <label>
@@ -462,7 +476,7 @@ export const AdsPage = () => {
               {t.common.active}
             </label>
             <div className="table-actions">
-              <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
+              <button className="ghost-button" type="button" onClick={closeForm}>{t.common.cancel}</button>
               <button className="primary-button" type="submit" disabled={saving || uploading}>
                 {saving ? t.common.saving : editingId ? t.common.update : t.common.create}
               </button>
