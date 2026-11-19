@@ -26,6 +26,8 @@ from typing import Any, Dict, List, Optional
 
 import redis.asyncio as redis
 
+from api.services.story_filler import is_placeholder_definition, is_template_grammar_explanation
+
 logger = logging.getLogger(__name__)
 
 # ── Redis key constants ─────────────────────────────────────────────────────
@@ -49,14 +51,14 @@ def _extract_text_for_seeds(story_vocab: List[Dict], story_grammar: List[Dict]) 
         if term:
             parts.append(term)
         defn = v.get("definition") or ""
-        if defn:
+        if defn and not is_placeholder_definition(defn):
             parts.append(defn)
     for g in story_grammar:
         topic = g.get("topic") or g.get("name") or ""
         if topic:
             parts.append(topic)
         explanation = g.get("explanation") or ""
-        if explanation:
+        if explanation and not is_template_grammar_explanation(explanation):
             parts.append(explanation)
     return " ".join(parts)
 
