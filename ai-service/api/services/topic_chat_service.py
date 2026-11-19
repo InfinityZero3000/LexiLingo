@@ -34,6 +34,32 @@ SAFE_FIXED_RESPONSE = (
     "Please try again shortly."
 )
 
+def _topic_diagnosis_policy() -> str:
+    # "rules" is a handful of regexes (fast, narrow); "auto" runs the LLM diagnosis.
+    return "auto" if os.getenv("TOPIC_DIAGNOSIS_POLICY", "rules").strip().lower() == "auto" else "rules"
+
+
+_TOPIC_DIAGNOSIS_POLICY = _topic_diagnosis_policy()
+
+_EXPLAIN_IN_NATIVE = ("A1", "A2", "B1")
+
+
+async def build_topic_learner_profile(user_id: str | None, story_level: str) -> dict[str, Any]:
+    """`level` stays the story's (it sets the persona's difficulty); only the
+    language of correction explanations follows the learner: native up to B1,
+    English from B2. Without a card it falls back to the story level."""
+    from api.services.learner_card import card_level, get_learner_card
+    from api.utils.languages import iso_to_language_name
+
+    card = await get_learner_card(user_id) if user_id else None
+    level = card_level(card) or str(story_level or "B1").upper()
+    native = iso_to_language_name(str((card or {}).get("native_language") or ""))
+    return {
+        "level": story_level,
+        "explanation_language": native if level in _EXPLAIN_IN_NATIVE else "English",
+    }
+
+
 _PRIMARY_TIMEOUT = _env_float("TOPIC_TRACECAG_TIMEOUT_SEC", 12.0)
 _RETRY_TIMEOUT = _env_float("TOPIC_TRACECAG_RETRY_TIMEOUT_SEC", 6.0)
 
@@ -130,6 +156,8 @@ async def call_tracecag_with_retry(
     """Primary TraceCAG call -> degraded retry -> SAFE_FIXED_RESPONSE fallback."""
     from api.services.orchestrator import get_orchestrator
 
+    learner_profile = await build_topic_learner_profile(user_id, difficulty_level)
+
     try:
         graph_start = time.time()
         orchestrator = await get_orchestrator()
@@ -138,10 +166,10 @@ async def call_tracecag_with_retry(
                 user_input=message,
                 session_id=session_id,
                 user_id=user_id,
-                learner_profile={"level": difficulty_level},
+                learner_profile=learner_profile,
                 conversation_history=conversation_history[-6:],
                 retrieval_policy="rapid",
-                diagnosis_policy="rules",
+                diagnosis_policy=_TOPIC_DIAGNOSIS_POLICY,
                 generation_policy="auto",
                 topic_system_prompt=topic_system_prompt,
                 kg_seed_concepts=kg_seeds or None,
@@ -179,11 +207,11 @@ async def call_tracecag_with_retry(
                 user_input=message,
                 session_id=session_id,
                 user_id=user_id,
-                learner_profile={"level": difficulty_level},
+                learner_profile=learner_profile,
                 conversation_history=[],
                 cache_policy="off",
                 retrieval_policy="rapid",
-                diagnosis_policy="rules",
+                diagnosis_policy=_TOPIC_DIAGNOSIS_POLICY,
                 generation_policy="auto",
                 topic_system_prompt=topic_system_prompt,
             ),
@@ -338,6 +366,8 @@ async def stream_tracecag_topic_message(
 
     yield "event: thinking\ndata: {}\n\n"
 
+    learner_profile = await build_topic_learner_profile(user_id, difficulty_level)
+
     orchestrator = None
     try:
         async for item in _run_with_heartbeats(get_orchestrator, primary_timeout):
@@ -358,10 +388,10 @@ async def stream_tracecag_topic_message(
             user_input=message,
             session_id=session_id,
             user_id=user_id,
-            learner_profile={"level": difficulty_level},
+            learner_profile=learner_profile,
             conversation_history=hist,
             retrieval_policy="rapid",
-            diagnosis_policy="rules",
+            diagnosis_policy=_TOPIC_DIAGNOSIS_POLICY,
             topic_system_prompt=topic_system_prompt,
             cache_policy="off",
         )
