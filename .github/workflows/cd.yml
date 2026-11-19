@@ -161,6 +161,9 @@ jobs:
       - name: Build Flutter web (release)
         run: flutter build web --release --no-pub
 
+      - name: Fingerprint fonts so they can be cached as immutable
+        run: python3 scripts/fingerprint_web_fonts.py build/web
+
       - name: Verify vocabulary collection API compatibility
         run: |
           if grep -Fq 'vocabulary/collection?limit=1000' build/web/main.dart.js; then
