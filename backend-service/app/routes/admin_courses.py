@@ -1203,11 +1203,21 @@ async def bulk_import_grammar(
 async def list_questions_admin(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
+    level: Optional[str] = Query(None, max_length=20),
+    q: Optional[str] = Query(None, max_length=200),
+    question_type: Optional[str] = Query(None, max_length=50),
     db: AsyncSession = Depends(get_db),
     admin_user: User = Depends(require_content)
 ):
+    stmt = select(QuestionItem)
+    if level and level.strip():
+        stmt = stmt.where(QuestionItem.difficulty_level == level.strip().upper())
+    if q and q.strip():
+        stmt = stmt.where(QuestionItem.prompt.ilike(f"%{q.strip()}%"))
+    if question_type and question_type.strip():
+        stmt = stmt.where(QuestionItem.question_type == question_type.strip())
     result = await db.execute(
-        select(QuestionItem).order_by(QuestionItem.created_at.desc()).limit(limit).offset(offset)
+        stmt.order_by(QuestionItem.created_at.desc()).limit(limit).offset(offset)
     )
     items = result.scalars().all()
     return ApiResponse(
