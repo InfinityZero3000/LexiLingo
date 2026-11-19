@@ -234,7 +234,7 @@ class TraceCAGState(TypedDict, total=False):
     # Policy controls (used for benchmarking/experiments)
     cache_policy: str  # "on" | "off"
     retrieval_policy: str  # "full" | "rapid"
-    diagnosis_policy: str  # "auto" | "rules"
+    diagnosis_policy: str  # "auto" | "rules" | "llm" (model only, no rule fallback)
     generation_policy: str  # "auto" | "extractive" (template is deprecated alias)
     prompt_tokens: int
     completion_tokens: int
