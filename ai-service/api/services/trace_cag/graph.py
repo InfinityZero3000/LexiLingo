@@ -286,6 +286,10 @@ class TraceCAGPipeline:
 
         return {
             "tutor_response": state.get("tutor_response", ""),
+            # The diagnosis as diagnose_node produced it (span/type/correction/explanation).
+            # Topic chat builds its correction cards and its learner evidence from this;
+            # without it the JSON route saw no errors at all and scored every turn as clean.
+            "diagnosis_errors": [dict(err) for err in errors],
             "corrections": [
                 {
                     "error": err.get("span", ""),

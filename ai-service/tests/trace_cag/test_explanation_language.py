@@ -183,3 +183,18 @@ async def test_json_turn_passes_the_profile_and_policy(monkeypatch):
     kwargs = orchestrator.process.await_args.kwargs
     assert kwargs["learner_profile"] == profile
     assert kwargs["diagnosis_policy"] == "llm"
+
+
+def test_role_play_prompt_leaves_corrections_to_the_card():
+    from api.services.trace_cag.generate import build_generation_prompt
+
+    err = {"span": "I has", "correction": "I have", "explanation": "x", "type": "subject_verb_agreement"}
+    base = {"user_input": "I has a toothache", "diagnosis_errors": [err],
+            "learner_profile": {"level": "B1"}, "conversation_history": []}
+
+    topic_prompt, _ = build_generation_prompt({**base, "topic_system_prompt": "You are Dr. Kim."})
+    lexi_prompt, _ = build_generation_prompt(base)
+
+    assert "do NOT correct" in topic_prompt and "we say ..." not in topic_prompt.split("do NOT correct")[0][-200:]
+    assert "'I has' → 'I have'" not in topic_prompt
+    assert "'I has' → 'I have'" in lexi_prompt
