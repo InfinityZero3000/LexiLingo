@@ -460,7 +460,9 @@ async def groq_llm(prompt: str) -> Any:
     # Reasoning stays on for generation (CLAUDE.md); json_object keeps the output clean.
     effort = os.getenv("STORY_ENRICH_REASONING", "medium")
     return await _groq_json(
-        [{"role": "user", "content": prompt}], max_tokens=7000, temperature=0.6, effort=effort
+        [{"role": "user", "content": prompt}],
+        # 7000 leaves room for medium reasoning; a lower cap fits per-key token limits when Groq is busy.
+        max_tokens=int(os.getenv("STORY_ENRICH_MAX_TOKENS", "7000")), temperature=0.6, effort=effort
     )
 
 
