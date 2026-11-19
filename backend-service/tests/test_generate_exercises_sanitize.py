@@ -1,11 +1,6 @@
-"""Guard for scripts/generate_exercises_ai.py::sanitize_exercises."""
+"""Guard for app.services.exercise_generation::sanitize_exercises."""
 
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
-
-from generate_exercises_ai import (
+from app.services.exercise_generation import (
     exercises_from_payload,
     lesson_is_varied,
     needs_regeneration,

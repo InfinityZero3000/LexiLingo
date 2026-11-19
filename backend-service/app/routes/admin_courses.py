@@ -51,6 +51,7 @@ from app.schemas.course import (
     UnitUpdate,
 )
 from app.schemas.response import ApiResponse
+from app.services import exercise_generation
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -727,6 +728,57 @@ async def update_lesson_content(
     lesson = await _apply_lesson_update(db, lesson_id, payload)
     data = LessonDetailResponse.model_validate(lesson).model_dump()
     return ApiResponse(success=True, message="Lesson content updated", data=data)
+
+
+def _unique_exercise_ids(exercises: list[dict], taken: set[str], lesson_id: UUID) -> list[dict]:
+    """Give every generated exercise an id that collides with nothing already in the lesson."""
+    seen = set(taken)
+    counter = 1
+    for exercise in exercises:
+        if not exercise.get("id") or str(exercise["id"]) in seen:
+            while f"ex_{lesson_id}_{counter}" in seen:
+                counter += 1
+            exercise["id"] = f"ex_{lesson_id}_{counter}"
+        seen.add(str(exercise["id"]))
+    return exercises
+
+
+@router.post("/lessons/{lesson_id}/generate-exercises", response_model=ApiResponse[dict])
+async def generate_lesson_exercises_draft(
+    lesson_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_courses),
+):
+    """AI-draft 5 exercises for a lesson. Returns them without saving; the editor saves via PUT."""
+    lesson = await LessonCRUD.get_lesson(db, lesson_id)
+    if not lesson:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lesson not found")
+    course = await CourseCRUD.get_course(db, lesson.course_id)
+    unit = await UnitCRUD.get_unit(db, lesson.unit_id) if lesson.unit_id else None
+
+    try:
+        exercises = await exercise_generation.generate_lesson_exercises(
+            course_title=course.title if course else "",
+            level=course.level if course else "",
+            unit_title=unit.title if unit else "",
+            lesson_title=lesson.title,
+            lesson_id=str(lesson.id),
+        )
+    except exercise_generation.ExerciseGenerationUnavailable:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI generation is not configured or the provider rejected the request",
+        )
+    except exercise_generation.ExerciseGenerationFailed:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="AI could not produce a valid lesson, try again",
+        )
+
+    existing = (lesson.content or {}).get("exercises") if isinstance(lesson.content, dict) else None
+    taken = {str(e["id"]) for e in existing or [] if isinstance(e, dict) and e.get("id")}
+    _unique_exercise_ids(exercises, taken, lesson.id)
+    return ApiResponse(success=True, message="Draft generated", data={"exercises": exercises})
 
 
 # ============================================================================
