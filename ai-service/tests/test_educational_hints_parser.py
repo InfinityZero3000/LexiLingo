@@ -101,20 +101,6 @@ def test_unknown_label_becomes_other_and_alias_is_normalised():
     assert [gc.label for gc in hints.grammar_corrections] == ["verb_tense", "other"]
 
 
-def test_rule_based_diagnosis_types_map_to_closed_labels():
-    from api.services.trace_cag.nodes_v2 import _rule_based_diagnosis
-
-    errors, _ = _rule_based_diagnosis("yesterday I go and I have went and he go", "off")
-    hints, accepted = EducationalHintsParser.corrections_from_diagnosis(
-        None, errors, "yesterday I go and I have went and he go"
-    )
-
-    assert len(accepted) == 3
-    assert {gc.label for gc in hints.grammar_corrections} == {
-        "verb_tense", "verb_form", "subject_verb_agreement"
-    }
-
-
 def test_the_rules_explanation_is_no_longer_guessed_as_article():
     hints, _ = EducationalHintsParser.corrections_from_diagnosis(
         None,

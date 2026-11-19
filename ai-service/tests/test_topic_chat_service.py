@@ -163,7 +163,7 @@ async def test_stream_topic_message_primary_success(monkeypatch):
     # Analyze called with the full quality-path params — nothing skipped.
     prep_kwargs = orchestrator.pipeline.analyze_for_streaming.await_args.kwargs
     assert prep_kwargs["retrieval_policy"] == "rapid"
-    assert prep_kwargs["diagnosis_policy"] == "rules"
+    assert prep_kwargs["diagnosis_policy"] == "llm"
     assert prep_kwargs["topic_system_prompt"] == "You are Sarah."
     assert prep_kwargs["cache_policy"] == "off"
 

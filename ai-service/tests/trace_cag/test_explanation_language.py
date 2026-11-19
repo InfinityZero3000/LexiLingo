@@ -36,18 +36,85 @@ def test_language_name_cannot_inject_into_the_prompt():
 
 
 @pytest.mark.asyncio
-async def test_rules_diagnosis_explains_in_the_requested_language():
-    state = {
-        "user_input": "I goes home",
-        "diagnosis_policy": "rules",
-        "learner_profile": {"level": "B1", "explanation_language": "Vietnamese"},
-    }
-    vi = (await diagnose_node(state))["diagnosis_errors"][0]["explanation"]
-    state["learner_profile"]["explanation_language"] = "English"
-    en = (await diagnose_node(state))["diagnosis_errors"][0]["explanation"]
+async def test_llm_policy_never_falls_back_to_rules(monkeypatch):
+    gateway = MagicMock()
+    gateway.execute_task = AsyncMock(return_value={"success": False, "error": "down"})
+    monkeypatch.setattr(nodes_v2, "get_gateway", AsyncMock(return_value=gateway))
+    monkeypatch.setattr(
+        "api.core.groq_key_pool.get_available_groq_key", AsyncMock(return_value=None)
+    )
 
-    assert vi == "Với 'I' ta dùng 'go', không thêm -es."
-    assert en == "Use 'go' with 'I'"
+    out = await diagnose_node({
+        "user_input": "I goes home",  # a sentence the regex rules would flag
+        "diagnosis_policy": "llm",
+        "learner_profile": {"level": "B1"},
+    })
+
+    assert out["diagnosis_errors"] == []
+    assert out["diagnosis_confidence"] == 0.0
+    assert out["models_used"] == ["llm_unavailable"]
+
+
+@pytest.mark.asyncio
+async def test_llm_policy_crash_is_ungraded_not_rules(monkeypatch):
+    monkeypatch.setattr(nodes_v2, "get_gateway", AsyncMock(side_effect=RuntimeError("boom")))
+
+    out = await diagnose_node({
+        "user_input": "I goes home",
+        "diagnosis_policy": "llm",
+        "learner_profile": {"level": "B1"},
+    })
+
+    assert out["diagnosis_errors"] == []
+    assert out["diagnosis_confidence"] == 0.0
+
+
+@pytest.mark.asyncio
+async def test_llm_policy_asks_for_closed_labels_even_with_bridge_off(monkeypatch):
+    monkeypatch.setattr(nodes_v2.settings, "KG_DIAGNOSIS_BRIDGE", "off")
+    gateway = MagicMock()
+    gateway.execute_task = AsyncMock(return_value={"success": True, "data": {
+        "errors": [{"span": "I has", "type": "subject_verb_agreement",
+                    "correction": "I have", "explanation": "x"}],
+        "intent": "correct", "confidence": 0.3,
+    }})
+    monkeypatch.setattr(nodes_v2, "get_gateway", AsyncMock(return_value=gateway))
+
+    out = await diagnose_node({
+        "user_input": "I has a toothache",
+        "diagnosis_policy": "llm",
+        "learner_profile": {"level": "B1"},
+    })
+
+    assert "TYPES: article_missing" in gateway.execute_task.await_args.args[1]["message"]
+    assert out["diagnosis_errors"][0]["correction"] == "I have"
+    assert out["diagnosis_confidence"] == 0.3
+
+
+def test_llm_policy_routes_straight_to_retrieval():
+    from api.services.trace_cag.edges import route_after_diagnosis
+
+    for state in (
+        {"diagnosis_policy": "llm", "diagnosis_confidence": 0.0},
+        {"diagnosis_policy": "llm", "diagnosis_confidence": 0.9,
+         "learner_profile": {"level": "A1"}, "diagnosis_errors": [{"span": "x"}]},
+    ):
+        assert route_after_diagnosis(state) == "retrieve_node"
+    assert route_after_diagnosis({"diagnosis_confidence": 0.1}) == "ask_clarify_node"
+
+
+@pytest.mark.parametrize(
+    "trace, graded",
+    [
+        ({"scores": {"diagnosis_confidence": 0.0}}, False),
+        ({"scores": {"diagnosis_confidence": 0.8}}, True),
+        ({"diagnosis_confidence": 0.0}, False),
+        ({"diagnosis_confidence": 0.9}, True),
+        (None, False),
+    ],
+)
+def test_turn_was_graded(trace, graded):
+    assert svc.turn_was_graded(trace) is graded
 
 
 @pytest.mark.asyncio
@@ -115,13 +182,4 @@ async def test_json_turn_passes_the_profile_and_policy(monkeypatch):
 
     kwargs = orchestrator.process.await_args.kwargs
     assert kwargs["learner_profile"] == profile
-    assert kwargs["diagnosis_policy"] == "rules"
-
-
-def test_topic_diagnosis_policy_defaults_to_rules_and_is_opt_in(monkeypatch):
-    monkeypatch.delenv("TOPIC_DIAGNOSIS_POLICY", raising=False)
-    assert svc._topic_diagnosis_policy() == "rules"
-    monkeypatch.setenv("TOPIC_DIAGNOSIS_POLICY", "AUTO")
-    assert svc._topic_diagnosis_policy() == "auto"
-    monkeypatch.setenv("TOPIC_DIAGNOSIS_POLICY", "weird")
-    assert svc._topic_diagnosis_policy() == "rules"
+    assert kwargs["diagnosis_policy"] == "llm"

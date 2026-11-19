@@ -47,6 +47,7 @@ from api.services.topic_prompt_builder import TopicPromptBuilder
 from api.core.redis_client import get_redis
 from api.services.topic_chat_service import (
     build_turn_hints,
+    turn_was_graded,
     call_tracecag_with_retry,
     is_scripted_turn,
     persist_topic_turn,
@@ -493,7 +494,7 @@ async def send_topic_message(
             repo=repo,
         )
 
-        if tracecag_result.trace_result and not scripted:
+        if tracecag_result.trace_result and not scripted and turn_was_graded(tracecag_result.trace_result):
             try:
                 from api.services.learner_observation_spool import persist_trace_observations
 

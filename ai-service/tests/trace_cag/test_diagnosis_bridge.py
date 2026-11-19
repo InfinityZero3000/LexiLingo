@@ -489,9 +489,9 @@ def test_bridge_is_read_once_and_handed_to_every_rule_fallback(monkeypatch):
     seen = []
     real = nodes_v2._rule_based_diagnosis
 
-    def spy(text, bridge=None, explanation_language="English"):
+    def spy(text, bridge=None):
         seen.append(bridge)
-        return real(text, bridge, explanation_language)
+        return real(text, bridge)
 
     node = {"user_input": "I eat a apple", "learner_profile": {"level": "B1"}}
     replies = [{"success": False}, {"success": True, "data": "{ oops }"}]

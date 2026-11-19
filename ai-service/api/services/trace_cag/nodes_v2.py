@@ -684,7 +684,11 @@ async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
     learner_level = learner_profile.get("level", "B1")
     explanation_language = learner_profile.get("explanation_language") or "English"
     benchmark_task = state.get("benchmark_task")
-    bridge = settings.KG_DIAGNOSIS_BRIDGE
+    # "llm": the model's diagnosis or nothing. A failed call yields no errors
+    # rather than the regex fallback, and labels are always the closed set so
+    # the client can name them.
+    llm_only = state.get("diagnosis_policy") == "llm"
+    bridge = "closed" if llm_only else settings.KG_DIAGNOSIS_BRIDGE
 
     if benchmark_task in {"multihop_qa", "retrieval_qa"}:
         return {
@@ -699,7 +703,7 @@ async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
         }
 
     if state.get("diagnosis_policy", "auto") == "rules":
-        errors, root_causes = _rule_based_diagnosis(user_text, bridge, explanation_language)
+        errors, root_causes = _rule_based_diagnosis(user_text, bridge)
         error_count = len(errors)
         confidence = 0.9 if error_count == 0 else (0.75 if error_count <= 2 else 0.65)
         grammar_score = 0.95 if error_count == 0 else 0.7
@@ -847,12 +851,17 @@ async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
             except (json.JSONDecodeError, TypeError) as e:
                 logger.warning(f"[diagnose_node] Failed to parse AI response: {e}")
                 # Fallback to rule-based
-                errors, root_causes = _rule_based_diagnosis(user_text, bridge, explanation_language)
+                errors, root_causes = ([], []) if llm_only else _rule_based_diagnosis(user_text, bridge)
         else:
             # Fallback to rule-based if AI fails
             logger.warning("[diagnose_node] AI diagnosis failed, using rules")
-            errors, root_causes = _rule_based_diagnosis(user_text, bridge, explanation_language)
+            errors, root_causes = ([], []) if llm_only else _rule_based_diagnosis(user_text, bridge)
         
+        if llm_only and not parsed:
+            # Ungraded, not error-free: callers must not record this turn as evidence.
+            confidence = 0.0
+            used_model = "llm_unavailable"
+
         latency_ms = int((time.time() - start_time) * 1000)
         logger.info(f"[diagnose_node] Found {len(errors)} errors, intent={intent}, latency={latency_ms}ms")
         
@@ -874,35 +883,23 @@ async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"[diagnose_node] Error: {e}")
         # Fallback
-        errors, root_causes = _rule_based_diagnosis(user_text, bridge, explanation_language)
+        errors, root_causes = ([], []) if llm_only else _rule_based_diagnosis(user_text, bridge)
         return {
             "diagnosis_intent": "correct",
             "diagnosis_errors": errors,
             "diagnosis_root_causes": root_causes,
-            "diagnosis_confidence": 0.5,
+            "diagnosis_confidence": 0.0 if llm_only else 0.5,
             "grammar_score": 0.7,
             "fluency_score": 0.7,
             "vocabulary_level": EvaluationAgent.estimate_vocab_level(user_text),
-            "models_used": ["rule_fallback"],
+            "models_used": ["llm_unavailable" if llm_only else "rule_fallback"],
         }
 
 
-_RULE_EXPLANATIONS_VI: Dict[str, str] = {
-    "Use 'go' with 'I'": "Với 'I' ta dùng 'go', không thêm -es.",
-    "Add -s for he/she/it": "Với he/she/it, động từ thêm -s: 'goes'.",
-    "Use past tense with yesterday": "Có 'yesterday' thì dùng thì quá khứ: 'went'.",
-    "Use past participle with have": "Sau 'have' dùng quá khứ phân từ: 'gone'.",
-    "Use 'an' before vowels": "Trước nguyên âm ta dùng 'an': 'an apple'.",
-}
-
-
-def _rule_based_diagnosis(
-    text: str, bridge: Optional[str] = None, explanation_language: str = "English"
-) -> tuple:
+def _rule_based_diagnosis(text: str, bridge: Optional[str] = None) -> tuple:
     """Fallback rule-based diagnosis when AI is unavailable"""
     errors = []
     root_causes = []
-    vietnamese = (explanation_language or "").strip().lower() == "vietnamese"
 
     rules = [
         (r"\bI goes\b", "subject_verb_agreement", "I go", "Use 'go' with 'I'"),
@@ -920,7 +917,7 @@ def _rule_based_diagnosis(
                 span=match.group(),
                 type=err_type,
                 correction=correction,
-                explanation=_RULE_EXPLANATIONS_VI.get(explanation, explanation) if vietnamese else explanation,
+                explanation=explanation,
             ))
             root_causes.append(f"concept:grammar.{err_type}")
 

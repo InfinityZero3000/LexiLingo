@@ -34,12 +34,8 @@ SAFE_FIXED_RESPONSE = (
     "Please try again shortly."
 )
 
-def _topic_diagnosis_policy() -> str:
-    # "rules" is a handful of regexes (fast, narrow); "auto" runs the LLM diagnosis.
-    return "auto" if os.getenv("TOPIC_DIAGNOSIS_POLICY", "rules").strip().lower() == "auto" else "rules"
-
-
-_TOPIC_DIAGNOSIS_POLICY = _topic_diagnosis_policy()
+# The LLM's diagnosis or none: no regex fallback, closed labels (nodes_v2.diagnose_node).
+_TOPIC_DIAGNOSIS_POLICY = "llm"
 
 _EXPLAIN_IN_NATIVE = ("A1", "A2", "B1")
 
@@ -274,6 +270,19 @@ async def is_scripted_turn(session: dict[str, Any], message: str, db: Any) -> bo
     return is_scripted_prompt(message, prompts)
 
 
+def turn_was_graded(trace: dict[str, Any] | None) -> bool:
+    """False when the diagnosis could not run: such a turn is ungraded, and
+    recording it would score it as error-free."""
+    if not trace:
+        return False
+    scores = trace.get("scores") if isinstance(trace.get("scores"), dict) else {}
+    confidence = scores.get("diagnosis_confidence", trace.get("diagnosis_confidence", 1.0))
+    try:
+        return float(confidence) > 0.0
+    except (TypeError, ValueError):
+        return True
+
+
 def build_turn_hints(
     response: str,
     diagnosis_errors: list[dict[str, Any]] | None,
@@ -504,7 +513,7 @@ async def stream_tracecag_topic_message(
         repo=repo,
     )
 
-    if raw_state is not None and not scripted:
+    if raw_state is not None and not scripted and turn_was_graded(raw_state):
         try:
             from api.services.learner_observation_spool import persist_trace_observations
 
