@@ -30,6 +30,12 @@ def good_output(story: dict) -> dict:
                 "definition": f"what people mean by {v['term']} here",
                 "example_in_story": f"I would like to ask about the {v['term']} today.",
                 "part_of_speech": "noun",
+                "collocations": [f"a new {v['term']}", f"check the {v['term']}"],
+                "common_error": {
+                    "wrong": f"WRONG sentence with {v['term']}",
+                    "right": f"A right sentence with {v['term']}.",
+                    "why": "a short rule",
+                },
             }
             for v in story["vocabulary_list"]
         ],
@@ -64,15 +70,18 @@ class FakeLLM:
 
 
 async def clean_diagnose(text, level):
-    return []
+    # Flags only the deliberate "wrong" sentence of each common_error.
+    return [{"span": "WRONG", "correction": "right"}] if "WRONG" in text else []
 
 
 async def bad_diagnose(text, level):
-    return [{"span": "BAD", "correction": "good"}] if "BAD" in text else []
+    if "BAD" in text:
+        return [{"span": "BAD", "correction": "good"}]
+    return await clean_diagnose(text, level)
 
 
 def _args(path: Path, **kw) -> argparse.Namespace:
-    base = dict(sample_stories=path, write=False, dry_run=False, only=[], concurrency=1, delay=0.0, attempts=2)
+    base = dict(sample_stories=path, write=False, dry_run=False, only=[], concurrency=1, delay=0.0, attempts=2, force=False)
     base.update(kw)
     return argparse.Namespace(**base)
 
@@ -321,3 +330,81 @@ async def test_diagnosis_counts_only_grounded_errors():
         accepted = await ets.groq_diagnose("I has a toothache.", "B1")
 
     assert [e["span"] for e in accepted] == ["I has"]
+
+
+# ── KG material: collocations and a verified common error ───────────────────
+
+@pytest.mark.asyncio
+async def test_a_common_error_the_diagnosis_does_not_flag_blocks_the_story():
+    story = _story()
+    out = good_output(story)
+    out["vocabulary"][0]["common_error"]["wrong"] = "This sentence is fine."
+
+    new, problems = await ets.enrich_story(story, FakeLLM([out, out]), clean_diagnose)
+
+    assert new is None
+    assert any("not flagged as a mistake" in p for p in problems)
+
+
+@pytest.mark.asyncio
+async def test_a_flagged_corrected_sentence_blocks_the_story():
+    story = _story()
+    out = good_output(story)
+    out["vocabulary"][0]["common_error"]["right"] = "BAD corrected sentence."
+
+    new, _ = await ets.enrich_story(story, FakeLLM([out, out]), bad_diagnose)
+
+    assert new is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda v: v.update(collocations=["one"]),
+        lambda v: v.update(collocations=["no term here", "nor here"]),
+        lambda v: v["common_error"].update(right=v["common_error"]["wrong"]),
+        lambda v: v["common_error"].update(why=""),
+    ],
+)
+async def test_bad_kg_material_is_rejected(mutate):
+    story = _story()
+    out = good_output(story)
+    mutate(out["vocabulary"][0])
+
+    new, _ = await ets.enrich_story(story, FakeLLM([out, out]), clean_diagnose)
+
+    assert new is None
+
+
+@pytest.mark.asyncio
+async def test_enriched_stories_are_skipped_and_progress_is_saved_per_story():
+    stories = [s for s in _stories() if "topic_expansion" in s["tags"]][:2]
+    first, second = copy.deepcopy(stories[0]), copy.deepcopy(stories[1])
+    done, _ = await ets.enrich_story(first, FakeLLM([good_output(first)]), clean_diagnose)
+    assert ets.is_enriched(done) and not ets.is_enriched(second)
+
+    saved = []
+    llm = FakeLLM([good_output(second)])
+    merged, failures = await ets.run([done, second], llm, clean_diagnose, delay=0, on_pass=saved.append, log=lambda _: None)
+
+    assert failures == {} and len(llm.prompts) == 1  # the enriched story was not redone
+    assert len(saved) == 1 and ets.is_enriched(saved[0][1])
+    assert merged[0] is done
+
+
+def test_kg_carries_the_enriched_content_on_the_same_ids():
+    from scripts import generate_tracecag_topic_corpus as gen
+
+    story = _story()
+    import asyncio
+    new, _ = asyncio.run(ets.enrich_story(story, FakeLLM([good_output(story)]), clean_diagnose))
+    graph, quads, _ = gen.generate_tracecag_graph([new])
+    titles = {c["id"]: c["title"] for c in graph["concepts"]}
+    term = new["vocabulary_list"][0]["term"]
+    slug = gen.slugify(f"{story['story_id']}_{term}")
+
+    assert titles[f"collocation:{slug}_collocation"] == f"Collocations of '{term}': a new {term}; check the {term}"
+    assert titles[f"errorpattern:{slug}_misuse"].startswith(f"Common mistake: 'WRONG sentence with {term}'")
+    assert titles[f"phrase:{gen.slugify(story['story_id'])}_practice_phrase_1"] == "I have a toothache."
+    assert not any("Learner may misuse" in str(q) for q in quads)
