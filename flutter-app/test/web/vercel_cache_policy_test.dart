@@ -4,7 +4,10 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('all deployed files use one revalidating cache policy', () async {
+  // Every file revalidates, except fonts that scripts/fingerprint_web_fonts.py
+  // copied under a content-hashed name: only a name that changes with the
+  // bytes may be cached as immutable.
+  test('only content-hashed fonts skip revalidation', () async {
     final config =
         jsonDecode(await File('vercel.json').readAsString())
             as Map<String, dynamic>;
@@ -22,6 +25,11 @@ void main() {
 
     expect(cacheRules, [
       {'source': '/(.*)', 'key': 'Cache-Control', 'value': 'no-cache'},
+      {
+        'source': r'/assets/(.*)\.([0-9a-f]{12})\.(ttf|otf)',
+        'key': 'Cache-Control',
+        'value': 'public, max-age=31536000, immutable',
+      },
     ]);
   });
 
