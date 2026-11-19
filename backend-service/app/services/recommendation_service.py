@@ -43,7 +43,7 @@ CANDIDATES_PER_TYPE = 40
 INTERACTION_EPOCH_PREFIX = "rec:interaction_epoch:"
 
 
-async def _get_interaction_epoch(user_id: uuid.UUID) -> int:
+async def get_interaction_epoch(user_id: uuid.UUID) -> int:
     try:
         client = await get_redis()
         if client is None:
@@ -53,6 +53,15 @@ async def _get_interaction_epoch(user_id: uuid.UUID) -> int:
     except Exception as exc:  # cache must never fail the request
         logger.warning("interaction epoch read failed: %s", exc)
         return 0
+
+
+async def get_state_epoch(db: AsyncSession, user_id: uuid.UUID) -> int:
+    epoch = await db.scalar(
+        select(LearnerStateProfile.state_epoch).where(
+            LearnerStateProfile.user_id == user_id
+        )
+    )
+    return int(epoch or 0)
 
 
 async def get_assessed_level(db: AsyncSession, user_id: uuid.UUID) -> str:
@@ -112,11 +121,7 @@ async def build_profile(db: AsyncSession, user_id: uuid.UUID) -> dict[str, Any]:
         )
 
     due = await get_due_concepts_for_user(db, user_id)
-    epoch = await db.scalar(
-        select(LearnerStateProfile.state_epoch).where(
-            LearnerStateProfile.user_id == user_id
-        )
-    )
+    epoch = await get_state_epoch(db, user_id)
 
     insights = await _read_cached_insights(user_id)
     if insights is None:
@@ -130,8 +135,8 @@ async def build_profile(db: AsyncSession, user_id: uuid.UUID) -> dict[str, Any]:
         # — see the note there for why it is not loaded here.
         "mastery": {},
         "due_concepts": [row.concept_id for row in due],
-        "state_epoch": int(epoch or 0),
-        "interaction_epoch": await _get_interaction_epoch(user_id),
+        "state_epoch": epoch,
+        "interaction_epoch": await get_interaction_epoch(user_id),
         "required_types": ["course", "lesson", "vocab", "video"],
         **insights,
     }

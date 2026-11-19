@@ -19,6 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
+from app.core.proxy_cache import get_cached_image, put_cached_image
 from app.core.safe_http import image_proxy_response, safe_get as _safe_get, safe_stream_get as _safe_stream_get
 from app.services.api_cache_service import (
     APICacheService,
@@ -171,7 +172,10 @@ async def proxy_image(url: str = Query(..., description="The image URL to proxy"
     Proxy news images to bypass browser CORS on web.
     """
     _validate_public_http_url(url)
-        
+    cached = await get_cached_image(url)
+    if cached is not None:
+        return cached
+
     async with httpx.AsyncClient(timeout=10.0) as client:
         try:
             resp = await _get_public_url(
@@ -184,7 +188,9 @@ async def proxy_image(url: str = Query(..., description="The image URL to proxy"
                     status_code=resp.status_code,
                     detail=f"Failed to fetch image: HTTP {resp.status_code}"
                 )
-            return image_proxy_response(resp)
+            out = image_proxy_response(resp)
+            await put_cached_image(url, out)
+            return out
         except HTTPException:
             raise
         except Exception as e:

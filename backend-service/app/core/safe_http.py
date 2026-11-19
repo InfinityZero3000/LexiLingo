@@ -214,6 +214,11 @@ async def safe_resolve_final_url(
 # the API's own origin.
 PROXIED_IMAGE_TYPES = frozenset({"image/jpeg", "image/png", "image/gif", "image/webp", "image/avif"})
 MAX_PROXIED_IMAGE_BYTES = 5 * 1024 * 1024
+IMAGE_PROXY_HEADERS = {
+    "Cache-Control": "public, max-age=86400",
+    "X-Content-Type-Options": "nosniff",
+    "Content-Security-Policy": "default-src 'none'; sandbox",
+}
 
 
 def image_proxy_response(resp: httpx.Response) -> Response:
@@ -231,9 +236,5 @@ def image_proxy_response(resp: httpx.Response) -> Response:
     return Response(
         content=resp.content,
         media_type=media,
-        headers={
-            "Cache-Control": "public, max-age=86400",
-            "X-Content-Type-Options": "nosniff",
-            "Content-Security-Policy": "default-src 'none'; sandbox",
-        },
+        headers=dict(IMAGE_PROXY_HEADERS),
     )

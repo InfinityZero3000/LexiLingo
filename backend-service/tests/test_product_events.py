@@ -69,7 +69,7 @@ async def test_content_interaction_is_ingested_and_bumps_interaction_epoch(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     from app.core.redis import RedisClient
-    from app.services.recommendation_service import _get_interaction_epoch
+    from app.services.recommendation_service import get_interaction_epoch as _get_interaction_epoch
 
     class FakeRedis:
         def __init__(self):
