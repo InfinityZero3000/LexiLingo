@@ -170,6 +170,14 @@ describe("TopicsPage", () => {
     expect((screen.getByLabelText("Term 1") as HTMLInputElement).value).toBe("key card");
     expect(screen.getByRole("button", { name: "Hotel" }).getAttribute("aria-pressed")).toBe("true");
     expect(screen.getByText(/Could not tell the icon/)).toBeTruthy();
+    expect(screen.queryByText(/chosen from the title/)).toBeNull();
+
+    // the draft chose the icon: editing the title afterwards must not undo it
+    api.suggestTopicMetaAdmin.mockClear();
+    fireEvent.change(screen.getByLabelText("English title"), { target: { value: "Hotel Check-In Late" } });
+    await new Promise((r) => setTimeout(r, 600));
+    expect(api.suggestTopicMetaAdmin).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Hotel" }).getAttribute("aria-pressed")).toBe("true");
   });
 
   it("refuses to draft without a title, and shows the service's reason when the draft fails", async () => {

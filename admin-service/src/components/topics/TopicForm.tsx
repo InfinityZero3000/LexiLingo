@@ -27,6 +27,9 @@ export type TopicFormMode = "create" | "edit" | "clone";
 
 const META_DEBOUNCE_MS = 350;
 
+/** A row of inputs that wraps on a narrow screen; the remove button keeps its own size. */
+const ROW: React.CSSProperties = { display: "flex", flexWrap: "wrap", gap: 12, alignItems: "flex-start" };
+
 export const TopicForm = ({
   mode,
   initial,
@@ -107,6 +110,10 @@ export const TopicForm = ({
       if (!res.data) throw new Error("The AI returned nothing. Try again.");
       const { draft, warnings } = res.data;
       setForm((f) => applyDraft(f, draft));
+      // The draft picked the category and icon; a later edit of the title must not undo that.
+      setCategoryTouched(true);
+      setIconTouched(true);
+      setMeta(null);
       setDraftWarnings(warnings);
       setFromDraft(true);
     } catch (err: any) {
@@ -203,7 +210,7 @@ export const TopicForm = ({
           />
         </label>
       </div>
-      {mode !== "edit" && <p className="form-hint">Leave the ID empty to use <code>{idHint}</code>.</p>}
+      {mode !== "edit" && <p className="form-hint" style={{ overflowWrap: "anywhere" }}>Leave the ID empty to use <code>{idHint}</code>.</p>}
 
       <div className="panel-inner">
         <div className="table-title">Draft with AI</div>
@@ -348,20 +355,25 @@ export const TopicForm = ({
         <summary className="table-title">Vocabulary ({form.vocabulary.filter((v) => v.term.trim()).length})</summary>
         <div className="form" style={{ marginTop: 8 }}>
           {form.vocabulary.map((item, index) => (
-            <div className="form-row" key={index} style={{ alignItems: "start" }}>
+            <div key={index} style={ROW}>
               <input
+                style={{ flex: "1 1 130px" }}
                 aria-label={`Term ${index + 1}`}
                 placeholder="term"
                 value={item.term}
                 onChange={(e) => patch({ vocabulary: form.vocabulary.map((v, i) => (i === index ? { ...v, term: e.target.value } : v)) })}
               />
-              <input
+              <textarea
+                style={{ flex: "2 1 200px" }}
+                rows={2}
                 aria-label={`Definition ${index + 1}`}
                 placeholder="definition"
                 value={item.definition}
                 onChange={(e) => patch({ vocabulary: form.vocabulary.map((v, i) => (i === index ? { ...v, definition: e.target.value } : v)) })}
               />
-              <input
+              <textarea
+                style={{ flex: "2 1 200px" }}
+                rows={2}
                 aria-label={`Example ${index + 1}`}
                 placeholder="example sentence"
                 value={item.example_in_story}
@@ -390,14 +402,17 @@ export const TopicForm = ({
         <div className="form" style={{ marginTop: 8 }}>
           {form.grammar.map((item, index) => (
             <div className="panel-inner" key={index}>
-              <div className="form-row" style={{ alignItems: "start" }}>
+              <div style={ROW}>
                 <input
+                  style={{ flex: "1 1 180px" }}
                   aria-label={`Structure ${index + 1}`}
                   placeholder="structure, e.g. Polite requests with could"
                   value={item.grammar_structure}
                   onChange={(e) => patch({ grammar: form.grammar.map((g, i) => (i === index ? { ...g, grammar_structure: e.target.value } : g)) })}
                 />
-                <input
+                <textarea
+                  style={{ flex: "2 1 240px" }}
+                  rows={2}
                   aria-label={`Explanation ${index + 1}`}
                   placeholder="one-sentence explanation"
                   value={item.explanation}
