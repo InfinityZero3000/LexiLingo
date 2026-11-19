@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/utils/freshness.dart';
 import 'package:lexilingo_app/features/auth/presentation/widgets/verify_email_banner.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -46,16 +47,19 @@ class _HomePageNewState extends State<HomePageNew> {
       // Captured synchronously so dispose() can remove the listener without
       // touching context after an async gap.
       _levelProvider = context.read<LevelProvider>();
+      final banners = context.read<PromoBannerProvider>();
       homeProvider.loadHomeData().then((_) {
-        if (mounted) _levelProvider?.fetchLevelFull();
+        if (!mounted) return;
+        _levelProvider?.fetchLevelFull(maxAge: kPassiveReloadWindow);
+        // Banners do not affect first paint; they wait for the home data.
+        banners.load();
       });
-      context.read<PromoBannerProvider>().load();
       _levelProvider?.addListener(_onLevelProviderChange);
 
       _streakProvider = context.read<StreakProvider>();
       _streakProvider?.addListener(_onStreakProviderChange);
       // Loaded here, after the auth token is ready, rather than in main.dart.
-      _streakProvider?.loadStreak();
+      _streakProvider?.loadStreak(maxAge: kPassiveReloadWindow);
     });
   }
 

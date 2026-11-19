@@ -1,3 +1,5 @@
+import 'package:lexilingo_app/core/utils/freshness.dart';
+import 'package:lexilingo_app/features/progress/presentation/providers/progress_provider.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -96,25 +98,32 @@ class _MainScreenState extends State<MainScreen> with RouteAware {
   }
 
   @override
-  void didPopNext() => _refreshProgress();
+  void didPopNext() => _refreshProgress(afterActivity: true);
 
-  void _refreshProgress() {
+  // A tab switch is passive and may reuse data loaded moments ago; coming back
+  // from a pushed screen (a lesson, a game) is not, so it always refetches.
+  void _refreshProgress({bool afterActivity = false}) {
     final now = DateTime.now();
     final last = _lastProgressRefresh;
     if (last != null && now.difference(last) < const Duration(seconds: 2)) {
       return;
     }
     _lastProgressRefresh = now;
-    context.read<HomeProvider>().refreshWeeklyProgressSilently();
-    context.read<LevelProvider>().fetchLevelFull();
-    context.read<StreakProvider>().loadStreak();
+    final maxAge = afterActivity ? null : kPassiveReloadWindow;
+    context.read<HomeProvider>().refreshWeeklyProgressSilently(maxAge: maxAge);
+    context.read<LevelProvider>().fetchLevelFull(maxAge: maxAge);
+    context.read<StreakProvider>().loadStreak(maxAge: maxAge);
     final auth = context.read<AuthProvider>();
+    if (afterActivity) {
+      auth.invalidateFreshness();
+      context.read<ProgressProvider>().invalidateFreshness();
+    }
     if (secondaryFeaturesLocked(
       flagEnabled: ApiConfig.progressiveUnlock,
       lessonsCompleted: auth.currentUser?.lessonsCompleted,
       totalXp: auth.currentUser?.totalXp,
     )) {
-      auth.refreshCurrentUser();
+      auth.refreshCurrentUser(maxAge: maxAge);
     }
   }
 
@@ -146,7 +155,12 @@ class _MainScreenState extends State<MainScreen> with RouteAware {
     _getPage(_currentIndex);
     if (_currentIndex == 2) {
       _lexiWarmedUp = true;
-      _warmupAiModels();
+      // Model warm-up is not first-paint data; let the first frame's requests go first.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Future<void>.delayed(const Duration(seconds: 1), () {
+          if (mounted) _warmupAiModels();
+        });
+      });
     }
     _triggerPreWarming();
     WidgetsBinding.instance.addPostFrameCallback((_) {

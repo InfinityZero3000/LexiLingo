@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/utils/freshness.dart';
 import '../../domain/entities/level_entity.dart';
 import '../../domain/services/level_calculator.dart';
 
@@ -10,6 +11,7 @@ class LevelProvider with ChangeNotifier {
 
   int _generation = 0;
   Future<void>? _levelLoad;
+  final Freshness _levelFreshness = Freshness();
   LevelStatus _levelStatus = LevelStatus.empty();
   bool _isLoading = false;
   String? _errorMessage;
@@ -217,6 +219,7 @@ class LevelProvider with ChangeNotifier {
   void reset() {
     _generation++;
     _levelLoad = null;
+    _levelFreshness.invalidate();
     _certifiedLevel = 'A1';
     _levelVerified = true;
     _levelStatus = LevelStatus.empty();
@@ -248,7 +251,11 @@ class LevelProvider with ChangeNotifier {
   ///
   /// Requires an [ApiClient] instance (passed in to keep provider loosely
   /// coupled from DI container).
-  Future<void> fetchLevelFull() {
+  ///
+  /// [maxAge] lets passive callers skip a reload of data fetched that recently;
+  /// callers that just changed something leave it null and always fetch.
+  Future<void> fetchLevelFull({Duration? maxAge}) {
+    if (_levelFreshness.isFresh(maxAge)) return Future<void>.value();
     final inFlight = _levelLoad;
     if (inFlight != null) return inFlight;
     final run = _fetchLevelFull();
@@ -306,6 +313,7 @@ class LevelProvider with ChangeNotifier {
 
       // Keep CEFR LevelStatus in sync for legacy display (no extra notifyListeners).
       _levelStatus = LevelCalculator.calculateLevelStatus(_totalXp);
+      _levelFreshness.mark();
     } catch (e) {
       if (generation != _generation) return;
       _errorMessage = e.toString();
