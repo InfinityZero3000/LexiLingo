@@ -75,8 +75,10 @@ jobs:
           echo "Changes since $BASE (last successful CD run):"
           changed="$(git diff --name-only "$BASE" "$GITHUB_SHA")"
           printf '%s\n' "$changed"
-          grep -qE '^flutter-app/' <<<"$changed" && echo "web=true" >> "$GITHUB_OUTPUT"
-          grep -qE '^admin-service/' <<<"$changed" && echo "admin=true" >> "$GITHUB_OUTPUT"
+          # This file holds the build config (API URLs, env), so editing it changes both
+          # builds; #814 changed only the web API URL here and shipped nothing.
+          grep -qE '^(flutter-app/|\.github/workflows/cd\.yml$)' <<<"$changed" && echo "web=true" >> "$GITHUB_OUTPUT"
+          grep -qE '^(admin-service/|\.github/workflows/cd\.yml$)' <<<"$changed" && echo "admin=true" >> "$GITHUB_OUTPUT"
           true
 
   # ──────────────────────────────────────────────
