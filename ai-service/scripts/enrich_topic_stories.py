@@ -309,7 +309,8 @@ async def gate(story: dict[str, Any], enriched: dict[str, Any], diagnose: Diagno
         )
     sentences = _sentences(enriched)
     seen: set[str] = set()
-    old = _old_sentences(story)
+    # Only template stories have filler to get rid of; a hand-written story may keep its good lines.
+    old = _old_sentences(story) if TAG in (story.get("tags") or []) else set()
     for text in sentences:
         key = _norm(text)
         if key in seen:

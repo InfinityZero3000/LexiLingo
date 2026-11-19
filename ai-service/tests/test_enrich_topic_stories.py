@@ -500,3 +500,20 @@ async def test_a_small_story_needs_floor_of_seventy_percent_verified():
     new, problems = await ets.enrich_story(story, FakeLLM([out]), clean_diagnose)
 
     assert problems == [] and new is not None
+
+
+@pytest.mark.asyncio
+async def test_a_hand_written_story_may_keep_its_own_sentences():
+    story = next(copy.deepcopy(s) for s in _stories() if s["story_id"] == "story_airport_checkin")
+    out = good_output(story)
+    out["suggested_prompts"] = ["Can I check in for my flight here?", "Is my bag too heavy?", "Which gate do I go to?"]
+    kept = story["vocabulary_list"][0]["example_in_story"]
+    out["vocabulary"][0]["example_in_story"] = kept
+    out["grammar_points"] = [
+        {**g, "examples": [f"Grammar example {i} one.", f"Grammar example {i} two."]}
+        for i, g in enumerate(out["grammar_points"])
+    ]
+
+    new, problems = await ets.enrich_story(story, FakeLLM([out]), clean_diagnose)
+
+    assert problems == [] and new["vocabulary_list"][0]["example_in_story"] == kept
