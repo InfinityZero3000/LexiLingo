@@ -447,7 +447,10 @@ class _TopicChatPageState extends State<TopicChatPage> {
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Icon(
-              TopicIconResolver.forCategory(widget.story.category),
+              TopicIconResolver.forTopic(
+                iconKey: widget.story.iconKey,
+                category: widget.story.category,
+              ),
               color: Theme.of(context).colorScheme.surface,
               size: 20,
             ),
