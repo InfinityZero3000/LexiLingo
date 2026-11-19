@@ -108,6 +108,14 @@ class EducationalHintsParser:
         re.IGNORECASE | re.UNICODE
     )
 
+    # Types emitted by the rule-based diagnosis (topic chat runs with
+    # diagnosis_policy="rules"); they predate the closed label set.
+    _RULE_TYPE_LABELS = {
+        "third_person_s": "subject_verb_agreement",
+        "past_tense": "verb_tense",
+        "present_perfect": "verb_form",
+    }
+
     @staticmethod
     def _norm(text: Any) -> str:
         return " ".join(unicodedata.normalize("NFKC", str(text or "")).casefold().split())
@@ -146,7 +154,7 @@ class EducationalHintsParser:
             if span_n not in text or (span_n, corrected_n) in seen:
                 continue
             raw = normalize_diagnosis_label(err.get("type"))
-            label = DIAGNOSIS_LABEL_ALIASES.get(raw, raw)
+            label = DIAGNOSIS_LABEL_ALIASES.get(raw, cls._RULE_TYPE_LABELS.get(raw, raw))
             if label not in DIAGNOSIS_LABELS:
                 label = "other"
             seen.add((span_n, corrected_n))
