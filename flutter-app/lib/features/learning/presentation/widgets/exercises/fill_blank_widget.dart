@@ -205,6 +205,11 @@ class _FillBlankWidgetState extends State<FillBlankWidget> {
             TextField(
               controller: _ctrl,
               enabled: !widget.isAnswered,
+              // A locked field would draw the answer in the disabled grey, as
+              // faint as the hint it replaced.
+              style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                color: colors.textPrimary,
+              ),
               decoration: InputDecoration(
                 hintText: 'lesson.exercise.answerHint'.tr(),
                 filled: true,

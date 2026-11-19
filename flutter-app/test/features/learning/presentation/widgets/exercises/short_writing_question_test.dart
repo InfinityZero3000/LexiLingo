@@ -74,6 +74,28 @@ void main() {
       });
     }
 
+    testWidgets('a locked answer keeps the text colour, not the disabled grey', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ShortWritingAnswerWidget(
+              exercise: _ex('Write about your weekend.'),
+              onAnswer: (_) {},
+              isAnswered: true,
+              userAnswer: 'I went hiking.',
+            ),
+          ),
+        ),
+      );
+
+      final field = tester.widget<TextField>(find.byType(TextField));
+
+      expect(field.enabled, isFalse);
+      expect(field.style?.color, isNotNull);
+    });
+
     testWidgets('never shows a stray full stop before the quoted phrase', (
       tester,
     ) async {

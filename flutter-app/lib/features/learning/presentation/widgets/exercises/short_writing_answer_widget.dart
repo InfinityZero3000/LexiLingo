@@ -106,6 +106,11 @@ class _ShortWritingAnswerWidgetState extends State<ShortWritingAnswerWidget> {
             controller: _ctrl,
             enabled: !widget.isAnswered,
             maxLines: 4,
+            // A locked field would draw the answer in the disabled grey, as
+            // faint as the hint it replaced.
+            style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+              color: colors.textPrimary,
+            ),
             decoration: InputDecoration(
               hintText: 'lesson.exercise.shortWritingHint'.tr(),
               hintStyle: Theme.of(
