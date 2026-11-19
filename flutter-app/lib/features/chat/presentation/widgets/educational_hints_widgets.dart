@@ -138,120 +138,127 @@ class GrammarCorrectionBadge extends StatelessWidget {
     final showPractice =
         onPractice != null && grammarLabelHasPractice(correction.errorType);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
+    // Material, not a decorated Container, so the save button's ink shows.
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Material(
         color: status.warningContainer,
         borderRadius: AppRadius.mdAll,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+        clipBehavior: Clip.antiAlias,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Wrap(
-                  spacing: AppSpacing.sm,
-                  runSpacing: AppSpacing.xs,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
+              Row(
+                children: [
+                  Expanded(
+                    child: Wrap(
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.xs,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        Icon(Icons.edit_note, size: 18, color: ink),
-                        const SizedBox(width: AppSpacing.xs),
-                        Flexible(
-                          child: Text(
-                            'chat.fixSuggestion'.tr(),
-                            style: textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.edit_note, size: 18, color: ink),
+                            const SizedBox(width: AppSpacing.xs),
+                            Flexible(
+                              child: Text(
+                                'chat.fixSuggestion'.tr(),
+                                style: textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: ink,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (labelKey != null)
+                          StatusPill(
+                            label: labelKey.tr(),
+                            tone: StatusTone.warning,
+                          ),
+                      ],
+                    ),
+                  ),
+                  if (onSave != null)
+                    Semantics(
+                      button: true,
+                      label: 'chat.saveCorrection'.tr(),
+                      child: ExcludeSemantics(
+                        child: InkResponse(
+                          onTap: onSave,
+                          radius: kMinTapTarget / 2,
+                          child: TapTargetBox(
+                            child: Icon(
+                              Icons.bookmark_add_outlined,
+                              size: 20,
                               color: ink,
                             ),
                           ),
                         ),
-                      ],
-                    ),
-                    if (labelKey != null)
-                      StatusPill(
-                        label: labelKey.tr(),
-                        tone: StatusTone.warning,
                       ),
-                  ],
+                    ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              _CorrectionLine(
+                icon: Icons.close_rounded,
+                iconColor: theme.colorScheme.error,
+                child: Text(
+                  original,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: ink,
+                    decoration: TextDecoration.lineThrough,
+                  ),
                 ),
               ),
-              if (onSave != null)
-                Semantics(
-                  button: true,
-                  label: 'chat.saveCorrection'.tr(),
-                  child: ExcludeSemantics(
-                    child: TapTarget(
-                      onTap: onSave,
-                      child: Icon(
-                        Icons.bookmark_add_outlined,
-                        size: 20,
-                        color: ink,
-                      ),
+              const SizedBox(height: AppSpacing.xs),
+              _CorrectionLine(
+                icon: Icons.check_rounded,
+                iconColor: status.success,
+                child: _themedMd(
+                  context,
+                  corrected,
+                  textTheme.bodyMedium!.copyWith(
+                    color: ink,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              if (explanation.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.sm),
+                _themedMd(
+                  context,
+                  explanation,
+                  textTheme.bodySmall!.copyWith(color: ink),
+                ),
+              ],
+              if (showPractice)
+                Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.sm),
+                  child: ActionChip(
+                    avatar: Icon(
+                      Icons.fitness_center_rounded,
+                      size: 14,
+                      color: ink,
                     ),
+                    label: Text(
+                      'chat.practiceThisAction'.tr(),
+                      style: textTheme.bodySmall?.copyWith(color: ink),
+                    ),
+                    onPressed: onPractice,
+                    backgroundColor: theme.colorScheme.surface,
+                    side: BorderSide.none,
+                    visualDensity: TapTargetBox.applies(context)
+                        ? VisualDensity.standard
+                        : VisualDensity.compact,
                   ),
                 ),
             ],
           ),
-          const SizedBox(height: AppSpacing.sm),
-          _CorrectionLine(
-            icon: Icons.close_rounded,
-            iconColor: theme.colorScheme.error,
-            child: Text(
-              original,
-              style: textTheme.bodyMedium?.copyWith(
-                color: ink,
-                decoration: TextDecoration.lineThrough,
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          _CorrectionLine(
-            icon: Icons.check_rounded,
-            iconColor: status.success,
-            child: _themedMd(
-              context,
-              corrected,
-              textTheme.bodyMedium!.copyWith(
-                color: ink,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          if (explanation.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.sm),
-            _themedMd(
-              context,
-              explanation,
-              textTheme.bodySmall!.copyWith(color: ink),
-            ),
-          ],
-          if (showPractice)
-            Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.sm),
-              child: ActionChip(
-                avatar: Icon(
-                  Icons.fitness_center_rounded,
-                  size: 14,
-                  color: ink,
-                ),
-                label: Text(
-                  'chat.practiceThisAction'.tr(),
-                  style: textTheme.bodySmall?.copyWith(color: ink),
-                ),
-                onPressed: onPractice,
-                backgroundColor: theme.colorScheme.surface,
-                side: BorderSide.none,
-                visualDensity: TapTargetBox.applies(context)
-                    ? VisualDensity.standard
-                    : VisualDensity.compact,
-              ),
-            ),
-        ],
+        ),
       ),
     );
   }
