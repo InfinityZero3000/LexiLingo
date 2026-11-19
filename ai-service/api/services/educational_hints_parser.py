@@ -145,6 +145,10 @@ class EducationalHintsParser:
                 continue
             if span_n not in text or (span_n, corrected_n) in seen:
                 continue
+            # Two cards for one slip ("has"->"have" and "I has"->"I have had") read as
+            # two mistakes; the diagnosis lists the most important first, so keep that one.
+            if any(span_n in other or other in span_n for other, _ in seen):
+                continue
             raw = normalize_diagnosis_label(err.get("type"))
             label = DIAGNOSIS_LABEL_ALIASES.get(raw, raw)
             if label not in DIAGNOSIS_LABELS:

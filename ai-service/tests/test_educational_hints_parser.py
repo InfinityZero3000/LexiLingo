@@ -124,3 +124,17 @@ def test_duplicate_errors_collapse_and_existing_vocab_hints_survive():
 def test_no_errors_returns_hints_untouched():
     assert EducationalHintsParser.corrections_from_diagnosis(None, None, "hi") == (None, [])
     assert EducationalHintsParser.corrections_from_diagnosis(None, [], "hi") == (None, [])
+
+
+def test_overlapping_spans_give_one_card_the_first():
+    text = "I has a toothache since yesterday."
+    errors = [
+        _diag("has", "have", "subject_verb_agreement", "x"),
+        _diag("I has", "I have had", "verb_tense", "y"),
+        _diag("since yesterday", "since yesterday morning", "other", "z"),
+    ]
+
+    hints, accepted = EducationalHintsParser.corrections_from_diagnosis(None, errors, text)
+
+    assert [gc.corrected for gc in hints.grammar_corrections] == ["have", "since yesterday morning"]
+    assert len(accepted) == 2
