@@ -208,19 +208,21 @@ class ExerciseExplanationCard extends StatelessWidget {
         !isCorrect && correctAnswer != null && correctAnswer!.isNotEmpty;
     if (!hasExplanation && !showCorrectAnswer) return const SizedBox.shrink();
 
+    // The bright kCorrect / kError greens and reds are for fills and icons; as
+    // text on their own 8% tint they measured 2.1:1. The container tokens are
+    // the pair built to be read together.
+    final status = context.status;
+    final scheme = Theme.of(context).colorScheme;
+    final bg = isCorrect ? status.successContainer : scheme.errorContainer;
+    final fg = isCorrect ? status.onSuccessContainer : scheme.onErrorContainer;
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: isCorrect
-            ? kCorrect.withValues(alpha: 0.08)
-            : kError.withValues(alpha: 0.08),
+        color: bg,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: isCorrect
-              ? kCorrect.withValues(alpha: 0.4)
-              : kError.withValues(alpha: 0.4),
-        ),
+        border: Border.all(color: fg.withValues(alpha: 0.25)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,7 +233,7 @@ class ExerciseExplanationCard extends StatelessWidget {
               children: [
                 Icon(
                   isCorrect ? Icons.check_circle : Icons.info_outline,
-                  color: isCorrect ? kCorrect : kError,
+                  color: fg,
                   size: 20,
                 ),
                 const SizedBox(width: 10),
@@ -239,7 +241,7 @@ class ExerciseExplanationCard extends StatelessWidget {
                   child: Text(
                     explanation!,
                     style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-                      color: isCorrect ? kCorrect : kError,
+                      color: fg,
                       fontWeight: FontWeight.w500,
                       height: 1.5,
                     ),
@@ -252,7 +254,7 @@ class ExerciseExplanationCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.lightbulb_outline, color: kCorrect, size: 20),
+                Icon(Icons.lightbulb_outline, color: fg, size: 20),
                 const SizedBox(width: 10),
                 Expanded(
                   child: pairAnswer
@@ -263,7 +265,7 @@ class ExerciseExplanationCard extends StatelessWidget {
                               'lesson.exercise.correctAnswerLabel'.tr(),
                               style: Theme.of(context).textTheme.bodyMedium!
                                   .copyWith(
-                                    color: kCorrect,
+                                    color: fg,
                                     fontWeight: FontWeight.w700,
                                   ),
                             ),
@@ -277,7 +279,7 @@ class ExerciseExplanationCard extends StatelessWidget {
                           '${'lesson.exercise.correctAnswerLabel'.tr()}: $correctAnswer',
                           style: Theme.of(context).textTheme.bodyMedium!
                               .copyWith(
-                                color: kCorrect,
+                                color: fg,
                                 fontWeight: FontWeight.w600,
                                 height: 1.5,
                               ),
@@ -320,6 +322,23 @@ class CircleAudioButton extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The first quoted phrase and the text around it, so a question can be shown
+/// with the phrase highlighted and its own punctuation left where it was.
+/// Single quotes are tried before double, like [extractQuotedWord].
+({String before, String quoted, String after})? splitAroundQuote(String text) {
+  for (final pattern in [RegExp("'([^']+)'"), RegExp('"([^"]+)"')]) {
+    final match = pattern.firstMatch(text);
+    if (match != null) {
+      return (
+        before: text.substring(0, match.start),
+        quoted: match.group(1)!,
+        after: text.substring(match.end),
+      );
+    }
+  }
+  return null;
 }
 
 /// Extract first quoted word from text — tries single then double quotes

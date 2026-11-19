@@ -86,6 +86,27 @@ void main() {
       expect(target.alreadyEnrolled, isTrue);
     });
 
+    test('reads the target ApiClient hands back, which is already unwrapped', () async {
+      // The real ApiClient strips {data, meta} before returning; a fake that
+      // keeps the envelope hid this once and the first lesson never opened.
+      final repo = StartLearningRepositoryImpl(
+        remoteDataSource: StartLearningRemoteDataSourceImpl(
+          apiClient: _Api({
+            'course_id': 'c1',
+            'course_title': 'Starter',
+            'first_lesson_id': 'l1',
+            'already_enrolled': false,
+          }),
+        ),
+      );
+
+      final result = await repo.startLearning(courseId: 'c1');
+
+      final target = result.getOrElse(() => throw StateError('failed'));
+      expect(target.firstLessonId, 'l1');
+      expect(target.alreadyEnrolled, isFalse);
+    });
+
     test('a response without a lesson is a failure, not a crash', () async {
       final repo = StartLearningRepositoryImpl(
         remoteDataSource: StartLearningRemoteDataSourceImpl(

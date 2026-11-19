@@ -1,4 +1,5 @@
 import 'package:lexilingo_app/core/network/api_client.dart';
+import 'package:lexilingo_app/core/network/envelope.dart';
 import 'package:lexilingo_app/features/onboarding/data/models/start_learning_target_model.dart';
 
 abstract class StartLearningRemoteDataSource {
@@ -17,7 +18,8 @@ class StartLearningRemoteDataSourceImpl
       '/users/me/start-learning',
       body: courseId == null ? null : {'course_id': courseId},
     );
-    final data = response['data'];
+    // ApiClient hands back the body already unwrapped; accept it either way.
+    final data = unwrapEnvelope(response);
     if (data is! Map<String, dynamic>) {
       throw const FormatException('start-learning response has no data');
     }
