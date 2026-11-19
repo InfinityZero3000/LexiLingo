@@ -27,6 +27,7 @@ import '../../../voice/presentation/screens/voice_practice_screen.dart';
 import '../../domain/entities/story.dart';
 import '../../domain/entities/topic_session.dart';
 import '../helpers/chat_mistake_recorder.dart';
+import '../helpers/suggested_prompts.dart';
 import '../providers/story_provider.dart';
 import '../widgets/educational_hints_widgets.dart';
 import '../widgets/markdown_message_content.dart';
@@ -389,9 +390,16 @@ class _TopicChatPageState extends State<TopicChatPage> {
                   ),
 
                   // 3. Suggested Prompts (if any)
-                  if (widget.story.suggestedPrompts.isNotEmpty &&
-                      !provider.isSendingMessage)
-                    _buildSuggestedPrompts(isDark),
+                  if (!provider.isSendingMessage)
+                    _buildSuggestedPrompts(
+                      isDark,
+                      remainingSuggestedPrompts(
+                        widget.story.suggestedPrompts,
+                        provider.messages
+                            .where((m) => m.isUser)
+                            .map((m) => m.content),
+                      ),
+                    ),
 
                   // 4. Task banner (collapses to zero height when hidden)
                   if (!_taskBannerDismissedByUser)
@@ -583,16 +591,17 @@ class _TopicChatPageState extends State<TopicChatPage> {
     );
   }
 
-  Widget _buildSuggestedPrompts(bool isDark) {
+  Widget _buildSuggestedPrompts(bool isDark, List<String> prompts) {
+    if (prompts.isEmpty) return const SizedBox.shrink();
     return Container(
       height: 50,
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-        itemCount: widget.story.suggestedPrompts.length,
+        itemCount: prompts.length,
         itemBuilder: (context, index) {
-          final prompt = widget.story.suggestedPrompts[index];
+          final prompt = prompts[index];
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
             child: ActionChip(
@@ -1236,15 +1245,16 @@ class _TopicMessageBubble extends StatelessWidget {
                       'error_type': correction.errorType,
                     },
                   );
-                  await const ChatMistakeRecorder().recordGrammarCorrection(
-                    sourceType: 'topic_chat',
-                    sourceId: message.sessionId,
-                    original: correction.original,
-                    corrected: correction.corrected,
-                    explanation: correction.explanation,
-                    skill: correction.errorType ?? 'grammar',
-                  );
-                  if (!context.mounted) return;
+                  final saved = await const ChatMistakeRecorder()
+                      .recordGrammarCorrection(
+                        sourceType: 'topic_chat',
+                        sourceId: message.sessionId,
+                        original: correction.original,
+                        corrected: correction.corrected,
+                        explanation: correction.explanation,
+                        errorType: correction.errorType,
+                      );
+                  if (!saved || !context.mounted) return;
                   context.read<StoryProvider>().recordMistakeSaved();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('topicChat.savedToMistakes'.tr())),

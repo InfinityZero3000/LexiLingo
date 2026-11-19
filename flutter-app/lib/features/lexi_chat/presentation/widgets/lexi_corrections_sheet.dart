@@ -44,15 +44,15 @@ class LexiCorrectionsSheet extends StatelessWidget {
   }
 
   Future<void> _saveMistake(BuildContext context, LexiCorrection c) async {
-    await const ChatMistakeRecorder().recordGrammarCorrection(
+    final saved = await const ChatMistakeRecorder().recordGrammarCorrection(
       sourceType: 'lexi_chat',
       sourceId: messageId,
       original: c.errorSpan,
       corrected: c.correction,
       explanation: c.explanation,
-      skill: c.errorType,
+      errorType: c.errorType,
     );
-    if (!context.mounted) return;
+    if (!saved || !context.mounted) return;
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text('lexiChat.savedToMistakes'.tr())));
