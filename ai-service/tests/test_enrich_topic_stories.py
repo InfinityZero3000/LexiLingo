@@ -420,6 +420,7 @@ def test_kg_carries_the_enriched_content_on_the_same_ids():
     assert titles[f"errorpattern:{slug}_misuse"].startswith(f"Common mistake: 'WRONG sentence with {term}'")
     assert titles[f"phrase:{gen.slugify(story['story_id'])}_practice_phrase_1"] == "I have a toothache."
     assert not any("Learner may misuse" in str(q) for q in quads)
+    assert titles[f"phrase:{slug}_request"] == new["vocabulary_list"][0]["example_in_story"]
 
 
 def test_all_stories_also_selects_the_hand_written_ones():

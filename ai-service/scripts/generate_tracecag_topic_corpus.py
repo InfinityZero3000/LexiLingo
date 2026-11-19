@@ -466,7 +466,10 @@ def generate_tracecag_graph(stories: list[dict[str, Any]]) -> tuple[dict[str, An
                 )
             else:
                 kg_concept(concepts, error_id, f"{term.title()} Misuse", level, [term, "error", "learner"])
-            kg_concept(concepts, phrase_id, f"{term.title()} Request Phrase", level, [term, "request", "phrase"])
+            if collocations and item.get("example_in_story"):
+                kg_concept(concepts, phrase_id, item["example_in_story"], level, [term, "phrase"])
+            else:
+                kg_concept(concepts, phrase_id, f"{term.title()} Request Phrase", level, [term, "request", "phrase"])
             if collocations:
                 kg_concept(concepts, collocation_id, f"Collocations of '{term}': " + "; ".join(collocations), level, [term, "collocation", *collocations])
             else:
