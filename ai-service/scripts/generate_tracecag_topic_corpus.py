@@ -457,6 +457,13 @@ def generate_tracecag_graph(stories: list[dict[str, Any]]) -> tuple[dict[str, An
                     f"Common mistake: '{mistake['wrong']}' -> '{mistake['right']}' ({mistake.get('why', '')})",
                     level, [term, "error", "mistake"],
                 )
+            elif collocations and item.get("definition"):
+                # Enriched, but no mistake the diagnosis could verify: say how the word is used instead.
+                kg_concept(
+                    concepts, error_id,
+                    f"Using '{term}' correctly: {item['definition']} e.g. " + "; ".join(collocations),
+                    level, [term, "usage"],
+                )
             else:
                 kg_concept(concepts, error_id, f"{term.title()} Misuse", level, [term, "error", "learner"])
             kg_concept(concepts, phrase_id, f"{term.title()} Request Phrase", level, [term, "request", "phrase"])

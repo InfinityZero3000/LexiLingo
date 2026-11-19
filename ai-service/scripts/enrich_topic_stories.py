@@ -26,6 +26,7 @@ import argparse
 import asyncio
 import copy
 import json
+import math
 import os
 import re
 import sys
@@ -57,6 +58,7 @@ PARTS_OF_SPEECH = {
 }
 
 NEW_GRAMMAR_POINTS = 2
+MIN_VERIFIED_ERRORS = 0.7
 
 LLM = Callable[[str], Awaitable[Any]]
 Diagnose = Callable[[str, str], Awaitable[list[dict[str, Any]]]]
@@ -79,7 +81,7 @@ def is_enriched(story: dict[str, Any]) -> bool:
     """Already has real content: every term carries collocations, a common error and a real definition."""
     vocab = story.get("vocabulary_list") or []
     return bool(vocab) and all(
-        v.get("collocations") and (v.get("common_error") or {}).get("right")
+        v.get("collocations") and "common_error" in v
         and v.get("definition") and not is_placeholder_definition(v["definition"])
         for v in vocab
     )
@@ -188,17 +190,20 @@ def parse_enrichment(raw: Any, story: dict[str, Any]) -> dict[str, Any]:
         wrong = right = why = ""
         if isinstance(error, dict):
             wrong, right, why = (str(error.get(k) or "").strip() for k in ("wrong", "right", "why"))
-        if not wrong or not right or _norm(wrong) == _norm(right) or not why:
-            problems.append(f"common_error of {term!r} needs a different wrong/right pair and a why")
-        elif _words(why) > 15 or not 2 <= _words(wrong) <= 16 or not 2 <= _words(right) <= 16:
-            problems.append(f"common_error of {term!r}: wrong/right at most 16 words, why at most 15")
+        # A malformed common error is dropped, not fatal: the gate keeps only verified ones.
+        common_error = (
+            {"wrong": wrong, "right": right, "why": why}
+            if wrong and right and why and _norm(wrong) != _norm(right)
+            and _words(why) <= 15 and 2 <= _words(wrong) <= 16 and 2 <= _words(right) <= 16
+            else None
+        )
         vocabulary.append({
             "term": term,
             "definition": definition,
             "example_in_story": example,
             "part_of_speech": pos if pos in PARTS_OF_SPEECH else item.get("part_of_speech", "noun"),
             "collocations": [c.strip() for c in collocations],
-            "common_error": {"wrong": wrong, "right": right, "why": why},
+            "common_error": common_error,
         })
 
     prompts_in = raw.get("suggested_prompts")
@@ -268,7 +273,7 @@ def parse_enrichment(raw: Any, story: dict[str, Any]) -> dict[str, Any]:
 def _sentences(enriched: dict[str, Any]) -> list[str]:
     out = list(enriched["suggested_prompts"])
     out += [v["example_in_story"] for v in enriched["vocabulary"]]
-    out += [v["common_error"]["right"] for v in enriched["vocabulary"]]
+    out += [v["common_error"]["right"] for v in enriched["vocabulary"] if v.get("common_error")]
     for g in enriched["grammar_points"]:
         out += g["examples"]
     return out
@@ -283,8 +288,25 @@ def _old_sentences(story: dict[str, Any]) -> set[str]:
 
 
 async def gate(story: dict[str, Any], enriched: dict[str, Any], diagnose: Diagnose) -> list[str]:
-    """Problems that keep a story from being written; empty means it passed."""
+    """Problems that keep a story from being written; empty means it passed.
+
+    A common error whose "wrong" sentence the diagnosis does not flag is dropped
+    (set to None) rather than failing the story, so the KG never teaches a
+    non-error; the story still needs MIN_VERIFIED_ERRORS of its terms covered.
+    """
     problems: list[str] = []
+    level = story["difficulty_level"]
+    vocab = enriched["vocabulary"]
+    for item in vocab:
+        error = item.get("common_error")
+        if error and not await diagnose(error["wrong"], level):
+            item["common_error"] = None
+    verified = sum(1 for item in vocab if item.get("common_error"))
+    if vocab and verified < max(1, math.floor(MIN_VERIFIED_ERRORS * len(vocab))):
+        problems.append(
+            f"only {verified} of {len(vocab)} common errors are real mistakes the diagnosis flags; "
+            "write clearer, typical learner mistakes"
+        )
     sentences = _sentences(enriched)
     seen: set[str] = set()
     old = _old_sentences(story)
@@ -295,17 +317,11 @@ async def gate(story: dict[str, Any], enriched: dict[str, Any], diagnose: Diagno
         seen.add(key)
         if key in old:
             problems.append(f"unchanged from the old template: {text!r}")
-    level = story["difficulty_level"]
     for text in sentences:
         for err in await diagnose(text, level):
             problems.append(
                 f"diagnosis flags {text!r}: {err.get('span')!r} -> {err.get('correction')!r}"
             )
-    for item in enriched["vocabulary"]:
-        # The "wrong" sentence must really be wrong, or the KG would teach a non-error.
-        wrong = item["common_error"]["wrong"]
-        if not await diagnose(wrong, level):
-            problems.append(f"common_error of {item['term']!r}: {wrong!r} is not flagged as a mistake")
     return problems
 
 
@@ -317,7 +333,7 @@ def apply_enrichment(story: dict[str, Any], enriched: dict[str, Any]) -> dict[st
             example_in_story=fresh["example_in_story"],
             part_of_speech=fresh["part_of_speech"],
             collocations=list(fresh["collocations"]),
-            common_error=dict(fresh["common_error"]),
+            common_error=dict(fresh["common_error"]) if fresh.get("common_error") else None,
         )
     new["suggested_prompts"] = list(enriched["suggested_prompts"])
     new["grammar_points"] = copy.deepcopy(enriched["grammar_points"])
@@ -467,7 +483,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--only", action="append", default=[], help="story id; repeatable")
     parser.add_argument("--concurrency", type=int, default=2)
     parser.add_argument("--delay", type=float, default=6.0)
-    parser.add_argument("--attempts", type=int, default=2)
+    parser.add_argument("--attempts", type=int, default=3)
     parser.add_argument("--force", action="store_true", help="also redo stories that are already enriched")
     parser.add_argument(
         "--all-stories", action="store_true",

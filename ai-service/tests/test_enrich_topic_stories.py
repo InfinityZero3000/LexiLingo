@@ -335,15 +335,29 @@ async def test_diagnosis_counts_only_grounded_errors():
 # ── KG material: collocations and a verified common error ───────────────────
 
 @pytest.mark.asyncio
-async def test_a_common_error_the_diagnosis_does_not_flag_blocks_the_story():
+async def test_an_unflagged_common_error_is_dropped_not_fatal():
     story = _story()
     out = good_output(story)
     out["vocabulary"][0]["common_error"]["wrong"] = "This sentence is fine."
 
-    new, problems = await ets.enrich_story(story, FakeLLM([out, out]), clean_diagnose)
+    new, problems = await ets.enrich_story(story, FakeLLM([out]), clean_diagnose)
 
-    assert new is None
-    assert any("not flagged as a mistake" in p for p in problems)
+    assert problems == []
+    assert new["vocabulary_list"][0]["common_error"] is None
+    assert new["vocabulary_list"][1]["common_error"]["right"].startswith("A right sentence")
+    assert ets.is_enriched(new)
+
+
+@pytest.mark.asyncio
+async def test_too_few_verified_common_errors_blocks_the_story():
+    story = _story()
+    out = good_output(story)
+    for v in out["vocabulary"][:4]:
+        v["common_error"]["wrong"] = f"Fine sentence about {v['term']}."
+
+    new, problems = await ets.enrich_story(story, FakeLLM([out, out, out]), clean_diagnose)
+
+    assert new is None and any("common errors are real mistakes" in p for p in problems)
 
 
 @pytest.mark.asyncio
@@ -363,8 +377,6 @@ async def test_a_flagged_corrected_sentence_blocks_the_story():
     [
         lambda v: v.update(collocations=["one"]),
         lambda v: v.update(collocations=["no term here", "nor here"]),
-        lambda v: v["common_error"].update(right=v["common_error"]["wrong"]),
-        lambda v: v["common_error"].update(why=""),
     ],
 )
 async def test_bad_kg_material_is_rejected(mutate):
@@ -451,3 +463,40 @@ async def test_a_story_without_grammar_points_must_get_two():
     new, problems = await ets.enrich_story(story, FakeLLM([out, out]), clean_diagnose)
 
     assert new is None and any("propose 2" in p for p in problems)
+
+
+@pytest.mark.asyncio
+async def test_a_malformed_common_error_is_dropped_and_the_kg_says_how_the_word_is_used():
+    from scripts import generate_tracecag_topic_corpus as gen
+
+    story = _story()
+    out = good_output(story)
+    out["vocabulary"][0]["common_error"].update(right=out["vocabulary"][0]["common_error"]["wrong"])
+
+    new, problems = await ets.enrich_story(story, FakeLLM([out]), clean_diagnose)
+    graph, _, _ = gen.generate_tracecag_graph([new])
+    term = new["vocabulary_list"][0]["term"]
+    title = {c["id"]: c["title"] for c in graph["concepts"]}[
+        f"errorpattern:{gen.slugify(story['story_id'] + '_' + term)}_misuse"
+    ]
+
+    assert problems == [] and new["vocabulary_list"][0]["common_error"] is None
+    assert title.startswith(f"Using '{term}' correctly: what people mean by {term} here")
+
+
+@pytest.mark.asyncio
+async def test_a_small_story_needs_floor_of_seventy_percent_verified():
+    story = next(copy.deepcopy(s) for s in _stories() if s["story_id"] == "story_apartment_renting")
+    out = good_output(story)
+    out["suggested_prompts"] = ["Is the apartment still available?", "How much is the rent each month?", "Can I see the kitchen first?"]
+    out["grammar_points"] = [
+        {"grammar_structure": "Modal verbs for requests", "explanation": "Use can or could plus a base verb to ask politely.",
+         "usage_in_story": "You use it to ask the landlord for things.", "examples": ["Could I see the bedroom?", "Can I pay by card?"]},
+        {"grammar_structure": "Present simple for facts", "explanation": "Use the present simple for things that are generally true.",
+         "usage_in_story": "You use it to describe the flat.", "examples": ["The flat has two bedrooms.", "The rent includes water."]},
+    ]
+    out["vocabulary"][0]["common_error"]["wrong"] = "A fine sentence here."  # 2 of 3 verified
+
+    new, problems = await ets.enrich_story(story, FakeLLM([out]), clean_diagnose)
+
+    assert problems == [] and new is not None
