@@ -17,7 +17,10 @@ void registerVocabModule({required bool skipDatabase}) {
   }
 
   sl.registerLazySingleton<VocabRepository>(
-    () => VocabRepositoryImpl(localDataSource: skipDatabase ? null : sl()),
+    () => VocabRepositoryImpl(
+      localDataSource: skipDatabase ? null : sl(),
+      apiClient: sl<ApiClient>(),
+    ),
   );
 
   sl.registerLazySingleton(() => GetWordsUseCase(sl()));

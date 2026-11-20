@@ -56,24 +56,31 @@ class _ProfilePageState extends State<ProfilePage> {
     final gamificationProvider = context.read<GamificationProvider>();
     final proficiencyProvider = context.read<ProficiencyProvider>();
 
-    // Refresh the authoritative account state so email verification changes
-    // are reflected in the profile badge after returning from the email link.
-    if (authProvider.currentUser != null) {
-      await authProvider.refreshCurrentUser(maxAge: kPassiveReloadWindow);
-      await levelProvider.fetchLevelFull(maxAge: kPassiveReloadWindow);
+    // Independent loads: one failing must not hold back the wallet or the rest.
+    Future<void> guarded(Future<void> Function() load) async {
+      try {
+        await load();
+      } catch (e) {
+        debugPrint('Profile load step failed: $e');
+      }
     }
 
-    // Load progress stats
-    await progressProvider.fetchMyProgress(maxAge: kPassiveReloadWindow);
-
-    // Load profile stats from backend
-    await profileProvider.loadProfileData();
-
-    // Load gamification data (wallet, etc.)
-    await gamificationProvider.loadWallet();
-
-    // Load proficiency data (AI-evaluated skill assessment)
-    await proficiencyProvider.loadProfile();
+    await Future.wait([
+      guarded(gamificationProvider.loadWallet),
+      guarded(() async {
+        // Refresh the authoritative account state so email verification
+        // changes show after returning from the email link.
+        if (authProvider.currentUser != null) {
+          await authProvider.refreshCurrentUser(maxAge: kPassiveReloadWindow);
+          await levelProvider.fetchLevelFull(maxAge: kPassiveReloadWindow);
+        }
+      }),
+      guarded(
+        () => progressProvider.fetchMyProgress(maxAge: kPassiveReloadWindow),
+      ),
+      guarded(profileProvider.loadProfileData),
+      guarded(proficiencyProvider.loadProfile),
+    ]);
   }
 
   bool _isAdminUser(UserEntity? user) {
@@ -136,11 +143,14 @@ class _ProfilePageState extends State<ProfilePage> {
           // Wallet/Gems Button
           Consumer<GamificationProvider>(
             builder: (context, gamification, _) {
+              final unavailable = gamification.walletUnavailable;
               return TapTarget(
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const WalletScreen()),
-                ),
+                onTap: () => unavailable
+                    ? gamification.loadWallet()
+                    : Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const WalletScreen()),
+                      ),
                 child: Container(
                   margin: const EdgeInsets.only(right: AppSpacing.sm),
                   padding: const EdgeInsets.symmetric(
@@ -162,11 +172,20 @@ class _ProfilePageState extends State<ProfilePage> {
                         size: 16,
                       ),
                       const SizedBox(width: AppSpacing.xs),
-                      Text(
-                        '${gamification.wallet?.gems ?? 0}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.surfaceLight,
-                          fontWeight: FontWeight.bold,
+                      Semantics(
+                        label: gamification.wallet != null
+                            ? null
+                            : (unavailable
+                                      ? 'errors.loadFailed'
+                                      : 'common.loading')
+                                  .tr(),
+                        child: Text(
+                          gamification.wallet?.gems.toString() ?? '—',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: AppColors.surfaceLight,
+                                fontWeight: FontWeight.bold,
+                              ),
                         ),
                       ),
                     ],

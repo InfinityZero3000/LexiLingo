@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:easy_localization/easy_localization.dart';
@@ -20,7 +21,7 @@ import '../pages/welcome_page.dart';
 import '../pages/onboarding_page.dart';
 import '../pages/pre_auth_questions_page.dart';
 import 'package:lexilingo_app/features/level/presentation/level_sync.dart';
-import '../user_session_sync.dart';
+import 'session_sync_gate.dart';
 import 'package:lexilingo_app/core/navigation/learner_route.dart';
 import 'package:lexilingo_app/features/onboarding/domain/entities/start_learning_target.dart';
 import 'package:lexilingo_app/features/onboarding/presentation/pages/start_learning_page.dart';
@@ -40,7 +41,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
   bool _startingLearning = false;
   bool _showPreAuthWelcome = false;
   bool _showPreAuthQuestions = false;
-  bool _wasAuthenticated = false;
   bool _isResolvingFlow = false;
   bool _isResolvingPreAuthFlow = false;
   bool _isShowingRegister = false;
@@ -283,50 +283,55 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-
-    // Show loading while checking auth state
-    if (authProvider.isCheckingAuth) {
-      return Scaffold(body: LoadingScreen(message: 'common.loading'.tr()));
-    }
-
-    // Detect when user just logged in
-    if (authProvider.isAuthenticated && !_wasAuthenticated) {
-      _wasAuthenticated = true;
-      _flowResolvedForUserId = null;
-      _showOnboarding = false;
-      final userId = authProvider.currentUser?.id;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+    final auth = context.read<AuthProvider>();
+    return SessionSyncGate(
+      listenable: auth,
+      read: () => SessionSnapshot(
+        checking: auth.isCheckingAuth,
+        authenticated: auth.isAuthenticated,
+        userId: auth.currentUser?.id,
+      ),
+      onSignedOut: () {
+        _showOnboarding = false;
+        _startingLearning = false;
+        _flowResolvedForUserId = null;
+        _entitlementSyncedForUserId = null;
+        _preAuthFlowResolved = false;
+        _showPreAuthWelcome = false;
+        _showPreAuthQuestions = false;
+        _isShowingRegister = false;
+      },
+      onSignedIn: () {
+        _flowResolvedForUserId = null;
+        _showOnboarding = false;
+      },
+      onSessionStart: (context) {
+        final userId = auth.currentUser?.id;
         // Load user settings when authenticated
         if (userId != null) {
           context.read<SettingsProvider>().loadSettings(userId, context);
         }
         // Lexi falls back to what the app sends when the learner card is
         // slow; it used to send a fixed B1 for everyone.
-        final level = authProvider.currentUser?.cefrLevel;
+        final level = auth.currentUser?.cefrLevel;
         if (level != null) {
           context.read<LexiChatProvider>().setLearnerLevel(level);
         }
-        if (mounted) UserSessionSync.afterSignIn(context);
-        _resolvePostAuthFlow(authProvider);
-        _syncEntitlements(authProvider);
-      });
-    }
+      },
+      onSessionStarted: () {
+        _resolvePostAuthFlow(auth);
+        _syncEntitlements(auth);
+      },
+      child: _buildBody(context),
+    );
+  }
 
-    // Reset state when user logs out
-    if (!authProvider.isAuthenticated && _wasAuthenticated) {
-      _wasAuthenticated = false;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) UserSessionSync.afterSignOut(context);
-      });
-      _showOnboarding = false;
-      _startingLearning = false;
-      _flowResolvedForUserId = null;
-      _entitlementSyncedForUserId = null;
-      _preAuthFlowResolved = false;
-      _showPreAuthWelcome = false;
-      _showPreAuthQuestions = false;
-      _isShowingRegister = false;
+  Widget _buildBody(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+
+    // Show loading while checking auth state
+    if (authProvider.isCheckingAuth) {
+      return Scaffold(body: LoadingScreen(message: 'common.loading'.tr()));
     }
 
     if (authProvider.isAuthenticated && !_isResolvingFlow) {

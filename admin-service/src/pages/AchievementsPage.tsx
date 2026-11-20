@@ -60,7 +60,6 @@ type BadgeSource = {
 
 const BACKEND_BASE = ENV.backendUrl.replace("/api/v1", "");
 const CDN_BASE = "https://cdn.jsdelivr.net/gh/InfinityZero3000/LexiLingo@main/flutter-app/assets/badges";
-const LEGACY_CDN_BASE = "https://cdn.jsdelivr.net/gh/InfinityZero3000/LexiLingo@feature/flutter-app/assets/badges";
 
 const BADGE_ASSET_BY_SLUG: Record<string, string> = {
   first_steps: "common-lesson.png",
@@ -128,11 +127,6 @@ const badgeImgUrl = (badge: BadgeSource) => {
   const mappedFile = badge.slug ? BADGE_ASSET_BY_SLUG[badge.slug.toLowerCase()] : null;
 
   if (!icon) return mappedFile ? badgeCdnUrl(mappedFile) : null;
-
-  if (icon.startsWith(LEGACY_CDN_BASE)) {
-    const filename = safeDecode(icon.slice(LEGACY_CDN_BASE.length + 1));
-    return isBadgeFilename(filename) ? badgeCdnUrl(filename) : mappedFile ? badgeCdnUrl(mappedFile) : null;
-  }
 
   if (icon.includes("/assets/badges/")) {
     const filename = safeDecode(icon.split("/assets/badges/").pop() || "");

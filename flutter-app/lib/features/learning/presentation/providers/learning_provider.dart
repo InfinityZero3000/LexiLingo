@@ -15,11 +15,12 @@ import 'package:lexilingo_app/features/learning/domain/usecases/submit_answer_us
 import 'package:lexilingo_app/features/learning/domain/usecases/complete_lesson_usecase.dart';
 import 'package:lexilingo_app/features/learning/domain/usecases/get_course_roadmap_usecase.dart';
 import 'package:lexilingo_app/features/learning/domain/usecases/get_lesson_content_usecase.dart';
+import 'package:lexilingo_app/core/state/reset_epoch.dart';
 
 const String outOfHeartsCode = 'out_of_hearts';
 
 /// Learning Provider - Manages learning sessions, roadmap, and lesson progress
-class LearningProvider with ChangeNotifier {
+class LearningProvider with ChangeNotifier, ResetEpoch {
   final StartLessonUseCase _startLessonUseCase;
   final SubmitAnswerUseCase _submitAnswerUseCase;
   final CompleteLessonUseCase _completeLessonUseCase;
@@ -50,6 +51,7 @@ class LearningProvider with ChangeNotifier {
   /// [refresh] keeps the current roadmap on screen while it reloads, so
   /// coming back from a lesson updates it in place instead of flashing a loader.
   Future<void> loadRoadmap(String courseId, {bool refresh = false}) async {
+    final epoch = resetEpoch;
     _isLoadingRoadmap = !refresh || _courseRoadmap == null;
     _roadmapError = null;
     notifyListeners();
@@ -57,6 +59,7 @@ class LearningProvider with ChangeNotifier {
     final result = await _getCourseRoadmapUseCase(
       GetCourseRoadmapParams(courseId: courseId),
     );
+    if (isStale(epoch)) return;
 
     result.fold(
       (failure) {
@@ -158,6 +161,7 @@ class LearningProvider with ChangeNotifier {
   }
 
   Future<void> startLesson(String courseId, String lessonId) async {
+    final epoch = resetEpoch;
     _courseId = courseId;
     _lessonId = lessonId;
     _isLoading = true;
@@ -179,6 +183,10 @@ class LearningProvider with ChangeNotifier {
       final attemptResult = await _startLessonUseCase(
         StartLessonParams(lessonId: lessonId),
       );
+      if (isStale(epoch)) {
+        contentRequest.ignore();
+        return;
+      }
       final attempt = attemptResult.fold<LessonAttempt?>((failure) {
         _applyBlockingFailure(failure);
         return null;
@@ -197,6 +205,7 @@ class LearningProvider with ChangeNotifier {
         );
 
         final contentResult = await contentRequest;
+        if (isStale(epoch)) return;
         contentResult.fold(_applyBlockingFailure, (lesson) {
           if (lesson.exercises.isEmpty) {
             _isContentUnavailable = true;
@@ -217,6 +226,7 @@ class LearningProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     } catch (e) {
+      if (isStale(epoch)) return;
       _error = e.toString();
       _isLoading = false;
       notifyListeners();
@@ -242,6 +252,7 @@ class LearningProvider with ChangeNotifier {
         ? DateTime.now().difference(_exerciseStartTime!).inMilliseconds
         : 5000;
 
+    final epoch = resetEpoch;
     if (_currentAttempt != null) {
       final result = await _submitAnswerUseCase(
         SubmitAnswerParams(
@@ -252,6 +263,7 @@ class LearningProvider with ChangeNotifier {
           timeSpentMs: timeSpentMs,
         ),
       );
+      if (isStale(epoch)) return;
 
       result.fold(
         (failure) {
@@ -347,11 +359,13 @@ class LearningProvider with ChangeNotifier {
     final attempt = _currentAttempt;
     if (attempt == null || _isCompleting) return;
 
+    final epoch = resetEpoch;
     _isCompleting = true;
     _completionFailed = false;
     final result = await _completeLessonUseCase(
       CompleteLessonParams(attemptId: attempt.attemptId),
     );
+    if (isStale(epoch)) return;
     _isCompleting = false;
     result.fold(
       (failure) {
@@ -478,6 +492,20 @@ class LearningProvider with ChangeNotifier {
       }
     }
     return matrix[len1][len2];
+  }
+
+  void reset() {
+    bumpResetEpoch();
+    _courseRoadmap = null;
+    _isLoadingRoadmap = false;
+    _roadmapError = null;
+    _courseId = null;
+    _lessonId = null;
+    _isLoading = false;
+    _isCompleting = false;
+    _outOfHeartsPromptCount = 0;
+    _exerciseStartTime = null;
+    clearLesson();
   }
 
   void clearLesson() {

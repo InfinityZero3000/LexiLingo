@@ -17,7 +17,7 @@ from app.models.gamification import Achievement
 
 BADGE_CDN_BASE = (
     "https://cdn.jsdelivr.net/gh/InfinityZero3000/"
-    "LexiLingo@feature/flutter-app/assets/badges"
+    "LexiLingo@main/flutter-app/assets/badges"
 )
 
 

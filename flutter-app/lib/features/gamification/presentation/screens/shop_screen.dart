@@ -88,6 +88,18 @@ class _ShopScreenState extends State<ShopScreen>
     if (_purchasingItemId != null) return;
     final provider = context.read<GamificationProvider>();
 
+    if (provider.wallet == null) await provider.loadWallet();
+    if (!mounted) return;
+    if (provider.wallet == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('errors.loadFailed'.tr()),
+          backgroundColor: AppColors.errorBright,
+        ),
+      );
+      return;
+    }
+
     // Check if can afford
     if (provider.gems < item.priceGems) {
       _showNotEnoughGemsDialog();
@@ -387,8 +399,13 @@ class _ShopScreenState extends State<ShopScreen>
               return Padding(
                 padding: const EdgeInsets.only(right: AppSpacing.lg),
                 child: GemCounter(
-                  gems: provider.gems,
+                  gems: provider.wallet?.gems,
+                  failed: provider.walletUnavailable,
                   onTap: () {
+                    if (provider.walletUnavailable) {
+                      provider.loadWallet();
+                      return;
+                    }
                     // Navigate to wallet
                     Navigator.push(
                       context,
@@ -407,6 +424,15 @@ class _ShopScreenState extends State<ShopScreen>
         child: Column(
           children: [
             const ActiveBoostsBar(),
+            Consumer<GamificationProvider>(
+              builder: (context, provider, _) => provider.walletUnavailable
+                  ? ErrorDisplayWidget.fromMessage(
+                      message: 'errors.loadFailed'.tr(),
+                      onRetry: provider.loadWallet,
+                      compact: true,
+                    )
+                  : const SizedBox.shrink(),
+            ),
             TabBar(
               controller: _tabController,
               isScrollable: true,

@@ -9,11 +9,12 @@ import 'package:lexilingo_app/features/mistakes/domain/mistake_notebook_entry.da
 
 import '../../data/repositories/news_repository.dart';
 import '../../domain/entities/news_entities.dart';
+import 'package:lexilingo_app/core/state/reset_epoch.dart';
 
 /// State management for News Reading feature.
 ///
 /// Phase 2: News Reading.
-class NewsProvider extends ChangeNotifier {
+class NewsProvider extends ChangeNotifier with ResetEpoch {
   final NewsRepository _repository;
   final MistakeNotebookRepository _mistakeRepository;
   final SkillEventRecorder _skillRecorder;
@@ -73,6 +74,7 @@ class NewsProvider extends ChangeNotifier {
   Future<void> loadArticles({bool refresh = false}) async {
     if (refresh) _currentPage = 1;
 
+    final epoch = resetEpoch;
     _isLoading = true;
     _error = null;
     if (refresh) _articles = [];
@@ -84,23 +86,30 @@ class NewsProvider extends ChangeNotifier {
         level: _selectedLevel,
         page: _currentPage,
       );
+      if (isStale(epoch)) return;
       if (refresh || _currentPage == 1) {
         _articles = result;
       } else {
         _articles.addAll(result);
       }
     } catch (e) {
+      if (isStale(epoch)) return;
       _error = e.toString();
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      if (!isStale(epoch)) {
+        _isLoading = false;
+        notifyListeners();
+      }
     }
   }
 
   /// Load available categories.
   Future<void> loadCategories() async {
+    final epoch = resetEpoch;
     try {
-      _categories = await _repository.getCategories();
+      final categories = await _repository.getCategories();
+      if (isStale(epoch)) return;
+      _categories = categories;
       notifyListeners();
     } catch (e) {
       debugPrint('Failed to load categories: $e');
@@ -125,18 +134,24 @@ class NewsProvider extends ChangeNotifier {
   Future<void> searchArticles(String query) async {
     if (query.length < 2) return;
 
+    final epoch = resetEpoch;
     _isLoading = true;
     _error = null;
     _articles = [];
     notifyListeners();
 
     try {
-      _articles = await _repository.getArticles(query: query);
+      final found = await _repository.getArticles(query: query);
+      if (isStale(epoch)) return;
+      _articles = found;
     } catch (e) {
+      if (isStale(epoch)) return;
       _error = e.toString();
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      if (!isStale(epoch)) {
+        _isLoading = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -335,5 +350,23 @@ class NewsProvider extends ChangeNotifier {
   String _optionText(List<String> options, int index) {
     if (index < 0 || index >= options.length) return '';
     return options[index];
+  }
+
+  void reset() {
+    bumpResetEpoch();
+    _articles = [];
+    _categories = [];
+    _currentQuiz = null;
+    _currentQuizArticleId = null;
+    _currentQuizArticle = null;
+    _isLoading = false;
+    _isLoadingQuiz = false;
+    _error = null;
+    _selectedCategory = 'general';
+    _selectedLevel = null;
+    _currentPage = 1;
+    _answers = {};
+    _quizSubmitted = false;
+    notifyListeners();
   }
 }

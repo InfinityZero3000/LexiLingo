@@ -1201,8 +1201,6 @@ async def complete_lesson(
     except Exception as e:
         logger.warning("Proficiency update error: %s", e)
 
-    await delete_cached(build_cache_key("achievements_me", user_id=str(current_user.id)))
-    await delete_cached(build_cache_key("wallet", user_id=str(current_user.id)))
     await delete_cached(build_cache_key("progress_me", user_id=str(current_user.id)))
     await delete_cached(build_cache_key("progress_xp", user_id=str(current_user.id)))
     await delete_cached(build_cache_key("progress_streak", user_id=str(current_user.id)))

@@ -72,6 +72,17 @@ const _tabs = <({IconData icon, IconData activeIcon, String label})>[
   ),
 ];
 
+/// Signed out, every progress request would go out with no token and 401, and
+/// popping back to this screen during a sign-out is exactly when that happens.
+@visibleForTesting
+bool progressRefreshDue({
+  required bool authenticated,
+  required DateTime? last,
+  required DateTime now,
+}) =>
+    authenticated &&
+    (last == null || now.difference(last) >= const Duration(seconds: 2));
+
 class _MainScreenState extends State<MainScreen> with RouteAware {
   late int _currentIndex;
   bool _lexiWarmedUp = false;
@@ -105,8 +116,11 @@ class _MainScreenState extends State<MainScreen> with RouteAware {
   // from a pushed screen (a lesson, a game) is not, so it always refetches.
   void _refreshProgress({bool afterActivity = false}) {
     final now = DateTime.now();
-    final last = _lastProgressRefresh;
-    if (last != null && now.difference(last) < const Duration(seconds: 2)) {
+    if (!progressRefreshDue(
+      authenticated: context.read<AuthProvider>().isAuthenticated,
+      last: _lastProgressRefresh,
+      now: now,
+    )) {
       return;
     }
     _lastProgressRefresh = now;

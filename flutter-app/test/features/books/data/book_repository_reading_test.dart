@@ -118,11 +118,11 @@ void main() {
 
     test('one corrupt progress record does not hide the others', () async {
       SharedPreferences.setMockInitialValues({
-        'book_progress_bad': 'not json',
-        'book_progress_good':
+        'u:anonymous:book_progress_bad': 'not json',
+        'u:anonymous:book_progress_good':
             '{"book_id":"good","current_page":10,"total_pages":100,'
             '"reading_progress":0.1,"last_read_at":"2026-10-23T09:00:00.000"}',
-        'book_reading_data_good':
+        'u:anonymous:book_reading_data_good':
             '{"id":"good","title":"Good book","cefr_level":"A2"}',
       });
       final list = await BookRepository().getContinueReading();

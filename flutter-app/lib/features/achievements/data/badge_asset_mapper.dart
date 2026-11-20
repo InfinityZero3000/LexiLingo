@@ -6,6 +6,8 @@
 /// and falls back to SmartAchievementBadge if no mapping exists.
 library;
 
+import 'package:lexilingo_app/core/network/api_config.dart';
+
 class BadgeAssetMapper {
   BadgeAssetMapper._();
 
@@ -105,26 +107,47 @@ class BadgeAssetMapper {
   }
 }
 
-/// Badge image URLs for achievements (CDN-hosted)
-/// Loads badges from jsdelivr CDN for better performance
-class BadgeNetworkImages {
-  BadgeNetworkImages._();
+enum BadgeImageKind { asset, network, none }
 
-  static const String _baseUrl =
-      'https://cdn.jsdelivr.net/gh/InfinityZero3000/LexiLingo@feature/flutter-app/assets/badges';
+class BadgeImage {
+  const BadgeImage._(this.kind, this.value);
 
-  /// Get badge URL for an achievement from CDN
-  /// Returns null if no badge mapping exists
-  static String? getBadgeUrl(String achievementId) {
-    final filename = BadgeAssetMapper._badgeAssets[achievementId.toLowerCase()];
-    if (filename == null) return null;
-    return '$_baseUrl/$filename';
-  }
+  const BadgeImage.asset(String path) : this._(BadgeImageKind.asset, path);
+  const BadgeImage.network(String url) : this._(BadgeImageKind.network, url);
+  static const BadgeImage none = BadgeImage._(BadgeImageKind.none, null);
 
-  /// Check if achievement has a CDN badge URL
-  static bool hasCdnBadge(String achievementId) {
-    return BadgeAssetMapper._badgeAssets.containsKey(
-      achievementId.toLowerCase(),
+  final BadgeImageKind kind;
+  final String? value;
+}
+
+/// Decides what to draw for a badge: bundled asset by slug, then a
+/// `/media/...` upload, then an absolute URL, else nothing (placeholder).
+/// A `badge_icon` is never joined onto `assets/badges/`.
+BadgeImage resolveBadgeImage({
+  required String slug,
+  String? badgeIcon,
+  String? mediaBaseUrl,
+}) {
+  final asset = BadgeAssetMapper.getBadgeAsset(slug.trim());
+  if (asset != null) return BadgeImage.asset(asset);
+
+  final icon = badgeIcon?.trim() ?? '';
+  if (icon.isEmpty) return BadgeImage.none;
+
+  if (icon.startsWith('/media/')) {
+    final base = (mediaBaseUrl ?? ApiConfig.mediaBaseUrl).replaceAll(
+      RegExp(r'/+$'),
+      '',
     );
+    return BadgeImage.network('$base$icon');
   }
+
+  final uri = Uri.tryParse(icon);
+  if (uri != null &&
+      (uri.scheme == 'http' || uri.scheme == 'https') &&
+      uri.host.isNotEmpty) {
+    // Rows written before 2026-11 pin a branch that no longer exists.
+    return BadgeImage.network(icon.replaceFirst('@feature/', '@main/'));
+  }
+  return BadgeImage.none;
 }

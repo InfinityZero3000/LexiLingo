@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/services/user_scope_service.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/entities/notification_entity.dart';
@@ -124,7 +125,9 @@ class NotificationLocalDataSourceImpl implements NotificationLocalDataSource {
   @override
   Future<List<NotificationEntity>> getNotifications() async {
     final p = await prefs;
-    final jsonString = p.getString(_notificationsKey);
+    final jsonString = p.getString(
+      await UserScopeService.scopedKey(_notificationsKey),
+    );
     if (jsonString == null || jsonString.isEmpty) {
       return [];
     }
@@ -157,7 +160,10 @@ class NotificationLocalDataSourceImpl implements NotificationLocalDataSource {
     final jsonString = json.encode(jsonList);
 
     final p = await prefs;
-    await p.setString(_notificationsKey, jsonString);
+    await p.setString(
+      await UserScopeService.scopedKey(_notificationsKey),
+      jsonString,
+    );
   }
 
   /// Add a notification
@@ -202,7 +208,7 @@ class NotificationLocalDataSourceImpl implements NotificationLocalDataSource {
   @override
   Future<void> deleteAllNotifications() async {
     final p = await prefs;
-    await p.remove(_notificationsKey);
+    await p.remove(await UserScopeService.scopedKey(_notificationsKey));
   }
 
   /// Get unread count

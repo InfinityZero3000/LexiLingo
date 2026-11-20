@@ -1,7 +1,6 @@
 /// Achievement Widgets - UI components for displaying achievements
 library;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/features/achievements/presentation/theme/achievement_palette.dart';
@@ -112,7 +111,6 @@ class AchievementBadge extends StatelessWidget {
   final double size;
   final bool useNewStyle; // Toggle between old and new style
   final bool preferImageAsset; // Prefer image asset over generated badge
-  final bool useCdnFirst; // Prefer CDN over local assets
 
   const AchievementBadge({
     super.key,
@@ -122,71 +120,22 @@ class AchievementBadge extends StatelessWidget {
     this.size = 80,
     this.useNewStyle = true, // Default to new style
     this.preferImageAsset = true, // Default to prefer image assets
-    this.useCdnFirst =
-        kReleaseMode, // Use CDN in production, local-first in dev
   });
-
-  bool _isNetworkUrl(String value) {
-    final trimmed = value.trim();
-    if (trimmed.isEmpty) return false;
-    final uri = Uri.tryParse(trimmed);
-    return uri != null &&
-        (uri.scheme == 'http' || uri.scheme == 'https') &&
-        uri.host.isNotEmpty;
-  }
-
-  bool _looksLikeImageFileName(String value) {
-    final lower = value.toLowerCase().trim();
-    return lower.endsWith('.png') ||
-        lower.endsWith('.jpg') ||
-        lower.endsWith('.jpeg') ||
-        lower.endsWith('.webp') ||
-        lower.endsWith('.gif');
-  }
 
   @override
   Widget build(BuildContext context) {
-    final effectiveUseCdnFirst = useCdnFirst && !kIsWeb;
-
     if (preferImageAsset) {
-      // Prefer slug (stable ID) over id (UUID) for badge asset lookup
-      final lookupKey = (achievement.slug ?? achievement.id).trim();
-      final badgeIcon = achievement.badgeIcon?.trim();
-
-      final mappedAssetPath = BadgeAssetMapper.getBadgeAsset(lookupKey);
-      if (effectiveUseCdnFirst) {
-        // In production, try network first and fall back to local assets on error.
-        if (badgeIcon != null &&
-            badgeIcon.isNotEmpty &&
-            _isNetworkUrl(badgeIcon)) {
-          return _buildNetworkBadge(context, badgeIcon);
-        }
-
-        final cdnUrl = BadgeNetworkImages.getBadgeUrl(lookupKey);
-        if (cdnUrl != null) {
-          return _buildNetworkBadge(context, cdnUrl);
-        }
-      }
-
-      // Local mapped asset (deterministic and offline-safe).
-      if (mappedAssetPath != null) {
-        return _buildImageAssetBadge(context, mappedAssetPath);
-      }
-
-      // Allow raw filenames in DB, e.g. "course-graduate.png".
-      if (badgeIcon != null &&
-          badgeIcon.isNotEmpty &&
-          _looksLikeImageFileName(badgeIcon)) {
-        return _buildImageAssetBadge(context, 'assets/badges/$badgeIcon');
-      }
-
-      // If CDN-first is disabled, still allow explicit network URL from backend.
-      if (!effectiveUseCdnFirst &&
-          badgeIcon != null &&
-          badgeIcon.isNotEmpty &&
-          _isNetworkUrl(badgeIcon) &&
-          !kIsWeb) {
-        return _buildNetworkBadge(context, badgeIcon);
+      final image = resolveBadgeImage(
+        slug: achievement.slug ?? achievement.id,
+        badgeIcon: achievement.badgeIcon,
+      );
+      switch (image.kind) {
+        case BadgeImageKind.asset:
+          return _buildImageAssetBadge(context, image.value!);
+        case BadgeImageKind.network:
+          return _buildNetworkBadge(context, image.value!);
+        case BadgeImageKind.none:
+          break;
       }
     }
 

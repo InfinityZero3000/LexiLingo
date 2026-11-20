@@ -1,6 +1,7 @@
 import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/features/auth/presentation/user_session_sync.dart';
 import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import 'package:lexilingo_app/core/widgets/language_flag.dart';
 import 'package:flutter/services.dart';
@@ -28,6 +29,8 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  bool _signingOut = false;
+
   static const double _flagWidth = 48;
   static const double _flagHeight = 32;
 
@@ -862,7 +865,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
           // Sign out button
           InkWell(
-            onTap: () => _confirmSignOut(context),
+            onTap: _signingOut ? null : () => _confirmSignOut(context),
             child: Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppSpacing.lg,
@@ -892,11 +895,19 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                   const Spacer(),
-                  Icon(
-                    Icons.chevron_right,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    size: 20,
-                  ),
+                  if (_signingOut)
+                    const SizedBox(
+                      key: Key('settings.signingOut'),
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  else
+                    Icon(
+                      Icons.chevron_right,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      size: 20,
+                    ),
                 ],
               ),
             ),
@@ -1462,11 +1473,53 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     );
 
-    if (confirmed == true && context.mounted) {
-      await context.read<AuthProvider>().signOut();
-      if (context.mounted) {
-        Navigator.of(context).popUntil((route) => route.isFirst);
+    if (confirmed != true || !context.mounted || _signingOut) return;
+    final auth = context.read<AuthProvider>();
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final flush = UserSessionSync.beforeSignOut(context);
+    setState(() => _signingOut = true);
+    try {
+      final done = await performSignOut(
+        flushPending: () => flush,
+        signOut: auth.signOut,
+        isSignedOut: () => !auth.isAuthenticated,
+        popToRoot: () => navigator.popUntil((route) => route.isFirst),
+      );
+      if (!done) {
+        messenger.showSnackBar(
+          SnackBar(content: Text('errors.genericRetry'.tr())),
+        );
       }
+    } finally {
+      if (mounted) setState(() => _signingOut = false);
     }
   }
+}
+
+/// Deliberate sign-out, in the order that has no race.
+///
+/// Work still on its way goes out first, while the token is valid. Then the
+/// session ends. Only then, and only if it did end, does the app return to its
+/// first route: that pop makes the home screen refresh its progress, and it
+/// does so only for a signed-in learner, so popping earlier would fire requests
+/// that race the token being cleared (a 401 there reads as an expired session).
+/// `AuthProvider.signOut` swallows its errors and leaves the learner signed in;
+/// that is reported by returning false, with no pop.
+@visibleForTesting
+Future<bool> performSignOut({
+  required Future<void> Function() flushPending,
+  required Future<void> Function() signOut,
+  required bool Function() isSignedOut,
+  required void Function() popToRoot,
+}) async {
+  try {
+    await flushPending();
+  } catch (_) {
+    // Undelivered work is dropped; it must not stop the learner signing out.
+  }
+  await signOut();
+  if (!isSignedOut()) return false;
+  popToRoot();
+  return true;
 }

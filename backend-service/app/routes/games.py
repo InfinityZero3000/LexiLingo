@@ -34,7 +34,7 @@ from app.services.game_fsrs_service import (
 )
 from app.services.item_effects_service import ItemEffectsService
 from app.services.xp_service import award_xp_transaction, get_existing_xp_award
-from app.core.cache import build_cache_key, delete_cached, invalidate_cache
+from app.core.cache import invalidate_cache
 from app.services import check_achievements_for_user
 from app.services.streak_service import update_user_streak
 from app.services.proficiency_service import ProficiencyService
@@ -1731,15 +1731,6 @@ async def complete_game_session(
         )
         if unlocked_achievements:
             await db.commit()
-            await delete_cached(
-                build_cache_key(
-                    "achievements_me",
-                    user_id=str(current_user.id),
-                )
-            )
-            await delete_cached(
-                build_cache_key("wallet", user_id=str(current_user.id))
-            )
     except Exception:
         logger.exception(
             "Achievement evaluation failed after game session %s",

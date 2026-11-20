@@ -39,6 +39,7 @@ import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/features/achievements/presentation/screens/achievements_screen.dart';
 import 'package:lexilingo_app/features/achievements/presentation/providers/achievement_provider.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:lexilingo_app/features/auth/presentation/user_session_sync.dart';
 import 'package:lexilingo_app/features/auth/presentation/pages/reset_password_page.dart';
 import 'package:lexilingo_app/features/auth/presentation/pages/verify_email_page.dart';
 import 'package:lexilingo_app/core/navigation/token_routes.dart';
@@ -356,63 +357,53 @@ class _LexiLingoAppState extends State<LexiLingoApp>
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => di.sl<AuthProvider>()),
-        ChangeNotifierProvider(create: (_) => di.sl<UserProvider>()),
-        ChangeNotifierProvider(create: (_) => di.sl<HomeProvider>()),
+        UserSessionSync.provider(() => di.sl<UserProvider>()),
+        UserSessionSync.provider(() => di.sl<HomeProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<PromoBannerProvider>()),
-        ChangeNotifierProvider(create: (_) => di.sl<ProfileProvider>()),
-        ChangeNotifierProvider(create: (_) => di.sl<ChatProvider>()),
-        ChangeNotifierProvider(create: (_) => di.sl<StoryProvider>()),
-        ChangeNotifierProvider(create: (_) => di.sl<CourseProvider>()),
-        ChangeNotifierProvider(create: (_) => di.sl<LearningProvider>()),
-        ChangeNotifierProvider(create: (_) => di.sl<ProgressProvider>()),
-        ChangeNotifierProvider(create: (_) => di.sl<VocabProvider>()),
-        ChangeNotifierProvider(create: (_) => di.sl<FlashcardProvider>()),
-        ChangeNotifierProvider(create: (_) => di.sl<VoiceProvider>()),
-        ChangeNotifierProvider(
-          create: (_) => di.sl<SpeechRecognitionProvider>(),
-        ),
+        UserSessionSync.provider(() => di.sl<ProfileProvider>()),
+        UserSessionSync.provider(() => di.sl<ChatProvider>()),
+        UserSessionSync.provider(() => di.sl<StoryProvider>()),
+        UserSessionSync.provider(() => di.sl<CourseProvider>()),
+        UserSessionSync.provider(() => di.sl<LearningProvider>()),
+        UserSessionSync.provider(() => di.sl<ProgressProvider>()),
+        UserSessionSync.provider(() => di.sl<VocabProvider>()),
+        UserSessionSync.provider(() => di.sl<FlashcardProvider>()),
+        UserSessionSync.provider(() => di.sl<VoiceProvider>()),
+        UserSessionSync.provider(() => di.sl<SpeechRecognitionProvider>()),
         ChangeNotifierProvider(
           create: (_) => di.sl<TtsSettingsProvider>()..init(),
         ),
         // Loaded by UserSessionSync once someone is signed in; an eager load
         // here ran with no token and 401'd on every cold start.
-        ChangeNotifierProvider(create: (_) => di.sl<StreakProvider>()),
-        ChangeNotifierProvider(create: (_) => di.sl<DailyChallengesProvider>()),
+        UserSessionSync.provider(() => di.sl<StreakProvider>()),
+        UserSessionSync.provider(() => di.sl<DailyChallengesProvider>()),
         // No eager load: the Content tab calls load() when first opened.
-        ChangeNotifierProvider(create: (_) => di.sl<ContentActivityProvider>()),
-        ChangeNotifierProvider(create: (_) => di.sl<AchievementProvider>()),
-        ChangeNotifierProvider(create: (_) => di.sl<NotificationProvider>()),
-        ChangeNotifierProvider(create: (_) => di.sl<LevelProvider>()),
-        ChangeNotifierProvider(create: (_) => di.sl<ProficiencyProvider>()),
+        UserSessionSync.provider(() => di.sl<ContentActivityProvider>()),
+        UserSessionSync.provider(() => di.sl<AchievementProvider>()),
+        UserSessionSync.provider(() => di.sl<NotificationProvider>()),
+        UserSessionSync.provider(() => di.sl<LevelProvider>()),
+        UserSessionSync.provider(() => di.sl<ProficiencyProvider>()),
         ChangeNotifierProvider(create: (_) => di.sl<SettingsProvider>()),
-        ChangeNotifierProvider(create: (_) => di.sl<GamificationProvider>()),
-        ChangeNotifierProvider(create: (_) => di.sl<SocialProvider>()),
+        UserSessionSync.provider(() => di.sl<GamificationProvider>()),
+        UserSessionSync.provider(() => di.sl<SocialProvider>()),
         // Phase 1: YouTube Video Integration
-        ChangeNotifierProvider(create: (_) => di.sl<YouTubeProvider>()),
+        UserSessionSync.provider(() => di.sl<YouTubeProvider>()),
         // Phase 2: News Reading
-        ChangeNotifierProvider(create: (_) => di.sl<NewsProvider>()),
+        UserSessionSync.provider(() => di.sl<NewsProvider>()),
         // Phase 3: English Games + XP System
-        // On web: defer XP profile load to avoid blocking startup
-        ChangeNotifierProvider(
-          create: (_) {
-            final p = di.sl<GamesProvider>();
-            if (!kIsWeb) p.loadXPProfile();
-            return p;
-          },
-        ),
+        // The XP profile loads from UserSessionSync once someone is signed in.
+        UserSessionSync.provider(() => di.sl<GamesProvider>()),
         // Phase 4: Podcast
         // On web: defer curated podcast load (AudioService not available on web)
-        ChangeNotifierProvider(
-          create: (_) {
-            final p = di.sl<PodcastProvider>();
-            if (!kIsWeb) p.loadCuratedPodcasts();
-            return p;
-          },
-        ),
+        UserSessionSync.provider(() {
+          final p = di.sl<PodcastProvider>();
+          if (!kIsWeb) p.loadCuratedPodcasts();
+          return p;
+        }),
         // Phase 5: Book Reading
-        ChangeNotifierProvider(create: (_) => di.sl<BookProvider>()),
+        UserSessionSync.provider(() => di.sl<BookProvider>()),
         // Phase 6: Lexi Chat — Story Adventure
-        ChangeNotifierProvider(create: (_) => di.sl<LexiChatProvider>()),
+        UserSessionSync.provider(() => di.sl<LexiChatProvider>()),
       ],
       child: Consumer<SettingsProvider>(
         builder: (context, settings, child) {
