@@ -831,7 +831,8 @@ tbody tr:hover {
   box-shadow: 0 8px 16px rgba(255, 77, 0, 0.2);
 }
 
-.primary-button:disabled {
+.primary-button:disabled,
+.ghost-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
@@ -4775,5 +4776,205 @@ textarea:focus {
 }
 
 .cohort-cell-muted {
+  color: var(--muted);
+}
+
+.banner-drop {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px dashed var(--line-strong);
+}
+
+.banner-drop.dragging {
+  border-color: var(--accent);
+  background: var(--tint-orange);
+}
+
+.banner-preview {
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  overflow: hidden;
+  background: var(--panel-soft-2);
+}
+
+.banner-preview img,
+.banner-preview-empty {
+  display: block;
+  width: 100%;
+  /* Matches the learner app's hero banner (AspectRatio 16/7 in promo_banner_section.dart). */
+  aspect-ratio: 16 / 7;
+  object-fit: cover;
+}
+
+.banner-preview-empty {
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.banner-preview-text {
+  padding: 10px 12px;
+}
+
+/* Content Lab: tag input, choice editor, question picker */
+.tag-input {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.tag-input-box {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.tag-input-box:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+
+.tag-input-box input {
+  flex: 1;
+  min-width: 120px;
+  border: 0;
+  outline: 0;
+  padding: 6px 4px;
+  background: transparent;
+}
+
+.tag-input-box input:focus {
+  outline: 0;
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px 2px 10px;
+  border-radius: 12px;
+  background: var(--panel-soft-2);
+  color: var(--text);
+  font-size: 13px;
+}
+
+.tag-chip button {
+  min-width: 24px;
+  min-height: 24px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.tag-chip button:hover {
+  color: var(--ink-red);
+}
+
+.tag-chip button:focus-visible {
+  outline: 2px solid var(--accent);
+}
+
+.choice-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  min-width: 0;
+}
+
+.choice-editor legend {
+  padding: 0 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.choice-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.choice-row input[type="text"] {
+  flex: 1;
+  min-width: 0;
+}
+
+.choice-row input[type="radio"],
+.picker-item input[type="checkbox"] {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  accent-color: var(--accent);
+}
+
+.choice-row .ghost-button {
+  min-width: 44px;
+  min-height: 40px;
+}
+
+.picker-list {
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.form .picker-item {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.picker-item:last-child {
+  border-bottom: 0;
+}
+
+.picker-item:hover {
+  background: var(--panel-soft);
+}
+
+.picker-item-text {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.picker-random {
+  display: flex;
+  align-items: flex-end;
+}
+
+.picker-selected {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.picker-selected li::marker {
   color: var(--muted);
 }

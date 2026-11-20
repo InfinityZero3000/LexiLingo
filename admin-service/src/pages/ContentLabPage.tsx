@@ -2,6 +2,11 @@ import { useConfirm } from "../components/ConfirmDialog";
 import React, { useEffect, useRef, useState } from "react";
 import { SectionHeader } from "../components/SectionHeader";
 import { DataTable } from "../components/DataTable";
+import { TagInput } from "../components/TagInput";
+import { ChoiceEditor } from "../components/ChoiceEditor";
+import { QuestionPicker } from "../components/QuestionPicker";
+import { useI18n } from "../lib/i18n";
+import { isChoiceType, loadChoiceState, loadPlainAnswer, validateChoices } from "../lib/questionForm";
 import {
   type GrammarItem,
   type QuestionItem,
@@ -33,8 +38,29 @@ const tabs = [
 
 type TabKey = (typeof tabs)[number]["key"];
 
+const emptyGrammarForm = { title: "", level: "A1", topic: "", summary: "", content: "", tags: [] as string[] };
+const emptyQuestionForm = {
+  prompt: "",
+  question_type: "mcq",
+  difficulty_level: "A1",
+  explanation: "",
+  tags: [] as string[]
+};
+const emptyChoices = () => ["", ""];
+const emptyTestForm = {
+  title: "",
+  description: "",
+  level: "A1",
+  duration_minutes: 20,
+  passing_score: 70,
+  question_ids: [] as string[],
+  is_published: false
+};
+const BASE_QUESTION_TYPES = ["mcq", "fill_blank", "true_false"];
+
 export const ContentLabPage = () => {
   const confirm = useConfirm();
+  const { t } = useI18n();
   const [tab, setTab] = useState<TabKey>("grammar");
   const [grammar, setGrammar] = useState<GrammarItem[]>([]);
   const [questions, setQuestions] = useState<QuestionItem[]>([]);
@@ -52,32 +78,14 @@ export const ContentLabPage = () => {
   const questionFileRef = useRef<HTMLInputElement>(null);
   const testFileRef = useRef<HTMLInputElement>(null);
 
-  const [grammarForm, setGrammarForm] = useState({
-    title: "",
-    level: "A1",
-    topic: "",
-    summary: "",
-    content: "",
-    tags: ""
-  });
-  const [questionForm, setQuestionForm] = useState({
-    prompt: "",
-    question_type: "mcq",
-    difficulty_level: "A1",
-    options: "",
-    answer: "",
-    explanation: "",
-    tags: ""
-  });
-  const [testForm, setTestForm] = useState({
-    title: "",
-    description: "",
-    level: "A1",
-    duration_minutes: 20,
-    passing_score: 70,
-    question_ids: "",
-    is_published: false
-  });
+  const [grammarForm, setGrammarForm] = useState(emptyGrammarForm);
+  const [questionForm, setQuestionForm] = useState(emptyQuestionForm);
+  const [choices, setChoices] = useState<string[]>(emptyChoices);
+  const [correct, setCorrect] = useState<number | null>(null);
+  const [answerText, setAnswerText] = useState("");
+  const [answerUnmatched, setAnswerUnmatched] = useState(false);
+  const [triedSave, setTriedSave] = useState(false);
+  const [testForm, setTestForm] = useState(emptyTestForm);
 
   const loadAll = async () => {
     setLoading(true);
@@ -127,13 +135,13 @@ export const ContentLabPage = () => {
       topic: row.topic || "",
       summary: row.summary || "",
       content: row.content,
-      tags: (row.tags || []).join(", ")
+      tags: row.tags || []
     });
   };
 
   const handleCancelGrammar = () => {
     setEditingGrammarId(null);
-    setGrammarForm({ title: "", level: "A1", topic: "", summary: "", content: "", tags: "" });
+    setGrammarForm(emptyGrammarForm);
   };
 
   const handleCreateGrammar = async (event: React.FormEvent) => {
@@ -145,7 +153,7 @@ export const ContentLabPage = () => {
         topic: grammarForm.topic || undefined,
         summary: grammarForm.summary || undefined,
         content: grammarForm.content,
-        tags: grammarForm.tags.split(",").map((t) => t.trim()).filter(Boolean)
+        tags: grammarForm.tags
       };
       if (editingGrammarId) {
         await updateGrammar(editingGrammarId, payload);
@@ -165,37 +173,53 @@ export const ContentLabPage = () => {
       prompt: row.prompt,
       question_type: row.question_type,
       difficulty_level: row.difficulty_level,
-      options: row.options ? JSON.stringify(row.options) : "",
-      answer: row.answer !== null && row.answer !== undefined ? JSON.stringify(row.answer) : "",
       explanation: row.explanation || "",
-      tags: (row.tags || []).join(", ")
+      tags: row.tags || []
     });
+    setTriedSave(false);
+    if (isChoiceType(row.question_type)) {
+      const state = loadChoiceState(row.options, row.answer);
+      setChoices(state.options.length >= 2 ? state.options : [...state.options, ...emptyChoices()].slice(0, 2));
+      setCorrect(state.correct);
+      setAnswerUnmatched(state.unmatched);
+      setAnswerText("");
+    } else {
+      setChoices(loadChoiceState(row.options, null).options);
+      setCorrect(null);
+      setAnswerUnmatched(false);
+      setAnswerText(loadPlainAnswer(row.answer));
+    }
   };
 
   const handleCancelQuestion = () => {
     setEditingQuestionId(null);
-    setQuestionForm({
-      prompt: "",
-      question_type: "mcq",
-      difficulty_level: "A1",
-      options: "",
-      answer: "",
-      explanation: "",
-      tags: ""
-    });
+    setQuestionForm(emptyQuestionForm);
+    setChoices(emptyChoices());
+    setCorrect(null);
+    setAnswerText("");
+    setAnswerUnmatched(false);
+    setTriedSave(false);
   };
+
+  const choiceType = isChoiceType(questionForm.question_type);
+  const choiceProblems = choiceType ? validateChoices(choices, correct) : [];
 
   const handleCreateQuestion = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (choiceProblems.length > 0) {
+      setTriedSave(true);
+      return;
+    }
     try {
+      const options = choices.map((o) => o.trim()).filter(Boolean);
       const payload = {
         prompt: questionForm.prompt,
         question_type: questionForm.question_type,
         difficulty_level: questionForm.difficulty_level,
-        options: questionForm.options ? JSON.parse(questionForm.options) : undefined,
-        answer: questionForm.answer ? JSON.parse(questionForm.answer) : undefined,
+        options: choiceType ? options : options.length > 0 ? options : undefined,
+        answer: choiceType ? choices[correct as number].trim() : answerText.trim() || undefined,
         explanation: questionForm.explanation || undefined,
-        tags: questionForm.tags.split(",").map((t) => t.trim()).filter(Boolean)
+        tags: questionForm.tags
       };
       if (editingQuestionId) {
         await updateQuestion(editingQuestionId, payload);
@@ -217,22 +241,14 @@ export const ContentLabPage = () => {
       level: row.level,
       duration_minutes: row.duration_minutes,
       passing_score: row.passing_score,
-      question_ids: (row.question_ids || []).join(", "),
+      question_ids: row.question_ids || [],
       is_published: row.is_published
     });
   };
 
   const handleCancelTest = () => {
     setEditingTestId(null);
-    setTestForm({
-      title: "",
-      description: "",
-      level: "A1",
-      duration_minutes: 20,
-      passing_score: 70,
-      question_ids: "",
-      is_published: false
-    });
+    setTestForm(emptyTestForm);
   };
 
   const handleCreateTest = async (event: React.FormEvent) => {
@@ -244,9 +260,7 @@ export const ContentLabPage = () => {
         level: testForm.level,
         duration_minutes: Number(testForm.duration_minutes),
         passing_score: Number(testForm.passing_score),
-        question_ids: testForm.question_ids
-          ? testForm.question_ids.split(",").map((id) => id.trim()).filter(Boolean)
-          : undefined,
+        question_ids: testForm.question_ids,
         is_published: testForm.is_published
       };
       if (editingTestId) {
@@ -374,10 +388,12 @@ export const ContentLabPage = () => {
                 Content
                 <textarea rows={4} value={grammarForm.content} onChange={(e) => setGrammarForm({ ...grammarForm, content: e.target.value })} />
               </label>
-              <label>
-                Tags (csv)
-                <input value={grammarForm.tags} onChange={(e) => setGrammarForm({ ...grammarForm, tags: e.target.value })} />
-              </label>
+              <TagInput
+                label={t.contentLab.tags}
+                placeholder={t.contentLab.tagPlaceholder}
+                value={grammarForm.tags}
+                onChange={(tags) => setGrammarForm({ ...grammarForm, tags })}
+              />
               <div className="form-row">
                 <button className="primary-button" type="submit">{editingGrammarId ? "Cập nhật" : "Tạo"}</button>
                 {editingGrammarId && (
@@ -457,6 +473,9 @@ export const ContentLabPage = () => {
                   <option value="mcq">MCQ</option>
                   <option value="fill_blank">Fill Blank</option>
                   <option value="true_false">True/False</option>
+                  {!BASE_QUESTION_TYPES.includes(questionForm.question_type) && (
+                    <option value={questionForm.question_type}>{questionForm.question_type}</option>
+                  )}
                 </select>
               </label>
               <label>
@@ -469,22 +488,43 @@ export const ContentLabPage = () => {
                   ))}
                 </select>
               </label>
-              <label>
-                Options (JSON array)
-                <textarea rows={2} value={questionForm.options} onChange={(e) => setQuestionForm({ ...questionForm, options: e.target.value })} />
-              </label>
-              <label>
-                Answer (JSON)
-                <textarea rows={2} value={questionForm.answer} onChange={(e) => setQuestionForm({ ...questionForm, answer: e.target.value })} />
-              </label>
+              {choiceType ? (
+                <ChoiceEditor
+                  label={t.contentLab.options}
+                  options={choices}
+                  onOptionsChange={setChoices}
+                  correct={correct}
+                  onCorrectChange={(index) => {
+                    setCorrect(index);
+                    setAnswerUnmatched(false);
+                  }}
+                  problems={triedSave ? choiceProblems : []}
+                  warning={answerUnmatched ? t.contentLab.errAnswerMismatch : null}
+                />
+              ) : (
+                <>
+                  <label>
+                    {t.contentLab.answer}
+                    <input value={answerText} onChange={(e) => setAnswerText(e.target.value)} />
+                  </label>
+                  <ChoiceEditor
+                    label={t.contentLab.optionsOptional}
+                    options={choices}
+                    onOptionsChange={setChoices}
+                    correct={undefined}
+                  />
+                </>
+              )}
               <label>
                 Explanation
                 <textarea rows={2} value={questionForm.explanation} onChange={(e) => setQuestionForm({ ...questionForm, explanation: e.target.value })} />
               </label>
-              <label>
-                Tags (csv)
-                <input value={questionForm.tags} onChange={(e) => setQuestionForm({ ...questionForm, tags: e.target.value })} />
-              </label>
+              <TagInput
+                label={t.contentLab.tags}
+                placeholder={t.contentLab.tagPlaceholder}
+                value={questionForm.tags}
+                onChange={(tags) => setQuestionForm({ ...questionForm, tags })}
+              />
               <div className="form-row">
                 <button className="primary-button" type="submit">{editingQuestionId ? "Cập nhật" : "Tạo"}</button>
                 {editingQuestionId && (
@@ -590,13 +630,13 @@ export const ContentLabPage = () => {
                   />
                 </label>
               </div>
-              <label>
-                Question IDs (csv)
-                <input
-                  value={testForm.question_ids}
-                  onChange={(e) => setTestForm({ ...testForm, question_ids: e.target.value })}
-                />
-              </label>
+              <QuestionPicker
+                key={editingTestId ?? "new"}
+                examLevel={testForm.level}
+                selected={testForm.question_ids}
+                onChange={(question_ids) => setTestForm({ ...testForm, question_ids })}
+                known={questions}
+              />
               <label className="checkbox">
                 <input
                   type="checkbox"
