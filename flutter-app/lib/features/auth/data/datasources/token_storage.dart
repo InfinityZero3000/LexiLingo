@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../../core/services/account_data_cleaner.dart';
 import '../../../../core/services/background_sync_queue_service.dart';
 import '../../../../core/services/encrypted_local_cache_service.dart';
 import '../../../../core/services/user_scope_service.dart';
@@ -139,6 +140,7 @@ class TokenStorage {
       await BackgroundSyncQueueService.instance.clearUserScope(userScope);
     }
 
+    await AccountDataCleaner.clear();
     await UserScopeService.clearActiveUserId();
   }
 
@@ -152,6 +154,7 @@ class TokenStorage {
     }
 
     await EncryptedLocalCacheService.instance.clearAll();
+    await AccountDataCleaner.clear();
     // Clear pending mutation queue to avoid replay across users.
     await BackgroundSyncQueueService.instance.clearAll();
   }

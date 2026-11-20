@@ -204,7 +204,7 @@ void main() {
         tester,
         _FakeRepo(episodes: threeEpisodes),
         prefs: {
-          'podcast_listening_history': [
+          'u:anonymous:podcast_listening_history': [
             _historyJson('g1', position: 180),
             _historyJson('g2', position: 590, done: true),
           ],
@@ -433,7 +433,7 @@ void main() {
           ],
         ),
         prefs: {
-          'podcast_listening_history': [_historyJson('g1', position: 200)],
+          'u:anonymous:podcast_listening_history': [_historyJson('g1', position: 200)],
         },
         theme: buildTheme(),
         size: const Size(320, 640),

@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexilingo_app/core/network/api_config.dart';
+import 'package:lexilingo_app/core/services/user_scope_service.dart';
 import 'package:lexilingo_app/features/gamification/domain/repositories/gamification_repository.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/shop_item.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/wallet.dart';
@@ -31,6 +34,9 @@ class GamificationProvider extends ChangeNotifier {
   bool get isLoadingWallet => _isLoadingWallet;
   String? get walletError => _walletError;
   int get gems => _wallet?.gems ?? 0;
+
+  /// No balance and the last load failed: show a retry, not a fake 0.
+  bool get walletUnavailable => _wallet == null && _walletError != null;
   StarterRewardEntity? _pendingStarterReward;
   bool _isLoadingStarterReward = false;
 
@@ -116,25 +122,67 @@ class GamificationProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ============== Session ==============
+  /// Bumped by [reset]; a response that started before it belongs to the
+  /// previous account and is dropped.
+  int _epoch = 0;
+
+  /// Drops every per-user value so the next account never sees the last one's.
+  void reset() {
+    _epoch++;
+    _walletRequest++;
+    _wallet = null;
+    _transactions = [];
+    _isLoadingWallet = false;
+    _walletError = null;
+    _pendingStarterReward = null;
+    _isLoadingStarterReward = false;
+    _shopItems = [];
+    _isLoadingShop = false;
+    _shopError = null;
+    _selectedCategory = 'all';
+    _inventory = [];
+    _isLoadingInventory = false;
+    _inventoryError = null;
+    _leaderboards.clear();
+    _loadingLeaderboardLeagues.clear();
+    _leagueStatus = null;
+    _isLoadingLeagueStatus = false;
+    _leaderboardError = null;
+    _selectedLeague = 'bronze';
+    _leagueChangedFrom = null;
+    _leagueChangedTo = null;
+    notifyListeners();
+  }
+
   // ============== Wallet Methods ==============
+  int _walletRequest = 0;
+
   Future<void> loadWallet() async {
+    final request = ++_walletRequest;
     _isLoadingWallet = true;
     _walletError = null;
     notifyListeners();
     try {
-      _wallet = await _repository.getWallet();
+      final wallet = await _repository.getWallet();
+      if (request == _walletRequest) _wallet = wallet;
     } catch (e) {
-      _walletError = e.toString();
+      if (request == _walletRequest) _walletError = e.toString();
       debugPrint('Error loading wallet: $e');
     } finally {
-      _isLoadingWallet = false;
-      notifyListeners();
+      if (request == _walletRequest) {
+        _isLoadingWallet = false;
+        notifyListeners();
+      }
     }
   }
 
   Future<void> loadTransactions({int limit = 50}) async {
+    final epoch = _epoch;
     try {
-      _transactions = await _repository.getTransactions(limit: limit);
+      final transactions = await _repository.getTransactions(limit: limit);
+      if (epoch != _epoch) return;
+      _transactions = transactions;
       notifyListeners();
     } catch (e) {
       debugPrint('Error loading transactions: $e');
@@ -144,25 +192,31 @@ class GamificationProvider extends ChangeNotifier {
   Future<StarterRewardEntity?> loadPendingStarterReward() async {
     if (!_enableStarterReward) return null;
     if (_isLoadingStarterReward) return _pendingStarterReward;
+    final epoch = _epoch;
     _isLoadingStarterReward = true;
     notifyListeners();
     try {
-      _pendingStarterReward = await _repository.getPendingStarterReward();
-      return _pendingStarterReward;
+      final reward = await _repository.getPendingStarterReward();
+      if (epoch != _epoch) return null;
+      _pendingStarterReward = reward;
+      return reward;
     } catch (e) {
       debugPrint('Error loading starter reward: $e');
       return null;
     } finally {
-      _isLoadingStarterReward = false;
-      notifyListeners();
+      if (epoch == _epoch) {
+        _isLoadingStarterReward = false;
+        notifyListeners();
+      }
     }
   }
 
   Future<bool> acknowledgeStarterReward() async {
     if (!_enableStarterReward) return false;
     try {
+      final epoch = _epoch;
       final ok = await _repository.acknowledgeStarterReward();
-      if (ok) {
+      if (ok && epoch == _epoch) {
         _pendingStarterReward = null;
         notifyListeners();
       }
@@ -175,17 +229,21 @@ class GamificationProvider extends ChangeNotifier {
 
   // ============== Shop Methods ==============
   Future<void> loadShopItems() async {
+    final epoch = _epoch;
     _isLoadingShop = true;
     _shopError = null;
     notifyListeners();
     try {
-      _shopItems = await _repository.getShopItems();
+      final items = await _repository.getShopItems();
+      if (epoch == _epoch) _shopItems = items;
     } catch (e) {
-      _shopError = e.toString();
+      if (epoch == _epoch) _shopError = e.toString();
       debugPrint('Error loading shop items: $e');
     } finally {
-      _isLoadingShop = false;
-      notifyListeners();
+      if (epoch == _epoch) {
+        _isLoadingShop = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -249,17 +307,21 @@ class GamificationProvider extends ChangeNotifier {
 
   // ============== Inventory Methods ==============
   Future<void> loadInventory() async {
+    final epoch = _epoch;
     _isLoadingInventory = true;
     _inventoryError = null;
     notifyListeners();
     try {
-      _inventory = await _repository.getInventory();
+      final inventory = await _repository.getInventory();
+      if (epoch == _epoch) _inventory = inventory;
     } catch (e) {
-      _inventoryError = e.toString();
+      if (epoch == _epoch) _inventoryError = e.toString();
       debugPrint('Error loading inventory: $e');
     } finally {
-      _isLoadingInventory = false;
-      notifyListeners();
+      if (epoch == _epoch) {
+        _isLoadingInventory = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -310,46 +372,59 @@ class GamificationProvider extends ChangeNotifier {
   Future<void> loadLeaderboard({String? league}) async {
     final targetLeague = league ?? _selectedLeague;
     final targetKey = targetLeague.toLowerCase();
+    final epoch = _epoch;
     _selectedLeague = targetLeague;
     _loadingLeaderboardLeagues.add(targetKey);
     _leaderboardError = null;
     notifyListeners();
     try {
       final data = await _repository.getLeaderboard(targetLeague);
-      _leaderboards[targetKey] = data;
+      if (epoch == _epoch) _leaderboards[targetKey] = data;
     } catch (e) {
-      _leaderboardError = e.toString();
+      if (epoch == _epoch) _leaderboardError = e.toString();
       debugPrint('Error loading leaderboard: $e');
     } finally {
-      _loadingLeaderboardLeagues.remove(targetKey);
-      notifyListeners();
+      if (epoch == _epoch) {
+        _loadingLeaderboardLeagues.remove(targetKey);
+        notifyListeners();
+      }
     }
   }
 
   static const _leaguePrefKey = 'lexilingo.last_known_league';
 
   Future<void> loadLeagueStatus() async {
+    final epoch = _epoch;
     _isLoadingLeagueStatus = true;
     notifyListeners();
     try {
-      _leagueStatus = await _repository.getLeagueStatus();
-      await _detectLeagueChange(_leagueStatus!.league);
+      final status = await _repository.getLeagueStatus();
+      if (epoch != _epoch) return;
+      _leagueStatus = status;
+      await _detectLeagueChange(status.league, epoch);
     } catch (e) {
       debugPrint('Error loading league status: $e');
     } finally {
-      _isLoadingLeagueStatus = false;
-      notifyListeners();
+      if (epoch == _epoch) {
+        _isLoadingLeagueStatus = false;
+        notifyListeners();
+      }
     }
   }
 
-  Future<void> _detectLeagueChange(String currentLeague) async {
+  Future<void> _detectLeagueChange(String currentLeague, int epoch) async {
     final prefs = await SharedPreferences.getInstance();
-    final previous = prefs.getString(_leaguePrefKey);
+    // Per learner: a shared key is what let one account's league show up as a
+    // "league changed" banner on the next, and clearing it on sign-out raced a
+    // quick sign-in. A learner's own value is theirs to keep.
+    final key = await UserScopeService.scopedKey(_leaguePrefKey);
+    if (epoch != _epoch) return;
+    final previous = prefs.getString(key);
     if (previous != null && previous != currentLeague) {
       _leagueChangedFrom = previous;
       _leagueChangedTo = currentLeague;
     }
-    await prefs.setString(_leaguePrefKey, currentLeague);
+    await prefs.setString(key, currentLeague);
   }
 
   void setLeague(String league) {

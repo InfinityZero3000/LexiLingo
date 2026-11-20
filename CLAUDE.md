@@ -635,6 +635,48 @@ Adding a widget with `Card(`, `BoxDecoration(` or `showModalBottomSheet(` under
 `learner_surface_inventory_test` fails. `locale_keys.g.dart` is hand-appended on `dev`;
 regenerating it would drop keys still in use.
 
+## Flutter — per-account state (nothing of A's may be visible to B)
+
+On 2026-11-19 the same prod account showed 300 / 65 / 0 gems (the real balance was 0),
+badges came and went, and a second account tried to delete the first one's Lexi session
+(403). Cause: every root `ChangeNotifier` is an app-lifetime singleton and logout cleared
+only tokens plus seven providers. The rules that now hold it:
+
+- **One reset point: `UserSessionSync`** (`features/auth/presentation/user_session_sync.dart`).
+  A new root provider that holds per-user data gets a `reset()` and is added there; one
+  that holds none is added to the allowlist **with a reason** in
+  `test/features/auth/user_session_sync_guard_test.dart`, which fails otherwise. Register
+  it through `UserSessionSync.provider<T>()` — a reset must not construct a provider the
+  learner never opened. Stateful GetIt singletons (`KnownWordsService`,
+  `ListeningHistoryRecorder`, `PodcastAudioHandler`) are not providers, so the guard cannot
+  see them: add them to its hand-kept list and to `_resetServices`.
+- **An account switch is a sign-out.** `AuthWrapper` can see the user id change with no
+  signed-out frame in between (`SessionTracker`); it must run the same reset and the same
+  `AccountDataCleaner` before `afterSignIn`.
+- **Every async load that writes provider state checks `ResetEpoch`**
+  (`core/state/reset_epoch.dart`) after each `await`. A response that lands after `reset()`
+  belongs to the previous account and must be dropped, never re-queued — a retried flashcard
+  review would be sent under the next account's token.
+- **Storage: decide per key whether it is a cache or device-only data.** A cache of server
+  data is deleted on logout (`AccountDataCleaner`; per-user `LocalCacheService` entries
+  only, public offline caches stay). Device-only data (saved videos, podcast follows, book
+  progress, notifications, recents) is keyed `UserScopeService.scopedKey(...)`, and legacy
+  global values are claimed once by the first signed-in user (`setActiveUserId`) — never
+  deleted outright, never shown to a second account.
+- **Web has no persistent sync queue** (`BackgroundSyncQueueService` is off on web). Words
+  added on web live in a per-user pending list until `/vocabulary/collection/quick-save`
+  accepts them; a 400/409/422 drops the word, anything else keeps it. Never flush it under a
+  different account's token.
+- **A balance is never shown as 0 before it is known.** `GamificationProvider.wallet` is
+  null until loaded: the pill shows "—" (tap to retry on failure), the shop refuses to
+  decide "not enough gems" without it. The backend does not cache `/gamification/wallet` or
+  `/achievements/me`: they were stale for up to 30 s after any write that forgot to
+  invalidate, and `cache.py` once kept serving an in-memory copy after invalidation.
+- **Badge images resolve in this order** (`resolveBadgeImage`): bundled asset by slug →
+  `/media/...` via `ApiConfig.mediaBaseUrl` → absolute URL → placeholder. `achievements.badge_icon`
+  must never point at a git branch that may not exist (`@feature` did, 44 of 48 rows); the
+  backfill script and the admin page pin `@main`.
+
 ## Code Style
 
 - No comments unless the WHY is non-obvious

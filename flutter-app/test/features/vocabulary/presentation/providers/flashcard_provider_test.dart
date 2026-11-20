@@ -243,6 +243,93 @@ void main() {
       provider.dispose();
     });
 
+    test(
+      'ratings still queued at sign-out are never sent as the next account',
+      () async {
+        final repository = _RecordingVocabularyRepository()
+          ..due = [due('a'), due('b'), due('c')]
+          ..submitGate = Completer<void>();
+        final provider = build(repository);
+        await provider.startReviewSession();
+        await provider.submitReview(ReviewQuality.good); // a: on its way
+        await provider.submitReview(ReviewQuality.good); // b: waits behind a
+
+        provider.reset();
+        repository
+          ..due = [due('x')]
+          ..failSubmits = 0;
+        repository.submitGate!.complete();
+        await provider.startReviewSession();
+        await provider.submitReview(ReviewQuality.good);
+
+        expect(repository.sent, isNot(contains('b')));
+        expect(repository.sent, isNot(contains('c')));
+        expect(repository.sent.last, 'x');
+        provider.dispose();
+      },
+    );
+
+    test('a rating that fails after sign-out is not retried for the next '
+        'account', () async {
+      final repository = _RecordingVocabularyRepository()
+        ..due = [due('a'), due('b')]
+        ..submitGate = Completer<void>()
+        ..failSubmits = 1;
+      final provider = build(repository);
+      await provider.startReviewSession();
+      await provider.submitReview(ReviewQuality.good); // a: will fail
+
+      provider.reset();
+      repository.submitGate!.complete();
+      repository.due = [due('x')];
+      await provider.startReviewSession();
+      await provider.submitReview(ReviewQuality.good);
+
+      expect(repository.sent, ['x'], reason: 'a must not be re-queued');
+      provider.dispose();
+    });
+
+    test(
+      'flushDelivery lets a rating on its way arrive, within a bound',
+      () async {
+        final repository = _RecordingVocabularyRepository()
+          ..due = [due('a'), due('b')]
+          ..submitGate = Completer<void>();
+        final provider = build(repository);
+        await provider.startReviewSession();
+        await provider.submitReview(ReviewQuality.good);
+
+        final slow = provider.flushDelivery(
+          timeout: const Duration(milliseconds: 20),
+        );
+        await slow;
+        expect(repository.sent, isEmpty, reason: 'bounded: it gave up waiting');
+
+        final flushed = provider.flushDelivery();
+        repository.submitGate!.complete();
+        await flushed;
+        expect(repository.sent, ['a']);
+        provider.dispose();
+      },
+    );
+
+    test('ratings still unsent when the wait runs out are cancelled', () async {
+      final repository = _RecordingVocabularyRepository()
+        ..due = [due('a'), due('b'), due('c')]
+        ..submitGate = Completer<void>();
+      final provider = build(repository);
+      await provider.startReviewSession();
+      await provider.submitReview(ReviewQuality.good); // a: in flight
+      await provider.submitReview(ReviewQuality.good); // b: queued behind
+
+      await provider.flushDelivery(timeout: const Duration(milliseconds: 20));
+      repository.submitGate!.complete();
+      await pumpEventQueue();
+
+      expect(repository.sent, ['a'], reason: 'b is never sent');
+      provider.dispose();
+    });
+
     test('a word that cannot be loaded does not strand the session', () async {
       final repository = _RecordingVocabularyRepository()
         ..missingItems.add('gone')

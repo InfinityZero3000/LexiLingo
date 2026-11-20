@@ -670,7 +670,6 @@ async def claim_daily_reward(
     uid = str(current_user.id)
     await delete_cached(build_cache_key("progress_streak", user_id=uid))
     await delete_cached(build_cache_key("progress_me", user_id=uid))
-    await delete_cached(build_cache_key("wallet", user_id=uid))
 
     response_data = {
         'gems_awarded': reward_gems,

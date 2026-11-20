@@ -23,6 +23,10 @@ class ProfileProvider with ChangeNotifier {
     this.getRecentBadgesUseCase,
   });
 
+  /// Bumped by [clear]; a response that started before it belongs to the
+  /// previous account and is dropped.
+  int _epoch = 0;
+
   // State
   UserStatsEntity? _stats;
   List<WeeklyActivityEntity> _weeklyActivity = [];
@@ -49,11 +53,13 @@ class ProfileProvider with ChangeNotifier {
 
   /// Load user statistics
   Future<void> loadStats() async {
+    final epoch = _epoch;
     _isLoadingStats = true;
     _statsError = null;
     notifyListeners();
 
     final result = await getUserStatsUseCase();
+    if (epoch != _epoch) return;
 
     result.fold(
       (failure) {
@@ -71,11 +77,13 @@ class ProfileProvider with ChangeNotifier {
 
   /// Load weekly activity data
   Future<void> loadWeeklyActivity() async {
+    final epoch = _epoch;
     _isLoadingActivity = true;
     _activityError = null;
     notifyListeners();
 
     final result = await getWeeklyActivityUseCase();
+    if (epoch != _epoch) return;
 
     result.fold(
       (failure) {
@@ -99,6 +107,7 @@ class ProfileProvider with ChangeNotifier {
       return;
     }
 
+    final epoch = _epoch;
     _isLoadingBadges = true;
     _badgesError = null;
     notifyListeners();
@@ -107,10 +116,12 @@ class ProfileProvider with ChangeNotifier {
       final badges = await getRecentBadgesUseCase!.call(
         limit: _recentBadgesLimit,
       );
+      if (epoch != _epoch) return;
       _recentBadges = badges.take(_recentBadgesLimit).toList();
       _isLoadingBadges = false;
       notifyListeners();
     } catch (e) {
+      if (epoch != _epoch) return;
       _badgesError = e.toString();
       _isLoadingBadges = false;
       notifyListeners();
@@ -135,6 +146,7 @@ class ProfileProvider with ChangeNotifier {
 
   /// Clear all data
   void clear() {
+    _epoch++;
     _stats = null;
     _weeklyActivity = [];
     _recentBadges = [];

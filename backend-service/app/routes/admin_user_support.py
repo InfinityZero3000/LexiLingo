@@ -11,7 +11,6 @@ from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.cache import build_cache_key, delete_cached
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.dependencies import get_current_super_admin, require_permission
@@ -138,7 +137,6 @@ async def adjust_user_wallet(
             )
     balance = wallet.gems
     await db.commit()
-    await delete_cached(build_cache_key("wallet", user_id=str(user_id)))
     return ApiResponse(success=True, message="Wallet adjusted", data={"balance": balance, "delta": data.delta})
 
 

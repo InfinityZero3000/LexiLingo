@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import 'package:lexilingo_app/core/state/reset_epoch.dart';
 import '../../domain/entities/podcast_entities.dart';
 import '../repositories/podcast_repository.dart';
 
@@ -11,7 +12,7 @@ import '../repositories/podcast_repository.dart';
 /// screen is popped, and the place has to keep being recorded then too.
 /// The logic is plain method calls ([onPosition], [onPlaying], [onDuration]);
 /// [bind] only wires a handler's streams to them.
-class ListeningHistoryRecorder {
+class ListeningHistoryRecorder with ResetEpoch {
   ListeningHistoryRecorder(this._repository, {DateTime Function()? now})
     : _now = now ?? DateTime.now;
 
@@ -81,8 +82,10 @@ class ListeningHistoryRecorder {
     _listenedMs = 0;
     _duration = Duration(seconds: episode.durationSeconds);
     final guid = episode.guid;
+    final trackEpoch = resetEpoch;
     _queue = _queue
         .then((_) async {
+          if (isStale(trackEpoch)) return;
           final before = await _repository.getListeningHistory(guid);
           // Only carry the total forward if nothing was counted meanwhile.
           if (before != null && _episode?.guid == guid && _listenedMs == 0) {
@@ -92,6 +95,21 @@ class ListeningHistoryRecorder {
         .catchError((Object e) {
           _log(e);
         });
+  }
+
+  /// Sign-out or account switch: forget the episode being recorded and drop
+  /// saves still queued. The stream bindings stay; the next [track] resumes.
+  void reset() {
+    bumpResetEpoch();
+    _episode = null;
+    _podcastTitle = '';
+    _artworkUrl = '';
+    _position = Duration.zero;
+    _duration = Duration.zero;
+    _lastSaved = Duration.zero;
+    _lastTick = Duration.zero;
+    _listenedMs = 0;
+    _playing = false;
   }
 
   void onDuration(Duration duration) {
@@ -142,8 +160,13 @@ class ListeningHistoryRecorder {
       podcastTitle: _podcastTitle,
       artworkUrl: _artworkUrl,
     );
+    final epoch = resetEpoch;
     _queue = _queue
-        .then((_) => _repository.saveListeningHistory(entry))
+        .then((_) async {
+          // Saves resolve the learner at write time: one queued before a
+          // sign-out must not land in the next account's history.
+          if (!isStale(epoch)) await _repository.saveListeningHistory(entry);
+        })
         .catchError((Object e) {
           _log(e);
         });

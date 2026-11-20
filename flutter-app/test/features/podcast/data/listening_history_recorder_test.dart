@@ -259,4 +259,58 @@ void main() {
       expect(repo.saved.single.lastPositionSeconds, 2);
     });
   });
+
+  group('account reset', () {
+    test(
+      'a save queued before sign-out never reaches the next account',
+      () async {
+        recorder.track(
+          episode: _episode('a-episode'),
+          podcastTitle: 'A show',
+          artworkUrl: '',
+        );
+        await recorder.flush();
+        recorder.onPlaying(true);
+        recorder.onPosition(_s(10));
+        recorder.onPlaying(false); // queues a save
+
+        recorder.reset();
+        await recorder.flush();
+
+        expect(repo.saved, isEmpty);
+      },
+    );
+
+    test('playback that carries on after reset records nothing', () async {
+      recorder.track(
+        episode: _episode('a-episode'),
+        podcastTitle: 'A show',
+        artworkUrl: '',
+      );
+      recorder.reset();
+
+      recorder.onPlaying(true);
+      recorder.onPosition(_s(30));
+      recorder.onPlaying(false);
+      await recorder.flush();
+
+      expect(repo.saved, isEmpty);
+    });
+
+    test('the next episode is recorded normally after a reset', () async {
+      recorder.reset();
+      recorder.track(
+        episode: _episode('b-episode'),
+        podcastTitle: 'B show',
+        artworkUrl: '',
+      );
+      await recorder.flush();
+      recorder.onPlaying(true);
+      recorder.onPosition(_s(5));
+      recorder.onPlaying(false);
+      await recorder.flush();
+
+      expect(repo.saved.map((h) => h.episodeGuid).toSet(), {'b-episode'});
+    });
+  });
 }

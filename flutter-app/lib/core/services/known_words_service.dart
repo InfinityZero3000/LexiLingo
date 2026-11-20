@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:lexilingo_app/core/services/quick_save_vocabulary_service.dart';
+import 'package:lexilingo_app/core/state/reset_epoch.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/repositories/vocabulary_repository.dart';
 
 /// Single source of truth for "does the user already know this word" across
@@ -10,7 +11,7 @@ import 'package:lexilingo_app/features/vocabulary/domain/repositories/vocabulary
 /// state that reset on every app restart, even though the real answer
 /// (the user's saved vocabulary collection) was already persisted on the
 /// backend — this service is the missing read path, not a new store.
-class KnownWordsService {
+class KnownWordsService with ResetEpoch {
   final VocabularyRepository vocabularyRepository;
   Set<String>? _cache;
   StreamSubscription<QuickSaveVocabularyResult>? _quickSaveSub;
@@ -37,24 +38,30 @@ class KnownWordsService {
     // bigger saved collection will see words past this cut-off read as
     // "unknown" in reading/watching screens. Paginate here if that's ever
     // a real complaint.
+    final epoch = resetEpoch;
     final result = await vocabularyRepository.getUserCollection(limit: 500);
-    return result.fold(
-      (_) => _cache ?? const {},
-      (items) {
-        _cache = items
-            .map((item) => item.word?.trim().toLowerCase())
-            .whereType<String>()
-            .where((word) => word.isNotEmpty)
-            .toSet();
-        return _cache!;
-      },
-    );
+    if (isStale(epoch)) return const {};
+    return result.fold((_) => _cache ?? const {}, (items) {
+      _cache = items
+          .map((item) => item.word?.trim().toLowerCase())
+          .whereType<String>()
+          .where((word) => word.isNotEmpty)
+          .toSet();
+      return _cache!;
+    });
   }
 
   void addKnownWord(String word) {
     final normalized = word.trim().toLowerCase();
     if (normalized.isEmpty) return;
     _cache = {...?_cache, normalized};
+  }
+
+  /// Sign-out or account switch: the next learner starts with no known words
+  /// and an answer still in flight for the previous one is dropped.
+  void reset() {
+    bumpResetEpoch();
+    _cache = null;
   }
 
   void dispose() {

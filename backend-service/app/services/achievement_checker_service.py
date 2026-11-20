@@ -23,7 +23,6 @@ from app.models.proficiency import SkillDailyStat, SkillType
 
 logger = logging.getLogger(__name__)
 
-
 # Mapping of triggers to achievement condition types
 TRIGGER_CONDITIONS = {
     "lesson_complete": [

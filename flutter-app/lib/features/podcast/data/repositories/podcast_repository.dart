@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/services/user_scope_service.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
@@ -14,8 +15,9 @@ import '../../domain/entities/podcast_entities.dart';
 Uri podcastAudioUri(String audioUrl) {
   final direct = Uri.parse(audioUrl);
   if (!direct.hasScheme) return direct;
-  return Uri.parse('${ApiConfig.baseUrl}/podcasts/audio')
-      .replace(queryParameters: {'url': audioUrl});
+  return Uri.parse(
+    '${ApiConfig.baseUrl}/podcasts/audio',
+  ).replace(queryParameters: {'url': audioUrl});
 }
 
 /// Repository for Podcast feature — handles API calls, local SQLite cache,
@@ -34,6 +36,10 @@ class PodcastRepository {
   PodcastRepository({http.Client? client, LocalCacheService? cache})
     : _client = client ?? http.Client(),
       _cache = cache ?? LocalCacheService.instance;
+
+  /// Follows and listening history are the learner's own and not on the
+  /// server: keyed by user, so they never show to the next account.
+  Future<String> _k(String base) => UserScopeService.scopedKey(base);
 
   String get _baseUrl => '${ApiConfig.baseUrl}/podcasts';
 
@@ -194,7 +200,8 @@ class PodcastRepository {
   Future<List<ListeningHistory>> getRecentListening() async {
     final prefs = await SharedPreferences.getInstance();
     final entries = <ListeningHistory>[];
-    for (final raw in prefs.getStringList(_historyKey) ?? const <String>[]) {
+    for (final raw
+        in prefs.getStringList(await _k(_historyKey)) ?? const <String>[]) {
       try {
         entries.add(
           ListeningHistory.fromJson(jsonDecode(raw) as Map<String, dynamic>),
@@ -235,7 +242,7 @@ class PodcastRepository {
       ...all.where((h) => h.episodeGuid != history.episodeGuid),
     ].take(historyCap);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_historyKey, [
+    await prefs.setStringList(await _k(_historyKey), [
       for (final h in next) jsonEncode(h.toJson()),
     ]);
   }
@@ -244,7 +251,7 @@ class PodcastRepository {
   Future<void> removeListeningHistory(String episodeGuid) async {
     final all = await getRecentListening();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_historyKey, [
+    await prefs.setStringList(await _k(_historyKey), [
       for (final h in all)
         if (h.episodeGuid != episodeGuid) jsonEncode(h.toJson()),
     ]);
@@ -255,7 +262,7 @@ class PodcastRepository {
   /// Get all podcasts the user is following from local SharedPreferences.
   Future<List<UserPodcastFollow>> getFollowedPodcasts() async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getStringList(_followsKey) ?? [];
+    final raw = prefs.getStringList(await _k(_followsKey)) ?? [];
     return raw
         .map(
           (s) =>
@@ -269,7 +276,7 @@ class PodcastRepository {
   /// Silently ignores duplicates (matched by [feedUrl]).
   Future<void> followPodcast(Podcast podcast) async {
     final prefs = await SharedPreferences.getInstance();
-    final existing = prefs.getStringList(_followsKey) ?? [];
+    final existing = prefs.getStringList(await _k(_followsKey)) ?? [];
 
     final alreadyFollowed = existing.any((s) {
       final decoded = jsonDecode(s) as Map<String, dynamic>;
@@ -285,26 +292,26 @@ class PodcastRepository {
     );
 
     existing.add(jsonEncode(follow.toJson()));
-    await prefs.setStringList(_followsKey, existing);
+    await prefs.setStringList(await _k(_followsKey), existing);
   }
 
   /// Remove a followed podcast from local SharedPreferences.
   Future<void> unfollowPodcast(String feedUrl) async {
     final prefs = await SharedPreferences.getInstance();
-    final existing = prefs.getStringList(_followsKey) ?? [];
+    final existing = prefs.getStringList(await _k(_followsKey)) ?? [];
 
     final updated = existing.where((s) {
       final decoded = jsonDecode(s) as Map<String, dynamic>;
       return decoded['feed_url'] != feedUrl;
     }).toList();
 
-    await prefs.setStringList(_followsKey, updated);
+    await prefs.setStringList(await _k(_followsKey), updated);
   }
 
   /// Check whether the user is currently following a podcast.
   Future<bool> isFollowing(String feedUrl) async {
     final prefs = await SharedPreferences.getInstance();
-    final existing = prefs.getStringList(_followsKey) ?? [];
+    final existing = prefs.getStringList(await _k(_followsKey)) ?? [];
     return existing.any((s) {
       final decoded = jsonDecode(s) as Map<String, dynamic>;
       return decoded['feed_url'] == feedUrl;

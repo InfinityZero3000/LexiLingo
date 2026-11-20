@@ -1027,10 +1027,6 @@ async def send_gift_to_user(
     db.add(notification)
     await db.commit()
 
-    # 4. Invalidate wallet cache
-    from app.core.cache import delete_cached, build_cache_key
-    await delete_cached(build_cache_key("wallet", user_id=str(user_id)))
-
     return ApiResponse(
         success=True,
         message=f"Gift successfully sent: {gift_desc}",

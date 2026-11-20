@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:lexilingo_app/core/state/reset_epoch.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_detail_entity.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_category_entity.dart';
@@ -11,7 +12,7 @@ import 'package:lexilingo_app/features/course/domain/usecases/get_enrolled_cours
 
 /// Course Provider
 /// Manages course state and business logic for UI
-class CourseProvider with ChangeNotifier {
+class CourseProvider with ChangeNotifier, ResetEpoch {
   final GetCoursesUseCase getCoursesUseCase;
   final GetCourseDetailUseCase getCourseDetailUseCase;
   final EnrollInCourseUseCase enrollInCourseUseCase;
@@ -380,6 +381,7 @@ class CourseProvider with ChangeNotifier {
 
     // Progress and lesson ticks change whenever the learner studies, so the
     // cache only paints the screen instantly; the fetch below always runs.
+    final epoch = resetEpoch;
     final cached = _detailCache[courseId];
     _wantedDetailId = courseId;
     if (cached != null) {
@@ -397,6 +399,7 @@ class CourseProvider with ChangeNotifier {
 
     try {
       final result = await getCourseDetailUseCase(courseId);
+      if (isStale(epoch)) return;
 
       result.fold(
         (failure) {
@@ -413,26 +416,31 @@ class CourseProvider with ChangeNotifier {
         },
       );
     } catch (e) {
-      if (cached == null && _wantedDetailId == courseId) {
+      if (!isStale(epoch) && cached == null && _wantedDetailId == courseId) {
         _detailError = e.toString();
       }
     } finally {
       // A background refresh never set the flag, so it must not clear the
-      // flag of the course the learner opened meanwhile.
-      if (cached == null) _isLoadingDetail = false;
-      if (_refreshingDetailId == courseId) _refreshingDetailId = null;
-      notifyListeners();
+      // flag of the course the learner opened meanwhile. After a reset the
+      // flags already belong to whoever loads next.
+      if (!isStale(epoch)) {
+        if (cached == null) _isLoadingDetail = false;
+        if (_refreshingDetailId == courseId) _refreshingDetailId = null;
+        notifyListeners();
+      }
     }
   }
 
   /// Enroll in a course
   Future<bool> enrollInCourse(String courseId) async {
+    final epoch = resetEpoch;
     _isEnrolling = true;
     _enrollmentError = null;
     _enrollmentSuccess = null;
     notifyListeners();
 
     final result = await enrollInCourseUseCase(courseId);
+    if (isStale(epoch)) return false;
 
     return result.fold(
       (failure) {
@@ -496,7 +504,9 @@ class CourseProvider with ChangeNotifier {
     _categoriesError = null;
     notifyListeners();
 
+    final epoch = resetEpoch;
     final result = await getCategoriesUseCase(activeOnly: activeOnly);
+    if (isStale(epoch)) return;
 
     result.fold(
       (failure) {
@@ -526,11 +536,13 @@ class CourseProvider with ChangeNotifier {
     if (!append) _categoryCourses = [];
     notifyListeners();
 
+    final epoch = resetEpoch;
     final result = await getCoursesByCategoryUseCase(
       categoryId: categoryId,
       page: page,
       pageSize: 20,
     );
+    if (isStale(epoch)) return;
 
     result.fold(
       (failure) => _categoryCoursesError = _getErrorMessage(failure),
@@ -560,7 +572,9 @@ class CourseProvider with ChangeNotifier {
 
     notifyListeners();
 
+    final epoch = resetEpoch;
     final result = await getEnrolledCoursesUseCase(page: page, pageSize: 20);
+    if (isStale(epoch)) return;
 
     result.fold(
       (failure) {
@@ -589,8 +603,17 @@ class CourseProvider with ChangeNotifier {
 
   /// Reset state
   void reset() {
+    bumpResetEpoch();
     _courses = [];
     _categoryCourses = [];
+    _enrolledCourses = [];
+    _enrolledError = null;
+    _isLoadingEnrolled = false;
+    _isLoadingCategoryCourses = false;
+    _categoryCoursesError = null;
+    _isLoadingCategories = false;
+    _categoryPage = 1;
+    _categoryTotalPages = 1;
     _coursesLoadedAt = null;
     _coursesRequestId++;
     _dataVersion++;

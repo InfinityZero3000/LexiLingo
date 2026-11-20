@@ -10,6 +10,7 @@ import 'package:lexilingo_app/features/mistakes/domain/mistake_notebook_entry.da
 
 import '../../data/repositories/book_repository.dart';
 import '../../domain/entities/book_entities.dart';
+import 'package:lexilingo_app/core/state/reset_epoch.dart';
 
 /// Reader pages per quiz section; the last section may be shorter.
 const int kPagesPerQuizSection = 10;
@@ -104,7 +105,7 @@ abstract final class QuizSections {
 /// State management for the Book Reading feature.
 ///
 /// Phase 5: Book Reading.
-class BookProvider extends ChangeNotifier {
+class BookProvider extends ChangeNotifier with ResetEpoch {
   final BookRepository _repository;
   final MistakeNotebookRepository _mistakeRepository;
   final SkillEventRecorder _skillRecorder;
@@ -245,19 +246,23 @@ class BookProvider extends ChangeNotifier {
 
   /// Load curated recommended books, optionally filtered by CEFR level.
   Future<void> loadRecommendedBooks({String? cefrLevel}) async {
+    final epoch = resetEpoch;
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      _recommendedBooks = await _repository.getRecommendedBooks(
-        cefrLevel: cefrLevel,
-      );
+      final books = await _repository.getRecommendedBooks(cefrLevel: cefrLevel);
+      if (isStale(epoch)) return;
+      _recommendedBooks = books;
     } catch (e) {
+      if (isStale(epoch)) return;
       _error = e.toString();
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      if (!isStale(epoch)) {
+        _isLoading = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -329,6 +334,7 @@ class BookProvider extends ChangeNotifier {
     if (_levelLoadingMore[level] == true) return;
     if (_levelHasMore[level] == false) return;
 
+    final epoch = resetEpoch;
     _levelLoadingMore[level] = true;
     notifyListeners();
 
@@ -342,7 +348,7 @@ class BookProvider extends ChangeNotifier {
       );
       // The topic filter clears every level's pages; a reply for the old
       // topic would otherwise be appended to the new topic's shelf.
-      if (topic != _selectedTopic) return;
+      if (topic != _selectedTopic || isStale(epoch)) return;
       final have = {for (final b in _levelBooks[level] ?? const <Book>[]) b.id};
       _levelBooks[level] = [
         ...(_levelBooks[level] ?? []),
@@ -353,8 +359,10 @@ class BookProvider extends ChangeNotifier {
     } catch (_) {
       // Silently ignore — curated books remain visible
     } finally {
-      _levelLoadingMore[level] = false;
-      notifyListeners();
+      if (!isStale(epoch)) {
+        _levelLoadingMore[level] = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -406,22 +414,27 @@ class BookProvider extends ChangeNotifier {
     final book = _currentBook;
     if (book == null) return;
 
+    final epoch = resetEpoch;
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      await _loadText(book, charsPerPage);
+      await _loadText(book, charsPerPage, epoch);
     } catch (e) {
+      if (isStale(epoch)) return;
       _error = e.toString();
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      if (!isStale(epoch)) {
+        _isLoading = false;
+        notifyListeners();
+      }
     }
   }
 
-  Future<void> _loadText(Book book, int charsPerPage) async {
+  Future<void> _loadText(Book book, int charsPerPage, int epoch) async {
     var text = await _repository.fetchBookText(book);
+    if (isStale(epoch)) return;
 
     // Strip Project Gutenberg header/footer boilerplate
     text = _stripGutenbergBoilerplate(text);
@@ -580,7 +593,9 @@ class BookProvider extends ChangeNotifier {
     final book = _currentBook;
     if (book == null) return;
 
+    final epoch = resetEpoch;
     final isMarked = await _repository.isBookmarked(book.id, _currentPage);
+    if (isStale(epoch)) return;
     if (isMarked) {
       await _repository.removeBookmark(book.id, _currentPage);
     } else {
@@ -593,7 +608,9 @@ class BookProvider extends ChangeNotifier {
         ),
       );
     }
-    _bookmarks = await _repository.getBookmarks(book.id);
+    final marks = await _repository.getBookmarks(book.id);
+    if (isStale(epoch)) return;
+    _bookmarks = marks;
     notifyListeners();
   }
 
@@ -622,18 +639,24 @@ class BookProvider extends ChangeNotifier {
     final book = _currentBook;
     if (book == null) return;
 
+    final epoch = resetEpoch;
     _isDownloading = true;
     _error = null;
     notifyListeners();
 
     try {
-      _downloadedPath = await _repository.downloadBook(book);
+      final path = await _repository.downloadBook(book);
+      if (isStale(epoch)) return;
+      _downloadedPath = path;
     } catch (e) {
+      if (isStale(epoch)) return;
       _error = e.toString();
       debugPrint('BookProvider.downloadBook: $e');
     } finally {
-      _isDownloading = false;
-      notifyListeners();
+      if (!isStale(epoch)) {
+        _isDownloading = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -659,7 +682,7 @@ class BookProvider extends ChangeNotifier {
 
     try {
       if (_pages.isEmpty) {
-        await _loadText(book, 2000);
+        await _loadText(book, 2000, resetEpoch);
         if (token != _quizLoadToken) return;
         if (_pages.isEmpty) {
           _quizError = 'Book text unavailable';
@@ -809,8 +832,11 @@ class BookProvider extends ChangeNotifier {
   // ── Continue reading ───────────────────────────────────────
 
   Future<void> loadContinueReading() async {
+    final epoch = resetEpoch;
     try {
-      _continueReading = await _repository.getContinueReading();
+      final shelf = await _repository.getContinueReading();
+      if (isStale(epoch)) return;
+      _continueReading = shelf;
       notifyListeners();
     } catch (e) {
       debugPrint('Failed to load continue reading: $e');
@@ -820,18 +846,24 @@ class BookProvider extends ChangeNotifier {
   // ── Saved Books ────────────────────────────────────────────
 
   Future<void> loadSavedBooks() async {
-    _savedBooks = await _repository.getSavedBooks();
+    final epoch = resetEpoch;
+    final saved = await _repository.getSavedBooks();
+    if (isStale(epoch)) return;
+    _savedBooks = saved;
     notifyListeners();
   }
 
   bool isBookSaved(String bookId) => _savedBooks.any((b) => b.id == bookId);
 
   Future<void> toggleSaveBook(Book book) async {
+    final epoch = resetEpoch;
     if (isBookSaved(book.id)) {
       await _repository.unsaveBook(book.id);
+      if (isStale(epoch)) return;
       _savedBooks = _savedBooks.where((b) => b.id != book.id).toList();
     } else {
       await _repository.saveBook(book);
+      if (isStale(epoch)) return;
       if (!_savedBooks.any((b) => b.id == book.id)) {
         _savedBooks = [..._savedBooks, book];
       }
@@ -843,6 +875,43 @@ class BookProvider extends ChangeNotifier {
 
   void clearError() {
     _error = null;
+    notifyListeners();
+  }
+
+  void reset() {
+    bumpResetEpoch();
+    _searchDebounce?.cancel();
+    _searchToken++;
+    _quizLoadToken++;
+    _recommendedBooks = [];
+    _searchResults = [];
+    _selectedCefrLevel = null;
+    _selectedTopic = null;
+    _levelBooks.clear();
+    _levelPage.clear();
+    _levelLoadingMore.clear();
+    _levelHasMore.clear();
+    _currentBook = null;
+    _bookText = null;
+    _pages = [];
+    _currentPage = 0;
+    _bookmarks = [];
+    _currentProgress = null;
+    _currentQuiz = null;
+    _quizCompleted = false;
+    _quizScore = 0;
+    _isLoading = false;
+    _isQuizLoading = false;
+    _quizError = null;
+    _isSearching = false;
+    _isDownloading = false;
+    _downloadedPath = null;
+    _error = null;
+    _openFailed = false;
+    _savedBooks = [];
+    _continueReading = [];
+    _snapshotted.clear();
+    _awardedMilestones.clear();
     notifyListeners();
   }
 

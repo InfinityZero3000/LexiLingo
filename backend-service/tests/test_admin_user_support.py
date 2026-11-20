@@ -1,7 +1,6 @@
 """Support tools: wallet ledger, manual adjustments, admin-granted premium (real SQL, in-memory SQLite)."""
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
@@ -55,12 +54,6 @@ def _request():
 
 async def _audits(db):
     return (await db.execute(select(AuditLog))).scalars().all()
-
-
-@pytest.fixture(autouse=True)
-def _no_cache():
-    with patch.object(support, "delete_cached", new=AsyncMock()):
-        yield
 
 
 # ── wallet ────────────────────────────────────────────────────────────────

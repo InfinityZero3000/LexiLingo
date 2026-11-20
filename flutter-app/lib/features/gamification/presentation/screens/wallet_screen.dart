@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:lexilingo_app/features/gamification/presentation/providers/gamification_provider.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/wallet.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/widgets/error_widget.dart';
 
 /// Wallet Screen
 /// Displays gem balance and transaction history
@@ -82,24 +83,43 @@ class _WalletScreenState extends State<WalletScreen> {
                                 ),
                               ),
                               const SizedBox(height: AppSpacing.sm),
-                              // Balance — animates to the new total on change
-                              // (no key: lets it tween from the old value, not
-                              // reset to 0, so top-ups read as a smooth count).
-                              TweenAnimationBuilder<int>(
-                                tween: IntTween(begin: 0, end: provider.gems),
-                                duration: const Duration(milliseconds: 600),
-                                curve: Curves.easeOutCubic,
-                                builder: (_, value, __) => Text(
-                                  '$value',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .displaySmall
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.surfaceLight,
-                                      ),
+                              // Balance — animates to the new total on change.
+                              if (provider.wallet == null)
+                                Semantics(
+                                  label:
+                                      (provider.walletUnavailable
+                                              ? 'errors.loadFailed'
+                                              : 'common.loading')
+                                          .tr(),
+                                  child: Text(
+                                    '—',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .displaySmall
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.surfaceLight,
+                                        ),
+                                  ),
+                                )
+                              else
+                                // No begin: the first build shows the balance
+                                // as is, later changes tween from the old one.
+                                TweenAnimationBuilder<int>(
+                                  tween: IntTween(end: provider.gems),
+                                  duration: const Duration(milliseconds: 600),
+                                  curve: Curves.easeOutCubic,
+                                  builder: (_, value, __) => Text(
+                                    '$value',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .displaySmall
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.surfaceLight,
+                                        ),
+                                  ),
                                 ),
-                              ),
                               const SizedBox(height: 2),
                               Text(
                                 'gamification.gems'.tr(),
@@ -124,27 +144,37 @@ class _WalletScreenState extends State<WalletScreen> {
                 SliverToBoxAdapter(
                   child: Container(
                     padding: const EdgeInsets.all(AppSpacing.lg),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: _buildStatCard(
-                            icon: Icons.arrow_upward,
-                            color: AppColors.greenSuccessBright,
-                            label: 'gamification.earned'.tr(),
-                            value: '${provider.wallet?.totalEarned ?? 0}',
+                    child: provider.walletUnavailable
+                        ? ErrorDisplayWidget.fromMessage(
+                            message: 'errors.loadFailed'.tr(),
+                            onRetry: provider.loadWallet,
+                            compact: true,
+                          )
+                        : Row(
+                            children: [
+                              Expanded(
+                                child: _buildStatCard(
+                                  icon: Icons.arrow_upward,
+                                  color: AppColors.greenSuccessBright,
+                                  label: 'gamification.earned'.tr(),
+                                  value:
+                                      provider.wallet?.totalEarned.toString() ??
+                                      '—',
+                                ),
+                              ),
+                              const SizedBox(width: AppSpacing.md),
+                              Expanded(
+                                child: _buildStatCard(
+                                  icon: Icons.arrow_downward,
+                                  color: AppColors.orange,
+                                  label: 'gamification.spent'.tr(),
+                                  value:
+                                      provider.wallet?.totalSpent.toString() ??
+                                      '—',
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(width: AppSpacing.md),
-                        Expanded(
-                          child: _buildStatCard(
-                            icon: Icons.arrow_downward,
-                            color: AppColors.orange,
-                            label: 'gamification.spent'.tr(),
-                            value: '${provider.wallet?.totalSpent ?? 0}',
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
 

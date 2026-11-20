@@ -38,33 +38,8 @@ class _RecentBadgesSectionState extends State<RecentBadgesSection>
     super.dispose();
   }
 
-  bool _hasRenderableBadgeImage(UserAchievementEntity badge) {
-    final achievement = badge.achievement;
-
-    if (achievement.category.toLowerCase() == 'xp') {
-      return false;
-    }
-
-    final networkBadge = achievement.badgeIcon?.trim();
-    final networkBadgeUri = networkBadge != null && networkBadge.isNotEmpty
-        ? Uri.tryParse(networkBadge)
-        : null;
-    final hasValidNetworkBadge =
-        networkBadgeUri != null &&
-        (networkBadgeUri.scheme == 'http' ||
-            networkBadgeUri.scheme == 'https') &&
-        networkBadgeUri.host.isNotEmpty;
-    if (hasValidNetworkBadge) {
-      return true;
-    }
-
-    final lookupKey = (achievement.slug ?? achievement.id).trim();
-    if (lookupKey.isEmpty) {
-      return false;
-    }
-
-    return BadgeAssetMapper.hasRenderableBadge(lookupKey);
-  }
+  bool _isVisible(UserAchievementEntity badge) =>
+      badge.achievement.category.toLowerCase() != 'xp';
 
   /// Build empty badges placeholder
   Widget _buildEmptyBadges() {
@@ -168,46 +143,38 @@ class _RecentBadgesSectionState extends State<RecentBadgesSection>
     );
   }
 
+  /// Only supplies the alpha the shine is masked with; the badge itself, or
+  /// its placeholder, is drawn by [AchievementBadge] underneath.
   Widget _buildBadgeShineMask(UserAchievementEntity badge, double badgeSize) {
     final achievement = badge.achievement;
-
-    final networkBadge = achievement.badgeIcon?.trim();
-    final networkBadgeUri = networkBadge != null && networkBadge.isNotEmpty
-        ? Uri.tryParse(networkBadge)
-        : null;
-    final hasValidNetworkBadge =
-        networkBadgeUri != null &&
-        (networkBadgeUri.scheme == 'http' ||
-            networkBadgeUri.scheme == 'https') &&
-        networkBadgeUri.host.isNotEmpty;
-
-    if (hasValidNetworkBadge) {
-      return ClipOval(
-        child: Image.network(
-          networkBadge!,
-          width: badgeSize,
-          height: badgeSize,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-        ),
-      );
+    final image = resolveBadgeImage(
+      slug: achievement.slug ?? achievement.id,
+      badgeIcon: achievement.badgeIcon,
+    );
+    switch (image.kind) {
+      case BadgeImageKind.asset:
+        return ClipOval(
+          child: Image.asset(
+            image.value!,
+            width: badgeSize,
+            height: badgeSize,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+          ),
+        );
+      case BadgeImageKind.network:
+        return ClipOval(
+          child: Image.network(
+            image.value!,
+            width: badgeSize,
+            height: badgeSize,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+          ),
+        );
+      case BadgeImageKind.none:
+        return const SizedBox.shrink();
     }
-
-    final lookupKey = (achievement.slug ?? achievement.id).trim();
-    final assetPath = BadgeAssetMapper.getBadgeAsset(lookupKey);
-    if (assetPath != null) {
-      return ClipOval(
-        child: Image.asset(
-          assetPath,
-          width: badgeSize,
-          height: badgeSize,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-        ),
-      );
-    }
-
-    return const SizedBox.shrink();
   }
 
   @override
@@ -216,7 +183,7 @@ class _RecentBadgesSectionState extends State<RecentBadgesSection>
       builder: (context, provider, child) {
         final badges = provider.recentBadges;
         final isLoading = provider.isLoadingBadges;
-        final visibleBadges = badges.where(_hasRenderableBadgeImage).toList();
+        final visibleBadges = badges.where(_isVisible).toList();
 
         return Column(
           children: [

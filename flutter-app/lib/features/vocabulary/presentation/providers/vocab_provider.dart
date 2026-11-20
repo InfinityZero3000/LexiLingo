@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/services/quick_save_vocabulary_service.dart';
+import 'package:lexilingo_app/core/state/reset_epoch.dart';
 import 'package:lexilingo_app/core/usecase/usecase.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/vocab_word.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/word_translation.dart';
@@ -33,7 +34,7 @@ class DictionaryLookupResult {
   });
 }
 
-class VocabProvider extends ChangeNotifier {
+class VocabProvider extends ChangeNotifier with ResetEpoch {
   static const int _backendCollectionPageSize = 100;
 
   final GetWordsUseCase getWordsUseCase;
@@ -60,8 +61,6 @@ class VocabProvider extends ChangeNotifier {
     _savedWordsSubscription = _quickSaveService?.savedWords.listen((_) {
       unawaited(loadWords());
     });
-    unawaited(loadWords());
-    unawaited(loadDecks());
   }
 
   List<VocabWord> get words => _words;
@@ -92,10 +91,12 @@ class VocabProvider extends ChangeNotifier {
   bool get isLookingUp => _isLookingUp;
 
   Future<void> loadWords() async {
+    final epoch = resetEpoch;
     _isLoading = true;
     notifyListeners();
 
     final result = await getWordsUseCase(NoParams());
+    if (isStale(epoch)) return;
     result.fold(
       (failure) {
         _errorMessage = (_getFailureMessage(failure));
@@ -111,6 +112,7 @@ class VocabProvider extends ChangeNotifier {
     if (_apiClient != null) {
       try {
         final backendWords = await _fetchBackendCollection();
+        if (isStale(epoch)) return;
         final localWordSet = {for (final w in _words) w.word.toLowerCase()};
         final merged = [
           ..._words,
@@ -125,6 +127,18 @@ class VocabProvider extends ChangeNotifier {
     }
 
     _isLoading = false;
+    notifyListeners();
+  }
+
+  void reset() {
+    bumpResetEpoch();
+    _words = [];
+    _decks = [];
+    _errorMessage = null;
+    _isLoading = false;
+    _selectedTag = null;
+    _lookupResult = null;
+    _isLookingUp = false;
     notifyListeners();
   }
 
@@ -302,11 +316,13 @@ class VocabProvider extends ChangeNotifier {
 
   Future<void> loadDecks() async {
     if (_apiClient == null) return;
+    final epoch = resetEpoch;
     _isLoading = true;
     notifyListeners();
 
     try {
       final response = await _apiClient.get('/vocabulary/decks');
+      if (isStale(epoch)) return;
       final items = response['data'] ?? response;
       if (items is List) {
         _decks = items

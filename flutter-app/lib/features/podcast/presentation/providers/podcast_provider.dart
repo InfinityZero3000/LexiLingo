@@ -2,11 +2,12 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../../data/repositories/podcast_repository.dart';
 import '../../domain/entities/podcast_entities.dart';
+import 'package:lexilingo_app/core/state/reset_epoch.dart';
 
 /// State management for Podcast feature.
 ///
 /// Phase 4: Podcast.
-class PodcastProvider extends ChangeNotifier {
+class PodcastProvider extends ChangeNotifier with ResetEpoch {
   final PodcastRepository _repository;
 
   PodcastProvider({PodcastRepository? repository})
@@ -56,17 +57,23 @@ class PodcastProvider extends ChangeNotifier {
 
   /// Load and cache curated podcast categories from the backend.
   Future<void> loadCuratedPodcasts() async {
+    final epoch = resetEpoch;
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      _curatedCategories = await _repository.getCuratedPodcasts();
+      final curated = await _repository.getCuratedPodcasts();
+      if (isStale(epoch)) return;
+      _curatedCategories = curated;
     } catch (e) {
+      if (isStale(epoch)) return;
       _error = e.toString();
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      if (!isStale(epoch)) {
+        _isLoading = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -113,6 +120,7 @@ class PodcastProvider extends ChangeNotifier {
   /// Set [podcast] as the active podcast and load its episode list.
   Future<void> loadEpisodes(Podcast podcast) async {
     final token = ++_episodesToken;
+    final epoch = resetEpoch;
     _currentPodcast = podcast;
     _currentEpisodes = [];
     _isLoading = true;
@@ -122,10 +130,10 @@ class PodcastProvider extends ChangeNotifier {
     try {
       final episodes = await _repository.getEpisodes(feedUrl: podcast.feedUrl);
       final withProgress = await _withListeningProgress(episodes);
-      if (token != _episodesToken) return;
+      if (token != _episodesToken || isStale(epoch)) return;
       _currentEpisodes = withProgress;
     } catch (e) {
-      if (token != _episodesToken) return;
+      if (token != _episodesToken || isStale(epoch)) return;
       debugPrint(
         '[PodcastProvider] loadEpisodes failed for "${podcast.title}" '
         '(feed: ${podcast.feedUrl}): $e',
@@ -167,8 +175,11 @@ class PodcastProvider extends ChangeNotifier {
 
   /// Refresh the "continue listening" shelf from local history.
   Future<void> loadContinueListening() async {
+    final epoch = resetEpoch;
     try {
-      _continueListening = await _repository.getContinueListening();
+      final shelf = await _repository.getContinueListening();
+      if (isStale(epoch)) return;
+      _continueListening = shelf;
       notifyListeners();
     } catch (e) {
       debugPrint('Failed to load continue listening: $e');
@@ -177,8 +188,11 @@ class PodcastProvider extends ChangeNotifier {
 
   /// Load the user's followed podcasts from local SharedPreferences.
   Future<void> loadFollowedPodcasts() async {
+    final epoch = resetEpoch;
     try {
-      _followedPodcasts = await _repository.getFollowedPodcasts();
+      final follows = await _repository.getFollowedPodcasts();
+      if (isStale(epoch)) return;
+      _followedPodcasts = follows;
       notifyListeners();
     } catch (e) {
       debugPrint('Failed to load followed podcasts: $e');
@@ -189,13 +203,16 @@ class PodcastProvider extends ChangeNotifier {
   ///
   /// Refreshes [followedPodcasts] after the operation completes.
   Future<void> toggleFollow(Podcast podcast) async {
+    final epoch = resetEpoch;
     final following = await _repository.isFollowing(podcast.feedUrl);
+    if (isStale(epoch)) return;
     try {
       if (following) {
         await _repository.unfollowPodcast(podcast.feedUrl);
       } else {
         await _repository.followPodcast(podcast);
       }
+      if (isStale(epoch)) return;
       await loadFollowedPodcasts();
     } catch (e) {
       debugPrint('Failed to toggle follow for ${podcast.feedUrl}: $e');
@@ -242,12 +259,15 @@ class PodcastProvider extends ChangeNotifier {
   ///
   /// Phase 4: Podcast — skill: performance-offline-fallback.
   Future<void> downloadEpisode(PodcastEpisode episode) async {
+    final epoch = resetEpoch;
     _patchEpisode(episode.copyWith(downloadState: DownloadState.downloading));
 
     try {
       final updated = await _repository.downloadEpisode(episode);
+      if (isStale(epoch)) return;
       _patchEpisode(updated);
     } catch (e) {
+      if (isStale(epoch)) return;
       debugPrint('PodcastProvider.downloadEpisode: $e');
       _patchEpisode(
         episode.copyWith(downloadState: DownloadState.notDownloaded),
@@ -268,6 +288,27 @@ class PodcastProvider extends ChangeNotifier {
   /// Clear the current error message.
   void clearError() {
     _error = null;
+    notifyListeners();
+  }
+
+  void reset() {
+    bumpResetEpoch();
+    _searchToken++;
+    _episodesToken++;
+    _searchDebounce?.cancel();
+    _searchResults = [];
+    _currentPodcast = null;
+    _currentEpisodes = [];
+    _followedPodcasts = [];
+    _continueListening = [];
+    _curatedCategories = [];
+    _isLoading = false;
+    _isSearching = false;
+    _error = null;
+    _currentPlayingEpisode = null;
+    _playbackPosition = 0;
+    _isPlaying = false;
+    _playbackSpeed = 1.0;
     notifyListeners();
   }
 

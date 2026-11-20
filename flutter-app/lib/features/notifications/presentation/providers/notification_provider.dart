@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:lexilingo_app/core/services/locale_service.dart';
+import 'package:lexilingo_app/core/state/reset_epoch.dart';
 import 'package:lexilingo_app/core/l10n/ui_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -9,7 +10,7 @@ import '../../domain/services/review_reminder_notification_sync_service.dart';
 
 /// Notification Provider
 /// Manages notification state and integrates with Firebase Cloud Messaging
-class NotificationProvider with ChangeNotifier {
+class NotificationProvider with ChangeNotifier, ResetEpoch {
   final NotificationRepository _repository;
 
   // State
@@ -123,6 +124,7 @@ class NotificationProvider with ChangeNotifier {
 
   /// Load all notifications
   Future<void> loadNotifications({bool syncReviewReminder = false}) async {
+    final epoch = resetEpoch;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -131,16 +133,23 @@ class NotificationProvider with ChangeNotifier {
       if (syncReviewReminder) {
         await _syncReviewReminderNotification();
       }
-      _groupedNotifications = await _repository.getGroupedNotifications();
-      _notifications = await _repository.getNotifications();
-      _unreadCount = await _repository.getUnreadCount();
+      final grouped = await _repository.getGroupedNotifications();
+      final all = await _repository.getNotifications();
+      final unread = await _repository.getUnreadCount();
+      if (isStale(epoch)) return;
+      _groupedNotifications = grouped;
+      _notifications = all;
+      _unreadCount = unread;
       _errorMessage = null;
     } catch (e) {
+      if (isStale(epoch)) return;
       _errorMessage = UiText.key('notifications.failedToLoad');
       debugPrint('Failed to load notifications: $e');
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      if (!isStale(epoch)) {
+        _isLoading = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -258,6 +267,19 @@ class NotificationProvider with ChangeNotifier {
 
     await _repository.addNotification(notification);
     await loadNotifications();
+  }
+
+  /// Notifications are stored per user; this empties the screen and the next
+  /// sign-in reloads from that user's own store.
+  void reset() {
+    bumpResetEpoch();
+    _groupedNotifications = [];
+    _notifications = [];
+    _unreadCount = 0;
+    _isLoading = false;
+    _errorMessage = null;
+    _pendingDeletedNotification = null;
+    notifyListeners();
   }
 
   /// Clear error message

@@ -73,75 +73,88 @@ class AchievementProvider with ChangeNotifier {
     return (unlockedCount / totalCount * 100);
   }
 
-  /// Load all achievements
-  Future<void> loadAllAchievements() async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
+  /// One counter per list: a `loadMyAchievements` fired by an unlock must not
+  /// discard a `loadAll` still in flight, and within a list the newest call
+  /// wins (screen, check and topic chat all reload it).
+  int _allRequest = 0;
+  int _mineRequest = 0;
 
-    try {
-      _allAchievements = _removeXpAchievements(
-        await repository.getAllAchievements(),
-      );
-    } catch (e) {
-      _error = UiText.key('errors.loadFailed');
-      debugPrint('Failed to load achievements: $e');
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
+  /// Bumped by [reset]; a response that started before it belongs to the
+  /// previous account and is dropped.
+  int _epoch = 0;
+
+  /// Drops every per-user value so the next account never sees the last one's.
+  void reset() {
+    _epoch++;
+    _allRequest++;
+    _mineRequest++;
+    _allAchievements = [];
+    _myAchievements = [];
+    _recentlyUnlocked = [];
+    _isLoading = false;
+    _error = null;
+    _inFlight = 0;
+    notifyListeners();
   }
 
-  /// Load user's unlocked achievements
-  Future<void> loadMyAchievements() async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
+  int _inFlight = 0;
 
-    try {
-      _myAchievements = _removeXpUserAchievements(
-        await repository.getMyAchievements(),
-      );
-    } catch (e) {
-      _error = UiText.key('errors.loadFailed');
-      debugPrint('Failed to load my achievements: $e');
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
-
-  /// Load all data
-  Future<void> loadAll() async {
+  /// A failed load keeps the previous lists and sets [error].
+  Future<void> _load({required bool all, required bool mine}) async {
+    final epoch = _epoch;
+    final allRequest = all ? ++_allRequest : _allRequest;
+    final mineRequest = mine ? ++_mineRequest : _mineRequest;
+    _inFlight++;
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
       final results = await Future.wait([
-        repository.getAllAchievements(),
-        repository.getMyAchievements(),
+        if (all) repository.getAllAchievements(),
+        if (mine) repository.getMyAchievements(),
       ]);
-
-      _allAchievements = _removeXpAchievements(
-        results[0] as List<AchievementEntity>,
-      );
-      _myAchievements = _removeXpUserAchievements(
-        results[1] as List<UserAchievementEntity>,
-      );
+      if (epoch != _epoch) return;
+      var next = 0;
+      if (all) {
+        final list = results[next++] as List<AchievementEntity>;
+        if (allRequest == _allRequest) {
+          _allAchievements = _removeXpAchievements(list);
+        }
+      }
+      if (mine) {
+        final list = results[next] as List<UserAchievementEntity>;
+        if (mineRequest == _mineRequest) {
+          _myAchievements = _removeXpUserAchievements(list);
+        }
+      }
     } catch (e) {
-      _error = UiText.key('errors.loadFailed');
+      if (epoch == _epoch) _error = UiText.key('errors.loadFailed');
       debugPrint('Failed to load achievements: $e');
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      if (epoch == _epoch) {
+        _inFlight--;
+        _isLoading = _inFlight > 0;
+        notifyListeners();
+      }
     }
   }
 
+  /// Load all achievements
+  Future<void> loadAllAchievements() => _load(all: true, mine: false);
+
+  /// Load user's unlocked achievements
+  Future<void> loadMyAchievements() => _load(all: false, mine: true);
+
+  /// Load all data
+  Future<void> loadAll() => _load(all: true, mine: true);
+
   /// Force check all achievements and get newly unlocked
   Future<List<UnlockedAchievement>> checkAchievements() async {
+    final epoch = _epoch;
     try {
       final unlocked = await repository.checkAllAchievements();
+      if (epoch != _epoch) return [];
       if (unlocked.isNotEmpty) {
         _recentlyUnlocked = unlocked;
         // Reload my achievements to update the list
@@ -154,9 +167,17 @@ class AchievementProvider with ChangeNotifier {
     }
   }
 
+  /// Identifies the signed-in account; read it before a request and pass it
+  /// back to [handleUnlockedAchievements] so a late response is ignored.
+  int get sessionEpoch => _epoch;
+
   /// Handle newly unlocked achievements from API responses
-  void handleUnlockedAchievements(List<dynamic> achievementsJson) {
+  void handleUnlockedAchievements(
+    List<dynamic> achievementsJson, {
+    int? sessionEpoch,
+  }) {
     if (achievementsJson.isEmpty) return;
+    if (sessionEpoch != null && sessionEpoch != _epoch) return;
 
     _recentlyUnlocked = achievementsJson
         .map((json) => UnlockedAchievementModel.fromJson(json))

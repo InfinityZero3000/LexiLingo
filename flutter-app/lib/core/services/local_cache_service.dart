@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
 import 'package:sqflite/sqflite.dart';
 import 'database_helper.dart';
 
@@ -275,6 +275,51 @@ class LocalCacheService {
       for (final row in rows)
         row['content_type'] as String: (row['count'] as int?) ?? 0,
     };
+  }
+
+  /// Keys holding the signed-in learner's own data. Everything else here is
+  /// public content (news, books, podcasts, videos, dictionary) and stays
+  /// across a sign-out, so it is still there offline for the next learner.
+  static const List<String> perUserKeyPrefixes = [
+    'proficiency:',
+    'due_vocab_',
+    'xp:',
+  ];
+
+  static bool isPerUserKey(String key) =>
+      perUserKeyPrefixes.any(key.startsWith);
+
+  /// Drops the learner's entries held in memory, at once. Sign-out calls it
+  /// before anything awaits, so a screen built a moment later cannot read the
+  /// previous learner's XP or proficiency out of the web cache.
+  void clearUserMemory() =>
+      _memoryCache.removeWhere((key, _) => isPerUserKey(key));
+
+  @visibleForTesting
+  void debugPutMemory(String key, dynamic data, [String type = 'game']) {
+    _memoryCache[key] = _MemoryCacheEntry(
+      contentType: type,
+      dataJson: jsonEncode(data),
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  @visibleForTesting
+  Set<String> get debugMemoryKeys => _memoryCache.keys.toSet();
+
+  /// Remove the entries in [perUserKeyPrefixes], stored and in memory.
+  Future<void> clearUserEntries() async {
+    clearUserMemory();
+    if (kIsWeb) return;
+
+    final db = await DatabaseHelper.instance.database;
+    await db.delete(
+      _tableName,
+      where: perUserKeyPrefixes
+          .map((p) => 'substr(cache_key, 1, ${p.length}) = ?')
+          .join(' OR '),
+      whereArgs: perUserKeyPrefixes,
+    );
   }
 
   /// Clear all cache data.

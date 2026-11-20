@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:lexilingo_app/core/l10n/ui_text.dart';
 import 'package:lexilingo_app/core/services/analytics_service.dart';
+import 'package:lexilingo_app/core/state/reset_epoch.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/review_session_entity.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/user_vocabulary_entity.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/usecases/get_due_vocabulary_usecase.dart';
@@ -10,7 +11,7 @@ import 'package:lexilingo_app/features/vocabulary/domain/repositories/vocabulary
 /// Flashcard Provider (Presentation Layer)
 /// Manages flashcard review session state
 /// Clean Architecture: Presentation layer orchestrates use cases
-class FlashcardProvider extends ChangeNotifier {
+class FlashcardProvider extends ChangeNotifier with ResetEpoch {
   static const int _collectionCompatibilityPageSize = 100;
   static const int _initialBatchSize = 10;
   static const int _batchSize = 10;
@@ -123,6 +124,7 @@ class FlashcardProvider extends ChangeNotifier {
   /// Start a new review session with lazy loading
   Future<void> startReviewSession({int limit = 50}) async {
     _resetLazyState();
+    final generation = _sessionGeneration;
     _isLoading = true;
     _errorMessage = null;
     _nothingDue = false;
@@ -132,6 +134,7 @@ class FlashcardProvider extends ChangeNotifier {
       final result = await getDueVocabularyUseCase(
         GetDueVocabularyParams(limit: limit),
       );
+      if (generation != _sessionGeneration) return;
 
       await result.fold(
         (failure) async {
@@ -154,6 +157,7 @@ class FlashcardProvider extends ChangeNotifier {
               .take(_initialBatchSize)
               .toList();
           final cards = await _loadVocabCards(firstBatch);
+          if (generation != _sessionGeneration) return;
           _loadedVocabCount = firstBatch.length;
 
           if (cards.isEmpty) {
@@ -176,6 +180,7 @@ class FlashcardProvider extends ChangeNotifier {
         },
       );
     } catch (e) {
+      if (generation != _sessionGeneration) return;
       debugPrint('Unexpected vocabulary error: $e');
       _errorMessage = UiText.key('flashcard.unexpectedError');
       _isLoading = false;
@@ -186,6 +191,7 @@ class FlashcardProvider extends ChangeNotifier {
   /// Start a new review session for a specific topic (tag)
   Future<void> startTopicSession({required String tag, int limit = 20}) async {
     _resetLazyState();
+    final generation = _sessionGeneration;
     _isLoading = true;
     _errorMessage = null;
     _currentSession = null;
@@ -196,6 +202,7 @@ class FlashcardProvider extends ChangeNotifier {
         tag: tag,
         limit: limit,
       );
+      if (generation != _sessionGeneration) return;
 
       await itemsResult.fold(
         (failure) async {
@@ -217,6 +224,7 @@ class FlashcardProvider extends ChangeNotifier {
           final collectionResult = await vocabularyRepository.getUserCollection(
             limit: _collectionCompatibilityPageSize,
           );
+          if (generation != _sessionGeneration) return;
 
           await collectionResult.fold(
             (failure) async {
@@ -251,6 +259,7 @@ class FlashcardProvider extends ChangeNotifier {
               });
 
               final results = await Future.wait(cardFutures);
+              if (generation != _sessionGeneration) return;
               final cards = results.whereType<ReviewCardEntity>().toList();
 
               if (cards.isEmpty) {
@@ -275,6 +284,7 @@ class FlashcardProvider extends ChangeNotifier {
         },
       );
     } catch (e) {
+      if (generation != _sessionGeneration) return;
       debugPrint('Unexpected vocabulary error: $e');
       _errorMessage = UiText.key('flashcard.unexpectedError');
       _isLoading = false;
@@ -288,6 +298,7 @@ class FlashcardProvider extends ChangeNotifier {
     int limit = 50,
   }) async {
     _resetLazyState();
+    final generation = _sessionGeneration;
     _isLoading = true;
     _errorMessage = null;
     _currentSession = null;
@@ -295,6 +306,7 @@ class FlashcardProvider extends ChangeNotifier {
 
     try {
       final result = await vocabularyRepository.getDeckItems(deckId);
+      if (generation != _sessionGeneration) return;
 
       await result.fold(
         (failure) async {
@@ -316,6 +328,7 @@ class FlashcardProvider extends ChangeNotifier {
               .take(_initialBatchSize)
               .toList();
           final cards = await _loadVocabCards(firstBatch);
+          if (generation != _sessionGeneration) return;
           _loadedVocabCount = firstBatch.length;
 
           if (cards.isEmpty) {
@@ -339,6 +352,7 @@ class FlashcardProvider extends ChangeNotifier {
         },
       );
     } catch (e) {
+      if (generation != _sessionGeneration) return;
       debugPrint('Unexpected vocabulary error: $e');
       _errorMessage = UiText.key('flashcard.unexpectedError');
       _isLoading = false;
@@ -394,7 +408,8 @@ class FlashcardProvider extends ChangeNotifier {
       quality: quality,
       timeSpentMs: timeSpentMs,
     );
-    _delivery = _delivery.then((_) => _deliver(review));
+    final epoch = resetEpoch;
+    _delivery = _delivery.then((_) => _deliver(review, epoch));
 
     if (_currentSession?.isCompleted ?? false) {
       await _delivery;
@@ -409,13 +424,20 @@ class FlashcardProvider extends ChangeNotifier {
   /// One rating at a time, in order. A rating that fails is retried ahead of
   /// the next one; whatever is still unsent after the last card is dropped
   /// and its word comes due again.
-  Future<void> _deliver(SubmitReviewParams review) async {
+  ///
+  /// A rating belongs to the learner who gave it. Once a sign-out or account
+  /// switch has bumped [epoch], it is dropped and never re-queued, so it can
+  /// not be submitted under the next account's token.
+  Future<void> _deliver(SubmitReviewParams review, int epoch) async {
+    if (isStale(epoch)) return;
     _unsent.add(review);
     final batch = List.of(_unsent);
     _unsent.clear();
     for (final item in batch) {
+      if (isStale(epoch)) return;
       try {
         final result = await submitReviewUseCase(item);
+        if (isStale(epoch)) return;
         result.fold((_) => _unsent.add(item), (reviewResult) {
           final session = _currentSession;
           if (session == null) return;
@@ -425,7 +447,7 @@ class FlashcardProvider extends ChangeNotifier {
         });
       } catch (e) {
         debugPrint('Failed to submit review: $e');
-        _unsent.add(item);
+        if (!isStale(epoch)) _unsent.add(item);
       }
     }
     _notify();
@@ -443,6 +465,29 @@ class FlashcardProvider extends ChangeNotifier {
     _cardStartTime = null;
     _errorMessage = null;
     notifyListeners();
+  }
+
+  /// Waits for ratings already on their way, up to [timeout]. Called before a
+  /// deliberate sign-out, while the learner's token is still valid: a rating
+  /// the learner just gave should reach the server instead of being dropped.
+  ///
+  /// If the wait runs out, whatever has not been sent is cancelled: the
+  /// sign-out that follows clears the token, and a rating sent after that
+  /// would fail with a 401 that reads as an expired session.
+  Future<void> flushDelivery({
+    Duration timeout = const Duration(seconds: 3),
+  }) async {
+    var timedOut = false;
+    await _delivery.timeout(timeout, onTimeout: () => timedOut = true);
+    if (timedOut) bumpResetEpoch();
+  }
+
+  void reset() {
+    bumpResetEpoch();
+    _unsent.clear();
+    _isLoading = false;
+    _nothingDue = false;
+    endSession();
   }
 
   /// Reset error message
