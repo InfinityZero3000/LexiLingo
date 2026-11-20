@@ -11,6 +11,7 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/course/presentation/providers/course_provider.dart';
 import 'package:lexilingo_app/features/course/presentation/screens/course_detail_screen.dart';
 import 'package:lexilingo_app/features/course/presentation/screens/category_detail_screen.dart';
+import 'package:lexilingo_app/features/course/presentation/utils/course_tag_label.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_category_entity.dart';
 
@@ -1290,11 +1291,7 @@ class _HorizontalCourseCard extends StatelessWidget {
     final alias = aliases[key];
     if (alias != null) return 'course.tag.$alias'.tr();
 
-    return key
-        .split('_')
-        .where((part) => part.isNotEmpty)
-        .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
-        .join(' ');
+    return courseTagLabel(tag);
   }
 
   List<Color> _getGradientFromHash(int hash) {

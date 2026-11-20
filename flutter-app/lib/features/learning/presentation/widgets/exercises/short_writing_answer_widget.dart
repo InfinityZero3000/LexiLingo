@@ -38,12 +38,10 @@ class _ShortWritingAnswerWidgetState extends State<ShortWritingAnswerWidget> {
     super.dispose();
   }
 
-  String _extractHighlightWord() => extractQuotedWord(widget.exercise.question);
-
   @override
   Widget build(BuildContext context) {
     final colors = ExercisePalette.of(context);
-    final highlight = _extractHighlightWord();
+    final parts = splitAroundQuote(widget.exercise.question);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, AppSpacing.xl, 20, AppSpacing.lg),
@@ -86,20 +84,18 @@ class _ShortWritingAnswerWidgetState extends State<ShortWritingAnswerWidget> {
                 height: 1.3,
               ),
               children: [
-                TextSpan(
-                  text: widget.exercise.question
-                      .replaceAll('"$highlight"', '')
-                      .replaceAll("'$highlight'", '')
-                      .trimRight()
-                      .replaceAll(RegExp(r'\s+$'), ''),
-                ),
-                if (highlight.isNotEmpty) ...[
-                  const TextSpan(text: ' '),
+                // Rebuilt around the quoted phrase, keeping the question's own
+                // punctuation: cutting the phrase out and appending a full
+                // stop left the original one behind ("English: . "...".").
+                if (parts == null)
+                  TextSpan(text: widget.exercise.question)
+                else ...[
+                  TextSpan(text: parts.before),
                   TextSpan(
-                    text: '"$highlight"',
+                    text: '"${parts.quoted}"',
                     style: TextStyle(color: colors.primary),
                   ),
-                  const TextSpan(text: '.'),
+                  TextSpan(text: parts.after),
                 ],
               ],
             ),
@@ -110,6 +106,11 @@ class _ShortWritingAnswerWidgetState extends State<ShortWritingAnswerWidget> {
             controller: _ctrl,
             enabled: !widget.isAnswered,
             maxLines: 4,
+            // A locked field would draw the answer in the disabled grey, as
+            // faint as the hint it replaced.
+            style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+              color: colors.textPrimary,
+            ),
             decoration: InputDecoration(
               hintText: 'lesson.exercise.shortWritingHint'.tr(),
               hintStyle: Theme.of(

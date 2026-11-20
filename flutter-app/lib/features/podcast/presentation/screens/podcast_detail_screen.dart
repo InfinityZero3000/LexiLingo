@@ -445,9 +445,12 @@ class _Description extends StatelessWidget {
           ),
           child: Text(
             expanded ? 'podcast.showLess'.tr() : 'podcast.showMore'.tr(),
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
+            // The theme's bodySmall carries its own dark colour, which beat
+            // the button's foregroundColor and left this 1.1:1 on the header.
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColors.onGradient,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ),
       ],

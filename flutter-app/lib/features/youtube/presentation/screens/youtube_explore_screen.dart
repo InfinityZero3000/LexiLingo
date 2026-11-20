@@ -382,6 +382,23 @@ class _YouTubeExploreScreenState extends State<YouTubeExploreScreen>
             ),
           ),
         ],
+        // The recommendations call failing (no API key, quota gone) used to
+        // leave the channels and nothing else, with no hint that anything broke.
+        if (recommended.isEmpty &&
+            !provider.isLoadingRecommendations &&
+            provider.error != null)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.xl),
+              child: EmptyStateWidget(
+                icon: PhosphorIconsBold.warningCircle,
+                iconSize: 40,
+                title: _localizedApiError(provider.error!),
+                actionLabel: 'common.retry'.tr(),
+                onAction: provider.loadRecommendations,
+              ),
+            ),
+          ),
         if (shelf.isNotEmpty) ...[
           SliverToBoxAdapter(
             child: Padding(
