@@ -1,123 +1,35 @@
+import React, { useEffect, useMemo, useState } from "react";
+import { Copy, MessageSquare, Pencil, Search } from "lucide-react";
 import { useI18n } from "../lib/i18n";
-import React, { useEffect, useState } from "react";
-import {
-  BadgeCheck,
-  Banknote,
-  BookOpen,
-  BriefcaseBusiness,
-  Building2,
-  Car,
-  GraduationCap,
-  HeartPulse,
-  Home,
-  Landmark,
-  MapPinned,
-  MessageSquare,
-  Mic,
-  Plane,
-  PlugZap,
-  School,
-  Settings2,
-  ShoppingCart,
-  Sparkles,
-  Stethoscope,
-  Users,
-  Utensils,
-  Wifi,
-  Wrench,
-} from "lucide-react";
-
 import { DataTable } from "../components/DataTable";
 import { EmptyState } from "../components/EmptyState";
 import { SectionHeader } from "../components/SectionHeader";
 import { StatusPill } from "../components/StatusPill";
 import { TableSkeleton } from "../components/Skeleton";
+import { TopicForm, type TopicFormMode } from "../components/topics/TopicForm";
+import { iconFor } from "../components/topics/topicIcons";
 import {
-  createTopicStoryAdmin,
+  getTopicStoryAdmin,
   listTopicStoriesAdmin,
   type TopicDifficulty,
   type TopicItem,
 } from "../lib/adminApi";
+import { DIFFICULTIES, emptyForm, formFromStory, type TopicFormState } from "../lib/topicForm";
 
-const DIFFICULTIES: TopicDifficulty[] = ["A1", "A2", "B1", "B2", "C1", "C2"];
-
-const TOPIC_ICONS = [
-  { key: "travel", label: "Travel", icon: Plane },
-  { key: "hotel", label: "Hotel", icon: Building2 },
-  { key: "directions", label: "Directions", icon: MapPinned },
-  { key: "transport", label: "Transport", icon: Car },
-  { key: "work", label: "Work", icon: BriefcaseBusiness },
-  { key: "finance", label: "Finance", icon: Banknote },
-  { key: "shopping", label: "Shopping", icon: ShoppingCart },
-  { key: "food", label: "Food", icon: Utensils },
-  { key: "health", label: "Health", icon: HeartPulse },
-  { key: "doctor", label: "Doctor", icon: Stethoscope },
-  { key: "education", label: "Education", icon: GraduationCap },
-  { key: "library", label: "Library", icon: BookOpen },
-  { key: "technology", label: "Technology", icon: PlugZap },
-  { key: "internet", label: "Internet", icon: Wifi },
-  { key: "services", label: "Services", icon: Settings2 },
-  { key: "repair", label: "Repair", icon: Wrench },
-  { key: "housing", label: "Housing", icon: Home },
-  { key: "culture", label: "Culture", icon: Landmark },
-  { key: "social", label: "Social", icon: Users },
-  { key: "media", label: "Media", icon: Mic },
-  { key: "classroom", label: "Classroom", icon: School },
-  { key: "achievement", label: "Achievement", icon: BadgeCheck },
-  { key: "ai", label: "AI", icon: Sparkles },
-  { key: "chat", label: "Chat", icon: MessageSquare },
-];
-
-const CATEGORIES = [
-  "travel",
-  "work",
-  "services",
-  "health",
-  "food",
-  "social",
-  "finance",
-  "shopping",
-  "education",
-  "technology",
-  "housing",
-  "culture",
-  "leisure",
-  "media",
-  "emergency",
-  "daily_life",
-];
-
-const iconFor = (key?: string | null) => {
-  const normalized = (key || "").toLowerCase();
-  return TOPIC_ICONS.find((item) => item.key === normalized)?.icon || MessageSquare;
-};
-
-const splitTags = (value: string) =>
-  value
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
+type SourceFilter = "all" | "custom" | "builtin";
+type Editor = { mode: TopicFormMode; initial: TopicFormState; key: number };
 
 export const TopicsPage = () => {
   const { t } = useI18n();
   const [topics, setTopics] = useState<TopicItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showForm, setShowForm] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [form, setForm] = useState({
-    story_id: "",
-    title_en: "",
-    title_vi: "",
-    difficulty_level: "A2" as TopicDifficulty,
-    category: "travel",
-    estimated_minutes: 15,
-    icon_key: "travel",
-    opening_prompt: "",
-    suggested_prompts: "",
-    tags: "",
-  });
+  const [notice, setNotice] = useState<string | null>(null);
+  const [editor, setEditor] = useState<Editor | null>(null);
+  const [opening, setOpening] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [source, setSource] = useState<SourceFilter>("all");
+  const [level, setLevel] = useState<"" | TopicDifficulty>("");
 
   const loadTopics = async () => {
     setLoading(true);
@@ -136,220 +48,118 @@ export const TopicsPage = () => {
     void loadTopics();
   }, []);
 
-  const resetForm = () => {
-    setForm({
-      story_id: "",
-      title_en: "",
-      title_vi: "",
-      difficulty_level: "A2",
-      category: "travel",
-      estimated_minutes: 15,
-      icon_key: "travel",
-      opening_prompt: "",
-      suggested_prompts: "",
-      tags: "",
-    });
-    setIsEditing(false);
+  const openEditor = (mode: TopicFormMode, initial: TopicFormState) => {
+    setNotice(null);
+    setEditor({ mode, initial, key: Date.now() });
   };
 
-  const handleEdit = (topic: TopicItem) => {
-    setForm({
-      story_id: topic.story_id,
-      title_en: topic.title.en,
-      title_vi: topic.title.vi,
-      difficulty_level: topic.difficulty_level,
-      category: topic.category,
-      estimated_minutes: topic.estimated_minutes,
-      icon_key: topic.icon_key || topic.category,
-      opening_prompt: "",
-      suggested_prompts: (topic.suggested_prompts || []).join(", "),
-      tags: (topic.tags || []).join(", "),
-    });
-    setIsEditing(true);
-    setShowForm(true);
-  };
-
-  const handleSave = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setSaving(true);
+  /** Loads the full story first: the list only carries what a card shows. */
+  const openExisting = async (mode: "edit" | "clone", topic: TopicItem) => {
+    setOpening(topic.story_id);
     setError(null);
     try {
-      await createTopicStoryAdmin({
-        story_id: form.story_id || undefined,
-        title: {
-          en: form.title_en,
-          vi: form.title_vi || form.title_en,
-        },
-        difficulty_level: form.difficulty_level,
-        category: form.category,
-        estimated_minutes: Number(form.estimated_minutes) || 15,
-        icon_key: form.icon_key,
-        opening_prompt: form.opening_prompt || undefined,
-        suggested_prompts: splitTags(form.suggested_prompts),
-        tags: splitTags(form.tags),
-        is_published: true,
-      });
-      resetForm();
-      setShowForm(false);
-      setIsEditing(false);
-      await loadTopics();
+      const res = await getTopicStoryAdmin(topic.story_id);
+      if (!res.data) throw new Error("Topic not found");
+      openEditor(mode, formFromStory(res.data, mode));
     } catch (err: any) {
-      setError(err?.message || t.adminPages.topicSaveFailed);
+      setError(err?.message || t.adminPages.topicsLoadFailed);
     } finally {
-      setSaving(false);
+      setOpening(null);
     }
   };
+
+  const visible = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    return topics.filter((topic) => {
+      if (source !== "all" && (topic.source ?? "custom") !== source) return false;
+      if (level && topic.difficulty_level !== level) return false;
+      if (!needle) return true;
+      return [topic.title.en, topic.title.vi, topic.category, topic.story_id].some((v) => v.toLowerCase().includes(needle));
+    });
+  }, [topics, query, source, level]);
+
+  const customCount = topics.filter((topic) => (topic.source ?? "custom") === "custom").length;
 
   return (
     <div className="stack">
       <SectionHeader
         title="Conversation Topics"
-        description={`${topics.length} topic chat scenarios from AI service`}
+        description={`${topics.length} topics: ${customCount} created here, ${topics.length - customCount} built in`}
       />
 
-      {error && <div className="form-error">{error}</div>}
+      {error && <div className="form-error" role="alert">{error}</div>}
+      {notice && <div className="form-hint" role="status">{notice}</div>}
 
       <div className="panel" style={{ padding: "12px 16px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
           <div>
             <div className="table-title">Topic catalog</div>
-            <div className="table-sub">Create topics with icon keys shown in the mobile Topic tab.</div>
+            <div className="table-sub">
+              Type a title and the category and icon are picked for you; or let the AI draft the whole topic.
+              Built-in topics are read-only: clone one to make your own version.
+            </div>
           </div>
           <button
             className="primary-button"
-            onClick={() => {
-              resetForm();
-              setShowForm((value) => !value);
-            }}
+            onClick={() => (editor?.mode === "create" ? setEditor(null) : openEditor("create", emptyForm()))}
           >
-            {showForm && !isEditing ? t.adminPages.topicsHideForm : t.adminPages.topicsCreate}
+            {editor?.mode === "create" ? t.adminPages.topicsHideForm : t.adminPages.topicsCreate}
           </button>
         </div>
       </div>
 
-      {showForm && (
-        <form className="panel" onSubmit={handleSave} style={{ padding: 16 }}>
-          <h4 style={{ margin: "0 0 12px", fontSize: 15, fontWeight: 600 }}>
-            {isEditing ? t.adminPages.topicsEditing.replace("{title}", form.title_en) : t.adminPages.topicsNew}
-          </h4>
-          <div className="form-grid">
-            <label>
-              English title
-              <input
-                required
-                value={form.title_en}
-                onChange={(e) => setForm({ ...form, title_en: e.target.value })}
-              />
-            </label>
-            <label>
-              Vietnamese title
-              <input
-                value={form.title_vi}
-                onChange={(e) => setForm({ ...form, title_vi: e.target.value })}
-              />
-            </label>
-            <label>
-              Story ID
-              <input
-                placeholder="Auto generated if empty"
-                value={form.story_id}
-                onChange={(e) => setForm({ ...form, story_id: e.target.value })}
-              />
-            </label>
-            <label>
-              Category
-              <select
-                value={form.category}
-                onChange={(e) => setForm({ ...form, category: e.target.value })}
-              >
-                {CATEGORIES.map((category) => (
-                  <option key={category} value={category}>{category}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Difficulty
-              <select
-                value={form.difficulty_level}
-                onChange={(e) => setForm({ ...form, difficulty_level: e.target.value as TopicDifficulty })}
-              >
-                {DIFFICULTIES.map((level) => (
-                  <option key={level} value={level}>{level}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Minutes
-              <input
-                type="number"
-                min={5}
-                max={60}
-                value={form.estimated_minutes}
-                onChange={(e) => setForm({ ...form, estimated_minutes: Number(e.target.value) })}
-              />
-            </label>
-          </div>
+      {editor && (
+        <TopicForm
+          key={editor.key}
+          mode={editor.mode}
+          initial={editor.initial}
+          onCancel={() => setEditor(null)}
+          onSaved={() => {
+            setEditor(null);
+            setNotice("Topic saved. Learners see it now.");
+            void loadTopics();
+          }}
+        />
+      )}
 
-          <label>
-            Opening prompt
-            <textarea
-              rows={3}
-              value={form.opening_prompt}
-              onChange={(e) => setForm({ ...form, opening_prompt: e.target.value })}
+      <div className="panel" style={{ padding: "12px 16px" }}>
+        <div className="form-row" style={{ alignItems: "end" }}>
+          <label className="form" style={{ gap: 6 }}>
+            <span className="table-meta"><Search size={12} aria-hidden="true" /> Search</span>
+            <input
+              placeholder="title, category or id"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
             />
           </label>
-
-          <div>
-            <div className="table-title" style={{ marginBottom: 8 }}>Icon</div>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              {TOPIC_ICONS.map((item) => {
-                const Icon = item.icon;
-                const selected = form.icon_key === item.key;
-                return (
-                  <button
-                    key={item.key}
-                    type="button"
-                    className={selected ? "primary-button" : "ghost-button"}
-                    onClick={() => setForm({ ...form, icon_key: item.key })}
-                    style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
-                  >
-                    <Icon size={16} />
-                    {item.label}
-                  </button>
-                );
-              })}
-            </div>
+          <label className="form" style={{ gap: 6 }}>
+            <span className="table-meta">Level</span>
+            <select value={level} onChange={(e) => setLevel(e.target.value as "" | TopicDifficulty)}>
+              <option value="">All levels</option>
+              {DIFFICULTIES.map((item) => <option key={item} value={item}>{item}</option>)}
+            </select>
+          </label>
+          <div className="tab-row" role="group" aria-label="Source">
+            {(
+              [
+                ["all", "All"],
+                ["custom", "Created here"],
+                ["builtin", "Built in"],
+              ] as const
+            ).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                className={`tab${source === key ? " active" : ""}`}
+                aria-pressed={source === key}
+                onClick={() => setSource(key)}
+              >
+                {label}
+              </button>
+            ))}
           </div>
-
-          <div className="form-grid">
-            <label>
-              Suggested prompts
-              <input
-                placeholder="comma separated"
-                value={form.suggested_prompts}
-                onChange={(e) => setForm({ ...form, suggested_prompts: e.target.value })}
-              />
-            </label>
-            <label>
-              Tags
-              <input
-                placeholder="comma separated"
-                value={form.tags}
-                onChange={(e) => setForm({ ...form, tags: e.target.value })}
-              />
-            </label>
-          </div>
-
-          <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-            <button className="ghost-button" type="button" onClick={() => { resetForm(); setShowForm(false); }}>
-              Cancel
-            </button>
-            <button className="primary-button" type="submit" disabled={saving}>
-              {saving ? t.common.saving : isEditing ? t.adminPages.topicsUpdate : t.adminPages.topicsSave}
-            </button>
-          </div>
-        </form>
-      )}
+        </div>
+      </div>
 
       <div className="panel">
         {loading ? (
@@ -359,7 +169,13 @@ export const TopicsPage = () => {
             title="No topics"
             description="Create the first topic from this admin panel."
             icon={<MessageSquare size={40} aria-hidden="true" />}
-            action={<button className="primary-button" onClick={() => setShowForm(true)}>Create Topic</button>}
+            action={<button className="primary-button" onClick={() => openEditor("create", emptyForm())}>Create Topic</button>}
+          />
+        ) : visible.length === 0 ? (
+          <EmptyState
+            title="No topic matches"
+            description="Change the search or the filters."
+            icon={<Search size={40} aria-hidden="true" />}
           />
         ) : (
           <DataTable
@@ -368,11 +184,11 @@ export const TopicsPage = () => {
                 header: "Topic",
                 sortValue: (row) => row.title.en,
                 render: (row) => {
-                  const Icon = iconFor(row.icon_key || row.category);
+                  const Icon = iconFor(row.icon_key, row.category);
                   return (
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <span className="stat-icon" style={{ width: 36, height: 36 }}>
-                        <Icon size={18} />
+                        <Icon size={18} aria-hidden="true" />
                       </span>
                       <div>
                         <div className="table-title">{row.title.en}</div>
@@ -382,25 +198,46 @@ export const TopicsPage = () => {
                   );
                 },
               },
+              {
+                header: "Source",
+                sortValue: (row) => row.source ?? "custom",
+                render: (row) =>
+                  (row.source ?? "custom") === "builtin"
+                    ? <StatusPill tone="neutral" label="Built in" />
+                    : <StatusPill tone="success" label="Created here" />,
+              },
               { header: "Category", sortValue: (row) => row.category, render: (row) => <StatusPill tone="info" label={row.category} /> },
               { header: "Level", sortValue: (row) => row.difficulty_level, render: (row) => <StatusPill tone="warning" label={row.difficulty_level} />, align: "center" },
-              { header: "Icon", render: (row) => <span className="table-meta">{row.icon_key || row.category}</span> },
               { header: "Minutes", sortValue: (row) => row.estimated_minutes, render: (row) => <span className="table-meta">{row.estimated_minutes}</span>, align: "center" },
               {
                 header: "",
                 render: (row) => (
-                  <button
-                    className="ghost-button small"
-                    onClick={() => handleEdit(row)}
-                    type="button"
-                  >
-                    {t.adminPages.topicsEdit}
-                  </button>
+                  <div className="inline-actions" style={{ justifyContent: "flex-end" }}>
+                    {(row.source ?? "custom") === "custom" && (
+                      <button
+                        className="ghost-button small"
+                        type="button"
+                        disabled={opening === row.story_id}
+                        onClick={() => void openExisting("edit", row)}
+                      >
+                        <Pencil size={13} aria-hidden="true" /> {t.adminPages.topicsEdit}
+                      </button>
+                    )}
+                    <button
+                      className="ghost-button small"
+                      type="button"
+                      disabled={opening === row.story_id}
+                      onClick={() => void openExisting("clone", row)}
+                    >
+                      <Copy size={13} aria-hidden="true" /> Clone
+                    </button>
+                  </div>
                 ),
                 align: "right",
               },
             ]}
-            rows={topics}
+            rows={visible}
+            rowKey={(row) => row.story_id}
           />
         )}
       </div>
