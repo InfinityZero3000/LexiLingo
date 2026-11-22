@@ -217,6 +217,10 @@ check_required_secrets() {
     POSTGRES_PASSWORD
     SECRET_KEY
     REDIS_PASSWORD
+    MONGO_ROOT_USER
+    MONGO_ROOT_PASSWORD
+    MONGO_APP_USER
+    MONGO_APP_PASSWORD
   )
 
   local missing=()

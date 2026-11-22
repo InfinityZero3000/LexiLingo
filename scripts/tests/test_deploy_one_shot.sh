@@ -40,7 +40,7 @@ chmod +x "${WORK}/proj/scripts/smoke-prod.sh" "${WORK}/proj/scripts/deploy-one-s
 : > "${WORK}/proj/docker-compose.yml"
 : > "${WORK}/proj/docker-compose.images.yml"
 printf 'ALLOWED_HOSTS=backend-service\n' > "${WORK}/proj/.env.production"
-printf 'POSTGRES_PASSWORD=x\nSECRET_KEY=x\nREDIS_PASSWORD=x\nAI_AUDIT_INGEST_SECRET=x\n' > "${WORK}/proj/.env.production.secrets"
+printf 'POSTGRES_PASSWORD=x\nSECRET_KEY=x\nREDIS_PASSWORD=x\nMONGO_ROOT_USER=x\nMONGO_ROOT_PASSWORD=x\nMONGO_APP_USER=x\nMONGO_APP_PASSWORD=x\nAI_AUDIT_INGEST_SECRET=x\n' > "${WORK}/proj/.env.production.secrets"
 printf '#!/usr/bin/env bash\nexec "$@"\n' > "${WORK}/bin/sudo"
 printf '#!/usr/bin/env bash\necho "docker $*"\n' > "${WORK}/bin/docker"
 printf '#!/usr/bin/env bash\nexit 0\n' > "${WORK}/bin/flock"
