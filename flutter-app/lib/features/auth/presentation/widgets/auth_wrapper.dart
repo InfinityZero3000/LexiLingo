@@ -220,6 +220,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
     await prefs.setBool(_onboardingCompletedKey(userId), true);
     await prefs.setString(_onboardingConfigKey(userId), jsonEncode(config));
     await prefs.remove(_preAuthAnswersKey);
+    _pendingPreAuthAnswers = null;
 
     await authProvider.submitOnboarding(
       answers.toJson(),
@@ -297,6 +298,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
         _flowResolvedForUserId = null;
         _entitlementSyncedForUserId = null;
         _preAuthFlowResolved = false;
+        _pendingPreAuthAnswers = null;
         _showPreAuthWelcome = false;
         _showPreAuthQuestions = false;
         _isShowingRegister = false;

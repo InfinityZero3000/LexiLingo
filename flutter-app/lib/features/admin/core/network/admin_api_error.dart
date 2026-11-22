@@ -110,7 +110,11 @@ class AdminApiError implements Exception {
   /// list of objects, which is not worth showing.
   static String? _detail(Object? data) {
     if (data is Map) {
-      final detail = data['detail'] ?? data['message'];
+      final error = data['error'];
+      final detail =
+          data['detail'] ??
+          data['message'] ??
+          (error is Map ? error['message'] : null);
       if (detail is String && detail.trim().isNotEmpty) return detail.trim();
     }
     return null;

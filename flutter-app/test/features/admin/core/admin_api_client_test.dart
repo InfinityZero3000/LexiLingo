@@ -141,5 +141,15 @@ void main() {
       );
       expect(AdminApiError.from(timeout).isNetwork, isTrue);
     });
+
+    test('keeps the reason from the backend error envelope', () {
+      final e = AdminApiError.from(
+        status(400, {
+          'success': false,
+          'error': {'code': 'BAD', 'message': 'Daily gift budget reached'},
+        }),
+      );
+      expect(e.message.resolve(), 'Daily gift budget reached');
+    });
   });
 }

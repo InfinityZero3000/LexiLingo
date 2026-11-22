@@ -50,7 +50,7 @@ class DeepLinkService {
   void dispose() => _sub?.cancel();
 
   void _route(Uri uri) {
-    debugPrint('DeepLink: $uri');
+    debugPrint('DeepLink: /${uri.pathSegments.join('/')}');
     final segments = uri.pathSegments;
 
     if (segments.isEmpty) return;
