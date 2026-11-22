@@ -77,3 +77,41 @@ async def test_forward_fails_closed_when_key_not_configured(monkeypatch):
         await admin_ai_proxy._forward("GET", "/config")
 
     assert getattr(exc_info.value, "status_code", None) == 503
+
+
+def test_every_topic_route_the_admin_ui_calls_exists_behind_admin_auth():
+    wanted = {
+        ("GET", "/admin/ai-proxy/topics/{story_id}"),
+        ("POST", "/admin/ai-proxy/topics/suggest-meta"),
+        ("POST", "/admin/ai-proxy/topics/draft"),
+    }
+    found = {}
+    for route in router.routes:
+        if isinstance(route, APIRoute):
+            for method in route.methods:
+                found[(method, route.path)] = route
+    assert wanted <= set(found)
+    for key in wanted:
+        assert get_current_admin in _dependency_calls(found[key]), f"{key} is not behind admin auth"
+
+
+@pytest.mark.asyncio
+async def test_draft_waits_longer_than_other_forwards_and_ids_are_encoded(monkeypatch):
+    monkeypatch.setenv("AI_ADMIN_API_KEY", "server-secret")
+    response = MagicMock()
+    response.status_code = 200
+    response.json.return_value = {"success": True}
+    http = AsyncMock()
+    http.request = AsyncMock(return_value=response)
+
+    with patch("app.routes.admin_ai_proxy.httpx.AsyncClient") as client_cls:
+        client_cls.return_value.__aenter__ = AsyncMock(return_value=http)
+        client_cls.return_value.__aexit__ = AsyncMock(return_value=False)
+        await admin_ai_proxy.draft_topic({"title": "x"}, _admin=MagicMock())
+        draft_timeout = client_cls.call_args.kwargs["timeout"]
+        await admin_ai_proxy.get_topic("a/b c", _admin=MagicMock())
+        plain_timeout = client_cls.call_args.kwargs["timeout"]
+
+    assert draft_timeout.read >= 60
+    assert plain_timeout.read < draft_timeout.read
+    assert http.request.await_args.args[1].endswith("/admin/topics/a%2Fb%20c")
