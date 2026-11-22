@@ -299,6 +299,11 @@ class _AuthWrapperState extends State<AuthWrapper> {
         _entitlementSyncedForUserId = null;
         _preAuthFlowResolved = false;
         _pendingPreAuthAnswers = null;
+        unawaited(
+          SharedPreferences.getInstance().then(
+            (p) => p.remove(_preAuthAnswersKey),
+          ),
+        );
         _showPreAuthWelcome = false;
         _showPreAuthQuestions = false;
         _isShowingRegister = false;
