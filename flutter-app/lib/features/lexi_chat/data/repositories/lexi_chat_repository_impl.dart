@@ -102,6 +102,7 @@ class LexiChatRepositoryImpl implements LexiChatRepository {
     String learnerLevel = 'B1',
     String nativeLanguage = 'vi',
     String? storyContext,
+    String? idempotencyKey,
   }) {
     return dataSource.sendMessageStream(
       userId: userId,
@@ -113,6 +114,7 @@ class LexiChatRepositoryImpl implements LexiChatRepository {
       learnerLevel: learnerLevel,
       nativeLanguage: nativeLanguage,
       storyContext: storyContext,
+      idempotencyKey: idempotencyKey,
     );
   }
 }

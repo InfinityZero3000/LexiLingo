@@ -64,5 +64,6 @@ abstract class LexiChatRepository {
     String learnerLevel = 'B1',
     String nativeLanguage = 'vi',
     String? storyContext,
+    String? idempotencyKey,
   });
 }

@@ -644,7 +644,7 @@ async def test_lexi_stream_returns_503_when_quota_check_times_out(
             request_context=request_context,
             request=lexi_route.LexiChatRequest(
                 user_id="u1",
-                session_id="s1",
+                session_id=None,  # quota now runs after the ownership check; a new session skips it
                 message="hello",
                 enable_tts=False,
             ),

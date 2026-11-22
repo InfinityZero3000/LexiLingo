@@ -4,6 +4,14 @@ import json
 from datetime import timedelta
 from typing import Any, Dict, List, Optional
 
+# Lexi history retention in Mongo. TTL only fires on BSON Dates and every Lexi
+# timestamp is an ISO string, so the TTL indexes read two Date fields instead:
+# `last_activity_at` on lexi_sessions, `stored_at` on lexi_messages.
+LEXI_RETENTION_SECONDS = 90 * 24 * 60 * 60
+# Redis keeps only the newest messages per session; the prompt uses 12 and the
+# history endpoints fall back to Mongo when the cache is shorter than message_count.
+LEXI_MESSAGE_CACHE_LIMIT = 50
+
 
 class LexiSessionStore:
     """
@@ -77,10 +85,15 @@ class LexiSessionStore:
         r = await self._redis()
         if r:
             key = f"{self._MSG_PREFIX}{sid}"
-            await r.rpush(key, json.dumps(msg))
-            await r.expire(key, self._TTL)
+            pipe = r.pipeline(transaction=False)
+            pipe.rpush(key, json.dumps(msg))
+            pipe.ltrim(key, -LEXI_MESSAGE_CACHE_LIMIT, -1)
+            pipe.expire(key, self._TTL)
+            await pipe.execute()
         else:
-            self._mem_messages.setdefault(sid, []).append(msg)
+            bucket = self._mem_messages.setdefault(sid, [])
+            bucket.append(msg)
+            del bucket[:-LEXI_MESSAGE_CACHE_LIMIT]
 
     async def append_messages(self, sid: str, messages: List[Dict[str, Any]]):
         messages = list(messages)
@@ -92,10 +105,13 @@ class LexiSessionStore:
             key = f"{self._MSG_PREFIX}{sid}"
             pipe = r.pipeline(transaction=False)
             pipe.rpush(key, *[json.dumps(msg) for msg in messages])
+            pipe.ltrim(key, -LEXI_MESSAGE_CACHE_LIMIT, -1)
             pipe.expire(key, self._TTL)
             await pipe.execute()
         else:
-            self._mem_messages.setdefault(sid, []).extend(messages)
+            bucket = self._mem_messages.setdefault(sid, [])
+            bucket.extend(messages)
+            del bucket[:-LEXI_MESSAGE_CACHE_LIMIT]
 
     async def init_messages(self, sid: str):
         """Ensure the message list exists (no-op for Redis, inits list for mem)."""

@@ -142,3 +142,17 @@ def enforce_user_scope(
             detail="Forbidden: user scope mismatch",
         )
     return current_user.user_id
+
+
+def assert_session_owner(session: Any, current_user: AuthenticatedUser) -> None:
+    """The one ownership rule for every chat session (lexi, topic, chat): fail closed.
+
+    A session with no owner is refused, not shared — an ownerless row used to be
+    readable and writable by any signed-in user.
+    """
+    owner = str((session or {}).get("user_id") or "")
+    if not owner or owner != current_user.user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: session ownership mismatch",
+        )

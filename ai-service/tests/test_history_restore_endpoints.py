@@ -41,7 +41,7 @@ def mock_topic_db():
     db = MagicMock()
 
     chat_sessions = MagicMock()
-    chat_sessions.find_one = AsyncMock(return_value={"session_id": "topic_s1"})
+    chat_sessions.find_one = AsyncMock(return_value={"session_id": "topic_s1", "user_id": "u1"})
 
     chat_messages = MagicMock()
     cursor = MagicMock()
@@ -151,6 +151,7 @@ async def test_topic_messages_limit_zero_loads_full_history_batches(mock_topic_d
         session_id="topic_s1",
         limit=0,
         db=mock_topic_db,
+        current_user=AuthenticatedUser(user_id="u1", claims={}),
     )
 
     assert "messages" in result
@@ -178,6 +179,7 @@ async def test_topic_messages_limit_positive_uses_limit_cursor(mock_topic_db):
         session_id="topic_s1",
         limit=1,
         db=mock_topic_db,
+        current_user=AuthenticatedUser(user_id="u1", claims={}),
     )
 
     assert len(result["messages"]) == 1
@@ -191,6 +193,7 @@ async def test_lexi_messages_returns_cached_when_cache_is_complete(
 ):
     mock_lexi_db["lexi_sessions"].find_one.return_value = {
         "session_id": "lexi_s1",
+        "user_id": "u1",
         "message_count": 2,
     }
     mock_lexi_store.get_session.return_value = {

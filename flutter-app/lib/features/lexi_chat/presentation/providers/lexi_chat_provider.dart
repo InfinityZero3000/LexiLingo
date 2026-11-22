@@ -547,7 +547,12 @@ class LexiChatProvider extends ChangeNotifier with ResetEpoch {
   }
 
   // ── Send Message ───────────────────────────────────────────────────────────
-  Future<void> sendMessage(String text, {String? userId}) async {
+  Future<void> sendMessage(
+    String text, {
+    String? userId,
+    bool recoveredSession = false,
+    String? retryOfRequestId,
+  }) async {
     if (text.trim().isEmpty || _isSending) return;
 
     final epoch = resetEpoch;
@@ -556,8 +561,10 @@ class LexiChatProvider extends ChangeNotifier with ResetEpoch {
       await startSession(uid);
       if (isStale(epoch)) return;
     }
-    final sessionId = _session?.sessionId ?? '';
-    final requestId = _buildRequestId(uid, sessionId);
+    final sessionId = _session!.sessionId;
+    // A fallback from /stream keeps the stream's id: it is the idempotency key, so
+    // the server replays an answer the stream already stored instead of a new turn.
+    final requestId = retryOfRequestId ?? _buildRequestId(uid, sessionId);
 
     // Optimistic: add user message immediately
     final userMsg = LexiMessage(
@@ -624,6 +631,16 @@ class LexiChatProvider extends ChangeNotifier with ResetEpoch {
       }
       if (isMessageTooLongError(e)) {
         _rejectTooLongMessage(requestId, e);
+        return;
+      }
+      if (!recoveredSession && _isMissingSessionError(e)) {
+        logWarn(_tag, 'Session $sessionId missing on server; starting a new one');
+        _messages.removeWhere((m) => m.id == requestId);
+        _sessions.removeWhere((s) => s.sessionId == sessionId);
+        _session = null;
+        await _saveSessions();
+        notifyListeners();
+        await sendMessage(text, userId: uid, recoveredSession: true);
         return;
       }
       _error = UiText.key('lexiChat.offlineQueued');
@@ -784,7 +801,7 @@ class LexiChatProvider extends ChangeNotifier with ResetEpoch {
       await startSession(uid);
       if (isStale(epoch)) return;
     }
-    final sessionId = _session?.sessionId ?? '';
+    final sessionId = _session!.sessionId;
     final requestId = _buildRequestId(uid, sessionId);
     final placeholderId = 'stream_$requestId';
 
@@ -826,6 +843,7 @@ class LexiChatProvider extends ChangeNotifier with ResetEpoch {
         enableTts: _ttsEnabled,
         learnerLevel: _learnerLevel,
         nativeLanguage: _nativeLanguage,
+        idempotencyKey: requestId,
       )) {
         // A reset ends the turn: leaving the loop cancels the stream, so
         // nothing more is appended and no reply audio is played.
@@ -1015,7 +1033,7 @@ class LexiChatProvider extends ChangeNotifier with ResetEpoch {
     }
 
     notifyListeners();
-    await sendMessage(text, userId: userId);
+    await sendMessage(text, userId: userId, retryOfRequestId: requestId);
   }
 
   // The server will refuse this text every time, so it is neither queued nor retried.
@@ -1035,7 +1053,7 @@ class LexiChatProvider extends ChangeNotifier with ResetEpoch {
       await startSession(uid);
       if (isStale(epoch)) return;
     }
-    final sessionId = _session?.sessionId ?? '';
+    final sessionId = _session!.sessionId;
 
     _isSending = true;
     _beginLexiResponseState();

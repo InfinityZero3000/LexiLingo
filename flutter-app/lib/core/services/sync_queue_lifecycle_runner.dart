@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 
+import '../error/exceptions.dart';
 import '../network/api_client.dart';
 import '../utils/app_logger.dart';
 import 'background_sync_queue_service.dart';
@@ -85,20 +86,31 @@ class SyncQueueLifecycleRunner {
               );
               return;
             case 'lexi.chat.send.v1':
-              await _apiClient.post(
-                '/lexi/chat',
-                body: {
-                  'user_id': item.payload['user_id'],
-                  'session_id': item.payload['session_id'],
-                  'message': item.payload['message'],
-                  'input_type': item.payload['input_type'] ?? 'text',
-                  'enable_tts': item.payload['enable_tts'] ?? true,
-                  'learner_level': item.payload['learner_level'] ?? 'B1',
-                  if (item.payload['story_context'] != null)
-                    'story_context': item.payload['story_context'],
-                },
-                headers: {'X-Idempotency-Key': item.idempotencyKey},
-              );
+              try {
+                await _apiClient.post(
+                  '/lexi/chat',
+                  body: {
+                    'user_id': item.payload['user_id'],
+                    'session_id': item.payload['session_id'],
+                    'message': item.payload['message'],
+                    'input_type': item.payload['input_type'] ?? 'text',
+                    'enable_tts': item.payload['enable_tts'] ?? true,
+                    'learner_level': item.payload['learner_level'] ?? 'B1',
+                    if (item.payload['story_context'] != null)
+                      'story_context': item.payload['story_context'],
+                  },
+                  headers: {'X-Idempotency-Key': item.idempotencyKey},
+                );
+              } on ServerException catch (e) {
+                // The session is gone on the server; a retry can never succeed.
+                if (!e.message.contains('status 404')) rethrow;
+                logWarn(
+                  _tag,
+                  'Dropping queued Lexi message: session '
+                  '${item.payload['session_id']} no longer exists',
+                );
+                return;
+              }
               await _markLexiMessageSynced(
                 userScope: userScope,
                 sessionId: item.payload['session_id']?.toString() ?? '',

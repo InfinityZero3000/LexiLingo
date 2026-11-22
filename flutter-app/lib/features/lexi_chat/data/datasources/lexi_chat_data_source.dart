@@ -166,17 +166,9 @@ class LexiChatDataSource {
             DateTime.tryParse(data['created_at'] ?? '') ?? DateTime.now(),
       );
     } catch (e) {
-      if (_isUnauthorizedError(e)) {
-        // Let provider surface a re-login message instead of creating stale local sessions.
-        rethrow;
-      }
+      // No local-id fallback: the server never knows it, so every later send 404s.
       logError(_tag, 'createSession failed: $e');
-      // Return a local session ID as fallback
-      return LexiSession(
-        sessionId: DateTime.now().millisecondsSinceEpoch.toString(),
-        userId: userId,
-        createdAt: DateTime.now(),
-      );
+      rethrow;
     }
   }
 
@@ -516,6 +508,7 @@ class LexiChatDataSource {
     String learnerLevel = 'B1',
     String nativeLanguage = 'vi',
     String? storyContext,
+    String? idempotencyKey,
   }) async* {
     final payload = {
       'user_id': userId,
@@ -529,7 +522,16 @@ class LexiChatDataSource {
       if (storyContext != null) 'story_context': storyContext,
     };
 
-    final rawStream = apiClient.postStream('/lexi/stream', body: payload);
+    final rawStream = apiClient.postStream(
+      '/lexi/stream',
+      body: payload,
+      // Shared with the /chat fallback, so a stream that already answered is
+      // replayed by the server instead of stored as a second turn.
+      headers: {
+        if (idempotencyKey != null && idempotencyKey.isNotEmpty)
+          'X-Idempotency-Key': idempotencyKey,
+      },
+    );
 
     // SSE parsing state
     String? currentEvent;

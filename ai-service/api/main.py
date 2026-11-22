@@ -29,6 +29,7 @@ from api.core.database import mongodb_manager
 from api.core.redis_client import RedisClient, get_redis
 from api.core.groq_key_pool import build_groq_key_pool, GroqKeyPool
 from api.core.config import get_settings
+from api.services.lexi_session_store import LEXI_RETENTION_SECONDS
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -60,6 +61,32 @@ MONGODB_DATABASE = settings.MONGODB_DATABASE
 _gateway_initialized = False
 _http_client: Optional[httpx.AsyncClient] = None
 _groq_pool: Optional[GroqKeyPool] = None
+
+
+async def _backfill_lexi_ttl_dates(db) -> None:
+    """Give rows written before the TTL fields existed a Date to expire on.
+
+    Without it every pre-existing session and message (ISO-string timestamps only)
+    would be kept forever. Idempotent: only touches rows still missing the field.
+    """
+    jobs = (
+        ("lexi_sessions", "last_activity_at", ("updated_at", "created_at")),
+        ("lexi_messages", "stored_at", ("timestamp",)),
+    )
+    for collection, field, sources in jobs:
+        candidates = [
+            {"$convert": {"input": f"${src}", "to": "date", "onError": None, "onNull": None}}
+            for src in sources
+        ]
+        try:
+            result = await db[collection].update_many(
+                {field: {"$exists": False}},
+                [{"$set": {field: {"$ifNull": [*candidates, "$$NOW"]}}}],
+            )
+            if result.modified_count:
+                logger.info("Backfilled %s.%s on %d rows", collection, field, result.modified_count)
+        except Exception as exc:
+            logger.warning("Skip %s.%s backfill: %s", collection, field, exc)
 
 
 async def _ensure_mongo_indexes() -> None:
@@ -139,6 +166,13 @@ async def _ensure_mongo_indexes() -> None:
         [("session_id", ASCENDING), ("timestamp", ASCENDING)],
         name="chat_messages_session_timestamp_idx",
     )
+    # Lived only in scripts/init_db.py, which nothing runs, so it never existed.
+    await _create_index_safe(
+        "chat_messages",
+        [("timestamp", ASCENDING)],
+        name="chat_messages_timestamp_ttl",
+        expireAfterSeconds=30 * 24 * 60 * 60,
+    )
 
     await _ensure_session_unique_index(
         collection="lexi_sessions",
@@ -167,6 +201,19 @@ async def _ensure_mongo_indexes() -> None:
         name="lexi_messages_session_id_uq",
         unique=True,
         partialFilterExpression={"id": {"$exists": True, "$type": "string"}},
+    )
+    await _backfill_lexi_ttl_dates(db)
+    await _create_index_safe(
+        "lexi_sessions",
+        [("last_activity_at", ASCENDING)],
+        name="lexi_sessions_last_activity_ttl",
+        expireAfterSeconds=LEXI_RETENTION_SECONDS,
+    )
+    await _create_index_safe(
+        "lexi_messages",
+        [("stored_at", ASCENDING)],
+        name="lexi_messages_stored_at_ttl",
+        expireAfterSeconds=LEXI_RETENTION_SECONDS,
     )
     await _create_index_safe(
         "learner_observation_spool",
