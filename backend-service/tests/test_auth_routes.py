@@ -975,6 +975,59 @@ class TestGoogleLogin:
         assert local_user.is_verified is True
         assert "google" in local_user.provider
 
+    async def test_google_link_drops_the_unverified_registrants_password_and_sessions(self):
+        """An unverified account can log in, so whoever registered the address first
+        holds a password and refresh tokens. Google proving the email must cut both."""
+        from app.main import app
+        from app.core.database import get_db
+
+        old_hash = "$2b$12$old.registrant.password.hash.......................................x"
+        local_user = _make_mock_user(is_verified=False, provider=["local"], hashed_password=old_hash)
+        session = _make_mock_session(scalar_one_or_none_value=local_user)
+
+        async def mock_get_db():
+            yield session
+
+        app.dependency_overrides[get_db] = mock_get_db
+        transport = ASGITransport(app=app)
+        google_info = {"email": "test@example.com", "email_verified": True, "name": "Test User"}
+        revoke = AsyncMock()
+        with patch("app.core.security.verify_google_token", new=AsyncMock(return_value=google_info)), \
+             patch("app.routes.auth._revoke_all_refresh_tokens", new=revoke):
+            async with AsyncClient(transport=transport, base_url="http://test") as c:
+                response = await c.post(f"{BASE}/google", json={"id_token": "good-token", "source": "app"})
+        app.dependency_overrides.clear()
+
+        assert response.status_code == 200
+        assert local_user.hashed_password != old_hash
+        revoke.assert_awaited_once()
+        assert revoke.await_args.args[1] == local_user.id
+
+    async def test_google_link_keeps_the_password_of_an_already_verified_account(self):
+        from app.main import app
+        from app.core.database import get_db
+
+        old_hash = "$2b$12$kept.password.hash...........................................x"
+        local_user = _make_mock_user(is_verified=True, provider=["local"], hashed_password=old_hash)
+        session = _make_mock_session(scalar_one_or_none_value=local_user)
+
+        async def mock_get_db():
+            yield session
+
+        app.dependency_overrides[get_db] = mock_get_db
+        transport = ASGITransport(app=app)
+        google_info = {"email": "test@example.com", "email_verified": True, "name": "Test User"}
+        revoke = AsyncMock()
+        with patch("app.core.security.verify_google_token", new=AsyncMock(return_value=google_info)), \
+             patch("app.routes.auth._revoke_all_refresh_tokens", new=revoke):
+            async with AsyncClient(transport=transport, base_url="http://test") as c:
+                response = await c.post(f"{BASE}/google", json={"id_token": "good-token", "source": "app"})
+        app.dependency_overrides.clear()
+
+        assert response.status_code == 200
+        assert local_user.hashed_password == old_hash
+        revoke.assert_not_awaited()
+
     async def test_google_login_local_account_blocked_when_email_not_verified(self):
         """If Google has NOT verified the email, an unverified local account stays blocked."""
         from app.main import app

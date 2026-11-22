@@ -594,6 +594,12 @@ async def google_login(
 
         # Admin-allowlisted link, or Google vouching for a local account's email →
         # link google to this account.
+        if email_verified and not user.is_verified and user.has_local_auth:
+            # Whoever registered this address never proved they own it, and unverified
+            # accounts can now sign in. The real owner just proved it through Google,
+            # so the password and sessions the registrant holds must not survive.
+            user.hashed_password = await get_password_hash_async(uuid.uuid4().hex)
+            await _revoke_all_refresh_tokens(db, user.id)
         user.add_provider("google")
         user.is_verified = email_verified or user.is_verified
         user.avatar_url = google_info.get("picture") or user.avatar_url
