@@ -12,6 +12,7 @@ from __future__ import annotations
 import logging
 import os
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -34,10 +35,20 @@ def _admin_headers() -> dict[str, str]:
     return {"X-Admin-Key": api_key}
 
 
-async def _forward(method: str, path: str, *, params: dict | None = None, json: Any = None) -> Any:
+_DRAFT_TIMEOUT = httpx.Timeout(60.0)
+
+
+async def _forward(
+    method: str,
+    path: str,
+    *,
+    params: dict | None = None,
+    json: Any = None,
+    timeout: httpx.Timeout = _TIMEOUT,
+) -> Any:
     url = f"{settings.AI_SERVICE_URL.rstrip('/')}/admin{path}"
     try:
-        async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+        async with httpx.AsyncClient(timeout=timeout) as client:
             resp = await client.request(method, url, params=params, json=json, headers=_admin_headers())
     except httpx.RequestError as exc:
         logger.error("ai-service admin proxy request failed: %s", exc)
@@ -62,6 +73,30 @@ async def create_topic(
     _admin: User = Depends(require_resource("topics")),
 ) -> Any:
     return await _forward("POST", "/topics", json=payload)
+
+
+@router.post("/topics/suggest-meta")
+async def suggest_topic_meta(
+    payload: dict,
+    _admin: User = Depends(require_resource("topics")),
+) -> Any:
+    return await _forward("POST", "/topics/suggest-meta", json=payload)
+
+
+@router.post("/topics/draft")
+async def draft_topic(
+    payload: dict,
+    _admin: User = Depends(require_resource("topics")),
+) -> Any:
+    return await _forward("POST", "/topics/draft", json=payload, timeout=_DRAFT_TIMEOUT)
+
+
+@router.get("/topics/{story_id}")
+async def get_topic(
+    story_id: str,
+    _admin: User = Depends(require_resource("topics")),
+) -> Any:
+    return await _forward("GET", f"/topics/{quote(story_id, safe='')}")
 
 
 @router.get("/config")
