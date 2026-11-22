@@ -1,112 +1,54 @@
 import 'package:flutter/foundation.dart';
-import 'package:lexilingo_app/core/services/google_sign_in_service.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
+import '../../../core/network/admin_api_error.dart';
 import '../data/auth_repository.dart';
 
-enum AuthState { unknown, authenticated, unauthenticated, loading }
+/// [forbidden]: signed in, but the account has no admin role.
+/// [unauthenticated]: no learner session; the panel closes.
+/// [failed]: the account could not be checked (network, server); retry.
+enum AuthState { unknown, authenticated, forbidden, unauthenticated, failed }
 
+/// Who is using the panel. There is no admin login: the panel borrows the
+/// learner's session and only checks that the account is an admin.
 class AuthProvider extends ChangeNotifier {
-  final _repo = AuthRepository();
-  final _googleSignIn = GoogleSignInService();
+  AuthProvider({AuthRepository? repository})
+    : _repo = repository ?? AuthRepository();
+
+  final AuthRepository _repo;
 
   AuthState _state = AuthState.unknown;
   AdminUser? _user;
-  String? _error;
+  UiText? _error;
 
   AuthState get state => _state;
   AdminUser? get user => _user;
-  String? get error => _error;
+  UiText? get errorText => _error;
   bool get isAuthenticated => _state == AuthState.authenticated;
   bool get isSuperAdmin => _user?.isSuperAdmin ?? false;
   bool get hasUserZoneAccess => _user?.hasUserZoneAccess ?? false;
 
   Future<void> init() async {
-    _user = await _repo.getMe();
-    _state = _user != null
-        ? AuthState.authenticated
-        : AuthState.unauthenticated;
-    notifyListeners();
-  }
-
-  Future<bool> loginWithGoogle() async {
     _error = null;
-    _state = AuthState.loading;
-    notifyListeners();
     try {
-      final idToken = await _googleSignIn.signIn();
-      if (idToken == null) {
-        _error = 'Đăng nhập Google bị hủy';
+      _user = await _repo.getMe();
+      if (_user == null) {
         _state = AuthState.unauthenticated;
-        notifyListeners();
-        return false;
+      } else {
+        _state = _user!.mayUsePanel
+            ? AuthState.authenticated
+            : AuthState.forbidden;
       }
-      if (idToken == GoogleSignInService.redirectInProgressMarker) {
-        _state = AuthState.unauthenticated;
-        notifyListeners();
-        return false;
-      }
-      _user = await _repo.loginWithGoogle(idToken);
-      _state = AuthState.authenticated;
-      notifyListeners();
-      return true;
     } catch (e) {
-      _error = _parseError(e);
-      _state = AuthState.unauthenticated;
-      notifyListeners();
-      return false;
+      _user = null;
+      _error = AdminApiError.from(e).message;
+      _state = AuthState.failed;
     }
-  }
-
-  Future<bool> requestOtp(String email) async {
-    _error = null;
-    _state = AuthState.loading;
-    notifyListeners();
-    try {
-      await _repo.requestOtp(email);
-      _state = AuthState.unauthenticated;
-      notifyListeners();
-      return true;
-    } catch (e) {
-      _error = _parseError(e);
-      _state = AuthState.unauthenticated;
-      notifyListeners();
-      return false;
-    }
-  }
-
-  Future<bool> verifyOtp(String email, String otp) async {
-    _error = null;
-    _state = AuthState.loading;
-    notifyListeners();
-    try {
-      _user = await _repo.verifyOtp(email, otp);
-      _state = AuthState.authenticated;
-      notifyListeners();
-      return true;
-    } catch (e) {
-      _error = _parseError(e);
-      _state = AuthState.unauthenticated;
-      notifyListeners();
-      return false;
-    }
-  }
-
-  Future<void> logout() async {
-    await _repo.logout();
-    _user = null;
-    _state = AuthState.unauthenticated;
     notifyListeners();
   }
 
-  String _parseError(dynamic e) {
-    final str = e.toString();
-    if (str.contains('401')) return 'Tài khoản không được xác thực';
-    if (str.contains('403')) return 'Tài khoản không có quyền truy cập admin';
-    if (str.contains('Admin Google OAuth not configured')) {
-      return 'Google OAuth admin chưa được cấu hình trên server';
-    }
-    if (str.contains('SocketException') || str.contains('connection')) {
-      return 'Không thể kết nối máy chủ';
-    }
-    return 'Có lỗi xảy ra, vui lòng thử lại';
+  Future<void> retry() {
+    _state = AuthState.unknown;
+    notifyListeners();
+    return init();
   }
 }

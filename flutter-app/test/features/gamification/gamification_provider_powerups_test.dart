@@ -20,7 +20,7 @@ class _FakeRepository implements GamificationRepository {
   Future<List<InventoryItemEntity>> getInventory() async => items;
 
   @override
-  Future<Map<String, dynamic>?> useItem(String inventoryId) async {
+  Future<Map<String, dynamic>?> useItem(String inventoryId, {String? gameSessionId}) async {
     lastUsedInventoryId = inventoryId;
     return useItemEffects;
   }

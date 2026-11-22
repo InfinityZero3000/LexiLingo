@@ -1,0 +1,2271 @@
+{
+  "category": {
+    "color": "#E53935",
+    "course_count": 0,
+    "created_at": {
+      "__dt__": "2026-03-14T03:20:37.101662"
+    },
+    "description": "Luyện thi IELTS Academic, General Training, nhắm Band 3 đến 8+",
+    "icon": "assignment",
+    "id": "1a3c9ab4-e473-478e-a9e2-e85158332eef",
+    "is_active": true,
+    "name": "IELTS Preparation",
+    "order_index": 2,
+    "slug": "test-prep",
+    "updated_at": {
+      "__dt__": "2026-03-14T03:20:37.101684"
+    }
+  },
+  "course": {
+    "category_id": "1a3c9ab4-e473-478e-a9e2-e85158332eef",
+    "content_version": 1,
+    "created_at": {
+      "__dt__": "2026-03-14T03:20:39.224654"
+    },
+    "description": "Khóa học IELTS chuyên sâu dành cho mục tiêu Band 7.0 trở lên. Luyện tập các kỹ năng nâng cao: phân tích dữ liệu phức tạp, lập luận học thuật sắc bén, phát âm tự nhiên và xử lý bài nghe khó. Phù hợp với học viên đã có nền tảng B2 vững chắc.",
+    "estimated_duration": 1080,
+    "id": "175933ee-9f19-4f87-9e38-74594c550f93",
+    "is_published": true,
+    "language": "en",
+    "level": "C1",
+    "skill": null,
+    "tags": [
+      "ielts",
+      "test-prep",
+      "band-7",
+      "band-8",
+      "advanced",
+      "academic",
+      "cefr-c1"
+    ],
+    "thumbnail_url": "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400",
+    "title": "IELTS Academic: Target Band 7+",
+    "total_lessons": 25,
+    "total_xp": 1500,
+    "updated_at": {
+      "__dt__": "2026-03-14T03:20:39.429215"
+    }
+  },
+  "format": 1,
+  "lessons": [
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "main auditorium",
+            "explanation": "This tests the ability to catch specific location details in an announcement. The phrase 'main auditorium' is the standard venue for large academic gatherings, distinguishing it from smaller lecture halls.",
+            "id": "ex_3f9a1b2c-4d5e-6f7g-8h9i-0j1k2l3m4n5o_1",
+            "options": [],
+            "question": "The seminar will be held in the {blank}.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "They could not find enough primary sources.",
+            "explanation": "In Section 3 discussions, students often cite resource availability as a hurdle. The distractors include a plausible technical issue (library access) and a common student error (misunderstanding dates), but the correct answer reflects the specific academic constraint mentioned in the utterance.",
+            "id": "ex_7b2c3d4e-5f6g-7h8i-9j0k-1l2m3n4o5p6q_2",
+            "options": [
+              "They were waiting for library access to be restored.",
+              "They could not find enough primary sources.",
+              "They misunderstood the submission date.",
+              "The professor extended the deadline initially."
+            ],
+            "question": "What is the primary reason the students missed the deadline for their literature review?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          },
+          {
+            "correct_answer": "draft proposals",
+            "explanation": "This exercises the recognition of specific academic terminology. 'Draft proposals' is a distinct deliverable in research-based courses, differentiating it from final papers or essays.",
+            "id": "ex_1a2b3c4d-5e6f-7g8h-9i0j-1k2l3m4n5o6p_3",
+            "options": [],
+            "question": "Please submit your {blank} by Friday.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "It ignores environmental sustainability factors.",
+            "explanation": "This reflects a common critique in Section 4 lectures regarding urban studies. The distractors offer plausible logistical and social criticisms (cost, engagement, data), but the specific academic objection here is the omission of environmental considerations.",
+            "id": "ex_8h9i0j1k-2l3m-4n5o-6p7q-8r9s0t1u2v3w_4",
+            "options": [
+              "It ignores environmental sustainability factors.",
+              "It is too expensive to implement.",
+              "It lacks community engagement strategies.",
+              "It relies on outdated demographic data."
+            ],
+            "question": "According to the lecturer, what is the main criticism of the proposed urban planning model?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          },
+          {
+            "correct_answer": "contaminated samples",
+            "explanation": "This tests the ability to identify specific scientific causes for experimental failure. 'Contaminated samples' is a precise technical reason distinct from human error or equipment malfunction.",
+            "id": "ex_4d5e6f7g-8h9i-0j1k-2l3m-4n5o6p7q8r9s_5",
+            "options": [],
+            "question": "The experiment failed due to {blank}.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "175933ee-9f19-4f87-9e38-74594c550f93",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.278445"
+      },
+      "description": null,
+      "estimated_minutes": 28,
+      "id": "2fa4578c-b39b-4fd9-b61e-5372ff98ef4b",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "listening",
+      "title": "Section 3–4: Academic Discussions & Lectures",
+      "total_exercises": 5,
+      "unit_id": "fc233af2-92f6-4edb-957c-a82f9774d3b4",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.377495"
+      },
+      "xp_reward": 28
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Cautious reservation",
+            "explanation": "The speaker uses the phrase 'I see the logic, but...' followed by 'it might inadvertently penalize students who...' This structure indicates they understand the rationale (logic) but are worried about the consequences (penalize students), which aligns with cautious reservation rather than full support or opposition.",
+            "id": "ex_001",
+            "options": [
+              "Enthusiastic support",
+              "Cautious reservation",
+              "Complete indifference",
+              "Angry opposition"
+            ],
+            "question": "What is the speaker's attitude towards the proposed change in the assessment criteria?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          },
+          {
+            "correct_answer": "non-negotiable",
+            "explanation": "The term 'non-negotiable' is a C1-level collocation often used in academic contexts to indicate that a rule or time cannot be changed. The tone is firm and final.",
+            "id": "ex_002",
+            "options": [],
+            "question": "The professor says the deadline is {blank}, implying it is strict.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "They require further verification.",
+            "explanation": "The speaker states, 'While these results are promising, we must wait for peer review before drawing definitive conclusions.' 'Promising' suggests potential, but 'wait for peer review' and 'before drawing definitive conclusions' imply that the findings are not yet confirmed or fully trusted.",
+            "id": "ex_003",
+            "options": [
+              "They are universally accepted.",
+              "They require further verification.",
+              "They are outdated.",
+              "They are irrelevant to the current topic."
+            ],
+            "question": "What does the speaker imply about the research findings mentioned?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          },
+          {
+            "correct_answer": "fundamentally flawed",
+            "explanation": "In academic feedback, 'fundamentally flawed' is a strong critique indicating that the core argument or structure is incorrect, necessitating significant changes rather than minor edits.",
+            "id": "ex_004",
+            "options": [],
+            "question": "The tutor says the essay is {blank}, meaning it needs major revisions.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "Constructive and collaborative",
+            "explanation": "The lecturer says, 'She stepped in when the team was stuck and helped synthesize the different viewpoints.' 'Stepped in' implies helpful intervention, and 'synthesized viewpoints' demonstrates collaborative skill, leading to a positive evaluation.",
+            "id": "ex_005",
+            "options": [
+              "Minimal but acceptable",
+              "Overwhelmingly dominant",
+              "Constructive and collaborative",
+              "Disruptive and unhelpful"
+            ],
+            "question": "How does the lecturer characterize the student's contribution to the group project?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "175933ee-9f19-4f87-9e38-74594c550f93",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.278479"
+      },
+      "description": null,
+      "estimated_minutes": 28,
+      "id": "a513c5f1-aba2-431b-b5a8-e16b9fe29e3e",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "listening",
+      "title": "Listening for Implicit Meaning & Speaker Attitude",
+      "total_exercises": 5,
+      "unit_id": "fc233af2-92f6-4edb-957c-a82f9774d3b4",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447792"
+      },
+      "xp_reward": 28
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "FALSE",
+            "explanation": "The text explicitly states that the filaments are unwound and combined into a thread, and 'This thread is then dyed'. Therefore, dyeing occurs after unwinding, making the statement false.",
+            "id": "ex_dcbfc49f-ed93-4765-9b6a-922434f1ab22_1",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "The diagram illustrates the traditional method of processing silk, beginning with the cocoon. The cocoon is first boiled to soften the sericin gum that binds the filaments. Following this, the filaments are carefully unwound and combined to form a thicker thread. This thread is then dyed before being woven into fabric. Does the passage state that the silk filaments are dyed before they are unwound from the cocoon?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "pupa",
+            "explanation": "The text describes the metamorphosis sequence: egg -> larva -> {blank} -> adult. In the biological context of mosquito life cycles described in such diagrams, the stage between larva and adult is the pupa. The sentence structure implies the missing term for the stage before the adult.",
+            "id": "ex_dcbfc49f-ed93-4765-9b6a-922434f1ab22_2",
+            "options": [],
+            "question": "In the life cycle of the mosquito, the egg hatches into a larva, which lives in water. The larva undergoes several stages of growth, shedding its skin each time. Eventually, the larva transforms into a {blank}, which is the reproductive adult stage capable of flight.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "NOT GIVEN",
+            "explanation": "The text states that mortar is applied 'between the bricks to bind them together' and describes the offset pattern. It does not specify the precise chronological order of applying mortar relative to placing the specific offset pattern, only that they are part of the building process. Therefore, the specific sequencing is not given.",
+            "id": "ex_dcbfc49f-ed93-4765-9b6a-922434f1ab22_3",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "The flow chart details the construction of a traditional brick wall. Bricks are laid in a pattern where each row is offset from the one below it. Mortar is applied between the bricks to bind them together. After the wall is built, a sealant is often applied to the surface. Does the passage state that the mortar is applied before the bricks are laid in the offset pattern?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "Runoff",
+            "explanation": "The text explicitly states: 'Runoff from the surrounding land also flows into the lake.' Evaporation and condensation are atmospheric processes, and precipitation falls from the sky, not specifically from the land.",
+            "id": "ex_dcbfc49f-ed93-4765-9b6a-922434f1ab22_4",
+            "options": [
+              "Evaporation",
+              "Condensation",
+              "Runoff",
+              "Precipitation"
+            ],
+            "question": "The diagram shows the water cycle in a closed ecosystem. Water evaporates from the lake surface and rises into the atmosphere. It condenses to form clouds. Precipitation falls back into the lake. Runoff from the surrounding land also flows into the lake. Which process is identified as the source of water entering the lake from the surrounding land?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "pulp",
+            "explanation": "In the context of paper production diagrams, the mixture of wood chips, water, and chemicals is technically referred to as pulp. This is the standard terminology for this stage in the process.",
+            "id": "ex_dcbfc49f-ed93-4765-9b6a-922434f1ab22_5",
+            "options": [],
+            "question": "The production of paper involves several key stages. Wood chips are mixed with water and chemicals to create a {blank}. This mixture is then pressed and dried to form sheets of paper.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "175933ee-9f19-4f87-9e38-74594c550f93",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.278498"
+      },
+      "description": null,
+      "estimated_minutes": 28,
+      "id": "dcbfc49f-ed93-4765-9b6a-922434f1ab22",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "reading",
+      "title": "Diagram & Flow Chart Completion",
+      "total_exercises": 5,
+      "unit_id": "fc233af2-92f6-4edb-957c-a82f9774d3b4",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:25:24.637241"
+      },
+      "xp_reward": 28
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "side door",
+            "explanation": "In dictation tasks, accuracy is paramount. The phrase 'side door' is a common collocation in campus announcements. Listen for the clear enunciation of the sibilant 's' and the dental 'd' to distinguish it from similar sounding words like 'side door' vs 'side floor'.",
+            "id": "ex_001",
+            "options": [],
+            "question": "Type exactly what you hear in the following announcement regarding library access: \"The main entrance is currently closed for maintenance, so please use the {blank} instead.\"",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "penalty",
+            "explanation": "This tests the ability to recognize academic vocabulary in context. The word 'penalty' follows the verb 'incur' naturally. Ensure you distinguish the /p/ onset from potential mishearings like 'penal' or 'person'.",
+            "id": "ex_002",
+            "options": [],
+            "question": "Complete the tutor's remark about the essay submission deadline: \"If you fail to submit your work by Friday, you will incur a {blank} of five percent per day.\"",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "Seventy-five minutes",
+            "explanation": "The speaker explicitly states 'seventy-five minutes'. The option 'An hour and fifteen minutes' is a semantic equivalent but incorrect because IELTS requires listening for the exact phrasing or specific numbers mentioned. '45 minutes' is a distractor based on a different time slot mentioned earlier in the hypothetical context.",
+            "id": "ex_003",
+            "options": [
+              "45 minutes",
+              "An hour and fifteen minutes",
+              "Seventy-five minutes",
+              "Two hours"
+            ],
+            "question": "Listen to the speaker's description of the seminar schedule. What is the actual duration of the lecture?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          },
+          {
+            "correct_answer": "Qualitative interviews",
+            "explanation": "The speaker emphasizes the importance of 'qualitative interviews' for gaining deep insights. 'Quantitative surveys' is a plausible distractor as it is a common alternative method, but the speaker specifically contrasts the depth of interviews against the breadth of surveys, favoring the former for this specific study.",
+            "id": "ex_004",
+            "options": [
+              "Qualitative interviews",
+              "Quantitative surveys",
+              "Mixed-methods analysis",
+              "Case study review"
+            ],
+            "question": "Listen to the professor's comment on the research methodology. Which approach does he recommend for data collection?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          },
+          {
+            "correct_answer": "Road construction",
+            "explanation": "The speaker attributes the delay to 'road construction' on the main route. 'Heavy traffic congestion' is a likely consequence of construction but not the root cause stated. 'Mechanical failure' is a distractor based on a common excuse for delays, but no such issue is mentioned.",
+            "id": "ex_005",
+            "options": [
+              "Heavy traffic congestion",
+              "Mechanical failure",
+              "Driver strike",
+              "Road construction"
+            ],
+            "question": "Listen to the announcement regarding the campus shuttle service. What is the primary reason for the delay?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "175933ee-9f19-4f87-9e38-74594c550f93",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.278516"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "3e0caabf-62c5-47b6-ba99-c853617ae5dd",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "listening",
+      "title": "Handling Accents & Natural Speech Patterns",
+      "total_exercises": 5,
+      "unit_id": "fc233af2-92f6-4edb-957c-a82f9774d3b4",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.377499"
+      },
+      "xp_reward": 25
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Thursday",
+            "explanation": "In this dictation task, you must transcribe the specific day mentioned. 'Thursday' is a single word, fitting the constraint for note-completion answers where the spoken utterance is short. This tests your ability to catch specific factual details in a campus announcement.",
+            "id": "ex_b7_listening_01",
+            "options": [],
+            "question": "The seminar is postponed to {blank} next week.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "The photography studio",
+            "explanation": "The speaker explicitly states that the photography studio requires booking, while the computer lab is first-come-first-served. 'The language center' is a distractor as it was mentioned in the previous sentence but not in relation to booking. This tests your ability to filter relevant information from surrounding details.",
+            "id": "ex_b7_listening_02",
+            "options": [
+              "The computer lab",
+              "The photography studio",
+              "The language center",
+              "The sports hall"
+            ],
+            "question": "Which facility requires advance booking?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          },
+          {
+            "correct_answer": "Friday noon",
+            "explanation": "You must type exactly what is heard. 'Friday noon' is a two-word phrase indicating a specific deadline. This tests your spelling and ability to capture time-related constraints accurately, which is crucial for Section 2 and Section 4 note completion.",
+            "id": "ex_b7_listening_03",
+            "options": [],
+            "question": "Please submit your essay by {blank}.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "To discuss a group project conflict",
+            "explanation": "The speaker mentions 'group project' and 'conflict' directly. 'Noise levels' is a distractor because the student initially mentions noise but clarifies it is not the main issue. 'Library extension' is a plausible but unsaid detail. This tests your ability to identify the primary intent amidst conversational fillers.",
+            "id": "ex_b7_listening_04",
+            "options": [
+              "To complain about noise levels",
+              "To request a library extension",
+              "To discuss a group project conflict",
+              "To ask about accommodation fees"
+            ],
+            "question": "What is the main purpose of the student's visit?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          },
+          {
+            "correct_answer": "two hundred",
+            "explanation": "You must transcribe the number as spoken. 'Two hundred' is the exact phrase. Note that in IELTS, numbers can be tricky (e.g., 20 vs 200). This tests your ability to distinguish between similar-sounding numbers and spell them correctly in words.",
+            "id": "ex_b7_listening_05",
+            "options": [],
+            "question": "The lecture hall capacity is {blank}.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "175933ee-9f19-4f87-9e38-74594c550f93",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.278532"
+      },
+      "description": "A full IELTS mock is 40 listening and 40 reading questions and lives in Practice Tests, not in a lesson. This is a short practice set.",
+      "estimated_minutes": 40,
+      "id": "55a6d244-367b-4579-b550-912cd87230cb",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "listening",
+      "title": "Listening Practice Set – Band 7 Benchmark",
+      "total_exercises": 5,
+      "unit_id": "fc233af2-92f6-4edb-957c-a82f9774d3b4",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:16:23.160598"
+      },
+      "xp_reward": 60
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "FALSE",
+            "explanation": "The text explicitly states the objective was to quantify the 'immediate impact,' which directly contradicts the statement claiming a focus on 'long-term ecological stability.' In IELTS, if the text contradicts the statement, the answer is FALSE.",
+            "id": "ex_7a1b2c3d-e4f5-6789-0abc-def123456789_1",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "The primary objective of the recent longitudinal study on urban biodiversity was to quantify the immediate impact of green roofs on local insect populations. Does the passage state that the study focused on long-term ecological stability rather than short-term population metrics?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "composition",
+            "explanation": "The text states that the variation was 'attributed to the composition of the underlying bedrock.' The word 'composition' fits grammatically and semantically into the summary sentence and is taken verbatim from the source text.",
+            "id": "ex_7a1b2c3d-e4f5-6789-0abc-def123456789_2",
+            "options": [],
+            "question": "Read the following summary of the paragraph regarding soil composition. Complete the note below using NO MORE THAN THREE WORDS from the text.\n\nText: The analysis revealed that while nitrogen levels were consistent across all samples, the phosphorus content varied significantly. This variation was attributed to the {blank} of the underlying bedrock, which determines the baseline mineral availability in the topsoil.\n\nNote: The {blank} of the bedrock explains the fluctuation in phosphorus levels.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "It is unable to detect activity concealed by the canopy.",
+            "explanation": "The text explicitly mentions that satellite data 'fails to detect illegal logging activities hidden beneath the upper tree layer.' This corresponds directly to the option stating it is unable to detect activity concealed by the canopy.",
+            "id": "ex_7a1b2c3d-e4f5-6789-0abc-def123456789_3",
+            "options": [
+              "It cannot distinguish between different tree species.",
+              "It is unable to detect activity concealed by the canopy.",
+              "It is too expensive for widespread monitoring.",
+              "It requires specialized software to interpret."
+            ],
+            "question": "According to the passage, what is the main limitation of using satellite imagery for monitoring deforestation in dense tropical canopies? The passage notes that while satellite data provides a broad overview of land use changes, it often fails to detect illegal logging activities hidden beneath the upper tree layer. The author argues that ground-based surveys are therefore necessary to complement aerial data. Which option best summarizes this limitation?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "storage",
+            "explanation": "The text refers to 'advanced storage systems' required to handle intermittent power. The word 'storage' is the exact term used in the text to complete the concept of what the systems are for.",
+            "id": "ex_7a1b2c3d-e4f5-6789-0abc-def123456789_4",
+            "options": [],
+            "question": "Complete the summary below using NO MORE THAN THREE WORDS from the text.\n\nText: The integration of renewable energy sources into the national grid presents significant technical challenges. One major issue is the intermittent nature of wind and solar power, which requires the development of advanced {blank} systems to store excess energy generated during peak production times.\n\nSummary: A key challenge of renewable energy is its intermittency, necessitating advanced {blank} systems for energy storage.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "NOT GIVEN",
+            "explanation": "The text mentions that microplastics accumulate in digestive systems, but it does not mention any specific consequences regarding reproductive failure. Since the information is neither confirmed nor contradicted by the text, the answer is NOT GIVEN.",
+            "id": "ex_7a1b2c3d-e4f5-6789-0abc-def123456789_5",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "The passage discusses the role of microplastics in marine ecosystems. It highlights that these particles accumulate in the digestive systems of filter feeders. Does the passage state that microplastics have been proven to cause reproductive failure in these organisms?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "175933ee-9f19-4f87-9e38-74594c550f93",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.326053"
+      },
+      "description": null,
+      "estimated_minutes": 28,
+      "id": "50d2c82b-cd05-41f7-b194-8e8adebdc124",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "reading",
+      "title": "Summary & Note Completion in Long Passages",
+      "total_exercises": 5,
+      "unit_id": "2324939e-dfad-4f13-b0bd-24db470735a2",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.377507"
+      },
+      "xp_reward": 28
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "A",
+            "explanation": "This question tests the theoretical understanding of the task types. The correct answer is A because IELTS guidelines explicitly state that T/F/NG relates to facts, while Y/N/NG relates to the writer's opinions or claims. Note: The prompt asked for a TF/NG style question but the options provided in the 'question' text were A/B/C/D. To strictly follow the 'multiple_choice' type with options, I have formatted this as a multiple choice question where the correct option is A. However, to strictly follow the 'true_false' instruction for TF/NG tasks, let's adjust the exercise type to 'true_false' if the options are TF/NG. The prompt asks for 'multiple_choice' type but the content is TF/NG. Let's ensure the JSON structure matches the 'multiple_choice' type requirement for options. Actually, the prompt says 'For TRUE/FALSE/NOT GIVEN, phrase it as a question... with options exactly [\"TRUE\", \"FALSE\", \"NOT GIVEN\"]'. This implies the type should likely be 'true_false' if the options are TF/NG, but the schema allows 'multiple_choice' with 3-4 options. I will use 'multiple_choice' with the TF/NG options as requested by the specific instruction for TF/NG tasks.",
+            "id": "ex_01_tfg_vs_ynn",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN",
+              "A"
+            ],
+            "question": "In IELTS Academic Reading, the 'True/False/Not Given' task assesses whether a statement agrees with the information given in the text, whereas the 'Yes/No/Not Given' task assesses whether a statement agrees with the views or claims of the writer. Which of the following best describes the key distinction in how candidates must approach these two task types? A) T/F/NG requires identifying facts, while Y/N/NG requires identifying opinions or attitudes. B) T/F/NG is used for factual texts, while Y/N/NG is used for literary texts. C) Both tasks are identical in function, but the labels are changed to test candidate attention. D) T/F/NG allows for inference, while Y/N/NG requires literal matching. Does the passage state that the fundamental difference lies in the distinction between factual information and the writer's views or claims?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "FALSE",
+            "explanation": "The statement 'The experiment was conducted in the last decade' is TRUE based on the text 'The experiment was conducted in 2019' (assuming current date is post-2010). However, the question asks if the answer is NOT GIVEN. It is not NOT GIVEN; it is TRUE. Furthermore, the reasoning in the question ('contradicts') is wrong for a TRUE answer. If the statement were 'The experiment was conducted in 2025', it would be FALSE (contradiction). If the statement were 'The experiment was expensive', it would be NOT GIVEN. The question asks if the answer is NG due to contradiction. This is a False statement about the logic. The answer to the question 'Does the passage state...' is FALSE.",
+            "id": "ex_02_ng_distinction",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "Many candidates confuse 'False' with 'Not Given'. A statement is 'False' if the text explicitly contradicts it. A statement is 'Not Given' if the text does not provide enough information to determine if it is true or false. Consider this scenario: The text states 'The experiment was conducted in 2019.' The statement is 'The experiment was conducted in the last decade.' Does the passage state that the statement is NOT GIVEN because the text provides specific information that contradicts the general statement?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "FALSE",
+            "explanation": "The text reports what 'many economists' and 'others' think, but does not attribute an opinion to the writer. Therefore, the answer would be NOT GIVEN, not YES. The question asks if the answer is YES. This is false.",
+            "id": "ex_03_ynn_opinion",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "In 'Yes/No/Not Given' tasks, you must identify the writer's opinion. If the writer says 'Some critics argue that the policy is ineffective,' but does not state their own view, the answer to the statement 'The writer believes the policy is ineffective' is Not Given. However, if the writer says 'I believe the policy is ineffective,' the answer is Yes. Consider this text: 'Many economists suggest that inflation is rising, but others disagree.' Statement: 'The writer thinks inflation is rising.' Does the passage state that the correct answer to this statement is YES?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "present",
+            "explanation": "The word 'present' (or 'found', 'contained') fits the context. The explanation relies on the definition: False = contradiction (information is present but opposite); Not Given = information is absent. The blank requires a word meaning 'existing in the text'. 'Present' is a suitable academic term.",
+            "id": "ex_04_ng_strategy",
+            "options": [],
+            "question": "When distinguishing between False and Not Given, candidates should check if the information is {blank} in the text. If the text contradicts the statement, the answer is False. If the information is missing or unknown, the answer is Not Given.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "TRUE",
+            "explanation": "This is the core definition of Not Given. If the information is not mentioned (e.g., publication method), we cannot say if it's true or false, hence Not Given.",
+            "id": "ex_05_paraphrasing_trap",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "A common trap in both task types is paraphrasing. In True/False/Not Given, a statement is True if it is a paraphrase of the text. In Yes/No/Not Given, a statement is Yes if it reflects the writer's opinion as paraphrased. If the text says 'The results were inconclusive,' and the statement says 'The results were clear,' the answer is False. If the text says 'The results were inconclusive,' and the statement says 'The results were significant,' the answer is False. If the text says 'The results were inconclusive,' and the statement says 'The results were published online,' the answer is Not Given. Does the passage state that a statement is NOT GIVEN when it introduces new information not mentioned in the text?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "175933ee-9f19-4f87-9e38-74594c550f93",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.326089"
+      },
+      "description": null,
+      "estimated_minutes": 28,
+      "id": "26db41ae-f8b9-4bd8-8886-79b651bf1f10",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "reading",
+      "title": "Yes/No/Not Given vs True/False/Not Given",
+      "total_exercises": 5,
+      "unit_id": "2324939e-dfad-4f13-b0bd-24db470735a2",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.377490"
+      },
+      "xp_reward": 28
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "FALSE",
+            "explanation": "The text explicitly contrasts 'minor adjustment' with 'fundamental change', stating that a paradigm shift is the latter. Therefore, the statement is false.",
+            "id": "ex_001",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "The term 'paradigm shift' in academic discourse refers to a minor adjustment within an existing theoretical framework. In contrast, a 'paradigm shift' denotes a fundamental change in the basic concepts and experimental practices of a scientific discipline. Does the passage state that a paradigm shift involves a minor adjustment within an existing theoretical framework?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "stifle",
+            "explanation": "The text states that critics argue measures 'may inadvertently stifle economic growth'. The word 'stifle' is taken verbatim from the text and fits the context of hindering growth.",
+            "id": "ex_002",
+            "options": [],
+            "question": "Read the following excerpt regarding environmental policy: 'Governments often employ stringent regulations to mitigate the adverse effects of industrial emissions on local ecosystems. However, critics argue that such measures may inadvertently stifle economic growth by imposing excessive financial burdens on manufacturing sectors. Despite these concerns, empirical evidence suggests that long-term sustainability is achieved through balanced legislative frameworks.' Fill in the blank: Critics argue that stringent regulations may {blank} economic growth.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Networks of relationships enabling collective action",
+            "explanation": "The text explicitly defines 'social capital' as 'networks of relationships... enabling that community to act collectively'. Option A refers to 'cultural capital', while options C and D are not mentioned.",
+            "id": "ex_003",
+            "options": [
+              "Knowledge and skills acquired through education",
+              "Networks of relationships enabling collective action",
+              "Financial assets within a community",
+              "Individual achievements in academic settings"
+            ],
+            "question": "In sociological studies, the concept of 'social capital' refers to the networks of relationships among people who live and work in a particular community, enabling that community to act collectively. It is distinct from cultural capital, which involves knowledge, skills, and education. Which of the following best defines 'social capital' as described in the text?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "NOT GIVEN",
+            "explanation": "The text states that discomfort 'often motivates' individuals to change beliefs, but it does not specify that this leads to 'immediate behavioral change' nor that it 'always' happens. The frequency and immediacy are not addressed, making the information not given.",
+            "id": "ex_004",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "The author discusses the phenomenon of 'cognitive dissonance', describing it as the mental discomfort experienced by a person who holds two or more contradictory beliefs, ideas, or values at the same time. The text notes that this discomfort often motivates individuals to change one of the beliefs to achieve consistency. Does the passage state that cognitive dissonance always leads to immediate behavioral change?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "resilient",
+            "explanation": "The text explicitly states that species with high genetic diversity are 'more resilient to such fluctuations'. The word 'resilient' is taken verbatim from the source text.",
+            "id": "ex_005",
+            "options": [],
+            "question": "Consider the following text on biological adaptation: 'Species facing rapid environmental changes must undergo significant genetic mutations to survive. Those that fail to adapt quickly enough risk extinction. Conversely, species with high genetic diversity are more resilient to such fluctuations.' Fill in the blank: Species with high genetic diversity are more {blank} to environmental fluctuations.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "175933ee-9f19-4f87-9e38-74594c550f93",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.326108"
+      },
+      "description": null,
+      "estimated_minutes": 28,
+      "id": "e7030f46-bd53-43ae-b20d-c5835066b46d",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "reading",
+      "title": "Vocab in Academic Texts: Collocations & Field-Specific Terms",
+      "total_exercises": 5,
+      "unit_id": "2324939e-dfad-4f13-b0bd-24db470735a2",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447883"
+      },
+      "xp_reward": 28
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "FALSE",
+            "explanation": "The text explicitly states that the optimal strategy involves allocating a 'maximum of 15-17 minutes' and warns that 'exceeding this time limit' is risky. Therefore, the statement that candidates should spend more than 20 minutes is false.",
+            "id": "ex_time_mgmt_001",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "According to the passage, is it advisable for candidates to spend more than 20 minutes on the first reading passage to ensure accuracy? According to the passage, the optimal strategy for the first passage in the IELTS Academic Reading test involves allocating a maximum of 15-17 minutes, as this section typically contains the easiest questions and serves as a confidence-building exercise. Experts suggest that exceeding this time limit risks compromising the ability to complete the more complex third passage within the allotted hour. Furthermore, strict adherence to this timeline allows for a buffer period to transfer answers to the answer sheet, which is not provided during the computer-delivered test but is critical in the paper-based format. Does the passage state that candidates should spend more than 20 minutes on the first reading passage to ensure accuracy?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "sustained focus",
+            "explanation": "The text states 'possesses sustained focus'. The gap requires a noun phrase indicating the mental state needed for the difficult third passage. 'Sustained focus' is exactly two words, fitting the 'no more than three words' rule.",
+            "id": "ex_time_mgmt_002",
+            "options": [],
+            "question": "Complete the summary below using NO MORE THAN THREE WORDS from the passage. To manage the 60-minute constraint effectively, test-takers must prioritize passages based on difficulty. It is generally recommended to tackle the most complex text, which is usually the third one, while the candidate still possesses high levels of {blank}. This approach ensures that cognitive fatigue does not impair the ability to decipher dense academic prose in the final section.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "To verify answers and check for administrative errors",
+            "explanation": "The text explicitly states that the final minutes are for 'answer verification', checking 'correctly transferred' answers, and reviewing 'spelling errors'. This matches the option regarding verification and administrative errors.",
+            "id": "ex_time_mgmt_003",
+            "options": [
+              "To rest before the writing section begins",
+              "To verify answers and check for administrative errors",
+              "To read the third passage more thoroughly",
+              "To complete any remaining listening questions"
+            ],
+            "question": "What is the primary reason given for leaving the last 2-3 minutes of the reading test unallocated for new content? The final minutes of the IELTS Reading test are critical for answer verification rather than new problem-solving. Candidates are advised to use this window to check that their answers are correctly transferred to the answer sheet, particularly in the paper-based version where no additional transfer time is allowed. Additionally, this period allows for a quick review of any flagged questions or potential spelling errors in summary completion tasks. Relying on this buffer prevents the loss of marks due to administrative oversights rather than comprehension failures. Why is it recommended to leave the last 2-3 minutes unallocated for new content?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "FALSE",
+            "explanation": "The text states 'this is not a rigid rule' and mentions that candidates 'may occasionally encounter... a simpler... text in the third'. This directly contradicts the claim that difficulty 'always' increases sequentially.",
+            "id": "ex_time_mgmt_004",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "Does the passage state that the difficulty of IELTS Reading passages always increases sequentially from the first to the third? Research into IELTS test design indicates that while there is a general tendency for complexity to rise across the three sections, this is not a rigid rule. The first passage often consists of factual information in a narrative or descriptive style, whereas the third typically involves abstract arguments or specialized scientific data. However, candidates may occasionally encounter a moderate difficulty in the second passage and a simpler, more straightforward text in the third. Test-makers may vary the order to prevent candidates from relying solely on position-based strategies rather than adaptive time management. Does the passage state that the difficulty of IELTS Reading passages always increases sequentially from the first to the third?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "main idea",
+            "explanation": "The answer 'main idea' is taken verbatim from the implied text structure where skimming helps grasp the 'main idea'. It is two words, satisfying the 'no more than three words' rule.",
+            "id": "ex_time_mgmt_005",
+            "options": [],
+            "question": "Complete the sentence below using NO MORE THAN THREE WORDS from the passage. Effective time management in the IELTS Reading test requires candidates to abandon the habit of reading every word in a passage before addressing the questions. Instead, they should employ a technique known as skimming, which involves reading the title, headings, and the first and last sentences of each paragraph to grasp the {blank}. This method allows for quicker identification of where specific information is likely to be located, thereby reducing the time spent on irrelevant details.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "175933ee-9f19-4f87-9e38-74594c550f93",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.326129"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "465f338e-10b3-4666-bd63-39d660ed8430",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "reading",
+      "title": "Time Management: 3 Passages in 60 Minutes",
+      "total_exercises": 5,
+      "unit_id": "2324939e-dfad-4f13-b0bd-24db470735a2",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:25:54.395326"
+      },
+      "xp_reward": 25
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "NOT GIVEN",
+            "explanation": "The text explicitly mentions the reading section, time limits, and academic prose. It does not mention any other components of the exam, such as listening. Therefore, the information is not given.",
+            "id": "ex_001_tfgn",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "The primary objective of this Full Reading Mock Test – Band 7 Benchmark is to replicate the exact time pressure and text complexity of the actual examination. Candidates are expected to navigate dense academic prose while managing a strict sixty-minute limit for three texts. The diagnostic nature of this assessment allows for a precise evaluation of current proficiency levels against the rigorous criteria of the higher band descriptors. Does the passage state that the mock test includes a listening component alongside the reading section?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "To identify specific error patterns for targeted improvement",
+            "explanation": "The text states that 'identifying specific error patterns provides more valuable data for targeted improvement,' which directly supports this option. The other options are not mentioned as reasons in the text.",
+            "id": "ex_002_mc",
+            "options": [
+              "To ensure the candidate finishes within the time limit",
+              "To identify specific error patterns for targeted improvement",
+              "To reduce the anxiety associated with high-stakes testing",
+              "To allow candidates to practice guessing techniques"
+            ],
+            "question": "Participants in this Full Reading Mock Test – Band 7 Benchmark are advised to prioritize accuracy over speed during the initial diagnostic phase. The rationale is that identifying specific error patterns provides more valuable data for targeted improvement than a raw score obtained through hasty completion. Consequently, the benchmark serves as a baseline for measuring progress rather than a final judgment of ability. What is the main reason provided for prioritizing accuracy during the initial phase of the benchmark?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "design",
+            "explanation": "The sentence concludes with 'This design ensures that the [design] accurately reflects...'. The word 'design' is taken verbatim from the previous sentence 'This design ensures...'. The answer must be no more than three words.",
+            "id": "ex_003_fib",
+            "options": [],
+            "question": "The structure of the Full Reading Mock Test – Band 7 Benchmark mirrors the official IELTS Academic format. It consists of three distinct reading passages, each increasing in difficulty and thematic complexity. Candidates must complete forty questions in total, with the final passage often containing more abstract academic concepts. This design ensures that the {blank} accurately reflects the challenges faced in the real examination environment.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "FALSE",
+            "explanation": "The text states that the scoring threshold 'accounts for the varying difficulty levels of different test versions.' This implies that the number of correct answers is not fixed but varies depending on the difficulty, making the statement false.",
+            "id": "ex_004_tfgn",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "To achieve a Band 7 in the Full Reading Mock Test – Band 7 Benchmark, candidates typically need to answer approximately twenty-three to twenty-six questions correctly. This scoring threshold is based on the official IELTS band score conversion table, which accounts for the varying difficulty levels of different test versions. However, the benchmark test utilizes a standardized set of texts with a known difficulty coefficient. Does the passage state that the number of correct answers required for a Band 7 is fixed for all versions of the IELTS test?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "distractors",
+            "explanation": "The text mentions 'understanding why specific distractors were chosen' and 'recognizing common traps'. The sentence structure 'By focusing on these [distractors]' refers back to the previously mentioned 'distractors'. The word is taken verbatim from the text.",
+            "id": "ex_005_fib",
+            "options": [],
+            "question": "Effective preparation for the Full Reading Mock Test – Band 7 Benchmark involves more than just completing practice papers. Candidates are encouraged to analyze their performance data to understand why specific distractors were chosen. This reflective process helps in recognizing common traps, such as paraphrases that alter the meaning slightly. By focusing on these {blank}, students can refine their reading strategies for future assessments.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "175933ee-9f19-4f87-9e38-74594c550f93",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.326148"
+      },
+      "description": "A full IELTS mock is 40 listening and 40 reading questions and lives in Practice Tests, not in a lesson. This is a short practice set.",
+      "estimated_minutes": 40,
+      "id": "aa241393-8603-4915-baab-7dfc045a9845",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "reading",
+      "title": "Reading Practice Set – Band 7 Benchmark",
+      "total_exercises": 5,
+      "unit_id": "2324939e-dfad-4f13-b0bd-24db470735a2",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:16:23.160600"
+      },
+      "xp_reward": 60
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "While coal consumption exhibited a volatile downward trend over the decade, renewable energy usage demonstrated a consistent and significant upward trajectory.",
+            "explanation": "This answer effectively synthesizes the two distinct trends into a single comparative statement using a concession clause ('While...'), which is a high-band feature for Task 1 overviews. It accurately captures the nature of the data (volatile vs. consistent) without listing specific figures.",
+            "id": "ex_001_comparing_graphs_overview",
+            "question": "Write a single-sentence overview comparing the trends in two line graphs: one showing a steady increase in renewable energy consumption from 2010 to 2020, and another showing a fluctuating but overall decline in coal usage over the same period.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "which",
+            "explanation": "The sentence requires a relative pronoun to refer back to 'the breakdown of costs' or the specific context of the technology sector's share. 'Which' is the correct relative pronoun to introduce a non-restrictive clause providing additional information about the data distribution shown in the pie chart.",
+            "id": "ex_002_mixed_data_grammar",
+            "question": "Correct the error in the following sentence describing a mixed chart (bar chart and pie chart): 'The bar chart illustrates the annual expenditure, whereas the pie chart shows the breakdown of costs, {blank} is significantly higher in the technology sector compared to the last decade.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "City A displayed the highest average household income among the three locations, yet it had the lowest population density. In stark contrast, City B recorded the lowest income levels but was characterized by the most concentrated population.",
+            "explanation": "This response successfully integrates data from two different visual sources (table and map) and highlights a clear correlation/contrast (high income/low density vs. low income/high density). The use of 'In stark contrast' and 'characterized by' demonstrates C1-level lexical resource and coherence.",
+            "id": "ex_003_mixed_data_comparison",
+            "question": "Write a two-sentence paragraph comparing a table of average household incomes across three cities with a map showing population density in those same cities. Focus on the contrast between City A (high income, low density) and City B (low income, high density).",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "dramatic",
+            "explanation": "The context implies a significant and noticeable increase ('surge'), making 'dramatic' an appropriate adjective to describe the magnitude of the change. This fits the academic register required for IELTS Task 1 when describing significant fluctuations in data.",
+            "id": "ex_004_graph_trend_vocabulary",
+            "question": "Complete the sentence describing a sharp rise in data followed by a period of stability: 'After a {blank} surge in online sales during the first quarter, the figures plateaued for the remainder of the year.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Overall, there was a clear correlation between the rising global temperatures and the diminishing volume of ice caps over the thirty-year period.",
+            "explanation": "This overview correctly identifies the relationship (correlation) between the two different data sources (line graph and bar chart). It summarizes the main trend without getting bogged down in specific data points, which is essential for a Band 7+ Task 1 overview.",
+            "id": "ex_005_mixed_data_synthesis",
+            "question": "Write an overview sentence for a task involving a line graph showing global temperature increases and a bar chart showing corresponding ice cap reduction. Both datasets cover the period from 1990 to 2020.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "175933ee-9f19-4f87-9e38-74594c550f93",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.349153"
+      },
+      "description": null,
+      "estimated_minutes": 28,
+      "id": "ccb731d4-613f-490e-9012-c71ae715c28b",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "Comparing Multiple Graphs & Mixed Data Sources",
+      "total_exercises": 5,
+      "unit_id": "4275ff25-aa35-4a77-b323-13f3ad0164a6",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:16:40.955585"
+      },
+      "xp_reward": 28
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Overall, the process involves several stages, beginning with the extraction of raw materials and culminating in the heating of the final product to ensure durability.",
+            "explanation": "This option correctly identifies the process as linear (non-circular) and accurately summarizes the start (extraction/digging) and end (heating/firing) points without adding unsupported details like 'painting' or 'recycling'. It uses appropriate academic vocabulary ('extraction', 'culminating').",
+            "id": "ex_1a2b3c4d-5678-90ab-cdef-111111111111_1",
+            "options": [
+              "Overall, the process involves several stages, beginning with the extraction of raw materials and culminating in the heating of the final product to ensure durability.",
+              "Overall, the process has many steps that happen at the same time, starting with digging and ending with painting the bricks.",
+              "Overall, the process is circular, which means the bricks are recycled immediately after they are fired in the kiln.",
+              "Overall, the process is very complex and requires many different types of machinery to dig the clay effectively."
+            ],
+            "question": "Write an overview sentence for a process diagram describing how bricks are manufactured. The process starts with digging clay and ends with firing the bricks in a kiln.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "is",
+            "explanation": "The subject 'The water' is uncountable and singular, requiring the singular passive auxiliary verb 'is'. The process description uses the passive voice to focus on the action rather than the actor.",
+            "id": "ex_2b3c4d5e-6789-01bc-def2-222222222222_2",
+            "options": [
+              "is",
+              "are",
+              "being",
+              "pump"
+            ],
+            "question": "Correct the error in this sentence describing a step in a water purification process: 'The water {blank} pumped into the filtration tank where impurities are removed.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Next, cement, sand, and water are combined within a large rotating drum to form a uniform mixture.",
+            "explanation": "This answer correctly uses the passive voice ('are combined') which is standard for process diagrams. It includes the correct sequence marker ('Next') and accurately describes the inputs and the mechanism ('large rotating drum').",
+            "id": "ex_3c4d5e6f-7890-12cd-ef34-333333333333_3",
+            "options": [
+              "In the second stage, a large rotating drum mixes cement, sand, and water together to create a homogeneous mixture.",
+              "Next, cement, sand, and water are combined within a large rotating drum to form a uniform mixture.",
+              "During the second phase, the workers put cement, sand, and water into the drum and mix them manually.",
+              "Afterwards, the mixture is placed into a large rotating drum where cement, sand, and water are added."
+            ],
+            "question": "Write a sentence describing the second stage of a concrete production process, where cement, sand, and water are mixed together in a large rotating drum. Use a passive structure.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "are",
+            "explanation": "The subject 'The butterflies' is plural, so the verb must agree in number. Since this describes a general natural process, the present simple passive 'are' is required. 'Is' is singular, 'were' is past tense, and 'being' is grammatically incomplete here.",
+            "id": "ex_4d5e6f7g-8901-23de-f456-444444444444_4",
+            "options": [
+              "are",
+              "is",
+              "were",
+              "being"
+            ],
+            "question": "Correct the error in this sentence describing the final stage of a lifecycle diagram: 'The butterflies {blank} born as eggs on the underside of leaves.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Once the bottles have been collected and sorted, they are subsequently crushed into small pieces known as cullet.",
+            "explanation": "This option uses a perfect passive clause ('have been collected') to show completion before the next step, followed by a clear sequence marker ('subsequently'). It accurately reflects the chronological order without implying contrast ('but', 'although') or incorrect causality ('so').",
+            "id": "ex_5e6f7g8h-9012-34ef-5678-555555555555_5",
+            "options": [
+              "Once the bottles have been collected and sorted, they are subsequently crushed into small pieces known as cullet.",
+              "First, the bottles are collected and sorted, but then they are crushed into small pieces known as cullet.",
+              "Although the bottles are collected and sorted, they are crushed into small pieces known as cullet.",
+              "The bottles are collected and sorted, so they are crushed into small pieces known as cullet."
+            ],
+            "question": "Write a sentence linking two stages in a glass bottle recycling process. Stage 1: Bottles are collected and sorted. Stage 2: They are crushed into small pieces called cullet.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "175933ee-9f19-4f87-9e38-74594c550f93",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.349216"
+      },
+      "description": null,
+      "estimated_minutes": 28,
+      "id": "9d390266-54c9-45c3-aac2-b04724bbff7b",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "Describing Process Diagrams Step-by-Step",
+      "total_exercises": 5,
+      "unit_id": "4275ff25-aa35-4a77-b323-13f3ad0164a6",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447783"
+      },
+      "xp_reward": 28
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Overall, the village underwent significant urbanization, with the primary changes being the replacement of agricultural land with residential housing and the expansion of public facilities.",
+            "explanation": "This answer provides a clear, high-level summary (overview) of the main trends (urbanization, housing expansion) without listing specific details, which is required for a Band 7+ Task 1 overview.",
+            "id": "ex_8664a330-dabf-48d5-9274-eee51751b6e3_1",
+            "options": [],
+            "question": "Write an overview sentence summarizing the most significant changes to the village shown in the maps over the 20-year period, focusing on the shift in land use.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "was",
+            "explanation": "The sentence requires the passive voice in the past simple tense to describe a completed action done to the school. 'Was' is the correct auxiliary verb for the singular subject 'school'.",
+            "id": "ex_8664a330-dabf-48d5-9274-eee51751b6e3_2",
+            "options": [],
+            "question": "Correct the error in the following sentence describing a map change: 'The old school {blank} demolished and replaced by a new library in 2005.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "The northern part of the island, which used to be densely forested, was cleared to accommodate a new hotel complex.",
+            "explanation": "This option uses advanced vocabulary ('densely forested', 'accommodate') and complex sentence structure (relative clause), demonstrating the lexical resource and grammatical range required for Band 7+.",
+            "id": "ex_8664a330-dabf-48d5-9274-eee51751b6e3_3",
+            "options": [
+              "The trees in the north were removed to make space for a hotel.",
+              "The northern part of the island, which used to be densely forested, was cleared to accommodate a new hotel complex.",
+              "A hotel was built in the north after the trees were cut down.",
+              "The forest in the north was replaced by a hotel."
+            ],
+            "question": "Which sentence best describes the transformation of the northern section of the island, where trees were removed to build a hotel?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "into",
+            "explanation": "The preposition 'into' is used to indicate movement or extension towards a specific direction or area. 'Extended to' is possible but 'into' better conveys the incorporation of the former car park into the park area.",
+            "id": "ex_8664a330-dabf-48d5-9274-eee51751b6e3_4",
+            "options": [],
+            "question": "Identify the correct preposition to complete the sentence: 'The park was extended {blank} the east to include the former car park.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "While the main entrance was initially located in the southern part of the site in 1990, it was relocated to the western boundary by 2010.",
+            "explanation": "This sentence effectively uses a comparative structure ('While...') and precise directional language ('southern part', 'western boundary') to clearly contrast the two time periods.",
+            "id": "ex_8664a330-dabf-48d5-9274-eee51751b6e3_5",
+            "options": [],
+            "question": "Write a sentence comparing the location of the main entrance in 1990 versus 2010, noting that it moved from the south to the west.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "175933ee-9f19-4f87-9e38-74594c550f93",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.349256"
+      },
+      "description": null,
+      "estimated_minutes": 28,
+      "id": "8664a330-dabf-48d5-9274-eee51751b6e3",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "Map Descriptions: Changes Over Time",
+      "total_exercises": 5,
+      "unit_id": "4275ff25-aa35-4a77-b323-13f3ad0164a6",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447766"
+      },
+      "xp_reward": 28
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "alleviate",
+            "explanation": "Alleviate means giảm nhẹ, và trong ngữ cảnh này, nó được sử dụng để mô tả việc giảm bớt tình trạng tắc nghẽn giao thông.",
+            "id": "ex_b11cfe5d-8a69-49db-9829-6d77b9eaeb39_1",
+            "options": [],
+            "question": "The new policy has been implemented to {blank} the traffic congestion in the city.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "fluctuate:biến động, stabilize:ổn định",
+            "explanation": "Fluctuate có nghĩa là biến động, và stabilize có nghĩa là ổn định.",
+            "id": "ex_b11cfe5d-8a69-49db-9829-6d77b9eaeb39_2",
+            "options": [
+              "fluctuate",
+              "stabilize",
+              "biến động",
+              "ổn định"
+            ],
+            "question": "Chọn từ phù hợp cho từng nghĩa sau:",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "increased",
+            "explanation": "Tăng lên, và trong ngữ cảnh này, nó được sử dụng để mô tả lợi nhuận của công ty đã tăng lên đáng kể trong năm qua.",
+            "id": "ex_b11cfe5d-8a69-49db-9829-6d77b9eaeb39_3",
+            "options": [
+              "decreased",
+              "increased",
+              "remained",
+              "fluctuated"
+            ],
+            "question": "Chọn từ phù hợp để hoàn thành câu sau: The company's profits have {blank} significantly over the past year.",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "Mitigate có nghĩa là giảm nhẹ, không phải tăng lên.",
+            "id": "ex_b11cfe5d-8a69-49db-9829-6d77b9eaeb39_4",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "Từ 'mitigate' có nghĩa là tăng lên.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "versatile",
+            "explanation": "Versatile có nghĩa là đa tài, và trong ngữ cảnh này, nó được sử dụng để mô tả nhân viên mới rất linh hoạt và nhanh chóng thích nghi với văn hóa của công ty.",
+            "id": "ex_b11cfe5d-8a69-49db-9829-6d77b9eaeb39_5",
+            "options": [],
+            "question": "The new employee was very {blank} and quickly adapted to the company's culture.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "175933ee-9f19-4f87-9e38-74594c550f93",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.349296"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "b11cfe5d-8a69-49db-9829-6d77b9eaeb39",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Lexical Resource for Band 7: Precise Vocabulary",
+      "total_exercises": 5,
+      "unit_id": "4275ff25-aa35-4a77-b323-13f3ad0164a6",
+      "updated_at": {
+        "__dt__": "2026-08-14T06:39:10.796200"
+      },
+      "xp_reward": 25
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Overall, renewable energy sources have seen a consistent increase, whereas coal production has decreased since its peak in 2000.",
+            "explanation": "This answer achieves Band 7+ by synthesizing the two main trends into a single, complex sentence. It uses 'Overall' to signal the overview, employs a contrastive linker ('whereas'), and accurately summarizes the general direction of the data without citing specific figures, which is reserved for the body paragraphs.",
+            "id": "ex_7f3a9b1c-2d4e-5f6a-8b9c-0d1e2f3a4b5c_1",
+            "options": [],
+            "question": "Write a concise overview sentence for a line graph showing that while electricity production from coal peaked in 2000 and has since declined, renewable energy sources have shown a steady upward trend over the same period. Focus on the most significant overall trend.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "a sharp",
+            "explanation": "The error is the missing indefinite article 'a' before the singular countable noun phrase 'sharp increase'. Additionally, while 'has seen' (present perfect) is often used, if the time phrase is a specific past date ('in 2010'), the past simple 'saw' would be more accurate. However, focusing on the immediate gap, 'a' is the required grammatical element to make the noun phrase valid. For Band 7, grammatical range and accuracy are crucial.",
+            "id": "ex_8g4b0c2d-3e5f-6g7b-9c0d-1e2f3a4b5c6d_2",
+            "options": [],
+            "question": "Correct the error in this sentence from a Task 1 report. The student attempted to describe a sharp increase but used incorrect article usage and tense consistency. 'The number of visitors has seen {blank} sharp increase in 2010.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "While dogs were the most popular pet in Country A, cats predominated in Country B.",
+            "explanation": "Option 2 is the correct answer for a Band 7+ candidate. It uses a complex sentence structure ('While...'), sophisticated vocabulary ('predominated', 'most popular'), and precise comparative language. Option 1 is too simple (Band 5-6). Option 3 uses informal language ('like') and lacks precision. Option 4 contains a logical flaw by comparing different categories (dogs vs. cats) rather than the same category across groups or total percentages.",
+            "id": "ex_9h5c1d3e-4f6g-7h8c-0d1e-2f3a4b5c6d7e_3",
+            "options": [
+              "Country A had more dogs than Country B, and Country B had more cats.",
+              "While dogs were the most popular pet in Country A, cats predominated in Country B.",
+              "The graph shows that people in Country A like dogs and people in Country B like cats.",
+              "Country A has a higher number of dog owners compared to Country B's cat owners."
+            ],
+            "question": "Which of the following options best demonstrates a Band 7+ level of lexical resource when describing a static bar chart comparing the percentage of households with pets in two different countries?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "are",
+            "explanation": "General processes (like natural cycles or industrial manufacturing steps that are always true) should be described in the Present Simple Passive, not the Present Continuous Passive. 'Are transported' is the correct form. Using 'are being transported' implies the action is happening only at this specific moment, which is less appropriate for a general description of a standard process. Band 7 requires accurate use of tenses.",
+            "id": "ex_0i6d2e4f-5g7h-8i9d-1e2f-3a4b5c6d7e8f_4",
+            "options": [],
+            "question": "In a Task 1 report describing a process diagram, the student wrote: 'The raw materials are being transported to the factory where they are processed.' For a general process that does not change, which correction is best? 'The raw materials {blank} transported to the factory where they are processed.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "The proportion of energy derived from oil declined from 40% in 1990 to 25% in 2020.",
+            "explanation": "This answer is Band 7+ because it uses precise vocabulary ('proportion', 'derived from', 'declined') and accurately reports the figures with their units and timeframes. It avoids the repetitive use of 'drop' by using the synonym 'declined'. It is concise and grammatically complex enough to demonstrate lexical resource and grammatical range.",
+            "id": "ex_1j7e3f5g-6h8i-9j0e-2f3a-4b5c6d7e8f9g_5",
+            "options": [],
+            "question": "Write a single sentence comparing two data points from a pie chart. In 1990, 40% of energy came from oil, while in 2020, this figure had dropped to 25%. Use a comparative structure and a synonym for 'drop'.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "175933ee-9f19-4f87-9e38-74594c550f93",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.349331"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "5302ae32-0c0c-48e3-a1dc-e16101470fbb",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "Task 1 Band 7 Model & Annotated Answer",
+      "total_exercises": 5,
+      "unit_id": "4275ff25-aa35-4a77-b323-13f3ad0164a6",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.377508"
+      },
+      "xp_reward": 50
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "While some argue for the prohibition of risky activities due to safety concerns, I believe that adult autonomy regarding personal choice should be respected, provided that participants are fully aware of the potential risks.",
+            "explanation": "This response earns Band 7+ because it explicitly addresses both sides of the argument (the need for bans/safety vs. individual freedom) and clearly states the writer's own position. The other options fail because they only address one side or provide general context without fulfilling the specific instruction to 'discuss both views and give your opinion' in a single coherent thesis.",
+            "id": "ex_001",
+            "options": [
+              "While some argue for the prohibition of risky activities due to safety concerns, I believe that adult autonomy regarding personal choice should be respected, provided that participants are fully aware of the potential risks.",
+              "Dangerous sports are often criticized for their high injury rates, and it is important for governments to consider public health statistics when making regulatory decisions.",
+              "I strongly disagree with the idea of banning sports because freedom is a fundamental human right that should never be infringed upon by state authorities.",
+              "Many people enjoy extreme sports such as skydiving and bungee jumping, which offer adrenaline rushes that are difficult to find in other forms of entertainment."
+            ],
+            "question": "Task 2 Prompt: 'Some people believe that governments should ban dangerous sports, while others think individuals should be free to choose their leisure activities. Discuss both views and give your own opinion.' Write a thesis statement that fully addresses both parts of this two-part question.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Overall, both countries witnessed a significant increase in the proportion of energy derived from renewable sources over the two-decade period, with Country B consistently outperforming Country A in terms of percentage growth by the end of the period.",
+            "explanation": "This overview successfully synthesizes the main trends (increase in both) and makes a key comparison (Country B outperforming Country A). Option B is merely a list of data points without synthesis. Option C introduces external information not present in the prompt. Option D only describes the chart's topic without summarizing the trends or making comparisons, thus failing to address the 'report main features' and 'make comparisons' instructions fully.",
+            "id": "ex_002",
+            "options": [
+              "Overall, both countries witnessed a significant increase in the proportion of energy derived from renewable sources over the two-decade period, with Country B consistently outperforming Country A in terms of percentage growth by the end of the period.",
+              "In 2000, Country A produced 10% of its energy from renewables, while Country B produced 15%. By 2020, these figures had risen to 40% and 55% respectively.",
+              "It is clear that renewable energy is becoming more popular globally, and both Country A and Country B are following this trend, although the specific reasons for this change are not detailed in the chart.",
+              "The chart illustrates data regarding energy production. It is important to note that the data refers specifically to renewable sources, excluding fossil fuels and nuclear power."
+            ],
+            "question": "Task 1 Prompt: 'The chart below shows the percentage of energy produced by renewable sources in Country A and Country B in 2000 and 2020. Summarize the information by selecting and reporting the main features, and make comparisons where relevant.' Which of the following overview paragraphs best fully addresses the task requirements?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "however",
+            "explanation": "The prompt requires discussing both advantages and disadvantages. The first clause lists advantages ('flexibility and convenience'), and the second lists disadvantages ('isolation'). The conjunction 'however' is required to signal the contrast between these two opposing points, ensuring both parts of the two-part question are acknowledged in a cohesive manner. 'And' fails to show the contrast, 'therefore' implies causation which is illogical here, and 'because' incorrectly subordinates the disadvantage to the advantage.",
+            "id": "ex_003",
+            "options": [
+              "however",
+              "and",
+              "therefore",
+              "because"
+            ],
+            "question": "Correct the error in this sentence from a Task 2 essay discussing the impact of technology on education. The error lies in the failure to address both parts of the prompt 'Discuss the advantages and disadvantages of online learning.'\n\nSentence: 'Online learning offers flexibility and convenience for students, {blank} it often leads to feelings of isolation and a lack of face-to-face interaction.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "whereas",
+            "explanation": "To fully address the instruction to 'make comparisons where relevant,' a comparative conjunction is needed to contrast the trend of the museum visitors (increasing) with the zoo visitors (stable). 'Whereas' effectively highlights this contrast. 'Also' and 'moreover' suggest addition rather than comparison, and 'so' implies causation, which is not supported by the data description. Using 'whereas' ensures the writer demonstrates the ability to compare data sets, a key requirement for Task 1.",
+            "id": "ex_004",
+            "options": [
+              "whereas",
+              "also",
+              "moreover",
+              "so"
+            ],
+            "question": "Correct the error in this sentence from a Task 1 report. The prompt asks to 'Summarize the information by selecting and reporting the main features, and make comparisons where relevant.'\n\nSentence: 'The number of visitors to the museum increased steadily from 2010 to 2015, {blank} the number of visitors to the zoo remained relatively stable during the same period.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Paragraph 1 discusses the benefits of mandatory community service (e.g., character building, social cohesion). Paragraph 2 discusses the drawbacks of mandating service (e.g., resentment, reduced time for studies) and the importance of individual freedom. The conclusion synthesizes these points with the writer's opinion.",
+            "explanation": "This structure explicitly addresses both views presented in the prompt: the argument for mandatory service and the argument for individual freedom. It ensures a balanced discussion. Option B ignores the 'discuss both views' instruction by largely dismissing the opposing view without proper analysis. Option C fails to address the question entirely, focusing on logistics rather than the debate. Option D fails to address the second view (individual freedom) and instead adds a new argument (economic benefits), which is irrelevant to the specific two-part question asked.",
+            "id": "ex_005",
+            "options": [
+              "Paragraph 1 discusses the benefits of mandatory community service (e.g., character building, social cohesion). Paragraph 2 discusses the drawbacks of mandating service (e.g., resentment, reduced time for studies) and the importance of individual freedom. The conclusion synthesizes these points with the writer's opinion.",
+              "Paragraph 1 explains why community service is good for the community. Paragraph 2 explains why high school students are too busy to volunteer. The conclusion states that students should not volunteer.",
+              "Paragraph 1 lists the various types of community service available. Paragraph 2 lists the penalties for not completing community service. The conclusion recommends stricter enforcement.",
+              "Paragraph 1 argues that community service builds character. Paragraph 2 argues that community service helps the local economy. The conclusion states that both arguments are valid."
+            ],
+            "question": "Task 2 Prompt: 'Some people think that unpaid community service should be a mandatory part of high school programs. Others believe that young people should have the freedom to choose how they spend their free time. Discuss both views and give your own opinion.' Which body paragraph structure best ensures that both parts of the question are fully addressed?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "175933ee-9f19-4f87-9e38-74594c550f93",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.390429"
+      },
+      "description": null,
+      "estimated_minutes": 28,
+      "id": "d9e7e199-f97f-4222-8748-0846b8dd65c3",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "Two-Part Questions: Fully Address Both Parts",
+      "total_exercises": 5,
+      "unit_id": "91150f08-3efa-4ee5-9e4c-e162ee4d2d28",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447855"
+      },
+      "xp_reward": 28
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Remote work increases productivity, for instance, a 2023 study by Stanford University showed a 13% efficiency gain among remote employees.",
+            "explanation": "Band 7+ writing requires specific evidence to support claims. The correct option uses the linking phrase 'for instance' to introduce concrete data (a study and a percentage), which substantiates the general claim about productivity. The other options lack specific evidence or fail to logically connect the evidence to the claim.",
+            "id": "ex_1c3954b8-c6cd-424b-8e54-3f6833b0c197_1",
+            "options": [
+              "Remote work increases productivity, for instance, a 2023 study by Stanford University showed a 13% efficiency gain among remote employees.",
+              "Remote work is good because people like it, so companies should allow it.",
+              "Remote work increases productivity, which is why everyone is doing it now.",
+              "Remote work increases productivity, although some people miss the office."
+            ],
+            "question": "Identify the correct phrasing to improve the cohesion of this argument regarding remote work. The original sentence is: 'Remote work increases productivity; therefore, companies should adopt it.' Which option best develops this argument by integrating a specific piece of evidence?",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "While social media can lead to superficial interactions, it undeniably strengthens community bonds, as evidenced by the rapid coordination of relief efforts during natural disasters via online platforms.",
+            "explanation": "A Band 7+ essay demonstrates the ability to acknowledge opposing views (concession) while maintaining the primary argument. The model answer uses 'While' to introduce the counter-argument and provides a specific example (relief efforts) to support the main claim, demonstrating lexical resource and grammatical range.",
+            "id": "ex_1c3954b8-c6cd-424b-8e54-3f6833b0c197_2",
+            "options": [],
+            "question": "Write a complex sentence that presents a concession to the argument that 'social media strengthens community bonds.' Use a subordinating conjunction to introduce the concession and a main clause that reaffirms the original argument using a specific example.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Urbanization leads to improved infrastructure, which is shown by cities like Tokyo that have invested heavily in high-speed rail networks.",
+            "explanation": "This option correctly uses a non-defining relative clause ('which is shown by...') to seamlessly integrate the example. It provides specific detail ('high-speed rail networks') rather than just naming the city, which is essential for Task Response at Band 7+. The other options are either grammatically fragmented or lack the necessary syntactic complexity and specific detail.",
+            "id": "ex_1c3954b8-c6cd-424b-8e54-3f6833b0c197_3",
+            "options": [
+              "Urbanization leads to improved infrastructure, which is shown by cities like Tokyo that have invested heavily in high-speed rail networks.",
+              "Urbanization leads to improved infrastructure, for example Tokyo has high-speed trains.",
+              "Urbanization leads to improved infrastructure, so Tokyo is a good city.",
+              "Urbanization leads to improved infrastructure, including Tokyo."
+            ],
+            "question": "Select the sentence that correctly uses a relative clause to integrate an example into an argument about urbanization. The core argument is: 'Urbanization leads to improved infrastructure.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Public investment in the arts is not merely a cultural luxury but an economic imperative, as demonstrated by the significant tourism revenue generated by national museums and galleries.",
+            "explanation": "High-band topic sentences clearly state the paragraph's focus and preview the supporting evidence. This model answer uses sophisticated vocabulary ('imperative,' 'generated') and explicitly links the claim (economic importance) to the specific evidence (tourism revenue), ensuring coherence and cohesion.",
+            "id": "ex_1c3954b8-c6cd-424b-8e54-3f6833b0c197_4",
+            "options": [],
+            "question": "Write a topic sentence for a body paragraph arguing that 'government funding for the arts is essential.' The sentence must include a clear claim and a preview of the specific evidence (economic impact) that will follow in the paragraph.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Renewable energy is more sustainable than fossil fuels, as evidenced by the fact that solar power generates zero greenhouse gas emissions during operation, unlike coal plants.",
+            "explanation": "This option provides a detailed comparative example ('zero greenhouse gas emissions' vs. 'coal plants') using the linking phrase 'as evidenced by the fact that.' It demonstrates precise lexical choice and complex grammatical structures, which are key features of Band 7+ writing. The other options are either too simplistic, vague, or lack the specific comparative evidence required to substantiate the claim.",
+            "id": "ex_1c3954b8-c6cd-424b-8e54-3f6833b0c197_5",
+            "options": [
+              "Renewable energy is more sustainable than fossil fuels, as evidenced by the fact that solar power generates zero greenhouse gas emissions during operation, unlike coal plants.",
+              "Renewable energy is better because it is green, whereas fossil fuels are dirty.",
+              "Renewable energy is more sustainable than fossil fuels, for example solar power.",
+              "Renewable energy is more sustainable than fossil fuels, which is why we should use solar power."
+            ],
+            "question": "Identify the sentence that best exemplifies the use of a comparative structure to highlight evidence in an argument about environmental policy. The argument is: 'Renewable energy is more sustainable than fossil fuels.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "175933ee-9f19-4f87-9e38-74594c550f93",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.390461"
+      },
+      "description": null,
+      "estimated_minutes": 30,
+      "id": "1c3954b8-c6cd-424b-8e54-3f6833b0c197",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "Developing Arguments with Evidence & Examples",
+      "total_exercises": 5,
+      "unit_id": "91150f08-3efa-4ee5-9e4c-e162ee4d2d28",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:17:02.227812"
+      },
+      "xp_reward": 30
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "The rise in sea levels, which is caused by melting ice caps, threatens coastal cities.",
+            "explanation": "The defining relative clause 'which is caused by melting ice caps' provides essential information without extra commas.",
+            "id": "ex_a28362e1-4213-4608-be2c-4432ea2fce0b_1",
+            "options": [
+              "The rise in sea levels, which is caused by melting ice caps, threatens coastal cities.",
+              "The rise in sea levels, that is caused by melting ice caps, threatens coastal cities.",
+              "The rise in sea levels which is caused by melting ice caps threatens coastal cities.",
+              "The rise in sea levels, which caused by melting ice caps, threatens coastal cities."
+            ],
+            "question": "Which sentence correctly uses a defining relative clause to add essential information about the cause of climate change?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "The subjunctive 'were' after 'if' shows advanced grammatical range and is expected at Band 7.",
+            "id": "ex_a28362e1-4213-4608-be2c-4432ea2fce0b_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "In IELTS Writing Task 2, using the subjunctive mood after 'if' in hypothetical past situations (e.g., 'If I were you') is necessary for a Band 7 score.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "Unless",
+            "explanation": "'Unless' introduces a condition meaning 'if not', fitting the meaning of the sentence.",
+            "id": "ex_a28362e1-4213-4608-be2c-4432ea2fce0b_3",
+            "options": [
+              "Although",
+              "Because",
+              "If",
+              "Unless"
+            ],
+            "question": "Complete the sentence with the appropriate subordinating conjunction: '{blank} the government invests more in renewable energy, emissions will continue to rise.'",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Mặc dù một số người cho rằng công nghệ làm cô lập cá nhân, nhưng nó đồng thời thúc đẩy sự hợp tác toàn cầu chưa từng có.",
+            "explanation": "The translation keeps the contrastive structure 'While... it simultaneously...' and uses appropriate Vietnamese terms.",
+            "id": "ex_a28362e1-4213-4608-be2c-4432ea2fce0b_4",
+            "options": [
+              "Mặc dù một số người cho rằng công nghệ làm cô lập cá nhân, nhưng nó đồng thời thúc đẩy sự hợp tác toàn cầu chưa từng có.",
+              "Trong khi một số người cho rằng công nghệ tách rời con người, nó cũng tạo ra sự hợp tác toàn cầu vô song.",
+              "Mặc dù một số người cho rằng công nghệ gây cô lập, nhưng nó cũng tạo ra sự hợp tác toàn cầu không có tiền lệ.",
+              "Trong khi một số người cho rằng công nghệ làm cô lập, nó đồng thời tạo nên hợp tác toàn cầu chưa từng có."
+            ],
+            "question": "Translate the following sentence into Vietnamese, preserving the complex structure: 'While some argue that technology isolates individuals, it simultaneously fosters unprecedented global collaboration.'",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "invest in education but also improve healthcare",
+            "explanation": "The parallel structure requires the verb 'invest' to be shared, so the phrase after 'but also' should be 'improve healthcare' without 'to'.",
+            "id": "ex_a28362e1-4213-4608-be2c-4432ea2fce0b_5",
+            "options": [],
+            "question": "Identify and correct the error in the following sentence: 'Governments should not only invest in education but also to improve healthcare.' Replace the incorrect part with '{blank}'.",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "175933ee-9f19-4f87-9e38-74594c550f93",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.390480"
+      },
+      "description": null,
+      "estimated_minutes": 28,
+      "id": "a28362e1-4213-4608-be2c-4432ea2fce0b",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Grammatical Range: Complex Structures for Band 7",
+      "total_exercises": 5,
+      "unit_id": "91150f08-3efa-4ee5-9e4c-e162ee4d2d28",
+      "updated_at": {
+        "__dt__": "2026-08-14T06:39:10.796191"
+      },
+      "xp_reward": 28
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "nevertheless",
+            "explanation": "The sentence presents a positive aspect (reduced commuting) followed by a negative aspect (social isolation). 'Nevertheless' correctly signals a concession or contrast, whereas 'consequently' implies cause and effect, and 'furthermore'/'in addition' imply addition of similar ideas.",
+            "id": "ex_cohesion_001",
+            "options": [
+              "consequently",
+              "nevertheless",
+              "furthermore",
+              "in addition"
+            ],
+            "question": "Identify the cohesive device that best establishes a logical link of contrast in the following Task 2 sentence regarding urban development: 'The construction of high-rise apartments significantly reduces the need for commuting; ________, this architectural trend often exacerbates social isolation among residents.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Overall, there was a significant increase in costs during the initial period, followed by a subsequent downturn.",
+            "explanation": "This answer demonstrates smooth paragraph flow by using 'Overall' to signal the overview function and 'subsequent downturn' to cohesively link the second phase of the data to the first without repeating specific numbers, maintaining a formal academic register suitable for Band 7+.",
+            "id": "ex_cohesion_002",
+            "options": [],
+            "question": "Write a cohesive overview sentence for a Task 1 report describing a line graph showing the rise in global coffee prices from 2010 to 2015, followed by a sharp decline in 2016. Use a nominalization to refer to the previous trend.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "such systems",
+            "explanation": "Using 'such systems' provides lexical cohesion by referring back to the specific noun phrase 'online learning platforms' without redundant repetition, while maintaining clarity. 'The former' and 'the latter' are incorrect because only one item is being discussed, not two distinct items for comparison.",
+            "id": "ex_cohesion_003",
+            "options": [
+              "the latter",
+              "such systems",
+              "these tools",
+              "the former"
+            ],
+            "question": "Select the most appropriate referent to replace the underlined text to avoid repetition and improve cohesion in the following Task 2 body paragraph: 'Many students believe that <u>online learning platforms</u> offer greater flexibility. However, critics argue that <u>online learning platforms</u> lack the interpersonal interaction necessary for holistic development.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "While tourism undoubtedly injects vital revenue into local economies, it simultaneously threatens the preservation of indigenous traditions.",
+            "explanation": "This answer effectively uses a complex sentence structure with 'While' to establish a concession, followed by the main clause. The adverb 'simultaneously' helps maintain cohesive flow by acknowledging that both phenomena occur at the same time, directly addressing the prompt's requirement for a contrastive argument.",
+            "id": "ex_cohesion_004",
+            "options": [],
+            "question": "Write a two-sentence paragraph for a Task 2 essay discussing the impact of tourism on local cultures. The first sentence should present a concession (acknowledging economic benefits), and the second sentence must use a contrastive linker to introduce the negative impact on cultural heritage.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Therefore",
+            "explanation": "'Therefore' implies a causal relationship, suggesting that the difference of 0.7 is a result of the previous statement. However, the difference is a mathematical calculation, not a consequence. A cohesive marker like 'Consequently' or 'Thus' might be acceptable if framing it as a result of the data, but 'Therefore' is often misused here to imply causality where only a result exists. A better cohesive choice would be 'Thus' or simply stating the calculation without a causal linker, as the difference is a fact, not an outcome of the previous clause's logic.",
+            "id": "ex_cohesion_005",
+            "options": [
+              "In contrast",
+              "Therefore",
+              "the two nations",
+              "owned"
+            ],
+            "question": "In the following Task 1 description, identify the error in cohesive referencing: 'The number of cars owned per household in Country A was 1.5 in 2000. In contrast, Country B had 0.8. Therefore, the difference between the two nations was 0.7.' Which word creates an ambiguous reference or logical disconnect?",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "175933ee-9f19-4f87-9e38-74594c550f93",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.390498"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "c8ab0b27-3a8f-4ee4-9157-37a8ff078a03",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "Cohesion & Coherence: Smooth Paragraph Flow",
+      "total_exercises": 5,
+      "unit_id": "91150f08-3efa-4ee5-9e4c-e162ee4d2d28",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:17:32.243017"
+      },
+      "xp_reward": 25
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "is",
+            "explanation": "The subject 'remote working' is a non-count noun phrase acting as a singular entity. Therefore, it requires the singular verb form 'is' rather than the plural 'are'. Band 7 candidates must demonstrate error-free sentences in the majority of their writing, and subject-verb agreement is a fundamental grammatical accuracy criterion.",
+            "id": "ex_0766e1a3-cb7a-46b8-a374-63405271bfb9_1",
+            "options": [],
+            "question": "Correct the grammatical error in this sentence from a Task 2 essay introduction to achieve Band 7+ accuracy. The sentence attempts to contrast two viewpoints but contains a subject-verb agreement error in the dependent clause.\n\nSentence: 'While some argue that remote working {blank} detrimental to employee productivity, others believe it fosters autonomy.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "While longer prison sentences may deter some offenders, I believe that investing in educational programs is a more effective strategy for reducing crime rates.",
+            "explanation": "This overview effectively uses a concession clause ('While longer prison sentences...') to acknowledge the opposing view, followed by a clear statement of the writer's position ('I believe that...'). It addresses both parts of the prompt (prison sentences vs. alternatives) and clearly outlines the essay's direction. This structure demonstrates 'Task Response' and 'Coherence and Cohesion' skills required for Band 7, providing a clear roadmap for the reader.",
+            "id": "ex_0766e1a3-cb7a-46b8-a374-63405271bfb9_2",
+            "options": [],
+            "question": "Write a single, Band 7+ overview sentence that clearly states the writer's position on the following prompt. \n\nPrompt: 'Some people believe that the best way to reduce crime is to give longer prison sentences. Others believe there are better alternative ways of dealing with criminals. Discuss both views and give your opinion.'\n\nInstruction: Your overview must explicitly state that you believe education is more effective than imprisonment, while acknowledging the opposing view. Use complex sentence structures (e.g., concession clauses).",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "mitigate",
+            "explanation": "The verb 'mitigate' is a precise academic term meaning to make something less severe, harmful, or painful. It collocates strongly with abstract nouns like 'cost of living' or 'inequality'. Using 'stop' or 'prevent' would be semantically inaccurate as these costs cannot be entirely eliminated, only reduced. Band 7 candidates are expected to use less common lexical items with some awareness of style and collocation.",
+            "id": "ex_0766e1a3-cb7a-46b8-a374-63405271bfb9_3",
+            "options": [],
+            "question": "Correct the lexical error in this body paragraph sentence to ensure precise word choice and collocation, essential for Band 7+ 'Lexical Resource'.\n\nSentence: 'The government should implement strict measures to {blank} the rising cost of living, which often exacerbates social inequality.'\n\nNote: The intended meaning is to alleviate or reduce the burden, not to stop it completely.",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "The isolation inherent in online learning environments can significantly hinder students' academic performance by depriving them of crucial peer-to-peer social interactions.",
+            "explanation": "This sentence effectively functions as a topic sentence by presenting a clear main idea (isolation hinders performance) and a supporting reason (lack of social interaction). It uses complex grammar (participle phrase 'inherent in...', gerund phrase 'depriving them...') and precise vocabulary ('isolation', 'inherent', 'hinder', 'crucial'). This level of syntactic complexity and lexical precision is characteristic of Band 7+ writing.",
+            "id": "ex_0766e1a3-cb7a-46b8-a374-63405271bfb9_4",
+            "options": [],
+            "question": "Write a complex sentence that acts as a topic sentence for a body paragraph discussing the disadvantages of online education. \n\nInstruction: Ensure the sentence includes a main clause and a subordinate clause showing cause and effect. Use academic vocabulary to describe 'lack of social interaction' and 'academic performance'. Keep it under 30 words.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "however; they",
+            "explanation": "The original sentence contains a comma splice when using 'however' as a conjunctive adverb. 'However' cannot join two independent clauses with just a comma. A semicolon is required before 'however', or a period must be used to separate the sentences. The corrected structure '...efficiency; however, they...' properly links the contrasting ideas. Band 7 candidates must demonstrate a range of complex structures and accurate punctuation to ensure clarity and cohesion.",
+            "id": "ex_0766e1a3-cb7a-46b8-a374-63405271bfb9_5",
+            "options": [],
+            "question": "Correct the punctuation and conjunction error in this sentence to improve coherence and cohesion. The sentence attempts to show a contrast but uses a comma splice and an incorrect coordinating conjunction.\n\nSentence: 'Technological advancements have improved efficiency, however, they have also created new ethical dilemmas, so we must regulate them carefully.'\n\nInstruction: Replace the incorrect conjunction and punctuation to create two distinct, grammatically correct sentences or a single complex sentence with proper subordination. Provide the corrected version of the first clause and the conjunction/punctuation that should follow it.",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "175933ee-9f19-4f87-9e38-74594c550f93",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.390514"
+      },
+      "description": null,
+      "estimated_minutes": 40,
+      "id": "0766e1a3-cb7a-46b8-a374-63405271bfb9",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "Task 2 Full Essay Practice – Band 7 Marking",
+      "total_exercises": 5,
+      "unit_id": "91150f08-3efa-4ee5-9e4c-e162ee4d2d28",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.377478"
+      },
+      "xp_reward": 60
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "I believe that the arts are a vital component of a nation's identity, and without public subsidy, many traditional forms of expression would face extinction.",
+            "explanation": "This answer achieves a Band 7+ by using sophisticated vocabulary ('vital component', 'subsidy', 'extinction') and complex grammatical structures ('without public subsidy, many... would face'). It provides a clear, abstract justification rather than a simple personal opinion.",
+            "id": "ex_speaking_repeat_01",
+            "options": [
+              "I think governments should help artists because art is good for culture and it makes people happy.",
+              "There is a strong argument for state funding of the arts, as it preserves cultural heritage which might otherwise be commercially unviable.",
+              "Maybe. Art is important, but it costs too much money for the government to pay for it all the time.",
+              "I believe that the arts are a vital component of a nation's identity, and without public subsidy, many traditional forms of expression would face extinction."
+            ],
+            "question": "Examiner: 'To what extent do you agree that governments should subsidize the arts?' Select the response that best demonstrates a Band 7+ level of fluency, coherence, and lexical resource.",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "preservation",
+            "explanation": "In the noun phrase 'preservation of individual freedoms', the head noun 'preservation' carries the primary stress. Correct stress placement is crucial for intelligibility in Part 3, where abstract nouns are frequent. Misplacing stress on 'of' or 'individual' would reduce clarity and sound unnatural.",
+            "id": "ex_pronunciation_drill_01",
+            "options": [],
+            "question": "Identify the word in the following phrase that requires primary stress to convey the correct meaning in an academic discussion: 'The {blank} of individual freedoms must be balanced against collective security.'",
+            "type": "translate",
+            "ui_type": "pronunciation_practice"
+          },
+          {
+            "correct_answer": "1. Introduction: Technology has revolutionized access to information. 2. Body: However, it may erode critical thinking skills if not regulated. 3. Conclusion: A hybrid model is optimal.",
+            "explanation": "This structure demonstrates the 'Position - Explanation - Example/Concession' framework essential for Part 3. It moves beyond simple statements to abstract analysis ('revolutionized access', 'erode critical thinking') and offers a nuanced conclusion ('hybrid model'), characteristic of a Band 7+ candidate.",
+            "id": "ex_writing_plan_01",
+            "options": [
+              "1. Technology is bad. 2. Schools should close. 3. I hate computers.",
+              "1. Introduction: Technology has revolutionized access to information. 2. Body: However, it may erode critical thinking skills if not regulated. 3. Conclusion: A hybrid model is optimal.",
+              "1. Computers are fast. 2. Internet is easy. 3. Students like games.",
+              "1. Education is important. 2. Technology is new. 3. We need both."
+            ],
+            "question": "You are asked to discuss the impact of technology on traditional education. Select the most appropriate logical structure for a Part 3 response.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "It is unlikely that remote work will completely supplant office-based employment, as interpersonal dynamics and spontaneous collaboration often suffer in virtual environments.",
+            "explanation": "This answer uses high-level vocabulary ('supplant', 'interpersonal dynamics', 'spontaneous collaboration') and a complex cause-and-effect structure. It avoids absolute statements ('will stop') and provides a reasoned, abstract analysis of workplace dynamics, fitting the Band 7+ criteria for lexical resource and grammatical range.",
+            "id": "ex_speaking_repeat_02",
+            "options": [
+              "No, people need to meet face-to-face to work properly.",
+              "It is unlikely that remote work will completely supplant office-based employment, as interpersonal dynamics and spontaneous collaboration often suffer in virtual environments.",
+              "Maybe in some jobs, but not all jobs can be done from home.",
+              "I think offices are too expensive, so companies will stop using them."
+            ],
+            "question": "Examiner: 'Do you think that remote work will eventually replace office-based work entirely?' Select the response that best uses abstract concepts and hedging language appropriate for Part 3.",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "evolution",
+            "explanation": "While 'evolution' is a content word and usually stressed, the preposition 'of' following it is a function word that typically reduces to its weak form /əv/ or /ə/ in connected speech. Recognizing and producing these weak forms is essential for achieving natural rhythm and fluency in Part 3 discussions.",
+            "id": "ex_pronunciation_drill_02",
+            "options": [],
+            "question": "In the phrase 'The {blank} of societal norms', identify the word that typically undergoes weak form reduction in rapid, natural speech.",
+            "type": "translate",
+            "ui_type": "pronunciation_practice"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "175933ee-9f19-4f87-9e38-74594c550f93",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.440769"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "80c8f73a-82a0-4382-9e6b-25916c94e276",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "speaking",
+      "title": "Speaking Part 3: Abstract Ideas & Opinions",
+      "total_exercises": 5,
+      "unit_id": "3da45718-7a08-46a0-bfbc-ea779f985be8",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447755"
+      },
+      "xp_reward": 25
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "however",
+            "explanation": "The discourse marker 'however' is the standard formal connector used to introduce a contrasting statement that qualifies or limits the previous clause, which is essential for Band 7+ coherence in Part 1 and Part 3 responses.",
+            "id": "ex_2a81f9db-2995-4d26-9289-0f004876ef51_1",
+            "options": [],
+            "question": "Complete the sentence to show a contrast between your love for the city and its downsides. 'I am quite fond of living in the city centre; ___ , the cost of living is prohibitively high.'",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "Moreover, it is important to consider the environmental impact.",
+            "explanation": "This exercise targets the smooth transition between the discourse marker 'Moreover' (used to add information) and the main clause. Correct stress on the first syllable of 'Moreover' (/mɒˈreʊər/) and the weak form of 'is' demonstrate the natural rhythm expected in high-band speaking.",
+            "id": "ex_2a81f9db-2995-4d26-9289-0f004876ef51_2",
+            "options": [],
+            "question": "Drill the following phrase, focusing on the linking of 'Moreover' with the subsequent clause and the reduction of 'is' to /ɪz/: 'Moreover, it is important to consider the environmental impact.'",
+            "type": "translate",
+            "ui_type": "pronunciation_practice"
+          },
+          {
+            "correct_answer": "Traditional schooling is rigid; In contrast, homeschooling offers a flexible curriculum tailored to individual needs.",
+            "explanation": "The correct answer uses 'In contrast' to juxtapose two opposing ideas (rigid vs. flexible). 'Moreover' would imply addition, not contrast. 'However' is acceptable for contrast but 'In contrast' is more formal and explicitly comparative, fitting the academic register of Part 3. The last option is grammatically incorrect due to the dangling prepositional phrase.",
+            "id": "ex_2a81f9db-2995-4d26-9289-0f004876ef51_3",
+            "options": [
+              "Traditional schooling is rigid; In contrast, homeschooling offers a flexible curriculum tailored to individual needs.",
+              "Traditional schooling is rigid; Moreover, homeschooling offers a flexible curriculum tailored to individual needs.",
+              "Traditional schooling is rigid; However, homeschooling offers a flexible curriculum tailored to individual needs.",
+              "Traditional schooling is rigid; In contrast, because homeschooling offers a flexible curriculum tailored to individual needs."
+            ],
+            "question": "Which sentence best demonstrates the use of 'In contrast' to compare two distinct educational approaches in a Part 3 discussion?",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "Initial opinion: disliked the subject; New evidence: read a compelling article; However: perspective shifted; Current view: appreciate the complexity.",
+            "explanation": "This note-form answer structures a coherent narrative for Part 2. It explicitly places 'However' at the pivot point where the speaker's attitude changes, demonstrating the functional use of the discourse marker to manage the flow of the story and signal a shift in argument, which is crucial for achieving a high score in Coherence and Cohesion.",
+            "id": "ex_2a81f9db-2995-4d26-9289-0f004876ef51_4",
+            "options": [],
+            "question": "Plan a brief answer (3-4 notes) for the Part 2 cue card: 'Describe a time you changed your mind about something.' Use 'However' to signal the turning point in your narrative.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "moreover",
+            "explanation": "The discourse marker 'moreover' is used to add an additional point that supports the previous statement. It is a formal alternative to 'furthermore' or 'in addition,' suitable for the academic register required in IELTS Speaking Part 3 when expanding on arguments about societal issues.",
+            "id": "ex_2a81f9db-2995-4d26-9289-0f004876ef51_5",
+            "options": [],
+            "question": "Complete the sentence to add a further supporting point to your argument about urban planning. 'Public transport reduces traffic congestion; ___ , it significantly lowers carbon emissions.'",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "175933ee-9f19-4f87-9e38-74594c550f93",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.440830"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "2a81f9db-2995-4d26-9289-0f004876ef51",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "speaking",
+      "title": "Discourse Markers for Fluency: However, Moreover, In Contrast",
+      "total_exercises": 5,
+      "unit_id": "3da45718-7a08-46a0-bfbc-ea779f985be8",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.377492"
+      },
+      "xp_reward": 25
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "PHO-to-gra-phy",
+            "explanation": "The primary stress in 'photograph' falls on the first syllable (PHO-to-gra-phy). Note that in the derived noun 'photography', the stress shifts to the second syllable, but for the base noun, it remains initial. Misplacing this stress can signal a lack of phonological control to the examiner.",
+            "id": "ex_001",
+            "options": [
+              "pho-TO-gra-ph",
+              "PHO-to-gra-phy",
+              "pho-to-GRAPH",
+              "pho-to-gra-PHY"
+            ],
+            "question": "Identify the correct primary stress pattern for the word 'photograph'. In a band 7+ response, precise word stress distinguishes content words from function words. Which syllable receives the primary stress?",
+            "type": "translate",
+            "ui_type": "pronunciation_practice"
+          },
+          {
+            "correct_answer": "drastically alter",
+            "explanation": "The phrase 'drastically alter' uses two content words that should be pronounced with equal prominence and clear vowel sounds. In the context of sentence rhythm, these stressed syllables create the beat of the sentence, while surrounding function words (like 'by the way') are reduced. This supports a natural, native-like cadence required for Band 7+.",
+            "id": "ex_002",
+            "options": [],
+            "question": "Complete the following model answer for Part 1. This sentence demonstrates sentence rhythm by grouping content words together and using weak forms for function words. 'I’ve always been fascinated by the way architecture can {blank} the mood of a city.'",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "False. In connected speech, the first syllable of 'interesting' is typically reduced to a schwa /'ɪntrəstɪŋ/ or even /'ntrəstɪŋ/ when preceded by a consonant. Over-articulating the first vowel as a full /i/ creates a robotic, 'sing-song' rhythm that disrupts the natural flow of speech. Fluent speakers use weak forms for unstressed syllables to maintain rhythm.",
+            "id": "ex_003",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "True or False: In the phrase 'an interesting opportunity', a Band 7+ candidate should pronounce the first syllable of 'interesting' with a clear /i/ (as in 'see') rather than a schwa /ə/ to ensure maximum clarity.",
+            "type": "translate",
+            "ui_type": "pronunciation_practice"
+          },
+          {
+            "correct_answer": "globalization, local, cultures",
+            "explanation": "In sentence stress, content words (nouns, main verbs, adjectives, adverbs) carry the meaning and receive primary stress. Here, 'globalization', 'impact', 'local', and 'cultures' are the content words. Function words ('the', 'of', 'on') are unstressed. Correctly stressing these key nouns ensures the listener grasps the core semantic elements of the argument, which is crucial for Coherence and Cohesion in Speaking.",
+            "id": "ex_004",
+            "options": [
+              "globalization, local, cultures",
+              "the, of, on",
+              "impact, on, the",
+              "globalization, the, impact"
+            ],
+            "question": "Match the Part 3 abstract topic with the appropriate lexical set and stress pattern strategy. Topic: 'The impact of globalization on local cultures.' Identify the key content words that should receive primary stress to convey meaning effectively.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Rise on 'efficiency', rise on 'costs', fall on 'morale'.",
+            "explanation": "In English, items in a list typically take a rising intonation (or a level tone) for all but the final item, which takes a falling intonation to signal the end of the list. This pattern (Rise-Rise-Fall) helps the listener anticipate that more information is coming until the final item, where the fall indicates completion. This is a key feature of fluent, cohesive speech for Band 7+.",
+            "id": "ex_005",
+            "options": [
+              "Fall on 'efficiency', fall on 'costs', fall on 'morale'.",
+              "Rise on 'efficiency', rise on 'costs', fall on 'morale'.",
+              "Fall on 'efficiency', rise on 'costs', rise on 'morale'.",
+              "Rise on 'efficiency', fall on 'costs', rise on 'morale'."
+            ],
+            "question": "Select the option that best demonstrates the correct use of intonation contour for a list of three items in a Part 2 long turn: 'The benefits include increased efficiency, reduced costs, and improved morale.' How should the pitch change on each item?",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "175933ee-9f19-4f87-9e38-74594c550f93",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.440859"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "fbc22c44-9257-4f81-88ad-c5cc4fd583cf",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "speaking",
+      "title": "Pronunciation: Word Stress & Sentence Rhythm",
+      "total_exercises": 5,
+      "unit_id": "3da45718-7a08-46a0-bfbc-ea779f985be8",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447911"
+      },
+      "xp_reward": 25
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "I drop by to see them now and then, usually on weekends.",
+            "explanation": "The phrase 'drop by' implies a casual visit, and 'now and then' indicates occasional frequency. This combination demonstrates natural, idiomatic usage appropriate for a Band 7 candidate, avoiding the rigid or unnatural tone of the other options.",
+            "id": "ex_01_idiom_meaning_1",
+            "options": [
+              "I visit them every single day.",
+              "I drop by to see them now and then, usually on weekends.",
+              "I go to their house frequently without fail.",
+              "I have a regular schedule for visiting them."
+            ],
+            "question": "Select the most natural Band 7+ idiomatic response to the Part 1 question: 'How often do you visit your grandparents?'",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "on the fence",
+            "explanation": "The idiom 'on the fence' is a standard Band 7+ expression for being undecided. It fits the context of weighing two options better than literal translations of uncertainty.",
+            "id": "ex_02_fill_blank_collocation",
+            "options": [],
+            "question": "Complete the Part 2 cue card response about a difficult decision. 'I was really {blank} about whether to accept the job offer in London or stay in my hometown.'",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "make up your mind",
+            "explanation": "This phrase requires clear articulation of the phrasal verb 'make up' and the noun 'mind'. Correct pronunciation involves linking the /d/ sound in 'made' (if used in past tense) or 'make' to the following word, ensuring the idiom sounds natural and fluent rather than segmented.",
+            "id": "ex_03_pronunciation_linking",
+            "options": [],
+            "question": "Practice the following idiomatic phrase, focusing on the linking between 'made' and 'up' and the stress on 'mind': 'make up your mind'.",
+            "type": "translate",
+            "ui_type": "pronunciation_practice"
+          },
+          {
+            "correct_answer": "1. Creates rapport/camaraderie. 2. Sounds more natural/less formal. 3. Cultural identity/belonging.",
+            "explanation": "This task tests the ability to structure an abstract argument. Key points should focus on social bonding (rapport), tone adjustment (naturalness), and cultural signaling, which are typical high-level arguments for this topic.",
+            "id": "ex_04_part3_abstract_discussion",
+            "options": [],
+            "question": "Plan a Part 3 answer to the question: 'Why do some people prefer to use idiomatic expressions in informal conversations?' Write your main points in note form.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "The idiom 'cost an arm and a leg' means something is very expensive. It is suitable for informal to semi-formal contexts, such as describing a personal possession in Part 2. It demonstrates lexical resource by using a vivid, idiomatic expression rather than a literal one like 'very expensive'.",
+            "id": "ex_05_idiom_usage_context",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "True or False: The idiom 'cost an arm and a leg' is appropriate for describing the price of a luxury item in a Part 2 speaking task about a valuable possession.",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "175933ee-9f19-4f87-9e38-74594c550f93",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.440884"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "06d5e246-5548-41f9-bae5-283220a3277e",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "speaking",
+      "title": "Idiomatic Language in Speaking (Band 7 Level)",
+      "total_exercises": 5,
+      "unit_id": "3da45718-7a08-46a0-bfbc-ea779f985be8",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.377477"
+      },
+      "xp_reward": 25
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "I'm quite keen on reading, particularly historical fiction. It helps me unwind after work. For instance, I recently finished a biography of Churchill which I found fascinating.",
+            "explanation": "This option demonstrates the 'Point, Reason, Example' structure essential for Band 7+. It uses sophisticated vocabulary ('keen on', 'unwind') and provides a specific, personal detail ('biography of Churchill') rather than generic statements.",
+            "id": "ex_1fab506a-5bd5-47a3-bedc-7431ec651e97_1",
+            "options": [
+              "Yes. Books are good. I read Harry Potter. It was fun.",
+              "I'm quite keen on reading, particularly historical fiction. It helps me unwind after work. For instance, I recently finished a biography of Churchill which I found fascinating.",
+              "Reading is very important for students. Many people read every day. Books have many pages and words.",
+              "I don't like reading. I prefer watching TV. TV is more exciting than books."
+            ],
+            "question": "For Part 1 of the mock interview, the examiner asks: 'Do you enjoy reading books?' Which of the following note structures best supports a Band 7+ response by providing a clear opinion, a reason, and a specific example?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Looking back, that decision proved to be pivotal, as it not only broadened my horizons but also set the trajectory for my current career path.",
+            "explanation": "This sentence uses complex grammatical structures ('not only... but also') and high-level lexical chunks ('proved to be pivotal', 'set the trajectory', 'broadened my horizons'), which are characteristic of Band 7-8 performance in the Long Turn.",
+            "id": "ex_2bc4d1e9-6cf6-58b4-cfed-8542fd762f08_2",
+            "options": [
+              "It was a good choice because I got a better job and now I am happy with my life.",
+              "Looking back, that decision proved to be pivotal, as it not only broadened my horizons but also set the trajectory for my current career path.",
+              "I decided to move to the city. It was hard at first. But now I have a nice apartment and good friends.",
+              "The result was positive. I learned a lot of new things and met interesting people."
+            ],
+            "question": "In Part 2, you are describing an important decision you made. Which of the following model sentences best demonstrates the grammatical range and lexical resource required for a Band 7-8 score when discussing the consequences of that decision?",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": " the",
+            "explanation": "This exercise focuses on the weak form of 'the' (/ə/) and the linking sound between the final 'r' of 'However' and the vowel of 'the'. Mastering this connection is crucial for natural fluency and rhythm in Part 3 discussions.",
+            "id": "ex_3de5f2a0-7dg7-69c5-dgfe-9653ge873g19_3",
+            "options": [],
+            "question": "For Part 3, when discussing abstract concepts like government spending, candidates often use linking words to show contrast. Drill the pronunciation of this phrase, paying attention to the linking between 'However' and 'the'. The phrase is: 'However{blank}the government allocates funds...'",
+            "type": "translate",
+            "ui_type": "pronunciation_practice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "False. Band 7 requires the ability to extend answers fully, develop ideas, and provide support or examples. Short, unextended answers, regardless of pronunciation accuracy, will limit the score for Fluency and Coherence as well as Lexical Resource, preventing a Band 7+.",
+            "id": "ex_4ef6g3b1-8eh8-7ad6-ehgf-0764hf984h20_4",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "True or False: In a Band 7-8 Part 3 response, it is acceptable to give a short, one-sentence answer if you are unsure of the topic, as long as your pronunciation is perfect.",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "While there are undeniable benefits, I would argue that...",
+            "explanation": "This phrase allows for a nuanced, balanced argument, which is key for Band 7+ in Part 3. It acknowledges the opposite view ('undeniable benefits') before presenting a critical perspective ('I would argue that'), demonstrating the ability to discuss abstract issues with depth and complexity.",
+            "id": "ex_5fg7h4c2-9fi9-8be6-fihg-1875ig095i31_5",
+            "options": [
+              "To cut a long story short",
+              "It's a matter of personal preference",
+              "While there are undeniable benefits, I would argue that...",
+              "As far as I'm concerned"
+            ],
+            "question": "Match the Part 3 question on the left with the most appropriate advanced vocabulary phrase to structure your argument on the right. Question: 'To what extent do you agree that technology has improved children's education?' Target Phrase: '{blank}'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "175933ee-9f19-4f87-9e38-74594c550f93",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.440913"
+      },
+      "description": "A full IELTS mock is 40 listening and 40 reading questions and lives in Practice Tests, not in a lesson. This is a short practice set.",
+      "estimated_minutes": 25,
+      "id": "1fab506a-5bd5-47a3-bedc-7431ec651e97",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "speaking",
+      "title": "Speaking Practice Set – Band 7–8",
+      "total_exercises": 5,
+      "unit_id": "3da45718-7a08-46a0-bfbc-ea779f985be8",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:16:23.160595"
+      },
+      "xp_reward": 60
+    }
+  ],
+  "units": [
+    {
+      "background_color": "#1A237E",
+      "course_id": "175933ee-9f19-4f87-9e38-74594c550f93",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.236307"
+      },
+      "description": "Kỹ thuật nghe nâng cao cho Section 3, 4 và các dạng bài khó",
+      "icon_url": null,
+      "id": "fc233af2-92f6-4edb-957c-a82f9774d3b4",
+      "order_index": 1,
+      "title": "IELTS Listening – Advanced Strategies (Band 7+)",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:39.274830"
+      }
+    },
+    {
+      "background_color": "#004D40",
+      "course_id": "175933ee-9f19-4f87-9e38-74594c550f93",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.276300"
+      },
+      "description": "Đọc hiểu văn bản học thuật phức tạp nhắm Band 7+",
+      "icon_url": null,
+      "id": "2324939e-dfad-4f13-b0bd-24db470735a2",
+      "order_index": 2,
+      "title": "IELTS Reading – Complex Academic Texts",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:39.305979"
+      }
+    },
+    {
+      "background_color": "#4A148C",
+      "course_id": "175933ee-9f19-4f87-9e38-74594c550f93",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.324047"
+      },
+      "description": "Phân tích biểu đồ kết hợp, sơ đồ quy trình và bản đồ đạt Band 7",
+      "icon_url": null,
+      "id": "4275ff25-aa35-4a77-b323-13f3ad0164a6",
+      "order_index": 3,
+      "title": "IELTS Writing Task 1 – Complex Data Analysis",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:39.344723"
+      }
+    },
+    {
+      "background_color": "#B71C1C",
+      "course_id": "175933ee-9f19-4f87-9e38-74594c550f93",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.346596"
+      },
+      "description": "Viết bài luận học thuật đạt Band 7–8 với lập luận chặt chẽ",
+      "icon_url": null,
+      "id": "91150f08-3efa-4ee5-9e4c-e162ee4d2d28",
+      "order_index": 4,
+      "title": "IELTS Writing Task 2 – Advanced Argumentation",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:39.387600"
+      }
+    },
+    {
+      "background_color": "#1B5E20",
+      "course_id": "175933ee-9f19-4f87-9e38-74594c550f93",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.388784"
+      },
+      "description": "Nâng cao khả năng nói tự nhiên và đạt Band 7 trong Speaking",
+      "icon_url": null,
+      "id": "3da45718-7a08-46a0-bfbc-ea779f985be8",
+      "order_index": 5,
+      "title": "IELTS Speaking – Fluency, Coherence & Pronunciation",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:39.434649"
+      }
+    }
+  ]
+}

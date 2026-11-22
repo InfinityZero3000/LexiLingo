@@ -22,7 +22,7 @@ import asyncio
 import threading
 import uuid
 import pytest
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 from httpx import AsyncClient, ASGITransport
 
@@ -436,8 +436,8 @@ class TestLogin:
         )
         assert response.status_code == 422
 
-    async def test_login_unverified_user_returns_403(self):
-        """Correct credentials but unverified email returns 403, not tokens."""
+    async def test_login_unverified_user_gets_a_session(self):
+        """An unverified account signs in; the app nags it to verify instead of shutting it out."""
         from app.main import app
         from app.core.database import get_db
 
@@ -458,12 +458,8 @@ class TestLogin:
                 )
         app.dependency_overrides.clear()
 
-        assert response.status_code == 403
-        message = response.json()["error"]["message"].lower()
-        assert "not verified" in message
-        data = response.json()
-        assert "access_token" not in data
-        assert "refresh_token" not in data
+        assert response.status_code == 200
+        assert response.json()["access_token"]
 
 
 # ===========================================================================
@@ -501,6 +497,12 @@ class TestRefreshToken:
         from app.core.database import get_db
 
         mock_login_user = _make_mock_user()
+        # The one mocked row answers both the token and the user lookup.
+        mock_login_user.is_used = False
+        mock_login_user.is_revoked = False
+        mock_login_user.expires_at = datetime.now(UTC) + timedelta(days=1)
+        mock_login_user.family_id = uuid.uuid4()
+        mock_login_user.token_hash = "h"
         session = _make_mock_session(scalar_one_or_none_value=mock_login_user)
 
         async def mock_get_db():
@@ -536,35 +538,6 @@ class TestRefreshToken:
                 json={"refresh_token": "valid.refresh.token"},
             )
         assert response.status_code == 401
-
-    async def test_refresh_unverified_user_returns_403(self):
-        """A still-unverified user cannot use a refresh token to renew access either."""
-        from app.main import app
-        from app.core.database import get_db
-
-        unverified_user = _make_mock_user(is_verified=False)
-        session = _make_mock_session(scalar_one_or_none_value=unverified_user)
-
-        async def mock_get_db():
-            yield session
-
-        app.dependency_overrides[get_db] = mock_get_db
-        transport = ASGITransport(app=app)
-
-        with patch(
-            "app.core.security.decode_token",
-            return_value={"type": "refresh", "sub": "00000000-0000-0000-0000-000000000001"},
-        ):
-            async with AsyncClient(transport=transport, base_url="http://test") as c:
-                response = await c.post(
-                    f"{BASE}/refresh",
-                    json={"refresh_token": "valid.refresh.token"},
-                )
-        app.dependency_overrides.clear()
-
-        assert response.status_code == 403
-        message = response.json()["error"]["message"].lower()
-        assert "not verified" in message
 
 
 # ===========================================================================
@@ -697,7 +670,7 @@ class TestResetPassword:
 
     async def test_reset_password_invalid_token_returns_400(self, client):
         """An invalid/expired reset token returns 400."""
-        with patch("app.core.security.decode_verification_token", return_value=None):
+        with patch("app.core.security.decode_verification_payload", return_value=None):
             response = await client.post(
                 f"{BASE}/reset-password",
                 json={"token": "bad-token", "new_password": "newpassword123"},
@@ -705,32 +678,52 @@ class TestResetPassword:
         assert response.status_code == 400
         assert "Invalid or expired reset token" in response.json()["error"]["message"]
 
-    async def test_reset_password_valid_token_returns_200(self):
-        """Valid reset token + new password returns 200."""
-        from app.main import app
-        from app.core.database import get_db
+    async def test_reset_link_works_once_and_ends_other_sessions(self, async_client):
+        """The mailed token resets the password once; a second use and old sessions are dead."""
+        from app.services.email_service import EmailService
 
-        user = _make_mock_user()
-        session = _make_mock_session(scalar_one_or_none_value=user)
+        with patch.object(EmailService, "send_verification_email", autospec=True, return_value=True), \
+                patch.object(EmailService, "send_welcome_email", autospec=True, return_value=True), \
+                patch.object(EmailService, "send_password_changed_email", autospec=True, return_value=True), \
+                patch.object(EmailService, "send_password_reset_email", autospec=True, return_value=True) as mailed:
+            await async_client.post(
+                f"{BASE}/register",
+                json={"email": "reset@example.com", "username": "resetter", "password": "SecurePass123!"},
+            )
+            session = (await async_client.post(
+                f"{BASE}/login", json={"email": "reset@example.com", "password": "SecurePass123!"}
+            )).json()
 
-        async def mock_get_db():
-            yield session
+            await async_client.post(f"{BASE}/forgot-password", json={"email": "reset@example.com"})
+            token = mailed.call_args.kwargs["reset_token"]
+            body = {"token": token, "new_password": "NewSecure456!"}
 
-        app.dependency_overrides[get_db] = mock_get_db
-        transport = ASGITransport(app=app)
+            first = await async_client.post(f"{BASE}/reset-password", json=body)
+            again = await async_client.post(f"{BASE}/reset-password", json={**body, "new_password": "Third789!x"})
+            old_refresh = await async_client.post(
+                f"{BASE}/refresh", json={"refresh_token": session["refresh_token"]}
+            )
+            relogin = await async_client.post(
+                f"{BASE}/login", json={"email": "reset@example.com", "password": "NewSecure456!"}
+            )
 
-        user_id = str(user.id)
-        with patch("app.core.security.decode_verification_token", return_value=user_id):
-            async with AsyncClient(transport=transport, base_url="http://test") as c:
-                response = await c.post(
-                    f"{BASE}/reset-password",
-                    json={"token": "valid-token", "new_password": "newpassword123"},
-                )
-        app.dependency_overrides.clear()
+        assert first.status_code == 200
+        assert again.status_code == 400
+        assert old_refresh.status_code == 401
+        assert relogin.status_code == 200
 
-        assert response.status_code == 200
-        data = response.json()
-        assert "Password reset successfully" in data["message"]
+    async def test_password_over_72_bytes_is_a_422_not_a_500(self, client):
+        long_password = "Aa1!" + "é" * 40  # 84 bytes, 44 characters
+        response = await client.post(
+            f"{BASE}/reset-password",
+            json={"token": "t", "new_password": long_password},
+        )
+        assert response.status_code == 422
+        response = await client.post(
+            f"{BASE}/register",
+            json={"email": "long@example.com", "username": "longpw", "password": long_password},
+        )
+        assert response.status_code == 422
 
     async def test_reset_password_too_short_returns_422(self, client):
         """New password shorter than 8 chars triggers 422."""
@@ -811,6 +804,88 @@ class TestVerifyEmail:
         data = response.json()
         assert data["verified"] is True
         assert "already verified" in data["message"].lower()
+
+
+class TestEmailVerificationEndToEnd:
+    """The link a new user is mailed must verify them; nothing here is mocked but the mail."""
+
+    async def test_registration_link_verifies_and_unlocks_login(self, async_client):
+        from app.services.email_service import EmailService
+
+        with patch.object(
+            EmailService, "send_verification_email", autospec=True, return_value=True
+        ) as sent, patch.object(
+            EmailService, "send_welcome_email", autospec=True, return_value=True
+        ):
+            response = await async_client.post(
+                f"{BASE}/register",
+                json={"email": "fresh@example.com", "username": "fresh", "password": "SecurePass123!"},
+            )
+            assert response.status_code == 201
+
+            # Unverified, the account still signs in and its session renews.
+            login = {"email": "fresh@example.com", "password": "SecurePass123!"}
+            early = await async_client.post(f"{BASE}/login", json=login)
+            assert early.status_code == 200
+            renewed = await async_client.post(
+                f"{BASE}/refresh", json={"refresh_token": early.json()["refresh_token"]}
+            )
+            assert renewed.status_code == 200
+
+            assert sent.call_count == 1
+            token = sent.call_args.kwargs["token"]
+            verified = await async_client.post(f"{BASE}/verify-email", json={"token": token})
+
+        assert verified.status_code == 200
+        body = verified.json()
+        assert body["message"] == "Email verified successfully"
+        assert (await async_client.post(f"{BASE}/login", json=login)).status_code == 200
+
+        # The link signs the learner in: its session works straight away.
+        me = await async_client.get(
+            f"{BASE}/me", headers={"Authorization": f"Bearer {body['access_token']}"}
+        )
+        assert me.status_code == 200
+        assert body["email"] == "fresh@example.com" and body["refresh_token"]
+
+        # A second click verifies nothing new and hands out no session.
+        with patch.object(EmailService, "send_welcome_email", autospec=True, return_value=True):
+            again = await async_client.post(f"{BASE}/verify-email", json={"token": token})
+        assert again.status_code == 200
+        assert again.json()["access_token"] is None
+
+    async def test_resend_link_verifies_too(self, async_client, monkeypatch):
+        from app.routes import auth
+        from app.services.email_service import EmailService
+
+        auth._verification_resend_cooldowns.clear()
+        auth._verification_resend_history.clear()
+        monkeypatch.setattr(auth.RedisClient, "get_instance", AsyncMock(return_value=None))
+        with patch.object(
+            EmailService, "send_verification_email", autospec=True, return_value=True
+        ) as sent, patch.object(
+            EmailService, "send_welcome_email", autospec=True, return_value=True
+        ):
+            await async_client.post(
+                f"{BASE}/register",
+                json={"email": "again@example.com", "username": "again", "password": "SecurePass123!"},
+            )
+            await async_client.post(f"{BASE}/resend-verification", json={"email": "again@example.com"})
+            assert sent.call_count == 2
+            # Resend schedules the mail as a background task with (email, token, name) positionally.
+            token = sent.call_args.args[1]
+            verified = await async_client.post(f"{BASE}/verify-email", json={"token": token})
+
+        assert verified.status_code == 200
+
+    async def test_a_reset_token_cannot_verify_an_email(self, async_client):
+        from app.core.security import create_verification_token
+
+        token = create_verification_token(
+            {"sub": str(uuid.uuid4()), "purpose": "password_reset"}, expires_minutes=60
+        )
+        response = await async_client.post(f"{BASE}/verify-email", json={"token": token})
+        assert response.status_code == 400
 
 
 # ===========================================================================
@@ -899,6 +974,59 @@ class TestGoogleLogin:
         assert "access_token" in data
         assert local_user.is_verified is True
         assert "google" in local_user.provider
+
+    async def test_google_link_drops_the_unverified_registrants_password_and_sessions(self):
+        """An unverified account can log in, so whoever registered the address first
+        holds a password and refresh tokens. Google proving the email must cut both."""
+        from app.main import app
+        from app.core.database import get_db
+
+        old_hash = "$2b$12$old.registrant.password.hash.......................................x"
+        local_user = _make_mock_user(is_verified=False, provider=["local"], hashed_password=old_hash)
+        session = _make_mock_session(scalar_one_or_none_value=local_user)
+
+        async def mock_get_db():
+            yield session
+
+        app.dependency_overrides[get_db] = mock_get_db
+        transport = ASGITransport(app=app)
+        google_info = {"email": "test@example.com", "email_verified": True, "name": "Test User"}
+        revoke = AsyncMock()
+        with patch("app.core.security.verify_google_token", new=AsyncMock(return_value=google_info)), \
+             patch("app.routes.auth._revoke_all_refresh_tokens", new=revoke):
+            async with AsyncClient(transport=transport, base_url="http://test") as c:
+                response = await c.post(f"{BASE}/google", json={"id_token": "good-token", "source": "app"})
+        app.dependency_overrides.clear()
+
+        assert response.status_code == 200
+        assert local_user.hashed_password != old_hash
+        revoke.assert_awaited_once()
+        assert revoke.await_args.args[1] == local_user.id
+
+    async def test_google_link_keeps_the_password_of_an_already_verified_account(self):
+        from app.main import app
+        from app.core.database import get_db
+
+        old_hash = "$2b$12$kept.password.hash...........................................x"
+        local_user = _make_mock_user(is_verified=True, provider=["local"], hashed_password=old_hash)
+        session = _make_mock_session(scalar_one_or_none_value=local_user)
+
+        async def mock_get_db():
+            yield session
+
+        app.dependency_overrides[get_db] = mock_get_db
+        transport = ASGITransport(app=app)
+        google_info = {"email": "test@example.com", "email_verified": True, "name": "Test User"}
+        revoke = AsyncMock()
+        with patch("app.core.security.verify_google_token", new=AsyncMock(return_value=google_info)), \
+             patch("app.routes.auth._revoke_all_refresh_tokens", new=revoke):
+            async with AsyncClient(transport=transport, base_url="http://test") as c:
+                response = await c.post(f"{BASE}/google", json={"id_token": "good-token", "source": "app"})
+        app.dependency_overrides.clear()
+
+        assert response.status_code == 200
+        assert local_user.hashed_password == old_hash
+        revoke.assert_not_awaited()
 
     async def test_google_login_local_account_blocked_when_email_not_verified(self):
         """If Google has NOT verified the email, an unverified local account stays blocked."""

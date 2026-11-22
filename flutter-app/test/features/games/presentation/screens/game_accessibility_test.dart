@@ -34,6 +34,7 @@ class _FakeGamesRepository extends GamesRepository {
     required List<Map<String, String>> answers,
     int? clientDurationSeconds,
     int hintsUsed = 0,
+    List<String> rescuedIds = const [],
   }) async => throw UnimplementedError();
 }
 
@@ -232,8 +233,8 @@ void main() {
       await tester.pump(const Duration(milliseconds: 1400));
       await tester.pump(const Duration(milliseconds: 800));
 
-      // Find ElevatedButton (Play Again)
-      final playAgainButtons = find.byType(ElevatedButton);
+      // Find FilledButton (Play Again)
+      final playAgainButtons = find.byType(FilledButton);
       expect(playAgainButtons, findsWidgets);
     });
 

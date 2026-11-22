@@ -13,6 +13,7 @@ import 'package:lexilingo_app/core/widgets/glassmorphic_components.dart'
 import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 String formatMemberSinceDate(DateTime createdAt, String locale) =>
     DateFormat('MMM yyyy', locale).format(createdAt);
@@ -52,7 +53,7 @@ Color tierColor(BuildContext context, String tierCode) {
   final isDark = Theme.of(context).brightness == Brightness.dark;
   switch (tierCode) {
     case 'A1':
-      return AppColors.greenSuccessBright;
+      return context.status.success;
     case 'A2':
       return AppColors.teal;
     case 'B1':
@@ -62,7 +63,7 @@ Color tierColor(BuildContext context, String tierCode) {
     case 'C1':
       return AppColors.purple;
     case 'C2':
-      return AppColors.warning;
+      return context.status.warning;
     default:
       return AppColorRoles.primary(isDark);
   }
@@ -88,12 +89,12 @@ class ProfileHeader extends StatelessWidget {
         final progress = levelProvider.displayLevelProgress;
 
         return Container(
-          margin: const EdgeInsets.all(16),
+          margin: const EdgeInsets.all(AppSpacing.lg),
           child: Stack(
             children: [
               // Glassmorphic Background Card
               ClipRRect(
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                   child: Container(
@@ -104,16 +105,18 @@ class ProfileHeader extends StatelessWidget {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          (isDark ? accent : AppColors.primary).withValues(
-                            alpha: 0.15,
-                          ),
-                          (isDark ? accent : AppColors.primary).withValues(
-                            alpha: 0.1,
-                          ),
+                          (isDark
+                                  ? accent
+                                  : Theme.of(context).colorScheme.primary)
+                              .withValues(alpha: 0.15),
+                          (isDark
+                                  ? accent
+                                  : Theme.of(context).colorScheme.primary)
+                              .withValues(alpha: 0.1),
                           AppColors.surfaceLight.withValues(alpha: 0.05),
                         ],
                       ),
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
                       border: Border.all(
                         color: Theme.of(
                           context,
@@ -122,8 +125,11 @@ class ProfileHeader extends StatelessWidget {
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: (isDark ? accent : AppColors.primary)
-                              .withValues(alpha: 0.12),
+                          color:
+                              (isDark
+                                      ? accent
+                                      : Theme.of(context).colorScheme.primary)
+                                  .withValues(alpha: 0.12),
                           blurRadius: 20,
                           offset: const Offset(0, 10),
                         ),
@@ -141,8 +147,14 @@ class ProfileHeader extends StatelessWidget {
                               size: 104,
                               strokeWidth: 5,
                               gradientColors: [
-                                isDark ? accent : AppColors.primary,
-                                isDark ? accent : AppColors.primary,
+                                isDark
+                                    ? accent
+                                    : Theme.of(context).colorScheme.primary,
+
+                                isDark
+                                    ? accent
+                                    : Theme.of(context).colorScheme.primary,
+
                                 AppColors.purple,
                               ],
                               child: Container(
@@ -158,7 +170,11 @@ class ProfileHeader extends StatelessWidget {
                                   boxShadow: [
                                     BoxShadow(
                                       color:
-                                          (isDark ? accent : AppColors.primary)
+                                          (isDark
+                                                  ? accent
+                                                  : Theme.of(
+                                                      context,
+                                                    ).colorScheme.primary)
                                               .withValues(alpha: 0.3),
                                       blurRadius: 16,
                                       spreadRadius: 3,
@@ -173,14 +189,20 @@ class ProfileHeader extends StatelessWidget {
                                     height: 88,
                                     fallback: Container(
                                       color:
-                                          (isDark ? accent : AppColors.primary)
+                                          (isDark
+                                                  ? accent
+                                                  : Theme.of(
+                                                      context,
+                                                    ).colorScheme.primary)
                                               .withValues(alpha: 0.2),
                                       child: Icon(
                                         Icons.person,
                                         size: 40,
                                         color: isDark
                                             ? accent
-                                            : AppColors.primary,
+                                            : Theme.of(
+                                                context,
+                                              ).colorScheme.primary,
                                       ),
                                     ),
                                   ),
@@ -202,8 +224,17 @@ class ProfileHeader extends StatelessWidget {
                                       decoration: BoxDecoration(
                                         gradient: LinearGradient(
                                           colors: [
-                                            isDark ? accent : AppColors.primary,
-                                            isDark ? accent : AppColors.primary,
+                                            isDark
+                                                ? accent
+                                                : Theme.of(
+                                                    context,
+                                                  ).colorScheme.primary,
+
+                                            isDark
+                                                ? accent
+                                                : Theme.of(
+                                                    context,
+                                                  ).colorScheme.primary,
                                           ],
                                         ),
                                         shape: BoxShape.circle,
@@ -216,7 +247,9 @@ class ProfileHeader extends StatelessWidget {
                                             color:
                                                 (isDark
                                                         ? accent
-                                                        : AppColors.primary)
+                                                        : Theme.of(
+                                                            context,
+                                                          ).colorScheme.primary)
                                                     .withValues(alpha: 0.5),
                                             blurRadius: 8,
                                           ),
@@ -233,7 +266,7 @@ class ProfileHeader extends StatelessWidget {
                               ),
                           ],
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: AppSpacing.md),
                         // User Name
                         Text(
                           user?.displayName ?? 'profile.guestUser'.tr(),
@@ -254,7 +287,7 @@ class ProfileHeader extends StatelessWidget {
                                   color: AppColorRoles.textSecondary(isDark),
                                 ),
                           ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: AppSpacing.md),
                         // Level Badge + CEFR Proficiency Badge + Rank Badge
                         Consumer<LevelProvider>(
                           builder: (_, lp, __) {
@@ -268,8 +301,8 @@ class ProfileHeader extends StatelessWidget {
                                 // Numeric Level badge
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 8,
+                                    horizontal: AppSpacing.md,
+                                    vertical: AppSpacing.sm,
                                   ),
                                   decoration: BoxDecoration(
                                     gradient: LinearGradient(
@@ -277,13 +310,17 @@ class ProfileHeader extends StatelessWidget {
                                         isDark,
                                       ),
                                     ),
-                                    borderRadius: BorderRadius.circular(20),
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.lg,
+                                    ),
                                     boxShadow: [
                                       BoxShadow(
                                         color:
                                             (isDark
                                                     ? accent
-                                                    : AppColors.primary)
+                                                    : Theme.of(
+                                                        context,
+                                                      ).colorScheme.primary)
                                                 .withValues(alpha: 0.4),
                                         blurRadius: 8,
                                         offset: const Offset(0, 4),
@@ -305,11 +342,13 @@ class ProfileHeader extends StatelessWidget {
                                             'level': '${lp.displayLevel}',
                                           },
                                         ),
-                                        style: TextStyle(
-                                          color: AppColors.surfaceLight,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13,
-                                        ),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: AppColors.surfaceLight,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                       ),
                                     ],
                                   ),
@@ -321,15 +360,17 @@ class ProfileHeader extends StatelessWidget {
                                   message: lp.proficiencyName,
                                   child: Container(
                                     padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
+                                      horizontal: AppSpacing.md,
+                                      vertical: AppSpacing.sm,
                                     ),
                                     decoration: BoxDecoration(
                                       color: tierColor(
                                         context,
                                         lp.proficiencyLevel,
                                       ).withValues(alpha: 0.12),
-                                      borderRadius: BorderRadius.circular(20),
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.lg,
+                                      ),
                                       border: Border.all(
                                         color: tierColor(
                                           context,
@@ -348,21 +389,23 @@ class ProfileHeader extends StatelessWidget {
                                             lp.proficiencyLevel,
                                           ),
                                         ),
-                                        const SizedBox(width: 4),
+                                        const SizedBox(width: AppSpacing.xs),
                                         Text(
                                           lp.proficiencyLevel,
-                                          style: TextStyle(
-                                            color: tierColor(
-                                              context,
-                                              lp.proficiencyLevel,
-                                            ),
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 13,
-                                          ),
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(
+                                                color: tierColor(
+                                                  context,
+                                                  lp.proficiencyLevel,
+                                                ),
+                                                fontWeight: FontWeight.bold,
+                                              ),
                                         ),
                                         // Chosen, not yet confirmed by a test.
                                         if (!lp.levelVerified) ...[
-                                          const SizedBox(width: 4),
+                                          const SizedBox(width: AppSpacing.xs),
                                           Tooltip(
                                             message:
                                                 'profile.levelUnverifiedValue'
@@ -400,10 +443,8 @@ class ProfileHeader extends StatelessWidget {
                                       ? ShaderMask(
                                           shaderCallback: (bounds) =>
                                               const LinearGradient(
-                                                colors: [
-                                                  Color(0xFF5AB6FF),
-                                                  Color(0xFFFFD64F),
-                                                ],
+                                                colors:
+                                                    AppColors.masterGradient,
                                                 begin: Alignment.topLeft,
                                                 end: Alignment.bottomRight,
                                               ).createShader(bounds),
@@ -413,15 +454,15 @@ class ProfileHeader extends StatelessWidget {
                                               vertical: 6,
                                             ),
                                             decoration: BoxDecoration(
-                                              color: Colors.white.withValues(
-                                                alpha: 0.12,
-                                              ),
+                                              color: AppColors.onGradient
+                                                  .withValues(alpha: 0.12),
                                               borderRadius:
-                                                  BorderRadius.circular(20),
+                                                  BorderRadius.circular(
+                                                    AppRadius.lg,
+                                                  ),
                                               border: Border.all(
-                                                color: Colors.white.withValues(
-                                                  alpha: 0.4,
-                                                ),
+                                                color: AppColors.onGradient
+                                                    .withValues(alpha: 0.4),
                                               ),
                                             ),
                                             child: Row(
@@ -435,11 +476,15 @@ class ProfileHeader extends StatelessWidget {
                                                 const SizedBox(width: 5),
                                                 Text(
                                                   lp.rankName,
-                                                  style: const TextStyle(
-                                                    color: Colors.white,
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 12,
-                                                  ),
+                                                  style: Theme.of(context)
+                                                      .textTheme
+                                                      .bodySmall
+                                                      ?.copyWith(
+                                                        color: AppColors
+                                                            .onGradient,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                      ),
                                                 ),
                                               ],
                                             ),
@@ -474,11 +519,14 @@ class ProfileHeader extends StatelessWidget {
                                               const SizedBox(width: 5),
                                               Text(
                                                 lp.rankName,
-                                                style: TextStyle(
-                                                  color: rankData.color,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 12,
-                                                ),
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodySmall
+                                                    ?.copyWith(
+                                                      color: rankData.color,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
                                               ),
                                             ],
                                           ),
@@ -488,7 +536,7 @@ class ProfileHeader extends StatelessWidget {
                             );
                           },
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: AppSpacing.sm),
                         Text(
                           formatMemberSince(context, user?.createdAt),
                           maxLines: 1,
@@ -498,7 +546,7 @@ class ProfileHeader extends StatelessWidget {
                                 color: AppColorRoles.textSecondary(isDark),
                               ),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: AppSpacing.md),
                         // Edit Profile Button
                         TapTarget(
                           onTap: () async {
@@ -515,17 +563,22 @@ class ProfileHeader extends StatelessWidget {
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 20,
-                              vertical: 8,
+                              vertical: AppSpacing.sm,
                             ),
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: AppColorRoles.primaryGradient(isDark),
                               ),
-                              borderRadius: BorderRadius.circular(20),
+                              borderRadius: BorderRadius.circular(AppRadius.lg),
                               boxShadow: [
                                 BoxShadow(
-                                  color: (isDark ? accent : AppColors.primary)
-                                      .withValues(alpha: 0.3),
+                                  color:
+                                      (isDark
+                                              ? accent
+                                              : Theme.of(
+                                                  context,
+                                                ).colorScheme.primary)
+                                          .withValues(alpha: 0.3),
                                   blurRadius: 8,
                                   offset: Offset(0, 4),
                                 ),
@@ -540,19 +593,23 @@ class ProfileHeader extends StatelessWidget {
                                   size: 14,
                                 ),
                                 SizedBox(width: 6),
-                                Text(
-                                  'profile.editProfile'.tr(),
-                                  style: TextStyle(
-                                    color: AppColors.surfaceLight,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 13,
+                                Flexible(
+                                  child: Text(
+                                    'profile.editProfile'.tr(),
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          color: AppColors.surfaceLight,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                               ],
                             ),
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppSpacing.lg),
                         // Social Stats Row
                         const SocialStatsRow(),
                       ],

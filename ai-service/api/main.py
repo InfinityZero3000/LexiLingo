@@ -360,6 +360,12 @@ async def lifespan(app: FastAPI):
     await mongodb_manager.disconnect()
     await RedisClient.close()
     try:
+        from api.core import auth_revocation
+
+        await auth_revocation.close()
+    except Exception as e:
+        logger.warning(f"Failed to close auth revocation client cleanly: {e}")
+    try:
         from api.clients.learner_state_client import close_learner_state_client
 
         await close_learner_state_client()

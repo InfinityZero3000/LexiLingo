@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, FileAudio, Plus, RefreshCw, Trash2 } from "lucide-react";
 
+import { IeltsProvenancePanel } from "../components/IeltsProvenancePanel";
 import { EmptyState } from "../components/EmptyState";
 import { SectionHeader } from "../components/SectionHeader";
 import { StatusPill } from "../components/StatusPill";
@@ -143,6 +144,7 @@ export const IeltsTestsPage = () => {
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft>(emptyDraft());
+  const [provenance, setProvenance] = useState<IeltsTest["provenance"]>(null);
   const [validation, setValidation] = useState<IeltsValidation | null>(null);
   const [attempts, setAttempts] = useState<IeltsAttemptRow[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -181,6 +183,14 @@ export const IeltsTestsPage = () => {
     }
   }, [draft.contentText]);
 
+  const parsedContent = useMemo(() => {
+    try {
+      return JSON.parse(draft.contentText || "{}");
+    } catch {
+      return null;
+    }
+  }, [draft.contentText]);
+
   const openTest = async (id: string) => {
     setSelectedId(id);
     setValidation(null);
@@ -191,6 +201,7 @@ export const IeltsTestsPage = () => {
         listIeltsAttempts(id),
       ]);
       const test = detail.data;
+      setProvenance(test?.provenance ?? null);
       if (test) {
         setDraft({
           title: test.title,
@@ -209,6 +220,7 @@ export const IeltsTestsPage = () => {
 
   const startNew = () => {
     setSelectedId(null);
+    setProvenance(null);
     setDraft(emptyDraft());
     setValidation(null);
     setAttempts([]);
@@ -517,6 +529,10 @@ export const IeltsTestsPage = () => {
             />
           </label>
         </div>
+
+        {selectedId && !contentError && (
+          <IeltsProvenancePanel content={parsedContent} provenance={provenance} />
+        )}
 
         {validation && (
           <div className="panel">

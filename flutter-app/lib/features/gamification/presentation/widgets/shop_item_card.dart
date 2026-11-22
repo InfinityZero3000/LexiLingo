@@ -1,4 +1,7 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/features/gamification/presentation/theme/reward_palette.dart';
 import 'package:lexilingo_app/core/widgets/game_icon.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/shop_item.dart';
@@ -30,7 +33,7 @@ class ShopItemCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
           color: _getCategoryColor(
             context,
@@ -40,7 +43,7 @@ class ShopItemCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Theme.of(context).shadowColor.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
@@ -83,24 +86,28 @@ class ShopItemCard extends StatelessWidget {
                       right: 8,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                          horizontal: AppSpacing.sm,
+                          vertical: AppSpacing.xs,
                         ),
                         decoration: BoxDecoration(
                           color: item.isOutOfStock
                               ? AppColors.errorBright.withValues(alpha: 0.9)
                               : AppColors.orange.withValues(alpha: 0.9),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
                         ),
                         child: Text(
                           item.isOutOfStock
-                              ? 'SOLD OUT'
-                              : '${item.stockRemaining} LEFT',
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.surface,
-                          ),
+                              ? 'shop.soldOut'.tr()
+                              : 'shop.stockLeft'.tr(
+                                  namedArgs: {
+                                    'count': '${item.stockRemaining}',
+                                  },
+                                ),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.surfaceLight,
+                              ),
                         ),
                       ),
                     ),
@@ -112,14 +119,14 @@ class ShopItemCard extends StatelessWidget {
                       left: 8,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                          horizontal: AppSpacing.sm,
+                          vertical: AppSpacing.xs,
                         ),
                         decoration: BoxDecoration(
                           color: AppColorRoles.primary(
                             Theme.of(context).brightness == Brightness.dark,
                           ).withValues(alpha: 0.9),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -129,14 +136,14 @@ class ShopItemCard extends StatelessWidget {
                               size: 12,
                               color: AppColors.surfaceLight,
                             ),
-                            const SizedBox(width: 4),
+                            const SizedBox(width: AppSpacing.xs),
                             Text(
                               '${item.effectDuration}h',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.surfaceLight,
-                              ),
+                              style: Theme.of(context).textTheme.labelSmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.surfaceLight,
+                                  ),
                             ),
                           ],
                         ),
@@ -149,28 +156,29 @@ class ShopItemCard extends StatelessWidget {
 
           // Item Info: sized by its content so the icon area absorbs the slack
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppSpacing.md),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   item.name,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
                   item.description,
-                  style: TextStyle(fontSize: 11, color: AppColors.grey600),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelSmall?.copyWith(color: AppColors.grey600),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
 
                 // Price and Buy Button
                 Row(
@@ -179,12 +187,12 @@ class ShopItemCard extends StatelessWidget {
                     Flexible(
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                          horizontal: AppSpacing.sm,
+                          vertical: AppSpacing.xs,
                         ),
                         decoration: BoxDecoration(
                           color: AppColors.purple.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -194,24 +202,24 @@ class ShopItemCard extends StatelessWidget {
                               size: 14,
                               color: AppColors.purple,
                             ),
-                            const SizedBox(width: 4),
+                            const SizedBox(width: AppSpacing.xs),
                             Flexible(
                               child: Text(
                                 '${item.priceGems}',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.purple,
-                                ),
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.purple,
+                                    ),
                               ),
                             ),
                           ],
                         ),
                       ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: AppSpacing.sm),
 
                     // Buy Button
                     GestureDetector(
@@ -226,14 +234,14 @@ class ShopItemCard extends StatelessWidget {
                         constraints: const BoxConstraints(minHeight: 44),
                         alignment: Alignment.center,
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
+                          horizontal: AppSpacing.md,
+                          vertical: AppSpacing.sm,
                         ),
                         decoration: BoxDecoration(
                           color: canAfford && !item.isOutOfStock && !isOwned
                               ? AppColors.greenSuccessBright
                               : AppColors.grey300,
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
                         ),
                         child: isLoading
                             ? SizedBox(
@@ -247,16 +255,16 @@ class ShopItemCard extends StatelessWidget {
                                     : item.isOutOfStock
                                     ? 'SOLD'
                                     : 'BUY',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color:
-                                      canAfford &&
-                                          !item.isOutOfStock &&
-                                          !isOwned
-                                      ? AppColors.surfaceLight
-                                      : AppColors.grey600,
-                                ),
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color:
+                                          canAfford &&
+                                              !item.isOutOfStock &&
+                                              !isOwned
+                                          ? AppColors.surfaceLight
+                                          : AppColors.grey600,
+                                    ),
                               ),
                       ),
                     ),
@@ -327,7 +335,7 @@ class ShopItemCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: _getCategoryColor(
@@ -357,7 +365,7 @@ class ShopItemCard extends StatelessWidget {
       case ShopItemEntity.categoryPowerUps:
         return AppColorRoles.primary(isDark);
       case ShopItemEntity.categoryCosmetics:
-        return const Color(0xFFEC4899); // Pink
+        return RewardPalette.shopPink;
       case ShopItemEntity.categoryBoosts:
         return AppColors.orange; // Amber
       case ShopItemEntity.categorySpecial:

@@ -45,11 +45,11 @@ from api.services.topic_catalog_service import get_topic_catalog_service
 from api.services.topic_preloader import get_topic_preloader
 from api.services.topic_prompt_builder import TopicPromptBuilder
 from api.core.redis_client import get_redis
-from api.services.educational_hints_parser import (
-    EducationalHintsParser,
-)
 from api.services.topic_chat_service import (
+    build_turn_hints,
+    turn_was_graded,
     call_tracecag_with_retry,
+    is_scripted_turn,
     persist_topic_turn,
     resolve_kg_seeds,
     sanitize_topic_response,
@@ -316,6 +316,7 @@ async def start_topic_session(
             "session_type": "topic_based",
             "preferred_llm": _normalize_preferred_llm(request.preferred_llm),
             "difficulty_level": story.difficulty_level.value,
+            "suggested_prompts": list(story.suggested_prompts or []),
             "created_at": created_at,
             "last_activity": created_at,
             "message_count": 0,
@@ -453,6 +454,7 @@ async def send_topic_message(
         preferred_llm = _normalize_preferred_llm(session.get("preferred_llm"))
 
         kg_seeds = await resolve_kg_seeds(session, redis_client)
+        scripted = await is_scripted_turn(session, request.message, db)
 
         conversation_history = [
             {"role": msg.get("role", "user"), "content": msg.get("content", "")}
@@ -473,12 +475,15 @@ async def send_topic_message(
         if not tracecag_result.ai_response:
             raise HTTPException(status_code=500, detail="No response from AI")
 
-        clean_response, parsed_hints = EducationalHintsParser.parse(tracecag_result.ai_response)
-        parsed_hints = EducationalHintsParser.merge_diagnosis_errors(
-            parsed_hints, tracecag_result.diagnosis_errors
+        clean_response, parsed_hints, accepted_errors = build_turn_hints(
+            tracecag_result.ai_response,
+            tracecag_result.diagnosis_errors,
+            request.message,
+            scripted,
         )
-        from api.core.redis_client import record_learner_errors
-        await record_learner_errors(request.user_id, tracecag_result.diagnosis_errors)
+        if accepted_errors:
+            from api.core.redis_client import record_learner_errors
+            await record_learner_errors(request.user_id, accepted_errors)
         display_response = sanitize_topic_response(clean_response or tracecag_result.ai_response)
 
         ai_message_id = await persist_topic_turn(
@@ -489,7 +494,7 @@ async def send_topic_message(
             repo=repo,
         )
 
-        if tracecag_result.trace_result:
+        if tracecag_result.trace_result and not scripted and turn_was_graded(tracecag_result.trace_result):
             try:
                 from api.services.learner_observation_spool import persist_trace_observations
 
@@ -612,6 +617,7 @@ async def send_topic_message_stream(
 
     history = await repo.get_history(session_id, limit=10)
     kg_seeds = await resolve_kg_seeds(session, redis_client)
+    scripted = await is_scripted_turn(session, request.message, db)
     conversation_history = [
         {"role": msg.get("role", "user"), "content": msg.get("content", "")}
         for msg in history
@@ -630,6 +636,7 @@ async def send_topic_message_stream(
             quota=quota,
             start_time=start_time,
             request_id=request_id,
+            scripted=scripted,
         ),
         media_type="text/event-stream",
         headers={

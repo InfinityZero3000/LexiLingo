@@ -15,6 +15,8 @@ import '../../domain/entities/podcast_entities.dart';
 import '../widgets/audio_player_controls.dart';
 import '../widgets/player_header.dart';
 import '../widgets/transcript_panel.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Full podcast player screen.
 ///
@@ -86,6 +88,20 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
       Future.delayed(const Duration(milliseconds: 500), () {
         _tryInitHandler(attempt: attempt + 1);
       });
+    } else {
+      setState(() {
+        _handlerInitializing = false;
+        _loadError = true;
+      });
+    }
+  }
+
+  void _retryLoad() {
+    if (_handler == null) {
+      setState(() => _loadError = false);
+      _tryInitHandler();
+    } else {
+      _loadEpisode();
     }
   }
 
@@ -120,6 +136,7 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
     // Sleep timer — read the current value synchronously first (a timer may
     // already be running from before this screen was (re)opened), then
     // follow further ticks.
+    _playbackSpeed = _handler!.speed;
     _sleepTimerSecondsRemaining = _handler!.sleepTimerSecondsRemaining;
     _subs.add(
       _handler!.sleepTimerSecondsStream.listen((seconds) {
@@ -178,6 +195,9 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
           : (widget.episode.listenProgress > 5
                 ? widget.episode.listenProgress
                 : null);
+      // The learner may have left, or started another episode, while the
+      // history was loading; seeking then would jump the wrong audio.
+      if (!mounted) return;
       if (resume != null) await _handler!.seek(Duration(seconds: resume));
     } catch (e) {
       debugPrint('PodcastPlayerScreen: failed to load audio: $e');
@@ -244,7 +264,7 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
       appBar: AppBar(
         systemOverlayStyle: SystemUiOverlayStyle.light,
         backgroundColor: Colors.transparent,
-        foregroundColor: Colors.white,
+        foregroundColor: AppColors.onGradient,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
@@ -255,8 +275,7 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
         ),
         title: Text(
           'podcast.nowPlaying'.tr().toUpperCase(),
-          style: const TextStyle(
-            fontSize: 12,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
             fontWeight: FontWeight.w600,
             letterSpacing: 1.6,
           ),
@@ -274,14 +293,17 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
                 level: widget.episode.cefrLevel ?? 'B1',
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, AppSpacing.xxl),
                 child: Column(
                   children: [
                     if (_handler == null)
-                      const Padding(
-                        padding: EdgeInsets.all(32),
-                        child: LottieLoadingWidget.medium(),
-                      )
+                      if (!_loadError)
+                        const Padding(
+                          padding: EdgeInsets.all(AppSpacing.xxl),
+                          child: LottieLoadingWidget.medium(),
+                        )
+                      else
+                        const SizedBox.shrink()
                     else
                       AudioPlayerControls(
                         onPlay: _handler!.play,
@@ -301,28 +323,33 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
                         sleepTimerSecondsRemaining: _sleepTimerSecondsRemaining,
                       ),
                     if (_loadError) ...[
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppSpacing.md),
                       DecoratedBox(
                         decoration: BoxDecoration(
                           color: scheme.errorContainer,
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
                         ),
                         child: Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+                          padding: const EdgeInsets.fromLTRB(
+                            AppSpacing.lg,
+                            AppSpacing.md,
+                            AppSpacing.sm,
+                            AppSpacing.md,
+                          ),
                           child: Row(
                             children: [
                               Expanded(
                                 child: Text(
                                   'podcast.audioLoadFailed'.tr(),
-                                  style: TextStyle(
-                                    color: scheme.onErrorContainer,
-                                    fontSize: 14,
-                                    height: 1.4,
-                                  ),
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(
+                                        color: scheme.onErrorContainer,
+                                        height: 1.4,
+                                      ),
                                 ),
                               ),
                               TextButton(
-                                onPressed: _loadEpisode,
+                                onPressed: _retryLoad,
                                 style: TextButton.styleFrom(
                                   foregroundColor: scheme.onErrorContainer,
                                   minimumSize: const Size(44, 44),
@@ -362,17 +389,20 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
         Material(
           color: scheme.surface,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             side: BorderSide(color: scheme.outlineVariant),
           ),
           child: InkWell(
             onTap: () =>
                 setState(() => _transcriptExpanded = !_transcriptExpanded),
             customBorder: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: 14,
+              ),
               child: Row(
                 children: [
                   Icon(
@@ -380,13 +410,12 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
                     size: 20,
                     color: scheme.primary,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text(
                       'podcast.transcriptLabel'.tr(),
-                      style: const TextStyle(
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         fontWeight: FontWeight.w700,
-                        fontSize: 16,
                       ),
                     ),
                   ),
@@ -403,7 +432,7 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
           ),
         ),
         if (_transcriptExpanded) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           TranscriptPanel(
             transcript: _transcript,
             isLoading: _transcriptLoading,

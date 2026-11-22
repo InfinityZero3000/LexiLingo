@@ -1,10 +1,7 @@
 library;
 
-import 'dart:io';
-
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:http/http.dart' as http;
-import 'package:http/io_client.dart';
 
 /// Dedicated cache bucket for achievement badges loaded from CDN URLs.
 class BadgeImageCache {
@@ -19,15 +16,17 @@ class BadgeImageCache {
       stalePeriod: const Duration(days: 30),
       maxNrOfCacheObjects: 300,
       fileService: HttpFileService(
-        httpClient: _TimeoutHttpClient(timeout: networkTimeout),
+        httpClient: TimeoutHttpClient(timeout: networkTimeout),
       ),
     ),
   );
 }
 
-class _TimeoutHttpClient extends http.BaseClient {
-  _TimeoutHttpClient({required this.timeout})
-    : _inner = IOClient(HttpClient()..connectionTimeout = timeout);
+/// Built on `http.Client()`, which picks the right client per platform; the
+/// IO-only client threw `Platform._version` on web.
+class TimeoutHttpClient extends http.BaseClient {
+  TimeoutHttpClient({required this.timeout, http.Client? inner})
+    : _inner = inner ?? http.Client();
 
   final Duration timeout;
   final http.Client _inner;

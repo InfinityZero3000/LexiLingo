@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/l10n/relative_time.dart';
 import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -12,6 +13,7 @@ import '../../../youtube/domain/entities/youtube_entities.dart';
 import '../../../youtube/presentation/providers/youtube_provider.dart';
 import '../providers/news_provider.dart';
 import 'package:lexilingo_app/core/services/content_time_tracker.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// News Detail Screen — full article with vocabulary highlighting.
 ///
@@ -53,6 +55,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
       sourceDetail: 'reading_time',
     )..start();
     _loadFullContentIfNeeded();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _syncProgress());
   }
 
   /// Auto-fetch full article content if the current content looks truncated.
@@ -76,6 +79,9 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
               _fullContent = fullContent;
               _isLoadingFullContent = false;
             });
+            WidgetsBinding.instance.addPostFrameCallback(
+              (_) => _syncProgress(),
+            );
           } else {
             if (mounted) setState(() => _isLoadingFullContent = false);
           }
@@ -96,15 +102,22 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
   void _trackProgress() {
     // Scrolling is the proof someone is reading rather than holding the phone.
     _readingTime.markActive();
-    if (!_scrollController.hasClients) return;
-    final maxScroll = _scrollController.position.maxScrollExtent;
-    if (maxScroll <= 0) return;
+    _syncProgress();
+  }
 
+  void _syncProgress() {
+    if (!mounted || !_scrollController.hasClients) return;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    // An article that fits on one screen has nothing to scroll, so reaching
+    // its end must not depend on a scroll that can never happen.
+    final progress = maxScroll <= 0
+        ? 1.0
+        : (_scrollController.offset / maxScroll).clamp(0.0, 1.0);
+    final showQuiz = _showQuizButton || progress >= 0.9;
+    if (progress == _readingProgress && showQuiz == _showQuizButton) return;
     setState(() {
-      _readingProgress = (_scrollController.offset / maxScroll).clamp(0.0, 1.0);
-      if (_readingProgress >= 0.9 && !_showQuizButton) {
-        _showQuizButton = true;
-      }
+      _readingProgress = progress;
+      _showQuizButton = showQuiz;
     });
   }
 
@@ -137,294 +150,356 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
     final cefrColor = _cefrColor(widget.article.cefrLevel);
 
     return Scaffold(
-      body: ContentWidth(maxWidth: ContentWidth.reading, child: Stack(
-        children: [
-          CustomScrollView(
-            controller: _scrollController,
-            slivers: [
-              // ── App Bar with Image ──
-              SliverAppBar(
-                expandedHeight: 240,
-                pinned: true,
-                backgroundColor: isDark
-                    ? AppColors.backgroundDark
-                    : Colors.white,
-                leading: AppBackButton(
-                  onPressed: () => Navigator.pop(context),
-                  color: Colors.white,
-                ),
-                flexibleSpace: FlexibleSpaceBar(
-                  background: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      if (widget.article.imageUrl.isNotEmpty)
-                        Image.network(
-                          widget.article.imageUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Container(
-                            color: cefrColor.withValues(alpha: 0.2),
-                          ),
-                        )
-                      else
-                        Container(color: cefrColor.withValues(alpha: 0.2)),
-                      Container(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.transparent,
-                              Colors.black.withValues(alpha: 0.7),
-                            ],
-                          ),
-                        ),
-                      ),
-                      // CEFR badge + meta
-                      Positioned(
-                        bottom: 16,
-                        left: 16,
-                        right: 16,
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 5,
-                              ),
-                              decoration: BoxDecoration(
-                                color: cefrColor,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                widget.article.cefrLevel,
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.surface,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 13,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            const Icon(
-                              Icons.schedule_rounded,
-                              size: 14,
-                              color: Colors.white70,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'news.minRead'.tr(namedArgs: {'count': '${widget.article.readingTimeMin}'}),
-                              style: const TextStyle(
-                                color: Colors.white70,
-                                fontSize: 12,
-                              ),
-                            ),
-                            const Spacer(),
-                            Text(
-                              widget.article.sourceName,
-                              style: const TextStyle(
-                                color: Colors.white60,
-                                fontSize: 11,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+      body: ContentWidth(
+        maxWidth: ContentWidth.reading,
+        child: Stack(
+          children: [
+            CustomScrollView(
+              controller: _scrollController,
+              slivers: [
+                // ── App Bar with Image ──
+                SliverAppBar(
+                  expandedHeight: 240,
+                  pinned: true,
+                  backgroundColor: isDark
+                      ? AppColors.backgroundDark
+                      : AppColors.onGradient,
+
+                  leading: AppBackButton(
+                    onPressed: () => Navigator.pop(context),
+                    color: AppColors.onGradient,
                   ),
-                ),
-              ),
-
-              // ── Article Content ──
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Title
-                      Text(
-                        widget.article.title,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          height: 1.3,
-                        ),
-                      ),
-
-                      // Author and date
-                      if (widget.article.author.isNotEmpty ||
-                          widget.article.publishedAt.isNotEmpty) ...[
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            if (widget.article.author.isNotEmpty)
-                              Text(
-                                'news.byAuthor'.tr(
-                                  namedArgs: {'author': widget.article.author},
-                                ),
-                                style: TextStyle(
-                                  color: isDark
-                                      ? Colors.white54
-                                      : AppColors.textGrey,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            if (widget.article.author.isNotEmpty &&
-                                widget.article.publishedAt.isNotEmpty)
-                              Text(
-                                ' · ',
-                                style: TextStyle(
-                                  color: isDark
-                                      ? Colors.white38
-                                      : AppColors.textGrey,
-                                ),
-                              ),
-                            if (widget.article.publishedAt.isNotEmpty)
-                              Text(
-                                _formatDate(widget.article.publishedAt),
-                                style: TextStyle(
-                                  color: isDark
-                                      ? Colors.white38
-                                      : AppColors.textGrey,
-                                  fontSize: 13,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ],
-
-                      const SizedBox(height: 20),
-
-                      // Highlighted words section
-                      if (widget.article.highlightedWords.isNotEmpty) ...[
+                  flexibleSpace: FlexibleSpaceBar(
+                    background: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        if (widget.article.imageUrl.isNotEmpty)
+                          Image.network(
+                            widget.article.imageUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              color: cefrColor.withValues(alpha: 0.2),
+                            ),
+                          )
+                        else
+                          Container(color: cefrColor.withValues(alpha: 0.2)),
                         Container(
-                          padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: cefrColor.withValues(alpha: 0.06),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: cefrColor.withValues(alpha: 0.15),
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                Theme.of(
+                                  context,
+                                ).colorScheme.shadow.withValues(alpha: 0.7),
+                              ],
                             ),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                        ),
+                        // CEFR badge + meta
+                        Positioned(
+                          bottom: 16,
+                          left: 16,
+                          right: 16,
+                          child: Row(
                             children: [
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.lightbulb_outline_rounded,
-                                    size: 16,
-                                    color: cefrColor,
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.md,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: cefrColor,
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.sm,
                                   ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'news.vocabularyToLearn'.tr(),
-                                    style: TextStyle(
-                                      color: cefrColor,
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ],
+                                ),
+                                child: Text(
+                                  widget.article.cefrLevel,
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.surface,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                ),
                               ),
-                              const SizedBox(height: 8),
-                              Wrap(
-                                spacing: 6,
-                                runSpacing: 6,
-                                children: widget.article.highlightedWords.map((
-                                  word,
-                                ) {
-                                  return TapTarget(
-                                    onTap: () => _onWordTap(word),
-                                    child: Container(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 5,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.surfaceLight,
-                                        borderRadius: BorderRadius.circular(8),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withValues(
-                                              alpha: 0.04,
-                                            ),
-                                            blurRadius: 4,
-                                          ),
-                                        ],
-                                      ),
-                                      child: Text(
-                                        word,
-                                        style: TextStyle(
-                                          color: cefrColor,
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 13,
+                              const SizedBox(width: AppSpacing.sm),
+                              Icon(
+                                Icons.schedule_rounded,
+                                size: 14,
+                                color: AppColors.onGradient.withValues(
+                                  alpha: 0.7,
+                                ),
+                              ),
+                              const SizedBox(width: AppSpacing.xs),
+                              Flexible(
+                                child: Text(
+                                  'news.minRead'.tr(
+                                    namedArgs: {
+                                      'count':
+                                          '${widget.article.readingTimeMin}',
+                                    },
+                                  ),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: AppColors.onGradient.withValues(
+                                          alpha: 0.7,
                                         ),
                                       ),
-                                    ),
-                                  );
-                                }).toList(),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              const SizedBox(width: AppSpacing.sm),
+                              Expanded(
+                                child: Text(
+                                  widget.article.sourceName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.end,
+                                  style: Theme.of(context).textTheme.labelSmall
+                                      ?.copyWith(
+                                        color: AppColors.onGradient.withValues(
+                                          alpha: 0.6,
+                                        ),
+                                      ),
+                                ),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 20),
                       ],
+                    ),
+                  ),
+                ),
 
-                      // Article body
-                      if (_isLoadingFullContent)
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          child: Center(
-                            child: SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: LottieLoadingWidget.tiny(),
+                // ── Article Content ──
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Title
+                        Text(
+                          widget.article.title,
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                height: 1.3,
+                              ),
+                        ),
+
+                        // Author and date
+                        if (widget.article.author.isNotEmpty ||
+                            widget.article.publishedAt.isNotEmpty) ...[
+                          const SizedBox(height: AppSpacing.md),
+                          Row(
+                            children: [
+                              if (widget.article.author.isNotEmpty)
+                                Flexible(
+                                  child: Text(
+                                    'news.byAuthor'.tr(
+                                      namedArgs: {
+                                        'author': widget.article.author,
+                                      },
+                                    ),
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          color: isDark
+                                              ? AppColors.onGradient.withValues(
+                                                  alpha: 0.54,
+                                                )
+                                              : Theme.of(
+                                                  context,
+                                                ).colorScheme.onSurfaceVariant,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              if (widget.article.author.isNotEmpty &&
+                                  widget.article.publishedAt.isNotEmpty)
+                                Text(
+                                  ' · ',
+                                  style: TextStyle(
+                                    color: isDark
+                                        ? AppColors.onGradient.withValues(
+                                            alpha: 0.38,
+                                          )
+                                        : Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              if (widget.article.publishedAt.isNotEmpty)
+                                Text(
+                                  _formatDate(widget.article.publishedAt),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: isDark
+                                            ? AppColors.onGradient.withValues(
+                                                alpha: 0.38,
+                                              )
+                                            : Theme.of(
+                                                context,
+                                              ).colorScheme.onSurfaceVariant,
+                                      ),
+                                ),
+                            ],
+                          ),
+                        ],
+
+                        const SizedBox(height: 20),
+
+                        // Highlighted words section
+                        if (widget.article.highlightedWords.isNotEmpty) ...[
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: cefrColor.withValues(alpha: 0.06),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                              border: Border.all(
+                                color: cefrColor.withValues(alpha: 0.15),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.lightbulb_outline_rounded,
+                                      size: 16,
+                                      color: cefrColor,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Flexible(
+                                      child: Text(
+                                        'news.vocabularyToLearn'.tr(),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: cefrColor,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: AppSpacing.sm),
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 6,
+                                  children: widget.article.highlightedWords.map(
+                                    (word) {
+                                      return TapTarget(
+                                        onTap: () => _onWordTap(word),
+                                        child: Container(
+                                          padding: EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 5,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.surfaceLight,
+                                            borderRadius: BorderRadius.circular(
+                                              AppRadius.sm,
+                                            ),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .shadow
+                                                    .withValues(alpha: 0.04),
+                                                blurRadius: 4,
+                                              ),
+                                            ],
+                                          ),
+                                          child: Text(
+                                            word,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodySmall
+                                                ?.copyWith(
+                                                  color: cefrColor,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ).toList(),
+                                ),
+                              ],
                             ),
                           ),
+                          const SizedBox(height: 20),
+                        ],
+
+                        // Article body
+                        if (_isLoadingFullContent)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(
+                              vertical: AppSpacing.lg,
+                            ),
+                            child: Center(
+                              child: SizedBox(
+                                width: 24,
+                                height: AppSpacing.xl,
+                                child: LottieLoadingWidget.tiny(),
+                              ),
+                            ),
+                          ),
+                        _buildArticleBody(
+                          _fullContent ??
+                              (widget.article.content.isNotEmpty
+                                  ? widget.article.content
+                                  : widget.article.description),
+                          isDark,
                         ),
-                      _buildArticleBody(
-                        _fullContent ??
-                            (widget.article.content.isNotEmpty
-                                ? widget.article.content
-                                : widget.article.description),
-                        isDark,
-                      ),
-                    ],
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            // ── Reading Progress Bar ──
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: LinearProgressIndicator(
+                    value: _readingProgress,
+                    backgroundColor: Colors.transparent,
+                    color: cefrColor,
+                    minHeight: 3,
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
 
-          // ── Reading Progress Bar ──
-          Positioned(
-            top: 0,
-            left: 0,
-            right: 0,
-            child: SafeArea(
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: LinearProgressIndicator(
-                  value: _readingProgress,
-                  backgroundColor: Colors.transparent,
-                  color: cefrColor,
-                  minHeight: 3,
-                ),
+            // ── Quiz Button (appears at 90% scroll) ──
+            if (_showQuizButton)
+              Positioned(
+                bottom: 24,
+                left: 20,
+                right: 20,
+                child: _buildQuizButton(cefrColor),
               ),
-            ),
-          ),
-
-          // ── Quiz Button (appears at 90% scroll) ──
-          if (_showQuizButton)
-            Positioned(
-              bottom: 24,
-              left: 20,
-              right: 20,
-              child: _buildQuizButton(cefrColor),
-            ),
-        ],
-      ),),
+          ],
+        ),
+      ),
     );
   }
 
@@ -436,7 +511,11 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
     if (rawText.isEmpty) {
       return Text(
         'news.noContent'.tr(),
-        style: TextStyle(color: isDark ? Colors.white54 : AppColors.textGrey),
+        style: TextStyle(
+          color: isDark
+              ? AppColors.onGradient.withValues(alpha: 0.54)
+              : Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
       );
     }
 
@@ -448,10 +527,11 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
         .toSet();
 
     final cefrColor = _cefrColor(widget.article.cefrLevel);
+
     final baseStyle = TextStyle(
       fontSize: 16,
       height: 1.7,
-      color: isDark ? Colors.white.withValues(alpha: 0.85) : AppColors.textDark,
+      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.85),
     );
 
     // Split into paragraphs
@@ -460,7 +540,8 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: paragraphs.map((paragraph) {
-        if (paragraph.trim().isEmpty) return const SizedBox(height: 12);
+        if (paragraph.trim().isEmpty)
+          return const SizedBox(height: AppSpacing.md);
 
         // Tokenise into non-space words while keeping track of spacing.
         // Use TextSpan for plain text (preserves whitespace naturally)
@@ -522,7 +603,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
         }
 
         return Padding(
-          padding: const EdgeInsets.only(bottom: 16),
+          padding: const EdgeInsets.only(bottom: AppSpacing.lg),
           child: RichText(
             text: TextSpan(style: baseStyle, children: spans),
           ),
@@ -568,12 +649,15 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
         },
         style: FilledButton.styleFrom(
           backgroundColor: cefrColor,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          foregroundColor: AppColors.onGradient,
+
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
-          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+          textStyle: Theme.of(
+            context,
+          ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
         ),
         child: Text('news.takeQuiz'.tr()),
       ),
@@ -593,9 +677,9 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
     final cefrColor = _cefrColor(widget.article.cefrLevel);
 
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
@@ -607,7 +691,8 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.grey400,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -620,7 +705,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
               color: cefrColor,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           FutureBuilder<WordTranslation>(
             future: translation,
             builder: (context, snapshot) {
@@ -641,18 +726,19 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                         if (t.hasPhonetic) t.phonetic,
                         if (t.partOfSpeech.isNotEmpty) t.partOfSpeech,
                       ].join('  ·  '),
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: isDark ? Colors.white54 : AppColors.textGrey,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: isDark
+                            ? AppColors.onGradient.withValues(alpha: 0.54)
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   if (t.hasTranslation) ...[
-                    const SizedBox(height: 8),
+                    const SizedBox(height: AppSpacing.sm),
                     Text(
                       t.translation,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : AppColors.textDark,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                   ],
@@ -660,9 +746,10 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                     const SizedBox(height: 6),
                     Text(
                       t.definition,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: isDark ? Colors.white54 : AppColors.textGrey,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: isDark
+                            ? AppColors.onGradient.withValues(alpha: 0.54)
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -670,7 +757,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
               );
             },
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           Row(
             children: [
               Expanded(
@@ -691,8 +778,9 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                         contextSentence: contextSentence,
                         definition: t.hasDefinition ? t.definition : null,
                         translation: t.hasTranslation ? t.translation : null,
-                        partOfSpeech:
-                            t.partOfSpeech.isNotEmpty ? t.partOfSpeech : null,
+                        partOfSpeech: t.partOfSpeech.isNotEmpty
+                            ? t.partOfSpeech
+                            : null,
                       );
                     });
                   },
@@ -702,29 +790,33 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
                     foregroundColor: cefrColor,
                     side: BorderSide(color: cefrColor),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.md,
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: FilledButton(
                   onPressed: () => Navigator.pop(context),
                   style: FilledButton.styleFrom(
                     backgroundColor: cefrColor,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.md,
+                    ),
                   ),
                   child: Text('news.closeButton'.tr()),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
         ],
       ),
     );
@@ -737,11 +829,11 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
   Color _cefrColor(String level) {
     switch (level) {
       case 'A1':
-        return AppColors.greenSuccessBright;
+        return context.status.success;
       case 'A2':
         return AppColors.greenSuccessSoft;
       case 'B1':
-        return AppColors.warning;
+        return context.status.warning;
       case 'B2':
         return AppColors.orange;
       case 'C1':
@@ -749,7 +841,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
       case 'C2':
         return AppColors.purple;
       default:
-        return AppColors.primary;
+        return Theme.of(context).colorScheme.primary;
     }
   }
 
@@ -758,11 +850,8 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
       final date = DateTime.parse(isoDate);
       final now = DateTime.now();
       final diff = now.difference(date);
-      if (diff.inDays == 0) return 'Today';
-      if (diff.inDays == 1) return 'Yesterday';
-      if (diff.inDays < 7) return '${diff.inDays}d ago';
-      if (diff.inDays < 30) return '${diff.inDays ~/ 7}w ago';
-      return '${diff.inDays ~/ 30}mo ago';
+      if (diff.inDays == 0) return 'datetime.today'.tr();
+      return relativeTime(date, now: now, coarse: true);
     } catch (_) {
       return '';
     }

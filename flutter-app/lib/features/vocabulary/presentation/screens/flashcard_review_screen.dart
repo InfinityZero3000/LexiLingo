@@ -6,12 +6,14 @@ import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/flashcard_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/review_session_entity.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/widgets/flashcard_widget.dart';
+import 'package:lexilingo_app/features/vocabulary/presentation/widgets/review_deck.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/widgets/review_quality_buttons.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/widgets/session_header.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/screens/session_complete_screen.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/screens/vocabulary_speaking_practice_screen.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/tts_speed_selector.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Flashcard Review Screen (Presentation Layer)
 /// Interactive flashcard review with animations
@@ -26,19 +28,15 @@ class FlashcardReviewScreen extends StatefulWidget {
 class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _slideController;
-  late Animation<Offset> _slideAnimation;
+  bool _submitting = false;
 
   @override
   void initState() {
     super.initState();
     _slideController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 320),
       vsync: this,
     );
-    _slideAnimation =
-        Tween<Offset>(begin: Offset.zero, end: const Offset(-1.5, 0)).animate(
-          CurvedAnimation(parent: _slideController, curve: Curves.easeInOut),
-        );
 
     // Start review session
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -56,29 +54,31 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
   }
 
   Future<void> _handleReview(ReviewQuality quality) async {
+    // The buttons only lock once the provider is loading, which is after the
+    // card has flown out; a second tap in that window rated the card twice.
+    if (_submitting) return;
+    _submitting = true;
     final provider = context.read<FlashcardProvider>();
 
-    // Animate card sliding out
-    await _slideController.forward();
+    try {
+      await _slideController.forward();
+      await provider.submitReview(quality);
 
-    // Submit review
-    await provider.submitReview(quality);
-
-    // Check if session is complete
-    if (provider.currentSession?.isCompleted ?? false) {
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (_) =>
-                SessionCompleteScreen(session: provider.currentSession!),
-          ),
-        );
+      if (provider.currentSession?.isCompleted ?? false) {
+        if (mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) =>
+                  SessionCompleteScreen(session: provider.currentSession!),
+            ),
+          );
+        }
+        return;
       }
-      return;
+      if (mounted) _slideController.reset();
+    } finally {
+      _submitting = false;
     }
-
-    // Reset animation for next card
-    _slideController.reset();
   }
 
   void _openSpeakingPractice() {
@@ -135,7 +135,7 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
             if (provider.errorMessage != null) {
               return Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(24.0),
+                  padding: const EdgeInsets.all(AppSpacing.xl),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -148,7 +148,7 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
                       Text(
                         provider.errorMessage!,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(fontSize: 16),
+                        style: Theme.of(context).textTheme.bodyLarge!,
                       ),
                       const SizedBox(height: 24),
                       ElevatedButton(
@@ -168,7 +168,7 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
               final theme = Theme.of(context);
               return Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(AppSpacing.xl),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -228,15 +228,21 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
                   // Session Header (Progress, Stats)
                   SessionHeader(session: session),
 
-                  // Flashcard — fixed position, never shifts when buttons appear
+                  // Flashcard on its pile — fixed position, never shifts
+                  // when the buttons appear.
                   Expanded(
                     child: Align(
                       alignment: const Alignment(0, -0.15),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: SlideTransition(
-                          position: _slideAnimation,
+                        padding: const EdgeInsets.symmetric(horizontal: 28),
+                        child: ReviewDeck(
+                          behind: session.remainingCards - 1,
+                          exit: _slideController,
                           child: FlashcardWidget(
+                            // A new word gets a new widget, face up. Reusing
+                            // the old one flipped it back over 600ms and
+                            // showed the new word's answer on the way.
+                            key: ValueKey(currentCard.userVocabulary.id),
                             card: currentCard,
                             isFlipped: provider.isCardFlipped,
                             onTap: () {
@@ -301,7 +307,7 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
             },
             child: Text(
               'lesson.exit'.tr(),
-              style: TextStyle(color: AppColors.errorBright),
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           ),
         ],

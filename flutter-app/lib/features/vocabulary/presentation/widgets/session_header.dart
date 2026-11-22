@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/review_session_entity.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Session Header Widget
 /// Clean Code: Single responsibility - display session progress
@@ -12,83 +12,55 @@ class SessionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark
-            ? AppColors.surfaceDarkMuted
-            : Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
+
+    // One line: the bar and the count say where you are, the two chips say
+    // how it is going. "Reviewed" and "Remaining" only repeated the count.
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, AppSpacing.xs, 20, AppSpacing.md),
+      child: Row(
         children: [
-          // Progress bar
-          Row(
-            children: [
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: LinearProgressIndicator(
-                    value: session.progress,
-                    minHeight: 8,
-                    backgroundColor: Theme.of(
-                      context,
-                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      AppColors.primary,
-                    ),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(end: session.progress),
+                duration: const Duration(milliseconds: 350),
+                curve: Curves.easeOutCubic,
+                builder: (context, value, _) => LinearProgressIndicator(
+                  value: value,
+                  minHeight: 10,
+                  backgroundColor: muted.withValues(alpha: 0.18),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    Theme.of(context).colorScheme.primary,
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
-              Text(
-                '${session.reviewedCards}/${session.totalCards}',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
+            ),
           ),
-
-          const SizedBox(height: 16),
-
-          // Stats row
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _StatItem(
-                icon: Icons.assignment_turned_in,
-                label: 'vocabulary.reviewed'.tr(),
-                value: '${session.reviewedCards}',
-                color: AppColors.primary,
-              ),
-              _StatItem(
-                icon: Icons.check_circle,
-                label: 'assessment.correct'.tr(),
-                value: '${session.correctCount}',
-                color: AppColors.greenSuccess,
-              ),
-              _StatItem(
-                icon: Icons.star,
-                label: 'XP',
-                value: '+${session.totalXpEarned}',
-                color: AppColors.accentYellow,
-              ),
-              _StatItem(
-                icon: Icons.pending,
-                label: 'vocabulary.remaining'.tr(),
-                value: '${session.remainingCards}',
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ],
+          const SizedBox(width: 12),
+          Text(
+            '${session.reviewedCards}/${session.totalCards}',
+            style: theme.textTheme.labelLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: muted,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+          const SizedBox(width: 12),
+          _StatChip(
+            icon: Icons.check_circle_rounded,
+            value: '${session.correctCount}',
+            color: context.status.success,
+            semanticLabel: 'assessment.correct'.tr(),
+          ),
+          const SizedBox(width: 8),
+          _StatChip(
+            icon: Icons.star_rounded,
+            value: '+${session.totalXpEarned}',
+            color: context.status.warning,
+            semanticLabel: 'XP',
           ),
         ],
       ),
@@ -96,43 +68,48 @@ class SessionHeader extends StatelessWidget {
   }
 }
 
-class _StatItem extends StatelessWidget {
+class _StatChip extends StatelessWidget {
   final IconData icon;
-  final String label;
   final String value;
   final Color color;
+  final String semanticLabel;
 
-  const _StatItem({
+  const _StatChip({
     required this.icon,
-    required this.label,
     required this.value,
     required this.color,
+    required this.semanticLabel,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Icon(icon, size: 20, color: color),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: color,
+    final theme = Theme.of(context);
+    return Semantics(
+      label: '$semanticLabel: $value',
+      child: ExcludeSemantics(
+        child: Material(
+          color: color.withValues(alpha: 0.14),
+          shape: const StadiumBorder(),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 16, color: color),
+                const SizedBox(width: 4),
+                Text(
+                  value,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.onSurface,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 10,
-            color: Theme.of(
-              context,
-            ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

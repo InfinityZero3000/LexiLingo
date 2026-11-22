@@ -11,7 +11,9 @@ from typing import Optional, Dict, Any
 
 import anyio
 import bcrypt
-from jose import JWTError, jwt
+import hashlib
+
+import jwt
 
 from app.core.config import settings
 
@@ -112,6 +114,10 @@ def create_refresh_token(data: Dict[str, Any]) -> str:
     return encoded_jwt
 
 
+def hash_refresh_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
 def decode_token(token: str) -> Optional[Dict[str, Any]]:
     """
     Decode and verify JWT token.
@@ -129,9 +135,10 @@ def decode_token(token: str) -> Optional[Dict[str, Any]]:
             algorithms=[settings.ALGORITHM],
             issuer=settings.JWT_ISSUER,
             audience=settings.JWT_AUDIENCE,
+            options={"verify_iat": False},
         )
         return payload
-    except JWTError:
+    except jwt.PyJWTError:
         return None
 
 
@@ -142,8 +149,8 @@ def is_locally_issued_token(token: str) -> bool:
     access — so a forged `iss` costs the attacker a path, not us a check.
     """
     try:
-        claims = jwt.get_unverified_claims(token)
-    except (JWTError, ValueError, AttributeError):
+        claims = jwt.decode(token, options={"verify_signature": False})
+    except (jwt.PyJWTError, ValueError, AttributeError):
         return False
     return claims.get("iss") == settings.JWT_ISSUER
 
@@ -177,6 +184,23 @@ def create_verification_token(data: Dict[str, Any], expires_minutes: int = 60) -
     return encoded_jwt
 
 
+def password_fingerprint(hashed_password: Optional[str]) -> str:
+    """Short digest of the stored hash. A reset token carries it, so the token dies with the
+    password it was issued for: one use, no table to keep."""
+    return hashlib.sha256((hashed_password or "").encode("utf-8")).hexdigest()[:16]
+
+
+def decode_verification_payload(token: str, purpose: str) -> Optional[Dict[str, Any]]:
+    """Claims of a verification token of the given purpose, or None."""
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+    except jwt.PyJWTError:
+        return None
+    if payload.get("type") != "verification" or payload.get("purpose") != purpose:
+        return None
+    return payload
+
+
 def decode_verification_token(token: str, purpose: str) -> Optional[str]:
     """
     Decode and verify a verification token.
@@ -204,7 +228,7 @@ def decode_verification_token(token: str, purpose: str) -> Optional[str]:
             return None
         
         return payload.get("sub")
-    except JWTError:
+    except jwt.PyJWTError:
         return None
 
 

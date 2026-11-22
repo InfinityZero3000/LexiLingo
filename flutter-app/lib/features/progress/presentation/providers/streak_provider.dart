@@ -1,5 +1,7 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
+import 'package:lexilingo_app/core/services/locale_service.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
+import 'package:lexilingo_app/core/utils/freshness.dart';
 import 'package:lexilingo_app/core/services/notification_service.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/streak_entity.dart';
 import 'package:lexilingo_app/features/progress/domain/repositories/progress_repository.dart';
@@ -15,7 +17,26 @@ class StreakProvider extends ChangeNotifier {
     required ProgressRepository repository,
     NotificationService? notificationService,
   }) : _repository = repository,
-       _notifications = notificationService;
+       _notifications = notificationService {
+    LocaleService.languageSwitches.addListener(_refreshCheckinReminders);
+  }
+
+  int _generation = 0;
+  Future<void>? _streakLoad;
+  final Freshness _streakFreshness = Freshness();
+  bool _disposed = false;
+
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    LocaleService.languageSwitches.removeListener(_refreshCheckinReminders);
+    super.dispose();
+  }
 
   void _refreshCheckinReminders() {
     final streak = _streak;
@@ -32,14 +53,14 @@ class StreakProvider extends ChangeNotifier {
   // State
   StreakEntity? _streak;
   bool _isLoading = false;
-  String? _errorMessage;
+  UiText? _errorMessage;
   StreakUpdateResult? _lastUpdateResult;
   bool _milestoneJustReached = false;
 
   // Getters
   StreakEntity? get streak => _streak;
   bool get isLoading => _isLoading;
-  String? get errorMessage => _errorMessage;
+  String? get errorMessage => _errorMessage?.resolve();
   StreakUpdateResult? get lastUpdateResult => _lastUpdateResult;
   bool get milestoneJustReached => _milestoneJustReached;
 
@@ -59,20 +80,36 @@ class StreakProvider extends ChangeNotifier {
   bool get hasStreak => _streak != null;
 
   /// Load current user's streak
-  Future<void> loadStreak() async {
+  ///
+  /// [maxAge] lets passive callers skip a reload of data fetched that recently.
+  Future<void> loadStreak({Duration? maxAge}) {
+    if (_streakFreshness.isFresh(maxAge)) return Future<void>.value();
+    final inFlight = _streakLoad;
+    if (inFlight != null) return inFlight;
+    final run = _loadStreak();
+    _streakLoad = run;
+    return run.whenComplete(() {
+      if (identical(_streakLoad, run)) _streakLoad = null;
+    });
+  }
+
+  Future<void> _loadStreak() async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
+    final generation = _generation;
     final result = await _repository.getMyStreak();
+    if (generation != _generation) return;
 
     result.fold(
       (failure) {
-        _errorMessage = failure.message;
-        _streak = StreakEntity.empty();
+        _errorMessage = UiText.failure(failure);
+        _streak ??= StreakEntity.empty();
       },
       (streakData) {
         _streak = streakData;
+        _streakFreshness.mark();
         _refreshCheckinReminders();
       },
     );
@@ -88,12 +125,14 @@ class StreakProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    final generation = _generation;
     final result = await _repository.updateStreak();
+    if (generation != _generation) return false;
 
     bool success = false;
     result.fold(
       (failure) {
-        _errorMessage = failure.message;
+        _errorMessage = UiText.failure(failure);
       },
       (updateResult) {
         _lastUpdateResult = updateResult;
@@ -103,7 +142,7 @@ class StreakProvider extends ChangeNotifier {
         final updatedWeekly = List<bool>.from(
           _streak?.weeklyActivity ?? List.filled(7, false),
         );
-        if (todayIndex >= 0 && todayIndex < 7) {
+        if (todayIndex >= 0 && todayIndex < updatedWeekly.length) {
           updatedWeekly[todayIndex] = true;
         }
         _streak = StreakEntity(
@@ -136,7 +175,7 @@ class StreakProvider extends ChangeNotifier {
   /// Use a streak freeze to protect current streak
   Future<bool> useFreeze() async {
     if (_streak == null || _streak!.freezeCount <= 0) {
-      _errorMessage = 'progress.noStreakFreezes'.tr();
+      _errorMessage = UiText.key('progress.noStreakFreezes');
       notifyListeners();
       return false;
     }
@@ -145,12 +184,14 @@ class StreakProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    final generation = _generation;
     final result = await _repository.useStreakFreeze();
+    if (generation != _generation) return false;
 
     bool success = false;
     result.fold(
       (failure) {
-        _errorMessage = failure.message;
+        _errorMessage = UiText.failure(failure);
       },
       (data) {
         // Update local streak
@@ -186,12 +227,14 @@ class StreakProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    final generation = _generation;
     final result = await _repository.restoreStreak();
+    if (generation != _generation) return false;
 
     bool success = false;
     result.fold(
       (failure) {
-        _errorMessage = failure.message;
+        _errorMessage = UiText.failure(failure);
       },
       (streakData) {
         _streak = streakData;
@@ -210,12 +253,14 @@ class StreakProvider extends ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    final generation = _generation;
     final result = await _repository.claimDailyReward();
+    if (generation != _generation) return null;
 
     Map<String, dynamic>? successData;
     result.fold(
       (failure) {
-        _errorMessage = failure.message;
+        _errorMessage = UiText.failure(failure);
       },
       (data) {
         successData = data;
@@ -259,6 +304,9 @@ class StreakProvider extends ChangeNotifier {
 
   /// Reset state (for logout)
   void reset() {
+    _generation++;
+    _streakLoad = null;
+    _streakFreshness.invalidate();
     _streak = null;
     _isLoading = false;
     _errorMessage = null;

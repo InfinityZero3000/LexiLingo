@@ -96,6 +96,22 @@ async def get_current_user(
     )
 
 
+async def get_current_verified_user(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """Signed in AND email verified.
+
+    Unverified accounts can sign in and learn. This guards what a throwaway signup could
+    farm or abuse: referral pay-outs and spending gems.
+    """
+    if not current_user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Verify your email to use this.",
+        )
+    return current_user
+
+
 async def get_current_user_optional(
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(optional_security),
     db: AsyncSession = Depends(get_db)

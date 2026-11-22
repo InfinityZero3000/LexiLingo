@@ -30,6 +30,7 @@ from app.clients.ai_service_client import AIServiceClient
 from app.models.user import User
 from app.crud.vocabulary import USER_SAVED_PLACEHOLDER, vocabulary_crud
 from app.services.streak_service import record_daily_activity, update_user_streak
+from app.services.vocabulary_translation import schedule_enrichment
 from app.schemas.common import MessageResponse
 from app.services.rank_service import rank_proficiency_level
 from app.schemas.vocabulary import (
@@ -378,6 +379,7 @@ async def quick_save_to_collection(
     - Reuse existing master vocabulary item when found
     - Create new master item when missing
     - Add to user collection idempotently
+    - A word already collected is made due for review (once per 10 min)
     """
     normalized_word = vocabulary_crud.normalize_word(request.word)
     if not normalized_word:
@@ -398,16 +400,11 @@ async def quick_save_to_collection(
     )
     looked_up = await _lookup_word(normalized_word) if needs_lookup else {}
 
-    if vocab_item:
-        await vocabulary_crud.fill_placeholder_item(
-            db,
-            vocab_item,
-            definition=looked_up.get("definition"),
-            translation=looked_up.get("translation"),
-            part_of_speech=looked_up.get("part_of_speech"),
-            pronunciation=looked_up.get("phonetic"),
-        )
-    else:
+    if vocab_item is None:
+        await vocabulary_crud.lock_word(db, normalized_word)
+        vocab_item = await vocabulary_crud.find_vocabulary_by_word(db, normalized_word)
+
+    if vocab_item is None:
         defined_by_lookup = not request.definition and bool(looked_up.get("definition"))
         try:
             vocab_item = await vocabulary_crud.create_vocabulary_item(
@@ -427,6 +424,15 @@ async def quick_save_to_collection(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=str(exc),
             ) from exc
+    else:
+        await vocabulary_crud.fill_placeholder_item(
+            db,
+            vocab_item,
+            definition=looked_up.get("definition"),
+            translation=looked_up.get("translation"),
+            part_of_speech=looked_up.get("part_of_speech"),
+            pronunciation=looked_up.get("phonetic"),
+        )
 
     existing_user_vocab = await vocabulary_crud.get_user_vocabulary(
         db,
@@ -439,6 +445,9 @@ async def quick_save_to_collection(
         db,
         user_id=current_user.id,
         vocabulary_id=vocab_item.id,
+    )
+    review_scheduled = (
+        await vocabulary_crud.mark_resaved(db, user_vocab) if already_in_collection else False
     )
 
     note_parts = []
@@ -460,12 +469,16 @@ async def quick_save_to_collection(
             await db.commit()
             await db.refresh(user_vocab)
 
+    await schedule_enrichment(vocab_item)
+
     return QuickSaveVocabularyResponse(
         user_vocabulary=UserVocabularyResponse.model_validate(user_vocab),
         vocabulary=VocabularyItemResponse.model_validate(vocab_item),
         created_new_item=created_new_item,
         already_in_collection=already_in_collection,
         normalized_word=normalized_word,
+        review_scheduled=review_scheduled,
+        next_review_date=user_vocab.next_review_date,
     )
 
 

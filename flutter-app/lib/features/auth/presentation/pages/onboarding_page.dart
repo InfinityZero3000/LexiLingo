@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/level/presentation/widgets/cefr_level_picker.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class OnboardingAnswers {
   final String goal;
@@ -12,7 +13,7 @@ class OnboardingAnswers {
   const OnboardingAnswers({
     required this.goal,
     required this.level,
-    required this.interest,
+    this.interest = 'daily-life',
   });
 
   Map<String, dynamic> toJson() {
@@ -23,7 +24,14 @@ class OnboardingAnswers {
 class OnboardingPage extends StatefulWidget {
   final Future<void> Function(OnboardingAnswers answers) onComplete;
 
-  const OnboardingPage({super.key, required this.onComplete});
+  /// Runs the placement test and returns the level it assigned, if any.
+  final Future<String?> Function()? onTakePlacementTest;
+
+  const OnboardingPage({
+    super.key,
+    required this.onComplete,
+    this.onTakePlacementTest,
+  });
 
   @override
   State<OnboardingPage> createState() => _OnboardingPageState();
@@ -37,7 +45,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   String _selectedGoal = 'career';
   String _selectedLevel = 'A1';
-  String _selectedInterest = 'daily-life';
+  static const int _totalSteps = 2;
 
   @override
   void dispose() {
@@ -45,8 +53,16 @@ class _OnboardingPageState extends State<OnboardingPage> {
     super.dispose();
   }
 
+  Future<void> _takePlacementTest() async {
+    final assigned = await widget.onTakePlacementTest?.call();
+    if (!mounted || assigned == null) return;
+    if (cefrLevelOptions.any((option) => option.code == assigned)) {
+      setState(() => _selectedLevel = assigned);
+    }
+  }
+
   Future<void> _goNext() async {
-    if (_currentPage < 2) {
+    if (_currentPage < _totalSteps - 1) {
       await _pageController.nextPage(
         duration: const Duration(milliseconds: 280),
         curve: Curves.easeOutCubic,
@@ -57,11 +73,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
     setState(() => _isSubmitting = true);
     try {
       await widget.onComplete(
-        OnboardingAnswers(
-          goal: _selectedGoal,
-          level: _selectedLevel,
-          interest: _selectedInterest,
-        ),
+        OnboardingAnswers(goal: _selectedGoal, level: _selectedLevel),
       );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -83,31 +95,37 @@ class _OnboardingPageState extends State<OnboardingPage> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 760),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+              padding: const EdgeInsets.fromLTRB(20, AppSpacing.lg, 20, 20),
               child: Column(
                 children: [
                   Row(
                     children: [
-                      Text(
-                        'onboarding.personalizeTitle'.tr(),
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
+                      Expanded(
+                        child: Text(
+                          'onboarding.personalizeTitle'.tr(),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                       ),
-                      const Spacer(),
+                      const SizedBox(width: AppSpacing.md),
                       Text(
-                        '${_currentPage + 1}/3',
+                        '${_currentPage + 1}/$_totalSteps',
                         style: theme.textTheme.labelLarge?.copyWith(
-                          color: isDark ? Colors.white70 : AppColors.textSlate,
+                          color: isDark
+                              ? Colors.white70
+                              : Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                     child: LinearProgressIndicator(
-                      value: (_currentPage + 1) / 3,
+                      value: (_currentPage + 1) / _totalSteps,
                       minHeight: 8,
                       backgroundColor: isDark
                           ? AppColors.slate800
@@ -152,51 +170,28 @@ class _OnboardingPageState extends State<OnboardingPage> {
                             setState(() => _selectedLevel = value);
                           },
                         ),
-                        _buildChoiceStep(
-                          context: context,
-                          title: 'onboarding.interestQuestion'.tr(),
-                          subtitle: 'onboarding.interestSubtitle'.tr(),
-                          value: _selectedInterest,
-                          options: [
-                            _OnboardingOption(
-                              'daily-life',
-                              'onboarding.interestDailyLife'.tr(),
-                              Icons.coffee_rounded,
-                            ),
-                            _OnboardingOption(
-                              'technology',
-                              'onboarding.interestTechnology'.tr(),
-                              Icons.computer_rounded,
-                            ),
-                            _OnboardingOption(
-                              'culture',
-                              'onboarding.interestCulture'.tr(),
-                              Icons.palette_rounded,
-                            ),
-                            _OnboardingOption(
-                              'career',
-                              'onboarding.interestCareer'.tr(),
-                              Icons.business_center_rounded,
-                            ),
-                          ],
-                          onSelected: (value) {
-                            setState(() => _selectedInterest = value);
-                          },
-                        ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.sm),
+                  if (_currentPage == 1 && widget.onTakePlacementTest != null)
+                    TextButton(
+                      onPressed: _isSubmitting ? null : _takePlacementTest,
+                      style: TextButton.styleFrom(
+                        minimumSize: const Size.fromHeight(48),
+                      ),
+                      child: Text('onboarding.notSureTakeTest'.tr()),
+                    ),
                   SizedBox(
                     width: double.infinity,
                     height: 54,
-                    child: ElevatedButton(
+                    child: FilledButton(
                       onPressed: _isSubmitting ? null : _goNext,
-                      style: ElevatedButton.styleFrom(
+                      style: FilledButton.styleFrom(
                         backgroundColor: AppColors.accentMint,
                         foregroundColor: AppColors.accentMintDark,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                       ),
                       child: _isSubmitting
@@ -206,9 +201,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
                               child: LottieLoadingWidget.tiny(),
                             )
                           : Text(
-                              _currentPage < 2
+                              _currentPage < _totalSteps - 1
                                   ? 'onboarding.continueBtn'.tr()
-                                  : 'onboarding.createPlan'.tr(),
+                                  : 'onboarding.startLesson'.tr(),
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                               ),
@@ -268,26 +263,30 @@ class _OnboardingPageState extends State<OnboardingPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.lg),
         Text(
           title,
           textAlign: TextAlign.center,
           style: theme.textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.bold,
             fontSize: 28,
-            color: isDark ? Colors.white : AppColors.textDark,
+            color: isDark
+                ? AppColors.onGradient
+                : Theme.of(context).colorScheme.onSurface,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         Text(
           subtitle,
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: isDark ? Colors.white70 : AppColors.textGrey,
+            color: isDark
+                ? Colors.white70
+                : Theme.of(context).colorScheme.onSurfaceVariant,
             fontSize: 15,
           ),
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.xl),
         Expanded(
           child: GridView.builder(
             physics: const BouncingScrollPhysics(),
@@ -307,7 +306,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                     border: Border.all(
                       color: isSelected
                           ? AppColors.accentMint
@@ -327,13 +326,18 @@ class _OnboardingPageState extends State<OnboardingPage> {
                         : null,
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     child: Stack(
                       fit: StackFit.expand,
                       children: [
                         Image.network(
                           goal['image'] as String,
                           fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            color: isDark
+                                ? AppColors.slate800
+                                : AppColors.slate200,
+                          ),
                           loadingBuilder: (context, child, loadingProgress) {
                             if (loadingProgress == null) return child;
                             return Container(
@@ -357,7 +361,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           ),
                         ),
                         Padding(
-                          padding: const EdgeInsets.all(16.0),
+                          padding: const EdgeInsets.all(AppSpacing.lg),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.end,
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -371,14 +375,16 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                   size: 28,
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: AppSpacing.sm),
                               Text(
                                 goal['label'] as String,
-                                style: TextStyle(
-                                  color: AppColors.surfaceLight,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: Theme.of(context).textTheme.sectionTitle
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.surface,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                               ),
                             ],
                           ),
@@ -409,26 +415,30 @@ class _OnboardingPageState extends State<OnboardingPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.lg),
         Text(
           title,
           textAlign: TextAlign.center,
           style: theme.textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.bold,
             fontSize: 28,
-            color: isDark ? Colors.white : AppColors.textDark,
+            color: isDark
+                ? AppColors.onGradient
+                : Theme.of(context).colorScheme.onSurface,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         Text(
           subtitle,
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyMedium?.copyWith(
-            color: isDark ? Colors.white70 : AppColors.textGrey,
+            color: isDark
+                ? Colors.white70
+                : Theme.of(context).colorScheme.onSurfaceVariant,
             fontSize: 15,
           ),
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: AppSpacing.xxl),
         Expanded(
           child: ListView.separated(
             physics: const BouncingScrollPhysics(),
@@ -445,19 +455,20 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     vertical: 18,
                   ),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                     color: selected
                         ? AppColors.accentMint.withValues(alpha: 0.1)
                         : (isDark
                               ? AppColors.surfaceDarkInput.withValues(
                                   alpha: 0.55,
                                 )
-                              : Colors.white),
+                              : AppColors.onGradient),
                     border: Border.all(
                       color: selected
                           ? AppColors.accentMint
                           : (isDark
-                                ? AppColors.textSlate.withValues(alpha: 0.5)
+                                ? Theme.of(context).colorScheme.onSurfaceVariant
+                                      .withValues(alpha: 0.5)
                                 : AppColors.slate200),
                       width: selected ? 2 : 1.5,
                     ),
@@ -488,10 +499,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           option.icon,
                           color: selected
                               ? AppColors.accentMint
-                              : (isDark ? Colors.white54 : AppColors.textGrey),
+                              : (isDark
+                                    ? Colors.white54
+                                    : Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant),
                           size: 26,
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: AppSpacing.lg),
                       ],
                       Expanded(
                         child: Text(
@@ -501,10 +516,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                 ? FontWeight.bold
                                 : FontWeight.w500,
                             color: selected
-                                ? (isDark ? Colors.white : AppColors.textDark)
+                                ? (isDark
+                                      ? AppColors.onGradient
+                                      : Theme.of(context).colorScheme.onSurface)
                                 : (isDark
                                       ? Colors.white70
-                                      : AppColors.textSlate),
+                                      : Theme.of(
+                                          context,
+                                        ).colorScheme.onSurfaceVariant),
                             fontSize: 17,
                           ),
                         ),
@@ -534,7 +553,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                 ),
               );
             },
-            separatorBuilder: (_, __) => const SizedBox(height: 16),
+            separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.lg),
             itemCount: options.length,
           ),
         ),

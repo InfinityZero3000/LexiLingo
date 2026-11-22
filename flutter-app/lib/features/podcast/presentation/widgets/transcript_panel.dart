@@ -4,6 +4,7 @@ import 'package:shimmer/shimmer.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import '../../../../core/widgets/content_kit.dart';
 import '../../../../core/widgets/quick_save_selection_area.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Scrollable transcript panel shown inside the podcast player.
 ///
@@ -38,13 +39,13 @@ class TranscriptPanel extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: scheme.surface,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(color: scheme.outlineVariant),
       ),
       child: ConstrainedBox(
         constraints: const BoxConstraints(minHeight: 120),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -56,17 +57,16 @@ class TranscriptPanel extends StatelessWidget {
                       size: 20,
                       color: scheme.primary,
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpacing.sm),
                     Text(
                       'podcast.transcriptLabel'.tr(),
-                      style: const TextStyle(
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         fontWeight: FontWeight.w700,
-                        fontSize: 16,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.md),
               ],
 
               // ── Content area ──
@@ -97,7 +97,7 @@ class TranscriptPanel extends StatelessWidget {
         children: [
           for (var i = 0; i < 5; i++)
             Padding(
-              padding: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
               child: FractionallySizedBox(
                 widthFactor: i % 3 == 2 ? 0.6 : 1,
                 child: DecoratedBox(
@@ -133,11 +133,11 @@ class TranscriptPanel extends StatelessWidget {
   Widget _buildParagraph(BuildContext context, String para) {
     final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: scheme.onSurface.withValues(alpha: 0.04),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: Padding(
           padding: const EdgeInsets.all(14),
@@ -149,7 +149,9 @@ class TranscriptPanel extends StatelessWidget {
               contextSentence: para,
               child: Text(
                 para,
-                style: const TextStyle(fontSize: 14, height: 1.6),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(height: 1.6),
               ),
             ),
           ),
@@ -176,7 +178,9 @@ class TranscriptPanel extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             'podcast.noTranscript'.tr(),
-            style: TextStyle(fontSize: 14, color: contentMuted(context)),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: contentMuted(context)),
             textAlign: TextAlign.center,
           ),
           if (onGenerateTranscript != null) ...[
@@ -187,18 +191,17 @@ class TranscriptPanel extends StatelessWidget {
               label: Text('podcast.generateTranscript'.tr()),
               style: FilledButton.styleFrom(
                 minimumSize: const Size(44, 44),
-                textStyle: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
+                textStyle: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
                 ),
               ),
             ),
           ],
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
         ],
       ),
     );

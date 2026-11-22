@@ -1,4 +1,5 @@
-import 'dart:typed_data';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart';
 
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/exceptions.dart';
@@ -35,11 +36,12 @@ class AuthRepositoryImpl implements AuthRepository {
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } on UnauthorizedException catch (_) {
-      return Left(AuthFailure('Registration failed.'));
+      return Left(AuthFailure('auth.registerFailed'.tr()));
     } on AuthException catch (_) {
-      return Left(AuthFailure('Registration failed.'));
+      return Left(AuthFailure('auth.registerFailed'.tr()));
     } catch (e) {
-      return Left(ServerFailure('Registration failed: $e'));
+      debugPrint('Registration failed: $e');
+      return const Left(ServerFailure());
     }
   }
 
@@ -68,11 +70,12 @@ class AuthRepositoryImpl implements AuthRepository {
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } on UnauthorizedException catch (_) {
-      return Left(AuthFailure('Invalid email or password.'));
+      return Left(AuthFailure('auth.errInvalidCredentials'.tr()));
     } on AuthException catch (_) {
-      return Left(AuthFailure('Invalid email or password.'));
+      return Left(AuthFailure('auth.errInvalidCredentials'.tr()));
     } catch (e) {
-      return Left(ServerFailure('Login failed: $e'));
+      debugPrint('Login failed: $e');
+      return const Left(ServerFailure());
     }
   }
 
@@ -92,9 +95,10 @@ class AuthRepositoryImpl implements AuthRepository {
     } on ApiErrorException catch (e) {
       return Left(_mapApiErrorToFailure(e));
     } on AuthException catch (_) {
-      return Left(AuthFailure('Google login failed'));
+      return Left(AuthFailure('auth.googleLoginFailed'.tr()));
     } catch (e) {
-      return Left(AuthFailure('Google login failed: $e'));
+      debugPrint('Google login failed: $e');
+      return const Left(AuthFailure());
     }
   }
 
@@ -118,9 +122,10 @@ class AuthRepositoryImpl implements AuthRepository {
     } on ApiErrorException catch (e) {
       return Left(_mapApiErrorToFailure(e));
     } on AuthException catch (_) {
-      return Left(AuthFailure('Facebook login failed'));
+      return Left(AuthFailure('auth.facebookLoginFailed'.tr()));
     } catch (e) {
-      return Left(AuthFailure('Facebook login failed: $e'));
+      debugPrint('Facebook login failed: $e');
+      return const Left(AuthFailure());
     }
   }
 
@@ -150,7 +155,8 @@ class AuthRepositoryImpl implements AuthRepository {
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Failed to get current user: $e'));
+      debugPrint('Failed to get current user: $e');
+      return const Left(ServerFailure());
     }
   }
 
@@ -159,6 +165,7 @@ class AuthRepositoryImpl implements AuthRepository {
     String? displayName,
     String? avatarUrl,
     String? nativeLanguage,
+    String? lexiReplyLanguage,
     String? targetLanguage,
     String? level,
     String? goal,
@@ -170,6 +177,7 @@ class AuthRepositoryImpl implements AuthRepository {
         displayName: displayName,
         avatarUrl: avatarUrl,
         nativeLanguage: nativeLanguage,
+        lexiReplyLanguage: lexiReplyLanguage,
         targetLanguage: targetLanguage,
         level: level,
         goal: goal,
@@ -180,7 +188,8 @@ class AuthRepositoryImpl implements AuthRepository {
     } on ApiErrorException catch (e) {
       return Left(_mapApiErrorToFailure(e));
     } catch (e) {
-      return Left(ServerFailure('Profile update failed: $e'));
+      debugPrint('Profile update failed: $e');
+      return const Left(ServerFailure());
     }
   }
 
@@ -196,7 +205,8 @@ class AuthRepositoryImpl implements AuthRepository {
     } on ApiErrorException catch (e) {
       return Left(_mapApiErrorToFailure(e));
     } catch (e) {
-      return Left(ServerFailure('Avatar upload failed: $e'));
+      debugPrint('Avatar upload failed: $e');
+      return const Left(ServerFailure());
     }
   }
 
@@ -213,7 +223,26 @@ class AuthRepositoryImpl implements AuthRepository {
     } on ApiErrorException catch (e) {
       return Left(_mapApiErrorToFailure(e));
     } catch (e) {
-      return Left(ServerFailure('Email verification failed: $e'));
+      debugPrint('Email verification failed: $e');
+      return const Left(ServerFailure());
+    }
+  }
+
+  @override
+  Future<Either<Failure, UserEntity?>> verifyEmailAndSignIn(String token) async {
+    try {
+      final session = await backendDataSource.verifyEmail(token);
+      if (session == null) return const Right(null);
+      try {
+        return Right(await backendDataSource.getCurrentUser());
+      } on ServerException {
+        return Right(_buildFallbackUser(session));
+      }
+    } on ApiErrorException catch (e) {
+      return Left(_mapApiErrorToFailure(e));
+    } catch (e) {
+      debugPrint('Email verification failed: $e');
+      return const Left(ServerFailure());
     }
   }
 
@@ -225,7 +254,8 @@ class AuthRepositoryImpl implements AuthRepository {
     } on ApiErrorException catch (e) {
       return Left(_mapApiErrorToFailure(e));
     } catch (e) {
-      return Left(ServerFailure('Password reset request failed: $e'));
+      debugPrint('Password reset request failed: $e');
+      return const Left(ServerFailure());
     }
   }
 
@@ -237,7 +267,8 @@ class AuthRepositoryImpl implements AuthRepository {
     } on ApiErrorException catch (e) {
       return Left(_mapApiErrorToFailure(e));
     } catch (e) {
-      return Left(ServerFailure('Resend verification failed: $e'));
+      debugPrint('Resend verification failed: $e');
+      return const Left(ServerFailure());
     }
   }
 
@@ -255,7 +286,8 @@ class AuthRepositoryImpl implements AuthRepository {
     } on ApiErrorException catch (e) {
       return Left(_mapApiErrorToFailure(e));
     } catch (e) {
-      return Left(ServerFailure('Password reset failed: $e'));
+      debugPrint('Password reset failed: $e');
+      return const Left(ServerFailure());
     }
   }
 
@@ -273,7 +305,8 @@ class AuthRepositoryImpl implements AuthRepository {
     } on ApiErrorException catch (e) {
       return Left(_mapApiErrorToFailure(e));
     } catch (e) {
-      return Left(ServerFailure('Password change failed: $e'));
+      debugPrint('Password change failed: $e');
+      return const Left(ServerFailure());
     }
   }
 

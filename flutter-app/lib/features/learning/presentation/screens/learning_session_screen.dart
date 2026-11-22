@@ -1,5 +1,7 @@
+import 'package:lexilingo_app/features/notifications/presentation/widgets/push_permission_card.dart';
 import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/l10n/locale_keys.g.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lottie/lottie.dart';
@@ -8,12 +10,16 @@ import 'package:lexilingo_app/core/widgets/widgets.dart';
 import '../../domain/entities/lesson_entity.dart';
 import '../providers/learning_provider.dart';
 import '../widgets/quiz_widget.dart';
+import '../widgets/lesson_hearts_row.dart';
+import '../widgets/out_of_hearts_sheet.dart';
+import '../../../gamification/presentation/providers/gamification_provider.dart';
 import '../widgets/lesson_content_widget.dart';
 import '../widgets/premium_exercise_widgets.dart';
 import '../../../voice/presentation/widgets/tts_speed_selector.dart';
 import '../../../progress/presentation/providers/streak_provider.dart';
 import '../../../progress/presentation/widgets/streak_milestone_overlay.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Learning Session Screen
 /// Handles the lesson learning flow with interactive exercises
@@ -35,6 +41,9 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
   bool _wasAnswered = false;
   bool _wasCompleted = false;
   LearningProvider? _provider;
+  bool _heartsSheetOpen = false;
+  int _seenHeartsPrompts = 0;
+  bool _streakRecorded = false;
 
   @override
   void initState() {
@@ -53,8 +62,62 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
     super.dispose();
   }
 
+  Future<void> _showHeartsSheet() async {
+    if (_heartsSheetOpen || !mounted) return;
+    _heartsSheetOpen = true;
+    try {
+      final learning = context.read<LearningProvider>();
+      final gamification = context.read<GamificationProvider>();
+      try {
+        await gamification.prepareHeartRefill();
+      } catch (_) {}
+      if (!mounted) return;
+      final choice = await showOutOfHeartsSheet(
+        context,
+        refillPrice: gamification.heartRefillItem?.priceGems,
+        gems: gamification.gems,
+        onRefill: () async {
+          final ok = await gamification.refillLessonHearts();
+          if (ok) learning.heartsRefilled();
+          return ok;
+        },
+      );
+      if (!mounted) return;
+      switch (choice) {
+        case OutOfHeartsChoice.refilled:
+          if (learning.isCurrentAnswered) learning.nextExercise();
+        case OutOfHeartsChoice.restart:
+          await learning.restartLesson();
+        case OutOfHeartsChoice.leave:
+          Navigator.of(context).pop();
+        case null:
+          break;
+      }
+    } finally {
+      _heartsSheetOpen = false;
+    }
+  }
+
+  bool _blockedByHearts(LearningProvider provider) {
+    final lastQuestion =
+        provider.currentExerciseIndex >= provider.totalExercises - 1;
+    if (!provider.isOutOfHearts || lastQuestion) return false;
+    _showHeartsSheet();
+    return true;
+  }
+
   void _onProviderChange() {
     final provider = context.read<LearningProvider>();
+
+    if (provider.outOfHeartsPromptCount != _seenHeartsPrompts) {
+      _seenHeartsPrompts = provider.outOfHeartsPromptCount;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _showHeartsSheet());
+    }
+
+    if (!provider.isCompleted) {
+      _wasCompleted = false;
+      _streakRecorded = false;
+    }
 
     // Lesson just completed
     if (!_wasCompleted && provider.isCompleted) {
@@ -113,12 +176,11 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                   return const SizedBox.shrink();
                 }
                 return Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(AppSpacing.sm),
                   child: Center(
                     child: Text(
-                      '${provider.currentExerciseIndex + 1}/${provider.totalExercises}',
-                      style: const TextStyle(
-                        fontSize: 16,
+                      '${(provider.currentExerciseIndex + 1).clamp(1, provider.totalExercises)}/${provider.totalExercises}',
+                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -158,20 +220,29 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                       horizontal: 20,
                       vertical: 10,
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(999),
-                      child: LinearProgressIndicator(
-                        value: provider.progress,
-                        minHeight: 10,
-                        backgroundColor: Theme.of(
-                          context,
-                        ).colorScheme.surfaceContainerHighest,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          AppColorRoles.primary(
-                            Theme.of(context).brightness == Brightness.dark,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                            child: LinearProgressIndicator(
+                              value: provider.progress,
+                              minHeight: 10,
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHighest,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                AppColorRoles.primary(
+                                  Theme.of(context).brightness ==
+                                      Brightness.dark,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
+                        const SizedBox(width: 12),
+                        LessonHeartsRow(lives: provider.livesRemaining),
+                      ],
                     ),
                   ),
 
@@ -205,11 +276,16 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
 
   Widget _buildErrorState(BuildContext context, LearningProvider provider) {
     final theme = Theme.of(context);
+    final locked = provider.isLessonLocked;
     final contentGap = provider.isContentUnavailable;
+    final terminal = locked || contentGap;
 
     return Center(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xxl,
+          vertical: AppSpacing.xl,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -218,23 +294,27 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
               height: 96,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: contentGap
+                color: terminal
                     ? theme.colorScheme.secondaryContainer
                     : theme.colorScheme.errorContainer,
               ),
               child: Icon(
-                contentGap
+                locked
+                    ? Icons.lock_outline_rounded
+                    : contentGap
                     ? Icons.hourglass_empty_rounded
                     : Icons.error_outline_rounded,
                 size: 44,
-                color: contentGap
+                color: terminal
                     ? theme.colorScheme.onSecondaryContainer
                     : theme.colorScheme.onErrorContainer,
               ),
             ),
             const SizedBox(height: 24),
             Text(
-              contentGap
+              locked
+                  ? 'lesson.lockedTitle'.tr()
+                  : contentGap
                   ? 'lesson.contentUnavailableTitle'.tr()
                   : 'common.error'.tr(),
               textAlign: TextAlign.center,
@@ -244,7 +324,9 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              contentGap
+              locked
+                  ? 'lesson.lockedMessage'.tr()
+                  : contentGap
                   ? 'lesson.contentUnavailableMessage'.tr()
                   : provider.error!,
               textAlign: TextAlign.center,
@@ -254,7 +336,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
               ),
             ),
             const SizedBox(height: 28),
-            if (contentGap)
+            if (terminal)
               FilledButton(
                 onPressed: () => Navigator.of(context).pop(),
                 child: Text('common.back'.tr()),
@@ -294,10 +376,13 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
         child: Semantics(
           label: key.tr(),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: 6,
+            ),
             decoration: BoxDecoration(
               color: colorScheme.secondaryContainer,
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
             ),
             child: Text(
               key.tr(),
@@ -318,13 +403,13 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
     }
     final colorScheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, AppSpacing.md),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
           color: colorScheme.primaryContainer,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -590,99 +675,104 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
     final isDark = theme.brightness == Brightness.dark;
     final primaryColor = AppColorRoles.primary(isDark);
     final disabledColor = theme.colorScheme.surfaceContainerHighest;
-    final actionForeground = answered || canCheckDraft
-        ? Colors.white
+    final actionForeground = canCheckDraft && !answered
+        ? AppColors.textInverted
         : AppColorRoles.textMuted(isDark);
 
     // Button colour: correct=green, wrong=orange, not answered=primary blue
     final checkColor = answered
-        ? (correct ? const Color(0xFF2DBD73) : const Color(0xFFFF6B35))
+        ? (correct ? context.status.success : context.status.warning)
         : primaryColor;
+    final checkForeground = answered
+        ? (correct ? context.status.onSuccess : context.status.onWarning)
+        : actionForeground;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
         border: Border(top: BorderSide(color: theme.dividerColor, width: 1)),
       ),
-      child: Row(
-        children: [
-          // Skip — always visible, outlined pill
-          Expanded(
-            child: OutlinedButton(
-              onPressed: () => provider.skipExercise(),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: primaryColor,
-                side: BorderSide(color: primaryColor, width: 1.5),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(999),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, AppSpacing.md, 20, 20),
+          child: Row(
+            children: [
+              // Skip — always visible, outlined pill
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    if (!_blockedByHearts(provider)) provider.skipExercise();
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: primaryColor,
+                    side: BorderSide(color: primaryColor, width: 1.5),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                  ),
+                  child: Text('common.skip'.tr()),
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 15),
               ),
-              child: Text('common.skip'.tr()),
-            ),
+              const SizedBox(width: 12),
+              // Check / Continue — filled pill
+              Expanded(
+                flex: 2,
+                child: ElevatedButton.icon(
+                  onPressed: answered
+                      ? () {
+                          if (!_blockedByHearts(provider)) {
+                            provider.nextExercise();
+                          }
+                        }
+                      : canCheckDraft
+                      ? () => provider.submitCurrentDraftAnswer()
+                      : null,
+                  icon: Icon(
+                    answered
+                        ? (correct
+                              ? Icons.check_circle_outline
+                              : Icons.arrow_forward_rounded)
+                        : Icons.check_circle_outline,
+                    size: 20,
+                    color: checkForeground,
+                  ),
+                  label: Text(
+                    answered
+                        ? 'lesson.continueButton'.tr()
+                        : 'lesson.checkAnswer'.tr(),
+                    style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: checkForeground,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: checkColor,
+                    disabledBackgroundColor: disabledColor,
+                    disabledForegroundColor: AppColorRoles.textMuted(isDark),
+                    foregroundColor: checkForeground,
+                    elevation: answered ? 2 : 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          // Check / Continue — filled pill
-          Expanded(
-            flex: 2,
-            child: ElevatedButton.icon(
-              onPressed: answered
-                  ? () => provider.nextExercise()
-                  : canCheckDraft
-                  ? () => provider.submitCurrentDraftAnswer()
-                  : null,
-              icon: Icon(
-                answered
-                    ? (correct
-                          ? Icons.check_circle_outline
-                          : Icons.arrow_forward_rounded)
-                    : Icons.check_circle_outline,
-                size: 20,
-                color: actionForeground,
-              ),
-              label: Text(
-                answered
-                    ? 'lesson.continueButton'.tr()
-                    : 'lesson.checkAnswer'.tr(),
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: actionForeground,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: checkColor,
-                disabledBackgroundColor: disabledColor,
-                disabledForegroundColor: AppColorRoles.textMuted(isDark),
-                foregroundColor: Colors.white,
-                elevation: answered ? 2 : 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 15),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildCompletionScreen(
-    BuildContext context,
-    LearningProvider provider,
-  ) {
-    final score = provider.score;
-    final total = provider.totalExercises;
-    final percentage = (score / total * 100).toInt();
-
-    // Update streak when lesson is completed, then show milestone if reached
+  void _recordStreak() {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       final streakProvider = context.read<StreakProvider>();
       await streakProvider.updateStreak();
-      if (!context.mounted) return;
+      if (!mounted) return;
       if (streakProvider.milestoneJustReached) {
         await StreakMilestoneOverlay.show(
           context,
@@ -691,6 +781,21 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
         );
       }
     });
+  }
+
+  Widget _buildCompletionScreen(
+    BuildContext context,
+    LearningProvider provider,
+  ) {
+    final score = provider.score;
+    final total = provider.totalExercises;
+    final percentage = total == 0 ? 0 : (score / total * 100).toInt();
+    final saving = provider.isCompleting;
+
+    if (!_streakRecorded) {
+      _streakRecorded = true;
+      _recordStreak();
+    }
 
     return Stack(
       children: [
@@ -707,225 +812,331 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
         ),
 
         // Content
-        Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Trophy icon with glow effect
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0.0, end: 1.0),
-                duration: const Duration(milliseconds: 800),
-                curve: Curves.elasticOut,
-                builder: (context, value, child) {
-                  return Transform.scale(scale: value, child: child);
-                },
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Container(
-                      width: 140,
-                      height: 140,
-                      decoration: BoxDecoration(
-                        color:
-                            (percentage >= 80
-                                    ? AppColors.warning
-                                    : AppColors.greenSuccessBright)
-                                .withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
+        LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.xl),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight - AppSpacing.xl * 2,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Trophy icon with glow effect
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0.0, end: 1.0),
+                    duration: const Duration(milliseconds: 800),
+                    curve: Curves.elasticOut,
+                    builder: (context, value, child) {
+                      return Transform.scale(scale: value, child: child);
+                    },
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Container(
+                          width: 140,
+                          height: 140,
+                          decoration: BoxDecoration(
                             color:
                                 (percentage >= 80
-                                        ? AppColors.warning
-                                        : AppColors.greenSuccessBright)
-                                    .withValues(alpha: 0.3),
-                            blurRadius: 30,
-                            spreadRadius: 10,
+                                        ? context.status.warning
+                                        : context.status.success)
+                                    .withValues(alpha: 0.2),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color:
+                                    (percentage >= 80
+                                            ? context.status.warning
+                                            : context.status.success)
+                                        .withValues(alpha: 0.3),
+                                blurRadius: 30,
+                                spreadRadius: 10,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                        if (percentage >= 80)
+                          const LottieAnimationWidget(
+                            animation: LottieAnimation.starBurst,
+                            width: 120,
+                            height: 120,
+                            repeat: false,
+                          )
+                        else
+                          AnimatedCheckmark(
+                            color: context.status.success,
+                            size: 80,
+                          ),
+                      ],
                     ),
-                    if (percentage >= 80)
-                      const LottieAnimationWidget(
-                        animation: LottieAnimation.starBurst,
-                        width: 120,
-                        height: 120,
-                        repeat: false,
-                      )
-                    else
-                      AnimatedCheckmark(
-                        color: AppColors.greenSuccessBright,
-                        size: 80,
-                      ),
-                  ],
-                ),
-              ),
+                  ),
 
-              const SizedBox(height: 32),
+                  const SizedBox(height: 32),
 
-              // Animated Title
-              TweenAnimationBuilder<double>(
-                tween: Tween(begin: 0.0, end: 1.0),
-                duration: const Duration(milliseconds: 600),
-                curve: Curves.easeOut,
-                builder: (context, value, child) {
-                  return Opacity(
-                    opacity: value,
-                    child: Transform.translate(
-                      offset: Offset(0, 20 * (1 - value)),
-                      child: child,
-                    ),
-                  );
-                },
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                  // Animated Title
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0.0, end: 1.0),
+                    duration: const Duration(milliseconds: 600),
+                    curve: Curves.easeOut,
+                    builder: (context, value, child) {
+                      return Opacity(
+                        opacity: value,
+                        child: Transform.translate(
+                          offset: Offset(0, 20 * (1 - value)),
+                          child: child,
+                        ),
+                      );
+                    },
+                    child: Column(
                       children: [
-                        Icon(
-                          percentage >= 80
-                              ? Icons.celebration
-                              : Icons.auto_awesome,
-                          color: percentage >= 80
-                              ? AppColors.warning
-                              : AppColors.purple,
-                          size: 28,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              percentage >= 80
+                                  ? Icons.celebration
+                                  : Icons.auto_awesome,
+                              color: percentage >= 80
+                                  ? context.status.warning
+                                  : AppColors.purple,
+                              size: 28,
+                            ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                percentage >= 80
+                                    ? 'lesson.excellent'.tr()
+                                    : 'lesson.wellDone'.tr(),
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineMedium
+                                    ?.copyWith(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Icon(
+                              percentage >= 80
+                                  ? Icons.celebration
+                                  : Icons.auto_awesome,
+                              color: percentage >= 80
+                                  ? context.status.warning
+                                  : AppColors.purple,
+                              size: 28,
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(height: 12),
                         Text(
-                          percentage >= 80
-                              ? 'lesson.excellent'.tr()
-                              : 'lesson.wellDone'.tr(),
-                          style: Theme.of(context).textTheme.headlineMedium
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(width: 8),
-                        Icon(
-                          percentage >= 80
-                              ? Icons.celebration
-                              : Icons.auto_awesome,
-                          color: percentage >= 80
-                              ? AppColors.warning
-                              : AppColors.purple,
-                          size: 28,
+                          textAlign: TextAlign.center,
+                          'lesson.scoreSummary'.tr(
+                            namedArgs: {
+                              'score': '$score',
+                              'total': '$total',
+                              'percentage': '$percentage',
+                            },
+                          ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(
+                                color: AppColorRoles.textSecondary(
+                                  Theme.of(context).brightness ==
+                                      Brightness.dark,
+                                ),
+                              ),
                         ),
                       ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 32),
+
+                  if (provider.completionFailed) ...[
+                    Text(
+                      'lesson.resultNotSavedTitle'.tr(),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'lesson.resultNotSavedMessage'.tr(),
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     const SizedBox(height: 12),
-                    Text(
-                      'lesson.scoreSummary'.tr(
-                        namedArgs: {
-                          'score': '$score',
-                          'total': '$total',
-                          'percentage': '$percentage',
-                        },
-                      ),
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: AppColorRoles.textSecondary(
-                          Theme.of(context).brightness == Brightness.dark,
+                    OutlinedButton.icon(
+                      onPressed: saving ? null : provider.retryCompletion,
+                      icon: const Icon(Icons.refresh_rounded),
+                      label: Text('common.retry'.tr()),
+                    ),
+                  ] else if ((provider.lessonResult?.totalXpEarned ?? 0) > 0)
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0.0, end: 1.0),
+                      duration: const Duration(milliseconds: 800),
+                      curve: Curves.bounceOut,
+                      builder: (context, value, child) {
+                        return Transform.scale(scale: value, child: child);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.xl,
+                          vertical: AppSpacing.md,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [context.status.warning, AppColors.orange],
+                          ),
+                          borderRadius: BorderRadius.circular(30),
+                          boxShadow: [
+                            BoxShadow(
+                              color: context.status.warning.withValues(
+                                alpha: 0.4,
+                              ),
+                              blurRadius: 15,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.stars,
+                              color: AppColors.surfaceLight,
+                              size: 28,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '+${provider.lessonResult!.totalXpEarned} XP',
+                              style: Theme.of(context).textTheme.headlineSmall!
+                                  .copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.surfaceLight,
+                                  ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
 
-              const SizedBox(height: 32),
+                  const SizedBox(height: 24),
+                  const PushPermissionCard(),
+                  const SizedBox(height: 24),
 
-              // XP earned with animation
-              if (provider.xpEarned > 0)
-                TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0.0, end: 1.0),
-                  duration: const Duration(milliseconds: 800),
-                  curve: Curves.bounceOut,
-                  builder: (context, value, child) {
-                    return Transform.scale(scale: value, child: child);
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.amber.shade400, Colors.orange.shade400],
-                      ),
-                      borderRadius: BorderRadius.circular(30),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.amber.withValues(alpha: 0.4),
-                          blurRadius: 15,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.stars,
-                          color: AppColors.surfaceLight,
-                          size: 28,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '+${provider.xpEarned} XP',
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.surfaceLight,
+                  // Action buttons
+                  if (provider.lessonResult?.nextLessonUnlocked != null) ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: saving
+                            ? null
+                            : () => Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => LearningSessionScreen(
+                                    lessonId: provider
+                                        .lessonResult!
+                                        .nextLessonUnlocked!,
+                                    courseId: widget.courseId,
+                                  ),
+                                ),
+                              ),
+                        icon: const Icon(Icons.arrow_forward),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: AppSpacing.lg,
+                          ),
+                          backgroundColor: context.status.success,
+                          foregroundColor: context.status.onSuccess,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-
-              const SizedBox(height: 48),
-
-              // Action buttons
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context, true),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: AppColors.greenSuccessBright,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: Text(
-                    'lesson.continueButton'.tr(),
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              if (percentage < 80)
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: () {
-                      provider.restartLesson();
-                    },
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        label: Text(
+                          LocaleKeys.lesson_nextLesson.tr(),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
-                    child: Text(
-                      'lesson.practiceAgain'.tr(),
-                      style: TextStyle(fontSize: 18),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: saving
+                            ? null
+                            : () => Navigator.pop(context, true),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: AppSpacing.lg,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                          ),
+                        ),
+                        child: Text(
+                          'lesson.continueButton'.tr(),
+                          style: const TextStyle(fontSize: 18),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-            ],
+                  ] else
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: saving
+                            ? null
+                            : () => Navigator.pop(context, true),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: AppSpacing.lg,
+                          ),
+                          backgroundColor: context.status.success,
+                          foregroundColor: context.status.onSuccess,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                          ),
+                        ),
+                        child: Text(
+                          'lesson.continueButton'.tr(),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  const SizedBox(height: 12),
+
+                  if (percentage < 80)
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: saving ? null : provider.restartLesson,
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: AppSpacing.lg,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                          ),
+                        ),
+                        child: Text(
+                          'lesson.practiceAgain'.tr(),
+                          style: TextStyle(fontSize: 18),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
         ),
       ],
@@ -945,7 +1156,9 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.errorBright),
+            style: TextButton.styleFrom(
+              foregroundColor: Theme.of(context).colorScheme.error,
+            ),
             child: Text('lesson.exit'.tr()),
           ),
         ],

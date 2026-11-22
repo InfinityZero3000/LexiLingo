@@ -1,5 +1,5 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 import '../../domain/entities/level_history_entry.dart';
 import '../../domain/entities/proficiency_entity.dart';
 import '../../data/datasources/proficiency_data_source.dart';
@@ -21,10 +21,11 @@ class ProficiencyProvider with ChangeNotifier {
 
   ProficiencyProfile _profile = ProficiencyProfile.empty();
   bool _isLoading = false;
-  String? _errorMessage;
+  UiText? _errorMessage;
   bool _showLevelUpDialog = false;
   String? _previousLevel;
 
+  int _generation = 0;
   List<LevelHistoryEntry> _history = const [];
   bool _historyLoaded = false;
   bool _historyLoading = false;
@@ -36,7 +37,7 @@ class ProficiencyProvider with ChangeNotifier {
   // Getters
   ProficiencyProfile get profile => _profile;
   bool get isLoading => _isLoading;
-  String? get errorMessage => _errorMessage;
+  String? get errorMessage => _errorMessage?.resolve();
   bool get showLevelUpDialog => _showLevelUpDialog;
   String? get previousLevel => _previousLevel;
 
@@ -92,13 +93,17 @@ class ProficiencyProvider with ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    final generation = _generation;
     try {
-      _profile = await dataSource.getProfile();
+      final loaded = await dataSource.getProfile();
+      if (generation != _generation) return;
+      _profile = loaded;
       _isLoading = false;
       notifyListeners();
     } catch (e) {
+      if (generation != _generation) return;
       _isLoading = false;
-      _errorMessage = 'errors.loadFailed'.tr();
+      _errorMessage = UiText.key('errors.loadFailed');
       notifyListeners();
       debugPrint('Error loading proficiency: $e');
     }
@@ -141,16 +146,19 @@ class ProficiencyProvider with ChangeNotifier {
     _historyFailed = false;
     notifyListeners();
 
+    final generation = _generation;
     try {
-      _history = parseLevelHistory(await dataSource.getLevelHistory());
+      final loaded = parseLevelHistory(await dataSource.getLevelHistory());
+      if (generation != _generation) return;
+      _history = loaded;
       _historyLoaded = true;
     } catch (e) {
+      if (generation != _generation) return;
       _historyFailed = true;
       debugPrint('Error loading level history: $e');
-    } finally {
-      _historyLoading = false;
-      notifyListeners();
     }
+    _historyLoading = false;
+    notifyListeners();
   }
 
   /// Record exercise results and update proficiency
@@ -185,7 +193,7 @@ class ProficiencyProvider with ChangeNotifier {
 
       return result;
     } catch (e) {
-      _errorMessage = 'errors.saveFailed'.tr();
+      _errorMessage = UiText.key('errors.saveFailed');
       notifyListeners();
       debugPrint('Error recording exercises: $e');
       return null;
@@ -233,6 +241,11 @@ class ProficiencyProvider with ChangeNotifier {
 
   /// Reset provider state
   void reset() {
+    _generation++;
+    _history = const [];
+    _historyLoaded = false;
+    _historyLoading = false;
+    _historyFailed = false;
     _profile = ProficiencyProfile.empty();
     _isLoading = false;
     _errorMessage = null;

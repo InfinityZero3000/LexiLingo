@@ -5,7 +5,7 @@ Phase 3: Intelligent Vocabulary Learning with SM-2 Algorithm
 
 import uuid
 from datetime import datetime, timedelta, timezone
-from sqlalchemy import String, Integer, ForeignKey, Float, Text, Index, Enum as SQLEnum, Boolean, UniqueConstraint
+from sqlalchemy import String, Integer, ForeignKey, Float, Text, Index, Enum as SQLEnum, Boolean, UniqueConstraint, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from typing import Optional
 import enum
@@ -110,7 +110,7 @@ class VocabularyItem(Base):
     
     # Indexes for performance
     __table_args__ = (
-        Index("ix_vocabulary_items_word_lower", "word"),
+        Index("ix_vocabulary_items_lower_word", text("lower(word)")),
         Index("ix_vocabulary_items_course_difficulty", "course_id", "difficulty_level"),
         UniqueConstraint("word", "part_of_speech", name="uq_vocab_word_pos"),
     )
@@ -193,6 +193,9 @@ class UserVocabulary(Base):
     notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     
     added_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
+
+    resave_count: Mapped[int] = mapped_column(Integer, default=0, server_default="0", nullable=False)
+    last_resaved_at: Mapped[Optional[datetime]] = mapped_column(TZDateTime, nullable=True)
     
     # Relationships
     vocabulary: Mapped["VocabularyItem"] = relationship("VocabularyItem")

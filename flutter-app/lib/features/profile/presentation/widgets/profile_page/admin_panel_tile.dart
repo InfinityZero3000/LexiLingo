@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 class AdminPanelTile extends StatelessWidget {
   final VoidCallback onTap;
@@ -10,41 +12,51 @@ class AdminPanelTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.md,
+      ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           child: Ink(
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [Color(0xFFFF6B35), Color(0xFFFF3B00)],
+                colors: _adminGradient,
                 begin: Alignment.centerLeft,
                 end: Alignment.centerRight,
               ),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.deepOrange.withValues(alpha: isDark ? 0.4 : 0.25),
+                  color: AppColors.deepOrange.withValues(
+                    alpha: isDark ? 0.4 : 0.25,
+                  ),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
               ],
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: AppSpacing.lg,
+              ),
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(AppSpacing.sm),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(10),
+                      color: AppColors.onGradient.withValues(alpha: 0.2),
+
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                     ),
                     child: const Icon(
                       Icons.admin_panel_settings_rounded,
-                      color: Colors.white,
+                      color: AppColors.onGradient,
+
                       size: 22,
                     ),
                   ),
@@ -55,26 +67,28 @@ class AdminPanelTile extends StatelessWidget {
                       children: [
                         Text(
                           'profile.switchToAdmin'.tr(),
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15,
-                          ),
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(
+                                color: AppColors.onGradient,
+                                fontWeight: FontWeight.bold,
+                              ),
                         ),
                         SizedBox(height: 2),
                         Text(
                           'profile.adminMobileSubtitle'.tr(),
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: AppColors.onGradient.withValues(
+                                  alpha: 0.7,
+                                ),
+                              ),
                         ),
                       ],
                     ),
                   ),
-                  const Icon(
+                  Icon(
                     Icons.open_in_new_rounded,
-                    color: Colors.white70,
+                    color: AppColors.onGradient.withValues(alpha: 0.7),
                     size: 18,
                   ),
                 ],
@@ -86,3 +100,5 @@ class AdminPanelTile extends StatelessWidget {
     );
   }
 }
+
+const _adminGradient = [Color(0xFFFF6B35), Color(0xFFFF3B00)];

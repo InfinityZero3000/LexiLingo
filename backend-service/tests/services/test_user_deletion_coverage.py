@@ -32,3 +32,8 @@ def test_every_user_foreign_key_is_deleted_or_cascaded() -> None:
         "add these to _USER_ID_SCOPED_MODELS or give the FK ondelete=CASCADE/SET NULL: "
         + ", ".join(sorted(uncovered))
     )
+
+
+def test_every_listed_model_has_a_user_id_column() -> None:
+    missing = [m.__name__ for m in _USER_ID_SCOPED_MODELS if not hasattr(m, "user_id")]
+    assert not missing, f"no user_id column, the delete would raise AttributeError: {missing}"

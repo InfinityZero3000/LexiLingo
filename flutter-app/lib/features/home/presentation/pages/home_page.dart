@@ -1,11 +1,15 @@
+import 'package:lexilingo_app/core/utils/freshness.dart';
+import 'package:lexilingo_app/features/auth/presentation/widgets/verify_email_banner.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/network/api_config.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
+import 'package:lexilingo_app/features/home/domain/progressive_unlock.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/promo_banner_provider.dart';
-import 'package:lexilingo_app/features/home/presentation/widgets/home_page/discover_rail.dart';
+import 'package:lexilingo_app/features/home/presentation/widgets/home_page/discover_section.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/home_header.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/home_skeleton_loading.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/next_up_hero.dart';
@@ -43,16 +47,19 @@ class _HomePageNewState extends State<HomePageNew> {
       // Captured synchronously so dispose() can remove the listener without
       // touching context after an async gap.
       _levelProvider = context.read<LevelProvider>();
+      final banners = context.read<PromoBannerProvider>();
       homeProvider.loadHomeData().then((_) {
-        if (mounted) _levelProvider?.fetchLevelFull();
+        if (!mounted) return;
+        _levelProvider?.fetchLevelFull(maxAge: kPassiveReloadWindow);
+        // Banners do not affect first paint; they wait for the home data.
+        banners.load();
       });
-      context.read<PromoBannerProvider>().load();
       _levelProvider?.addListener(_onLevelProviderChange);
 
       _streakProvider = context.read<StreakProvider>();
       _streakProvider?.addListener(_onStreakProviderChange);
       // Loaded here, after the auth token is ready, rather than in main.dart.
-      _streakProvider?.loadStreak();
+      _streakProvider?.loadStreak(maxAge: kPassiveReloadWindow);
     });
   }
 
@@ -139,11 +146,28 @@ class _HomePageNewState extends State<HomePageNew> {
               );
             }
 
+            final locked = secondaryFeaturesLocked(
+              flagEnabled: ApiConfig.progressiveUnlock,
+              lessonsCompleted: authProvider.currentUser?.lessonsCompleted,
+              totalXp: authProvider.currentUser?.totalXp,
+            );
+
             return RefreshIndicator(
-              onRefresh: () => Future.wait([
-                homeProvider.refreshData(),
-                context.read<StreakProvider>().loadStreak(),
-              ]),
+              onRefresh: () async {
+                final streakProvider = context.read<StreakProvider>();
+                final messenger = ScaffoldMessenger.of(context);
+                await Future.wait([
+                  homeProvider.refreshData(),
+                  streakProvider.loadStreak(),
+                ]);
+                final error =
+                    homeProvider.errorMessage ?? homeProvider.enrolledError;
+                if (mounted && error != null) {
+                  messenger
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(SnackBar(content: Text(error)));
+                }
+              },
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: EdgeInsets.only(
@@ -158,9 +182,10 @@ class _HomePageNewState extends State<HomePageNew> {
                       slideOffset: 22,
                       children: [
                         const HomeHeader(),
+                        const VerifyEmailBanner(),
                         const NextUpHero(),
                         const StreakGoalStrip(),
-                        const ProgressChipsRow(),
+                        ProgressChipsRow(showShopEntry: !locked),
                         Padding(
                           padding: const EdgeInsets.only(top: 16),
                           child: Column(
@@ -168,13 +193,13 @@ class _HomePageNewState extends State<HomePageNew> {
                             children: [
                               SectionTitle(title: 'home.quickActions'.tr()),
                               const SizedBox(height: 8),
-                              const QuickActionsGrid(),
+                              QuickActionsGrid(lockSecondary: locked),
                             ],
                           ),
                         ),
                         const WordOfDayCard(),
                         const PromoBannerSection(),
-                        const DiscoverRail(),
+                        const DiscoverSection(),
                       ],
                     ),
                   ),

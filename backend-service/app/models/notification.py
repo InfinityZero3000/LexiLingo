@@ -5,7 +5,7 @@ Maps to existing 'notifications' table in the database.
 
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import String, Boolean, ForeignKey, Text, Index
+from sqlalchemy import String, Boolean, ForeignKey, Text, Index, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -43,10 +43,23 @@ class Notification(Base):
     is_read: Mapped[bool] = mapped_column(Boolean, default=False)
     read_at: Mapped[datetime] = mapped_column(TZDateTime, nullable=True)
 
+    # "<period>" for system-sent nudges (a day, an ISO week); the unique index
+    # below is what stops an overlapping or retried run from sending twice.
+    dedupe_key: Mapped[str | None] = mapped_column(String(80), nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
 
     __table_args__ = (
         Index("idx_notification_user_read", "user_id", "is_read"),
+        Index(
+            "uq_notification_user_type_dedupe",
+            "user_id",
+            "type",
+            "dedupe_key",
+            unique=True,
+            postgresql_where=text("dedupe_key IS NOT NULL"),
+            sqlite_where=text("dedupe_key IS NOT NULL"),
+        ),
     )
 
     def __repr__(self) -> str:

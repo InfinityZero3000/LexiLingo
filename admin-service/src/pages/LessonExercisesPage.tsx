@@ -1,9 +1,10 @@
 import { useConfirm } from "../components/ConfirmDialog";
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   getLessonDetail,
   updateLessonContent,
+  generateLessonExercises,
   type LessonDetail,
   type Exercise,
   type UiType,
@@ -12,6 +13,7 @@ import {
   UI_TYPE_TO_TYPE,
 } from "../lib/adminApi";
 import { ExerciseTypeForm } from "../components/ExerciseTypeForm";
+import { useI18n } from "../lib/i18n";
 import {
   ArrowLeft,
   Plus,
@@ -23,6 +25,7 @@ import {
   Loader2,
   BookOpen,
   Clock,
+  Sparkles,
   GripVertical,
   X,
 } from "lucide-react";
@@ -30,6 +33,22 @@ import {
 // ─── helpers ────────────────────────────────────────────────────────────────
 
 const makeId = () => `ex_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+
+// The model numbers its ids from 1 each call, so a second unsaved draft repeats them.
+const appendWithFreshIds = (prev: Exercise[], drafts: Exercise[], lessonId: string): Exercise[] => {
+  const used = new Set(prev.map((e) => e.id));
+  let n = 1;
+  const added = drafts.map((d) => {
+    let id = d.id;
+    if (!id || used.has(id)) {
+      while (used.has(`ex_${lessonId}_${n}`)) n += 1;
+      id = `ex_${lessonId}_${n}`;
+    }
+    used.add(id);
+    return id === d.id ? d : { ...d, id };
+  });
+  return [...prev, ...added];
+};
 
 const defaultExercise = (uiType: UiType, index: number): Exercise => ({
   id: makeId(),
@@ -318,6 +337,7 @@ const ExerciseRow = ({
 
 export const LessonExercisesPage = () => {
   const confirm = useConfirm();
+  const { t } = useI18n();
   const { courseId, unitId, lessonId } = useParams<{
     courseId: string;
     unitId: string;
@@ -333,6 +353,11 @@ export const LessonExercisesPage = () => {
   const [isDirty, setIsDirty] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const generatingRef = useRef(false);
+  const savingRef = useRef(false);
+  const [genError, setGenError] = useState<{ message: string; retry: boolean } | null>(null);
+  const [genNotice, setGenNotice] = useState<string | null>(null);
 
   // Modal states
   const [showTypeSelector, setShowTypeSelector] = useState(false);
@@ -397,7 +422,8 @@ export const LessonExercisesPage = () => {
   };
 
   const handleSaveAll = async () => {
-    if (!lessonId) return;
+    if (!lessonId || generatingRef.current) return;
+    savingRef.current = true;
     setSaving(true);
     setError(null);
     try {
@@ -416,7 +442,31 @@ export const LessonExercisesPage = () => {
       // Server rejects e.g. emptying exercises of a live lesson — show why.
       setError(err?.message || "Lỗi kết nối server.");
     } finally {
+      savingRef.current = false;
       setSaving(false);
+    }
+  };
+
+  // Draft only: the exercises are appended and marked dirty, never saved here.
+  const handleGenerate = async () => {
+    if (!lessonId || generatingRef.current || savingRef.current) return;
+    generatingRef.current = true;
+    setGenerating(true);
+    setGenError(null);
+    setGenNotice(null);
+    try {
+      const res = await generateLessonExercises(lessonId);
+      const drafts = res.data?.exercises ?? [];
+      setExercises((prev) => appendWithFreshIds(prev, drafts, lessonId));
+      if (drafts.length > 0) markDirty();
+      setGenNotice(t.aiGenerate.added.replace("{count}", String(drafts.length)));
+    } catch (err: any) {
+      if (err?.status === 503) setGenError({ message: t.aiGenerate.unavailable, retry: false });
+      else if (err?.status === 502) setGenError({ message: t.aiGenerate.couldNotProduce, retry: true });
+      else setGenError({ message: err?.message || t.aiGenerate.couldNotProduce, retry: false });
+    } finally {
+      generatingRef.current = false;
+      setGenerating(false);
     }
   };
 
@@ -504,14 +554,46 @@ export const LessonExercisesPage = () => {
         <h2>
           Danh sách bài tập ({exercises.length})
         </h2>
-        <button
-          type="button"
-          onClick={() => setShowTypeSelector(true)}
-          className="primary-button"
-        >
-          <Plus size={15} /> Thêm bài tập
-        </button>
+        <div className="table-actions">
+          <button
+            type="button"
+            onClick={handleGenerate}
+            disabled={generating || saving}
+            className="ghost-button"
+          >
+            {generating ? (
+              <Loader2 size={15} className="is-spinning" aria-hidden="true" />
+            ) : (
+              <Sparkles size={15} aria-hidden="true" />
+            )}
+            {generating ? t.aiGenerate.running : t.aiGenerate.button}
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowTypeSelector(true)}
+            className="primary-button"
+          >
+            <Plus size={15} /> Thêm bài tập
+          </button>
+        </div>
       </div>
+
+      <div role="status" aria-live="polite">
+        {genNotice && <div className="form-success">{genNotice}</div>}
+      </div>
+      {genError && (
+        <div className="form-error" role="alert">
+          {genError.message}
+          {genError.retry && (
+            <>
+              {" "}
+              <button type="button" className="ghost-button small" onClick={handleGenerate} disabled={generating || saving}>
+                {t.aiGenerate.retry}
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Exercise list */}
       {exercises.length === 0 ? (
@@ -541,7 +623,7 @@ export const LessonExercisesPage = () => {
       <div className="lesson-save-bar">
         <button
           type="button"
-          disabled={!isDirty || saving}
+          disabled={!isDirty || saving || generating}
           onClick={handleSaveAll}
           className="primary-button lesson-save-button"
         >

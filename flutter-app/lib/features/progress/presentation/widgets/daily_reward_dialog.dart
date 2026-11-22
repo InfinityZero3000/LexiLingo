@@ -7,6 +7,8 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/streak_provider.dart';
 import 'package:lexilingo_app/features/gamification/presentation/providers/gamification_provider.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/streak_entity.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/features/progress/presentation/theme/progress_palette.dart';
 
 /// Shows the daily reward celebration dialog.
 Future<Object?> showDailyRewardDialog(
@@ -17,7 +19,7 @@ Future<Object?> showDailyRewardDialog(
     context: context,
     barrierDismissible: false,
     barrierLabel: 'daily_reward',
-    barrierColor: Colors.black87,
+    barrierColor: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.87),
     transitionDuration: const Duration(milliseconds: 350),
     pageBuilder: (context, animation, secondaryAnimation) {
       return Dialog(
@@ -133,8 +135,8 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final bgGradient = isDark
-        ? const [Color(0xFF132333), Color(0xFF0F1B26)]
-        : const [AppColors.surfaceLight, Color(0xFFF0F6FB)];
+        ? const [ProgressPalette.nightTop, ProgressPalette.nightBottom]
+        : const [AppColors.surfaceLight, ProgressPalette.mist];
     final textTheme = Theme.of(context).textTheme;
 
     return Container(
@@ -148,13 +150,16 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: isDark ? 0.5 : 0.15),
+            color: Theme.of(
+              context,
+            ).colorScheme.shadow.withValues(alpha: isDark ? 0.5 : 0.15),
+
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
         ],
         border: Border.all(
-          color: isDark ? const Color(0xFF2E4154) : AppColors.surfaceLight,
+          color: isDark ? ProgressPalette.nightCard : AppColors.surfaceLight,
           width: 2,
         ),
       ),
@@ -164,12 +169,15 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
           alignment: Alignment.center,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.xl,
+                vertical: 28,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   // Keep the celebration decoration local to the gift. The
                   // old full-size StarBurst left a large star frozen behind
                   // the icon after its one-shot animation completed.
@@ -196,12 +204,13 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                         fontWeight: FontWeight.w900,
                         color: isDark
                             ? AppColors.surfaceLight
-                            : AppColors.textDark,
+                            : Theme.of(context).colorScheme.onSurface,
+
                         letterSpacing: -0.5,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.sm),
 
                   // Subtitle
                   _swap(
@@ -217,8 +226,9 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                         color: claimed
                             ? AppColors.purpleLight
                             : isDark
-                            ? const Color(0xFFB5C8D8)
-                            : AppColors.textGrey,
+                            ? ProgressPalette.nightText
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
+
                         fontWeight: claimed ? FontWeight.w800 : null,
                         height: 1.4,
                       ),
@@ -232,7 +242,7 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
+                      horizontal: AppSpacing.md,
                       vertical: 14,
                     ),
                     child: Row(
@@ -260,26 +270,26 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                   // Action Button
                   SizedBox(
                     width: double.infinity,
-                    child: ElevatedButton(
+                    child: FilledButton(
                       onPressed: claimed
                           ? () => Navigator.of(context).pop()
                           : canClaim
                           ? _claimReward
                           : null,
-                      style: ElevatedButton.styleFrom(
+                      style: FilledButton.styleFrom(
                         minimumSize: const Size.fromHeight(56),
                         backgroundColor: AppColors.orange,
                         foregroundColor: AppColors.surfaceLight,
                         elevation: 4,
                         shadowColor: AppColors.orange.withValues(alpha: 0.4),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
                         ),
                       ),
                       child: _isClaiming
                           ? const SizedBox(
                               width: 24,
-                              height: 24,
+                              height: AppSpacing.xl,
                               child: CircularProgressIndicator(
                                 strokeWidth: 3,
                                 valueColor: AlwaysStoppedAnimation<Color>(
@@ -291,15 +301,15 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                               claimed
                                   ? 'common.awesome'.tr()
                                   : 'gamification.claimDailyRewardButton'.tr(),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
-                              ),
+                              style: Theme.of(context).textTheme.bodyLarge
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
+                                  ),
                             ),
                     ),
                   ),
-                  if (!claimed) const SizedBox(height: 12),
+                  if (!claimed) const SizedBox(height: AppSpacing.md),
 
                   // Skip / Close text button
                   if (!claimed)
@@ -310,7 +320,7 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                       style: TextButton.styleFrom(
                         foregroundColor: isDark
                             ? AppColors.surfaceLight.withValues(alpha: 0.6)
-                            : AppColors.textGrey,
+                            : Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                       child: Text('common.close'.tr()),
                     ),
@@ -345,7 +355,7 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
       builder: (context, child) {
         final pulse = Curves.easeInOut.transform(_pulseController.value);
         return Semantics(
-          label: 'Daily reward gift',
+          label: 'gamification.dailyReward.giftLabel'.tr(),
           image: true,
           child: SizedBox(
             key: const ValueKey('daily-reward-gift-emblem'),
@@ -444,33 +454,39 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
     double scale = 1.0;
 
     if (isActive) {
-      cardBg = isDark ? const Color(0xFF384D63) : AppColors.surfaceLight;
+      cardBg = isDark
+          ? ProgressPalette.nightCardRaised
+          : AppColors.surfaceLight;
       border = Border.all(color: AppColors.orange, width: 2.5);
       scale = 1.05;
     } else if (isClaimed) {
-      cardBg = isDark ? const Color(0xFF1E2F40) : const Color(0xFFE2F0D9);
+      cardBg = isDark ? ProgressPalette.doneNight : ProgressPalette.doneLight;
       border = Border.all(
-        color: isDark ? const Color(0xFF2E4154) : const Color(0xFFAAD38D),
+        color: isDark
+            ? ProgressPalette.nightCard
+            : ProgressPalette.doneBorderLight,
         width: 1,
       );
     } else {
       // Locked
       cardBg = isDark
-          ? const Color(0xFF172433).withValues(alpha: 0.6)
-          : const Color(0xFFF1F5F9);
+          ? ProgressPalette.todayNight.withValues(alpha: 0.6)
+          : ProgressPalette.todayLight;
       border = Border.all(
-        color: isDark ? const Color(0xFF243547) : const Color(0xFFE2E8F0),
+        color: isDark ? ProgressPalette.railNight : ProgressPalette.railLight,
         width: 1,
       );
     }
 
     final card = Semantics(
-      label: 'Day $dayNumber, $gems gems',
+      label: 'gamification.dailyReward.dayLabel'.tr(
+        namedArgs: {'day': '$dayNumber', 'gems': '$gems'},
+      ),
       value: isActive
-          ? 'available today'
+          ? 'gamification.dailyReward.availableToday'.tr()
           : isClaimed
-          ? 'claimed'
-          : 'locked',
+          ? 'gamification.dailyReward.claimed'.tr()
+          : 'gamification.dailyReward.locked'.tr(),
       child: Container(
         key: isActive ? _activeCardKey : null,
         width: 60,
@@ -478,7 +494,7 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: cardBg,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: border,
           boxShadow: isActive
               ? [
@@ -495,14 +511,13 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
           children: [
             Text(
               'D$dayNumber',
-              style: TextStyle(
-                fontSize: 11,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: isActive
                     ? AppColors.orange
                     : isDark
                     ? AppColors.surfaceLight.withValues(alpha: 0.6)
-                    : AppColors.textGrey,
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 6),
@@ -522,14 +537,15 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                     : AppColors.textMuted,
                 size: 16,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.xs),
               Text(
                 '+$gems',
-                style: TextStyle(
-                  fontSize: 11,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   fontWeight: FontWeight.w900,
                   color: isActive
-                      ? (isDark ? AppColors.surfaceLight : AppColors.textDark)
+                      ? (isDark
+                            ? AppColors.surfaceLight
+                            : Theme.of(context).colorScheme.onSurface)
                       : isDark
                       ? AppColors.surfaceLight.withValues(alpha: 0.3)
                       : AppColors.textMuted,
@@ -580,7 +596,7 @@ class _GemBurst extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Semantics(
-      label: 'Gems received',
+      label: 'gamification.dailyReward.gemsReceived'.tr(),
       image: true,
       child: SizedBox(
         width: 124,

@@ -9,7 +9,6 @@ import 'package:just_audio/just_audio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:record/record.dart';
-import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/pronunciation_evaluation_entity.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/review_session_entity.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/flashcard_provider.dart';
@@ -17,6 +16,7 @@ import 'package:lexilingo_app/features/vocabulary/presentation/screens/session_c
 import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/tts_speed_selector.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class VocabularySpeakingPracticeScreen extends StatefulWidget {
   const VocabularySpeakingPracticeScreen({super.key});
@@ -78,7 +78,7 @@ class _VocabularySpeakingPracticeScreenState
   Future<void> _startRecording() async {
     final hasPermission = await _recorder.hasPermission();
     if (!hasPermission) {
-      _showError('Microphone permission is required.');
+      _showError('voice.micPermissionRetry'.tr());
       return;
     }
 
@@ -110,7 +110,8 @@ class _VocabularySpeakingPracticeScreenState
         setState(() => _recordingDuration += const Duration(seconds: 1));
       });
     } catch (e) {
-      _showError('Failed to start recording: $e');
+      debugPrint('Failed to start recording: $e');
+      _showError('voice.recordingStartFailed'.tr());
     }
   }
 
@@ -124,20 +125,21 @@ class _VocabularySpeakingPracticeScreenState
       setState(() => _isRecording = false);
 
       if (path == null) {
-        _showError('No recorded audio was returned.');
+        _showError('voice.recordingMissing'.tr());
         return;
       }
 
       final audioData = await _readRecordedAudio(path);
       if (audioData == null || audioData.isEmpty) {
-        _showError('Recorded audio is empty.');
+        _showError('voice.recordingUnreadable'.tr());
         return;
       }
 
       setState(() => _recordedAudio = audioData);
       await _evaluateCurrentRecording(audioData);
     } catch (e) {
-      _showError('Failed to stop recording: $e');
+      debugPrint('Failed to stop recording: $e');
+      _showError('voice.recordingStopFailed'.tr());
     }
   }
 
@@ -189,6 +191,7 @@ class _VocabularySpeakingPracticeScreenState
     try {
       if (_isPlayingRecording) {
         await _player.stop();
+        if (!mounted) return;
         setState(() => _isPlayingRecording = false);
         return;
       }
@@ -209,7 +212,9 @@ class _VocabularySpeakingPracticeScreenState
       await _player.play();
       if (mounted) setState(() => _isPlayingRecording = true);
     } catch (e) {
-      _showError('Failed to play recording: $e');
+      debugPrint('Failed to play recording: $e');
+      if (!mounted) return;
+      _showError('voice.playbackFailed'.tr());
     }
   }
 
@@ -263,7 +268,12 @@ class _VocabularySpeakingPracticeScreenState
       context: context,
       showDragHandle: true,
       builder: (context) => Padding(
-        padding: const EdgeInsets.fromLTRB(24, 8, 24, 28),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.xl,
+          AppSpacing.sm,
+          AppSpacing.xl,
+          28,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -292,7 +302,10 @@ class _VocabularySpeakingPracticeScreenState
   void _showError(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: AppColors.errorBright),
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      ),
     );
   }
 
@@ -382,7 +395,7 @@ class _VocabularySpeakingPracticeScreenState
     final total = session.totalCards;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+      padding: const EdgeInsets.fromLTRB(20, AppSpacing.sm, 20, 0),
       child: Row(
         children: [
           SpeakButton(
@@ -401,7 +414,7 @@ class _VocabularySpeakingPracticeScreenState
           const SizedBox(width: 12),
           Expanded(
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: BorderRadius.circular(AppRadius.pill),
               child: LinearProgressIndicator(
                 minHeight: 10,
                 value: total == 0 ? 0 : current / total,
@@ -421,7 +434,7 @@ class _VocabularySpeakingPracticeScreenState
     final vocabulary = card.vocabularyItem;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 26, 24, 18),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.xl, 26, AppSpacing.xl, 18),
       child: Column(
         children: [
           Text(
@@ -438,9 +451,8 @@ class _VocabularySpeakingPracticeScreenState
             const SizedBox(height: 12),
             Text(
               '/${vocabulary.pronunciation}/',
-              style: const TextStyle(
+              style: Theme.of(context).textTheme.titleLarge!.copyWith(
                 color: Color(0xFF6A7A70),
-                fontSize: 22,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -472,7 +484,7 @@ class _VocabularySpeakingPracticeScreenState
               shape: BoxShape.circle,
               border: Border.all(
                 color: _isRecording
-                    ? AppColors.errorBright
+                    ? Theme.of(context).colorScheme.error
                     : const Color(0xFF2EAE5B),
                 width: 4,
               ),
@@ -487,7 +499,7 @@ class _VocabularySpeakingPracticeScreenState
             child: Icon(
               _isRecording ? Icons.stop_rounded : Icons.mic_rounded,
               color: _isRecording
-                  ? AppColors.errorBright
+                  ? Theme.of(context).colorScheme.error
                   : const Color(0xFF168348),
               size: 48,
             ),
@@ -495,7 +507,9 @@ class _VocabularySpeakingPracticeScreenState
         ),
         const SizedBox(height: 14),
         Text(
-          _isRecording ? _formatDuration(_recordingDuration) : 'Tap to record',
+          _isRecording
+              ? _formatDuration(_recordingDuration)
+              : 'voice.tapToRecord'.tr(),
           style: const TextStyle(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 16),
@@ -515,7 +529,7 @@ class _VocabularySpeakingPracticeScreenState
                   color: active
                       ? const Color(0xFF2EAE5B)
                       : const Color(0xFFC9D8CE),
-                  borderRadius: BorderRadius.circular(999),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
               );
             }),
@@ -642,7 +656,7 @@ class _VocabularySpeakingPracticeScreenState
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16),
+              style: Theme.of(context).textTheme.bodyLarge!,
             ),
             const SizedBox(height: 20),
             ElevatedButton(onPressed: onAction, child: Text(actionLabel)),

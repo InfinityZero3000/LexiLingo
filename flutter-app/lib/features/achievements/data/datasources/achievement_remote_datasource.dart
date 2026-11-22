@@ -5,8 +5,10 @@ library;
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:lexilingo_app/core/error/exceptions.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/network/badge_image_cache.dart';
+import 'package:lexilingo_app/features/achievements/data/badge_asset_mapper.dart';
 import 'package:lexilingo_app/features/achievements/data/models/achievement_model.dart';
 
 abstract class AchievementRemoteDataSource {
@@ -29,24 +31,16 @@ class AchievementRemoteDataSourceImpl implements AchievementRemoteDataSource {
 
   AchievementRemoteDataSourceImpl({required this.apiClient});
 
-  bool _isNetworkUrl(String value) {
-    final trimmed = value.trim();
-    if (trimmed.isEmpty) return false;
-    final uri = Uri.tryParse(trimmed);
-    return uri != null &&
-        (uri.scheme == 'http' || uri.scheme == 'https') &&
-        uri.host.isNotEmpty;
-  }
-
   Future<void> _warmBadgeCache(List<UserAchievementModel> badges) async {
     final Set<String> urls = <String>{};
 
     for (final badge in badges) {
       final achievement = badge.achievement;
-      final rawBadgeIcon = achievement.badgeIcon?.trim();
-      if (rawBadgeIcon != null && _isNetworkUrl(rawBadgeIcon)) {
-        urls.add(rawBadgeIcon);
-      }
+      final image = resolveBadgeImage(
+        slug: achievement.slug ?? achievement.id,
+        badgeIcon: achievement.badgeIcon,
+      );
+      if (image.kind == BadgeImageKind.network) urls.add(image.value!);
     }
 
     if (urls.isEmpty) return;
@@ -64,80 +58,52 @@ class AchievementRemoteDataSourceImpl implements AchievementRemoteDataSource {
     }
   }
 
+  /// A failed call must throw: an empty list here is indistinguishable from
+  /// "this learner has no badges" and would overwrite the real list.
+  List<dynamic> _items(Map<String, dynamic> data, String what) {
+    if (data['success'] != true) {
+      throw ServerException('Could not load $what');
+    }
+    return (data['data'] as List<dynamic>?) ?? const [];
+  }
+
   @override
   Future<List<AchievementModel>> getAllAchievements() async {
-    try {
-      final data = await apiClient.get('/gamification/achievements');
-
-      if (data['success'] == true && data['data'] != null) {
-        final List<dynamic> achievementsList = data['data'];
-        return achievementsList
-            .map((json) => AchievementModel.fromJson(json))
-            .toList();
-      }
-      return [];
-    } catch (e) {
-      debugPrint('Error fetching achievements: $e');
-      return [];
-    }
+    final data = await apiClient.get('/gamification/achievements');
+    return _items(
+      data,
+      'achievements',
+    ).map((json) => AchievementModel.fromJson(json)).toList();
   }
 
   @override
   Future<List<UserAchievementModel>> getMyAchievements() async {
-    try {
-      final data = await apiClient.get('/gamification/achievements/me');
-
-      if (data['success'] == true && data['data'] != null) {
-        final List<dynamic> achievementsList = data['data'];
-        return achievementsList
-            .map((json) => UserAchievementModel.fromJson(json))
-            .toList();
-      }
-      return [];
-    } catch (e) {
-      debugPrint('Error fetching my achievements: $e');
-      return [];
-    }
+    final data = await apiClient.get('/gamification/achievements/me');
+    return _items(
+      data,
+      'my achievements',
+    ).map((json) => UserAchievementModel.fromJson(json)).toList();
   }
 
   @override
   Future<List<UserAchievementModel>> getRecentBadges({int limit = 4}) async {
-    try {
-      // Uses new /gamification/achievements/recent endpoint
-      final data = await apiClient.get(
-        '/gamification/achievements/recent?limit=$limit',
-      );
-
-      if (data['success'] == true && data['data'] != null) {
-        final List<dynamic> badgesList = data['data'];
-        final badges = badgesList
-            .map((json) => UserAchievementModel.fromJson(json))
-            .toList();
-        unawaited(_warmBadgeCache(badges));
-        return badges;
-      }
-      return [];
-    } catch (e) {
-      debugPrint('Error fetching recent badges: $e');
-      return [];
-    }
+    final data = await apiClient.get(
+      '/gamification/achievements/recent?limit=$limit',
+    );
+    final badges = _items(
+      data,
+      'recent badges',
+    ).map((json) => UserAchievementModel.fromJson(json)).toList();
+    unawaited(_warmBadgeCache(badges));
+    return badges;
   }
 
   @override
   Future<List<UnlockedAchievementModel>> checkAllAchievements() async {
-    try {
-      final data = await apiClient.post('/gamification/achievements/check');
-
-      if (data['success'] == true && data['data'] != null) {
-        final List<dynamic> unlockedList = data['data'];
-        return unlockedList
-            .map((json) => UnlockedAchievementModel.fromJson(json))
-            .toList();
-      }
-      return [];
-    } catch (e) {
-      debugPrint('Error checking achievements: $e');
-      return [];
-    }
+    final data = await apiClient.post('/gamification/achievements/check');
+    return _items(
+      data,
+      'unlocked achievements',
+    ).map((json) => UnlockedAchievementModel.fromJson(json)).toList();
   }
 }

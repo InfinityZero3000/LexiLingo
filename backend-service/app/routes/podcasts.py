@@ -27,6 +27,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.safe_http import (
+    PROXIED_IMAGE_TYPES,
     safe_get as _safe_get,
     safe_resolve_final_url,
     validate_public_url,
@@ -92,18 +93,20 @@ CURATED_PODCASTS = [
         "language": "en",
     },
     # B1-B2 — normal conversational speed
+    # voanews.com answers 403 to the VPS's datacenter IP range whatever the
+    # User-Agent, so the VOA feeds cannot be served from here.
     {
-        "id": hashlib.md5(b"https://learningenglish.voanews.com/podcast/?zoneId=1689&pod_play_count=20").hexdigest()[:12],
-        "title": "VOA Learning English",
-        "author": "Voice of America",
+        "id": hashlib.md5(b"https://podcasts.files.bbci.co.uk/p02pc9zn.rss").hexdigest()[:12],
+        "title": "The English We Speak",
+        "author": "BBC Learning English",
         "description": (
-            "Clear, slow-paced English news and stories using limited vocabulary."
-            " Formerly VOA Special English — perfect for building fluency."
+            "Everyday expressions and real conversations. Every week a new phrase"
+            " or word you can use right away, explained in short, clear episodes."
         ),
-        "feed_url": "https://learningenglish.voanews.com/podcast/?zoneId=1689&pod_play_count=20",
-        "artwork_url": "https://gdb.voanews.com/0684e143-ca54-4c31-bbc7-c26e19b2fb70.jpg",
-        "episode_count": 250,
-        "categories": ["education", "news"],
+        "feed_url": "https://podcasts.files.bbci.co.uk/p02pc9zn.rss",
+        "artwork_url": "http://ichef.bbci.co.uk/images/ic/3000x3000/p0hxql2c.jpg",
+        "episode_count": 800,
+        "categories": ["education", "conversation"],
         "cefr_level": "B1",
         "language": "en",
     },
@@ -222,8 +225,9 @@ async def proxy_image(url: str = Query(..., description="The image URL to proxy"
                         headers=_PROXY_CORS,
                     )
 
-                content_type = resp.headers.get("content-type", "")
-                if content_type and not content_type.startswith("image/"):
+                content_type = (resp.headers.get("content-type") or "image/jpeg").split(";")[0].strip().lower()
+                # Raster only: image/svg+xml passed the old startswith("image/") check and can carry script.
+                if content_type not in PROXIED_IMAGE_TYPES:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail="URL did not return an image content type.",
@@ -241,10 +245,12 @@ async def proxy_image(url: str = Query(..., description="The image URL to proxy"
                         )
                 return Response(
                     content=bytes(image),
-                    media_type=content_type or "image/jpeg",
+                    media_type=content_type,
                     headers={
                         **_PROXY_CORS,
                         "Cache-Control": "public, max-age=86400",
+                        "X-Content-Type-Options": "nosniff",
+                        "Content-Security-Policy": "default-src 'none'; sandbox",
                     },
                 )
             finally:

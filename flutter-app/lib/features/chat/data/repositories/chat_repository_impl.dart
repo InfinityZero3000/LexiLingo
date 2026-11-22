@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../core/error/failures.dart';
@@ -30,13 +31,6 @@ class ChatRepositoryImpl implements ChatRepository {
     required this.networkInfo,
     this.apiDataSource,
   });
-
-  bool _isSessionNotFoundError(Object error) {
-    final msg = error.toString().toLowerCase();
-    return msg.contains('status 404') ||
-        msg.contains('404') ||
-        msg.contains('not found');
-  }
 
   // ===== Session Management =====
 
@@ -73,7 +67,8 @@ class ChatRepositoryImpl implements ChatRepository {
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
     } catch (e) {
-      return Left(CacheFailure('Failed to create session: $e'));
+      debugPrint('Failed to create session: $e');
+      return const Left(CacheFailure());
     }
   }
 
@@ -96,7 +91,8 @@ class ChatRepositoryImpl implements ChatRepository {
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
     } catch (e) {
-      return Left(CacheFailure('Failed to get sessions: $e'));
+      debugPrint('Failed to get sessions: $e');
+      return const Left(CacheFailure());
     }
   }
 
@@ -108,7 +104,8 @@ class ChatRepositoryImpl implements ChatRepository {
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
     } catch (e) {
-      return Left(CacheFailure('Failed to get session: $e'));
+      debugPrint('Failed to get session: $e');
+      return const Left(CacheFailure());
     }
   }
 
@@ -120,7 +117,8 @@ class ChatRepositoryImpl implements ChatRepository {
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
     } catch (e) {
-      return Left(CacheFailure('Failed to delete session: $e'));
+      debugPrint('Failed to delete session: $e');
+      return const Left(CacheFailure());
     }
   }
 
@@ -135,7 +133,8 @@ class ChatRepositoryImpl implements ChatRepository {
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
     } catch (e) {
-      return Left(CacheFailure('Failed to update session title: $e'));
+      debugPrint('Failed to update session title: $e');
+      return const Left(CacheFailure());
     }
   }
 
@@ -150,7 +149,8 @@ class ChatRepositoryImpl implements ChatRepository {
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
     } catch (e) {
-      return Left(CacheFailure('Failed to save message: $e'));
+      debugPrint('Failed to save message: $e');
+      return const Left(CacheFailure());
     }
   }
 
@@ -169,7 +169,8 @@ class ChatRepositoryImpl implements ChatRepository {
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
     } catch (e) {
-      return Left(CacheFailure('Failed to get messages: $e'));
+      debugPrint('Failed to get messages: $e');
+      return const Left(CacheFailure());
     }
   }
 
@@ -181,33 +182,6 @@ class ChatRepositoryImpl implements ChatRepository {
   }) async {
     try {
       if (apiDataSource != null && await networkInfo.isConnected) {
-        if (cursor == null || cursor.isEmpty) {
-          try {
-            final metadata = await apiDataSource!.getMessagesMetadata(
-              sessionId,
-            );
-            if (!metadata.hasMessages || metadata.totalCount == 0) {
-              return const Right(
-                ChatMessagesPage(
-                  messages: [],
-                  hasMore: false,
-                  nextCursor: null,
-                  returned: 0,
-                ),
-              );
-            }
-          } catch (e) {
-            if (_isSessionNotFoundError(e)) {
-              rethrow;
-            }
-            // Metadata endpoint is an optimization layer only.
-            logWarn(
-              _tag,
-              'getMessagesMetadata failed, continue paged fetch: $e',
-            );
-          }
-        }
-
         final page = await apiDataSource!.getMessagesPaged(
           sessionId: sessionId,
           limit: limit,
@@ -244,7 +218,8 @@ class ChatRepositoryImpl implements ChatRepository {
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
     } catch (e) {
-      return Left(CacheFailure('Failed to get paged messages: $e'));
+      debugPrint('Failed to get paged messages: $e');
+      return const Left(CacheFailure());
     }
   }
 
@@ -260,7 +235,8 @@ class ChatRepositoryImpl implements ChatRepository {
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
     } catch (e) {
-      return Left(CacheFailure('Failed to update message status: $e'));
+      debugPrint('Failed to update message status: $e');
+      return const Left(CacheFailure());
     }
   }
 
@@ -272,7 +248,8 @@ class ChatRepositoryImpl implements ChatRepository {
     } on CacheException catch (e) {
       return Left(CacheFailure(e.message));
     } catch (e) {
-      return Left(CacheFailure('Failed to delete message: $e'));
+      debugPrint('Failed to delete message: $e');
+      return const Left(CacheFailure());
     }
   }
 
@@ -287,7 +264,7 @@ class ChatRepositoryImpl implements ChatRepository {
     List<ChatMessage>? conversationHistory,
   }) async {
     if (!await networkInfo.isConnected) {
-      return const Left(NetworkFailure('No internet connection'));
+      return const Left(NetworkFailure());
     }
 
     try {
@@ -318,7 +295,8 @@ class ChatRepositoryImpl implements ChatRepository {
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Failed to get AI response: $e'));
+      debugPrint('Failed to get AI response: $e');
+      return const Left(ServerFailure());
     }
   }
 

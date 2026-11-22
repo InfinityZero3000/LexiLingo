@@ -40,6 +40,35 @@ export const getCoursePopularity = () =>
 export const getCompletionFunnel = () =>
   apiFetch<{ data: FunnelData[] }>(`${base()}/dashboard/completion-funnel`);
 
+/* ─── Activation funnel ───────────────────────────────── */
+
+export type FunnelStepKey =
+  | "signed_up" | "email_verified" | "onboarding_completed" | "enrolled" | "lesson_started" | "lesson_completed";
+
+export type ActivationStep = {
+  key: FunnelStepKey;
+  label: string;
+  definition: string;
+  count: number;
+  pct_of_first: number | null;
+  pct_of_previous: number | null;
+  breakdown?: { with_google_provider: number; without_google_provider: number };
+};
+
+export type RetentionCell = { eligible: number; retained: number; rate: number | null };
+
+export type RetentionCohort = { week_start: string; size: number; d1: RetentionCell; d7: RetentionCell; d30: RetentionCell };
+
+export type ActivationFunnel = {
+  window_days: number;
+  steps: ActivationStep[];
+  cohorts: RetentionCohort[];
+  retention_definition: string;
+};
+
+export const getActivationFunnel = (days: number = 90) =>
+  apiFetch<ActivationFunnel>(`${base()}/dashboard/activation-funnel?days=${days}`);
+
 /* ─── Content Performance ─────────────────────────────── */
 
 export type CoursePerformance = {

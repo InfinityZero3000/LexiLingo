@@ -214,6 +214,28 @@ void main() {
       expect(find.textContaining('profile.levelDemoted'), findsOneWidget);
     });
 
+    testWidgets(
+      'direction follows the chips when a test row starts from the certified level',
+      (tester) async {
+        final provider = ProficiencyProvider(
+          dataSource: _Source({
+            'history': [
+              // Certified A1 -> A2 while the working level was B1.
+              _row('A1', 'A2', '2026-09-03T00:00:00Z'),
+              _row('A1', 'B1', '2026-09-02T00:00:00Z', type: 'self_set'),
+              _row('A1', 'A2', '2026-09-01T00:00:00Z'),
+            ],
+          }),
+        );
+
+        await pump(tester, provider);
+
+        expect(chips(tester), ['A1', 'A2', 'B1', 'A2']);
+        expect(find.textContaining('profile.levelDemoted'), findsOneWidget);
+        expect(find.textContaining('profile.levelPromoted'), findsNothing);
+      },
+    );
+
     testWidgets('a self-chosen level reads as chosen, not as moved up', (
       tester,
     ) async {

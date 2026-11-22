@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lexilingo_app/features/podcast/data/repositories/podcast_repository.dart';
 import 'package:lexilingo_app/features/podcast/domain/entities/podcast_entities.dart';
@@ -51,6 +53,8 @@ class _Repo extends PodcastRepository {
 const _podcast = Podcast(id: '1', title: 'Show', feedUrl: 'feed://a');
 
 void main() {
+  stalePodcastTests();
+
   test('loadEpisodes overlays saved progress on matching episodes', () async {
     final provider = PodcastProvider(
       repository: _Repo(history: [_history('a', position: 250)]),
@@ -98,4 +102,38 @@ void main() {
       expect(notified, 1);
     },
   );
+}
+
+class _SlowEpisodesRepo extends PodcastRepository {
+  final Map<String, Completer<List<PodcastEpisode>>> pending = {};
+
+  @override
+  Future<List<PodcastEpisode>> getEpisodes({
+    required String feedUrl,
+    int limit = 20,
+  }) => (pending[feedUrl] = Completer<List<PodcastEpisode>>()).future;
+
+  @override
+  Future<List<ListeningHistory>> getRecentListening() async => const [];
+}
+
+void stalePodcastTests() {
+  test('a slow first podcast cannot overwrite the second one opened', () async {
+    final repo = _SlowEpisodesRepo();
+    final provider = PodcastProvider(repository: repo);
+
+    final first = provider.loadEpisodes(
+      const Podcast(id: '1', title: 'One', feedUrl: 'feed://one'),
+    );
+    final second = provider.loadEpisodes(
+      const Podcast(id: '2', title: 'Two', feedUrl: 'feed://two'),
+    );
+    repo.pending['feed://two']!.complete([_episode('two')]);
+    await second;
+    repo.pending['feed://one']!.complete([_episode('one')]);
+    await first;
+
+    expect(provider.currentEpisodes.map((e) => e.guid), ['two']);
+    expect(provider.isLoading, isFalse);
+  });
 }

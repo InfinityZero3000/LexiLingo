@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import '../providers/auth_provider.dart';
 import 'login_page.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class EmailVerificationPendingPage extends StatefulWidget {
   const EmailVerificationPendingPage({super.key, required this.email});
@@ -62,7 +63,10 @@ class _EmailVerificationPendingPageState
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.xl,
+                vertical: AppSpacing.xxl,
+              ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -70,42 +74,50 @@ class _EmailVerificationPendingPageState
                   Icon(
                     Icons.mark_email_unread_outlined,
                     size: 72,
-                    color: isDark ? AppColors.accentMint : AppColors.primary,
+                    color: isDark
+                        ? AppColors.accentMint
+                        : Theme.of(context).colorScheme.primary,
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpacing.xl),
                   Text(
                     'auth.emailVerificationTitle'.tr(),
                     textAlign: TextAlign.center,
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : AppColors.surfaceDarkInput,
+                      color: isDark
+                          ? AppColors.onGradient
+                          : AppColors.surfaceDarkInput,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   Text(
                     'auth.emailVerificationMessage'.tr(
                       namedArgs: {'email': widget.email},
                     ),
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: isDark ? Colors.white70 : AppColors.textSlateLight,
+                      color: isDark
+                          ? Colors.white70
+                          : Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: AppSpacing.xxl),
                   if (_message != null)
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
                       child: Text(
                         _message!,
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: _isError ? Colors.red : Colors.green,
+                          color: _isError
+                              ? Theme.of(context).colorScheme.error
+                              : context.status.success,
                         ),
                       ),
                     ),
-                  ElevatedButton(
+                  FilledButton(
                     onPressed: _resendLoading ? null : _resend,
-                    style: ElevatedButton.styleFrom(
+                    style: FilledButton.styleFrom(
                       backgroundColor: AppColors.accentMint,
                       foregroundColor: const Color(0xFF0B132B),
                       shape: RoundedRectangleBorder(
@@ -125,7 +137,7 @@ class _EmailVerificationPendingPageState
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.lg),
                   TextButton(
                     onPressed: () {
                       Navigator.of(context).pushAndRemoveUntil(
@@ -138,7 +150,7 @@ class _EmailVerificationPendingPageState
                       style: TextStyle(
                         color: isDark
                             ? AppColors.accentMint
-                            : AppColors.primary,
+                            : Theme.of(context).colorScheme.primary,
                       ),
                     ),
                   ),

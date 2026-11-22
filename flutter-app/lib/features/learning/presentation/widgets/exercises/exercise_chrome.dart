@@ -1,7 +1,10 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_palette.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Small pill label (e.g. "MULTIPLE CHOICE")
 class ExerciseBadge extends StatelessWidget {
@@ -13,10 +16,13 @@ class ExerciseBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = ExercisePalette.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: 5,
+      ),
       decoration: BoxDecoration(
         color: colors.surface,
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         border: Border.all(color: colors.border),
       ),
       child: Row(
@@ -28,8 +34,7 @@ class ExerciseBadge extends StatelessWidget {
           ],
           Text(
             label,
-            style: TextStyle(
-              fontSize: 11,
+            style: Theme.of(context).textTheme.labelSmall!.copyWith(
               fontWeight: FontWeight.w700,
               color: colors.primary,
               letterSpacing: 1.1,
@@ -73,16 +78,18 @@ class ExerciseOptionCard extends StatelessWidget {
     Color border = colors.border;
     Color fg = colors.textPrimary;
 
-    if (isAnswered && isSelected) {
-      if (isCorrect) {
-        bg = kCorrect;
-        border = kCorrect;
-        fg = Colors.white;
-      } else {
-        bg = kError;
-        border = kError;
-        fg = Colors.white;
-      }
+    final status = context.status;
+    final scheme = Theme.of(context).colorScheme;
+    final revealCorrect = isAnswered && isCorrect;
+    final revealWrong = isAnswered && isSelected && !isCorrect;
+    if (revealCorrect) {
+      bg = status.success;
+      border = status.success;
+      fg = status.onSuccess;
+    } else if (revealWrong) {
+      bg = scheme.error;
+      border = scheme.error;
+      fg = scheme.onError;
     } else if (!isAnswered && isSelected) {
       bg = colors.primary;
       border = colors.primary;
@@ -99,13 +106,12 @@ class ExerciseOptionCard extends StatelessWidget {
                 color: isSelected ? fg.withValues(alpha: 0.5) : colors.border,
                 width: 1.5,
               ),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             alignment: Alignment.center,
             child: Text(
               label!,
-              style: TextStyle(
-                fontSize: 12,
+              style: Theme.of(context).textTheme.bodySmall!.copyWith(
                 fontWeight: FontWeight.w700,
                 color: isSelected ? fg : colors.textSecondary,
               ),
@@ -140,8 +146,7 @@ class ExerciseOptionCard extends StatelessWidget {
             Expanded(
               child: Text(
                 text,
-                style: TextStyle(
-                  fontSize: 16,
+                style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                   fontWeight: FontWeight.w600,
                   color: fg,
                 ),
@@ -161,9 +166,9 @@ class ExerciseOptionCard extends StatelessWidget {
                 color: isSelected ? fg : colors.border,
               ),
             ],
-            if (isAnswered && isSelected)
+            if (revealCorrect || revealWrong)
               Padding(
-                padding: const EdgeInsets.only(left: 8),
+                padding: const EdgeInsets.only(left: AppSpacing.sm),
                 child: Icon(
                   isCorrect
                       ? Icons.check_circle_outline
@@ -203,89 +208,124 @@ class ExerciseExplanationCard extends StatelessWidget {
         !isCorrect && correctAnswer != null && correctAnswer!.isNotEmpty;
     if (!hasExplanation && !showCorrectAnswer) return const SizedBox.shrink();
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isCorrect
-            ? kCorrect.withValues(alpha: 0.08)
-            : kError.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isCorrect
-              ? kCorrect.withValues(alpha: 0.4)
-              : kError.withValues(alpha: 0.4),
+    // The bright kCorrect / kError greens and reds are for fills and icons; as
+    // text on their own 8% tint they measured 2.1:1. The container tokens are
+    // the pair built to be read together.
+    final status = context.status;
+    final scheme = Theme.of(context).colorScheme;
+    final bg = isCorrect ? status.successContainer : scheme.errorContainer;
+    final fg = isCorrect ? status.onSuccessContainer : scheme.onErrorContainer;
+
+    return _ScrollIntoView(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: fg.withValues(alpha: 0.25)),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (hasExplanation)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  isCorrect ? Icons.check_circle : Icons.info_outline,
-                  color: isCorrect ? kCorrect : kError,
-                  size: 20,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    explanation!,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: isCorrect ? kCorrect : kError,
-                      fontWeight: FontWeight.w500,
-                      height: 1.5,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (hasExplanation)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    isCorrect ? Icons.check_circle : Icons.info_outline,
+                    color: fg,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      explanation!,
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                        color: fg,
+                        fontWeight: FontWeight.w500,
+                        height: 1.5,
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          if (showCorrectAnswer) ...[
-            if (hasExplanation) const SizedBox(height: 10),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.lightbulb_outline, color: kCorrect, size: 20),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: pairAnswer
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'lesson.exercise.correctAnswerLabel'.tr(),
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: kCorrect,
-                                fontWeight: FontWeight.w700,
+                ],
+              ),
+            if (showCorrectAnswer) ...[
+              if (hasExplanation) const SizedBox(height: 10),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.lightbulb_outline, color: fg, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: pairAnswer
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'lesson.exercise.correctAnswerLabel'.tr(),
+                                style: Theme.of(context).textTheme.bodyMedium!
+                                    .copyWith(
+                                      color: fg,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            PairAnswerChips(
-                              pairs: parsePairAnswer(correctAnswer!),
-                            ),
-                          ],
-                        )
-                      : Text(
-                          '${'lesson.exercise.correctAnswerLabel'.tr()}: $correctAnswer',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: kCorrect,
-                            fontWeight: FontWeight.w600,
-                            height: 1.5,
+                              const SizedBox(height: 8),
+                              PairAnswerChips(
+                                pairs: parsePairAnswer(correctAnswer!),
+                              ),
+                            ],
+                          )
+                        : Text(
+                            '${'lesson.exercise.correctAnswerLabel'.tr()}: $correctAnswer',
+                            style: Theme.of(context).textTheme.bodyMedium!
+                                .copyWith(
+                                  color: fg,
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.5,
+                                ),
                           ),
-                        ),
-                ),
-              ],
-            ),
+                  ),
+                ],
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
+}
+
+/// Brings its child into view once, when it first appears: after an answer the
+/// explanation lands below the fold on a phone with long options, behind the
+/// action bar, and the learner had to scroll to find out why they were wrong.
+class _ScrollIntoView extends StatefulWidget {
+  const _ScrollIntoView({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_ScrollIntoView> createState() => _ScrollIntoViewState();
+}
+
+class _ScrollIntoViewState extends State<_ScrollIntoView> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final still = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+      Scrollable.ensureVisible(
+        context,
+        duration: still ? Duration.zero : const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+        alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 /// Circular blue button that plays TTS audio
@@ -316,6 +356,23 @@ class CircleAudioButton extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The first quoted phrase and the text around it, so a question can be shown
+/// with the phrase highlighted and its own punctuation left where it was.
+/// Single quotes are tried before double, like [extractQuotedWord].
+({String before, String quoted, String after})? splitAroundQuote(String text) {
+  for (final pattern in [RegExp("'([^']+)'"), RegExp('"([^"]+)"')]) {
+    final match = pattern.firstMatch(text);
+    if (match != null) {
+      return (
+        before: text.substring(0, match.start),
+        quoted: match.group(1)!,
+        after: text.substring(match.end),
+      );
+    }
+  }
+  return null;
 }
 
 /// Extract first quoted word from text — tries single then double quotes
@@ -360,7 +417,7 @@ class PairAnswerChips extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: kCorrect.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
                 border: Border.all(color: kCorrect.withValues(alpha: 0.35)),
               ),
               child: Row(
@@ -368,8 +425,7 @@ class PairAnswerChips extends StatelessWidget {
                 children: [
                   Text(
                     e.key,
-                    style: TextStyle(
-                      fontSize: 13,
+                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                       fontWeight: FontWeight.w700,
                       color: kCorrect,
                     ),
@@ -384,8 +440,7 @@ class PairAnswerChips extends StatelessWidget {
                   ),
                   Text(
                     e.value,
-                    style: TextStyle(
-                      fontSize: 13,
+                    style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                       fontWeight: FontWeight.w700,
                       color: kCorrect,
                     ),
@@ -395,6 +450,40 @@ class PairAnswerChips extends StatelessWidget {
             ),
           )
           .toList(),
+    );
+  }
+}
+
+/// Body of an exercise that must stay usable on a small screen: scrolls when
+/// the content is taller than the space, and centres it vertically when there
+/// is room to spare (a fixed Column with Spacers overflowed instead).
+class ExerciseScrollBody extends StatelessWidget {
+  final List<Widget> children;
+  const ExerciseScrollBody({super.key, required this.children});
+
+  static const _padding = EdgeInsets.fromLTRB(
+    20,
+    AppSpacing.xl,
+    20,
+    AppSpacing.lg,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, box) => SingleChildScrollView(
+        padding: _padding,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: max(0, box.maxHeight - _padding.vertical),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: children,
+          ),
+        ),
+      ),
     );
   }
 }

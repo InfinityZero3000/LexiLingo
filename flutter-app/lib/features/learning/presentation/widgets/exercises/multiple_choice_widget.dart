@@ -4,6 +4,7 @@ import 'package:lexilingo_app/features/learning/domain/entities/lesson_entity.da
 import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_palette.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_chrome.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 // ═══════════════════════════════════════════════════════════════
 // 2. Multiple Choice
@@ -77,7 +78,7 @@ class MultipleChoiceWidget extends StatelessWidget {
     final options = exercise.options ?? [];
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+      padding: const EdgeInsets.fromLTRB(20, AppSpacing.xl, 20, AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -101,7 +102,7 @@ class MultipleChoiceWidget extends StatelessWidget {
             final sel = userAnswer == opt;
             final corr = exercise.correctAnswer == opt;
             return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.only(bottom: AppSpacing.md),
               child: ExerciseOptionCard(
                 text: opt,
                 showRadio: true,

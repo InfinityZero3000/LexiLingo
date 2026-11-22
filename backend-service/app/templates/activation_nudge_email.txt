@@ -1,0 +1,10 @@
+Hi {display_name},
+
+{lead}
+
+Start my first lesson: {start_link}
+
+Too many reminders? Unsubscribe: {unsubscribe_link}
+Or change them in settings: {settings_link}
+
+LexiLingo Team

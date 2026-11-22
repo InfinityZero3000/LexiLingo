@@ -37,7 +37,11 @@ async def client(tmp_path, monkeypatch):
 
     monkeypatch.setattr(users_routes, "_AVATAR_MEDIA_DIR", tmp_path)
     monkeypatch.setattr(users_routes.settings, "MEDIA_PUBLIC_BASE_URL", "https://api.example.test")
-    session = MagicMock(commit=AsyncMock(), refresh=AsyncMock())
+    session = MagicMock(
+        commit=AsyncMock(),
+        refresh=AsyncMock(),
+        execute=AsyncMock(return_value=MagicMock(scalar=MagicMock(return_value=0))),
+    )
     user = _user()
 
     async def fake_db():

@@ -1,16 +1,17 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/api_endpoints.dart';
-import '../../../core/constants/app_colors.dart';
+import 'package:lexilingo_app/features/admin/core/theme/admin_palette.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/admin_shell.dart';
-import '../../../shared/widgets/admin_skeleton.dart';
-import '../../../shared/widgets/kpi_count_card.dart';
-import '../../../shared/widgets/staggered_entrance.dart';
+import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
+import 'package:lexilingo_app/core/widgets/stat_card.dart';
+import 'package:lexilingo_app/core/widgets/stagger_list.dart';
 import '../../auth/presentation/auth_provider.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -72,8 +73,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             .map<Map<String, dynamic>>(
               (e) => {
                 'lang': (e['language'] ?? e['lang'] ?? '').toString(),
-                'pct':
-                    ((e['percentage'] ?? e['pct'] ?? 0) as num) / 100.0,
+                'pct': ((e['percentage'] ?? e['pct'] ?? 0) as num) / 100.0,
               },
             )
             .toList();
@@ -98,8 +98,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
-  double _kpiVal(String key) =>
-      ((_kpis?[key] as num?) ?? 0).toDouble();
+  double _kpiVal(String key) => ((_kpis?[key] as num?) ?? 0).toDouble();
 
   @override
   Widget build(BuildContext context) {
@@ -107,22 +106,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final user = auth.user;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.ac.background,
       body: RefreshIndicator(
-        color: AppColors.primary,
+        color: context.ac.primary,
         onRefresh: _load,
         child: CustomScrollView(
           slivers: [
             SliverAppBar(
               pinned: true,
-              backgroundColor: AppColors.background,
+              backgroundColor: context.ac.background,
               elevation: 0,
               scrolledUnderElevation: 0,
               leading: IconButton(
-                icon: const Icon(
-                  Icons.menu_rounded,
-                  color: AppColors.onSurface,
-                ),
+                icon: Icon(Icons.menu_rounded, color: context.ac.onSurface),
                 onPressed: AdminShell.openDrawer,
               ),
               title: Row(
@@ -131,22 +127,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(8),
+                      color: context.ac.primary,
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.language,
-                      color: AppColors.surface,
+                      color: context.ac.surface,
                       size: 18,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.sm),
                   Text(
                     'LingoAdmin',
-                    style: GoogleFonts.spaceGrotesk(
-                      fontSize: 18,
+                    style: Theme.of(context).textTheme.sectionTitle?.copyWith(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
+                      color: context.ac.primary,
                     ),
                   ),
                 ],
@@ -156,12 +151,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   padding: const EdgeInsets.only(right: 12),
                   child: CircleAvatar(
                     radius: 16,
-                    backgroundColor: AppColors.primaryContainer,
+                    backgroundColor: context.ac.primaryContainer,
                     // Initial is always the child so it still shows if the
                     // network avatar below fails to load — onBackgroundImageError
                     // only silences the exception, it can't swap in a fallback.
-                    backgroundImage:
-                        user?.avatarUrl?.trim().isNotEmpty == true
+                    backgroundImage: user?.avatarUrl?.trim().isNotEmpty == true
                         ? NetworkImage(user!.avatarUrl!.trim())
                         : null,
                     onBackgroundImageError:
@@ -172,10 +166,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       (user?.displayName.isNotEmpty == true)
                           ? user!.displayName[0].toUpperCase()
                           : 'A',
-                      style: GoogleFonts.spaceGrotesk(
-                        color: AppColors.primary,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: context.ac.primary,
                         fontWeight: FontWeight.w700,
-                        fontSize: 12,
                       ),
                     ),
                   ),
@@ -185,9 +178,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 80),
               sliver: SliverList(
-                delegate: SliverChildListDelegate(
-                  _buildBody(context),
-                ),
+                delegate: SliverChildListDelegate(_buildBody(context)),
               ),
             ),
           ],
@@ -200,7 +191,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (_loading) {
       return [
         _buildQuickActions(context),
-        const SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.xl),
         GridView.count(
           crossAxisCount: 2,
           shrinkWrap: true,
@@ -212,7 +203,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         const SizedBox(height: 14),
         const SectionCardSkeleton(contentHeight: 140),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
         const SectionCardSkeleton(contentHeight: 88),
       ];
     }
@@ -220,26 +211,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (_error != null) {
       return [
         _buildQuickActions(context),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.lg),
         _ErrorBanner(message: _error!, onRetry: _load),
       ];
     }
 
     return [
       _buildQuickActions(context),
-      const SizedBox(height: 16),
+      const SizedBox(height: AppSpacing.lg),
 
       // ── KPI Grid ────────────────────────────────────────────────────────
       Text(
-        'KEY METRICS',
-        style: GoogleFonts.spaceGrotesk(
-          fontSize: 10,
+        'adminUi.dashboard.keyMetrics'.tr(),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
           fontWeight: FontWeight.w700,
           letterSpacing: 0.08,
-          color: AppColors.onSurfaceMuted,
+          color: context.ac.onSurfaceMuted,
         ),
       ),
-      const SizedBox(height: 8),
+      const SizedBox(height: AppSpacing.sm),
       if (_kpis == null || _kpis!.isEmpty)
         const _EmptyState(message: 'No KPI data is available yet.')
       else ...[
@@ -250,7 +240,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             activeUsers: _kpiVal('active_users_7d'),
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         GridView.count(
           crossAxisCount: 2,
           shrinkWrap: true,
@@ -261,87 +251,88 @@ class _DashboardScreenState extends State<DashboardScreen> {
           children: [
             StaggeredEntrance(
               index: 1,
-              child: KpiCountCard(
-                label: 'Active 7d',
-                value: _kpiVal('active_users_7d'),
+              child: StatCard(
+                label: 'adminUi.dashboard.active7d'.tr(),
+                value: _kpiVal('active_users_7d').round().toString(),
                 icon: Icons.trending_up_outlined,
-                change: 'Last 7 days',
+                note: 'Last 7 days',
               ),
             ),
             StaggeredEntrance(
               index: 2,
-              child: KpiCountCard(
-                label: 'Courses',
-                value: _kpiVal('total_courses'),
+              child: StatCard(
+                label: 'adminUi.dashboard.courses'.tr(),
+                value: _kpiVal('total_courses').round().toString(),
                 icon: Icons.menu_book_outlined,
-                change: 'Published',
-                changePositive: true,
+                note: 'Published',
               ),
             ),
             StaggeredEntrance(
               index: 3,
-              child: KpiCountCard(
-                label: 'Avg DAU',
-                value: _kpiVal('avg_dau_30d'),
+              child: StatCard(
+                label: 'adminUi.dashboard.avgDau'.tr(),
+                value: _kpiVal('avg_dau_30d').round().toString(),
                 icon: Icons.bar_chart_outlined,
-                change: '30-day avg',
-                changePositive: true,
+                note: '30-day avg',
               ),
             ),
             StaggeredEntrance(
               index: 4,
-              child: KpiCountCard(
-                label: 'Lessons Today',
-                value: _kpiVal('total_lessons_completed_today'),
+              child: StatCard(
+                label: 'adminUi.dashboard.lessonsToday'.tr(),
+                value: _kpiVal(
+                  'total_lessons_completed_today',
+                ).round().toString(),
                 icon: Icons.task_alt_outlined,
-                change: 'Completed',
+                note: 'Completed',
               ),
             ),
           ],
         ),
       ],
-      const SizedBox(height: 12),
+      const SizedBox(height: AppSpacing.md),
 
       // ── DAU Line Chart ───────────────────────────────────────────────────
       StaggeredEntrance(
         index: 5,
         child: _SectionCard(
-          title: 'Daily Active Users',
-          subtitle: 'Engagement over 10 weeks',
-          trailing: _Chip(label: '10 Weeks'),
+          title: 'adminUi.dashboard.dailyActiveUsers'.tr(),
+          subtitle: 'adminUi.dashboard.engagementOver10Weeks'.tr(),
+          trailing: _Chip(label: 'adminUi.dashboard.10Weeks'.tr()),
           child: _dauSeries.isEmpty
-              ? const _EmptyState(message: 'No engagement data for this period.')
-              : SizedBox(
-                  height: 130,
-                  child: _DauLineChart(values: _dauSeries),
-                ),
+              ? const _EmptyState(
+                  message: 'No engagement data for this period.',
+                )
+              : SizedBox(height: 130, child: _DauLineChart(values: _dauSeries)),
         ),
       ),
-      const SizedBox(height: 12),
+      const SizedBox(height: AppSpacing.md),
 
       // ── User Growth ──────────────────────────────────────────────────────
       StaggeredEntrance(
         index: 6,
         child: _SectionCard(
-          title: 'User Growth',
-          subtitle: 'Total registered users over 30 days',
-          trailing: const _Chip(label: '30 Days'),
+          title: 'adminUi.dashboard.userGrowth'.tr(),
+          subtitle: 'adminUi.dashboard.totalRegisteredUsersOver30'.tr(),
+          trailing: _Chip(label: 'adminUi.dashboard.30Days'.tr()),
           child: _growthSeries.isEmpty
-              ? const _EmptyState(message: 'No user growth data for this period.')
+              ? const _EmptyState(
+                  message: 'No user growth data for this period.',
+                )
               : SizedBox(
                   height: 130,
                   child: _DauLineChart(values: _growthSeries, labelPrefix: 'D'),
                 ),
         ),
       ),
-      const SizedBox(height: 12),
+      const SizedBox(height: AppSpacing.md),
 
       // ── Language Distribution ────────────────────────────────────────────
       StaggeredEntrance(
         index: 7,
         child: _SectionCard(
-          title: 'Languages',
-          subtitle: 'Enrollment distribution',
+          title: 'adminUi.dashboard.languages'.tr(),
+          subtitle: 'adminUi.dashboard.enrollmentDistribution'.tr(),
           child: _languages.isEmpty
               ? const _EmptyState(message: 'No language enrollment data yet.')
               : Column(
@@ -350,7 +341,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     final l = entry.value;
                     return Column(
                       children: [
-                        if (i > 0) const SizedBox(height: 8),
+                        if (i > 0) const SizedBox(height: AppSpacing.sm),
                         _LanguageBar(
                           lang: l['lang'] as String,
                           pct: (l['pct'] as double).clamp(0.0, 1.0),
@@ -369,35 +360,34 @@ class _DashboardScreenState extends State<DashboardScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Quick Actions',
-          style: GoogleFonts.spaceGrotesk(
-            fontSize: 14,
+          'adminUi.dashboard.quickActions'.tr(),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.w700,
-            color: AppColors.onSurface,
+            color: context.ac.onSurface,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
               _QuickAction(
                 icon: Icons.add_circle_outline,
-                label: 'NEW LESSON',
+                label: 'adminUi.dashboard.newLesson'.tr(),
                 filled: true,
                 onTap: () => context.push('/curriculum'),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.sm),
               _QuickAction(
                 icon: Icons.group_outlined,
-                label: 'USERS',
+                label: 'adminUi.dashboard.users'.tr(),
                 filled: false,
                 onTap: () => context.push('/users'),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.sm),
               _QuickAction(
                 icon: Icons.bar_chart_outlined,
-                label: 'ANALYTICS',
+                label: 'adminUi.dashboard.analytics'.tr(),
                 filled: false,
                 onTap: () => context.push('/analytics'),
               ),
@@ -429,8 +419,8 @@ class _PrimaryKpiCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(16),
+        color: context.ac.primary,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Row(
         children: [
@@ -439,34 +429,33 @@ class _PrimaryKpiCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'TOTAL USERS',
-                  style: GoogleFonts.spaceGrotesk(
-                    fontSize: 12,
+                  'adminUi.dashboard.totalUsers'.tr(),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.surface.withValues(alpha: 0.75),
+                    color: context.ac.surface.withValues(alpha: 0.75),
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
                   _format(value),
-                  style: GoogleFonts.spaceGrotesk(
-                    fontSize: 32,
+                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.surface,
+                    color: context.ac.surface,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
-                  '${_format(activeUsers)} active in the last 7 days',
-                  style: GoogleFonts.spaceGrotesk(
-                    fontSize: 12,
-                    color: AppColors.surface.withValues(alpha: 0.75),
+                  'adminUi.dashboard.nActiveInTheLast'.tr(
+                    args: [_format(activeUsers)],
+                  ),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: context.ac.surface.withValues(alpha: 0.75),
                   ),
                 ),
               ],
             ),
           ),
-          const Icon(Icons.group_outlined, color: AppColors.surface, size: 32),
+          Icon(Icons.group_outlined, color: context.ac.surface, size: 32),
         ],
       ),
     );
@@ -486,10 +475,9 @@ class _EmptyState extends StatelessWidget {
         child: Text(
           message,
           textAlign: TextAlign.center,
-          style: GoogleFonts.spaceGrotesk(
-            fontSize: 12,
-            color: AppColors.onSurfaceMuted,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: context.ac.onSurfaceMuted),
         ),
       ),
     );
@@ -522,10 +510,8 @@ class _DauLineChart extends StatelessWidget {
           show: true,
           drawVerticalLine: false,
           horizontalInterval: (max / 4).clamp(1, double.infinity),
-          getDrawingHorizontalLine: (_) => const FlLine(
-            color: AppColors.outline,
-            strokeWidth: 0.5,
-          ),
+          getDrawingHorizontalLine: (_) =>
+              FlLine(color: context.ac.outline, strokeWidth: 0.5),
         ),
         borderData: FlBorderData(show: false),
         titlesData: FlTitlesData(
@@ -536,9 +522,8 @@ class _DauLineChart extends StatelessWidget {
               interval: (max / 4).clamp(1, double.infinity),
               getTitlesWidget: (value, _) => Text(
                 _formatY(value),
-                style: GoogleFonts.spaceGrotesk(
-                  fontSize: 10,
-                  color: AppColors.onSurfaceMuted,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: context.ac.onSurfaceMuted,
                 ),
               ),
             ),
@@ -547,15 +532,19 @@ class _DauLineChart extends StatelessWidget {
             sideTitles: SideTitles(
               showTitles: true,
               reservedSize: 22,
-              interval: (values.length / 5).ceilToDouble().clamp(1, double.infinity),
+              interval: (values.length / 5).ceilToDouble().clamp(
+                1,
+                double.infinity,
+              ),
               getTitlesWidget: (value, _) {
                 final i = value.toInt();
                 if (i < 0 || i >= values.length) return const SizedBox.shrink();
                 return Text(
-                  '$labelPrefix${i + 1}',
-                  style: GoogleFonts.spaceGrotesk(
-                    fontSize: 10,
-                    color: AppColors.onSurfaceMuted,
+                  'adminUi.dashboard.labelprefixn'.tr(
+                    args: [(i + 1).toString()],
+                  ),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: context.ac.onSurfaceMuted,
                   ),
                 );
               },
@@ -573,15 +562,15 @@ class _DauLineChart extends StatelessWidget {
             spots: spots,
             isCurved: true,
             curveSmoothness: 0.35,
-            color: AppColors.primaryBright,
+            color: context.ac.primaryBright,
             barWidth: 2.5,
             dotData: FlDotData(
               show: true,
               getDotPainter: (spot, _, __, ___) => FlDotCirclePainter(
                 radius: 3,
-                color: AppColors.surface,
+                color: context.ac.surface,
                 strokeWidth: 2,
-                strokeColor: AppColors.primaryBright,
+                strokeColor: context.ac.primaryBright,
               ),
             ),
             belowBarData: BarAreaData(
@@ -590,8 +579,8 @@ class _DauLineChart extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  AppColors.primaryBright.withValues(alpha: 0.2),
-                  AppColors.primaryBright.withValues(alpha: 0.0),
+                  context.ac.primaryBright.withValues(alpha: 0.2),
+                  context.ac.primaryBright.withValues(alpha: 0.0),
                 ],
               ),
             ),
@@ -599,14 +588,13 @@ class _DauLineChart extends StatelessWidget {
         ],
         lineTouchData: LineTouchData(
           touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (_) => AppColors.navy,
+            getTooltipColor: (_) => context.ac.navy,
             getTooltipItems: (spots) => spots.map((s) {
               return LineTooltipItem(
                 _formatY(s.y),
-                GoogleFonts.spaceGrotesk(
-                  color: AppColors.surface,
+                Theme.of(context).textTheme.bodySmall!.copyWith(
+                  color: context.ac.onNavy,
                   fontWeight: FontWeight.w700,
-                  fontSize: 12,
                 ),
               );
             }).toList(),
@@ -644,29 +632,26 @@ class _QuickAction extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
           color: filled
-              ? AppColors.primaryBright
-              : AppColors.surface.withValues(alpha: 0),
-          borderRadius: BorderRadius.circular(10),
-          border: filled
-              ? null
-              : Border.all(color: AppColors.outline),
+              ? context.ac.primaryBright
+              : context.ac.surface.withValues(alpha: 0),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: filled ? null : Border.all(color: context.ac.outline),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icon,
-              color: filled ? AppColors.surface : AppColors.primary,
+              color: filled ? context.ac.surface : context.ac.primary,
               size: 16,
             ),
             const SizedBox(width: 6),
             Text(
               label,
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 11,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.05,
-                color: filled ? AppColors.surface : AppColors.primary,
+                color: filled ? context.ac.surface : context.ac.primary,
               ),
             ),
           ],
@@ -694,9 +679,9 @@ class _SectionCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.outlineVariant, width: 0.5),
+        color: context.ac.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: context.ac.outlineVariant, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -710,18 +695,16 @@ class _SectionCard extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 14,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: AppColors.onSurface,
+                        color: context.ac.onSurface,
                       ),
                     ),
                     if (subtitle != null)
                       Text(
                         subtitle!,
-                        style: GoogleFonts.spaceGrotesk(
-                          fontSize: 11,
-                          color: AppColors.onSurfaceMuted,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: context.ac.onSurfaceMuted,
                         ),
                       ),
                   ],
@@ -730,7 +713,7 @@ class _SectionCard extends StatelessWidget {
               if (trailing != null) trailing!,
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           child,
         ],
       ),
@@ -747,15 +730,14 @@ class _Chip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(20),
+        color: context.ac.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Text(
         label,
-        style: GoogleFonts.spaceGrotesk(
-          fontSize: 11,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
           fontWeight: FontWeight.w600,
-          color: AppColors.onSurfaceVariant,
+          color: context.ac.onSurfaceVariant,
         ),
       ),
     );
@@ -777,28 +759,28 @@ class _LanguageBar extends StatelessWidget {
           children: [
             Text(
               lang,
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 13,
-                color: AppColors.onSurface,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: context.ac.onSurface),
             ),
             Text(
-              '${(pct * 100).toInt()}%',
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 13,
+              'adminUi.dashboard.n'.tr(
+                args: [((pct * 100).toInt()).toString()],
+              ),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w600,
-                color: AppColors.onSurface,
+                color: context.ac.onSurface,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.xs),
         ClipRRect(
           borderRadius: BorderRadius.circular(4),
           child: LinearProgressIndicator(
             value: pct,
-            backgroundColor: AppColors.surfaceContainerHigh,
-            valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+            backgroundColor: context.ac.surfaceContainerHigh,
+            valueColor: AlwaysStoppedAnimation(context.ac.primary),
             minHeight: 6,
           ),
         ),
@@ -818,35 +800,33 @@ class _ErrorBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.errorContainer,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+        color: context.ac.errorContainer,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        border: Border.all(color: context.ac.error.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.error_outline, color: AppColors.error, size: 18),
-          const SizedBox(width: 8),
+          Icon(Icons.error_outline, color: context.ac.error, size: 18),
+          const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               message,
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 13,
-                color: AppColors.error,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: context.ac.error),
             ),
           ),
           TextButton(
             onPressed: onRetry,
             style: TextButton.styleFrom(
-              foregroundColor: AppColors.error,
+              foregroundColor: context.ac.error,
               minimumSize: const Size(44, 44),
             ),
             child: Text(
-              'Retry',
-              style: GoogleFonts.spaceGrotesk(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
+              'adminUi.dashboard.retry'.tr(),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700),
             ),
           ),
         ],

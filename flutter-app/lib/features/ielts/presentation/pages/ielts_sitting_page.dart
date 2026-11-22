@@ -3,6 +3,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:path_provider/path_provider.dart';
@@ -14,7 +15,25 @@ import '../../../../core/di/service_locator.dart';
 import '../../../voice/data/datasources/voice_remote_datasource.dart';
 import '../../domain/entities/ielts_entities.dart';
 import '../providers/ielts_provider.dart';
+import '../widgets/ielts_passage_attribution.dart';
 import 'ielts_result_page.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
+
+String _skillLabel(IeltsSkill skill) => switch (skill) {
+  IeltsSkill.listening => 'ielts.skillListening'.tr(),
+  IeltsSkill.reading => 'ielts.skillReading'.tr(),
+  IeltsSkill.writing => 'ielts.skillWriting'.tr(),
+  IeltsSkill.speaking => 'ielts.skillSpeaking'.tr(),
+};
+
+String _partLabel(String key) {
+  final match = RegExp(r'^(writing_task|speaking_part)_(\d+)$').firstMatch(key);
+  if (match == null) return key.replaceAll('_', ' ');
+  final n = {'n': match.group(2)!};
+  return match.group(1) == 'writing_task'
+      ? 'ielts.writingTask'.tr(namedArgs: n)
+      : 'ielts.speakingPart'.tr(namedArgs: n);
+}
 
 /// One sitting, one skill at a time.
 ///
@@ -66,7 +85,7 @@ class _SittingViewState extends State<_SittingView> {
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Text(
-              provider.error ?? 'This test has no sections yet.',
+              provider.error ?? 'ielts.noSections'.tr(),
               textAlign: TextAlign.center,
             ),
           ),
@@ -86,7 +105,7 @@ class _SittingViewState extends State<_SittingView> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(ieltsSkillLabel(section.skill)),
+          title: Text(_skillLabel(section.skill)),
           bottom: PreferredSize(
             preferredSize: const Size.fromHeight(48),
             child: SingleChildScrollView(
@@ -96,9 +115,12 @@ class _SittingViewState extends State<_SittingView> {
                 children: [
                   for (var i = 0; i < sections.length; i++)
                     Padding(
-                      padding: const EdgeInsets.only(right: 8, bottom: 8),
+                      padding: const EdgeInsets.only(
+                        right: AppSpacing.sm,
+                        bottom: 8,
+                      ),
                       child: ChoiceChip(
-                        label: Text(ieltsSkillLabel(sections[i].skill)),
+                        label: Text(_skillLabel(sections[i].skill)),
                         selected: i == index,
                         onSelected: (_) => setState(() => _sectionIndex = i),
                       ),
@@ -109,7 +131,9 @@ class _SittingViewState extends State<_SittingView> {
           ),
         ),
         body: ContentWidth(
-          maxWidth: ContentWidth.reading,
+          maxWidth: section.skill == IeltsSkill.reading
+              ? ContentWidth.wide
+              : ContentWidth.reading,
           child: _SectionBody(section: section),
         ),
         bottomNavigationBar: ContentWidth(
@@ -125,7 +149,11 @@ class _SittingViewState extends State<_SittingView> {
                       onPressed: () =>
                           setState(() => _sectionIndex = index + 1),
                       child: Text(
-                        'Next: ${ieltsSkillLabel(sections[index + 1].skill)}',
+                        'ielts.nextSkill'.tr(
+                          namedArgs: {
+                            'skill': _skillLabel(sections[index + 1].skill),
+                          },
+                        ),
                       ),
                     )
                   else
@@ -143,18 +171,19 @@ class _SittingViewState extends State<_SittingView> {
     return showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Leave the test?'),
-        content: const Text(
-          'Your answers are saved and you can resume this test later.',
-        ),
+        title: Text('ielts.leaveTitle'.tr()),
+        content: Text('ielts.leaveBody'.tr()),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+            ),
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Stay'),
+            child: Text('ielts.stay'.tr()),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Leave'),
+            child: Text('ielts.leave'.tr()),
           ),
         ],
       ),
@@ -165,20 +194,23 @@ class _SittingViewState extends State<_SittingView> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Submit test?'),
+        title: Text('ielts.submitTitle'.tr()),
         content: Text(
-          'You have answered ${provider.answeredCount} items. '
-          'Listening and Reading are scored immediately; Writing and Speaking '
-          'are graded by AI and take a moment longer.',
+          'ielts.submitBody'.tr(
+            namedArgs: {'count': '${provider.answeredCount}'},
+          ),
         ),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+            ),
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Keep working'),
+            child: Text('ielts.keepWorking'.tr()),
           ),
           FilledButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Submit'),
+            child: Text('ielts.submit'.tr()),
           ),
         ],
       ),
@@ -189,16 +221,13 @@ class _SittingViewState extends State<_SittingView> {
     if (!context.mounted) return;
     if (result == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(provider.error ?? 'Submission failed')),
+        SnackBar(content: Text(provider.error ?? 'ielts.submitFailed'.tr())),
       );
       return;
     }
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (_) => IeltsResultPage(
-          attemptId: result.attemptId,
-          existingProvider: provider,
-        ),
+        builder: (_) => IeltsResultPage(attemptId: result.attemptId),
       ),
     );
   }
@@ -212,7 +241,7 @@ class _AnsweredCount extends StatelessWidget {
     final theme = Theme.of(context);
     final count = context.select<IeltsProvider, int>((p) => p.answeredCount);
     return Text(
-      '$count answered',
+      'ielts.answeredCount'.tr(namedArgs: {'count': '$count'}),
       style: theme.textTheme.bodySmall?.copyWith(
         color: theme.colorScheme.onSurfaceVariant,
       ),
@@ -237,7 +266,7 @@ class _SubmitButton extends StatelessWidget {
               height: 18,
               child: CircularProgressIndicator(strokeWidth: 2),
             )
-          : const Text('Submit test'),
+          : Text('ielts.submitTest'.tr()),
     );
   }
 }
@@ -276,20 +305,21 @@ class _ListeningSection extends StatelessWidget {
       children: [
         for (final part in section.parts) ...[
           Text(
-            part.title ?? 'Part ${part.order}',
+            part.title ??
+                'ielts.partNumber'.tr(namedArgs: {'order': '${part.order}'}),
             style: Theme.of(context).textTheme.titleMedium,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           if (part.audioUrl != null && part.audioUrl!.isNotEmpty)
             _AudioPlayerBar(url: part.audioUrl!),
           if (part.instructions != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               part.instructions!,
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           ...part.groups.map((group) => _QuestionGroup(group: group)),
           const Divider(height: 32),
         ],
@@ -309,7 +339,7 @@ class _AudioPlayerBar extends StatefulWidget {
 class _AudioPlayerBarState extends State<_AudioPlayerBar> {
   final AudioPlayer _player = AudioPlayer();
   bool _ready = false;
-  String? _error;
+  UiText? _error;
 
   @override
   void initState() {
@@ -325,8 +355,17 @@ class _AudioPlayerBarState extends State<_AudioPlayerBar> {
       await _player.setUrl(url);
       if (mounted) setState(() => _ready = true);
     } catch (e) {
-      if (mounted) setState(() => _error = 'ielts.audioUnavailable'.tr());
+      if (mounted)
+        setState(() => _error = const UiText.key('ielts.audioUnavailable'));
     }
+  }
+
+  Future<void> _togglePlayback(bool playing) async {
+    if (playing) return _player.pause();
+    if (_player.processingState == ProcessingState.completed) {
+      await _player.seek(Duration.zero);
+    }
+    await _player.play();
   }
 
   @override
@@ -341,24 +380,30 @@ class _AudioPlayerBarState extends State<_AudioPlayerBar> {
     if (_error != null) {
       return Card(
         color: theme.colorScheme.errorContainer,
-        child: Padding(padding: const EdgeInsets.all(12), child: Text(_error!)),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Text(_error!.resolve()),
+        ),
       );
     }
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: 4,
+        ),
         child: StreamBuilder<PlayerState>(
           stream: _player.playerStateStream,
           builder: (context, snapshot) {
-            final playing = snapshot.data?.playing ?? false;
+            final completed =
+                snapshot.data?.processingState == ProcessingState.completed;
+            final playing = (snapshot.data?.playing ?? false) && !completed;
             return Row(
               children: [
                 IconButton(
                   icon: Icon(playing ? Icons.pause : Icons.play_arrow),
-                  onPressed: !_ready
-                      ? null
-                      : () => playing ? _player.pause() : _player.play(),
+                  onPressed: !_ready ? null : () => _togglePlayback(playing),
                 ),
                 Expanded(
                   child: StreamBuilder<Duration>(
@@ -373,7 +418,7 @@ class _AudioPlayerBarState extends State<_AudioPlayerBar> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           LinearProgressIndicator(value: value.clamp(0.0, 1.0)),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: AppSpacing.xs),
                           Text(
                             '${_fmt(position)} / ${_fmt(total)}',
                             style: theme.textTheme.labelSmall,
@@ -383,7 +428,7 @@ class _AudioPlayerBarState extends State<_AudioPlayerBar> {
                     },
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.sm),
               ],
             );
           },
@@ -403,34 +448,235 @@ class _AudioPlayerBarState extends State<_AudioPlayerBar> {
 // Reading
 // ---------------------------------------------------------------------------
 
-class _ReadingSection extends StatelessWidget {
+class _ReadingSection extends StatefulWidget {
   final IeltsSection section;
   const _ReadingSection({required this.section});
 
   @override
-  Widget build(BuildContext context) {
+  State<_ReadingSection> createState() => _ReadingSectionState();
+}
+
+class _ReadingSectionState extends State<_ReadingSection> {
+  static const double _sideBySideFrom = 768;
+
+  final ScrollController _scroll = ScrollController();
+  final GlobalKey _viewportKey = GlobalKey();
+  late List<GlobalKey> _passageKeys;
+  late List<GlobalKey> _questionKeys;
+  bool _onQuestions = false;
+  int _widePart = 0;
+
+  List<IeltsPart> get _parts => widget.section.parts;
+
+  @override
+  void initState() {
+    super.initState();
+    _passageKeys = [for (final _ in _parts) GlobalKey()];
+    _questionKeys = [for (final _ in _parts) GlobalKey()];
+    _scroll.addListener(_syncSegment);
+  }
+
+  @override
+  void didUpdateWidget(covariant _ReadingSection old) {
+    super.didUpdateWidget(old);
+    if (old.section != widget.section ||
+        old.section.parts.length != _parts.length) {
+      _passageKeys = [for (final _ in _parts) GlobalKey()];
+      _questionKeys = [for (final _ in _parts) GlobalKey()];
+      _onQuestions = false;
+      _widePart = 0;
+      if (_scroll.hasClients) _scroll.jumpTo(0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  double? _topOf(GlobalKey key) {
+    final box = key.currentContext?.findRenderObject() as RenderBox?;
+    final viewport = _viewportKey.currentContext?.findRenderObject();
+    if (box == null || viewport is! RenderBox || !box.attached) return null;
+    return box.localToGlobal(Offset.zero, ancestor: viewport).dy;
+  }
+
+  int _currentPart() {
+    var current = 0;
+    for (var i = 0; i < _parts.length; i++) {
+      final top = _topOf(_passageKeys[i]);
+      if (top != null && top <= 80) current = i;
+    }
+    return current;
+  }
+
+  void _syncSegment() {
+    final top = _topOf(_questionKeys[_currentPart()]);
+    if (top == null) return;
+    final onQuestions = top <= 80;
+    if (onQuestions != _onQuestions) setState(() => _onQuestions = onQuestions);
+  }
+
+  void _jumpTo(bool questions) {
+    final keys = questions ? _questionKeys : _passageKeys;
+    final context = keys[_currentPart()].currentContext;
+    if (context == null) return;
+    setState(() => _onQuestions = questions);
+    Scrollable.ensureVisible(
+      context,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeOut,
+    );
+  }
+
+  Widget _passage(BuildContext context, IeltsPart part, {Key? key}) {
     final theme = Theme.of(context);
-    return ListView(
-      padding: const EdgeInsets.all(16),
+    return Column(
+      key: key,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (final part in section.parts) ...[
-          if (part.passageTitle != null)
-            Text(part.passageTitle!, style: theme.textTheme.titleMedium),
-          const SizedBox(height: 8),
-          if (part.passageText != null)
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  part.passageText!,
-                  style: theme.textTheme.bodyMedium?.copyWith(height: 1.6),
-                ),
+        if (part.passageTitle != null)
+          Text(part.passageTitle!, style: theme.textTheme.titleMedium),
+        const SizedBox(height: AppSpacing.sm),
+        if (part.passageText != null)
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: Text(
+                part.passageText!,
+                style: theme.textTheme.bodyMedium?.copyWith(height: 1.6),
               ),
             ),
-          const SizedBox(height: 16),
-          ...part.groups.map((group) => _QuestionGroup(group: group)),
-          const Divider(height: 32),
-        ],
+          ),
+        if (part.hasAttribution) IeltsPassageAttribution(part: part),
+      ],
+    );
+  }
+
+  Widget _questions(IeltsPart part, {Key? key}) {
+    return Column(
+      key: key,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: part.groups.map((g) => _QuestionGroup(group: g)).toList(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_parts.isEmpty) return const SizedBox.shrink();
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth >= _sideBySideFrom) {
+          return _buildWide(context);
+        }
+        return _buildNarrow(context);
+      },
+    );
+  }
+
+  Widget _buildNarrow(BuildContext context) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.sm,
+            AppSpacing.lg,
+            0,
+          ),
+          child: SegmentedButton<bool>(
+            showSelectedIcon: false,
+            segments: [
+              ButtonSegment(
+                value: false,
+                label: Text('ielts.passageTab'.tr()),
+                icon: const Icon(Icons.article_outlined),
+              ),
+              ButtonSegment(
+                value: true,
+                label: Text('ielts.questionsTab'.tr()),
+                icon: const Icon(Icons.checklist),
+              ),
+            ],
+            selected: {_onQuestions},
+            onSelectionChanged: (value) => _jumpTo(value.first),
+          ),
+        ),
+        Expanded(
+          child: SingleChildScrollView(
+            key: _viewportKey,
+            controller: _scroll,
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (var i = 0; i < _parts.length; i++) ...[
+                  _passage(context, _parts[i], key: _passageKeys[i]),
+                  const SizedBox(height: AppSpacing.lg),
+                  _questions(_parts[i], key: _questionKeys[i]),
+                  const Divider(height: 32),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWide(BuildContext context) {
+    final part = _parts[_widePart.clamp(0, _parts.length - 1)];
+    return Column(
+      children: [
+        if (_parts.length > 1)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.sm,
+                AppSpacing.lg,
+                0,
+              ),
+              child: Wrap(
+                spacing: AppSpacing.sm,
+                children: [
+                  for (var i = 0; i < _parts.length; i++)
+                    ChoiceChip(
+                      label: Text(
+                        'ielts.partNumber'.tr(
+                          namedArgs: {'order': '${_parts[i].order}'},
+                        ),
+                      ),
+                      selected: i == _widePart,
+                      onSelected: (_) => setState(() => _widePart = i),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        Expanded(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: ListView(
+                  key: PageStorageKey('ielts-passage-${part.order}'),
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  children: [_passage(context, part)],
+                ),
+              ),
+              Expanded(
+                child: ListView(
+                  key: PageStorageKey('ielts-questions-${part.order}'),
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  children: [_questions(part)],
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -496,7 +742,7 @@ class _QuestionTile extends StatelessWidget {
             '${question.number ?? ''}. ${question.prompt}',
             style: theme.textTheme.bodyMedium,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           if (options.isNotEmpty)
             Wrap(
               spacing: 8,
@@ -515,10 +761,10 @@ class _QuestionTile extends StatelessWidget {
           else
             TextFormField(
               initialValue: current,
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                border: const OutlineInputBorder(),
                 isDense: true,
-                hintText: 'Your answer',
+                hintText: 'ielts.answerHint'.tr(),
               ),
               onChanged: (value) => provider.setAnswer(question.key, value),
             ),
@@ -577,11 +823,8 @@ class _WritingTask extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          key.replaceAll('_', ' ').toUpperCase(),
-          style: theme.textTheme.labelLarge,
-        ),
-        const SizedBox(height: 8),
+        Text(_partLabel(key).toUpperCase(), style: theme.textTheme.labelLarge),
+        const SizedBox(height: AppSpacing.sm),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -589,9 +832,9 @@ class _WritingTask extends StatelessWidget {
           ),
         ),
         if (part.imageUrl != null && part.imageUrl!.isNotEmpty) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             child: Image.network(
               part.imageUrl!.startsWith('http')
                   ? part.imageUrl!
@@ -600,14 +843,16 @@ class _WritingTask extends StatelessWidget {
             ),
           ),
         ],
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
         TextFormField(
           initialValue: text,
           maxLines: 12,
           decoration: InputDecoration(
             border: const OutlineInputBorder(),
-            hintText: 'Write your response here…',
-            helperText: '$words / $minimum words minimum',
+            hintText: 'ielts.writeHint'.tr(),
+            helperText: 'ielts.wordsMinimum'.tr(
+              namedArgs: {'words': '$words', 'minimum': '$minimum'},
+            ),
             helperStyle: TextStyle(
               color: words >= minimum
                   ? theme.colorScheme.primary
@@ -616,10 +861,12 @@ class _WritingTask extends StatelessWidget {
           ),
           onChanged: (value) => provider.setAnswer(key, value),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         if (part.suggestedMinutes != null)
           Text(
-            'Aim for about ${part.suggestedMinutes} minutes.',
+            'ielts.aimMinutes'.tr(
+              namedArgs: {'minutes': '${part.suggestedMinutes}'},
+            ),
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -660,7 +907,8 @@ class _SpeakingPartState extends State<_SpeakingPart> {
   late final TextEditingController _transcriptController;
   bool _recording = false;
   bool _transcribing = false;
-  String? _error;
+  bool _busy = false;
+  UiText? _error;
 
   String get _key =>
       widget.part.partKey ?? 'speaking_part_${widget.part.order}';
@@ -676,11 +924,28 @@ class _SpeakingPartState extends State<_SpeakingPart> {
   @override
   void dispose() {
     _transcriptController.dispose();
-    _recorder.dispose();
+    unawaited(_releaseRecorder());
     super.dispose();
   }
 
+  Future<void> _releaseRecorder() async {
+    try {
+      if (await _recorder.isRecording()) await _recorder.stop();
+    } catch (_) {}
+    await _recorder.dispose();
+  }
+
   Future<void> _toggle() async {
+    if (_busy) return;
+    _busy = true;
+    try {
+      await _toggleRecording();
+    } finally {
+      _busy = false;
+    }
+  }
+
+  Future<void> _toggleRecording() async {
     final provider = context.read<IeltsProvider>();
     if (_recording) {
       final path = await _recorder.stop();
@@ -705,11 +970,11 @@ class _SpeakingPartState extends State<_SpeakingPart> {
           _transcriptController.text = transcript.trim();
           provider.setAnswer(_key, transcript.trim());
         } else {
-          setState(() => _error = 'ielts.nothingTranscribed'.tr());
+          setState(() => _error = const UiText.key('ielts.nothingTranscribed'));
         }
       } catch (e) {
         if (mounted) {
-          setState(() => _error = 'ielts.transcribeFailed'.tr());
+          setState(() => _error = const UiText.key('ielts.transcribeFailed'));
         }
       } finally {
         if (mounted) setState(() => _transcribing = false);
@@ -717,13 +982,18 @@ class _SpeakingPartState extends State<_SpeakingPart> {
       return;
     }
 
-    if (!await _recorder.hasPermission()) {
+    final granted = await _recorder.hasPermission();
+    if (!mounted) return;
+    if (!granted) {
       if (mounted) {
-        setState(() => _error = 'ielts.micPermissionRequired'.tr());
+        setState(
+          () => _error = const UiText.key('ielts.micPermissionRequired'),
+        );
       }
       return;
     }
     final dir = await getTemporaryDirectory();
+    if (!mounted) return;
     final path = '${dir.path}/ielts_$_key.m4a';
     await _recorder.start(const RecordConfig(), path: path);
     if (!mounted) return;
@@ -741,11 +1011,8 @@ class _SpeakingPartState extends State<_SpeakingPart> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          _key.replaceAll('_', ' ').toUpperCase(),
-          style: theme.textTheme.labelLarge,
-        ),
-        const SizedBox(height: 8),
+        Text(_partLabel(_key).toUpperCase(), style: theme.textTheme.labelLarge),
+        const SizedBox(height: AppSpacing.sm),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -757,10 +1024,14 @@ class _SpeakingPartState extends State<_SpeakingPart> {
                   style: theme.textTheme.bodyMedium,
                 ),
                 if (widget.part.prepSeconds != null) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.sm),
                   Text(
-                    'You have ${widget.part.prepSeconds}s to prepare and '
-                    '${widget.part.speakSeconds ?? 120}s to speak.',
+                    'ielts.prepAndSpeak'.tr(
+                      namedArgs: {
+                        'prep': '${widget.part.prepSeconds}',
+                        'speak': '${widget.part.speakSeconds ?? 120}',
+                      },
+                    ),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
@@ -770,15 +1041,17 @@ class _SpeakingPartState extends State<_SpeakingPart> {
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
         Row(
           children: [
             FilledButton.icon(
               onPressed: _transcribing ? null : _toggle,
               icon: Icon(_recording ? Icons.stop : Icons.mic),
-              label: Text(_recording ? 'Stop' : 'Record answer'),
+              label: Text(
+                _recording ? 'ielts.stop'.tr() : 'ielts.recordAnswer'.tr(),
+              ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.md),
             if (_transcribing)
               const SizedBox(
                 width: 18,
@@ -788,16 +1061,19 @@ class _SpeakingPartState extends State<_SpeakingPart> {
           ],
         ),
         if (_error != null) ...[
-          const SizedBox(height: 8),
-          Text(_error!, style: TextStyle(color: theme.colorScheme.error)),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            _error!.resolve(),
+            style: TextStyle(color: theme.colorScheme.error),
+          ),
         ],
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
         TextFormField(
           controller: _transcriptController,
           maxLines: 6,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            labelText: 'Transcript (edit if the recording was misheard)',
+          decoration: InputDecoration(
+            border: const OutlineInputBorder(),
+            labelText: 'ielts.transcriptLabel'.tr(),
           ),
           onChanged: (value) => provider.setAnswer(_key, value),
         ),

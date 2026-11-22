@@ -16,7 +16,7 @@ from api.services.trace_cag.graph import TraceCAGPipeline
 from api.services.trace_cag.state import create_initial_state
 
 TOP_KEYS = {
-    "tutor_response", "corrections", "linked_concepts", "learner_facts_stated",
+    "tutor_response", "diagnosis_errors", "corrections", "linked_concepts", "learner_facts_stated",
     "weak_concepts", "action_plan", "native_hint", "pronunciation_tip",
     "scores", "action", "metadata", "audio",
 }
@@ -44,6 +44,13 @@ def rel(rank, relevant):
 class TestKeyContract:
     def test_exact_top_level_keys(self):
         assert set(fmt({})) == TOP_KEYS
+
+    def test_diagnosis_errors_pass_through_unrenamed(self):
+        # Topic chat reads span/type/correction from here; "corrections" renames span to "error".
+        err = {"span": "I has", "type": "subject_verb_agreement", "correction": "I have", "explanation": "x"}
+        out = fmt({"diagnosis_errors": [err], "user_input": "I has a toothache"})
+        assert out["diagnosis_errors"] == [err]
+        assert out["corrections"][0]["error"] == "I has"
 
     def test_exact_score_and_metadata_keys(self):
         out = fmt({})

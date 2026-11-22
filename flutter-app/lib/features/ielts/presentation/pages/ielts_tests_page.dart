@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -8,6 +9,7 @@ import '../providers/ielts_provider.dart';
 import '../widgets/ielts_preview_sheet.dart';
 import 'ielts_sitting_page.dart';
 import 'ielts_result_page.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class IeltsTestsPage extends StatelessWidget {
   const IeltsTestsPage({super.key});
@@ -32,7 +34,7 @@ class _IeltsTestsView extends StatelessWidget {
     final provider = context.watch<IeltsProvider>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('IELTS Practice Tests')),
+      appBar: AppBar(title: Text('ielts.testsTitle'.tr())),
       body: ContentWidth(
         child: RefreshIndicator(
           onRefresh: () async {
@@ -58,21 +60,27 @@ class _IeltsTestsView extends StatelessWidget {
                         ),
                       ),
                     if (provider.history.isNotEmpty) ...[
-                      Text('Your results', style: theme.textTheme.titleMedium),
-                      const SizedBox(height: 8),
+                      Text(
+                        'ielts.yourResults'.tr(),
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
                       ...provider.history
                           .take(3)
                           .map((attempt) => _HistoryTile(attempt: attempt)),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: AppSpacing.xl),
                     ],
-                    Text('Available tests', style: theme.textTheme.titleMedium),
-                    const SizedBox(height: 8),
+                    Text(
+                      'ielts.availableTests'.tr(),
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
                     if (provider.tests.isEmpty && !provider.isLoading)
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 48),
                         child: Center(
                           child: Text(
-                            'No published tests yet.',
+                            'ielts.noTests'.tr(),
                             style: theme.textTheme.bodyMedium?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
@@ -118,7 +126,7 @@ class _TestCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         onTap: () => _preview(context),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -131,13 +139,17 @@ class _TestCard extends StatelessWidget {
                     child: Text(test.title, style: theme.textTheme.titleMedium),
                   ),
                   Chip(
-                    label: Text(test.isAcademic ? 'Academic' : 'General'),
+                    label: Text(
+                      test.isAcademic
+                          ? 'ielts.academic'.tr()
+                          : 'ielts.general'.tr(),
+                    ),
                     visualDensity: VisualDensity.compact,
                   ),
                 ],
               ),
               if (test.description != null && test.description!.isNotEmpty) ...[
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
                   test.description!,
                   maxLines: 2,
@@ -147,23 +159,29 @@ class _TestCard extends StatelessWidget {
                   ),
                 ),
               ],
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               Wrap(
                 spacing: 16,
                 runSpacing: 4,
                 children: [
                   _Meta(
                     icon: Icons.help_outline,
-                    label: '${test.questionCount} questions',
+                    label: 'ielts.previewQuestions'.tr(
+                      namedArgs: {'count': '${test.questionCount}'},
+                    ),
                   ),
                   _Meta(
                     icon: Icons.schedule,
-                    label: '${test.durationMinutes} min',
+                    label: 'ielts.previewMinutes'.tr(
+                      namedArgs: {'count': '${test.durationMinutes}'},
+                    ),
                   ),
                   if (test.targetBand != null)
                     _Meta(
                       icon: Icons.flag_outlined,
-                      label: 'Band ${test.targetBand}',
+                      label: 'ielts.bandValue'.tr(
+                        namedArgs: {'band': '${test.targetBand}'},
+                      ),
                     ),
                 ],
               ),
@@ -187,7 +205,7 @@ class _Meta extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 14, color: theme.colorScheme.onSurfaceVariant),
-        const SizedBox(width: 4),
+        const SizedBox(width: AppSpacing.xs),
         Text(
           label,
           style: theme.textTheme.bodySmall?.copyWith(
@@ -208,7 +226,8 @@ class _HistoryTile extends StatelessWidget {
     final theme = Theme.of(context);
     final overall = attempt['overall_band'];
     final status = attempt['status']?.toString() ?? '';
-    final title = attempt['test_title']?.toString() ?? 'IELTS test';
+    final title =
+        attempt['test_title']?.toString() ?? 'ielts.historyDefaultTitle'.tr();
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -216,10 +235,10 @@ class _HistoryTile extends StatelessWidget {
         title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
         subtitle: Text(
           status == 'graded'
-              ? 'Graded'
+              ? 'ielts.historyGraded'.tr()
               : status == 'submitted'
-              ? 'Writing and Speaking still being graded'
-              : 'In progress — tap to continue',
+              ? 'ielts.historyGrading'.tr()
+              : 'ielts.historyInProgress'.tr(),
         ),
         trailing: overall != null
             ? Text(

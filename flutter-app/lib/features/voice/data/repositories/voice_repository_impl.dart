@@ -1,4 +1,5 @@
-import 'dart:typed_data';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart';
 import 'package:dartz/dartz.dart';
 import 'package:lexilingo_app/core/error/exceptions.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
@@ -43,7 +44,8 @@ class VoiceRepositoryImpl implements VoiceRepository {
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Failed to transcribe: $e'));
+      debugPrint('Failed to transcribe: $e');
+      return const Left(ServerFailure());
     }
   }
 
@@ -64,7 +66,8 @@ class VoiceRepositoryImpl implements VoiceRepository {
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Failed to synthesize: $e'));
+      debugPrint('Failed to synthesize: $e');
+      return const Left(ServerFailure());
     }
   }
 
@@ -97,7 +100,8 @@ class VoiceRepositoryImpl implements VoiceRepository {
     } on ServerException catch (e) {
       return Left(ServerFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Failed to assess pronunciation: $e'));
+      debugPrint('Failed to assess pronunciation: $e');
+      return const Left(ServerFailure());
     }
   }
 
@@ -167,13 +171,13 @@ class VoiceRepositoryImpl implements VoiceRepository {
 
     String feedback;
     if (overallScore >= 90) {
-      feedback = 'Excellent pronunciation! Keep up the great work!';
+      feedback = 'voice.feedbackExcellent'.tr();
     } else if (overallScore >= 70) {
-      feedback = 'Good job! A few words need improvement.';
+      feedback = 'voice.feedbackGood'.tr();
     } else if (overallScore >= 50) {
-      feedback = 'Keep practicing! Focus on the highlighted words.';
+      feedback = 'voice.feedbackKeepPracticing'.tr();
     } else {
-      feedback = 'Try again slowly. Listen to the example first.';
+      feedback = 'voice.feedbackTryAgain'.tr();
     }
 
     return PronunciationScore(

@@ -8,6 +8,7 @@ import 'package:lexilingo_app/features/vocabulary/domain/entities/quiz_question_
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/quiz_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/screens/session_complete_screen.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/widgets/quiz_option_card.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Quizlet-style multiple-choice review over FSRS-due words.
 /// Tests each word in both directions (term ↔ meaning); results feed FSRS.
@@ -65,42 +66,47 @@ class _QuizReviewScreenState extends State<QuizReviewScreen> {
             if (!provider.hasSession) return const SizedBox.shrink();
             return Text(
               '${provider.currentQuestionNumber} / ${provider.totalQuestions}',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.w600),
             );
           },
         ),
         centerTitle: true,
       ),
-      body: ContentWidth(maxWidth: ContentWidth.reading, child: Consumer<QuizProvider>(
-        builder: (context, provider, child) {
-          if (provider.isLoading && !provider.hasSession) {
-            return LoadingScreen(message: 'vocabQuiz.loading'.tr());
-          }
+      body: ContentWidth(
+        maxWidth: ContentWidth.reading,
+        child: Consumer<QuizProvider>(
+          builder: (context, provider, child) {
+            if (provider.isLoading && !provider.hasSession) {
+              return LoadingScreen(message: 'vocabQuiz.loading'.tr());
+            }
 
-          if (provider.errorMessage != null) {
-            return _ErrorState(
-              message: provider.errorMessage!,
-              onRetry: () {
-                provider.clearError();
-                (widget.sessionStarter ?? (p) => p.startQuizSession())(
-                  provider,
-                );
-              },
+            if (provider.errorMessage != null) {
+              return _ErrorState(
+                message: provider.errorMessage!,
+                onRetry: () {
+                  provider.clearError();
+                  (widget.sessionStarter ?? (p) => p.startQuizSession())(
+                    provider,
+                  );
+                },
+              );
+            }
+
+            final question = provider.currentQuestion;
+            if (question == null) {
+              return Center(child: Text('vocabQuiz.empty'.tr()));
+            }
+
+            return _QuizBody(
+              provider: provider,
+              question: question,
+              onAdvance: () => _handleAdvance(provider),
             );
-          }
-
-          final question = provider.currentQuestion;
-          if (question == null) {
-            return Center(child: Text('vocabQuiz.empty'.tr()));
-          }
-
-          return _QuizBody(
-            provider: provider,
-            question: question,
-            onAdvance: () => _handleAdvance(provider),
-          );
-        },
-      ),),
+          },
+        ),
+      ),
     );
   }
 
@@ -122,7 +128,7 @@ class _QuizReviewScreenState extends State<QuizReviewScreen> {
             },
             child: Text(
               'lesson.exit'.tr(),
-              style: const TextStyle(color: AppColors.errorBright),
+              style: TextStyle(color: Theme.of(context).colorScheme.error),
             ),
           ),
         ],
@@ -147,39 +153,44 @@ class _QuizBody extends StatelessWidget {
     final theme = Theme.of(context);
     final answered = provider.isAnswered;
     final isTerm = question.direction == QuizDirection.termToMeaning;
-    final promptLabel =
-        isTerm ? 'vocabQuiz.term'.tr() : 'vocabQuiz.definition'.tr();
+    final promptLabel = isTerm
+        ? 'vocabQuiz.term'.tr()
+        : 'vocabQuiz.definition'.tr();
 
     return Column(
       children: [
         // Progress bar
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, AppSpacing.sm),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
             child: LinearProgressIndicator(
               value: provider.progress,
               minHeight: 8,
               backgroundColor: theme.colorScheme.surfaceContainerHighest,
-              valueColor:
-                  const AlwaysStoppedAnimation(AppColors.greenSuccessBright),
+              valueColor: AlwaysStoppedAnimation(context.status.success),
             ),
           ),
         ),
 
         Expanded(
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+            padding: const EdgeInsets.fromLTRB(
+              20,
+              AppSpacing.md,
+              20,
+              AppSpacing.xl,
+            ),
             children: [
               // Prompt card
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(AppSpacing.xl),
                 decoration: BoxDecoration(
                   color: theme.brightness == Brightness.dark
                       ? AppColors.surfaceDarkMuted
                       : Colors.white,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
                   border: Border.all(color: theme.colorScheme.outlineVariant),
                 ),
                 child: Column(
@@ -187,8 +198,7 @@ class _QuizBody extends StatelessWidget {
                   children: [
                     Text(
                       promptLabel,
-                      style: TextStyle(
-                        fontSize: 13,
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.4,
                         color: theme.colorScheme.onSurfaceVariant,
@@ -200,8 +210,7 @@ class _QuizBody extends StatelessWidget {
                       style: TextStyle(
                         fontSize: isTerm ? 28 : 20,
                         height: 1.4,
-                        fontWeight:
-                            isTerm ? FontWeight.bold : FontWeight.w500,
+                        fontWeight: isTerm ? FontWeight.bold : FontWeight.w500,
                         color: theme.colorScheme.onSurface,
                       ),
                     ),
@@ -213,8 +222,7 @@ class _QuizBody extends StatelessWidget {
 
               Text(
                 'vocabQuiz.chooseCorrect'.tr(),
-                style: TextStyle(
-                  fontSize: 14,
+                style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                   fontWeight: FontWeight.w600,
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -253,19 +261,20 @@ class _FeedbackBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final selected = provider.selectedIndex;
-    final isCorrect = selected != null &&
+    final isCorrect =
+        selected != null &&
         provider.currentQuestion!.options[selected].isCorrect;
-    final color =
-        isCorrect ? AppColors.greenSuccessBright : AppColors.errorBright;
-    final isLast =
-        provider.currentQuestionNumber >= provider.totalQuestions;
+    final color = isCorrect
+        ? context.status.success
+        : Theme.of(context).colorScheme.error;
+    final isLast = provider.currentQuestionNumber >= provider.totalQuestions;
 
     return Container(
       padding: EdgeInsets.fromLTRB(
         20,
-        16,
+        AppSpacing.lg,
         20,
-        16 + MediaQuery.of(context).padding.bottom,
+        AppSpacing.lg + MediaQuery.of(context).padding.bottom,
       ),
       decoration: BoxDecoration(
         color: theme.brightness == Brightness.dark
@@ -286,9 +295,7 @@ class _FeedbackBar extends StatelessWidget {
           Row(
             children: [
               Icon(
-                isCorrect
-                    ? Icons.check_circle_rounded
-                    : Icons.cancel_rounded,
+                isCorrect ? Icons.check_circle_rounded : Icons.cancel_rounded,
                 color: color,
               ),
               const SizedBox(width: 8),
@@ -296,8 +303,7 @@ class _FeedbackBar extends StatelessWidget {
                 isCorrect
                     ? 'vocabQuiz.correct'.tr()
                     : 'vocabQuiz.incorrect'.tr(),
-                style: TextStyle(
-                  fontSize: 16,
+                style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                   fontWeight: FontWeight.bold,
                   color: color,
                 ),
@@ -312,19 +318,18 @@ class _FeedbackBar extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: color,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
               ),
               child: Text(
                 isLast
                     ? 'vocabQuiz.finish'.tr()
                     : 'vocabQuiz.continueLabel'.tr(),
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.bold),
               ),
             ),
           ),

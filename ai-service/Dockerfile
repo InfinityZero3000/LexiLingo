@@ -1,4 +1,4 @@
-FROM python:3.11.13-slim-bookworm@sha256:86adf8dbadc3d6e82ee5dd2c74bec2e1c2467cdad47886280501df722372d2e1
+FROM python:3.11.18-slim-bookworm@sha256:a83ba18aef0f865b1a4a611c2cf460fe446f2795673bbb9fe43be570439e3b39
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_NO_CACHE_DIR=1 \
@@ -38,7 +38,11 @@ RUN python -c "import defusedxml, typer; from api.services.content_etl.cli impor
 RUN mkdir -p /app/models
 
 # Create non-root user
-RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+# /data/content-etl is a named volume; Docker seeds an empty volume's ownership
+# from this directory, so without it the ETL cannot write as appuser.
+RUN useradd -m -u 1000 appuser \
+    && mkdir -p /data/content-etl \
+    && chown -R appuser:appuser /app /data/content-etl
 USER appuser
 
 # Expose port

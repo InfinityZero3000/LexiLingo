@@ -183,6 +183,20 @@ void main() {
       expect(find.byType(EpisodeTile), findsNWidgets(3));
     });
 
+    testWidgets('the show-more toggle is light text on the dark header', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        _FakeRepo(episodes: threeEpisodes),
+        size: const Size(375, 1600),
+      );
+
+      final toggle = tester.widget<Text>(find.text('Show more'));
+
+      expect(toggle.style?.color, AppColors.onGradient);
+    });
+
     testWidgets('saved progress shows on the matching episodes', (
       tester,
     ) async {
@@ -190,7 +204,7 @@ void main() {
         tester,
         _FakeRepo(episodes: threeEpisodes),
         prefs: {
-          'podcast_listening_history': [
+          'u:anonymous:podcast_listening_history': [
             _historyJson('g1', position: 180),
             _historyJson('g2', position: 590, done: true),
           ],
@@ -419,7 +433,7 @@ void main() {
           ],
         ),
         prefs: {
-          'podcast_listening_history': [_historyJson('g1', position: 200)],
+          'u:anonymous:podcast_listening_history': [_historyJson('g1', position: 200)],
         },
         theme: buildTheme(),
         size: const Size(320, 640),

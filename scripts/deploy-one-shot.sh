@@ -7,12 +7,19 @@ ENV_FILE="${PROJECT_ROOT}/.env.production"
 SECRET_ENV_FILE="${PROJECT_ROOT}/.env.production.secrets"
 SMOKE_SCRIPT="${PROJECT_ROOT}/scripts/smoke-prod.sh"
 DEPLOY_DIR="${PROJECT_ROOT}/.deploy"
-DOCKER_COMPOSE_CMD="sudo docker compose --env-file .env.production --env-file .env.production.secrets -f docker-compose.yml"
+STATE_DIR="${STATE_DIR:-/var/lib/lexilingo/auto-deploy}"
+TAGS_FILE="${STATE_DIR}/image-tags.env"
+LOCK_WAIT_SEC="${LOCK_WAIT_SEC:-600}"
+# Same invocation as compose_img in auto-deploy.sh: registry images pinned by image-tags.env.
+DOCKER_COMPOSE_CMD="sudo docker compose -f docker-compose.yml -f docker-compose.images.yml --env-file .env.production --env-file .env.production.secrets --env-file ${TAGS_FILE}"
+# Only for the very first deploy on a box that has no image-tags.env; builds locally.
+BOOTSTRAP_COMPOSE_CMD="sudo docker compose --env-file .env.production --env-file .env.production.secrets -f docker-compose.yml"
 
 SKIP_GIT_PULL=false
 SKIP_IMAGE_PULL=false
 SKIP_SMOKE=false
 DRY_RUN=false
+BOOTSTRAP_LOCAL_BUILD=false
 
 usage() {
   cat <<'EOF'
@@ -23,6 +30,9 @@ Options:
   --skip-image-pull   Skip docker compose pull step
   --skip-smoke        Skip smoke test step
   --dry-run           Print commands but do not execute
+  --bootstrap-local-build
+                      First deploy only, when image-tags.env does not exist:
+                      build on this host. Refused once image-tags.env exists.
   -h, --help          Show this help message
 EOF
 }
@@ -45,6 +55,10 @@ while [[ $# -gt 0 ]]; do
       DRY_RUN=true
       shift
       ;;
+    --bootstrap-local-build)
+      BOOTSTRAP_LOCAL_BUILD=true
+      shift
+      ;;
     -h|--help)
       usage
       exit 0
@@ -57,6 +71,10 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+if [[ "${BOOTSTRAP_LOCAL_BUILD}" == true ]]; then
+  DOCKER_COMPOSE_CMD="${BOOTSTRAP_COMPOSE_CMD}"
+fi
+
 mkdir -p "${DEPLOY_DIR}"
 
 TIMESTAMP_UTC="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -64,6 +82,7 @@ TIMESTAMP_SAFE="$(date -u +%Y%m%dT%H%M%SZ)"
 ROLLBACK_SIGNAL_FILE="${DEPLOY_DIR}/ROLLBACK_REQUIRED_${TIMESTAMP_SAFE}.txt"
 ROLLBACK_FLAG_FILE="${DEPLOY_DIR}/ROLLBACK_REQUIRED"
 LAST_SUCCESS_FILE="${DEPLOY_DIR}/LAST_SUCCESS"
+TAGS_SNAPSHOT="${DEPLOY_DIR}/image-tags.env.pre-${TIMESTAMP_SAFE}"
 
 cd "${PROJECT_ROOT}"
 
@@ -93,7 +112,10 @@ write_rollback_signal() {
     echo ""
     echo "Rollback suggestion:"
     echo "  git checkout ${PREV_COMMIT}"
-    echo "  ${DOCKER_COMPOSE_CMD} up -d --remove-orphans"
+    if [[ -f "${TAGS_SNAPSHOT}" ]]; then
+      echo "  cp ${TAGS_SNAPSHOT} ${TAGS_FILE}"
+    fi
+    echo "  ${DOCKER_COMPOSE_CMD} up -d --no-build --remove-orphans"
     echo "  ./scripts/smoke-prod.sh"
   } > "${ROLLBACK_SIGNAL_FILE}"
 
@@ -119,6 +141,49 @@ check_prerequisites() {
   [[ -f "${ENV_FILE}" ]] || { echo "Missing ${ENV_FILE}"; exit 1; }
   [[ -f "${SECRET_ENV_FILE}" ]] || { echo "Missing ${SECRET_ENV_FILE}. Copy from .env.production.secrets.example and fill real values."; exit 1; }
   [[ -x "${SMOKE_SCRIPT}" ]] || { echo "Smoke script is not executable: ${SMOKE_SCRIPT}"; exit 1; }
+  [[ -f "${PROJECT_ROOT}/docker-compose.images.yml" ]] || { echo "Missing ${PROJECT_ROOT}/docker-compose.images.yml"; exit 1; }
+}
+
+# Backend and ai-service run registry images pinned by image-tags.env. Without it compose would
+# fall back to the build: sections, compiling ai-service on a 2-vCPU host for 15-30 min and
+# replacing the tested GHCR images, so refuse instead.
+check_image_tags() {
+  if [[ "${BOOTSTRAP_LOCAL_BUILD}" == true ]]; then
+    if [[ -s "${TAGS_FILE}" ]]; then
+      echo "Refusing --bootstrap-local-build: ${TAGS_FILE} exists, so this host runs registry images."
+      echo "A local build would replace them. Drop the flag."
+      exit 1
+    fi
+    log "BOOTSTRAP: no ${TAGS_FILE}; building on this host"
+    return 0
+  fi
+  if [[ ! -s "${TAGS_FILE}" ]]; then
+    echo "Missing ${TAGS_FILE}: auto-deploy has not switched this host to registry images yet."
+    echo "Not falling back to a build on the VPS. Run the first switch described in"
+    echo "docs/operations/AUTO_DEPLOY.md, or pass --bootstrap-local-build if this is a fresh host."
+    exit 1
+  fi
+}
+
+# Share auto-deploy.sh's lock so the 2-minute timer cannot swap services mid-deploy.
+acquire_deploy_lock() {
+  if [[ "${DRY_RUN}" == true ]]; then
+    return 0
+  fi
+  mkdir -p "${STATE_DIR}"
+  exec 9>"${STATE_DIR}/lock"
+  if ! flock -w "${LOCK_WAIT_SEC}" 9; then
+    echo "Another deploy holds ${STATE_DIR}/lock (waited ${LOCK_WAIT_SEC}s). Try again later."
+    exit 1
+  fi
+}
+
+# Read-only: show what compose would create or recreate before anything moves.
+preflight_plan() {
+  log "Pre-flight: what compose would recreate"
+  if ! ${DOCKER_COMPOSE_CMD} up -d --no-build --remove-orphans --dry-run 2>&1; then
+    log "WARNING: pre-flight 'up --dry-run' failed (docker compose too old?); continuing"
+  fi
 }
 
 # Both of these degrade silently when unset: ai-service calls backend directly
@@ -152,6 +217,10 @@ check_required_secrets() {
     POSTGRES_PASSWORD
     SECRET_KEY
     REDIS_PASSWORD
+    MONGO_ROOT_USER
+    MONGO_ROOT_PASSWORD
+    MONGO_APP_USER
+    MONGO_APP_PASSWORD
   )
 
   local missing=()
@@ -169,20 +238,20 @@ check_required_secrets() {
   fi
 }
 
-tag_rollback_images() {
-  # There is no registry and no image backup on this host, so a lost :latest
-  # tag is unrecoverable — on 2026-08-14 a cancelled build left ai-service with
-  # no image and no container. Keep a known-good tag before anything swaps.
-  local image
-  for service in ai-service backend-service; do
-    image="lexilingo-${service}:latest"
-    if sudo docker image inspect "${image}" >/dev/null 2>&1; then
-      run "sudo docker tag ${image} lexilingo-${service}:rollback"
-      log "Tagged rollback image for ${service}"
-    else
-      log "WARNING: ${image} missing — no rollback image for ${service}"
-    fi
-  done
+snapshot_image_tags() {
+  # The registry keeps every sha tag, so rolling back is putting the old tag file back.
+  if [[ "${DRY_RUN}" == true ]]; then
+    printf '[dry-run] cp %s %s\n' "${TAGS_FILE}" "${TAGS_SNAPSHOT}"
+    return 0
+  fi
+  if [[ -s "${TAGS_FILE}" ]]; then
+    cp "${TAGS_FILE}" "${TAGS_SNAPSHOT}"
+    log "Saved ${TAGS_SNAPSHOT}"
+  fi
+}
+
+bootstrap_up() {
+  run "${BOOTSTRAP_COMPOSE_CMD} up -d --build --remove-orphans"
 }
 
 wait_for_service() {
@@ -244,7 +313,9 @@ perform_git_pull() {
 main() {
   check_prerequisites
   check_required_secrets
+  check_image_tags
   check_internal_channel_config
+  acquire_deploy_lock
 
   log "Starting one-shot deployment at ${TIMESTAMP_UTC}"
   log "Branch: ${CURRENT_BRANCH}"
@@ -265,8 +336,13 @@ main() {
   fi
 
   log "Step 3/4: Docker up with orphan cleanup"
-  tag_rollback_images
-  run "${DOCKER_COMPOSE_CMD} up -d --build --remove-orphans"
+  if [[ "${BOOTSTRAP_LOCAL_BUILD}" == true ]]; then
+    bootstrap_up
+  else
+    snapshot_image_tags
+    preflight_plan
+    run "${DOCKER_COMPOSE_CMD} up -d --no-build --remove-orphans"
+  fi
 
   if [[ "${DRY_RUN}" == false ]]; then
     wait_for_service "postgres" 180

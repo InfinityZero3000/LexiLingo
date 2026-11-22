@@ -6,6 +6,7 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/lexi_chat/data/lexi_reply_suggester.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/lexi_followups.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Tap-to-send chips under Lexi's latest message: answers to her question
 /// (fetched, so they appear a beat late) then follow-ups that fit what she said.
@@ -74,8 +75,7 @@ class _LexiSuggestionBarState extends State<LexiSuggestionBar> {
             : null,
         label: Text(label, overflow: TextOverflow.ellipsis),
         onPressed: onTap,
-        labelStyle: TextStyle(
-          fontSize: 12,
+        labelStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
           color: answer ? primary : AppColorRoles.textSecondary(isDark),
         ),
         side: BorderSide(
@@ -100,7 +100,7 @@ class _LexiSuggestionBarState extends State<LexiSuggestionBar> {
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: chips.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.sm),
         itemBuilder: (_, i) => chips[i],
       ),
     );

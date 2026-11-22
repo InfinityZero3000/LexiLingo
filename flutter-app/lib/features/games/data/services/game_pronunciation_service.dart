@@ -65,8 +65,8 @@ class GamePronunciationService {
   GamePronunciationService({
     required VoiceRemoteDataSource voiceDataSource,
     AudioPlayerAdapter? player,
-  })  : _voiceDataSource = voiceDataSource,
-        _player = player ?? JustAudioPlayerAdapter();
+  }) : _voiceDataSource = voiceDataSource,
+       _player = player ?? JustAudioPlayerAdapter();
 
   bool _isPlaying = false;
   AudioError? _lastError;
@@ -119,8 +119,9 @@ class GamePronunciationService {
   }
 
   Future<int> _playFromTts(String text, int playsLeft) async {
-    final Uint8List audioBytes =
-        await _voiceDataSource.synthesizeSpeech(text: text);
+    final Uint8List audioBytes = await _voiceDataSource.synthesizeSpeech(
+      text: text,
+    );
 
     final startFuture = _player.playerStateStream
         .firstWhere((state) => state.playing)

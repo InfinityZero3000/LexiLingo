@@ -1,0 +1,1404 @@
+{
+  "category": {
+    "color": null,
+    "course_count": 4,
+    "created_at": {
+      "__dt__": "2026-06-30T15:13:15.217773"
+    },
+    "description": "English for work and business",
+    "icon": null,
+    "id": "12e25b46-9bc4-47fa-a891-7d8ea9d81436",
+    "is_active": true,
+    "name": "Business English",
+    "order_index": 2,
+    "slug": "business-english",
+    "updated_at": {
+      "__dt__": "2026-06-30T15:13:32.819036"
+    }
+  },
+  "course": {
+    "category_id": "12e25b46-9bc4-47fa-a891-7d8ea9d81436",
+    "content_version": 1,
+    "created_at": {
+      "__dt__": "2026-03-14T03:20:39.087479"
+    },
+    "description": "Tiếng Anh chuyên nghiệp dành cho môi trường doanh nghiệp. Viết email, thuyết trình, đàm phán, họp hành và giao tiếp với đối tác quốc tế. Phù hợp với nhân viên văn phòng và người đi làm trình độ B2.",
+    "estimated_duration": 720,
+    "id": "59b1b19e-38b0-4e15-91cb-5f336c9b8f05",
+    "is_published": true,
+    "language": "en",
+    "level": "B2",
+    "skill": null,
+    "tags": [
+      "business",
+      "professional",
+      "upper-intermediate",
+      "workplace",
+      "cefr-b2"
+    ],
+    "thumbnail_url": "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=400",
+    "title": "Business English Professional",
+    "total_lessons": 15,
+    "total_xp": 1000,
+    "updated_at": {
+      "__dt__": "2026-03-14T03:20:39.207038"
+    }
+  },
+  "format": 1,
+  "lessons": [
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Dear Mr. Smith,",
+            "explanation": "In formal business emails you use a polite salutation with title and surname.",
+            "id": "ex_9b17b17d-ffa6-47a2-8446-d7b057782a20_1",
+            "options": [
+              "Dear Mr. Smith,",
+              "Hi John,",
+              "Hey there,",
+              "Hello!"
+            ],
+            "question": "Which greeting is appropriate for a formal business email to a new client?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "'Thanks a lot' sounds informal; a formal email should use 'Thank you' or 'Thank you very much'.",
+            "id": "ex_9b17b17d-ffa6-47a2-8446-d7b057782a20_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "Using the phrase 'Thanks a lot' is appropriate in a formal business email.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "attached",
+            "explanation": "The standard phrase is 'Please find attached the report.'",
+            "id": "ex_9b17b17d-ffa6-47a2-8446-d7b057782a20_3",
+            "options": [],
+            "question": "Please find {blank} the attached report.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "concise:ngắn gọn, courteous:lịch sự",
+            "explanation": "'Concise' means 'ngắn gọn' and 'courteous' means 'lịch sự' in Vietnamese.",
+            "id": "ex_9b17b17d-ffa6-47a2-8446-d7b057782a20_4",
+            "options": [
+              "concise",
+              "courteous",
+              "ngắn gọn",
+              "lịch sự"
+            ],
+            "question": "Match each tone word with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "Best regards,",
+            "explanation": "'Best regards' is a common semi‑formal closing that maintains professionalism while being friendly.",
+            "id": "ex_9b17b17d-ffa6-47a2-8446-d7b057782a20_5",
+            "options": [],
+            "question": "Write a suitable semi‑formal closing line for an email to a colleague you have worked with on a project.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "59b1b19e-38b0-4e15-91cb-5f336c9b8f05",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.141053"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "9b17b17d-ffa6-47a2-8446-d7b057782a20",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Formal vs. Semi-Formal Business Emails",
+      "total_exercises": 5,
+      "unit_id": "ff268766-8a0d-4890-aea6-cf397b22124d",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836907"
+      },
+      "xp_reward": 22
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Please accept our apologies for the delay.",
+            "explanation": "This phrase is formal and shows respect, fitting a professional apology email.",
+            "id": "ex_a1b2c3d4-0001_1",
+            "options": [
+              "We sincerely apologize for the inconvenience caused.",
+              "We are sorry that you have to wait.",
+              "Please accept our apologies for the delay.",
+              "Sorry about the late delivery."
+            ],
+            "question": "Which phrase is most appropriate to start an apology email regarding a delayed shipment?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "Starting with a clear statement of disappointment is acceptable as long as it remains polite and professional.",
+            "id": "ex_f5ea88a-3c1b-4479-8006-07c3e62a3e09_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "In a complaint email, it is polite to begin with \"I am writing to express my disappointment...\".",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "we have missed",
+            "explanation": "The phrase \"we have missed\" correctly completes the sentence, indicating the schedule was not met.",
+            "id": "ex_9d8e7c6b-1122_3",
+            "options": [],
+            "question": "We regret to inform you that {blank} the delivery schedule due to unforeseen circumstances.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Dear Mr. Nguyen,\n\nWe sincerely apologize for the delay in shipping your order. The goods will be dispatched by Friday, and we appreciate your patience.\n\nBest regards,\nAnna Lee",
+            "explanation": "The answer demonstrates a polite opening, an apology, a clear action plan, and a courteous closing, which are key components of a professional apology email.",
+            "id": "ex_3e7f9b2a-55aa-4cdd-9f3e-2b1c6d8e4f01_4",
+            "options": [],
+            "question": "Write a brief apology email (2‑3 sentences) for a delayed shipment.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "We regret:Chúng tôi rất tiếc, We apologize:Chúng tôi xin lỗi",
+            "explanation": "Both English phrases are standard formal expressions; their Vietnamese equivalents convey the same level of politeness.",
+            "id": "ex_b2d4f6a9-8c3e-4f7a-9b2d-1e5c9a7f0c2b_5",
+            "options": [
+              "We regret",
+              "We apologize",
+              "Chúng tôi rất tiếc",
+              "Chúng tôi xin lỗi"
+            ],
+            "question": "Match each formal phrase used in complaint emails with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "59b1b19e-38b0-4e15-91cb-5f336c9b8f05",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.141107"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "0f5ea88a-3c1b-4479-8006-07c3e62a3e09",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "Writing Complaint & Apology Emails",
+      "total_exercises": 5,
+      "unit_id": "ff268766-8a0d-4890-aea6-cf397b22124d",
+      "updated_at": {
+        "__dt__": "2026-08-21T05:38:10.061163"
+      },
+      "xp_reward": 22
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "To give a brief overview of the report's main findings and recommendations",
+            "explanation": "An executive summary condenses the main points, findings, and recommendations so busy readers can understand the report quickly.",
+            "id": "ex_b662d6f7-8e40-45b5-bf7b-e3410cb6b8bf_1",
+            "options": [
+              "To provide a detailed analysis of data",
+              "To give a brief overview of the report's main findings and recommendations",
+              "To list all references used in the report",
+              "To present the author's biography"
+            ],
+            "question": "What is the primary purpose of an executive summary in a business report?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "Short reports are meant to be concise; they typically range from one to a few pages, focusing on key information.",
+            "id": "ex_b662d6f7-8e40-45b5-bf7b-e3410cb6b8bf_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "A short report should usually be longer than 5 pages to cover all necessary details.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "purpose",
+            "explanation": "The opening sentence should state the purpose of the report, guiding the reader's expectations.",
+            "id": "ex_b662d6f7-8e40-45b5-bf7b-e3410cb6b8bf_3",
+            "options": [],
+            "question": "In an executive summary, you should start with a clear statement of the {blank}.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Báo cáo kết luận bằng các khuyến nghị có thể thực hiện cho ban quản lý cấp cao.",
+            "explanation": "The translation captures the meaning of \"actionable recommendations\" and the target audience \"senior management\" in Vietnamese.",
+            "id": "ex_b662d6f7-8e40-45b5-bf7b-e3410cb6b8bf_4",
+            "options": [],
+            "question": "Translate the following sentence into Vietnamese: \"The report concludes with actionable recommendations for the senior management.\"",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Executive summary:Tóm tắt điều hành, Stakeholder:Các bên liên quan",
+            "explanation": "\"Executive summary\" means \"Tóm tắt điều hành\" and \"Stakeholder\" translates to \"Các bên liên quan\".",
+            "id": "ex_b662d6f7-8e40-45b5-bf7b-e3410cb6b8bf_5",
+            "options": [
+              "Executive summary",
+              "Stakeholder",
+              "Tóm tắt điều hành",
+              "Các bên liên quan"
+            ],
+            "question": "Match each business term with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "59b1b19e-38b0-4e15-91cb-5f336c9b8f05",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.141138"
+      },
+      "description": null,
+      "estimated_minutes": 28,
+      "id": "b662d6f7-8e40-45b5-bf7b-e3410cb6b8bf",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Executive Summaries & Short Reports",
+      "total_exercises": 5,
+      "unit_id": "ff268766-8a0d-4890-aea6-cf397b22124d",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836957"
+      },
+      "xp_reward": 25
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "To outline topics to be discussed",
+            "explanation": "An agenda lists the topics that will be covered, helping participants prepare.",
+            "id": "ex_0651e332-4120-4f34-b47a-4361011451c1_1",
+            "options": [
+              "To record decisions made",
+              "To outline topics to be discussed",
+              "To assign tasks after the meeting",
+              "To summarize the meeting outcome"
+            ],
+            "question": "What is the primary purpose of a meeting agenda?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "Minutes are a concise summary of decisions, actions, and key points, not a word‑for‑word record.",
+            "id": "ex_0651e332-4120-4f34-b47a-4361011451c1_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "Minutes should include a detailed verbatim transcript of everything said in the meeting.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "to discuss the quarterly sales targets",
+            "explanation": "A specific objective guides the discussion and keeps the meeting focused.",
+            "id": "ex_0651e332-4120-4f34-b47a-4361011451c1_3",
+            "options": [],
+            "question": "Write a clear meeting objective: The main objective of the meeting is {blank}.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "hạng mục hành động",
+            "explanation": "\"Action item\" refers to a specific task that results from the meeting, translated as \"hạng mục hành động\".",
+            "id": "ex_0651e332-4120-4f34-b47a-4361011451c1_4",
+            "options": [
+              "hạng mục hành động",
+              "mục tiêu",
+              "điểm hành động",
+              "công việc"
+            ],
+            "question": "Translate the term \"Action item\" into Vietnamese.",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "Agenda:Nội dung cuộc họp, Minutes:Biên bản cuộc họp",
+            "explanation": "An agenda outlines the meeting topics (Nội dung cuộc họp); minutes record what was decided (Biên bản cuộc họp).",
+            "id": "ex_0651e332-4120-4f34-b47a-4361011451c1_5",
+            "options": [
+              "Agenda",
+              "Minutes",
+              "Nội dung cuộc họp",
+              "Biên bản cuộc họp"
+            ],
+            "question": "Match each document with its Vietnamese description.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "59b1b19e-38b0-4e15-91cb-5f336c9b8f05",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.141168"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "0651e332-4120-4f34-b47a-4361011451c1",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Meeting Agendas & Minutes",
+      "total_exercises": 5,
+      "unit_id": "ff268766-8a0d-4890-aea6-cf397b22124d",
+      "updated_at": {
+        "__dt__": "2026-08-14T06:39:10.796089"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Best regards,",
+            "explanation": "‘Best regards’ is a standard formal closing in business correspondence.",
+            "id": "ex_02a8181b-e8ba-45e0-9182-9160f9b5bf02_1",
+            "options": [
+              "Looking forward to hearing from you soon.",
+              "Let me know if you need anything.",
+              "Best regards,",
+              "Cheers!"
+            ],
+            "question": "Which of the following is the most appropriate closing line for a formal business email?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "Contractions are informal and should be avoided in formal business writing.",
+            "id": "ex_02a8181b-e8ba-45e0-9182-9160f9b5bf02_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "In a business report, using contractions such as “can’t” and “won’t” is acceptable.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "to next Monday",
+            "explanation": "The phrase ‘to next Monday’ specifies the new date concisely.",
+            "id": "ex_02a8181b-e8ba-45e0-9182-9160f9b5bf02_3",
+            "options": [],
+            "question": "We would like to inform you that the meeting has been postponed {blank}.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Dear Sir/Madam, could you please provide an update on the project progress?",
+            "explanation": "The translation uses a polite opening and a clear request, appropriate for business email.",
+            "id": "ex_02a8181b-e8ba-45e0-9182-9160f9b5bf02_4",
+            "options": [],
+            "question": "Translate the following Vietnamese sentence into English: \"Kính gửi anh/chị, anh/chị có thể cung cấp bản cập nhật tiến độ dự án không?\"",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Agenda:Nội dung họp, Deadline:Hạn chót",
+            "explanation": "‘Agenda’ means ‘Nội dung họp’ and ‘Deadline’ means ‘Hạn chót’ in business contexts.",
+            "id": "ex_02a8181b-e8ba-45e0-9182-9160f9b5bf02_5",
+            "options": [
+              "Agenda",
+              "Deadline",
+              "Nội dung họp",
+              "Hạn chót"
+            ],
+            "question": "Match each business term with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "59b1b19e-38b0-4e15-91cb-5f336c9b8f05",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.141199"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "02a8181b-e8ba-45e0-9182-9160f9b5bf02",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "Business Writing Test",
+      "total_exercises": 5,
+      "unit_id": "ff268766-8a0d-4890-aea6-cf397b22124d",
+      "updated_at": {
+        "__dt__": "2026-08-21T05:38:10.061143"
+      },
+      "xp_reward": 40
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Good morning, everyone. Let’s get started.",
+            "explanation": "This polite, professional greeting sets a formal tone appropriate for business meetings.",
+            "id": "ex_d5920a3b-e4a4-4824-bdf0-91f10da9c7ba_1",
+            "options": [
+              "Good morning, everyone. Let’s get started.",
+              "Hey team, what’s up?",
+              "Yo, let’s kick this off!",
+              "Alright, let’s dive in."
+            ],
+            "question": "Which phrase is most appropriate to open a formal business meeting?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "One of the chair’s main duties is to keep the meeting on track and follow the agenda.",
+            "id": "ex_d5920a3b-e4a4-4824-bdf0-91f10da9c7ba_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The chairperson is responsible for ensuring that all agenda items are covered before the meeting ends.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "open",
+            "explanation": "‘Open’ is the verb commonly used to start a meeting.",
+            "id": "ex_d5920a3b-e4a4-4824-bdf0-91f10da9c7ba_3",
+            "options": [],
+            "question": "I would like to {blank} the meeting by reviewing the agenda.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Chúng ta có thể hoãn cuộc thảo luận về ngân sách sang cuộc họp tiếp theo không?",
+            "explanation": "The translation captures the polite request and key terms correctly.",
+            "id": "ex_d5920a3b-e4a4-4824-bdf0-91f10da9c7ba_4",
+            "options": [],
+            "question": "Translate into Vietnamese: 'Could we postpone the discussion on the budget to the next meeting?'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Chairperson:Người chủ trì, Minute taker:Thư ký",
+            "explanation": "The chairperson leads the meeting (Người chủ trì) and the minute taker records notes (Thư ký).",
+            "id": "ex_d5920a3b-e4a4-4824-bdf0-91f10da9c7ba_5",
+            "options": [
+              "Chairperson",
+              "Minute taker",
+              "Người chủ trì",
+              "Thư ký"
+            ],
+            "question": "Match each meeting role with its Vietnamese description.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "59b1b19e-38b0-4e15-91cb-5f336c9b8f05",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.184505"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "d5920a3b-e4a4-4824-bdf0-91f10da9c7ba",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Opening & Chairing a Meeting",
+      "total_exercises": 5,
+      "unit_id": "d7e6c2cf-d355-4a8a-acbf-67d843357a7e",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.837034"
+      },
+      "xp_reward": 22
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "I completely agree with your point.",
+            "explanation": "The full sentence uses a courteous tone and clearly shows agreement, which is appropriate for a professional setting.",
+            "id": "ex_59c9ea5e-9104-48a4-a292-e90993696b20_1",
+            "options": [
+              "Sure.",
+              "I completely agree with your point.",
+              "That's fine.",
+              "Yeah."
+            ],
+            "question": "Which of the following sentences is the most polite way to agree with a colleague during a meeting?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "Adding \"Sorry to cut in\" signals politeness, so the interruption is acceptable when done briefly.",
+            "id": "ex_59c9ea5e-9104-48a4-a292-e90993696b20_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "Interrupting with \"Sorry to cut in, but…\" is considered impolite in a professional meeting.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "we might need to consider another approach",
+            "explanation": "The phrase softens disagreement and suggests an alternative without sounding confrontational.",
+            "id": "ex_59c9ea5e-9104-48a4-a292-e90993696b20_3",
+            "options": [],
+            "question": "Complete the sentence with a polite way to disagree: \"I understand your perspective, but I think {blank}.\"",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Bạn có thể làm rõ ý của mình không?",
+            "explanation": "This translation keeps the polite request structure with \"please\" (có thể) and the verb \"làm rõ\" meaning \"clarify\".",
+            "id": "ex_59c9ea5e-9104-48a4-a292-e90993696b20_4",
+            "options": [
+              "Bạn có thể làm rõ ý của mình không?",
+              "Bạn có thể giải thích lại không?",
+              "Bạn có thể cho biết chi tiết hơn không?",
+              "Bạn có thể nói lại không?"
+            ],
+            "question": "Translate into Vietnamese: \"Could you please clarify your point?\"",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "I see your point:Bạn hiểu quan điểm của tôi, Let's explore alternatives:Hãy xem xét các lựa chọn khác",
+            "explanation": "The first English phrase corresponds to the first Vietnamese meaning, and the second English phrase matches the second Vietnamese meaning.",
+            "id": "ex_59c9ea5e-9104-48a4-a292-e90993696b20_5",
+            "options": [
+              "I see your point",
+              "Let's explore alternatives",
+              "Bạn hiểu quan điểm của tôi",
+              "Hãy xem xét các lựa chọn khác"
+            ],
+            "question": "Match each polite expression with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "59b1b19e-38b0-4e15-91cb-5f336c9b8f05",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.184541"
+      },
+      "description": null,
+      "estimated_minutes": 25,
+      "id": "59c9ea5e-9104-48a4-a292-e90993696b20",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Agreeing, Disagreeing & Interrupting Politely",
+      "total_exercises": 5,
+      "unit_id": "d7e6c2cf-d355-4a8a-acbf-67d843357a7e",
+      "updated_at": {
+        "__dt__": "2026-08-14T06:39:10.796155"
+      },
+      "xp_reward": 22
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Opening remarks",
+            "explanation": "The presentation usually starts with opening remarks to greet the audience and set the tone.",
+            "id": "ex_4a497bc8-9b43-4ece-9d85-5012e50833ce_1",
+            "options": [
+              "Conclusion",
+              "Agenda",
+              "Q&A session",
+              "Opening remarks"
+            ],
+            "question": "Which part typically comes first in a business presentation?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "A conclusion reinforces the main ideas by summarising them for the audience.",
+            "id": "ex_4a497bc8-9b43-4ece-9d85-5012e50833ce_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The \"Conclusion\" section should include a summary of the key points presented.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "purpose",
+            "explanation": "Stating the purpose helps the audience understand why they are listening.",
+            "id": "ex_4a497bc8-9b43-4ece-9d85-5012e50833ce_3",
+            "options": [],
+            "question": "In the opening, the presenter should state the {blank} of the presentation.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Agenda:Lịch trình, Conclusion:Kết luận",
+            "explanation": "Agenda corresponds to \"Lịch trình\" (the schedule) and Conclusion to \"Kết luận\" (the final summary).",
+            "id": "ex_4a497bc8-9b43-4ece-9d85-5012e50833ce_4",
+            "options": [
+              "Agenda",
+              "Conclusion",
+              "Lịch trình",
+              "Kết luận"
+            ],
+            "question": "Match each presentation section with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "Good morning everyone, thank you for joining us today. I am excited to introduce our latest product, which offers innovative solutions to meet your needs.",
+            "explanation": "An effective opening greets the audience, thanks them, and previews the main topic.",
+            "id": "ex_4a497bc8-9b43-4ece-9d85-5012e50833ce_5",
+            "options": [],
+            "question": "Write a brief opening statement (2‑3 sentences) for a presentation about launching a new product, in English.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "59b1b19e-38b0-4e15-91cb-5f336c9b8f05",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.184562"
+      },
+      "description": null,
+      "estimated_minutes": 28,
+      "id": "4a497bc8-9b43-4ece-9d85-5012e50833ce",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Structuring a Business Presentation",
+      "total_exercises": 5,
+      "unit_id": "d7e6c2cf-d355-4a8a-acbf-67d843357a7e",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836749"
+      },
+      "xp_reward": 25
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "We would like to propose $10,000.",
+            "explanation": "The phrase uses a polite 'would like to propose' which is standard for presenting an offer in business negotiations.",
+            "id": "ex_50e25457-8db9-4770-a994-2d9b5a04cd63_1",
+            "options": [
+              "We can offer $10,000.",
+              "We would like to propose $10,000.",
+              "Our budget is $10,000.",
+              "We think $10,000 is reasonable."
+            ],
+            "question": "Which phrase is most appropriate for making an initial offer in a negotiation?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "\"That's final\" sounds rigid and non‑collaborative; a collaborative closing should invite agreement, e.g., \"Shall we confirm the terms?\".",
+            "id": "ex_50e25457-8db9-4770-a994-2d9b5a04cd63_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "In a negotiation, saying \"That's final\" is considered a collaborative closing statement.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "$8,500",
+            "explanation": "Offering a modest increase shows flexibility while still moving toward a higher price.",
+            "id": "ex_50e25457-8db9-4770-a994-2d9b5a04cd63_3",
+            "options": [],
+            "question": "If the client says, \"We can’t go above $8,000,\" a good counter‑offer could be: \"How about {blank}?\"",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "counter‑offer:đề nghị phản hồi, closing:kết thúc",
+            "explanation": "A \"counter‑offer\" is a new proposal (đề nghị phản hồi) and \"closing\" refers to ending the negotiation (kết thúc).",
+            "id": "ex_50e25457-8db9-4770-a994-2d9b5a04cd63_4",
+            "options": [
+              "counter‑offer",
+              "closing",
+              "đề nghị phản hồi",
+              "kết thúc"
+            ],
+            "question": "Match each negotiation term with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "We would like to confirm this agreement and start the collaboration immediately.",
+            "explanation": "The sentence accurately conveys the Vietnamese request in polite, professional English suitable for a B2 learner.",
+            "id": "ex_50e25457-8db9-4770-a994-2d9b5a04cd63_5",
+            "options": [],
+            "question": "Write an English closing sentence for a negotiation when you want to confirm the agreement, given the Vietnamese meaning: \"Chúng tôi mong muốn xác nhận thỏa thuận này và bắt đầu hợp tác ngay lập tức.\"",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "59b1b19e-38b0-4e15-91cb-5f336c9b8f05",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.184580"
+      },
+      "description": null,
+      "estimated_minutes": 28,
+      "id": "50e25457-8db9-4770-a994-2d9b5a04cd63",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Negotiation Phrases: Offers, Counter-Offers & Closing",
+      "total_exercises": 5,
+      "unit_id": "d7e6c2cf-d355-4a8a-acbf-67d843357a7e",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836764"
+      },
+      "xp_reward": 25
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Good morning, everyone.",
+            "explanation": "In formal business settings, a polite greeting like 'Good morning, everyone.' is appropriate.",
+            "id": "ex_1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d_1",
+            "options": [
+              "Good morning, everyone.",
+              "Hey guys, what's up?",
+              "Yo, let's get started!",
+              "Sup team?"
+            ],
+            "question": "Which phrase is most appropriate to start a formal business meeting?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "Interrupting can be seen as rude; listening shows respect and improves negotiation outcomes.",
+            "id": "ex_2b3c4d5e-6f7a-8b9c-0d1e-2f3a4b5c6d7e_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "In a negotiation, it is effective to interrupt the counterpart frequently to show confidence.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "review",
+            "explanation": "'Review' means to examine the agenda, which fits the context.",
+            "id": "ex_3c4d5e6f-7a8b-9c0d-1e2f-3a4b5c6d7e8f_3",
+            "options": [],
+            "question": "Please fill the blank with the appropriate phrase: 'I would like to {blank} the agenda before we proceed.'",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "agenda:chương trình nghị sự, minutes:biên bản",
+            "explanation": "In meetings, 'agenda' lists topics, while 'minutes' record what was discussed.",
+            "id": "ex_4d5e6f7a-8b9c-0d1e-2f3a-4b5c6d7e8f9a_4",
+            "options": [
+              "agenda",
+              "minutes",
+              "chương trình nghị sự",
+              "biên bản"
+            ],
+            "question": "Match each business term with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "We need to reach an agreement by the end of this month.",
+            "explanation": "The translation captures the deadline and the goal of reaching an agreement.",
+            "id": "ex_5e6f7a8b-9c0d-1e2f-3a4b-5c6d7e8f9a0b_5",
+            "options": [],
+            "question": "Translate into English: 'Chúng tôi cần đạt được thỏa thuận trước cuối tháng này.'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "59b1b19e-38b0-4e15-91cb-5f336c9b8f05",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.184597"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "0acaa3cb-395c-4132-9fcb-80a694e0ba48",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Business Communication Test",
+      "total_exercises": 5,
+      "unit_id": "d7e6c2cf-d355-4a8a-acbf-67d843357a7e",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836586"
+      },
+      "xp_reward": 40
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Interest income",
+            "explanation": "Interest income is the earnings generated from interest on deposits, distinct from dividends or capital gains.",
+            "id": "ex_b17f6018-5139-4261-b87a-c5da81762c8b_1",
+            "options": [
+              "Principal",
+              "Dividend",
+              "Interest income",
+              "Capital gain"
+            ],
+            "question": "Which term refers to the money earned from interest on a savings account?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "A bull market is characterized by sustained increases in stock prices.",
+            "id": "ex_b17f6018-5139-4261-b87a-c5da81762c8b_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "A bull market indicates rising stock prices.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "capital",
+            "explanation": "Companies issue equity to raise capital for expansion or other needs.",
+            "id": "ex_b17f6018-5139-4261-b87a-c5da81762c8b_3",
+            "options": [],
+            "question": "The company issued new shares to raise {blank}.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "quản lý rủi ro",
+            "explanation": "'Risk management' translates to 'quản lý rủi ro' in Vietnamese.",
+            "id": "ex_b17f6018-5139-4261-b87a-c5da81762c8b_4",
+            "options": [
+              "quản lý rủi ro",
+              "đánh giá rủi ro",
+              "đầu tư rủi ro"
+            ],
+            "question": "Translate the phrase 'risk management' into Vietnamese.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Equity:Cổ phiếu, Bond:Trái phiếu",
+            "explanation": "Equity corresponds to 'Cổ phiếu' and Bond to 'Trái phiếu'.",
+            "id": "ex_b17f6018-5139-4261-b87a-c5da81762c8b_5",
+            "options": [
+              "Equity",
+              "Bond",
+              "Cổ phiếu",
+              "Trái phiếu"
+            ],
+            "question": "Match each financial term with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "59b1b19e-38b0-4e15-91cb-5f336c9b8f05",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.228978"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "b17f6018-5139-4261-b87a-c5da81762c8b",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Finance & Investment Vocabulary",
+      "total_exercises": 5,
+      "unit_id": "e271bd53-fe4e-4f7d-a43c-e53c3319aa1c",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836947"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Generating potential customer contacts",
+            "explanation": "Lead generation is the process of attracting and capturing interest in a product or service to create potential customer contacts.",
+            "id": "ex_a1b2c3d4-1111-2222-3333-444455556666_1",
+            "options": [
+              "Creating promotional videos",
+              "Generating potential customer contacts",
+              "Analyzing competitor pricing",
+              "Designing product packaging"
+            ],
+            "question": "What does the term \"lead generation\" refer to in marketing?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "At the break-even point, a business’s revenues exactly cover its expenses, resulting in zero profit.",
+            "id": "ex_a1b2c3d4-1111-2222-3333-444455556666_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "A \"break-even point\" is the point where total revenue equals total costs.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "acquiring",
+            "explanation": "The verb \"acquiring\" fits the context of gaining new customers.",
+            "id": "ex_a1b2c3d4-1111-2222-3333-444455556666_3",
+            "options": [],
+            "question": "Our company aims to increase market share by {blank} new customers each quarter.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "lead generation:tạo khách hàng tiềm năng, break-even point:điểm hòa vốn",
+            "explanation": "\"Lead generation\" means \"tạo khách hàng tiềm năng\" and \"break-even point\" means \"điểm hòa vốn\".",
+            "id": "ex_a1b2c3d4-1111-2222-3333-444455556666_4",
+            "options": [
+              "lead generation",
+              "break-even point",
+              "tạo khách hàng tiềm năng",
+              "điểm hòa vốn"
+            ],
+            "question": "Match each marketing term with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "content marketing strategy",
+            "explanation": "The phrase \"Chiến lược tiếp thị nội dung\" translates directly to \"content marketing strategy\" in English.",
+            "id": "ex_a1b2c3d4-1111-2222-3333-444455556666_5",
+            "options": [],
+            "question": "Translate into English: \"Chiến lược tiếp thị nội dung\".",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "59b1b19e-38b0-4e15-91cb-5f336c9b8f05",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.229025"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "d8d87f4a-320e-426c-a09a-872cd4a61014",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Marketing & Sales Terminology",
+      "total_exercises": 5,
+      "unit_id": "e271bd53-fe4e-4f7d-a43c-e53c3319aa1c",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.837038"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "applicant",
+            "explanation": "A 'candidate' or 'applicant' is someone who applies for a position.",
+            "id": "ex_4963f30e-1f8f-4c24-9974-6f7d8d846225_1",
+            "options": [
+              "applicant",
+              "interviewer",
+              "manager",
+              "colleague"
+            ],
+            "question": "Which word best fits the description: a person applying for a job?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "Onboarding is the process of integrating a new employee into the company, not terminating them.",
+            "id": "ex_4963f30e-1f8f-4c24-9974-6f7d8d846225_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "True or False: 'Onboarding' refers to the process of terminating an employee's contract.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "recruitment plan",
+            "explanation": "The phrase 'recruitment plan' fits the context of HR discussing hiring strategies.",
+            "id": "ex_4963f30e-1f8f-4c24-9974-6f7d8d846225_3",
+            "options": [],
+            "question": "The HR manager asked the team to schedule a meeting to discuss the {blank}.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Chúng tôi đang tìm kiếm một thành viên chủ động trong đội.",
+            "explanation": "The translation conveys the meaning of seeking a proactive team player.",
+            "id": "ex_4963f30e-1f8f-4c24-9974-6f7d8d846225_4",
+            "options": [],
+            "question": "Translate the following sentence into Vietnamese: 'We are looking for a proactive team player.'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Onboarding:Tiếp nhận nhân viên mới, Layoff:Sa thải",
+            "explanation": "Onboarding means 'tiếp nhận nhân viên mới', while layoff means 'sa thải'.",
+            "id": "ex_4963f30e-1f8f-4c24-9974-6f7d8d846225_5",
+            "options": [
+              "Onboarding",
+              "Layoff",
+              "Tiếp nhận nhân viên mới",
+              "Sa thải"
+            ],
+            "question": "Match each HR term with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "59b1b19e-38b0-4e15-91cb-5f336c9b8f05",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.229045"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "4963f30e-1f8f-4c24-9974-6f7d8d846225",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "HR & Recruitment Language",
+      "total_exercises": 5,
+      "unit_id": "e271bd53-fe4e-4f7d-a43c-e53c3319aa1c",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836745"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "A rough estimate",
+            "explanation": "In business, a 'ballpark figure' refers to an approximate or rough estimate.",
+            "id": "ex_a1b2c3d4-0001_1",
+            "options": [
+              "An exact number",
+              "A rough estimate",
+              "A legal term",
+              "A marketing strategy"
+            ],
+            "question": "What does the idiom 'ballpark figure' mean in a business context?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "'Touch base' is an idiom meaning to briefly make contact or update, not a literal baseball reference.",
+            "id": "ex_a1b2c3d4-0002_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The phrase 'touch base' means to physically meet someone in a baseball stadium.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "ballpark",
+            "explanation": "The idiom 'ballpark estimate' is used for an approximate figure.",
+            "id": "ex_a1b2c3d4-0003_3",
+            "options": [],
+            "question": "We need a {blank} estimate before we can proceed with the project.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "ballpark:ước chừng chung, touch base:liên lạc nhanh",
+            "explanation": "'Ballpark' corresponds to 'ước chừng chung' and 'touch base' to 'liên lạc nhanh' in business contexts.",
+            "id": "ex_a1b2c3d4-0004_4",
+            "options": [
+              "ballpark",
+              "touch base",
+              "ước chừng chung",
+              "liên lạc nhanh"
+            ],
+            "question": "Match each business idiom with its Vietnamese meaning.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "Hi John, I just wanted to touch base regarding the status of the quarterly report. Could you please let me know if there are any updates? Thanks.",
+            "explanation": "The answer demonstrates appropriate use of 'touch base' in a polite business email.",
+            "id": "ex_a1b2c3d4-0005_5",
+            "options": [],
+            "question": "Write a short email (2-3 sentences) using the idiom 'touch base' to ask for an update on the report.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "59b1b19e-38b0-4e15-91cb-5f336c9b8f05",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.229063"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "360f121a-4b47-462f-824b-e7b314a37561",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Common Business Idioms: Ball Park, Touch Base, etc.",
+      "total_exercises": 5,
+      "unit_id": "e271bd53-fe4e-4f7d-a43c-e53c3319aa1c",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836681"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Giảm chi phí bằng cách làm giảm chất lượng",
+            "explanation": "‘Cut corners’ means to do something in the cheapest or easiest way, often compromising quality.",
+            "id": "ex_38ac7a27-3556-4459-af6f-0df9db6260dc_1",
+            "options": [
+              "Giảm chi phí bằng cách làm giảm chất lượng",
+              "Mở rộng thị trường nhanh chóng",
+              "Tăng lợi nhuận bằng cách đầu tư mạnh",
+              "Cải thiện quy trình làm việc"
+            ],
+            "question": "What does the business idiom 'to cut corners' mean?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "In business, the bottom line is the final profit after all expenses.",
+            "id": "ex_38ac7a27-3556-4459-af6f-0df9db6260dc_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The phrase 'bottom line' refers to a company's net profit.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "significant",
+            "explanation": "'Significant' describes a noticeable or important increase.",
+            "id": "ex_38ac7a27-3556-4459-af6f-0df9db6260dc_3",
+            "options": [],
+            "question": "Our quarterly report shows a {blank} increase in revenue compared to last year.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Người có lợi ích",
+            "explanation": "Stakeholder means a person or group with an interest in the company's activities.",
+            "id": "ex_38ac7a27-3556-4459-af6f-0df9db6260dc_4",
+            "options": [
+              "Cổ đông",
+              "Người có lợi ích",
+              "Nhà đầu tư",
+              "Khách hàng"
+            ],
+            "question": "Select the correct Vietnamese translation for the term 'stakeholder'.",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "I look forward to hearing from you.",
+            "explanation": "This sentence politely indicates you expect a response.",
+            "id": "ex_38ac7a27-3556-4459-af6f-0df9db6260dc_5",
+            "options": [],
+            "question": "Write a short closing sentence for a business email that expresses anticipation of a reply, using the phrase 'I look forward to hearing from you'.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "59b1b19e-38b0-4e15-91cb-5f336c9b8f05",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.229080"
+      },
+      "description": null,
+      "estimated_minutes": 18,
+      "id": "38ac7a27-3556-4459-af6f-0df9db6260dc",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Business Vocabulary Final Test",
+      "total_exercises": 5,
+      "unit_id": "e271bd53-fe4e-4f7d-a43c-e53c3319aa1c",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836689"
+      },
+      "xp_reward": 40
+    }
+  ],
+  "units": [
+    {
+      "background_color": "#F57C00",
+      "course_id": "59b1b19e-38b0-4e15-91cb-5f336c9b8f05",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.100093"
+      },
+      "description": "Viết email, báo cáo và tài liệu kinh doanh chuyên nghiệp",
+      "icon_url": null,
+      "id": "ff268766-8a0d-4890-aea6-cf397b22124d",
+      "order_index": 1,
+      "title": "Professional Written Communication",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:39.135708"
+      }
+    },
+    {
+      "background_color": "#1565C0",
+      "course_id": "59b1b19e-38b0-4e15-91cb-5f336c9b8f05",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.137666"
+      },
+      "description": "Họp, thuyết trình và đàm phán bằng tiếng Anh",
+      "icon_url": null,
+      "id": "d7e6c2cf-d355-4a8a-acbf-67d843357a7e",
+      "order_index": 2,
+      "title": "Meetings, Presentations & Negotiations",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:39.179725"
+      }
+    },
+    {
+      "background_color": "#00695C",
+      "course_id": "59b1b19e-38b0-4e15-91cb-5f336c9b8f05",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:39.181859"
+      },
+      "description": "Từ vựng chuyên ngành và thành ngữ kinh doanh thường dùng",
+      "icon_url": null,
+      "id": "e271bd53-fe4e-4f7d-a43c-e53c3319aa1c",
+      "order_index": 3,
+      "title": "Business Vocabulary & Idioms",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:39.226669"
+      }
+    }
+  ]
+}

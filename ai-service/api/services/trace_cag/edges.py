@@ -37,6 +37,12 @@ def route_after_diagnosis(state: TraceCAGState) -> Literal["retrieve_node", "ask
     - level in A1/A2 and errors → vietnamese_node (explain in native language first)
     - otherwise → retrieve (continue normal flow)
     """
+    if state.get("diagnosis_policy") == "llm":
+        # Role-play (topic chat): the persona always answers. Corrections and
+        # their native-language explanation travel in the diagnosis itself, and
+        # a confidence of 0 means "ungraded", not "ask the learner what they meant".
+        return "retrieve_node"
+
     confidence = state.get("diagnosis_confidence", 1.0)
     level = state.get("learner_profile", {}).get("level", "B1")
     errors = state.get("diagnosis_errors", [])

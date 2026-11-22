@@ -2,7 +2,7 @@
 
 // ignore_for_file: constant_identifier_names
 
-abstract class  LocaleKeys {
+abstract class LocaleKeys {
   static const app_name = 'app.name';
   static const app_tagline = 'app.tagline';
   static const app = 'app';
@@ -78,7 +78,8 @@ abstract class  LocaleKeys {
   static const auth_continueWithGoogle = 'auth.continueWithGoogle';
   static const auth_continueWithFacebook = 'auth.continueWithFacebook';
   static const auth_resetYourPassword = 'auth.resetYourPassword';
-  static const auth_resetPasswordInstructions = 'auth.resetPasswordInstructions';
+  static const auth_resetPasswordInstructions =
+      'auth.resetPasswordInstructions';
   static const auth_sendResetInstructions = 'auth.sendResetInstructions';
   static const auth_resetEmailSent = 'auth.resetEmailSent';
   static const auth_requestRecorded = 'auth.requestRecorded';
@@ -105,9 +106,12 @@ abstract class  LocaleKeys {
   static const auth_emailVerificationTitle = 'auth.emailVerificationTitle';
   static const auth_emailVerificationMessage = 'auth.emailVerificationMessage';
   static const auth_emailVerificationResend = 'auth.emailVerificationResend';
-  static const auth_emailVerificationResendSuccess = 'auth.emailVerificationResendSuccess';
-  static const auth_emailVerificationResendError = 'auth.emailVerificationResendError';
-  static const auth_emailVerificationBackToLogin = 'auth.emailVerificationBackToLogin';
+  static const auth_emailVerificationResendSuccess =
+      'auth.emailVerificationResendSuccess';
+  static const auth_emailVerificationResendError =
+      'auth.emailVerificationResendError';
+  static const auth_emailVerificationBackToLogin =
+      'auth.emailVerificationBackToLogin';
   static const auth_passwordMismatch = 'auth.passwordMismatch';
   static const auth = 'auth';
   static const home_greeting = 'home.greeting';
@@ -134,12 +138,11 @@ abstract class  LocaleKeys {
   static const home_keepGoing = 'home.keepGoing';
   static const home_dashboardLoadFailed = 'home.dashboardLoadFailed';
   static const home_quickActions = 'home.quickActions';
+  static const home_unlockHint = 'home.unlockHint';
   static const home_continueLearningSection = 'home.continueLearningSection';
   static const home_featuredCourses = 'home.featuredCourses';
   static const home_noEnrolledCoursesYet = 'home.noEnrolledCoursesYet';
   static const home_enrollCoursePrompt = 'home.enrollCoursePrompt';
-  static const home_noFeaturedCourses = 'home.noFeaturedCourses';
-  static const home_noFeaturedCoursesDescription = 'home.noFeaturedCoursesDescription';
   static const home_reload = 'home.reload';
   static const home_refreshData = 'home.refreshData';
   static const home_startLearning = 'home.startLearning';
@@ -169,6 +172,13 @@ abstract class  LocaleKeys {
   static const home_todayProgress = 'home.todayProgress';
   static const home_weeklyStats = 'home.weeklyStats';
   static const home_recommendations = 'home.recommendations';
+  static const home_discover = 'home.discover';
+  static const home_discoverSubtitle = 'home.discoverSubtitle';
+  static const home_bookOfWeek = 'home.bookOfWeek';
+  static const home_bookChapters = 'home.bookChapters';
+  static const home_readNow = 'home.readNow';
+  static const home_discoverPodcastMeta = 'home.discoverPodcastMeta';
+  static const home_discoverCourseMeta = 'home.discoverCourseMeta';
   static const home_loadingChallenges = 'home.loadingChallenges';
   static const home_dailyChallenges = 'home.dailyChallenges';
   static const home_challengesCompleted = 'home.challengesCompleted';
@@ -211,13 +221,17 @@ abstract class  LocaleKeys {
   static const course_progress = 'course.progress';
   static const course_completed = 'course.completed';
   static const course_locked = 'course.locked';
+  static const course_lockedHint = 'course.lockedHint';
+  static const course_nextUp = 'course.nextUp';
   static const course_start = 'course.start';
   static const course_continue = 'course.continue';
   static const course_review = 'course.review';
   static const course_difficulty_beginner = 'course.difficulty.beginner';
   static const course_difficulty_elementary = 'course.difficulty.elementary';
-  static const course_difficulty_intermediate = 'course.difficulty.intermediate';
-  static const course_difficulty_upperIntermediate = 'course.difficulty.upperIntermediate';
+  static const course_difficulty_intermediate =
+      'course.difficulty.intermediate';
+  static const course_difficulty_upperIntermediate =
+      'course.difficulty.upperIntermediate';
   static const course_difficulty_advanced = 'course.difficulty.advanced';
   static const course_difficulty = 'course.difficulty';
   static const course_notFound = 'course.notFound';
@@ -235,13 +249,22 @@ abstract class  LocaleKeys {
   static const course_totalLessonsCount = 'course.totalLessonsCount';
   static const course_userProgressPercent = 'course.userProgressPercent';
   static const course = 'course';
+  static const lesson_pushPrompt = 'lesson.pushPrompt';
+  static const lesson_pushPromptAllow = 'lesson.pushPromptAllow';
+  static const lesson_pushPromptLater = 'lesson.pushPromptLater';
   static const lesson_sessionTitle = 'lesson.sessionTitle';
   static const lesson_loadingLesson = 'lesson.loadingLesson';
   static const lesson_noLessonData = 'lesson.noLessonData';
   static const lesson_noExerciseAvailable = 'lesson.noExerciseAvailable';
-  static const lesson_exerciseTypeNotImplemented = 'lesson.exerciseTypeNotImplemented';
+  static const lesson_lockedTitle = 'lesson.lockedTitle';
+  static const lesson_lockedMessage = 'lesson.lockedMessage';
+  static const lesson_resultNotSavedTitle = 'lesson.resultNotSavedTitle';
+  static const lesson_resultNotSavedMessage = 'lesson.resultNotSavedMessage';
+  static const lesson_exerciseTypeNotImplemented =
+      'lesson.exerciseTypeNotImplemented';
   static const lesson_checkAnswer = 'lesson.checkAnswer';
   static const lesson_continueButton = 'lesson.continueButton';
+  static const lesson_nextLesson = 'lesson.nextLesson';
   static const lesson_excellent = 'lesson.excellent';
   static const lesson_wellDone = 'lesson.wellDone';
   static const lesson_scoreSummary = 'lesson.scoreSummary';
@@ -269,7 +292,8 @@ abstract class  LocaleKeys {
   static const flashcard_reviewSessionTitle = 'flashcard.reviewSessionTitle';
   static const flashcard_loadingVocabulary = 'flashcard.loadingVocabulary';
   static const flashcard_tryAgain = 'flashcard.tryAgain';
-  static const flashcard_noReviewSessionAvailable = 'flashcard.noReviewSessionAvailable';
+  static const flashcard_noReviewSessionAvailable =
+      'flashcard.noReviewSessionAvailable';
   static const flashcard_sessionComplete = 'flashcard.sessionComplete';
   static const flashcard_exitReviewTitle = 'flashcard.exitReviewTitle';
   static const flashcard_exitReviewMessage = 'flashcard.exitReviewMessage';
@@ -284,11 +308,14 @@ abstract class  LocaleKeys {
   static const flashcard_noCards = 'flashcard.noCards';
   static const flashcard_addCard = 'flashcard.addCard';
   static const flashcard_practiceComplete = 'flashcard.practiceComplete';
-  static const flashcard_sessionCompleteTitle = 'flashcard.sessionCompleteTitle';
+  static const flashcard_sessionCompleteTitle =
+      'flashcard.sessionCompleteTitle';
   static const flashcard_excellentMotivation = 'flashcard.excellentMotivation';
   static const flashcard_greatJobMotivation = 'flashcard.greatJobMotivation';
-  static const flashcard_goodEffortMotivation = 'flashcard.goodEffortMotivation';
-  static const flashcard_keepPracticingMotivation = 'flashcard.keepPracticingMotivation';
+  static const flashcard_goodEffortMotivation =
+      'flashcard.goodEffortMotivation';
+  static const flashcard_keepPracticingMotivation =
+      'flashcard.keepPracticingMotivation';
   static const flashcard_wordsReviewed = 'flashcard.wordsReviewed';
   static const flashcard_correctAnswers = 'flashcard.correctAnswers';
   static const flashcard_accuracySubtitle = 'flashcard.accuracySubtitle';
@@ -313,12 +340,14 @@ abstract class  LocaleKeys {
   static const voice_enterPhraseHint = 'voice.enterPhraseHint';
   static const voice_stop = 'voice.stop';
   static const voice_listenToExample = 'voice.listenToExample';
-  static const voice_grantMicrophonePermission = 'voice.grantMicrophonePermission';
+  static const voice_grantMicrophonePermission =
+      'voice.grantMicrophonePermission';
   static const voice_yourTurn = 'voice.yourTurn';
   static const voice_analyzingPronunciation = 'voice.analyzingPronunciation';
   static const voice_youSaid = 'voice.youSaid';
   static const voice_excellentPronunciation = 'voice.excellentPronunciation';
-  static const voice_microphonePermissionDenied = 'voice.microphonePermissionDenied';
+  static const voice_microphonePermissionDenied =
+      'voice.microphonePermissionDenied';
   static const voice_failedToStartRecording = 'voice.failedToStartRecording';
   static const voice_recordedAudioUnreadable = 'voice.recordedAudioUnreadable';
   static const voice_noRecordedAudioReturned = 'voice.noRecordedAudioReturned';
@@ -344,7 +373,8 @@ abstract class  LocaleKeys {
   static const voice_listening = 'voice.listening';
   static const voice_tapToSpeak = 'voice.tapToSpeak';
   static const voice_playbackSpeed = 'voice.playbackSpeed';
-  static const voice_playbackSpeedDescription = 'voice.playbackSpeedDescription';
+  static const voice_playbackSpeedDescription =
+      'voice.playbackSpeedDescription';
   static const voice_selectPlaybackSpeed = 'voice.selectPlaybackSpeed';
   static const voice_confidence = 'voice.confidence';
   static const voice_playError = 'voice.playError';
@@ -368,6 +398,32 @@ abstract class  LocaleKeys {
   static const chat_processingVoice = 'chat.processingVoice';
   static const chat_grammarCorrection = 'chat.grammarCorrection';
   static const chat_correctionRule = 'chat.correctionRule';
+  static const chat_fixSuggestion = 'chat.fixSuggestion';
+  static const chat_saveCorrection = 'chat.saveCorrection';
+  static const chat_errorLabel_article_missing = 'chat.errorLabel.article_missing';
+  static const chat_errorLabel_article_a_an = 'chat.errorLabel.article_a_an';
+  static const chat_errorLabel_article_the = 'chat.errorLabel.article_the';
+  static const chat_errorLabel_preposition = 'chat.errorLabel.preposition';
+  static const chat_errorLabel_subject_verb_agreement = 'chat.errorLabel.subject_verb_agreement';
+  static const chat_errorLabel_verb_tense = 'chat.errorLabel.verb_tense';
+  static const chat_errorLabel_verb_form = 'chat.errorLabel.verb_form';
+  static const chat_errorLabel_irregular_verb = 'chat.errorLabel.irregular_verb';
+  static const chat_errorLabel_missing_auxiliary = 'chat.errorLabel.missing_auxiliary';
+  static const chat_errorLabel_missing_be = 'chat.errorLabel.missing_be';
+  static const chat_errorLabel_passive_voice = 'chat.errorLabel.passive_voice';
+  static const chat_errorLabel_noun_number = 'chat.errorLabel.noun_number';
+  static const chat_errorLabel_possessive = 'chat.errorLabel.possessive';
+  static const chat_errorLabel_pronoun_case = 'chat.errorLabel.pronoun_case';
+  static const chat_errorLabel_pronoun_missing = 'chat.errorLabel.pronoun_missing';
+  static const chat_errorLabel_word_order = 'chat.errorLabel.word_order';
+  static const chat_errorLabel_word_form = 'chat.errorLabel.word_form';
+  static const chat_errorLabel_comparison = 'chat.errorLabel.comparison';
+  static const chat_errorLabel_conjunction = 'chat.errorLabel.conjunction';
+  static const chat_errorLabel_particle = 'chat.errorLabel.particle';
+  static const chat_errorLabel_spelling = 'chat.errorLabel.spelling';
+  static const chat_errorLabel_punctuation = 'chat.errorLabel.punctuation';
+  static const chat_errorLabel_word_choice = 'chat.errorLabel.word_choice';
+  static const chat_errorLabel_other = 'chat.errorLabel.other';
   static const chat = 'chat';
   static const achievements_title = 'achievements.title';
   static const achievements_unlocked = 'achievements.unlocked';
@@ -377,14 +433,17 @@ abstract class  LocaleKeys {
   static const achievements_viewAll = 'achievements.viewAll';
   static const achievements_locked = 'achievements.locked';
   static const achievements_requirement = 'achievements.requirement';
-  static const achievements_loadingAchievements = 'achievements.loadingAchievements';
+  static const achievements_loadingAchievements =
+      'achievements.loadingAchievements';
   static const achievements_yourProgress = 'achievements.yourProgress';
   static const achievements_completeToUnlock = 'achievements.completeToUnlock';
-  static const achievements_achievementUnlocked = 'achievements.achievementUnlocked';
+  static const achievements_achievementUnlocked =
+      'achievements.achievementUnlocked';
   static const achievements_refresh = 'achievements.refresh';
   static const achievements_categoryLessons = 'achievements.categoryLessons';
   static const achievements_categoryStreaks = 'achievements.categoryStreaks';
-  static const achievements_categoryVocabulary = 'achievements.categoryVocabulary';
+  static const achievements_categoryVocabulary =
+      'achievements.categoryVocabulary';
   static const achievements_categoryQuiz = 'achievements.categoryQuiz';
   static const achievements_categoryCourse = 'achievements.categoryCourse';
   static const achievements_categoryVoice = 'achievements.categoryVoice';
@@ -392,7 +451,8 @@ abstract class  LocaleKeys {
   static const achievements_categorySpecial = 'achievements.categorySpecial';
   static const achievements_categorySkill = 'achievements.categorySkill';
   static const achievements_categorySocial = 'achievements.categorySocial';
-  static const achievements_categoryMilestone = 'achievements.categoryMilestone';
+  static const achievements_categoryMilestone =
+      'achievements.categoryMilestone';
   static const achievements_unlockedCount = 'achievements.unlockedCount';
   static const achievements_awesome = 'achievements.awesome';
   static const achievements = 'achievements';
@@ -432,11 +492,13 @@ abstract class  LocaleKeys {
   static const profile_passed = 'profile.passed';
   static const profile_weeklyActivity = 'profile.weeklyActivity';
   static const profile_last7Days = 'profile.last7Days';
-  static const profile_last7DaysDetailedBreakdown = 'profile.last7DaysDetailedBreakdown';
+  static const profile_last7DaysDetailedBreakdown =
+      'profile.last7DaysDetailedBreakdown';
   static const profile_noActivityDataYet = 'profile.noActivityDataYet';
   static const profile_totalXp = 'profile.totalXp';
   static const profile_recentBadges = 'profile.recentBadges';
-  static const profile_completeLessonsToEarnBadges = 'profile.completeLessonsToEarnBadges';
+  static const profile_completeLessonsToEarnBadges =
+      'profile.completeLessonsToEarnBadges';
   static const profile_total = 'profile.total';
   static const profile_bestDay = 'profile.bestDay';
   static const profile_noActivity = 'profile.noActivity';
@@ -453,7 +515,8 @@ abstract class  LocaleKeys {
   static const profile_accountInformation = 'profile.accountInformation';
   static const profile_username = 'profile.username';
   static const profile_saveChanges = 'profile.saveChanges';
-  static const profile_tapCameraToChangeAvatar = 'profile.tapCameraToChangeAvatar';
+  static const profile_tapCameraToChangeAvatar =
+      'profile.tapCameraToChangeAvatar';
   static const profile_chooseAvatar = 'profile.chooseAvatar';
   static const profile_useCustomUrl = 'profile.useCustomUrl';
   static const profile_customAvatarUrl = 'profile.customAvatarUrl';
@@ -467,13 +530,15 @@ abstract class  LocaleKeys {
   static const profile_startLessonToday = 'profile.startLessonToday';
   static const profile_lessonsDetails = 'profile.lessonsDetails';
   static const profile_totalLessonsCompleted = 'profile.totalLessonsCompleted';
-  static const profile_lessonsCompletedThisWeek = 'profile.lessonsCompletedThisWeek';
+  static const profile_lessonsCompletedThisWeek =
+      'profile.lessonsCompletedThisWeek';
   static const profile_coursesDetails = 'profile.coursesDetails';
   static const profile_totalCoursesFinished = 'profile.totalCoursesFinished';
   static const profile_noEnrolledCoursesYet = 'profile.noEnrolledCoursesYet';
   static const profile_courseProgressSummary = 'profile.courseProgressSummary';
   static const profile_vocabularyDetails = 'profile.vocabularyDetails';
-  static const profile_totalVocabularyMastered = 'profile.totalVocabularyMastered';
+  static const profile_totalVocabularyMastered =
+      'profile.totalVocabularyMastered';
   static const profile_newWordsThisWeek = 'profile.newWordsThisWeek';
   static const profile_testsDetails = 'profile.testsDetails';
   static const profile_totalTestsPassed = 'profile.totalTestsPassed';
@@ -481,12 +546,14 @@ abstract class  LocaleKeys {
   static const profile_noScoreYet = 'profile.noScoreYet';
   static const profile_yourProficiency = 'profile.yourProficiency';
   static const profile_proficiencyUnlockHint = 'profile.proficiencyUnlockHint';
-  static const profile_proficiencyUnlockThreshold = 'profile.proficiencyUnlockThreshold';
+  static const profile_proficiencyUnlockThreshold =
+      'profile.proficiencyUnlockThreshold';
   static const profile_startLessons = 'profile.startLessons';
   static const profile = 'profile';
   static const progress_title = 'progress.title';
   static const progress_loadingProgress = 'progress.loadingProgress';
-  static const progress_noProgressDataAvailable = 'progress.noProgressDataAvailable';
+  static const progress_noProgressDataAvailable =
+      'progress.noProgressDataAvailable';
   static const progress_overallStatistics = 'progress.overallStatistics';
   static const progress_coursesEnrolledStat = 'progress.coursesEnrolledStat';
   static const progress_coursesCompletedStat = 'progress.coursesCompletedStat';
@@ -500,7 +567,8 @@ abstract class  LocaleKeys {
   static const settings_language = 'settings.language';
   static const settings_language_subtitle = 'settings.language_subtitle';
   static const settings_notifications = 'settings.notifications';
-  static const settings_notifications_subtitle = 'settings.notifications_subtitle';
+  static const settings_notifications_subtitle =
+      'settings.notifications_subtitle';
   static const settings_sound = 'settings.sound';
   static const settings_sound_subtitle = 'settings.sound_subtitle';
   static const settings_theme = 'settings.theme';
@@ -523,29 +591,37 @@ abstract class  LocaleKeys {
   static const settings_sign_out = 'settings.sign_out';
   static const settings_sign_out_confirm = 'settings.sign_out_confirm';
   static const settings_goal_casual_label = 'settings.goal_casual_label';
-  static const settings_goal_casual_description = 'settings.goal_casual_description';
+  static const settings_goal_casual_description =
+      'settings.goal_casual_description';
   static const settings_goal_regular_label = 'settings.goal_regular_label';
-  static const settings_goal_regular_description = 'settings.goal_regular_description';
+  static const settings_goal_regular_description =
+      'settings.goal_regular_description';
   static const settings_goal_serious_label = 'settings.goal_serious_label';
-  static const settings_goal_serious_description = 'settings.goal_serious_description';
+  static const settings_goal_serious_description =
+      'settings.goal_serious_description';
   static const settings_goal_intense_label = 'settings.goal_intense_label';
-  static const settings_goal_intense_description = 'settings.goal_intense_description';
+  static const settings_goal_intense_description =
+      'settings.goal_intense_description';
   static const settings_goal_insane_label = 'settings.goal_insane_label';
-  static const settings_goal_insane_description = 'settings.goal_insane_description';
+  static const settings_goal_insane_description =
+      'settings.goal_insane_description';
   static const settings_goal_progress = 'settings.goal_progress';
   static const settings_goal_updated = 'settings.goal_updated';
   static const settings = 'settings';
   static const notifications_pageTitle = 'notifications.pageTitle';
   static const notifications_unreadCount = 'notifications.unreadCount';
-  static const notifications_unreadCountPlural = 'notifications.unreadCountPlural';
+  static const notifications_unreadCountPlural =
+      'notifications.unreadCountPlural';
   static const notifications_allCaughtUp = 'notifications.allCaughtUp';
   static const notifications_markAllRead = 'notifications.markAllRead';
   static const notifications_loading = 'notifications.loading';
-  static const notifications_somethingWentWrong = 'notifications.somethingWentWrong';
+  static const notifications_somethingWentWrong =
+      'notifications.somethingWentWrong';
   static const notifications_failedToLoad = 'notifications.failedToLoad';
   static const notifications_retry = 'notifications.retry';
   static const notifications_emptyTitle = 'notifications.emptyTitle';
-  static const notifications_emptyDescription = 'notifications.emptyDescription';
+  static const notifications_emptyDescription =
+      'notifications.emptyDescription';
   static const notifications_refresh = 'notifications.refresh';
   static const notifications_removed = 'notifications.removed';
   static const notifications_undo = 'notifications.undo';
@@ -573,16 +649,22 @@ abstract class  LocaleKeys {
   static const gamification_score = 'gamification.score';
   static const gamification_gems = 'gamification.gems';
   static const gamification_howToEarnGems = 'gamification.howToEarnGems';
-  static const gamification_transactionHistory = 'gamification.transactionHistory';
+  static const gamification_transactionHistory =
+      'gamification.transactionHistory';
   static const gamification_noTransactions = 'gamification.noTransactions';
   static const gamification_rankWeekly = 'gamification.rankWeekly';
   static const gamification_earned = 'gamification.earned';
   static const gamification_spent = 'gamification.spent';
-  static const gamification_earnTipCompleteLessons = 'gamification.earnTipCompleteLessons';
-  static const gamification_earnTipFinishCourse = 'gamification.earnTipFinishCourse';
-  static const gamification_earnTipStreakBonus = 'gamification.earnTipStreakBonus';
-  static const gamification_earnTipAchievements = 'gamification.earnTipAchievements';
-  static const gamification_earnTipChallenges = 'gamification.earnTipChallenges';
+  static const gamification_earnTipCompleteLessons =
+      'gamification.earnTipCompleteLessons';
+  static const gamification_earnTipFinishCourse =
+      'gamification.earnTipFinishCourse';
+  static const gamification_earnTipStreakBonus =
+      'gamification.earnTipStreakBonus';
+  static const gamification_earnTipAchievements =
+      'gamification.earnTipAchievements';
+  static const gamification_earnTipChallenges =
+      'gamification.earnTipChallenges';
   static const gamification = 'gamification';
   static const social_friends = 'social.friends';
   static const social_addFriend = 'social.addFriend';
@@ -593,7 +675,8 @@ abstract class  LocaleKeys {
   static const social_followersTab = 'social.followersTab';
   static const social_followingTab = 'social.followingTab';
   static const social_noActivityYet = 'social.noActivityYet';
-  static const social_followFriendsToSeeActivity = 'social.followFriendsToSeeActivity';
+  static const social_followFriendsToSeeActivity =
+      'social.followFriendsToSeeActivity';
   static const social_findFriends = 'social.findFriends';
   static const social_noFollowersYet = 'social.noFollowersYet';
   static const social_notFollowingAnyone = 'social.notFollowingAnyone';
@@ -638,7 +721,8 @@ abstract class  LocaleKeys {
   static const preAuth_nameHint = 'preAuth.nameHint';
   static const preAuth_namePlaceholder = 'preAuth.namePlaceholder';
   static const preAuth_nameChangeLater = 'preAuth.nameChangeLater';
-  static const preAuth_nativeLanguageQuestion = 'preAuth.nativeLanguageQuestion';
+  static const preAuth_nativeLanguageQuestion =
+      'preAuth.nativeLanguageQuestion';
   static const preAuth_nativeLanguageHint = 'preAuth.nativeLanguageHint';
   static const preAuth_otherLanguage = 'preAuth.otherLanguage';
   static const preAuth = 'preAuth';
@@ -754,7 +838,8 @@ abstract class  LocaleKeys {
   static const newsQuiz_correct = 'newsQuiz.correct';
   static const newsQuiz_excellentMessage = 'newsQuiz.excellentMessage';
   static const newsQuiz_goodJobMessage = 'newsQuiz.goodJobMessage';
-  static const newsQuiz_keepPracticingMessage = 'newsQuiz.keepPracticingMessage';
+  static const newsQuiz_keepPracticingMessage =
+      'newsQuiz.keepPracticingMessage';
   static const newsQuiz_dontGiveUpMessage = 'newsQuiz.dontGiveUpMessage';
   static const newsQuiz_excellentSub = 'newsQuiz.excellentSub';
   static const newsQuiz_goodJobSub = 'newsQuiz.goodJobSub';
@@ -772,8 +857,10 @@ abstract class  LocaleKeys {
   static const bookReader_bookmarkPage = 'bookReader.bookmarkPage';
   static const bookReader_lookingUp = 'bookReader.lookingUp';
   static const bookReader_noDefinitionFound = 'bookReader.noDefinitionFound';
-  static const bookReader_saveWordToVocabulary = 'bookReader.saveWordToVocabulary';
-  static const bookReader_wordAlreadyInCollection = 'bookReader.wordAlreadyInCollection';
+  static const bookReader_saveWordToVocabulary =
+      'bookReader.saveWordToVocabulary';
+  static const bookReader_wordAlreadyInCollection =
+      'bookReader.wordAlreadyInCollection';
   static const bookReader_wordSaved = 'bookReader.wordSaved';
   static const bookReader_couldNotSaveWord = 'bookReader.couldNotSaveWord';
   static const bookReader = 'bookReader';
@@ -789,7 +876,8 @@ abstract class  LocaleKeys {
   static const gamesHub_dailyChallengeLabel = 'gamesHub.dailyChallengeLabel';
   static const gamesHub_difficultyLabel = 'gamesHub.difficultyLabel';
   static const gamesHub_gamesSectionTitle = 'gamesHub.gamesSectionTitle';
-  static const gamesHub_leaderboardSectionTitle = 'gamesHub.leaderboardSectionTitle';
+  static const gamesHub_leaderboardSectionTitle =
+      'gamesHub.leaderboardSectionTitle';
   static const gamesHub_rank1st = 'gamesHub.rank1st';
   static const gamesHub_rank2nd = 'gamesHub.rank2nd';
   static const gamesHub_rank3rd = 'gamesHub.rank3rd';
@@ -824,7 +912,8 @@ abstract class  LocaleKeys {
   static const spellingBee = 'spellingBee';
   static const wordScramble_wordProgress = 'wordScramble.wordProgress';
   static const wordScramble_yourAnswerLabel = 'wordScramble.yourAnswerLabel';
-  static const wordScramble_availableLettersLabel = 'wordScramble.availableLettersLabel';
+  static const wordScramble_availableLettersLabel =
+      'wordScramble.availableLettersLabel';
   static const wordScramble_hintButton = 'wordScramble.hintButton';
   static const wordScramble_skipButton = 'wordScramble.skipButton';
   static const wordScramble = 'wordScramble';
@@ -853,20 +942,25 @@ abstract class  LocaleKeys {
   static const grammarQuiz_reviewConcepts = 'grammarQuiz.reviewConcepts';
   static const grammarQuiz = 'grammarQuiz';
   static const storySelection_pageTitle = 'storySelection.pageTitle';
-  static const storySelection_topicsAvailableCount = 'storySelection.topicsAvailableCount';
+  static const storySelection_topicsAvailableCount =
+      'storySelection.topicsAvailableCount';
   static const storySelection_searchHint = 'storySelection.searchHint';
   static const storySelection_filterAll = 'storySelection.filterAll';
   static const storySelection_filterBeginner = 'storySelection.filterBeginner';
-  static const storySelection_filterIntermediate = 'storySelection.filterIntermediate';
+  static const storySelection_filterIntermediate =
+      'storySelection.filterIntermediate';
   static const storySelection_filterAdvanced = 'storySelection.filterAdvanced';
-  static const storySelection_popularScenariosTitle = 'storySelection.popularScenariosTitle';
+  static const storySelection_popularScenariosTitle =
+      'storySelection.popularScenariosTitle';
   static const storySelection_seeAllLink = 'storySelection.seeAllLink';
   static const storySelection_noTopicsFound = 'storySelection.noTopicsFound';
   static const storySelection = 'storySelection';
-  static const topicChat_preparingTopicMessage = 'topicChat.preparingTopicMessage';
+  static const topicChat_preparingTopicMessage =
+      'topicChat.preparingTopicMessage';
   static const topicChat_emptyStateMessage = 'topicChat.emptyStateMessage';
   static const topicChat_openingTaskTitle = 'topicChat.openingTaskTitle';
-  static const topicChat_creatingSessionDetail = 'topicChat.creatingSessionDetail';
+  static const topicChat_creatingSessionDetail =
+      'topicChat.creatingSessionDetail';
   static const topicChat_failedOpenTitle = 'topicChat.failedOpenTitle';
   static const topicChat_tryAgainDefault = 'topicChat.tryAgainDefault';
   static const topicChat_failedStartSession = 'topicChat.failedStartSession';
@@ -880,10 +974,12 @@ abstract class  LocaleKeys {
   static const topicChat_endSessionTooltip = 'topicChat.endSessionTooltip';
   static const topicChat_inputHint = 'topicChat.inputHint';
   static const topicChat_endSessionTitle = 'topicChat.endSessionTitle';
-  static const topicChat_endSessionConfirmation = 'topicChat.endSessionConfirmation';
+  static const topicChat_endSessionConfirmation =
+      'topicChat.endSessionConfirmation';
   static const topicChat_cancelButton = 'topicChat.cancelButton';
   static const topicChat_endSessionButton = 'topicChat.endSessionButton';
-  static const topicChat_contextReadyBadgeLabel = 'topicChat.contextReadyBadgeLabel';
+  static const topicChat_contextReadyBadgeLabel =
+      'topicChat.contextReadyBadgeLabel';
   static const topicChat_keyVocabularyTitle = 'topicChat.keyVocabularyTitle';
   static const topicChat_swipeToCloseHint = 'topicChat.swipeToCloseHint';
   static const topicChat = 'topicChat';
@@ -891,7 +987,8 @@ abstract class  LocaleKeys {
   static const lexiChat_statusThinking = 'lexiChat.statusThinking';
   static const lexiChat_statusTyping = 'lexiChat.statusTyping';
   static const lexiChat_statusIdle = 'lexiChat.statusIdle';
-  static const lexiChat_tooltipSessionHistory = 'lexiChat.tooltipSessionHistory';
+  static const lexiChat_tooltipSessionHistory =
+      'lexiChat.tooltipSessionHistory';
   static const lexiChat_tooltipToggleVoice = 'lexiChat.tooltipToggleVoice';
   static const lexiChat_tooltipNewChat = 'lexiChat.tooltipNewChat';
   static const lexiChat_sessionsDrawerTitle = 'lexiChat.sessionsDrawerTitle';
@@ -906,7 +1003,8 @@ abstract class  LocaleKeys {
   static const lexiChat_recordingStatus = 'lexiChat.recordingStatus';
   static const lexiChat_inputHint = 'lexiChat.inputHint';
   static const lexiChat_holdToRecord = 'lexiChat.holdToRecord';
-  static const lexiChat_micPermissionRequired = 'lexiChat.micPermissionRequired';
+  static const lexiChat_micPermissionRequired =
+      'lexiChat.micPermissionRequired';
   static const lexiChat_failedStartRecording = 'lexiChat.failedStartRecording';
   static const lexiChat_audioReadError = 'lexiChat.audioReadError';
   static const lexiChat_failedStopRecording = 'lexiChat.failedStopRecording';
@@ -919,6 +1017,10 @@ abstract class  LocaleKeys {
   static const lexiChat = 'lexiChat';
   static const youtube_subtitles = 'youtube.subtitles';
   static const youtube_noSubtitles = 'youtube.noSubtitles';
+  static const youtube_noSubtitlesHint = 'youtube.noSubtitlesHint';
+  static const youtube_subtitlesUnavailable = 'youtube.subtitlesUnavailable';
+  static const youtube_subtitlesUnavailableHint =
+      'youtube.subtitlesUnavailableHint';
   static const youtube_saveWord = 'youtube.saveWord';
   static const youtube_exploreTitle = 'youtube.exploreTitle';
   static const youtube_channelsTitle = 'youtube.channelsTitle';
@@ -988,8 +1090,12 @@ abstract class  LocaleKeys {
   static const books_loadError = 'books.loadError';
   static const books_about = 'books.about';
   static const books_readingProgress = 'books.readingProgress';
-  static const books_chapterQuiz = 'books.chapterQuiz';
-  static const books_chapterQuizTitle = 'books.chapterQuizTitle';
+  static const books_sectionQuiz = 'books.sectionQuiz';
+  static const books_sectionQuizTitle = 'books.sectionQuizTitle';
+  static const books_reviewSection = 'books.reviewSection';
+  static const books_quizLockedHint = 'books.quizLockedHint';
+  static const books_sectionQuizReady = 'books.sectionQuizReady';
+  static const books_startQuiz = 'books.startQuiz';
   static const books_quizNotAvailable = 'books.quizNotAvailable';
   static const books_backToBook = 'books.backToBook';
   static const books_readerSettings = 'books.readerSettings';
@@ -1015,7 +1121,8 @@ abstract class  LocaleKeys {
   static const vocabulary_examples = 'vocabulary.examples';
   static const vocabulary_ratingQuestion = 'vocabulary.ratingQuestion';
   static const vocabulary_flashcard = 'vocabulary.flashcard';
-  static const vocabulary_tapToRevealDefinition = 'vocabulary.tapToRevealDefinition';
+  static const vocabulary_tapToRevealDefinition =
+      'vocabulary.tapToRevealDefinition';
   static const vocabulary_vietnameseLabel = 'vocabulary.vietnameseLabel';
   static const vocabulary_searchPlaceholder = 'vocabulary.searchPlaceholder';
   static const vocabulary_filterAll = 'vocabulary.filterAll';
@@ -1026,10 +1133,485 @@ abstract class  LocaleKeys {
   static const vocabulary_wordLabel = 'vocabulary.wordLabel';
   static const vocabulary_wordInputHint = 'vocabulary.wordInputHint';
   static const vocabulary_definitionHint = 'vocabulary.definitionHint';
-  static const vocabulary_exampleSentenceLabel = 'vocabulary.exampleSentenceLabel';
-  static const vocabulary_exampleSentenceHint = 'vocabulary.exampleSentenceHint';
+  static const vocabulary_exampleSentenceLabel =
+      'vocabulary.exampleSentenceLabel';
+  static const vocabulary_exampleSentenceHint =
+      'vocabulary.exampleSentenceHint';
   static const vocabulary_failedToSaveWord = 'vocabulary.failedToSaveWord';
   static const vocabulary_noDefinitionYet = 'vocabulary.noDefinitionYet';
   static const vocabulary = 'vocabulary';
+  static const coreKit_typeToConfirm = 'coreKit.typeToConfirm';
+  static const coreKit_loadMore = 'coreKit.loadMore';
+  static const coreKit_noResults = 'coreKit.noResults';
+  static const coreKit = 'coreKit';
 
+  static const admin_nav_group_overview = 'admin.nav.group.overview';
+  static const admin_nav_group_learners = 'admin.nav.group.learners';
+  static const admin_nav_group_content = 'admin.nav.group.content';
+  static const admin_nav_group_growth = 'admin.nav.group.growth';
+  static const admin_nav_group_system = 'admin.nav.group.system';
+  static const admin_nav_group_superAdmin = 'admin.nav.group.superAdmin';
+  static const admin_nav_group = 'admin.nav.group';
+  static const admin_nav_dashboard = 'admin.nav.dashboard';
+  static const admin_nav_users = 'admin.nav.users';
+  static const admin_nav_courses = 'admin.nav.courses';
+  static const admin_nav_topics = 'admin.nav.topics';
+  static const admin_nav_vocabulary = 'admin.nav.vocabulary';
+  static const admin_nav_grammar = 'admin.nav.grammar';
+  static const admin_nav_contentLab = 'admin.nav.contentLab';
+  static const admin_nav_contentQa = 'admin.nav.contentQa';
+  static const admin_nav_achievements = 'admin.nav.achievements';
+  static const admin_nav_ads = 'admin.nav.ads';
+  static const admin_nav_campaigns = 'admin.nav.campaigns';
+  static const admin_nav_rankingAgent = 'admin.nav.rankingAgent';
+  static const admin_nav_analytics = 'admin.nav.analytics';
+  static const admin_nav_logs = 'admin.nav.logs';
+  static const admin_nav_health = 'admin.nav.health';
+  static const admin_nav_config = 'admin.nav.config';
+  static const admin_nav_settings = 'admin.nav.settings';
+  static const admin_nav_superDashboard = 'admin.nav.superDashboard';
+  static const admin_nav_adminManagement = 'admin.nav.adminManagement';
+  static const admin_nav = 'admin.nav';
+  static const admin_shell_logout = 'admin.shell.logout';
+  static const admin_shell_roleAdmin = 'admin.shell.roleAdmin';
+  static const admin_shell_roleSuper = 'admin.shell.roleSuper';
+  static const admin_shell_permissionsFailed = 'admin.shell.permissionsFailed';
+  static const admin_shell = 'admin.shell';
+  static const admin_access_forbiddenTitle = 'admin.access.forbiddenTitle';
+  static const admin_access_forbiddenBody = 'admin.access.forbiddenBody';
+  static const admin_access_featureOffTitle = 'admin.access.featureOffTitle';
+  static const admin_access_featureOffBody = 'admin.access.featureOffBody';
+  static const admin_access = 'admin.access';
+  static const admin_errors_network = 'admin.errors.network';
+  static const admin_errors_unauthorized = 'admin.errors.unauthorized';
+  static const admin_errors_forbidden = 'admin.errors.forbidden';
+  static const admin_errors_notFound = 'admin.errors.notFound';
+  static const admin_errors_featureOff = 'admin.errors.featureOff';
+  static const admin_errors_server = 'admin.errors.server';
+  static const admin_errors_generic = 'admin.errors.generic';
+  static const admin_errors_googleCancelled = 'admin.errors.googleCancelled';
+  static const admin_errors_notVerified = 'admin.errors.notVerified';
+  static const admin_errors_notAdmin = 'admin.errors.notAdmin';
+  static const admin_errors_oauthMissing = 'admin.errors.oauthMissing';
+  static const admin_errors = 'admin.errors';
+  static const admin_nav_categories = 'admin.nav.categories';
+  static const admin_nav_ielts = 'admin.nav.ielts';
+  static const admin_content_actions = 'admin.content.actions';
+  static const admin_content_active = 'admin.content.active';
+  static const admin_content_create = 'admin.content.create';
+  static const admin_content_description = 'admin.content.description';
+  static const admin_content_draft = 'admin.content.draft';
+  static const admin_content_fillRequired = 'admin.content.fillRequired';
+  static const admin_content_inactive = 'admin.content.inactive';
+  static const admin_content_level = 'admin.content.level';
+  static const admin_content_name = 'admin.content.name';
+  static const admin_content_published = 'admin.content.published';
+  static const admin_content_tags = 'admin.content.tags';
+  static const admin_content_tagsHint = 'admin.content.tagsHint';
+  static const admin_content_title = 'admin.content.title';
+  static const admin_content_webOnly = 'admin.content.webOnly';
+  static const admin_content = 'admin.content';
+  static const admin_vocabulary_new = 'admin.vocabulary.new';
+  static const admin_vocabulary_edit = 'admin.vocabulary.edit';
+  static const admin_vocabulary_word = 'admin.vocabulary.word';
+  static const admin_vocabulary_definition = 'admin.vocabulary.definition';
+  static const admin_vocabulary_translation = 'admin.vocabulary.translation';
+  static const admin_vocabulary_pronunciation =
+      'admin.vocabulary.pronunciation';
+  static const admin_vocabulary_partOfSpeech = 'admin.vocabulary.partOfSpeech';
+  static const admin_vocabulary_empty = 'admin.vocabulary.empty';
+  static const admin_vocabulary = 'admin.vocabulary';
+  static const admin_grammar_new = 'admin.grammar.new';
+  static const admin_grammar_edit = 'admin.grammar.edit';
+  static const admin_grammar_topic = 'admin.grammar.topic';
+  static const admin_grammar_summary = 'admin.grammar.summary';
+  static const admin_grammar_content = 'admin.grammar.content';
+  static const admin_grammar_empty = 'admin.grammar.empty';
+  static const admin_grammar = 'admin.grammar';
+  static const admin_contentLab_questions = 'admin.contentLab.questions';
+  static const admin_contentLab_exams = 'admin.contentLab.exams';
+  static const admin_contentLab_newQuestion = 'admin.contentLab.newQuestion';
+  static const admin_contentLab_editQuestion = 'admin.contentLab.editQuestion';
+  static const admin_contentLab_newExam = 'admin.contentLab.newExam';
+  static const admin_contentLab_editExam = 'admin.contentLab.editExam';
+  static const admin_contentLab_prompt = 'admin.contentLab.prompt';
+  static const admin_contentLab_type = 'admin.contentLab.type';
+  static const admin_contentLab_options = 'admin.contentLab.options';
+  static const admin_contentLab_answer = 'admin.contentLab.answer';
+  static const admin_contentLab_explanation = 'admin.contentLab.explanation';
+  static const admin_contentLab_duration = 'admin.contentLab.duration';
+  static const admin_contentLab_passingScore = 'admin.contentLab.passingScore';
+  static const admin_contentLab_questionsReadOnly =
+      'admin.contentLab.questionsReadOnly';
+  static const admin_contentLab_examMeta = 'admin.contentLab.examMeta';
+  static const admin_contentLab_noQuestions = 'admin.contentLab.noQuestions';
+  static const admin_contentLab_noExams = 'admin.contentLab.noExams';
+  static const admin_contentLab = 'admin.contentLab';
+  static const admin_courses_new = 'admin.courses.new';
+  static const admin_courses_edit = 'admin.courses.edit';
+  static const admin_courses_empty = 'admin.courses.empty';
+  static const admin_courses_search = 'admin.courses.search';
+  static const admin_courses_language = 'admin.courses.language';
+  static const admin_courses_thumbnail = 'admin.courses.thumbnail';
+  static const admin_courses_publish = 'admin.courses.publish';
+  static const admin_courses_unpublish = 'admin.courses.unpublish';
+  static const admin_courses_publishTitle = 'admin.courses.publishTitle';
+  static const admin_courses_unpublishTitle = 'admin.courses.unpublishTitle';
+  static const admin_courses_counts = 'admin.courses.counts';
+  static const admin_courses = 'admin.courses';
+  static const admin_units_title = 'admin.units.title';
+  static const admin_units_new = 'admin.units.new';
+  static const admin_units_edit = 'admin.units.edit';
+  static const admin_units_empty = 'admin.units.empty';
+  static const admin_units_lessons = 'admin.units.lessons';
+  static const admin_units = 'admin.units';
+  static const admin_lessons_new = 'admin.lessons.new';
+  static const admin_lessons_edit = 'admin.lessons.edit';
+  static const admin_lessons_empty = 'admin.lessons.empty';
+  static const admin_lessons_outcome = 'admin.lessons.outcome';
+  static const admin_lessons_type = 'admin.lessons.type';
+  static const admin_lessons_skill = 'admin.lessons.skill';
+  static const admin_lessons_inheritSkill = 'admin.lessons.inheritSkill';
+  static const admin_lessons_xp = 'admin.lessons.xp';
+  static const admin_lessons_passPercent = 'admin.lessons.passPercent';
+  static const admin_lessons_minutes = 'admin.lessons.minutes';
+  static const admin_lessons_exercises = 'admin.lessons.exercises';
+  static const admin_lessons_xpValue = 'admin.lessons.xpValue';
+  static const admin_lessons = 'admin.lessons';
+  static const admin_categories_new = 'admin.categories.new';
+  static const admin_categories_edit = 'admin.categories.edit';
+  static const admin_categories_empty = 'admin.categories.empty';
+  static const admin_categories_slug = 'admin.categories.slug';
+  static const admin_categories_icon = 'admin.categories.icon';
+  static const admin_categories_color = 'admin.categories.color';
+  static const admin_categories_order = 'admin.categories.order';
+  static const admin_categories_courses = 'admin.categories.courses';
+  static const admin_categories = 'admin.categories';
+  static const admin_topics_new = 'admin.topics.new';
+  static const admin_topics_edit = 'admin.topics.edit';
+  static const admin_topics_empty = 'admin.topics.empty';
+  static const admin_topics_titleEn = 'admin.topics.titleEn';
+  static const admin_topics_titleVi = 'admin.topics.titleVi';
+  static const admin_topics_category = 'admin.topics.category';
+  static const admin_topics_minutes = 'admin.topics.minutes';
+  static const admin_topics_icon = 'admin.topics.icon';
+  static const admin_topics_opening = 'admin.topics.opening';
+  static const admin_topics_suggested = 'admin.topics.suggested';
+  static const admin_topics_minutesShort = 'admin.topics.minutesShort';
+  static const admin_topics = 'admin.topics';
+  static const admin_ielts_tests = 'admin.ielts.tests';
+  static const admin_ielts_attempts = 'admin.ielts.attempts';
+  static const admin_ielts_noTests = 'admin.ielts.noTests';
+  static const admin_ielts_noAttempts = 'admin.ielts.noAttempts';
+  static const admin_ielts_meta = 'admin.ielts.meta';
+  static const admin_ielts_band = 'admin.ielts.band';
+  static const admin_ielts_noBand = 'admin.ielts.noBand';
+  static const admin_ielts_publishable = 'admin.ielts.publishable';
+  static const admin_ielts_blocked = 'admin.ielts.blocked';
+  static const admin_ielts_problems = 'admin.ielts.problems';
+  static const admin_ielts = 'admin.ielts';
+  static const admin = 'admin';
+  static const admin_nav_ops = 'admin.nav.ops';
+  static const admin_nav_aiQuality = 'admin.nav.aiQuality';
+  static const admin_nav_roles = 'admin.nav.roles';
+  static const admin_sys = 'admin.sys';
+  static const admin_sys_webOnly = 'admin.sys.webOnly';
+  static const admin_sys_ops = 'admin.sys.ops';
+  static const admin_sys_ops_reminders = 'admin.sys.ops.reminders';
+  static const admin_sys_ops_productEvents = 'admin.sys.ops.productEvents';
+  static const admin_sys_ops_contentAgent = 'admin.sys.ops.contentAgent';
+  static const admin_sys_ops_celery = 'admin.sys.ops.celery';
+  static const admin_sys_ops_backups = 'admin.sys.ops.backups';
+  static const admin_sys_health = 'admin.sys.health';
+  static const admin_sys_health_system = 'admin.sys.health.system';
+  static const admin_sys_health_services = 'admin.sys.health.services';
+  static const admin_sys_health_database = 'admin.sys.health.database';
+  static const admin_sys_health_requests = 'admin.sys.health.requests';
+  static const admin_sys_health_integrations = 'admin.sys.health.integrations';
+  static const admin_sys_ai = 'admin.sys.ai';
+  static const admin_sys_ai_summary = 'admin.sys.ai.summary';
+  static const admin_sys_roles = 'admin.sys.roles';
+  static const admin_sys_roles_system = 'admin.sys.roles.system';
+  static const admin_sys_analytics = 'admin.sys.analytics';
+  static const admin_sys_analytics_overview = 'admin.sys.analytics.overview';
+  static const admin_sys_analytics_content = 'admin.sys.analytics.content';
+  static const admin_sys_analytics_funnels = 'admin.sys.analytics.funnels';
+  static const admin_sys_analytics_coursePopularity =
+      'admin.sys.analytics.coursePopularity';
+  static const admin_sys_analytics_contentPerformance =
+      'admin.sys.analytics.contentPerformance';
+  static const admin_sys_analytics_vocabulary =
+      'admin.sys.analytics.vocabulary';
+  static const admin_sys_analytics_activation =
+      'admin.sys.analytics.activation';
+  static const admin_sys_analytics_completion =
+      'admin.sys.analytics.completion';
+  static const admin_sys_audit = 'admin.sys.audit';
+  static const admin_sys_audit_empty = 'admin.sys.audit.empty';
+  static const admin_sys_config = 'admin.sys.config';
+  static const admin_sys_config_info = 'admin.sys.config.info';
+  static const admin_sys_admins = 'admin.sys.admins';
+  static const admin_sys_admins_webOnly = 'admin.sys.admins.webOnly';
+  static const adminGrowth_common_empty = 'adminGrowth.common.empty';
+  static const adminGrowth_common_retry = 'adminGrowth.common.retry';
+  static const adminGrowth_common_refresh = 'adminGrowth.common.refresh';
+  static const adminGrowth_common_save = 'adminGrowth.common.save';
+  static const adminGrowth_common_cancel = 'adminGrowth.common.cancel';
+  static const adminGrowth_common_edit = 'adminGrowth.common.edit';
+  static const adminGrowth_common_active = 'adminGrowth.common.active';
+  static const adminGrowth_common_saved = 'adminGrowth.common.saved';
+  static const adminGrowth_common_saveFailed = 'adminGrowth.common.saveFailed';
+  static const adminGrowth_common_updateFailed =
+      'adminGrowth.common.updateFailed';
+  static const adminGrowth_common_actionFailed =
+      'adminGrowth.common.actionFailed';
+  static const adminGrowth_common_webOnlyTitle =
+      'adminGrowth.common.webOnlyTitle';
+  static const adminGrowth_common_webOnlyBody =
+      'adminGrowth.common.webOnlyBody';
+  static const adminGrowth_common = 'adminGrowth.common';
+  static const adminGrowth_ads_title = 'adminGrowth.ads.title';
+  static const adminGrowth_ads_create = 'adminGrowth.ads.create';
+  static const adminGrowth_ads_edit = 'adminGrowth.ads.edit';
+  static const adminGrowth_ads_empty = 'adminGrowth.ads.empty';
+  static const adminGrowth_ads_fieldTitle = 'adminGrowth.ads.fieldTitle';
+  static const adminGrowth_ads_fieldDescription =
+      'adminGrowth.ads.fieldDescription';
+  static const adminGrowth_ads_fieldImage = 'adminGrowth.ads.fieldImage';
+  static const adminGrowth_ads_fieldLink = 'adminGrowth.ads.fieldLink';
+  static const adminGrowth_ads_fieldPosition = 'adminGrowth.ads.fieldPosition';
+  static const adminGrowth_ads_fieldPriority = 'adminGrowth.ads.fieldPriority';
+  static const adminGrowth_ads_fieldMinLevel = 'adminGrowth.ads.fieldMinLevel';
+  static const adminGrowth_ads_fieldMaxLevel = 'adminGrowth.ads.fieldMaxLevel';
+  static const adminGrowth_ads_fieldLanguage = 'adminGrowth.ads.fieldLanguage';
+  static const adminGrowth_ads_from = 'adminGrowth.ads.from';
+  static const adminGrowth_ads_to = 'adminGrowth.ads.to';
+  static const adminGrowth_ads_unlimited = 'adminGrowth.ads.unlimited';
+  static const adminGrowth_ads_needTitleImage =
+      'adminGrowth.ads.needTitleImage';
+  static const adminGrowth_ads_endBeforeStart =
+      'adminGrowth.ads.endBeforeStart';
+  static const adminGrowth_ads_minAboveMax = 'adminGrowth.ads.minAboveMax';
+  static const adminGrowth_ads_anyLanguage = 'adminGrowth.ads.anyLanguage';
+  static const adminGrowth_ads_anyLevel = 'adminGrowth.ads.anyLevel';
+  static const adminGrowth_ads_priorityChip = 'adminGrowth.ads.priorityChip';
+  static const adminGrowth_ads_levelAny = 'adminGrowth.ads.levelAny';
+  static const adminGrowth_ads = 'adminGrowth.ads';
+  static const adminGrowth_gamify_title = 'adminGrowth.gamify.title';
+  static const adminGrowth_gamify_tabAchievements =
+      'adminGrowth.gamify.tabAchievements';
+  static const adminGrowth_gamify_tabShop = 'adminGrowth.gamify.tabShop';
+  static const adminGrowth_gamify_category = 'adminGrowth.gamify.category';
+  static const adminGrowth_gamify_all = 'adminGrowth.gamify.all';
+  static const adminGrowth_gamify_new = 'adminGrowth.gamify.new';
+  static const adminGrowth_gamify_newItem = 'adminGrowth.gamify.newItem';
+  static const adminGrowth_gamify_emptyAchievements =
+      'adminGrowth.gamify.emptyAchievements';
+  static const adminGrowth_gamify_emptyShop = 'adminGrowth.gamify.emptyShop';
+  static const adminGrowth_gamify_inventoryCount =
+      'adminGrowth.gamify.inventoryCount';
+  static const adminGrowth_gamify_newAchievement =
+      'adminGrowth.gamify.newAchievement';
+  static const adminGrowth_gamify_editAchievement =
+      'adminGrowth.gamify.editAchievement';
+  static const adminGrowth_gamify_newShop = 'adminGrowth.gamify.newShop';
+  static const adminGrowth_gamify_editShop = 'adminGrowth.gamify.editShop';
+  static const adminGrowth_gamify_name = 'adminGrowth.gamify.name';
+  static const adminGrowth_gamify_description =
+      'adminGrowth.gamify.description';
+  static const adminGrowth_gamify_badgeIcon = 'adminGrowth.gamify.badgeIcon';
+  static const adminGrowth_gamify_badgeColor = 'adminGrowth.gamify.badgeColor';
+  static const adminGrowth_gamify_condition = 'adminGrowth.gamify.condition';
+  static const adminGrowth_gamify_conditionValue =
+      'adminGrowth.gamify.conditionValue';
+  static const adminGrowth_gamify_rarity = 'adminGrowth.gamify.rarity';
+  static const adminGrowth_gamify_xpReward = 'adminGrowth.gamify.xpReward';
+  static const adminGrowth_gamify_gemReward = 'adminGrowth.gamify.gemReward';
+  static const adminGrowth_gamify_hidden = 'adminGrowth.gamify.hidden';
+  static const adminGrowth_gamify_itemType = 'adminGrowth.gamify.itemType';
+  static const adminGrowth_gamify_price = 'adminGrowth.gamify.price';
+  static const adminGrowth_gamify_stock = 'adminGrowth.gamify.stock';
+  static const adminGrowth_gamify_iconUrl = 'adminGrowth.gamify.iconUrl';
+  static const adminGrowth_gamify_effects = 'adminGrowth.gamify.effects';
+  static const adminGrowth_gamify_effectsInvalid =
+      'adminGrowth.gamify.effectsInvalid';
+  static const adminGrowth_gamify_effectsObject =
+      'adminGrowth.gamify.effectsObject';
+  static const adminGrowth_gamify_available = 'adminGrowth.gamify.available';
+  static const adminGrowth_gamify_required = 'adminGrowth.gamify.required';
+  static const adminGrowth_gamify_badNumber = 'adminGrowth.gamify.badNumber';
+  static const adminGrowth_gamify_rewardChip = 'adminGrowth.gamify.rewardChip';
+  static const adminGrowth_gamify_gemsChip = 'adminGrowth.gamify.gemsChip';
+  static const adminGrowth_gamify_unlimitedStock =
+      'adminGrowth.gamify.unlimitedStock';
+  static const adminGrowth_gamify_inStock = 'adminGrowth.gamify.inStock';
+  static const adminGrowth_gamify = 'adminGrowth.gamify';
+  static const adminGrowth_jobs_retry = 'adminGrowth.jobs.retry';
+  static const adminGrowth_jobs_cancel = 'adminGrowth.jobs.cancel';
+  static const adminGrowth_jobs_apply = 'adminGrowth.jobs.apply';
+  static const adminGrowth_jobs_keep = 'adminGrowth.jobs.keep';
+  static const adminGrowth_jobs_created = 'adminGrowth.jobs.created';
+  static const adminGrowth_jobs_scheduled = 'adminGrowth.jobs.scheduled';
+  static const adminGrowth_jobs_actionFailed = 'adminGrowth.jobs.actionFailed';
+  static const adminGrowth_jobs_typeToConfirm =
+      'adminGrowth.jobs.typeToConfirm';
+  static const adminGrowth_jobs = 'adminGrowth.jobs';
+  static const adminGrowth_campaign_title = 'adminGrowth.campaign.title';
+  static const adminGrowth_campaign_create = 'adminGrowth.campaign.create';
+  static const adminGrowth_campaign_empty = 'adminGrowth.campaign.empty';
+  static const adminGrowth_campaign_createFailed =
+      'adminGrowth.campaign.createFailed';
+  static const adminGrowth_campaign_applyTitle =
+      'adminGrowth.campaign.applyTitle';
+  static const adminGrowth_campaign_applyBody =
+      'adminGrowth.campaign.applyBody';
+  static const adminGrowth_campaign_cancelTitle =
+      'adminGrowth.campaign.cancelTitle';
+  static const adminGrowth_campaign_cancelBody =
+      'adminGrowth.campaign.cancelBody';
+  static const adminGrowth_campaign_jobType = 'adminGrowth.campaign.jobType';
+  static const adminGrowth_campaign_typeTargeted =
+      'adminGrowth.campaign.typeTargeted';
+  static const adminGrowth_campaign_typeInApp =
+      'adminGrowth.campaign.typeInApp';
+  static const adminGrowth_campaign_typeScheduled =
+      'adminGrowth.campaign.typeScheduled';
+  static const adminGrowth_campaign_fieldTitle =
+      'adminGrowth.campaign.fieldTitle';
+  static const adminGrowth_campaign_fieldBody =
+      'adminGrowth.campaign.fieldBody';
+  static const adminGrowth_campaign_fieldType =
+      'adminGrowth.campaign.fieldType';
+  static const adminGrowth_campaign_fieldLink =
+      'adminGrowth.campaign.fieldLink';
+  static const adminGrowth_campaign_useAi = 'adminGrowth.campaign.useAi';
+  static const adminGrowth_campaign_segment = 'adminGrowth.campaign.segment';
+  static const adminGrowth_campaign_leagues = 'adminGrowth.campaign.leagues';
+  static const adminGrowth_campaign_levels = 'adminGrowth.campaign.levels';
+  static const adminGrowth_campaign_minStreak =
+      'adminGrowth.campaign.minStreak';
+  static const adminGrowth_campaign_inactiveDays =
+      'adminGrowth.campaign.inactiveDays';
+  static const adminGrowth_campaign_chooseTime =
+      'adminGrowth.campaign.chooseTime';
+  static const adminGrowth_campaign_needTime = 'adminGrowth.campaign.needTime';
+  static const adminGrowth_campaign_required = 'adminGrowth.campaign.required';
+  static const adminGrowth_campaign_numberRequired =
+      'adminGrowth.campaign.numberRequired';
+  static const adminGrowth_campaign_create_btn =
+      'adminGrowth.campaign.create_btn';
+  static const adminGrowth_campaign = 'adminGrowth.campaign';
+  static const adminGrowth_ranking_title = 'adminGrowth.ranking.title';
+  static const adminGrowth_ranking_subtitle = 'adminGrowth.ranking.subtitle';
+  static const adminGrowth_ranking_empty = 'adminGrowth.ranking.empty';
+  static const adminGrowth_ranking_create = 'adminGrowth.ranking.create';
+  static const adminGrowth_ranking_createTitle =
+      'adminGrowth.ranking.createTitle';
+  static const adminGrowth_ranking_createFailed =
+      'adminGrowth.ranking.createFailed';
+  static const adminGrowth_ranking_previewMissing =
+      'adminGrowth.ranking.previewMissing';
+  static const adminGrowth_ranking_preview = 'adminGrowth.ranking.preview';
+  static const adminGrowth_ranking_close = 'adminGrowth.ranking.close';
+  static const adminGrowth_ranking_applyTitle =
+      'adminGrowth.ranking.applyTitle';
+  static const adminGrowth_ranking_applyImpact =
+      'adminGrowth.ranking.applyImpact';
+  static const adminGrowth_ranking_applyWrites =
+      'adminGrowth.ranking.applyWrites';
+  static const adminGrowth_ranking_cancelTitle =
+      'adminGrowth.ranking.cancelTitle';
+  static const adminGrowth_ranking_cancelBody =
+      'adminGrowth.ranking.cancelBody';
+  static const adminGrowth_ranking_blockingErrors =
+      'adminGrowth.ranking.blockingErrors';
+  static const adminGrowth_ranking_warnings = 'adminGrowth.ranking.warnings';
+  static const adminGrowth_ranking_warningsLabel =
+      'adminGrowth.ranking.warningsLabel';
+  static const adminGrowth_ranking_blockingLabel =
+      'adminGrowth.ranking.blockingLabel';
+  static const adminGrowth_ranking_typeLeague =
+      'adminGrowth.ranking.typeLeague';
+  static const adminGrowth_ranking_typeXp = 'adminGrowth.ranking.typeXp';
+  static const adminGrowth_ranking_typeAchievement =
+      'adminGrowth.ranking.typeAchievement';
+  static const adminGrowth_ranking_jobType = 'adminGrowth.ranking.jobType';
+  static const adminGrowth_ranking_weekStart = 'adminGrowth.ranking.weekStart';
+  static const adminGrowth_ranking_eventName = 'adminGrowth.ranking.eventName';
+  static const adminGrowth_ranking_multiplier =
+      'adminGrowth.ranking.multiplier';
+  static const adminGrowth_ranking_hours = 'adminGrowth.ranking.hours';
+  static const adminGrowth_ranking_audience = 'adminGrowth.ranking.audience';
+  static const adminGrowth_ranking_audienceAll =
+      'adminGrowth.ranking.audienceAll';
+  static const adminGrowth_ranking_audienceLeague =
+      'adminGrowth.ranking.audienceLeague';
+  static const adminGrowth_ranking_audienceCefr =
+      'adminGrowth.ranking.audienceCefr';
+  static const adminGrowth_ranking_slugs = 'adminGrowth.ranking.slugs';
+  static const adminGrowth_ranking_minStreak = 'adminGrowth.ranking.minStreak';
+  static const adminGrowth_ranking_minVocab = 'adminGrowth.ranking.minVocab';
+  static const adminGrowth_ranking_leagues = 'adminGrowth.ranking.leagues';
+  static const adminGrowth_ranking_cefr = 'adminGrowth.ranking.cefr';
+  static const adminGrowth_ranking_aiInsights =
+      'adminGrowth.ranking.aiInsights';
+  static const adminGrowth_ranking_aiInsightsBody =
+      'adminGrowth.ranking.aiInsightsBody';
+  static const adminGrowth_ranking_checkFields =
+      'adminGrowth.ranking.checkFields';
+  static const adminGrowth_ranking_pTotalParticipants =
+      'adminGrowth.ranking.pTotalParticipants';
+  static const adminGrowth_ranking_pPromotions =
+      'adminGrowth.ranking.pPromotions';
+  static const adminGrowth_ranking_pDemotions =
+      'adminGrowth.ranking.pDemotions';
+  static const adminGrowth_ranking_pWeek = 'adminGrowth.ranking.pWeek';
+  static const adminGrowth_ranking_pUsersAffected =
+      'adminGrowth.ranking.pUsersAffected';
+  static const adminGrowth_ranking_pXpDelta = 'adminGrowth.ranking.pXpDelta';
+  static const adminGrowth_ranking_pMultiplier =
+      'adminGrowth.ranking.pMultiplier';
+  static const adminGrowth_ranking_pDuration = 'adminGrowth.ranking.pDuration';
+  static const adminGrowth_ranking_pXpAwarded =
+      'adminGrowth.ranking.pXpAwarded';
+  static const adminGrowth_ranking_pAchievements =
+      'adminGrowth.ranking.pAchievements';
+  static const adminGrowth_ranking = 'adminGrowth.ranking';
+  static const adminGrowth_qa_title = 'adminGrowth.qa.title';
+  static const adminGrowth_qa_headline = 'adminGrowth.qa.headline';
+  static const adminGrowth_qa_tracked = 'adminGrowth.qa.tracked';
+  static const adminGrowth_qa_tabNeeds = 'adminGrowth.qa.tabNeeds';
+  static const adminGrowth_qa_tabRepair = 'adminGrowth.qa.tabRepair';
+  static const adminGrowth_qa_tabPublished = 'adminGrowth.qa.tabPublished';
+  static const adminGrowth_qa_emptyBucket = 'adminGrowth.qa.emptyBucket';
+  static const adminGrowth_qa_unknownDate = 'adminGrowth.qa.unknownDate';
+  static const adminGrowth_qa_previewFailed = 'adminGrowth.qa.previewFailed';
+  static const adminGrowth_qa_approveTitle = 'adminGrowth.qa.approveTitle';
+  static const adminGrowth_qa_approveBody = 'adminGrowth.qa.approveBody';
+  static const adminGrowth_qa_rejectTitle = 'adminGrowth.qa.rejectTitle';
+  static const adminGrowth_qa_rejectBody = 'adminGrowth.qa.rejectBody';
+  static const adminGrowth_qa_close = 'adminGrowth.qa.close';
+  static const adminGrowth_qa_validation = 'adminGrowth.qa.validation';
+  static const adminGrowth_qa_noIssues = 'adminGrowth.qa.noIssues';
+  static const adminGrowth_qa_lessonsExercises =
+      'adminGrowth.qa.lessonsExercises';
+  static const adminGrowth_qa_noLessons = 'adminGrowth.qa.noLessons';
+  static const adminGrowth_qa_courses = 'adminGrowth.qa.courses';
+  static const adminGrowth_qa_lessons = 'adminGrowth.qa.lessons';
+  static const adminGrowth_qa_vocabulary = 'adminGrowth.qa.vocabulary';
+  static const adminGrowth_qa_exercises = 'adminGrowth.qa.exercises';
+  static const adminGrowth_qa_editExercise = 'adminGrowth.qa.editExercise';
+  static const adminGrowth_qa_approvePublish = 'adminGrowth.qa.approvePublish';
+  static const adminGrowth_qa_reject = 'adminGrowth.qa.reject';
+  static const adminGrowth_qa_saving = 'adminGrowth.qa.saving';
+  static const adminGrowth_qa_question = 'adminGrowth.qa.question';
+  static const adminGrowth_qa_optionsJson = 'adminGrowth.qa.optionsJson';
+  static const adminGrowth_qa_correctAnswer = 'adminGrowth.qa.correctAnswer';
+  static const adminGrowth_qa_explanation = 'adminGrowth.qa.explanation';
+  static const adminGrowth_qa_outcome = 'adminGrowth.qa.outcome';
+  static const adminGrowth_qa_optionsInvalid = 'adminGrowth.qa.optionsInvalid';
+  static const adminGrowth_qa_saveFailed = 'adminGrowth.qa.saveFailed';
+  static const adminGrowth_qa_actionFailed = 'adminGrowth.qa.actionFailed';
+  static const adminGrowth_qa = 'adminGrowth.qa';
+  static const adminGrowth = 'adminGrowth';
 }

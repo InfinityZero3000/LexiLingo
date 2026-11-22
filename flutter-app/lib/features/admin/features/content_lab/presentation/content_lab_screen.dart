@@ -1,176 +1,351 @@
 import 'dart:convert';
 
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import '../../../core/constants/app_colors.dart';
-import '../../../shared/widgets/admin_shell.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/core/widgets/app_text_field.dart';
+import 'package:lexilingo_app/core/widgets/stat_card.dart';
+import 'package:provider/provider.dart';
+import '../../../core/permissions/admin_permissions.dart';
+import '../../../shared/widgets/admin_form_sheet.dart';
+import '../../../shared/widgets/admin_item_card.dart';
+import '../../../shared/widgets/admin_page.dart';
+import '../../../shared/widgets/admin_paged_list.dart';
+import '../../../shared/widgets/admin_web_only_tile.dart';
+import '../../vocabulary/data/vocabulary_repository.dart' show vocabularyLevels;
 import '../data/content_lab_repository.dart';
 
+const _questionTypes = ['mcq', 'fill_blank', 'true_false'];
+
 class ContentLabScreen extends StatefulWidget {
-  const ContentLabScreen({super.key});
+  const ContentLabScreen({super.key, this.repository});
+
+  final ContentLabRepository? repository;
+
   @override
   State<ContentLabScreen> createState() => _ContentLabScreenState();
 }
 
-class _ContentLabScreenState extends State<ContentLabScreen> with SingleTickerProviderStateMixin {
-  final _repo = ContentLabRepository();
-  final _search = TextEditingController();
-  late final TabController _tabs;
-  List<QuestionItem> _questions = [];
-  List<TestExam> _exams = [];
-  bool _loading = true;
-  String? _error;
-  String _level = 'All';
-
-  @override
-  void initState() {
-    super.initState();
-    _tabs = TabController(length: 2, vsync: this)..addListener(() {
-      if (!_tabs.indexIsChanging) setState(() { _search.clear(); _level = 'All'; });
-    });
-    _load();
-  }
-
-  @override
-  void dispose() { _tabs.dispose(); _search.dispose(); super.dispose(); }
-
-  Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
-    try {
-      final results = await Future.wait([_repo.listQuestions(), _repo.listTestExams()]);
-      if (!mounted) return;
-      setState(() { _questions = results[0] as List<QuestionItem>; _exams = results[1] as List<TestExam>; _loading = false; });
-    } catch (_) {
-      if (mounted) setState(() { _loading = false; _error = 'Không thể tải Content Lab.'; });
-    }
-  }
-
-  void _message(String text, {bool error = false}) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(text, style: GoogleFonts.spaceGrotesk()),
-        backgroundColor: error ? AppColors.error : AppColors.success, behavior: SnackBarBehavior.floating));
-  }
-
-  Future<void> _delete(String id, String name, bool question) async {
-    final yes = await showDialog<bool>(context: context, builder: (context) => AlertDialog(
-      title: Text('Xóa ${question ? 'câu hỏi' : 'bài thi'}?'), content: Text(name),
-      actions: [TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Hủy')),
-        FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Xóa'))]));
-    if (yes != true) return;
-    try { question ? await _repo.deleteQuestion(id) : await _repo.deleteTestExam(id); await _load(); _message('Đã xóa.'); }
-    catch (_) { _message('Xóa thất bại.', error: true); }
-  }
-
-  Future<void> _questionForm([QuestionItem? item]) async {
-    final payload = await showModalBottomSheet<Map<String, dynamic>>(context: context, isScrollControlled: true,
-      backgroundColor: AppColors.surface, builder: (_) => _QuestionForm(item: item));
-    if (payload == null) return;
-    try { item == null ? await _repo.createQuestion(payload) : await _repo.updateQuestion(item.id, payload); await _load(); _message('Đã lưu câu hỏi.'); }
-    catch (_) { _message('Không thể lưu câu hỏi.', error: true); }
-  }
-
-  Future<void> _examForm([TestExam? item]) async {
-    final payload = await showModalBottomSheet<Map<String, dynamic>>(context: context, isScrollControlled: true,
-      backgroundColor: AppColors.surface, builder: (_) => _ExamForm(item: item));
-    if (payload == null) return;
-    try { item == null ? await _repo.createTestExam(payload) : await _repo.updateTestExam(item.id, payload); await _load(); _message('Đã lưu bài thi.'); }
-    catch (_) { _message('Không thể lưu bài thi.', error: true); }
-  }
-
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.background,
-    appBar: AppBar(backgroundColor: AppColors.background, elevation: 0,
-      leading: IconButton(icon: const Icon(Icons.menu_rounded, color: AppColors.onSurface), onPressed: AdminShell.openDrawer),
-      title: Text('Content Lab', style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, color: AppColors.onSurface)),
-      bottom: TabBar(controller: _tabs, labelStyle: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700),
-        labelColor: AppColors.primary, indicatorColor: AppColors.primary,
-        tabs: const [Tab(text: 'Questions'), Tab(text: 'Test Exams')]),
-    ),
-    floatingActionButton: FloatingActionButton.extended(backgroundColor: AppColors.primary, foregroundColor: AppColors.surface,
-      onPressed: () => _tabs.index == 0 ? _questionForm() : _examForm(),
-      icon: const Icon(Icons.add), label: const Text('Create')),
-    body: RefreshIndicator(color: AppColors.primary, onRefresh: _load, child: ListView(
-      physics: const AlwaysScrollableScrollPhysics(), padding: const EdgeInsets.fromLTRB(16, 16, 16, 96), children: [
-        TextField(controller: _search, onChanged: (_) => setState(() {}),
-          decoration: const InputDecoration(prefixIcon: Icon(Icons.search), hintText: 'Search', border: OutlineInputBorder())),
-        const SizedBox(height: 12),
-        DropdownButtonFormField<String>(initialValue: _level,
-          decoration: const InputDecoration(labelText: 'Level', border: OutlineInputBorder()),
-          items: const ['All','A1','A2','B1','B2','C1','C2'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
-          onChanged: (v) => setState(() => _level = v!)),
-        const SizedBox(height: 16),
-        if (_loading) const Padding(padding: EdgeInsets.all(48), child: Center(child: CircularProgressIndicator(color: AppColors.primary)))
-        else if (_error != null) _StateCard(icon: Icons.error_outline, text: _error!, action: _load)
-        else _tabs.index == 0 ? _questionList() : _examList(),
-      ])),
+class _ContentLabScreenState extends State<ContentLabScreen>
+    with SingleTickerProviderStateMixin {
+  late final ContentLabRepository _repo =
+      widget.repository ?? ContentLabRepository();
+  late final TabController _tabs = TabController(length: 2, vsync: this)
+    ..addListener(() => setState(() {}));
+  late final AdminPager<QuestionItem> _questions = AdminPager(
+    load: (request, _) => _repo.listQuestions(request),
+  );
+  late final AdminPager<TestExam> _exams = AdminPager(
+    load: (request, _) => _repo.listTestExams(request),
   );
 
-  Widget _questionList() {
-    final q = _search.text.toLowerCase();
-    final items = _questions.where((e) => (_level == 'All' || e.difficultyLevel == _level) &&
-      (e.prompt.toLowerCase().contains(q) || e.questionType.toLowerCase().contains(q))).toList();
-    if (items.isEmpty) return const _StateCard(icon: Icons.quiz_outlined, text: 'Không có câu hỏi.');
-    return Column(children: items.map((e) => _Card(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(e.prompt, maxLines: 3, overflow: TextOverflow.ellipsis, style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 16)),
-      const SizedBox(height: 8), Wrap(spacing: 8, runSpacing: 6, children: [_Chip(e.questionType), _Chip(e.difficultyLevel), _Chip(e.isActive ? 'Active' : 'Inactive')]),
-      if (e.tags.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 8), child: Text(e.tags.join(' • '), style: GoogleFonts.spaceGrotesk(color: AppColors.onSurfaceMuted))),
-      _Actions(onEdit: () => _questionForm(e), onDelete: () => _delete(e.id, e.prompt, true)),
-    ]))).toList());
+  @override
+  void dispose() {
+    _tabs.dispose();
+    _questions.dispose();
+    _exams.dispose();
+    super.dispose();
   }
 
-  Widget _examList() {
-    final q = _search.text.toLowerCase();
-    final items = _exams.where((e) => (_level == 'All' || e.level == _level) &&
-      (e.title.toLowerCase().contains(q) || (e.description ?? '').toLowerCase().contains(q))).toList();
-    if (items.isEmpty) return const _StateCard(icon: Icons.assignment_outlined, text: 'Không có bài thi.');
-    return Column(children: items.map((e) => _Card(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(e.title, style: GoogleFonts.spaceGrotesk(fontWeight: FontWeight.w700, fontSize: 16)),
-      if (e.description?.isNotEmpty == true) Padding(padding: const EdgeInsets.only(top: 6), child: Text(e.description!, maxLines: 2, overflow: TextOverflow.ellipsis)),
-      const SizedBox(height: 8), Wrap(spacing: 8, runSpacing: 6, children: [_Chip(e.level), _Chip('${e.durationMinutes} min'), _Chip('${e.passingScore}% pass'), _Chip('${e.questionIds.length} questions'), _Chip(e.isPublished ? 'Published' : 'Draft')]),
-      _Actions(onEdit: () => _examForm(e), onDelete: () => _delete(e.id, e.title, false)),
-    ]))).toList());
+  Widget _dropdown(
+    String label,
+    String value,
+    List<String> options,
+    ValueChanged<String> onChanged,
+  ) => DropdownButtonFormField<String>(
+    initialValue: value,
+    decoration: InputDecoration(labelText: label),
+    items: [
+      for (final v in options) DropdownMenuItem(value: v, child: Text(v)),
+    ],
+    onChanged: (v) => onChanged(v!),
+  );
+
+  Future<void> _editQuestion([QuestionItem? item]) async {
+    final prompt = TextEditingController(text: item?.prompt);
+    final options = TextEditingController(
+      text: item == null ? '' : jsonEncode(item.options),
+    );
+    final answer = TextEditingController(
+      text: item?.answer == null ? '' : jsonEncode(item!.answer),
+    );
+    final explanation = TextEditingController(text: item?.explanation);
+    final tags = TextEditingController(text: item?.tags.join(', '));
+    var type = _questionTypes.contains(item?.questionType)
+        ? item!.questionType
+        : 'mcq';
+    var level = item?.difficultyLevel ?? 'A1';
+    var active = item?.isActive ?? true;
+    List<dynamic>? parsedOptions;
+    dynamic parsedAnswer;
+    final saved = await showAdminFormSheet(
+      context,
+      controllers: [prompt, options, answer, explanation, tags],
+      title: item == null
+          ? 'admin.contentLab.newQuestion'.tr()
+          : 'admin.contentLab.editQuestion'.tr(),
+      validate: () {
+        if (prompt.text.trim().isEmpty) return false;
+        try {
+          final opts = options.text.trim().isEmpty
+              ? <dynamic>[]
+              : jsonDecode(options.text);
+          if (opts is! List) return false;
+          parsedOptions = opts;
+          parsedAnswer = answer.text.trim().isEmpty
+              ? null
+              : jsonDecode(answer.text);
+          return true;
+        } catch (_) {
+          return false;
+        }
+      },
+      builder: (_) => [
+        AppTextField(
+          controller: prompt,
+          label: 'admin.contentLab.prompt'.tr(),
+          minLines: 2,
+          maxLines: 4,
+        ),
+        StatefulBuilder(
+          builder: (context, set) => Column(
+            children: [
+              _dropdown(
+                'admin.contentLab.type'.tr(),
+                type,
+                _questionTypes,
+                (v) => set(() => type = v),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              _dropdown(
+                'admin.content.level'.tr(),
+                level,
+                vocabularyLevels,
+                (v) => set(() => level = v),
+              ),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text('admin.content.active'.tr()),
+                value: active,
+                onChanged: (v) => set(() => active = v),
+              ),
+            ],
+          ),
+        ),
+        AppTextField(
+          controller: options,
+          label: 'admin.contentLab.options'.tr(),
+          maxLines: 2,
+        ),
+        AppTextField(
+          controller: answer,
+          label: 'admin.contentLab.answer'.tr(),
+          maxLines: 2,
+        ),
+        AppTextField(
+          controller: explanation,
+          label: 'admin.contentLab.explanation'.tr(),
+          maxLines: 2,
+        ),
+        AppTextField(controller: tags, label: 'admin.content.tags'.tr()),
+      ],
+      onSubmit: () {
+        final data = {
+          'prompt': prompt.text.trim(),
+          'question_type': type,
+          'difficulty_level': level,
+          'options': parsedOptions,
+          'answer': parsedAnswer,
+          'explanation': explanation.text.trim().isEmpty
+              ? null
+              : explanation.text.trim(),
+          'tags': [
+            for (final t in tags.text.split(','))
+              if (t.trim().isNotEmpty) t.trim(),
+          ],
+          'is_active': active,
+        };
+        return item == null
+            ? _repo.createQuestion(data)
+            : _repo.updateQuestion(item.id, data);
+      },
+    );
+    for (final c in [prompt, options, answer, explanation, tags]) {
+      c.dispose();
+    }
+    if (saved) await _questions.controller.refresh();
+  }
+
+  Future<void> _editExam([TestExam? item]) async {
+    final title = TextEditingController(text: item?.title);
+    final description = TextEditingController(text: item?.description);
+    final duration = TextEditingController(
+      text: '${item?.durationMinutes ?? 20}',
+    );
+    final score = TextEditingController(text: '${item?.passingScore ?? 70}');
+    var level = item?.level ?? 'A1';
+    var published = item?.isPublished ?? false;
+    final saved = await showAdminFormSheet(
+      context,
+      controllers: [title, description, duration, score],
+      title: item == null
+          ? 'admin.contentLab.newExam'.tr()
+          : 'admin.contentLab.editExam'.tr(),
+      validate: () {
+        final d = int.tryParse(duration.text);
+        final s = int.tryParse(score.text);
+        return title.text.trim().isNotEmpty &&
+            d != null &&
+            d > 0 &&
+            s != null &&
+            s >= 0 &&
+            s <= 100;
+      },
+      builder: (_) => [
+        AppTextField(controller: title, label: 'admin.content.title'.tr()),
+        AppTextField(
+          controller: description,
+          label: 'admin.content.description'.tr(),
+          maxLines: 3,
+        ),
+        StatefulBuilder(
+          builder: (context, set) => Column(
+            children: [
+              _dropdown(
+                'admin.content.level'.tr(),
+                level,
+                vocabularyLevels,
+                (v) => set(() => level = v),
+              ),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text('admin.content.published'.tr()),
+                value: published,
+                onChanged: (v) => set(() => published = v),
+              ),
+            ],
+          ),
+        ),
+        AppTextField(
+          controller: duration,
+          label: 'admin.contentLab.duration'.tr(),
+          keyboardType: TextInputType.number,
+        ),
+        AppTextField(
+          controller: score,
+          label: 'admin.contentLab.passingScore'.tr(),
+          keyboardType: TextInputType.number,
+        ),
+        if (item != null)
+          Text(
+            'admin.contentLab.questionsReadOnly'.tr(
+              namedArgs: {'count': '${item.questionIds.length}'},
+            ),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+      ],
+      onSubmit: () {
+        final data = {
+          'title': title.text.trim(),
+          'description': description.text.trim().isEmpty
+              ? null
+              : description.text.trim(),
+          'level': level,
+          'duration_minutes': int.parse(duration.text),
+          'passing_score': int.parse(score.text),
+          'is_published': published,
+        };
+        return item == null
+            ? _repo.createTestExam(data)
+            : _repo.updateTestExam(item.id, data);
+      },
+    );
+    for (final c in [title, description, duration, score]) {
+      c.dispose();
+    }
+    if (saved) await _exams.controller.refresh();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final permissions = context.watch<AdminPermissions>();
+    final canCreate = permissions.can('content:create');
+    final canUpdate = permissions.can('content:update');
+    const header = Padding(
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.lg,
+        AppSpacing.lg,
+        0,
+      ),
+      child: AdminWebOnlyTile(),
+    );
+    return AdminPage(
+      title: 'admin.nav.contentLab'.tr(),
+      bottom: TabBar(
+        controller: _tabs,
+        tabs: [
+          Tab(text: 'admin.contentLab.questions'.tr()),
+          Tab(text: 'admin.contentLab.exams'.tr()),
+        ],
+      ),
+      floatingActionButton: canCreate
+          ? FloatingActionButton.extended(
+              onPressed: () => _tabs.index == 0 ? _editQuestion() : _editExam(),
+              icon: const Icon(Icons.add_rounded),
+              label: Text('admin.content.create'.tr()),
+            )
+          : null,
+      body: TabBarView(
+        controller: _tabs,
+        children: [
+          AdminPagedList<QuestionItem>(
+            pager: _questions,
+            header: header,
+            emptyTitle: 'admin.contentLab.noQuestions'.tr(),
+            emptyIcon: Icons.help_outline_rounded,
+            itemBuilder: (context, q, _) => AdminItemCard(
+              title: q.prompt,
+              subtitle: q.explanation,
+              badges: [
+                StatusPill(label: q.difficultyLevel, tone: StatusTone.info),
+                StatusPill(label: q.questionType),
+                if (!q.isActive)
+                  StatusPill(
+                    label: 'admin.content.inactive'.tr(),
+                    tone: StatusTone.warning,
+                  ),
+              ],
+              onTap: canUpdate ? () => _editQuestion(q) : null,
+            ),
+          ),
+          AdminPagedList<TestExam>(
+            pager: _exams,
+            header: header,
+            emptyTitle: 'admin.contentLab.noExams'.tr(),
+            emptyIcon: Icons.assignment_outlined,
+            itemBuilder: (context, e, _) => AdminItemCard(
+              title: e.title,
+              subtitle: 'admin.contentLab.examMeta'.tr(
+                namedArgs: {
+                  'minutes': '${e.durationMinutes}',
+                  'count': '${e.questionIds.length}',
+                },
+              ),
+              badges: [
+                StatusPill(label: e.level, tone: StatusTone.info),
+                StatusPill(
+                  label: e.isPublished
+                      ? 'admin.content.published'.tr()
+                      : 'admin.content.draft'.tr(),
+                  tone: e.isPublished ? StatusTone.success : StatusTone.neutral,
+                ),
+              ],
+              onTap: canUpdate ? () => _editExam(e) : null,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
-
-class _QuestionForm extends StatefulWidget {
-  final QuestionItem? item;
-  const _QuestionForm({this.item});
-  @override State<_QuestionForm> createState() => _QuestionFormState();
-}
-class _QuestionFormState extends State<_QuestionForm> {
-  late final TextEditingController prompt, options, answer, explanation, tags;
-  late String type, level; late bool active;
-  @override void initState() { super.initState(); final i=widget.item; prompt=TextEditingController(text:i?.prompt); options=TextEditingController(text:i==null?'':jsonEncode(i.options)); answer=TextEditingController(text:i?.answer==null?'':jsonEncode(i!.answer)); explanation=TextEditingController(text:i?.explanation); tags=TextEditingController(text:i?.tags.join(', ')); type=i?.questionType??'mcq'; level=i?.difficultyLevel??'A1'; active=i?.isActive??true; }
-  @override Widget build(BuildContext context) => _FormSheet(title: widget.item == null ? 'Create question' : 'Edit question', children: [
-    _field(prompt, 'Prompt', lines: 3), _drop('Type', type, const ['mcq','fill_blank','true_false'], (v)=>setState(()=>type=v)),
-    _drop('Difficulty', level, const ['A1','A2','B1','B2','C1','C2'], (v)=>setState(()=>level=v)),
-    _field(options, 'Options (JSON array)', lines: 2), _field(answer, 'Answer (JSON)', lines: 2),
-    _field(explanation, 'Explanation', lines: 2), _field(tags, 'Tags (comma-separated)'),
-    SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text('Active'), value: active, onChanged: (v)=>setState(()=>active=v)),
-    _save(context, () { try { final opts=options.text.trim().isEmpty?<dynamic>[]:jsonDecode(options.text); if (opts is! List) throw const FormatException(); Navigator.pop(context, {'prompt':prompt.text.trim(),'question_type':type,'difficulty_level':level,'options':opts,'answer':answer.text.trim().isEmpty?null:jsonDecode(answer.text),'explanation':explanation.text.trim().isEmpty?null:explanation.text.trim(),'tags':tags.text.split(',').map((e)=>e.trim()).where((e)=>e.isNotEmpty).toList(),'is_active':active}); } catch (_) { ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Options/answer must be valid JSON.'))); } })
-  ]);
-}
-
-class _ExamForm extends StatefulWidget { final TestExam? item; const _ExamForm({this.item}); @override State<_ExamForm> createState()=>_ExamFormState(); }
-class _ExamFormState extends State<_ExamForm> {
-  late final TextEditingController title, description, duration, score; late String level; late bool published;
-  @override void initState(){super.initState();final i=widget.item;title=TextEditingController(text:i?.title);description=TextEditingController(text:i?.description);duration=TextEditingController(text:'${i?.durationMinutes??20}');score=TextEditingController(text:'${i?.passingScore??70}');level=i?.level??'A1';published=i?.isPublished??false;}
-  @override Widget build(BuildContext context)=>_FormSheet(title:widget.item==null?'Create test exam':'Edit test exam',children:[
-    _field(title,'Title'),_field(description,'Description',lines:3),_drop('Level',level,const ['A1','A2','B1','B2','C1','C2'],(v)=>setState(()=>level=v)),
-    _field(duration,'Duration (minutes)',number:true),_field(score,'Passing score (%)',number:true),
-    if(widget.item!=null) Padding(padding:const EdgeInsets.symmetric(vertical:8),child:Text('${widget.item!.questionIds.length} questions (read-only)',style:GoogleFonts.spaceGrotesk(color:AppColors.onSurfaceMuted))),
-    SwitchListTile(contentPadding:EdgeInsets.zero,title:const Text('Published'),value:published,onChanged:(v)=>setState(()=>published=v)),
-    _save(context,(){final d=int.tryParse(duration.text),s=int.tryParse(score.text);if(title.text.trim().isEmpty||d==null||d<=0||s==null||s<0||s>100){ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content:Text('Enter a title, positive duration, and score from 0–100.')));return;}Navigator.pop(context,{'title':title.text.trim(),'description':description.text.trim().isEmpty?null:description.text.trim(),'level':level,'duration_minutes':d,'passing_score':s,'is_published':published});})
-  ]);
-}
-
-class _FormSheet extends StatelessWidget { final String title; final List<Widget> children; const _FormSheet({required this.title,required this.children}); @override Widget build(BuildContext context)=>SafeArea(child:Padding(padding:EdgeInsets.fromLTRB(20,20,20,MediaQuery.viewInsetsOf(context).bottom+20),child:SingleChildScrollView(child:Column(crossAxisAlignment:CrossAxisAlignment.stretch,children:[Text(title,style:GoogleFonts.spaceGrotesk(fontSize:22,fontWeight:FontWeight.w700)),const SizedBox(height:16),...children])))); }
-Widget _field(TextEditingController c,String label,{int lines=1,bool number=false})=>Padding(padding:const EdgeInsets.only(bottom:12),child:TextField(controller:c,maxLines:lines,keyboardType:number?TextInputType.number:null,decoration:InputDecoration(labelText:label,border:const OutlineInputBorder())));
-Widget _drop(String label,String value,List<String> options,ValueChanged<String> change)=>Padding(padding:const EdgeInsets.only(bottom:12),child:DropdownButtonFormField<String>(initialValue:value,decoration:InputDecoration(labelText:label,border:const OutlineInputBorder()),items:options.map((e)=>DropdownMenuItem(value:e,child:Text(e))).toList(),onChanged:(v)=>change(v!)));
-Widget _save(BuildContext context,VoidCallback onPressed)=>SizedBox(height:48,child:FilledButton(onPressed:onPressed,child:const Text('Save')));
-class _Card extends StatelessWidget { final Widget child; const _Card({required this.child}); @override Widget build(BuildContext context)=>Container(margin:const EdgeInsets.only(bottom:12),padding:const EdgeInsets.all(16),decoration:BoxDecoration(color:AppColors.surface,borderRadius:BorderRadius.circular(14),border:Border.all(color:AppColors.outline)),child:child); }
-class _Chip extends StatelessWidget { final String text; const _Chip(this.text); @override Widget build(BuildContext context)=>Container(padding:const EdgeInsets.symmetric(horizontal:9,vertical:5),decoration:BoxDecoration(color:AppColors.surfaceContainerLow,borderRadius:BorderRadius.circular(20)),child:Text(text,style:GoogleFonts.spaceGrotesk(fontSize:12,color:AppColors.onSurfaceMuted))); }
-class _Actions extends StatelessWidget { final VoidCallback onEdit,onDelete; const _Actions({required this.onEdit,required this.onDelete}); @override Widget build(BuildContext context)=>Row(mainAxisAlignment:MainAxisAlignment.end,children:[IconButton(constraints:const BoxConstraints(minWidth:44,minHeight:44),tooltip:'Edit',onPressed:onEdit,icon:const Icon(Icons.edit_outlined)),IconButton(constraints:const BoxConstraints(minWidth:44,minHeight:44),tooltip:'Delete',onPressed:onDelete,icon:const Icon(Icons.delete_outline,color:AppColors.error))]); }
-class _StateCard extends StatelessWidget { final IconData icon; final String text; final Future<void> Function()? action; const _StateCard({required this.icon,required this.text,this.action}); @override Widget build(BuildContext context)=>Padding(padding:const EdgeInsets.all(40),child:Column(children:[Icon(icon,size:48,color:AppColors.onSurfaceMuted),const SizedBox(height:12),Text(text,textAlign:TextAlign.center,style:GoogleFonts.spaceGrotesk(color:AppColors.onSurfaceMuted)),if(action!=null)TextButton(onPressed:action,child:const Text('Retry'))])); }

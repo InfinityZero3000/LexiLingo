@@ -6,6 +6,7 @@ import 'package:lexilingo_app/features/profile/presentation/widgets/profile_ui_c
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class LearningStatsSection extends StatelessWidget {
   const LearningStatsSection({super.key});
@@ -33,22 +34,26 @@ class LearningStatsSection extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(AppSpacing.lg),
               child: Row(
                 children: [
                   Icon(Icons.insights_rounded, color: primaryColor, size: 20),
-                  const SizedBox(width: 8),
-                  Text(
-                    'profile.learningStats'.tr(),
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
+                  const SizedBox(width: AppSpacing.sm),
+                  Flexible(
+                    child: Text(
+                      'profile.learningStats'.tr(),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
               child: Column(
                 children: [
                   Row(
@@ -75,7 +80,7 @@ class LearningStatsSection extends StatelessWidget {
                           titleFontSize: 13,
                           subtitleFontSize: 11,
                           contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
+                            horizontal: AppSpacing.md,
                             vertical: 10,
                           ),
                         ),
@@ -103,7 +108,7 @@ class LearningStatsSection extends StatelessWidget {
                           titleFontSize: 13,
                           subtitleFontSize: 11,
                           contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
+                            horizontal: AppSpacing.md,
                             vertical: 10,
                           ),
                         ),
@@ -136,7 +141,7 @@ class LearningStatsSection extends StatelessWidget {
                           titleFontSize: 13,
                           subtitleFontSize: 11,
                           contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
+                            horizontal: AppSpacing.md,
                             vertical: 10,
                           ),
                         ),
@@ -170,7 +175,7 @@ class LearningStatsSection extends StatelessWidget {
                           titleFontSize: 13,
                           subtitleFontSize: 11,
                           contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 12,
+                            horizontal: AppSpacing.md,
                             vertical: 10,
                           ),
                         ),
@@ -196,7 +201,7 @@ class _LoadingStats extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           child: Text(
             'profile.learningStats'.tr(),
             style: Theme.of(
@@ -208,7 +213,7 @@ class _LoadingStats extends StatelessWidget {
           crossAxisCount: 2,
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
           childAspectRatio: 1.15,

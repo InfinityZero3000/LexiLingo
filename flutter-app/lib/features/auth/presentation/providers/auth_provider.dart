@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:typed_data';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +14,7 @@ import 'package:lexilingo_app/core/services/purchases_service.dart';
 import 'package:lexilingo_app/core/services/session_expired_service.dart';
 import 'package:lexilingo_app/core/services/user_scope_service.dart';
 import 'package:lexilingo_app/core/usecase/usecase.dart';
+import 'package:lexilingo_app/core/utils/freshness.dart';
 import 'package:lexilingo_app/features/auth/domain/entities/user_entity.dart';
 import 'package:lexilingo_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:lexilingo_app/features/auth/domain/usecases/get_current_user_usecase.dart';
@@ -23,7 +25,9 @@ import 'package:lexilingo_app/features/auth/domain/usecases/register_usecase.dar
 
 import 'package:lexilingo_app/features/auth/domain/usecases/sign_in_with_facebook_usecase.dart';
 import 'package:lexilingo_app/core/services/facebook_sign_in_service.dart';
-import 'package:easy_localization/easy_localization.dart';
+
+/// What opening an email verification link did.
+enum VerifyEmailOutcome { signedIn, verified, failed }
 
 class AuthProvider extends ChangeNotifier {
   final SignInWithGoogleUseCase signInWithGoogleUseCase;
@@ -37,10 +41,13 @@ class AuthProvider extends ChangeNotifier {
   final FacebookSignInService facebookSignInService;
 
   UserEntity? _user;
+  Future<void>? _userRefresh;
+  final Freshness _userFreshness = Freshness();
+  String? _userFreshFor;
   bool _isLoading = false;
   bool _isCheckingAuth = true;
   bool _isJustLoggedIn = false;
-  String? _errorMessage;
+  UiText? _errorMessage;
   late final StreamSubscription<void> _sessionExpiredSub;
 
   AuthProvider({
@@ -81,7 +88,7 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isCheckingAuth => _isCheckingAuth;
   bool get isJustLoggedIn => _isJustLoggedIn;
-  String? get errorMessage => _errorMessage;
+  String? get errorMessage => _errorMessage?.resolve();
 
   // Clear just logged in flag (call after welcome screen)
   void clearJustLoggedIn() {
@@ -89,15 +96,42 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> refreshCurrentUser() async {
+  /// Concurrent calls share one `/users/me`. [maxAge] lets passive callers skip
+  /// a reload for the same user fetched that recently.
+  Future<void> refreshCurrentUser({Duration? maxAge}) {
+    final current = _user;
+    if (current != null &&
+        current.id == _userFreshFor &&
+        _userFreshness.isFresh(maxAge)) {
+      return Future<void>.value();
+    }
+    final inFlight = _userRefresh;
+    if (inFlight != null) return inFlight;
+    final run = _refreshCurrentUser();
+    _userRefresh = run;
+    return run.whenComplete(() {
+      if (identical(_userRefresh, run)) _userRefresh = null;
+    });
+  }
+
+  Future<void> _refreshCurrentUser() async {
     final result = await getCurrentUserUseCase(NoParams());
     result.fold((failure) => _errorMessage = _getFailureMessage(failure), (
       user,
     ) {
       _user = user;
       _errorMessage = null;
+      _markUserFresh(user);
     });
     notifyListeners();
+  }
+
+  /// The next passive [refreshCurrentUser] refetches; call after learning activity.
+  void invalidateFreshness() => _userFreshness.invalidate();
+
+  void _markUserFresh(UserEntity user) {
+    _userFreshFor = user.id;
+    _userFreshness.mark();
   }
 
   // Check current user on app start
@@ -142,6 +176,14 @@ class AuthProvider extends ChangeNotifier {
         (user) {
           _user = user;
           _errorMessage = null;
+          _markUserFresh(user);
+          if (sl.isRegistered<ApiClient>()) {
+            unawaited(
+              FirebaseMessagingService.instance.registerTokenWithBackend(
+                sl<ApiClient>(),
+              ),
+            );
+          }
         },
       );
     } catch (e) {
@@ -176,7 +218,7 @@ class AuthProvider extends ChangeNotifier {
       if (idToken == null) {
         final signInError = googleSignInService.lastError?.toLowerCase();
         if (signInError == null || signInError.contains('cancelled')) {
-          _errorMessage = 'auth.googleSignInCancelled'.tr();
+          _errorMessage = UiText.key('auth.googleSignInCancelled');
         } else {
           _errorMessage = _parseErrorMessage(googleSignInService.lastError!);
         }
@@ -232,7 +274,7 @@ class AuthProvider extends ChangeNotifier {
       // Get Firebase ID token via Facebook authentication
       final idToken = await facebookSignInService.signIn();
       if (idToken == null) {
-        _errorMessage = 'auth.facebookSignInCancelled'.tr();
+        _errorMessage = UiText.key('auth.facebookSignInCancelled');
         _isLoading = false;
         notifyListeners();
         return;
@@ -360,6 +402,39 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       _errorMessage = _parseErrorMessage(e.toString());
       return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Verify the mailed link. Signed in when it is the first verification.
+  Future<VerifyEmailOutcome> verifyEmailLink(String token) async {
+    try {
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+
+      final result = await authRepository.verifyEmailAndSignIn(token);
+      return result.fold(
+        (failure) {
+          _errorMessage = _getFailureMessage(failure);
+          return VerifyEmailOutcome.failed;
+        },
+        (user) {
+          if (user == null) return VerifyEmailOutcome.verified;
+          _user = user;
+          _isJustLoggedIn = true;
+          FirebaseMessagingService.instance.registerTokenWithBackend(
+            sl<ApiClient>(),
+          );
+          unawaited(_claimPendingReferral());
+          return VerifyEmailOutcome.signedIn;
+        },
+      );
+    } catch (e) {
+      _errorMessage = _parseErrorMessage(e.toString());
+      return VerifyEmailOutcome.failed;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -535,6 +610,31 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  /// Saves which language Lexi explains in. The choice shows at once and is
+  /// put back if the server refuses it.
+  Future<bool> updateLexiReplyLanguage(String value) async {
+    final previous = _user;
+    if (previous == null) return false;
+    if (previous.lexiReplyLanguage == value) return true;
+    _user = previous.copyWith(lexiReplyLanguage: value);
+    notifyListeners();
+
+    final result = await authRepository.updateProfile(lexiReplyLanguage: value);
+    return result.fold(
+      (failure) {
+        _user = previous;
+        _errorMessage = _getFailureMessage(failure);
+        notifyListeners();
+        return false;
+      },
+      (updatedUser) {
+        _user = updatedUser;
+        notifyListeners();
+        return true;
+      },
+    );
+  }
+
   /// Upload a picked image as the avatar; throws on failure.
   Future<void> uploadAvatar(Uint8List bytes, String filename) async {
     try {
@@ -601,94 +701,94 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // Parse error messages to user-friendly format
-  String _parseErrorMessage(String error) {
+  UiText _parseErrorMessage(String error) {
     final normalized = error.toLowerCase();
 
     if (normalized.contains('timeoutexception') ||
         normalized.contains('timed out')) {
-      return 'Server is not responding in time. Please try again in a moment.';
+      return const UiText.key('auth.errServerTimeout');
     }
     if (normalized.contains('/users/me failed')) {
-      return 'Sign in succeeded, but we could not load your profile. Please try again.';
+      return const UiText.key('auth.errProfileLoad');
     }
     if (normalized.contains('internal server error')) {
-      return 'Server error occurred. Please try again later.';
+      return const UiText.key('auth.errServer');
     }
     if (normalized.contains('google_server_client_id')) {
-      return 'Google sign-in config is missing. Please contact support.';
+      return const UiText.key('auth.errGoogleConfig');
     }
     if (normalized.contains('google sign-in android config mismatch') ||
         normalized.contains('developer_error') ||
         normalized.contains('sha-1') ||
         normalized.contains('sha/client id')) {
-      return 'Google Sign-In on Android is not configured correctly (SHA-1/SHA-256 or client ID). Please contact support.';
+      return const UiText.key('auth.errGoogleConfig');
     }
 
     if (normalized.contains('account-exists-with-different-credential')) {
-      return 'This email is already linked to another provider. Please sign in with the previous method first.';
+      return const UiText.key('auth.errAccountExists');
     }
     if (normalized.contains('access-control-allow-origin') ||
         normalized.contains('blocked by cors')) {
-      return 'Login is blocked by CORS configuration. Please try again in a moment.';
+      return const UiText.key('auth.errCors');
     }
     if (normalized.contains('network')) {
-      return 'Network error. Please check your internet connection.';
+      return const UiText.key('errors.networkRetry');
     } else if (normalized.contains('cancelled') ||
         normalized.contains('canceled')) {
-      return 'Sign in was cancelled.';
+      return const UiText.key('auth.errCancelled');
     } else if (normalized.contains('email')) {
-      return 'Invalid email address.';
+      return const UiText.key('auth.invalidEmail');
     } else if (normalized.contains('password')) {
-      return 'Invalid password.';
+      return const UiText.key('auth.errInvalidPassword');
     } else if (normalized.contains('user-not-found')) {
-      return 'No account found with this email.';
+      return const UiText.key('auth.errUserNotFound');
     } else if (normalized.contains('wrong-password')) {
-      return 'Incorrect password.';
+      return const UiText.key('auth.errWrongPassword');
     } else if (normalized.contains('too-many-requests')) {
-      return 'Too many attempts. Please try again later.';
+      return const UiText.key('auth.errRateLimited');
     } else {
-      return 'An error occurred. Please try again.';
+      return const UiText.key('errors.genericRetry');
     }
   }
 
   // Convert Failure to user-friendly message
-  String _getFailureMessage(Failure failure) {
+  UiText _getFailureMessage(Failure failure) {
     if (failure is AuthFailure) {
       final normalized = failure.message.toLowerCase();
       if (normalized.contains('invalid google id token')) {
-        return 'Google Sign-In token is invalid. Please update Android SHA and Google OAuth config.';
+        return const UiText.key('auth.errGoogleConfig');
       }
-      return failure.message;
+      return UiText.failure(failure);
     } else if (failure is ServerFailure) {
       final normalized = failure.message.toLowerCase();
       if (normalized.contains('timeoutexception') ||
           normalized.contains('timed out')) {
-        return 'Server timeout. Please check server status and try again.';
+        return const UiText.key('auth.errServerTimeout');
       }
       if (normalized.contains('/users/me failed')) {
-        return 'Sign in succeeded, but we could not load your profile. Please try again.';
+        return const UiText.key('auth.errProfileLoad');
       }
-      return failure.message;
+      return UiText.failure(failure);
     } else if (failure is NetworkFailure) {
-      return 'Network error. Please check your internet connection.';
+      return const UiText.key('errors.networkRetry');
     } else if (failure is CacheFailure) {
-      return 'Local storage error.';
+      return const UiText.key('errors.localStorage');
     } else if (failure is ValidationFailure) {
-      return failure.message;
+      return UiText.failure(failure);
     } else if (failure is ConflictFailure) {
-      return failure.message;
+      return UiText.failure(failure);
     } else if (failure is RateLimitFailure) {
-      return 'Too many attempts. Please try again later.';
+      return const UiText.key('auth.errRateLimited');
     } else if (failure is PermissionFailure) {
-      return failure.message;
+      return UiText.failure(failure);
     } else if (failure is NotFoundFailure) {
-      return failure.message;
+      return UiText.failure(failure);
     } else if (failure is UnauthorizedFailure) {
-      return 'Session expired. Please sign in again.';
+      return const UiText.key('errors.sessionExpired');
     } else {
       return failure.message.isNotEmpty
-          ? failure.message
-          : 'errors.genericRetry'.tr();
+          ? UiText.failure(failure)
+          : const UiText.key('errors.genericRetry');
     }
   }
 }

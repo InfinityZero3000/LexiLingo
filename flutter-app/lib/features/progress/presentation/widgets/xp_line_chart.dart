@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/weekly_progress_entity.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// 7-day XP trend line chart using fl_chart.
 class XpLineChart extends StatelessWidget {
@@ -26,12 +27,21 @@ class XpLineChart extends StatelessWidget {
       return FlSpot(e.key.toDouble(), e.value.xpEarned.toDouble());
     }).toList();
 
+    final maxY = (maxXP * 1.2).ceilToDouble();
+
     return SizedBox(
       height: 180,
       child: LineChart(
         LineChartData(
-          minY: 0,
-          maxY: (maxXP * 1.2).ceilToDouble(),
+          // Zero-XP days would sit on the bottom edge and have their dot and
+          // stroke clipped, so the axis starts a little below zero. No axis
+          // labels are drawn, so the negative range is never shown.
+          minY: -maxY * 0.06,
+          maxY: maxY,
+          // Half a day of room each side keeps the first and last label and
+          // dot inside the plot.
+          minX: -0.5,
+          maxX: days.length - 0.5,
           clipData: const FlClipData.all(),
           gridData: FlGridData(
             show: true,
@@ -42,8 +52,11 @@ class XpLineChart extends StatelessWidget {
             ),
             getDrawingHorizontalLine: (_) => FlLine(
               color: isDark
-                  ? Colors.white.withValues(alpha: 0.07)
-                  : Colors.black.withValues(alpha: 0.06),
+                  ? AppColors.onGradient.withValues(alpha: 0.07)
+                  : Theme.of(
+                      context,
+                    ).colorScheme.shadow.withValues(alpha: 0.06),
+
               strokeWidth: 1,
             ),
           ),
@@ -62,15 +75,17 @@ class XpLineChart extends StatelessWidget {
               sideTitles: SideTitles(
                 showTitles: true,
                 reservedSize: 24,
+                interval: 1,
                 getTitlesWidget: (value, meta) {
                   final i = value.toInt();
-                  if (i < 0 || i >= days.length) return const SizedBox.shrink();
+                  if (value != i.toDouble() || i < 0 || i >= days.length) {
+                    return const SizedBox.shrink();
+                  }
                   return Padding(
                     padding: const EdgeInsets.only(top: 6),
                     child: Text(
                       days[i].day,
-                      style: TextStyle(
-                        fontSize: 10,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: days[i].isToday
                             ? primary
                             : AppColorRoles.textMuted(isDark),
@@ -86,9 +101,7 @@ class XpLineChart extends StatelessWidget {
           ),
           lineTouchData: LineTouchData(
             touchTooltipData: LineTouchTooltipData(
-              getTooltipColor: (_) => isDark
-                  ? AppColors.surfaceDarkElevated
-                  : AppColors.surfaceLight,
+              getTooltipColor: (_) => Theme.of(context).colorScheme.surface,
               getTooltipItems: (spots) => spots.map((s) {
                 return LineTooltipItem(
                   '${s.y.toInt()} XP',
@@ -106,6 +119,7 @@ class XpLineChart extends StatelessWidget {
               spots: spots,
               isCurved: true,
               curveSmoothness: 0.35,
+              preventCurveOverShooting: true,
               color: primary,
               barWidth: 2.5,
               dotData: FlDotData(
@@ -164,6 +178,7 @@ class LessonsBarChart extends StatelessWidget {
       height: 180,
       child: BarChart(
         BarChartData(
+          alignment: BarChartAlignment.spaceAround,
           minY: 0,
           maxY: (maxLessons + 2).toDouble(),
           gridData: FlGridData(
@@ -172,8 +187,11 @@ class LessonsBarChart extends StatelessWidget {
             horizontalInterval: 1,
             getDrawingHorizontalLine: (_) => FlLine(
               color: isDark
-                  ? Colors.white.withValues(alpha: 0.07)
-                  : Colors.black.withValues(alpha: 0.06),
+                  ? AppColors.onGradient.withValues(alpha: 0.07)
+                  : Theme.of(
+                      context,
+                    ).colorScheme.shadow.withValues(alpha: 0.06),
+
               strokeWidth: 1,
             ),
           ),
@@ -192,15 +210,17 @@ class LessonsBarChart extends StatelessWidget {
               sideTitles: SideTitles(
                 showTitles: true,
                 reservedSize: 24,
+                interval: 1,
                 getTitlesWidget: (value, meta) {
                   final i = value.toInt();
-                  if (i < 0 || i >= days.length) return const SizedBox.shrink();
+                  if (value != i.toDouble() || i < 0 || i >= days.length) {
+                    return const SizedBox.shrink();
+                  }
                   return Padding(
                     padding: const EdgeInsets.only(top: 6),
                     child: Text(
                       days[i].day,
-                      style: TextStyle(
-                        fontSize: 10,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: days[i].isToday
                             ? primary
                             : AppColorRoles.textMuted(isDark),
@@ -216,13 +236,11 @@ class LessonsBarChart extends StatelessWidget {
           ),
           barTouchData: BarTouchData(
             touchTooltipData: BarTouchTooltipData(
-              getTooltipColor: (_) => isDark
-                  ? AppColors.surfaceDarkElevated
-                  : AppColors.surfaceLight,
+              getTooltipColor: (_) => Theme.of(context).colorScheme.surface,
               getTooltipItem: (group, groupIndex, rod, rodIndex) {
                 final count = rod.toY.toInt();
                 return BarTooltipItem(
-                  '$count lesson${count != 1 ? 's' : ''}',
+                  'progress.lessonsCount'.tr(namedArgs: {'count': '$count'}),
                   TextStyle(
                     color: primary,
                     fontWeight: FontWeight.w700,
@@ -297,9 +315,12 @@ class WeekActivityHeatmap extends StatelessWidget {
                             alpha: (0.2 + intensity * 0.7).clamp(0.2, 0.9),
                           )
                         : (isDark
-                              ? Colors.white.withValues(alpha: 0.07)
-                              : Colors.black.withValues(alpha: 0.05)),
-                    borderRadius: BorderRadius.circular(8),
+                              ? AppColors.onGradient.withValues(alpha: 0.07)
+                              : Theme.of(
+                                  context,
+                                ).colorScheme.shadow.withValues(alpha: 0.05)),
+
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                     border: day.isToday
                         ? Border.all(color: primary, width: 2)
                         : null,
@@ -308,11 +329,10 @@ class WeekActivityHeatmap extends StatelessWidget {
                       ? Icon(Icons.check_rounded, size: 14, color: primary)
                       : null,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
                   day.day.substring(0, 1),
-                  style: TextStyle(
-                    fontSize: 10,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     fontWeight: day.isToday
                         ? FontWeight.w700
                         : FontWeight.normal,
@@ -341,9 +361,8 @@ class _EmptyChart extends StatelessWidget {
       child: Center(
         child: Text(
           'progress.emptyChart'.tr(),
-          style: TextStyle(
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: AppColorRoles.textMuted(isDark),
-            fontSize: 13,
           ),
         ),
       ),

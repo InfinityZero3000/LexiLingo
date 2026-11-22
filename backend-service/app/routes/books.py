@@ -13,7 +13,7 @@ import hashlib
 import logging
 import re
 from typing import Optional
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query, status, Request, Response
@@ -21,7 +21,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.safe_http import safe_get
+from app.core.proxy_cache import (
+    MAX_CACHED_TEXT_BYTES,
+    get_cached_body,
+    get_cached_image,
+    put_cached_body,
+    put_cached_image,
+)
+from app.core.safe_http import image_proxy_response, safe_get, validate_public_url
 from app.services.api_cache_service import (
     APICacheService,
     QuotaExhaustedError,
@@ -642,10 +649,45 @@ async def _fetch_books(q: str, page: int, topic: Optional[str] = None) -> dict:
 ALLOWED_PROXY_DOMAINS = {
     "www.gutenberg.org",
     "gutenberg.org",
+    "gutenberg.pglaf.org",
     "gutendex.com",
     "openlibrary.org",
     "covers.openlibrary.org",
 }
+
+GUTENBERG_MIRROR = "gutenberg.pglaf.org"
+_TEXT_PROXY_HEADERS = {"Cache-Control": "public, max-age=86400"}
+
+
+async def _get_with_mirror(
+    client: httpx.AsyncClient, url: str, headers: dict[str, str]
+) -> httpx.Response:
+    """www.gutenberg.org goes down for maintenance now and then, and its own
+    mirror serves the same /cache/epub/ files, so a 5xx or a failed connection
+    there is retried on the mirror."""
+    parts = urlsplit(url)
+    mirror = (
+        parts._replace(netloc=GUTENBERG_MIRROR).geturl()
+        if (parts.hostname or "").lower() in {"www.gutenberg.org", "gutenberg.org"}
+        and parts.path.startswith("/cache/epub/")
+        else None
+    )
+    try:
+        resp = await safe_get(
+            client, url, allowed_hosts=ALLOWED_PROXY_DOMAINS, headers=headers
+        )
+    except httpx.RequestError:
+        if mirror is None:
+            raise
+        return await safe_get(
+            client, mirror, allowed_hosts=ALLOWED_PROXY_DOMAINS, headers=headers
+        )
+    if resp.status_code >= 500 and mirror is not None:
+        return await safe_get(
+            client, mirror, allowed_hosts=ALLOWED_PROXY_DOMAINS, headers=headers
+        )
+    return resp
+
 
 def _proxy_book_urls(book: dict, request: Request) -> dict:
     """Rewrite book cover_url and download_url to go through backend proxy to avoid CORS."""
@@ -673,26 +715,25 @@ async def proxy_image(url: str = Query(..., description="The image URL to proxy"
     """
     Proxy book cover images from Gutenberg or Open Library to bypass browser CORS.
     """
+    validate_public_url(url, allowed_hosts=ALLOWED_PROXY_DOMAINS)
+    cached = await get_cached_image(url)
+    if cached is not None:
+        return cached
     async with httpx.AsyncClient(timeout=10.0) as client:
         try:
-            resp = await safe_get(
+            resp = await _get_with_mirror(
                 client,
                 url,
-                allowed_hosts=ALLOWED_PROXY_DOMAINS,
-                headers={"User-Agent": "LexiLingo/1.0 (English learning app; cover-proxy)"},
+                {"User-Agent": "LexiLingo/1.0 (English learning app; cover-proxy)"},
             )
             if resp.status_code != 200:
                 raise HTTPException(
                     status_code=resp.status_code,
                     detail=f"Failed to fetch image: HTTP {resp.status_code}"
                 )
-            return Response(
-                content=resp.content,
-                media_type=resp.headers.get("content-type", "image/jpeg"),
-                headers={
-                    "Cache-Control": "public, max-age=86400",  # Cache for 24h
-                }
-            )
+            out = image_proxy_response(resp)
+            await put_cached_image(url, out)
+            return out
         except HTTPException:
             raise
         except httpx.RequestError as e:
@@ -714,13 +755,16 @@ async def proxy_text(url: str = Query(..., description="The text URL to proxy"))
     """
     Proxy book plain-text content from Gutenberg to bypass browser CORS.
     """
+    validate_public_url(url, allowed_hosts=ALLOWED_PROXY_DOMAINS)
+    cached = await get_cached_body("txt", url, _TEXT_PROXY_HEADERS)
+    if cached is not None:
+        return cached
     async with httpx.AsyncClient(timeout=15.0) as client:
         try:
-            resp = await safe_get(
+            resp = await _get_with_mirror(
                 client,
                 url,
-                allowed_hosts=ALLOWED_PROXY_DOMAINS,
-                headers={"User-Agent": "LexiLingo/1.0 (English learning app; text-proxy)"},
+                {"User-Agent": "LexiLingo/1.0 (English learning app; text-proxy)"},
             )
             if resp.status_code != 200:
                 raise HTTPException(
@@ -730,13 +774,13 @@ async def proxy_text(url: str = Query(..., description="The text URL to proxy"))
             
             content_type = resp.headers.get("content-type", "text/plain; charset=utf-8")
             
-            return Response(
+            out = Response(
                 content=resp.content,
                 media_type=content_type,
-                headers={
-                    "Cache-Control": "public, max-age=86400",  # Cache for 24h
-                }
+                headers=dict(_TEXT_PROXY_HEADERS),
             )
+            await put_cached_body("txt", url, out, max_bytes=MAX_CACHED_TEXT_BYTES)
+            return out
         except HTTPException:
             raise
         except httpx.RequestError as e:

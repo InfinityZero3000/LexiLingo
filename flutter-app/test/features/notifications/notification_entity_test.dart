@@ -160,6 +160,7 @@ void main() {
     });
   });
 
+  // No translations are loaded in unit tests, so the chosen key is returned.
   group('NotificationEntity - relativeTimeString', () {
     test('should return "Just now" for < 1 minute ago', () {
       final notification = NotificationEntity(
@@ -170,7 +171,7 @@ void main() {
         timestamp: DateTime.now().subtract(const Duration(seconds: 30)),
       );
 
-      expect(notification.relativeTimeString, 'Just now');
+      expect(notification.relativeTimeString, 'datetime.justNow');
     });
 
     test('should return minutes format for < 1 hour', () {
@@ -182,7 +183,7 @@ void main() {
         timestamp: DateTime.now().subtract(const Duration(minutes: 15)),
       );
 
-      expect(notification.relativeTimeString, '15m ago');
+      expect(notification.relativeTimeString, 'datetime.minutesAgo');
     });
 
     test('should return hours format for < 24 hours', () {
@@ -194,7 +195,7 @@ void main() {
         timestamp: DateTime.now().subtract(const Duration(hours: 5)),
       );
 
-      expect(notification.relativeTimeString, '5h ago');
+      expect(notification.relativeTimeString, 'datetime.hoursAgo');
     });
 
     test('should return "Yesterday" for yesterday', () {
@@ -207,7 +208,7 @@ void main() {
         timestamp: yesterday,
       );
 
-      expect(notification.relativeTimeString, 'Yesterday');
+      expect(notification.relativeTimeString, 'datetime.yesterday');
     });
 
     test('should return days format for < 7 days', () {
@@ -219,7 +220,7 @@ void main() {
         timestamp: DateTime.now().subtract(const Duration(days: 3)),
       );
 
-      expect(notification.relativeTimeString, '3d ago');
+      expect(notification.relativeTimeString, 'datetime.daysAgo');
     });
   });
 

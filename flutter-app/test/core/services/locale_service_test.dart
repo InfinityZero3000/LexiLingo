@@ -6,6 +6,24 @@ import 'package:lexilingo_app/core/services/locale_service.dart';
 void main() {
   tearDown(LocaleService.debugReset);
 
+  test('signals a switch between languages, not the first apply', () async {
+    LocaleService.debugConfigure(
+      apply: (_) => Future.value(),
+      persist: (_) async {},
+    );
+    final switches = <int>[];
+    void record() => switches.add(LocaleService.languageSwitches.value);
+    LocaleService.languageSwitches.addListener(record);
+    addTearDown(() => LocaleService.languageSwitches.removeListener(record));
+
+    await LocaleService.debugRequestLocale('vi');
+    expect(switches, isEmpty);
+    await LocaleService.debugRequestLocale('vi');
+    expect(switches, isEmpty);
+    await LocaleService.debugRequestLocale('en');
+    expect(switches, [1]);
+  });
+
   test('serializes application and coalesces pending locales', () async {
     final japanese = Completer<void>();
     final started = <String>[];

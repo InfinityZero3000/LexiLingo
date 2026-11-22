@@ -71,7 +71,11 @@ def build_cache_key(prefix: str, **params) -> str:
 
 
 async def get_cached(key: str) -> Optional[Any]:
-    """Get a cached value from Redis. Returns None on miss or error."""
+    """Get a cached value. Returns None on miss or error.
+
+    With Redis up, a miss is a miss: the in-memory copy only exists from an
+    earlier outage and may predate an invalidation.
+    """
     if _cache_disabled() and not _allow_cache_when_disabled(key):
         return None
 
@@ -80,12 +84,10 @@ async def get_cached(key: str) -> Optional[Any]:
         return _memory_get(key)
     try:
         data = await redis.get(key)
-        if data is not None:
-            return json.loads(data)
+        return json.loads(data) if data is not None else None
     except Exception as exc:
         logger.debug(f"Cache read error: {exc}")
         return _memory_get(key)
-    return _memory_get(key)
 
 
 async def set_cached(key: str, value: Any, ttl: int = 60) -> None:
@@ -105,45 +107,37 @@ async def set_cached(key: str, value: Any, ttl: int = 60) -> None:
 
 
 async def delete_cached(key: str) -> None:
-    """Delete a single cache entry by exact key. Silently ignores errors."""
+    """Delete a single cache entry by exact key, from memory and Redis."""
+    _memory_delete(key)
     if _cache_disabled() and not _allow_cache_when_disabled(key):
         return
 
     redis = await RedisClient.get_instance()
     if redis is None:
-        _memory_delete(key)
         return
     try:
         await redis.delete(key)
     except Exception as exc:
         logger.debug(f"Cache delete error: {exc}")
-        _memory_delete(key)
 
 
 async def invalidate_cache(prefix: str) -> int:
     """
-    Delete all cache keys matching a prefix.
-    Returns the number of keys deleted, or 0 if Redis is unavailable.
+    Delete all cache keys matching a prefix, from memory and Redis.
+    Returns the number of keys deleted.
     """
+    memory_keys = [k for k in _memory_cache if k.startswith(f"{prefix}:")]
+    for key in memory_keys:
+        _memory_cache.pop(key, None)
+
     redis = await RedisClient.get_instance()
     if redis is None:
-        keys = [k for k in _memory_cache.keys() if k.startswith(f"{prefix}:")]
-        for key in keys:
-            _memory_cache.pop(key, None)
-        return len(keys)
+        return len(memory_keys)
     try:
         keys = []
         async for key in redis.scan_iter(match=f"{prefix}:*", count=200):
             keys.append(key)
-        if keys:
-            return await redis.delete(*keys)
-        memory_keys = [k for k in _memory_cache.keys() if k.startswith(f"{prefix}:")]
-        for key in memory_keys:
-            _memory_cache.pop(key, None)
-        return len(memory_keys)
+        return await redis.delete(*keys) if keys else len(memory_keys)
     except Exception as exc:
         logger.debug(f"Cache invalidation error: {exc}")
-        keys = [k for k in _memory_cache.keys() if k.startswith(f"{prefix}:")]
-        for key in keys:
-            _memory_cache.pop(key, None)
-        return len(keys)
+        return len(memory_keys)

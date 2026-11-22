@@ -36,6 +36,9 @@ class _Entitlements implements EntitlementService {
   Future<bool> fetchCached({String entitlementId = 'premium'}) async => premium;
 
   @override
+  Future<bool?> fetchActive({String entitlementId = 'premium'}) async => premium;
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
@@ -218,7 +221,7 @@ void main() {
       expect(find.text('Start reading'), findsNothing);
       expect(find.text('42%'), findsOneWidget);
       expect(find.text('Page 43 of 100'), findsOneWidget);
-      expect(find.text('Chapter Quiz'), findsOneWidget);
+      expect(find.text('Section 4 quiz'), findsOneWidget);
       final bar = tester.widget<LinearProgressIndicator>(
         find.byType(LinearProgressIndicator),
       );
@@ -238,12 +241,42 @@ void main() {
       );
     });
 
-    testWidgets('the quiz button opens the quiz', (tester) async {
+    testWidgets('the quiz button is locked until section 1 is read', (
+      tester,
+    ) async {
+      await _pump(tester);
+      expect(
+        find.text('Read to the end of section 1 to unlock the quiz'),
+        findsOneWidget,
+      );
+      final button = tester.widget<OutlinedButton>(
+        find.widgetWithText(OutlinedButton, 'Section 1 quiz'),
+      );
+      expect(button.onPressed, isNull);
+    });
+
+    testWidgets('finished sections turn the button into a review', (
+      tester,
+    ) async {
+      await _pump(
+        tester,
+        progress: _started.copyWith(quizSectionsDone: const [1, 2, 3, 4]),
+      );
+      expect(find.text('Review section 4'), findsOneWidget);
+      expect(find.text('Section 4 quiz'), findsNothing);
+    });
+
+    testWidgets('the quiz button opens the latest unlocked section', (
+      tester,
+    ) async {
       await _pump(tester, progress: _started);
-      await tester.tap(find.text('Chapter Quiz'));
+      await tester.tap(find.text('Section 4 quiz'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
-      expect(find.byType(BookQuizScreen), findsOneWidget);
+      expect(
+        tester.widget<BookQuizScreen>(find.byType(BookQuizScreen)).section,
+        4,
+      );
     });
   });
 

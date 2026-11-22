@@ -1,7 +1,11 @@
+import 'dart:async';
+
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/l10n/app_localizations.dart';
+import 'package:lexilingo_app/core/l10n/cached_translation_loader.dart';
 import 'package:lexilingo_app/core/services/locale_service.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/language_flag.dart';
@@ -21,6 +25,9 @@ class LanguageSwitcherButton extends StatelessWidget {
   const LanguageSwitcherButton({super.key});
 
   static void showLanguageSheet(BuildContext context) {
+    unawaited(
+      CachedTranslationLoader.warmSupported(AppLocales.supportedLocales),
+    );
     final currentCode = context.locale.languageCode;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -28,7 +35,7 @@ class LanguageSwitcherButton extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       backgroundColor: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
       builder: (sheetContext) {
@@ -38,7 +45,12 @@ class LanguageSwitcherButton extends StatelessWidget {
               maxHeight: MediaQuery.of(sheetContext).size.height * 0.75,
             ),
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.lg,
+                AppSpacing.md,
+                AppSpacing.lg,
+                16,
+              ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -47,7 +59,7 @@ class LanguageSwitcherButton extends StatelessWidget {
                     height: 4,
                     decoration: BoxDecoration(
                       color: isDark ? AppColors.grey700 : AppColors.grey300,
-                      borderRadius: BorderRadius.circular(999),
+                      borderRadius: BorderRadius.circular(AppRadius.pill),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -55,7 +67,7 @@ class LanguageSwitcherButton extends StatelessWidget {
                     'settings.language'.tr(),
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : AppColors.textDark,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -73,11 +85,13 @@ class LanguageSwitcherButton extends StatelessWidget {
                             color: Colors.transparent,
                             child: ListTile(
                               contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 8,
+                                horizontal: AppSpacing.sm,
                                 vertical: 2,
                               ),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.md,
+                                ),
                               ),
                               tileColor: isSelected
                                   ? AppColors.accentMint.withValues(
@@ -94,7 +108,9 @@ class LanguageSwitcherButton extends StatelessWidget {
                                           alpha: isDark ? 0.2 : 0.15,
                                         )
                                       : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.md,
+                                  ),
                                 ),
                                 child: LanguageFlag(
                                   languageCode: code,
@@ -108,20 +124,20 @@ class LanguageSwitcherButton extends StatelessWidget {
                                   fontWeight: FontWeight.w600,
                                   color: isSelected
                                       ? AppColors.accentMint
-                                      : isDark
-                                      ? Colors.white
-                                      : AppColors.textDark,
+                                      : Theme.of(context).colorScheme.onSurface,
                                 ),
                               ),
                               subtitle: name != nameEn
                                   ? Text(
                                       nameEn,
-                                      style: TextStyle(
-                                        color: isDark
-                                            ? AppColors.textMuted
-                                            : AppColors.textSlateLight,
-                                        fontSize: 12,
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelMedium
+                                          ?.copyWith(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onSurfaceVariant,
+                                          ),
                                     )
                                   : null,
                               trailing: isSelected
@@ -158,12 +174,15 @@ class LanguageSwitcherButton extends StatelessWidget {
       onTap: () => showLanguageSheet(context),
       child: Container(
         height: 34,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: 4,
+        ),
         decoration: BoxDecoration(
           color: isDark
               ? AppColors.accentMint.withValues(alpha: 0.12)
               : AppColors.accentMint.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(999),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -172,8 +191,7 @@ class LanguageSwitcherButton extends StatelessWidget {
             const SizedBox(width: 4),
             Text(
               code.toUpperCase(),
-              style: TextStyle(
-                fontSize: 12,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: isDark ? AppColors.accentMint : AppColors.accentMintDark,
               ),

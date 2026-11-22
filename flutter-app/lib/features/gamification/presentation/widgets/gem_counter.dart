@@ -1,15 +1,21 @@
 import 'package:lexilingo_app/core/widgets/tap_target.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Animated Gem Counter Widget
 /// Shows gem balance with animation on value change
 class GemCounter extends StatefulWidget {
-  final int gems;
+  /// Null while the balance is still loading: shows a dash, never a fake 0.
+  final int? gems;
   final double iconSize;
   final double fontSize;
   final bool showBackground;
   final VoidCallback? onTap;
+
+  /// With a null [gems]: the load failed (tap retries) rather than pending.
+  final bool failed;
 
   const GemCounter({
     super.key,
@@ -18,6 +24,7 @@ class GemCounter extends StatefulWidget {
     this.fontSize = 16,
     this.showBackground = true,
     this.onTap,
+    this.failed = false,
   });
 
   @override
@@ -28,7 +35,7 @@ class _GemCounterState extends State<GemCounter>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
-  int _displayedGems = 0;
+  int? _displayedGems;
 
   @override
   void initState() {
@@ -69,48 +76,57 @@ class _GemCounterState extends State<GemCounter>
 
   @override
   Widget build(BuildContext context) {
-    return TapTarget(
-      onTap: widget.onTap,
-      child: AnimatedBuilder(
-        animation: _scaleAnimation,
-        builder: (context, child) {
-          return Transform.scale(scale: _scaleAnimation.value, child: child);
-        },
-        child: Container(
-          padding: widget.showBackground
-              ? const EdgeInsets.symmetric(horizontal: 12, vertical: 6)
-              : EdgeInsets.zero,
-          decoration: widget.showBackground
-              ? BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.purple.withValues(alpha: 0.15),
-                      AppColors.purpleLight.withValues(alpha: 0.1),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+    final unknown = widget.gems == null;
+    return Semantics(
+      label: unknown
+          ? (widget.failed ? 'errors.loadFailed' : 'common.loading').tr()
+          : null,
+      child: TapTarget(
+        onTap: widget.onTap,
+        child: AnimatedBuilder(
+          animation: _scaleAnimation,
+          builder: (context, child) {
+            return Transform.scale(scale: _scaleAnimation.value, child: child);
+          },
+          child: Container(
+            padding: widget.showBackground
+                ? const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.sm,
+                  )
+                : EdgeInsets.zero,
+            decoration: widget.showBackground
+                ? BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.purple.withValues(alpha: 0.15),
+                        AppColors.purpleLight.withValues(alpha: 0.1),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    border: Border.all(
+                      color: AppColors.purple.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  )
+                : null,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildGemIcon(),
+                const SizedBox(width: AppSpacing.sm),
+                Text(
+                  _formatNumber(_displayedGems),
+                  style: TextStyle(
+                    fontSize: widget.fontSize,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.purple,
                   ),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: AppColors.purple.withValues(alpha: 0.3),
-                    width: 1,
-                  ),
-                )
-              : null,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildGemIcon(),
-              const SizedBox(width: 6),
-              Text(
-                _formatNumber(_displayedGems),
-                style: TextStyle(
-                  fontSize: widget.fontSize,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.purple,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -136,15 +152,12 @@ class _GemCounterState extends State<GemCounter>
           ),
         ],
       ),
-      child: Icon(
-        Icons.diamond,
-        color: Theme.of(context).colorScheme.surface,
-        size: 14,
-      ),
+      child: Icon(Icons.diamond, color: AppColors.surfaceLight, size: 14),
     );
   }
 
-  String _formatNumber(int number) {
+  String _formatNumber(int? number) {
+    if (number == null) return '—';
     if (number >= 1000000) {
       return '${(number / 1000000).toStringAsFixed(1)}M';
     } else if (number >= 1000) {
@@ -185,7 +198,7 @@ class GemIcon extends StatelessWidget {
       ),
       child: Icon(
         Icons.diamond,
-        color: Theme.of(context).colorScheme.surface,
+        color: AppColors.surfaceLight,
         size: size * 0.6,
       ),
     );

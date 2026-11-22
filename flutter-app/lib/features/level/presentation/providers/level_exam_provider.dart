@@ -84,6 +84,10 @@ class LevelExamProvider with ChangeNotifier {
       });
     _index = 0;
     _result = null;
+    if (_questions.isEmpty) {
+      _attemptId = null;
+      _blockedReason = 'no_questions';
+    }
   });
 
   void answer(String option) {
@@ -102,10 +106,16 @@ class LevelExamProvider with ChangeNotifier {
   /// Returns true when the learner's certified level moved.
   Future<bool> submit() async {
     final id = _attemptId;
-    if (id == null) return false;
+    if (id == null || _loading) return false;
     await _run(() async {
       _result = await _dataSource.submitLevelExam(id, Map.of(_answers));
     });
+    final refused =
+        _result == null && _blockedReason != null && _blockedReason != 'error';
+    if (refused) {
+      _attemptId = null;
+      notifyListeners();
+    }
     return _result?['passed'] == true;
   }
 

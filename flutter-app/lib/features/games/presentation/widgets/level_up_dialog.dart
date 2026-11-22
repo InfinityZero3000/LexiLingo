@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/lottie_animation_widget.dart';
 
@@ -141,10 +142,10 @@ class _LevelUpDialogState extends State<LevelUpDialog>
                       child: SingleChildScrollView(
                         physics: const BouncingScrollPhysics(),
                         padding: EdgeInsets.fromLTRB(
-                          24,
-                          compact ? 14 : 28,
-                          24,
-                          compact ? 18 : 28,
+                          AppSpacing.xl,
+                          compact ? AppSpacing.lg : 28,
+                          AppSpacing.xl,
+                          compact ? AppSpacing.lg : 28,
                         ),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
@@ -349,7 +350,7 @@ class _HeaderCopy extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         Text(
           'games.levelUpSubtitle'.tr(),
           textAlign: TextAlign.center,
@@ -415,7 +416,7 @@ class _LevelHero extends StatelessWidget {
               shape: BoxShape.circle,
               color: palette.surface,
               border: Border.all(
-                color: Colors.white.withValues(alpha: 0.72),
+                color: AppColors.textInverted.withValues(alpha: 0.72),
                 width: 4,
               ),
               boxShadow: [
@@ -534,7 +535,7 @@ class _ProgressPanel extends StatelessWidget {
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         color: palette.surface,
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
             color: palette.shadow,
@@ -553,7 +554,7 @@ class _ProgressPanel extends StatelessWidget {
                 color: palette.primary,
                 background: palette.primarySoft,
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: AppSpacing.lg),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -579,7 +580,7 @@ class _ProgressPanel extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.xl),
           Row(
             children: [
               Expanded(
@@ -607,12 +608,12 @@ class _ProgressPanel extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.sm),
           AnimatedBuilder(
             animation: progressController,
             builder: (context, child) {
               return ClipRRect(
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: BorderRadius.circular(AppRadius.pill),
                 child: LinearProgressIndicator(
                   minHeight: 12,
                   value: progress * progressController.value,
@@ -622,9 +623,9 @@ class _ProgressPanel extends StatelessWidget {
               );
             },
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: AppSpacing.xl),
           Divider(color: palette.outline),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           Text(
             'games.newUnlocks'.tr(),
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -633,7 +634,7 @@ class _ProgressPanel extends StatelessWidget {
               letterSpacing: 2,
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.lg),
           Row(
             children: [
               Expanded(
@@ -712,7 +713,7 @@ class _UnlockItem extends StatelessWidget {
           height: 62,
           decoration: BoxDecoration(
             color: palette.surfaceHigh,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             boxShadow: [
               BoxShadow(
                 color: palette.shadow.withValues(alpha: 0.55),
@@ -723,7 +724,7 @@ class _UnlockItem extends StatelessWidget {
           ),
           child: Icon(icon, color: color, size: 32),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppSpacing.sm),
         Text(
           titleKey.tr(),
           textAlign: TextAlign.center,
@@ -749,15 +750,15 @@ class _ContinueButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      child: ElevatedButton.icon(
+      child: FilledButton.icon(
         onPressed: onPressed,
         icon: const Icon(Icons.arrow_forward_rounded),
         label: Text('games.continueJourney'.tr()),
         style:
-            ElevatedButton.styleFrom(
+            FilledButton.styleFrom(
               minimumSize: const Size.fromHeight(58),
               backgroundColor: palette.primary,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.textInverted,
               elevation: 0,
               shadowColor: Colors.transparent,
               textStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -769,7 +770,7 @@ class _ContinueButton extends StatelessWidget {
               ),
             ).copyWith(
               overlayColor: WidgetStatePropertyAll(
-                Colors.white.withValues(alpha: 0.12),
+                AppColors.textInverted.withValues(alpha: 0.12),
               ),
             ),
       ),

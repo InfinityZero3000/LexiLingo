@@ -7,6 +7,9 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, ConfigDict, Field
 
 
+MAX_CHAT_MESSAGE_CHARS = 4000
+
+
 class MessageRole(str, Enum):
     USER = "user"
     ASSISTANT = "assistant"
@@ -33,7 +36,7 @@ class CreateSessionResponse(BaseModel):
 class SendMessageRequest(BaseModel):
     session_id: str
     user_id: str
-    message: str
+    message: str = Field(..., max_length=MAX_CHAT_MESSAGE_CHARS)
 
 
 class SendMessageResponse(BaseModel):

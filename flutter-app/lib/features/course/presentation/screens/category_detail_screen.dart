@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -10,10 +11,10 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Sort options for courses
 enum CourseSortOption {
-  newest('Newest First', Icons.access_time),
-  popular('Most Popular', Icons.trending_up),
-  alphabetical('A-Z', Icons.sort_by_alpha),
-  level('By Level', Icons.signal_cellular_alt);
+  newest('course.sort.newest', Icons.access_time),
+  popular('course.sort.popular', Icons.trending_up),
+  alphabetical('course.sort.az', Icons.sort_by_alpha),
+  level('course.sort.level', Icons.signal_cellular_alt);
 
   const CourseSortOption(this.label, this.icon);
   final String label;
@@ -114,7 +115,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                     expandedHeight: 200,
                     pinned: true,
                     backgroundColor: categoryColor,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.textInverted,
                     flexibleSpace: FlexibleSpaceBar(
                       title: Text(
                         category.name,
@@ -200,7 +201,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                                       children: [
                                         Icon(option.icon, size: 18),
                                         const SizedBox(width: 8),
-                                        Text(option.label),
+                                        Text(option.label.tr()),
                                         if (option == _sortOption) ...[
                                           const Spacer(),
                                           const Icon(
@@ -224,7 +225,9 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                             onPressed: () {
                               setState(() => _isGridView = !_isGridView);
                             },
-                            tooltip: _isGridView ? 'List view' : 'Grid view',
+                            tooltip: _isGridView
+                                ? 'course.listView'.tr()
+                                : 'course.gridView'.tr(),
                           ),
                         ],
                       ),
@@ -232,7 +235,8 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
                   ),
 
                   // Course list
-                  if (provider.isLoadingCategoryCourses && categoryCourses.isEmpty)
+                  if (provider.isLoadingCategoryCourses &&
+                      categoryCourses.isEmpty)
                     SliverFillRemaining(
                       child: SkeletonList(
                         itemCount: 5,
@@ -288,7 +292,10 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
   /// Build list view of courses
   Widget _buildCourseList(List<CourseEntity> courses) {
     return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: 8,
+      ),
       sliver: SliverList(
         delegate: SliverChildBuilderDelegate((context, index) {
           final course = courses[index];
@@ -314,7 +321,10 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
         final crossAxisCount = adaptiveColumns(width);
 
         return SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: 8,
+          ),
           sliver: SliverGrid(
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: crossAxisCount,
@@ -514,10 +524,12 @@ class _CourseCard extends StatelessWidget {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Row(
@@ -525,7 +537,7 @@ class _CourseCard extends StatelessWidget {
             children: [
               // Thumbnail
               ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
                 child: SizedBox(
                   width: 100,
                   height: 100,
@@ -570,25 +582,31 @@ class _CourseCard extends StatelessWidget {
                     ],
 
                     // Level badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _getLevelColor(
+                    Builder(
+                      builder: (context) {
+                        final (bg, fg) = _levelBadgeColors(
+                          context,
                           course.level,
-                          isDark,
-                        ).withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        course.level,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: _getLevelColor(course.level, isDark),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                        );
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm,
+                            vertical: AppSpacing.xs,
+                          ),
+                          decoration: BoxDecoration(
+                            color: bg,
+                            borderRadius: BorderRadius.circular(AppRadius.sm),
+                          ),
+                          child: Text(
+                            course.level,
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: fg,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -614,25 +632,6 @@ class _CourseCard extends StatelessWidget {
       child: Icon(Icons.book, size: 40, color: AppColorRoles.textMuted(isDark)),
     );
   }
-
-  Color _getLevelColor(String level, bool isDark) {
-    switch (level.toLowerCase()) {
-      case 'beginner':
-      case 'a1':
-      case 'a2':
-        return AppColors.greenSuccessBright;
-      case 'intermediate':
-      case 'b1':
-      case 'b2':
-        return AppColors.orange;
-      case 'advanced':
-      case 'c1':
-      case 'c2':
-        return AppColors.errorBright;
-      default:
-        return AppColorRoles.primary(isDark);
-    }
-  }
 }
 
 /// Compact Course Card Widget for grid view
@@ -644,13 +643,14 @@ class _CourseGridCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -658,7 +658,7 @@ class _CourseGridCard extends StatelessWidget {
             Expanded(
               child: ClipRRect(
                 borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(12),
+                  top: Radius.circular(AppRadius.md),
                 ),
                 child: SizedBox(
                   width: double.infinity,
@@ -690,25 +690,28 @@ class _CourseGridCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   // Level badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _getLevelColor(
-                        course.level,
-                        isDark,
-                      ).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      course.level,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: _getLevelColor(course.level, isDark),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                  Builder(
+                    builder: (context) {
+                      final (bg, fg) = _levelBadgeColors(context, course.level);
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.sm,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: bg,
+                          borderRadius: BorderRadius.circular(AppRadius.sm),
+                        ),
+                        child: Text(
+                          course.level,
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: fg,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -732,23 +735,21 @@ class _CourseGridCard extends StatelessWidget {
       ),
     );
   }
+}
 
-  Color _getLevelColor(String level, bool isDark) {
-    switch (level.toLowerCase()) {
-      case 'beginner':
-      case 'a1':
-      case 'a2':
-        return AppColors.greenSuccessBright;
-      case 'intermediate':
-      case 'b1':
-      case 'b2':
-        return AppColors.orange;
-      case 'advanced':
-      case 'c1':
-      case 'c2':
-        return AppColors.errorBright;
-      default:
-        return AppColorRoles.primary(isDark);
-    }
-  }
+(Color, Color) _levelBadgeColors(BuildContext context, String level) {
+  final status = context.status;
+  final scheme = Theme.of(context).colorScheme;
+  return switch (level.toLowerCase()) {
+    'beginner' ||
+    'a1' ||
+    'a2' => (status.successContainer, status.onSuccessContainer),
+    'intermediate' ||
+    'b1' ||
+    'b2' => (status.warningContainer, status.onWarningContainer),
+    'advanced' ||
+    'c1' ||
+    'c2' => (scheme.errorContainer, scheme.onErrorContainer),
+    _ => (scheme.primaryContainer, scheme.onPrimaryContainer),
+  };
 }

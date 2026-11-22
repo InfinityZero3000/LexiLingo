@@ -1,4 +1,4 @@
-import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 
 import 'package:dartz/dartz.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
@@ -47,7 +47,8 @@ class VocabularyRepositoryImpl implements VocabularyRepository {
     } on NetworkException catch (e) {
       return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: $e'));
+      debugPrint('Unexpected error: $e');
+      return const Left(ServerFailure());
     }
   }
 
@@ -63,7 +64,8 @@ class VocabularyRepositoryImpl implements VocabularyRepository {
     } on NetworkException catch (e) {
       return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: $e'));
+      debugPrint('Unexpected error: $e');
+      return const Left(ServerFailure());
     }
   }
 
@@ -89,7 +91,8 @@ class VocabularyRepositoryImpl implements VocabularyRepository {
     } on NetworkException catch (e) {
       return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: $e'));
+      debugPrint('Unexpected error: $e');
+      return const Left(ServerFailure());
     }
   }
 
@@ -105,7 +108,8 @@ class VocabularyRepositoryImpl implements VocabularyRepository {
     } on NetworkException catch (e) {
       return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: $e'));
+      debugPrint('Unexpected error: $e');
+      return const Left(ServerFailure());
     }
   }
 
@@ -122,7 +126,8 @@ class VocabularyRepositoryImpl implements VocabularyRepository {
     } on NetworkException catch (e) {
       return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: $e'));
+      debugPrint('Unexpected error: $e');
+      return const Left(ServerFailure());
     }
   }
 
@@ -144,7 +149,8 @@ class VocabularyRepositoryImpl implements VocabularyRepository {
     } on NetworkException catch (e) {
       return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: $e'));
+      debugPrint('Unexpected error: $e');
+      return const Left(ServerFailure());
     }
   }
 
@@ -166,7 +172,8 @@ class VocabularyRepositoryImpl implements VocabularyRepository {
     } on NetworkException catch (e) {
       return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: $e'));
+      debugPrint('Unexpected error: $e');
+      return const Left(ServerFailure());
     }
   }
 
@@ -180,7 +187,8 @@ class VocabularyRepositoryImpl implements VocabularyRepository {
     } on NetworkException catch (e) {
       return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: $e'));
+      debugPrint('Unexpected error: $e');
+      return const Left(ServerFailure());
     }
   }
 
@@ -195,7 +203,8 @@ class VocabularyRepositoryImpl implements VocabularyRepository {
     } on NetworkException catch (e) {
       return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: $e'));
+      debugPrint('Unexpected error: $e');
+      return const Left(ServerFailure());
     }
   }
 
@@ -209,7 +218,8 @@ class VocabularyRepositoryImpl implements VocabularyRepository {
     } on NetworkException catch (e) {
       return Left(NetworkFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure('Unexpected error: $e'));
+      debugPrint('Unexpected error: $e');
+      return const Left(ServerFailure());
     }
   }
 }

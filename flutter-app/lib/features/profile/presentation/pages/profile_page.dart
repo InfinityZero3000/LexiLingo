@@ -1,7 +1,10 @@
+import 'package:lexilingo_app/core/utils/freshness.dart';
 import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:lexilingo_app/features/admin/admin_app.dart';
+import 'package:lexilingo_app/core/navigation/deferred_page.dart';
+import 'package:lexilingo_app/features/admin/admin_app.dart'
+    deferred as admin_app;
 import 'package:lexilingo_app/features/auth/domain/entities/user_entity.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/gamification/gamification.dart';
@@ -18,6 +21,7 @@ import 'package:lexilingo_app/features/progress/presentation/providers/progress_
 import 'package:lexilingo_app/features/user/presentation/pages/settings_page.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class ProfilePage extends StatefulWidget {
   final bool isActive;
@@ -44,6 +48,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _loadData() async {
+    if (!mounted) return;
     final authProvider = context.read<AuthProvider>();
     final levelProvider = context.read<LevelProvider>();
     final progressProvider = context.read<ProgressProvider>();
@@ -51,24 +56,31 @@ class _ProfilePageState extends State<ProfilePage> {
     final gamificationProvider = context.read<GamificationProvider>();
     final proficiencyProvider = context.read<ProficiencyProvider>();
 
-    // Refresh the authoritative account state so email verification changes
-    // are reflected in the profile badge after returning from the email link.
-    if (authProvider.currentUser != null) {
-      await authProvider.refreshCurrentUser();
-      await levelProvider.fetchLevelFull();
+    // Independent loads: one failing must not hold back the wallet or the rest.
+    Future<void> guarded(Future<void> Function() load) async {
+      try {
+        await load();
+      } catch (e) {
+        debugPrint('Profile load step failed: $e');
+      }
     }
 
-    // Load progress stats
-    await progressProvider.fetchMyProgress();
-
-    // Load profile stats from backend
-    await profileProvider.loadProfileData();
-
-    // Load gamification data (wallet, etc.)
-    await gamificationProvider.loadWallet();
-
-    // Load proficiency data (AI-evaluated skill assessment)
-    await proficiencyProvider.loadProfile();
+    await Future.wait([
+      guarded(gamificationProvider.loadWallet),
+      guarded(() async {
+        // Refresh the authoritative account state so email verification
+        // changes show after returning from the email link.
+        if (authProvider.currentUser != null) {
+          await authProvider.refreshCurrentUser(maxAge: kPassiveReloadWindow);
+          await levelProvider.fetchLevelFull(maxAge: kPassiveReloadWindow);
+        }
+      }),
+      guarded(
+        () => progressProvider.fetchMyProgress(maxAge: kPassiveReloadWindow),
+      ),
+      guarded(profileProvider.loadProfileData),
+      guarded(proficiencyProvider.loadProfile),
+    ]);
   }
 
   bool _isAdminUser(UserEntity? user) {
@@ -78,7 +90,10 @@ class _ProfilePageState extends State<ProfilePage> {
   void _openAdminPanel() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => const AdminApp(),
+        builder: (_) => DeferredPage(
+          loadLibrary: admin_app.loadLibrary,
+          builder: (_) => admin_app.AdminApp(),
+        ),
         fullscreenDialog: true,
       ),
     );
@@ -99,10 +114,10 @@ class _ProfilePageState extends State<ProfilePage> {
         title: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(AppSpacing.sm),
               decoration: BoxDecoration(
                 color: accent,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Icon(
                 Icons.person_rounded,
@@ -110,7 +125,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 size: 20,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Text(
                 'profile.title'.tr(),
@@ -128,13 +143,16 @@ class _ProfilePageState extends State<ProfilePage> {
           // Wallet/Gems Button
           Consumer<GamificationProvider>(
             builder: (context, gamification, _) {
+              final unavailable = gamification.walletUnavailable;
               return TapTarget(
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const WalletScreen()),
-                ),
+                onTap: () => unavailable
+                    ? gamification.loadWallet()
+                    : Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const WalletScreen()),
+                      ),
                 child: Container(
-                  margin: const EdgeInsets.only(right: 8),
+                  margin: const EdgeInsets.only(right: AppSpacing.sm),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
                     vertical: 6,
@@ -143,23 +161,31 @@ class _ProfilePageState extends State<ProfilePage> {
                     gradient: const LinearGradient(
                       colors: AppColors.purpleGradient,
                     ),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
                         Icons.diamond,
-                        color: Theme.of(context).colorScheme.surface,
+                        color: AppColors.surfaceLight,
                         size: 16,
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${gamification.wallet?.gems ?? 0}',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.surface,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
+                      const SizedBox(width: AppSpacing.xs),
+                      Semantics(
+                        label: gamification.wallet != null
+                            ? null
+                            : (unavailable
+                                      ? 'errors.loadFailed'
+                                      : 'common.loading')
+                                  .tr(),
+                        child: Text(
+                          gamification.wallet?.gems.toString() ?? '—',
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: AppColors.surfaceLight,
+                                fontWeight: FontWeight.bold,
+                              ),
                         ),
                       ),
                     ],
@@ -188,7 +214,8 @@ class _ProfilePageState extends State<ProfilePage> {
           if (_isAdminUser(user))
             IconButton(
               icon: const Icon(Icons.admin_panel_settings_rounded),
-              color: Colors.deepOrange,
+              color: Theme.of(context).colorScheme.error,
+
               tooltip: 'profile.adminMobile'.tr(),
               onPressed: _openAdminPanel,
             ),

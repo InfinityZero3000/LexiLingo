@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
@@ -163,8 +164,8 @@ class _ButtonContent extends StatelessWidget {
 
   EdgeInsetsGeometry get _padding => switch (size) {
     AppButtonSize.small => const EdgeInsets.symmetric(
-      horizontal: 14,
-      vertical: 8,
+      horizontal: AppSpacing.lg,
+      vertical: AppSpacing.sm,
     ),
     AppButtonSize.medium => const EdgeInsets.symmetric(
       horizontal: 20,
@@ -172,7 +173,7 @@ class _ButtonContent extends StatelessWidget {
     ),
     AppButtonSize.large => const EdgeInsets.symmetric(
       horizontal: 28,
-      vertical: 16,
+      vertical: AppSpacing.lg,
     ),
   };
 
@@ -189,9 +190,9 @@ class _ButtonContent extends StatelessWidget {
   };
 
   double get _borderRadius => switch (size) {
-    AppButtonSize.small => 10,
-    AppButtonSize.medium => 14,
-    AppButtonSize.large => 16,
+    AppButtonSize.small => AppRadius.sm,
+    AppButtonSize.medium => AppRadius.md,
+    AppButtonSize.large => AppRadius.lg,
   };
 
   Color _bgColor(bool isDark) {
@@ -216,7 +217,8 @@ class _ButtonContent extends StatelessWidget {
           : Colors.black.withValues(alpha: 0.3);
     }
     return switch (variant) {
-      AppButtonVariant.filled || AppButtonVariant.destructive => Colors.white,
+      AppButtonVariant.filled ||
+      AppButtonVariant.destructive => AppColors.textInverted,
       AppButtonVariant.outlined =>
         isDark ? AppColors.primaryDark : AppColors.primary,
       AppButtonVariant.ghost =>

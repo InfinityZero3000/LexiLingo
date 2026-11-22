@@ -7,6 +7,7 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/cefr_badge.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/vocabulary_item_entity.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/repositories/vocabulary_repository.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Full-screen Word of the Day view.
 /// Receives [VocabularyItemEntity] via Navigator arguments.
@@ -47,7 +48,8 @@ class _WordOfDayScreenState extends State<WordOfDayScreen>
 
   @override
   Widget build(BuildContext context) {
-    final word = ModalRoute.of(context)?.settings.arguments as VocabularyItemEntity?;
+    final word =
+        ModalRoute.of(context)?.settings.arguments as VocabularyItemEntity?;
     if (word == null) {
       return Scaffold(
         body: Center(child: Text('vocabulary.noWordAvailable'.tr())),
@@ -63,7 +65,9 @@ class _WordOfDayScreenState extends State<WordOfDayScreen>
     );
 
     return Scaffold(
-      backgroundColor: isDark ? AppColors.backgroundDark : AppColors.backgroundLight,
+      backgroundColor: isDark
+          ? AppColors.backgroundDark
+          : AppColors.backgroundLight,
       appBar: AppBar(
         title: Text('vocabulary.wordOfTheDay'.tr()),
         backgroundColor: Colors.transparent,
@@ -75,220 +79,241 @@ class _WordOfDayScreenState extends State<WordOfDayScreen>
           ),
         ],
       ),
-      body: ContentWidth(maxWidth: ContentWidth.reading, child: FadeTransition(
-        opacity: _fade,
-        child: SlideTransition(
-          position: _slide,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Hero word block
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: AppColorRoles.primaryGradient(isDark),
-                    ),
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColorRoles.primary(
-                          isDark,
-                        ).withValues(alpha: 0.25),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
+      body: ContentWidth(
+        maxWidth: ContentWidth.reading,
+        child: FadeTransition(
+          opacity: _fade,
+          child: SlideTransition(
+            position: _slide,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(
+                20,
+                AppSpacing.sm,
+                20,
+                AppSpacing.xxl,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Hero word block
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(AppSpacing.xl),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: AppColorRoles.primaryGradient(isDark),
                       ),
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          CefrBadge(
-                            level: word.difficultyLevel,
-                            onColored: true,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            word.partOfSpeech,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.white.withValues(alpha: 0.8),
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        word.word,
-                        style: const TextStyle(
-                          fontSize: 40,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white,
-                          letterSpacing: -0.5,
-                        ),
-                      ),
-                      if (word.pronunciation != null) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          word.pronunciation!,
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.white.withValues(alpha: 0.8),
-                            fontStyle: FontStyle.italic,
-                          ),
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColorRoles.primary(
+                            isDark,
+                          ).withValues(alpha: 0.25),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
                         ),
                       ],
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Definition
-                _Section(
-                  title: 'vocabulary.definition'.tr(),
-                  child: Text(
-                    word.definition,
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: AppColorRoles.textPrimary(isDark),
-                      height: 1.6,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            CefrBadge(
+                              level: word.difficultyLevel,
+                              onColored: true,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              word.partOfSpeech,
+                              style: Theme.of(context).textTheme.bodySmall!
+                                  .copyWith(
+                                    color: Colors.white.withValues(alpha: 0.8),
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          word.word,
+                          style: const TextStyle(
+                            fontSize: 40,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        if (word.pronunciation != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            word.pronunciation!,
+                            style: Theme.of(context).textTheme.bodyLarge!
+                                .copyWith(
+                                  color: Colors.white.withValues(alpha: 0.8),
+                                  fontStyle: FontStyle.italic,
+                                ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-                ),
+                  const SizedBox(height: 24),
 
-                // Translation in the user's app language (hidden when the word
-                // has no entry for that locale).
-                if (localizedTranslation != null || definitionTr != null) ...[
-                  const SizedBox(height: 16),
+                  // Definition
                   _Section(
-                    title: 'vocabulary.translationLabel'.tr(),
+                    title: 'vocabulary.definition'.tr(),
                     child: Text(
-                      [localizedTranslation, definitionTr]
-                          .whereType<String>()
-                          .join('\n'),
-                      style: TextStyle(
-                        fontSize: 15,
+                      word.definition,
+                      style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                         color: AppColorRoles.textPrimary(isDark),
-                        height: 1.5,
-                        fontStyle: FontStyle.italic,
+                        height: 1.6,
                       ),
                     ),
                   ),
-                ],
 
-                // Example sentences
-                if (word.examples.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  _Section(
-                    title: 'vocabulary.examples'.tr(),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: word.examples.map((example) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                width: 4,
-                                height: 4,
-                                margin: const EdgeInsets.only(top: 8, right: 10),
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: AppColorRoles.primary(isDark),
-                                ),
-                              ),
-                              Expanded(
-                                child: Text(
-                                  '"$example"',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: AppColorRoles.textSecondary(isDark),
-                                    height: 1.5,
-                                    fontStyle: FontStyle.italic,
+                  // Translation in the user's app language (hidden when the word
+                  // has no entry for that locale).
+                  if (localizedTranslation != null || definitionTr != null) ...[
+                    const SizedBox(height: 16),
+                    _Section(
+                      title: 'vocabulary.translationLabel'.tr(),
+                      child: Text(
+                        [
+                          localizedTranslation,
+                          definitionTr,
+                        ].whereType<String>().join('\n'),
+                        style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                          color: AppColorRoles.textPrimary(isDark),
+                          height: 1.5,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                  ],
+
+                  // Example sentences
+                  if (word.examples.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    _Section(
+                      title: 'vocabulary.examples'.tr(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: word.examples.map((example) {
+                          return Padding(
+                            padding: const EdgeInsets.only(
+                              bottom: AppSpacing.sm,
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  width: 4,
+                                  height: 4,
+                                  margin: const EdgeInsets.only(
+                                    top: AppSpacing.sm,
+                                    right: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: AppColorRoles.primary(isDark),
                                   ),
                                 ),
-                              ),
-                            ],
+                                Expanded(
+                                  child: Text(
+                                    '"$example"',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium!
+                                        .copyWith(
+                                          color: AppColorRoles.textSecondary(
+                                            isDark,
+                                          ),
+                                          height: 1.5,
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ],
+
+                  // Tags
+                  if (word.tags != null && word.tags!.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: word.tags!.map((tag) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: AppSpacing.xs,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColorRoles.primary(
+                              isDark,
+                            ).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(99),
+                          ),
+                          child: Text(
+                            '#$tag',
+                            style: Theme.of(context).textTheme.labelSmall!
+                                .copyWith(
+                                  color: AppColorRoles.primary(isDark),
+                                  fontWeight: FontWeight.w500,
+                                ),
                           ),
                         );
                       }).toList(),
                     ),
-                  ),
-                ],
+                  ],
 
-                // Tags
-                if (word.tags != null && word.tags!.isNotEmpty) ...[
-                  const SizedBox(height: 16),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: word.tags!.map((tag) {
-                      return Container(
+                  const SizedBox(height: 32),
+
+                  // Add to flashcards button
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: _addedToCollection
+                          ? null
+                          : () => _addToCollection(context, word),
+                      style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
+                          vertical: AppSpacing.lg,
                         ),
-                        decoration: BoxDecoration(
-                          color: AppColorRoles.primary(isDark).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(99),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
                         ),
-                        child: Text(
-                          '#$tag',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: AppColorRoles.primary(isDark),
-                            fontWeight: FontWeight.w500,
-                          ),
+                      ),
+                      icon: Icon(
+                        _addedToCollection
+                            ? Icons.check_circle_rounded
+                            : Icons.bookmark_add_rounded,
+                        size: 20,
+                      ),
+                      label: Text(
+                        _addedToCollection
+                            ? 'vocabulary.addedToFlashcardsShort'.tr()
+                            : 'vocabulary.addToFlashcards'.tr(),
+                        style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                          fontWeight: FontWeight.w700,
                         ),
-                      );
-                    }).toList(),
+                      ),
+                    ),
                   ),
                 ],
-
-                const SizedBox(height: 32),
-
-                // Add to flashcards button
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: _addedToCollection ? null : () => _addToCollection(context, word),
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                    ),
-                    icon: Icon(
-                      _addedToCollection
-                          ? Icons.check_circle_rounded
-                          : Icons.bookmark_add_rounded,
-                      size: 20,
-                    ),
-                    label: Text(
-                      _addedToCollection
-                          ? 'Added to Flashcards!'
-                          : 'Add to Flashcards',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
-      ),),
+      ),
     );
   }
 
@@ -300,35 +325,39 @@ class _WordOfDayScreenState extends State<WordOfDayScreen>
     final repo = sl<VocabularyRepository>();
     final result = await repo.addToCollection(word.id);
     if (!mounted) return;
-    result.fold(
-      (_) {},
-      (_) {
-        setState(() => _addedToCollection = true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('vocabulary.addedToFlashcards'.tr(namedArgs: {'word': word.word})),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            duration: const Duration(seconds: 2),
+    result.fold((_) {}, (_) {
+      setState(() => _addedToCollection = true);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'vocabulary.addedToFlashcards'.tr(namedArgs: {'word': word.word}),
           ),
-        );
-      },
-    );
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    });
   }
 
   void _share(VocabularyItemEntity word) {
-    final text = '📖 Word of the Day: "${word.word}"\n'
-        '${word.pronunciation != null ? '${word.pronunciation}\n' : ''}'
-        '${word.definition}\n\n'
-        'Learn English with LexiLingo!';
+    final details = [
+      if (word.pronunciation != null) word.pronunciation!,
+      word.definition,
+    ].join('\n');
+    final text = 'vocabulary.wordOfDayShare'.tr(
+      namedArgs: {'word': word.word, 'details': details},
+    );
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('common.copiedToClipboard'.tr()),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+        ),
         duration: const Duration(seconds: 2),
       ),
     );
@@ -348,8 +377,7 @@ class _Section extends StatelessWidget {
       children: [
         Text(
           title.toUpperCase(),
-          style: TextStyle(
-            fontSize: 11,
+          style: Theme.of(context).textTheme.labelSmall!.copyWith(
             fontWeight: FontWeight.w700,
             color: AppColorRoles.textMuted(isDark),
             letterSpacing: 1.2,

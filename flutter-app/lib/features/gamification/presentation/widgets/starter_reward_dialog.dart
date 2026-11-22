@@ -1,5 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/features/gamification/presentation/theme/reward_palette.dart';
 
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
@@ -43,20 +45,27 @@ class StarterRewardDialog extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
 
     return Material(
-      color: Colors.black.withValues(alpha: 0.52),
+      color: Theme.of(context).shadowColor.withValues(alpha: 0.52),
       child: SafeArea(
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 390),
             child: Container(
-              margin: const EdgeInsets.all(24),
-              padding: const EdgeInsets.fromLTRB(24, 30, 24, 24),
+              margin: const EdgeInsets.all(AppSpacing.xl),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.xl,
+                30,
+                AppSpacing.xl,
+                AppSpacing.xl,
+              ),
               decoration: BoxDecoration(
                 color: colors.surface,
-                borderRadius: BorderRadius.circular(28),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.22),
+                    color: Theme.of(
+                      context,
+                    ).shadowColor.withValues(alpha: 0.22),
                     blurRadius: 36,
                     offset: const Offset(0, 18),
                   ),
@@ -83,7 +92,7 @@ class StarterRewardDialog extends StatelessWidget {
                           gradient: const LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
-                            colors: [AppColors.accentMint, Color(0xFF7669F7)],
+                            colors: RewardPalette.starterGradient,
                           ),
                           boxShadow: [
                             BoxShadow(
@@ -103,7 +112,7 @@ class StarterRewardDialog extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpacing.xl),
                   Text(
                     'gamification.starterReward.title'.tr(),
                     textAlign: TextAlign.center,
@@ -111,17 +120,17 @@ class StarterRewardDialog extends StatelessWidget {
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppSpacing.sm),
                   Text(
                     '+$gems GEM',
                     style: theme.textTheme.headlineMedium?.copyWith(
                       color: isDark
                           ? AppColors.accentMint
-                          : const Color(0xFF5552CF),
+                          : RewardPalette.starterIndigo,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: AppSpacing.sm),
                   Text(
                     'gamification.starterReward.description'.tr(),
                     textAlign: TextAlign.center,
@@ -136,6 +145,7 @@ class StarterRewardDialog extends StatelessWidget {
                     child: FilledButton(
                       onPressed: () => Navigator.of(context).pop(),
                       style: FilledButton.styleFrom(
+                        minimumSize: const Size(kMinTapTarget, kMinTapTarget),
                         backgroundColor: AppColors.accentMint,
                         foregroundColor: AppColors.textDark,
                         padding: const EdgeInsets.symmetric(vertical: 15),
@@ -145,8 +155,7 @@ class StarterRewardDialog extends StatelessWidget {
                       ),
                       child: Text(
                         'gamification.starterReward.action'.tr(),
-                        style: const TextStyle(
-                          fontSize: 16,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           fontWeight: FontWeight.w800,
                         ),
                       ),

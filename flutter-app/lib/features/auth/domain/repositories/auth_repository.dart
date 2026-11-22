@@ -38,6 +38,7 @@ abstract class AuthRepository {
     String? displayName,
     String? avatarUrl,
     String? nativeLanguage,
+    String? lexiReplyLanguage,
     String? targetLanguage,
     String? level,
     String? goal,
@@ -56,6 +57,10 @@ abstract class AuthRepository {
 
   /// Verify email with token
   Future<Either<Failure, void>> verifyEmail(String token);
+
+  /// Verify email from the mailed link. The first verification signs the learner in and
+  /// returns them; null means verified but not signed in (the link was already used).
+  Future<Either<Failure, UserEntity?>> verifyEmailAndSignIn(String token);
 
   /// Resend verification email
   Future<Either<Failure, void>> resendVerificationEmail(String email);

@@ -8,7 +8,7 @@ from typing import List, Optional
 from uuid import UUID
 
 import anyio
-from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile, status
 from pydantic import BaseModel, Field
 from pypdf import PdfReader
 from sqlalchemy import desc, func, insert, or_, select
@@ -17,6 +17,7 @@ from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.cache import invalidate_cache
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.dependencies import require_resource
 from app.crud.course import CourseCRUD, LessonCRUD, UnitCRUD
@@ -50,6 +51,7 @@ from app.schemas.course import (
     UnitUpdate,
 )
 from app.schemas.response import ApiResponse
+from app.services import exercise_generation
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -728,6 +730,66 @@ async def update_lesson_content(
     return ApiResponse(success=True, message="Lesson content updated", data=data)
 
 
+def _unique_exercise_ids(exercises: list[dict], taken: set[str], lesson_id: UUID) -> list[dict]:
+    """Give every generated exercise an id that collides with nothing already in the lesson."""
+    seen = set(taken)
+    counter = 1
+    for exercise in exercises:
+        if not exercise.get("id") or str(exercise["id"]) in seen:
+            while f"ex_{lesson_id}_{counter}" in seen:
+                counter += 1
+            exercise["id"] = f"ex_{lesson_id}_{counter}"
+        seen.add(str(exercise["id"]))
+    return exercises
+
+
+@router.post("/lessons/{lesson_id}/generate-exercises", response_model=ApiResponse[dict])
+async def generate_lesson_exercises_draft(
+    lesson_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_courses),
+):
+    """AI-draft 5 exercises for a lesson. Returns them without saving; the editor saves via PUT."""
+    lesson = await LessonCRUD.get_lesson(db, lesson_id)
+    if not lesson:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Lesson not found")
+    course = await CourseCRUD.get_course(db, lesson.course_id)
+    unit = await UnitCRUD.get_unit(db, lesson.unit_id) if lesson.unit_id else None
+
+    course_title = course.title if course else ""
+    level = course.level if course else ""
+    unit_title = unit.title if unit else ""
+    lesson_title = lesson.title
+    lesson_uuid = lesson.id
+    existing = (lesson.content or {}).get("exercises") if isinstance(lesson.content, dict) else None
+    taken = {str(e["id"]) for e in existing or [] if isinstance(e, dict) and e.get("id")}
+    # Nothing was written; release the pooled connection before the ~90s AI call.
+    # ORM objects are expired after this, so only the locals above may be used.
+    await db.rollback()
+
+    try:
+        exercises = await exercise_generation.generate_lesson_exercises(
+            course_title=course_title,
+            level=level,
+            unit_title=unit_title,
+            lesson_title=lesson_title,
+            lesson_id=str(lesson_uuid),
+        )
+    except exercise_generation.ExerciseGenerationUnavailable:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="AI generation is not configured or the provider rejected the request",
+        )
+    except exercise_generation.ExerciseGenerationFailed:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="AI could not produce a valid lesson, try again",
+        )
+
+    _unique_exercise_ids(exercises, taken, lesson_uuid)
+    return ApiResponse(success=True, message="Draft generated", data={"exercises": exercises})
+
+
 # ============================================================================
 # Vocabulary Admin CRUD
 # ============================================================================
@@ -989,16 +1051,8 @@ async def extract_pdf_text(
 # Badge Image Upload
 # ============================================================================
 
-@router.post("/upload/badge", response_model=ApiResponse[dict])
-async def upload_badge_image(
-    file: UploadFile = File(...),
-    admin_user: User = Depends(require_content)
-):
-    """
-    Upload a badge image. Returns the URL path to the uploaded file.
-    Accepts PNG, JPG, WEBP images up to 2MB.
-    """
-    # Validate file type — SVG excluded to prevent XSS
+async def _save_uploaded_image(file: UploadFile, subdir: str) -> tuple[str, str]:
+    """Validate and store an admin image upload; returns (relative url path, filename)."""
     allowed_types = ["image/png", "image/jpeg", "image/webp"]
     if file.content_type not in allowed_types:
         raise HTTPException(
@@ -1006,7 +1060,6 @@ async def upload_badge_image(
             detail=f"Invalid file type: {file.content_type}. Allowed: {', '.join(allowed_types)}"
         )
 
-    # Read file and check size (2MB limit)
     contents = await file.read()
     if len(contents) > 2 * 1024 * 1024:
         raise HTTPException(
@@ -1015,34 +1068,50 @@ async def upload_badge_image(
         )
 
     if os.path.isdir(_MEDIA_DIR):
-        target_dir = _MEDIA_DIR / "badges"
-        url_prefix = "/media/badges"
+        target_dir = _MEDIA_DIR / subdir
+        url_prefix = f"/media/{subdir}"
     else:
-        target_dir = Path(__file__).resolve().parent.parent.parent / "static" / "badges"
-        url_prefix = "/static/badges"
+        target_dir = Path(__file__).resolve().parent.parent.parent / "static" / subdir
+        url_prefix = f"/static/{subdir}"
     target_dir.mkdir(parents=True, exist_ok=True)
 
-    # Generate UUID-based filename to prevent path traversal and name collisions
     import uuid
     allowed_extensions = {".png", ".jpg", ".jpeg", ".webp"}
-    original_ext = Path(file.filename or "badge.png").suffix.lower()
+    original_ext = Path(file.filename or "image.png").suffix.lower()
     if original_ext not in allowed_extensions:
         original_ext = ".png"
-    safe_name = f"{uuid.uuid4().hex}{original_ext}"
-    filepath = target_dir / safe_name
+    filepath = target_dir / f"{uuid.uuid4().hex}{original_ext}"
+    filepath.write_bytes(contents)
+    return f"{url_prefix}/{filepath.name}", filepath.name
 
-    with open(filepath, "wb") as f:
-        f.write(contents)
 
-    badge_url = f"{url_prefix}/{filepath.name}"
-
+@router.post("/upload/badge", response_model=ApiResponse[dict])
+async def upload_badge_image(
+    file: UploadFile = File(...),
+    admin_user: User = Depends(require_content)
+):
+    """Upload a badge image (PNG, JPG, WEBP, up to 2MB); returns its relative URL path."""
+    url, filename = await _save_uploaded_image(file, "badges")
     return ApiResponse(
         success=True,
         message="Badge image uploaded successfully",
-        data={
-            "url": badge_url,
-            "filename": filepath.name,
-        }
+        data={"url": url, "filename": filename},
+    )
+
+
+@router.post("/upload/banner", response_model=ApiResponse[dict])
+async def upload_banner_image(
+    request: Request,
+    file: UploadFile = File(...),
+    admin_user: User = Depends(require_resource("banners")),
+) -> ApiResponse[dict]:
+    """Upload a banner image; the URL is absolute because the app renders it without a base URL."""
+    path, filename = await _save_uploaded_image(file, "banners")
+    origin = settings.MEDIA_PUBLIC_BASE_URL.rstrip("/") or str(request.base_url).rstrip("/")
+    return ApiResponse(
+        success=True,
+        message="Banner image uploaded successfully",
+        data={"url": f"{origin}{path}", "filename": filename},
     )
 
 
@@ -1195,11 +1264,21 @@ async def bulk_import_grammar(
 async def list_questions_admin(
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
+    level: Optional[str] = Query(None, max_length=20),
+    q: Optional[str] = Query(None, max_length=200),
+    question_type: Optional[str] = Query(None, max_length=50),
     db: AsyncSession = Depends(get_db),
     admin_user: User = Depends(require_content)
 ):
+    stmt = select(QuestionItem)
+    if level and level.strip():
+        stmt = stmt.where(QuestionItem.difficulty_level == level.strip().upper())
+    if q and q.strip():
+        stmt = stmt.where(QuestionItem.prompt.ilike(f"%{q.strip()}%"))
+    if question_type and question_type.strip():
+        stmt = stmt.where(QuestionItem.question_type == question_type.strip())
     result = await db.execute(
-        select(QuestionItem).order_by(QuestionItem.created_at.desc()).limit(limit).offset(offset)
+        stmt.order_by(QuestionItem.created_at.desc()).limit(limit).offset(offset)
     )
     items = result.scalars().all()
     return ApiResponse(

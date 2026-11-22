@@ -6,6 +6,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from api.models.schemas import MAX_CHAT_MESSAGE_CHARS
+
 
 class DifficultyLevel(str, Enum):
     A1 = "A1"
@@ -88,6 +90,21 @@ class AdminStoryCreateRequest(BaseModel):
     context_description: Optional[ContextDescription] = None
     role_persona: Optional[RolePersona] = None
     conversation_flow: Optional[ConversationFlow] = None
+    # None = "the form did not send it": an edit keeps what is stored.
+    vocabulary_list: Optional[List[Dict[str, Any]]] = None
+    grammar_points: Optional[List[Dict[str, Any]]] = None
+
+
+class TopicMetaRequest(BaseModel):
+    title: str
+    tags: List[str] = Field(default_factory=list)
+
+
+class TopicDraftRequest(BaseModel):
+    title_en: str
+    difficulty_level: DifficultyLevel
+    category: str = ""
+    notes: str = ""
 
 
 class ListStoriesRequest(BaseModel):
@@ -120,7 +137,7 @@ class StartTopicSessionResponse(BaseModel):
 
 class TopicChatRequest(BaseModel):
     user_id: str
-    message: str
+    message: str = Field(..., max_length=MAX_CHAT_MESSAGE_CHARS)
 
 
 class TopicChatResponse(BaseModel):

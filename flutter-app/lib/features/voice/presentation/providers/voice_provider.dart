@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/core/services/skill_event_recorder.dart';
@@ -31,7 +31,7 @@ class VoiceProvider extends ChangeNotifier {
   });
 
   VoiceState _state = VoiceState.idle;
-  String? _errorMessage;
+  UiText? _errorMessage;
   Transcription? _lastTranscription;
   AudioSynthesis? _lastAudioSynthesis;
   PronunciationScore? _lastPronunciationScore;
@@ -39,7 +39,7 @@ class VoiceProvider extends ChangeNotifier {
 
   // Getters
   VoiceState get state => _state;
-  String? get errorMessage => _errorMessage;
+  String? get errorMessage => _errorMessage?.resolve();
   Transcription? get lastTranscription => _lastTranscription;
   AudioSynthesis? get lastAudioSynthesis => _lastAudioSynthesis;
   PronunciationScore? get lastPronunciationScore => _lastPronunciationScore;
@@ -84,7 +84,7 @@ class VoiceProvider extends ChangeNotifier {
 
     return result.fold(
       (failure) {
-        _errorMessage = _getFailureMessage(failure);
+        _errorMessage = (_getFailureMessage(failure));
         _state = VoiceState.error;
         notifyListeners();
         return null;
@@ -101,7 +101,7 @@ class VoiceProvider extends ChangeNotifier {
   /// Synthesize text to speech and play
   Future<AudioSynthesis?> synthesizeAndPlay({required String text}) async {
     if (text.isEmpty) {
-      _errorMessage = 'voice.textRequired'.tr();
+      _errorMessage = UiText.key('voice.textRequired');
       _state = VoiceState.error;
       notifyListeners();
       return null;
@@ -115,7 +115,7 @@ class VoiceProvider extends ChangeNotifier {
 
     return result.fold(
       (failure) {
-        _errorMessage = _getFailureMessage(failure);
+        _errorMessage = (_getFailureMessage(failure));
         _state = VoiceState.error;
         notifyListeners();
         return null;
@@ -143,7 +143,7 @@ class VoiceProvider extends ChangeNotifier {
     String? language,
   }) async {
     if (targetText.isEmpty) {
-      _errorMessage = 'voice.textRequired'.tr();
+      _errorMessage = UiText.key('voice.textRequired');
       _state = VoiceState.error;
       notifyListeners();
       return null;
@@ -164,7 +164,7 @@ class VoiceProvider extends ChangeNotifier {
 
     return result.fold(
       (failure) {
-        _errorMessage = _getFailureMessage(failure);
+        _errorMessage = (_getFailureMessage(failure));
         _state = VoiceState.error;
         notifyListeners();
         return null;
@@ -241,13 +241,13 @@ class VoiceProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  String _getFailureMessage(Failure failure) {
+  UiText _getFailureMessage(Failure failure) {
     if (failure is ServerFailure) {
-      return failure.message;
+      return UiText.failure(failure);
     } else if (failure is NetworkFailure) {
-      return 'errors.networkRetry'.tr();
+      return UiText.key('errors.networkRetry');
     } else {
-      return 'errors.genericRetry'.tr();
+      return UiText.key('errors.genericRetry');
     }
   }
 }

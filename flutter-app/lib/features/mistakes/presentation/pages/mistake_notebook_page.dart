@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/mistakes/data/mistake_notebook_repository.dart';
 import 'package:lexilingo_app/features/mistakes/domain/mistake_notebook_entry.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 enum _MistakeFilter { all, unreviewed, reviewed }
 
@@ -23,6 +24,7 @@ class _MistakeNotebookPageState extends State<MistakeNotebookPage> {
   List<MistakeNotebookEntry> _entries = const [];
   _MistakeFilter _filter = _MistakeFilter.all;
   bool _isLoading = true;
+  bool _loadFailed = false;
 
   @override
   void initState() {
@@ -30,30 +32,41 @@ class _MistakeNotebookPageState extends State<MistakeNotebookPage> {
     _loadEntries();
   }
 
-  Future<void> _loadEntries() async {
-    setState(() => _isLoading = true);
+  Future<void> _loadEntries({bool showSpinner = true}) async {
+    if (showSpinner && _entries.isEmpty) setState(() => _isLoading = true);
+    var failed = false;
     var entries = _entries;
     try {
       entries = await widget.repository.getEntries();
     } catch (_) {
-      entries = const [];
+      failed = true;
     }
     if (!mounted) return;
     setState(() {
       _entries = entries;
+      _loadFailed = failed && entries.isEmpty;
       _isLoading = false;
     });
   }
 
-  Future<void> _markReviewed(String id) async {
-    await widget.repository.markReviewed(id);
-    await _loadEntries();
+  Future<void> _mutate(Future<void> Function() change) async {
+    try {
+      await change();
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('errors.submitFailed'.tr())));
+    }
+    if (!mounted) return;
+    await _loadEntries(showSpinner: false);
   }
 
-  Future<void> _reopen(String id) async {
-    await widget.repository.reopen(id);
-    await _loadEntries();
-  }
+  Future<void> _markReviewed(String id) =>
+      _mutate(() => widget.repository.markReviewed(id));
+
+  Future<void> _reopen(String id) =>
+      _mutate(() => widget.repository.reopen(id));
 
   Future<void> _deleteEntry(MistakeNotebookEntry entry) async {
     final shouldDelete = await showDialog<bool>(
@@ -63,6 +76,9 @@ class _MistakeNotebookPageState extends State<MistakeNotebookPage> {
         content: Text('mistakeNotebook.deleteMessage'.tr()),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+            ),
             onPressed: () => Navigator.of(context).pop(false),
             child: Text('common.cancel'.tr()),
           ),
@@ -75,8 +91,7 @@ class _MistakeNotebookPageState extends State<MistakeNotebookPage> {
     );
     if (shouldDelete != true) return;
 
-    await widget.repository.delete(entry.id);
-    await _loadEntries();
+    await _mutate(() => widget.repository.delete(entry.id));
   }
 
   List<MistakeNotebookEntry> get _filteredEntries {
@@ -96,18 +111,14 @@ class _MistakeNotebookPageState extends State<MistakeNotebookPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
-      backgroundColor: isDark
-          ? AppColors.backgroundDark
-          : AppColors.backgroundLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('mistakeNotebook.title'.tr()),
         actions: [
           IconButton(
             tooltip: 'common.refresh'.tr(),
-            onPressed: _loadEntries,
+            onPressed: () => _loadEntries(),
             icon: const Icon(Icons.refresh_rounded),
           ),
         ],
@@ -116,8 +127,10 @@ class _MistakeNotebookPageState extends State<MistakeNotebookPage> {
         maxWidth: ContentWidth.reading,
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
+            : _loadFailed
+            ? _NotebookError(onRetry: _loadEntries)
             : RefreshIndicator(
-                onRefresh: _loadEntries,
+                onRefresh: () => _loadEntries(showSpinner: false),
                 child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -143,11 +156,44 @@ class _MistakeNotebookPageState extends State<MistakeNotebookPage> {
                           onReopen: () => _reopen(entry.id),
                           onDelete: () => _deleteEntry(entry),
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: AppSpacing.md),
                       ],
                   ],
                 ),
               ),
+      ),
+    );
+  }
+}
+
+class _NotebookError extends StatelessWidget {
+  const _NotebookError({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.error_outline_rounded,
+              size: 42,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text(
+              'common.error'.tr(),
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            FilledButton(onPressed: onRetry, child: Text('common.retry'.tr())),
+          ],
+        ),
       ),
     );
   }
@@ -172,11 +218,9 @@ class _NotebookHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDarkMuted : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? AppColors.borderDarkSoft : AppColors.slate200,
-        ),
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,11 +232,11 @@ class _NotebookHeader extends StatelessWidget {
                 height: 46,
                 decoration: BoxDecoration(
                   color: accent.withValues(alpha: isDark ? 0.2 : 0.12),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Icon(Icons.rule_folder_rounded, color: accent),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -216,7 +260,7 @@ class _NotebookHeader extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           Row(
             children: [
               Expanded(
@@ -260,8 +304,8 @@ class _HeaderMetric extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDarkInput : AppColors.grey50,
-        borderRadius: BorderRadius.circular(12),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -340,12 +384,14 @@ class _FilterChipButton extends StatelessWidget {
       onSelected: (_) => onSelected(),
       labelStyle: TextStyle(
         fontWeight: FontWeight.w700,
-        color: selected ? Colors.white : null,
+        color: selected ? Theme.of(context).colorScheme.onPrimary : null,
       ),
       selectedColor: AppColorRoles.primary(
         Theme.of(context).brightness == Brightness.dark,
       ),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
     );
   }
 }
@@ -362,11 +408,9 @@ class _NotebookEmptyState extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDarkMuted : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? AppColors.borderDarkSoft : AppColors.slate200,
-        ),
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: Column(
         children: [
@@ -376,10 +420,10 @@ class _NotebookEmptyState extends StatelessWidget {
                 : Icons.auto_stories_rounded,
             size: 42,
             color: hasAnyEntry
-                ? AppColors.greenSuccessBright
+                ? context.status.success
                 : AppColorRoles.primary(isDark),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
           Text(
             hasAnyEntry
                 ? 'mistakeNotebook.emptyFilterTitle'.tr()
@@ -428,12 +472,14 @@ class _MistakeCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDarkMuted : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
           color: entry.isReviewed
-              ? AppColors.greenSuccessBright.withValues(alpha: 0.4)
-              : AppColors.errorBright.withValues(alpha: isDark ? 0.45 : 0.3),
+              ? context.status.success.withValues(alpha: 0.4)
+              : Theme.of(
+                  context,
+                ).colorScheme.error.withValues(alpha: isDark ? 0.45 : 0.3),
         ),
       ),
       child: Column(
@@ -485,26 +531,26 @@ class _MistakeCard extends StatelessWidget {
           const SizedBox(height: 14),
           _AnswerLine(
             icon: Icons.close_rounded,
-            iconColor: AppColors.errorBright,
+            iconColor: Theme.of(context).colorScheme.error,
             label: 'mistakeNotebook.yourAnswer'.tr(),
             value: entry.selectedAnswer,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           _AnswerLine(
             icon: Icons.check_rounded,
-            iconColor: AppColors.greenSuccessBright,
+            iconColor: context.status.success,
             label: 'mistakeNotebook.correctAnswer'.tr(),
             value: entry.correctAnswer,
           ),
           if (entry.explanation.isNotEmpty) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             Text(
               'mistakeNotebook.explanation'.tr(),
               style: Theme.of(
                 context,
               ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w900),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               entry.explanation,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -517,8 +563,8 @@ class _MistakeCard extends StatelessWidget {
           Row(
             children: [
               if (entry.isReviewed) ...[
-                _ReviewedPill(reviewCount: entry.reviewCount),
-                const SizedBox(width: 8),
+                Flexible(child: _ReviewedPill(reviewCount: entry.reviewCount)),
+                const SizedBox(width: AppSpacing.sm),
                 TextButton(
                   onPressed: onReopen,
                   child: Text('mistakeNotebook.reopen'.tr()),
@@ -575,10 +621,10 @@ class _AnswerLine extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(icon, color: iconColor, size: 18),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpacing.sm),
         Expanded(
-          child: RichText(
-            text: TextSpan(
+          child: Text.rich(
+            TextSpan(
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppColorRoles.textSecondary(isDark),
                 height: 1.35,
@@ -611,28 +657,31 @@ class _ReviewedPill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: AppColors.greenSuccessBright.withValues(alpha: 0.12),
+        color: context.status.success.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.check_circle_rounded,
-            color: AppColors.greenSuccessBright,
+            color: context.status.success,
             size: 16,
           ),
           const SizedBox(width: 6),
-          Text(
-            reviewCount > 1
-                ? 'mistakeNotebook.reviewedTimes'.tr(
-                    namedArgs: {'count': '$reviewCount'},
-                  )
-                : 'mistakeNotebook.reviewed'.tr(),
-            style: const TextStyle(
-              color: AppColors.greenSuccessBright,
-              fontWeight: FontWeight.w800,
-              fontSize: 12,
+          Flexible(
+            child: Text(
+              reviewCount > 1
+                  ? 'mistakeNotebook.reviewedTimes'.tr(
+                      namedArgs: {'count': '$reviewCount'},
+                    )
+                  : 'mistakeNotebook.reviewed'.tr(),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: context.status.success,
+                fontWeight: FontWeight.w800,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
         ],

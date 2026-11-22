@@ -1,4 +1,6 @@
+import 'package:dartz/dartz.dart';
 import 'package:flutter/foundation.dart';
+import 'package:lexilingo_app/core/error/failures.dart';
 import '../../domain/entities/user.dart';
 import '../../domain/entities/settings.dart';
 import '../../domain/entities/daily_goal.dart';
@@ -10,8 +12,9 @@ import '../../domain/usecases/get_today_goal_usecase.dart';
 import '../../domain/usecases/set_daily_goal_usecase.dart';
 import '../../domain/usecases/update_daily_progress_usecase.dart';
 import '../../domain/usecases/get_current_streak_usecase.dart';
+import 'package:lexilingo_app/core/state/reset_epoch.dart';
 
-class UserProvider with ChangeNotifier {
+class UserProvider with ChangeNotifier, ResetEpoch {
   final GetUserUseCase getUserUseCase;
   final UpdateUserUseCase updateUserUseCase;
   final GetSettingsUseCase getSettingsUseCase;
@@ -69,6 +72,7 @@ class UserProvider with ChangeNotifier {
   Future<void> loadUserData() async {
     if (_currentUserId == null) return;
 
+    final epoch = resetEpoch;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -81,21 +85,24 @@ class UserProvider with ChangeNotifier {
         getTodayGoalUseCase(GetTodayGoalParams(userId: _currentUserId!)),
         getCurrentStreakUseCase(_currentUserId!),
       ]);
+      if (isStale(epoch)) return;
 
       _user = results[0] as User?;
-      _settings = results[1] as Settings?;
-
-      // Extract DailyGoal from Either result
-      final goalResult = results[2];
-      if (goalResult is DailyGoal?) {
-        _todayGoal = goalResult;
-      }
+      (results[1] as Either<Failure, Settings>).fold(
+        (failure) => _errorMessage = failure.message,
+        (settings) => _settings = settings,
+      );
+      (results[2] as Either<Failure, DailyGoal?>).fold(
+        (failure) => _errorMessage = failure.message,
+        (goal) => _todayGoal = goal,
+      );
 
       _currentStreak = results[3] as int;
 
       _isLoading = false;
       notifyListeners();
     } catch (e) {
+      if (isStale(epoch)) return;
       _errorMessage = e.toString();
       _isLoading = false;
       notifyListeners();
@@ -106,16 +113,19 @@ class UserProvider with ChangeNotifier {
   Future<void> loadTodayGoal() async {
     if (_currentUserId == null) return;
 
+    final epoch = resetEpoch;
     try {
       final result = await getTodayGoalUseCase(
         GetTodayGoalParams(userId: _currentUserId!),
       );
+      if (isStale(epoch)) return;
       result.fold(
         (failure) => _errorMessage = failure.message,
         (goal) => _todayGoal = goal,
       );
       notifyListeners();
     } catch (e) {
+      if (isStale(epoch)) return;
       _errorMessage = e.toString();
       notifyListeners();
     }
@@ -129,6 +139,7 @@ class UserProvider with ChangeNotifier {
   }) async {
     if (_currentUserId == null) return false;
 
+    final epoch = resetEpoch;
     try {
       final goal = DailyGoal(
         id: _todayGoal?.id ?? 0,
@@ -142,6 +153,7 @@ class UserProvider with ChangeNotifier {
       );
 
       final result = await setDailyGoalUseCase(SetDailyGoalParams(goal: goal));
+      if (isStale(epoch)) return false;
       return result.fold(
         (failure) {
           _errorMessage = failure.message;
@@ -169,6 +181,7 @@ class UserProvider with ChangeNotifier {
   }) async {
     if (_user == null) return;
 
+    final epoch = resetEpoch;
     try {
       final updatedUser = _user!.copyWith(
         name: name ?? _user!.name,
@@ -177,6 +190,7 @@ class UserProvider with ChangeNotifier {
       );
 
       await updateUserUseCase(updatedUser);
+      if (isStale(epoch)) return;
       _user = updatedUser;
       notifyListeners();
     } catch (e) {
@@ -187,8 +201,10 @@ class UserProvider with ChangeNotifier {
 
   // Update settings
   Future<void> updateUserSettings(Settings newSettings) async {
+    final epoch = resetEpoch;
     try {
       await updateSettingsUseCase(newSettings);
+      if (isStale(epoch)) return;
       _settings = newSettings;
       notifyListeners();
     } catch (e) {
@@ -245,6 +261,18 @@ class UserProvider with ChangeNotifier {
       _errorMessage = e.toString();
       notifyListeners();
     }
+  }
+
+  void reset() {
+    bumpResetEpoch();
+    _currentUserId = null;
+    _user = null;
+    _settings = null;
+    _todayGoal = null;
+    _currentStreak = 0;
+    _isLoading = false;
+    _errorMessage = null;
+    notifyListeners();
   }
 
   // Clear error

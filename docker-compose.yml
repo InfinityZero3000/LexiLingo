@@ -3,6 +3,10 @@ services:
     image: nginx:1.27-alpine
     container_name: lexilingo-gateway
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    # Measured ~11 MiB resident; 128m leaves >10x for gzip and proxy buffers.
+    mem_limit: 128m
     depends_on:
       backend-service:
         condition: service_started
@@ -77,13 +81,15 @@ services:
     image: mongo:7.0
     container_name: lexilingo-mongodb
     restart: unless-stopped
-    command: mongod --wiredTigerCacheSizeGB 0.25
+    command: mongod --auth --wiredTigerCacheSizeGB 0.25
     deploy:
       resources:
         limits:
           memory: 512M
     environment:
       MONGO_INITDB_DATABASE: ${MONGODB_DATABASE:-lexilingo}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:?set MONGO_ROOT_USER in .env.production.secrets}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?set MONGO_ROOT_PASSWORD in .env.production.secrets}
     volumes:
       - mongodb_data:/data/db
       - mongodb_config:/data/configdb
@@ -100,6 +106,9 @@ services:
     image: redis:7-alpine
     container_name: lexilingo-redis
     restart: unless-stopped
+    # Must stay above --maxmemory 512mb plus AOF-rewrite overhead, or the kernel
+    # kills redis before allkeys-lru gets to evict. Measured ~9 MiB resident.
+    mem_limit: 768m
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set in .env.production.secrets}
     command: /bin/sh -c 'redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru --requirepass "$$REDIS_PASSWORD"'
@@ -125,6 +134,8 @@ services:
     # across all replicas via Docker's internal DNS round-robin.
     container_name: lexilingo-backend-service
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:
@@ -164,9 +175,13 @@ services:
       # admin dashboard can show backup health; the dumps themselves stay unreachable.
       - /var/lib/lexilingo:/var/lib/lexilingo:ro
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)\""]
+      # Readiness, not liveness: /health/ready also runs SELECT 1 and pings redis, and answers 503
+      # (urlopen raises) when either is down. Probe timeout 8s inside a 12s check timeout, and 5
+      # failures at 30s = 150s of grace, so a slow database does not flap auto-deploy's verify step
+      # (it waits up to HEALTH_TIMEOUT_SEC=300 for "healthy").
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready', timeout=8)\""]
       interval: 30s
-      timeout: 5s
+      timeout: 12s
       retries: 5
       start_period: 60s
     logging:
@@ -183,6 +198,10 @@ services:
       dockerfile: Dockerfile.prod
     container_name: lexilingo-reminder-worker
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    # Measured ~139 MiB resident (concurrency=1).
+    mem_limit: 512m
     command: celery -A app.core.celery_app:celery_app worker --loglevel=INFO --concurrency=1
     env_file:
       - .env.production
@@ -198,6 +217,7 @@ services:
       CONTENT_AGENT_SERVICE_TOKEN: ${CONTENT_AGENT_SERVICE_TOKEN:-}
       REMINDERS_ENABLED: ${REMINDERS_ENABLED:-false}
       REMINDER_DRY_RUN: ${REMINDER_DRY_RUN:-true}
+      REFERENCE_CORPUS_DIR: /data/reference-corpus
     depends_on:
       postgres:
         condition: service_healthy
@@ -205,6 +225,9 @@ services:
         condition: service_healthy
     volumes:
       - ./backend-service/firebase-service-account.json:/run/secrets/firebase-service-account.json:ro
+      # Private reference corpus (never in the repo): written daily by export_reference_corpus.
+      # The host dir must be writable by uid 1000 (appuser).
+      - /var/lib/lexilingo/reference-content/live:/data/reference-corpus
     logging:
       driver: json-file
       options:
@@ -225,6 +248,10 @@ services:
       dockerfile: Dockerfile.prod
     container_name: lexilingo-reminder-beat
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    # Measured ~113 MiB resident.
+    mem_limit: 384m
     command: celery -A app.core.celery_app:celery_app beat --loglevel=INFO
     env_file:
       - .env.production
@@ -258,6 +285,8 @@ services:
       dockerfile: Dockerfile.prod
     container_name: lexilingo-ai-service
     restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
     deploy:
       resources:
         limits:
@@ -273,7 +302,7 @@ services:
       # Keep downloaded HuggingFace models in the ai_models volume, so rebuilds do not re-download them.
       HF_HOME: /app/models/hf
       ENVIRONMENT: production
-      MONGODB_URI: mongodb://mongodb:27017
+      MONGODB_URI: mongodb://${MONGO_APP_USER:?set MONGO_APP_USER}:${MONGO_APP_PASSWORD:?set MONGO_APP_PASSWORD}@mongodb:27017/${MONGODB_DATABASE:-lexilingo}?authSource=${MONGODB_DATABASE:-lexilingo}
       MONGODB_DATABASE: ${MONGODB_DATABASE:-lexilingo}
       REDIS_URL: redis://:${REDIS_PASSWORD:?REDIS_PASSWORD must be set}@redis:6379/1
       REDIS_HOST: redis

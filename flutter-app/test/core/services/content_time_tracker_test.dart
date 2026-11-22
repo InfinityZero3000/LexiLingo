@@ -67,6 +67,22 @@ void main() {
       ]);
     });
 
+    test('add() credits nothing while the app is backgrounded', () async {
+      final repository = _RecordingRepository();
+      final instance = tracker(repository);
+
+      instance.add(const Duration(minutes: 1));
+      instance.didChangeAppLifecycleState(AppLifecycleState.paused);
+      instance.add(const Duration(minutes: 10));
+      instance.didChangeAppLifecycleState(AppLifecycleState.resumed);
+      instance.add(const Duration(minutes: 1));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(instance.elapsed, const Duration(minutes: 2));
+      expect(repository.awards, isEmpty);
+      instance.stop();
+    });
+
     test('ignores a negative or zero delta', () async {
       final repository = _RecordingRepository();
       final instance = tracker(repository);
@@ -119,7 +135,9 @@ void main() {
 
       instance.markActive();
       expect(
-        instance.shouldCountTick(now: DateTime.now().add(const Duration(minutes: 1))),
+        instance.shouldCountTick(
+          now: DateTime.now().add(const Duration(minutes: 1)),
+        ),
         isFalse,
       );
     });

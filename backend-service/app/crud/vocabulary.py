@@ -8,7 +8,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from typing import TYPE_CHECKING, List, Optional
 
-from sqlalchemy import and_, func, or_, select
+from sqlalchemy import and_, case, func, or_, select, text, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
@@ -39,6 +39,8 @@ from app.services.learner_state import (
 # 21 days is the interval bar the pre-unification SM-2 status used.
 MASTERED_MASTERY = 0.85
 MASTERED_STABILITY_DAYS = 21.0
+
+RESAVE_COOLDOWN = timedelta(minutes=10)
 
 
 def _vocab_concept_id(word: str) -> str:
@@ -209,6 +211,22 @@ class VocabularyCRUD:
         )
         return result.scalar_one_or_none()
 
+    @staticmethod
+    def _is_postgres(db: AsyncSession) -> bool:
+        try:
+            return db.get_bind().dialect.name == "postgresql"
+        except Exception:  # noqa: BLE001
+            return False
+
+    async def lock_word(self, db: AsyncSession, word: str) -> None:
+        """Serialise find-or-create for one word until the transaction ends (Postgres only)."""
+        if not self._is_postgres(db):
+            return
+        await db.execute(
+            text("SELECT pg_advisory_xact_lock(hashtextextended(:w, 0))"),
+            {"w": f"vocab:{self.normalize_word(word)}"},
+        )
+
     async def create_vocabulary_item(
         self,
         db: AsyncSession,
@@ -234,14 +252,27 @@ class VocabularyCRUD:
         if level not in allowed_levels:
             level = DifficultyLevel.A1.value
 
-        item = VocabularyItem(
-            word=normalized,
-            definition=(definition or f"{USER_SAVED_PLACEHOLDER} {normalized}").strip(),
-            translation={"vi": translation.strip()} if translation and translation.strip() else None,
-            pronunciation=(pronunciation or "").strip()[:100] or None,
-            part_of_speech=pos,
-            difficulty_level=level,
-        )
+        values = {
+            "word": normalized,
+            "definition": (definition or f"{USER_SAVED_PLACEHOLDER} {normalized}").strip(),
+            "translation": {"vi": translation.strip()} if translation and translation.strip() else None,
+            "pronunciation": (pronunciation or "").strip()[:100] or None,
+            "part_of_speech": pos,
+            "difficulty_level": level,
+        }
+        if self._is_postgres(db):
+            now = datetime.now(timezone.utc)
+            await db.execute(
+                pg_insert(VocabularyItem)
+                .values(id=uuid.uuid4(), created_at=now, updated_at=now, usage_frequency=0, **values)
+                .on_conflict_do_nothing(index_elements=["word", "part_of_speech"])
+            )
+            await db.commit()
+            existing = await self.find_vocabulary_by_word(db, normalized)
+            if existing is not None:
+                return existing
+            raise ValueError("Vocabulary item could not be created")
+        item = VocabularyItem(**values)
         db.add(item)
         await db.commit()
         await db.refresh(item)
@@ -293,6 +324,53 @@ class VocabularyCRUD:
         )
         return result.scalar_one_or_none()
     
+    async def mark_resaved(
+        self,
+        db: AsyncSession,
+        user_vocab: UserVocabulary,
+        now: Optional[datetime] = None,
+        cooldown: timedelta = RESAVE_COOLDOWN,
+    ) -> bool:
+        """Make a re-saved word due now; True when this call changed it, False inside the cooldown or if already due."""
+        now = now or datetime.now(timezone.utc)
+        resting = user_vocab.status in (VocabularyStatus.MASTERED, VocabularyStatus.ARCHIVED)
+        due = user_vocab.next_review_date is not None and user_vocab.next_review_date <= now
+        if due and not resting:
+            return False
+        result = await db.execute(
+            update(UserVocabulary)
+            .where(
+                UserVocabulary.id == user_vocab.id,
+                or_(
+                    UserVocabulary.last_resaved_at.is_(None),
+                    UserVocabulary.last_resaved_at < now - cooldown,
+                ),
+            )
+            .values(
+                resave_count=UserVocabulary.resave_count + 1,
+                last_resaved_at=now,
+                next_review_date=case(
+                    (UserVocabulary.next_review_date > now, now),
+                    else_=UserVocabulary.next_review_date,
+                ),
+                status=case(
+                    (
+                        UserVocabulary.status.in_(
+                            [VocabularyStatus.MASTERED, VocabularyStatus.ARCHIVED]
+                        ),
+                        VocabularyStatus.REVIEWING,
+                    ),
+                    else_=UserVocabulary.status,
+                ),
+            )
+            .execution_options(synchronize_session=False)
+        )
+        await db.commit()
+        if result.rowcount != 1:
+            return False
+        await db.refresh(user_vocab)
+        return True
+
     async def get_user_vocabulary_list(
         self,
         db: AsyncSession,

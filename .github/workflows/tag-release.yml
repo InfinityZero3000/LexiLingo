@@ -22,8 +22,7 @@ on:
         default: true
 
 permissions:
-  contents: write
-  packages: write
+  contents: read
 
 concurrency:
   group: release
@@ -33,6 +32,10 @@ jobs:
   release:
     name: Tag, publish, version the images
     runs-on: ubuntu-latest
+    # contents: tag, release and the move of main; packages: retag images in ghcr.io
+    permissions:
+      contents: write
+      packages: write
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' &&
@@ -43,7 +46,7 @@ jobs:
       DRY: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
       INPUT_VERSION: ${{ inputs.version }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.event.workflow_run.head_sha || inputs.sha || github.sha }}
           fetch-depth: 0

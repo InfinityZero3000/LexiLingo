@@ -1,4 +1,8 @@
-import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/error/failures.dart';
+import 'package:lexilingo_app/core/services/user_scope_service.dart';
+import 'package:lexilingo_app/core/state/reset_epoch.dart';
+import 'package:lexilingo_app/core/utils/chat_input_limit.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -9,13 +13,13 @@ import '../../domain/entities/topic_stream_event.dart';
 import '../../domain/repositories/story_repository.dart';
 
 /// State management for Story/Topic-based conversation
-class StoryProvider extends ChangeNotifier {
+class StoryProvider extends ChangeNotifier with ResetEpoch {
   final StoryRepository repository;
   static const String _recentTopicsKey = 'recent_topic_ids';
   static const String _topicSessionPrefix = 'topic_session_';
 
   StoryProvider({required this.repository}) {
-    _loadRecentlyUsed();
+    loadRecentlyUsed();
   }
 
   // Stories state
@@ -39,7 +43,7 @@ class StoryProvider extends ChangeNotifier {
   bool _hasMoreMessages = true;
   String? _nextMessageCursor;
   final int _messagesPageSize = 20;
-  String? _sessionError;
+  UiText? _sessionError;
   int _mistakesSavedThisSession = 0;
   int _wordsSavedThisSession = 0;
 
@@ -58,7 +62,7 @@ class StoryProvider extends ChangeNotifier {
   bool get isSendingMessage => _isSendingMessage;
   bool get isLoadingMoreMessages => _isLoadingMoreMessages;
   bool get hasMoreMessages => _hasMoreMessages;
-  String? get sessionError => _sessionError;
+  String? get sessionError => _sessionError?.resolve();
   bool get hasActiveSession => _currentSession != null;
   int get mistakesSavedThisSession => _mistakesSavedThisSession;
   int get wordsSavedThisSession => _wordsSavedThisSession;
@@ -223,6 +227,7 @@ class StoryProvider extends ChangeNotifier {
     // Clear previous session state
     clearActiveSession();
 
+    final epoch = resetEpoch;
     _isLoading = true;
     _sessionError = null;
     notifyListeners();
@@ -233,10 +238,11 @@ class StoryProvider extends ChangeNotifier {
       sessionTitle: sessionTitle,
       preferredLlm: preferredLlm,
     );
+    if (isStale(epoch)) return false;
 
     return result.fold(
       (failure) {
-        _sessionError = failure.message;
+        _sessionError = UiText.failure(failure);
         _isLoading = false;
         notifyListeners();
         return false;
@@ -281,7 +287,9 @@ class StoryProvider extends ChangeNotifier {
     String? sessionTitle,
     String preferredLlm = 'tracecag',
   }) async {
+    final epoch = resetEpoch;
     final saved = await _loadSavedTopicSession(storyId);
+    if (isStale(epoch)) return false;
 
     if (saved != null) {
       _isLoading = true;
@@ -292,6 +300,7 @@ class StoryProvider extends ChangeNotifier {
         saved.sessionId,
         limit: _messagesPageSize,
       );
+      if (isStale(epoch)) return false;
 
       final restored = result.fold((_) => false, (page) {
         _currentSession = saved;
@@ -332,6 +341,20 @@ class StoryProvider extends ChangeNotifier {
     );
   }
 
+  /// Sign-out / account switch: the story catalogue stays, everything the
+  /// learner did goes. Their recent topics are stored per user and reload.
+  void reset() {
+    bumpResetEpoch();
+    _recentlyUsed = [];
+    _currentStoryDetails = null;
+    _isLoading = false;
+    _isWarming = false;
+    _error = null;
+    _isSendingMessage = false;
+    _wordsSavedThisSession = 0;
+    clearActiveSession();
+  }
+
   /// Clear the active topic session
   void clearActiveSession() {
     _currentSession = null;
@@ -351,11 +374,12 @@ class StoryProvider extends ChangeNotifier {
     required String message,
   }) async {
     if (_currentSession == null) {
-      _sessionError = 'errors.noActiveSession'.tr();
+      _sessionError = UiText.key('errors.noActiveSession');
       notifyListeners();
       return false;
     }
 
+    final epoch = resetEpoch;
     _isSendingMessage = true;
     _sessionError = null;
     notifyListeners();
@@ -376,10 +400,17 @@ class StoryProvider extends ChangeNotifier {
       userId: userId,
       message: message,
     );
+    if (isStale(epoch)) return false;
 
     return result.fold(
       (failure) {
-        _sessionError = failure.message;
+        if (failure is ValidationFailure ||
+            isMessageTooLongError(failure.message)) {
+          _messages.removeWhere((m) => m.id == userMessage.id);
+          _sessionError = messageTooLongText();
+        } else {
+          _sessionError = UiText.failure(failure);
+        }
         _isSendingMessage = false;
         notifyListeners();
         return false;
@@ -419,12 +450,14 @@ class StoryProvider extends ChangeNotifier {
     required String userId,
     required String message,
   }) async {
+    if (_isSendingMessage) return false;
     if (_currentSession == null) {
-      _sessionError = 'errors.noActiveSession'.tr();
+      _sessionError = UiText.key('errors.noActiveSession');
       notifyListeners();
       return false;
     }
 
+    final epoch = resetEpoch;
     final sessionId = _currentSession!.sessionId;
     final requestId = 'user_${DateTime.now().millisecondsSinceEpoch}';
     final placeholderId = 'ai_${DateTime.now().millisecondsSinceEpoch}';
@@ -461,6 +494,7 @@ class StoryProvider extends ChangeNotifier {
         userId: userId,
         message: message,
       )) {
+        if (isStale(epoch)) return false;
         switch (event) {
           case TopicStreamThinking():
             break;
@@ -502,6 +536,7 @@ class StoryProvider extends ChangeNotifier {
         }
       }
 
+      if (isStale(epoch)) return false;
       if (!receivedDone) {
         final idx = _messages.indexWhere((m) => m.id == placeholderId);
         final partial = idx == -1 ? '' : _messages[idx].content.trim();
@@ -518,9 +553,12 @@ class StoryProvider extends ChangeNotifier {
         // Partial content already visible — the server may have finished
         // and persisted on its side, so don't retry (would risk a
         // duplicated turn). Keep what streamed in and stop the spinner.
-        debugPrint('[StoryProvider] stream closed without done; kept partial content');
+        debugPrint(
+          '[StoryProvider] stream closed without done; kept partial content',
+        );
       }
     } catch (e) {
+      if (isStale(epoch)) return false;
       debugPrint('[StoryProvider] sendMessageStreaming exception: $e');
       await _retryMessageWithoutStreaming(
         message: message,
@@ -554,7 +592,13 @@ class StoryProvider extends ChangeNotifier {
     _isSendingMessage = false;
 
     if (_isUnauthorizedError(reason)) {
-      _sessionError = 'errors.sessionExpired'.tr();
+      _sessionError = UiText.key('errors.sessionExpired');
+      notifyListeners();
+      return;
+    }
+
+    if (isMessageTooLongError(reason)) {
+      _sessionError = messageTooLongText();
       notifyListeners();
       return;
     }
@@ -565,6 +609,7 @@ class StoryProvider extends ChangeNotifier {
 
   /// Load existing session messages
   Future<void> loadSessionMessages(String sessionId) async {
+    final epoch = resetEpoch;
     _isLoading = true;
     _sessionError = null;
     notifyListeners();
@@ -573,14 +618,16 @@ class StoryProvider extends ChangeNotifier {
       sessionId,
       limit: _messagesPageSize,
     );
+    if (isStale(epoch)) return;
 
     result.fold(
       (failure) {
         // Fallback to legacy full-history endpoint.
         repository.getTopicMessages(sessionId).then((legacy) {
+          if (isStale(epoch)) return;
           legacy.fold(
             (legacyFailure) {
-              _sessionError = legacyFailure.message;
+              _sessionError = UiText.raw(legacyFailure.message);
               _isLoading = false;
               notifyListeners();
             },
@@ -611,6 +658,7 @@ class StoryProvider extends ChangeNotifier {
       return;
     }
 
+    final epoch = resetEpoch;
     _isLoadingMoreMessages = true;
     notifyListeners();
 
@@ -619,10 +667,11 @@ class StoryProvider extends ChangeNotifier {
       limit: _messagesPageSize,
       cursor: _nextMessageCursor,
     );
+    if (isStale(epoch)) return;
 
     result.fold(
       (failure) {
-        _sessionError = failure.message;
+        _sessionError = UiText.failure(failure);
         _isLoadingMoreMessages = false;
         notifyListeners();
       },
@@ -669,7 +718,7 @@ class StoryProvider extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(
-        '$_topicSessionPrefix$storyId',
+        await UserScopeService.scopedKey('$_topicSessionPrefix$storyId'),
         jsonEncode(session.toCacheJson()),
       );
     } catch (e) {
@@ -680,7 +729,9 @@ class StoryProvider extends ChangeNotifier {
   Future<TopicSession?> _loadSavedTopicSession(String storyId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString('$_topicSessionPrefix$storyId');
+      final raw = prefs.getString(
+        await UserScopeService.scopedKey('$_topicSessionPrefix$storyId'),
+      );
       if (raw == null) return null;
       return TopicSession.fromCacheJson(
         jsonDecode(raw) as Map<String, dynamic>,
@@ -694,7 +745,9 @@ class StoryProvider extends ChangeNotifier {
   Future<void> _clearSavedTopicSession(String storyId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('$_topicSessionPrefix$storyId');
+      await prefs.remove(
+        await UserScopeService.scopedKey('$_topicSessionPrefix$storyId'),
+      );
     } catch (e) {
       debugPrint('Error clearing saved topic session: $e');
     }
@@ -704,22 +757,32 @@ class StoryProvider extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       final ids = _recentlyUsed.map((s) => s.storyId).toList();
-      await prefs.setStringList(_recentTopicsKey, ids);
+      await prefs.setStringList(
+        await UserScopeService.scopedKey(_recentTopicsKey),
+        ids,
+      );
 
       // Also cache full JSON for quick boot
       final jsonList = _recentlyUsed
           .map((s) => jsonEncode(s.toCacheJson()))
           .toList();
-      await prefs.setStringList('${_recentTopicsKey}_data', jsonList);
+      await prefs.setStringList(
+        await UserScopeService.scopedKey('${_recentTopicsKey}_data'),
+        jsonList,
+      );
     } catch (e) {
       debugPrint('Error saving recent topics: $e');
     }
   }
 
-  Future<void> _loadRecentlyUsed() async {
+  Future<void> loadRecentlyUsed() async {
+    final epoch = resetEpoch;
     try {
       final prefs = await SharedPreferences.getInstance();
-      final jsonList = prefs.getStringList('${_recentTopicsKey}_data');
+      final jsonList = prefs.getStringList(
+        await UserScopeService.scopedKey('${_recentTopicsKey}_data'),
+      );
+      if (isStale(epoch)) return;
 
       if (jsonList != null) {
         _recentlyUsed = jsonList

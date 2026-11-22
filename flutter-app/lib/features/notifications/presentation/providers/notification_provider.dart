@@ -1,5 +1,7 @@
 import 'dart:async';
-import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/services/locale_service.dart';
+import 'package:lexilingo_app/core/state/reset_epoch.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import '../../domain/entities/notification_entity.dart';
@@ -8,7 +10,7 @@ import '../../domain/services/review_reminder_notification_sync_service.dart';
 
 /// Notification Provider
 /// Manages notification state and integrates with Firebase Cloud Messaging
-class NotificationProvider with ChangeNotifier {
+class NotificationProvider with ChangeNotifier, ResetEpoch {
   final NotificationRepository _repository;
 
   // State
@@ -16,7 +18,7 @@ class NotificationProvider with ChangeNotifier {
   List<NotificationEntity> _notifications = [];
   int _unreadCount = 0;
   bool _isLoading = false;
-  String? _errorMessage;
+  UiText? _errorMessage;
 
   // Undo-delete buffer: stores the last deleted notification temporarily
   NotificationEntity? _pendingDeletedNotification;
@@ -37,14 +39,19 @@ class NotificationProvider with ChangeNotifier {
        _reviewReminderSyncService = reviewReminderSyncService,
        _listenToForegroundFcm = listenToForegroundFcm ?? !kIsWeb {
     _init();
+    LocaleService.languageSwitches.addListener(_onLanguageSwitched);
   }
+
+  /// Group headings and the review reminder row are stored translated.
+  void _onLanguageSwitched() =>
+      unawaited(loadNotifications(syncReviewReminder: true));
 
   // Getters
   List<NotificationGroup> get groupedNotifications => _groupedNotifications;
   List<NotificationEntity> get notifications => _notifications;
   int get unreadCount => _unreadCount;
   bool get isLoading => _isLoading;
-  String? get errorMessage => _errorMessage;
+  String? get errorMessage => _errorMessage?.resolve();
   bool get hasNotifications => _notifications.isNotEmpty;
   bool get hasUnread => _unreadCount > 0;
   NotificationEntity? get pendingDeletedNotification =>
@@ -117,6 +124,7 @@ class NotificationProvider with ChangeNotifier {
 
   /// Load all notifications
   Future<void> loadNotifications({bool syncReviewReminder = false}) async {
+    final epoch = resetEpoch;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -125,16 +133,23 @@ class NotificationProvider with ChangeNotifier {
       if (syncReviewReminder) {
         await _syncReviewReminderNotification();
       }
-      _groupedNotifications = await _repository.getGroupedNotifications();
-      _notifications = await _repository.getNotifications();
-      _unreadCount = await _repository.getUnreadCount();
+      final grouped = await _repository.getGroupedNotifications();
+      final all = await _repository.getNotifications();
+      final unread = await _repository.getUnreadCount();
+      if (isStale(epoch)) return;
+      _groupedNotifications = grouped;
+      _notifications = all;
+      _unreadCount = unread;
       _errorMessage = null;
     } catch (e) {
-      _errorMessage = 'notifications.failedToLoad'.tr();
+      if (isStale(epoch)) return;
+      _errorMessage = UiText.key('notifications.failedToLoad');
       debugPrint('Failed to load notifications: $e');
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      if (!isStale(epoch)) {
+        _isLoading = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -160,7 +175,7 @@ class NotificationProvider with ChangeNotifier {
       await _repository.markAsRead(notificationId);
       await loadNotifications();
     } catch (e) {
-      _errorMessage = 'notifications.markReadFailed'.tr();
+      _errorMessage = UiText.key('notifications.markReadFailed');
       debugPrint('Failed to mark notification as read: $e');
       notifyListeners();
     }
@@ -172,7 +187,7 @@ class NotificationProvider with ChangeNotifier {
       await _repository.markAllAsRead();
       await loadNotifications();
     } catch (e) {
-      _errorMessage = 'notifications.markReadFailed'.tr();
+      _errorMessage = UiText.key('notifications.markReadFailed');
       debugPrint('Failed to mark all as read: $e');
       notifyListeners();
     }
@@ -194,7 +209,7 @@ class NotificationProvider with ChangeNotifier {
       await _repository.deleteNotification(notificationId);
       await loadNotifications();
     } catch (e) {
-      _errorMessage = 'notifications.deleteFailed'.tr();
+      _errorMessage = UiText.key('notifications.deleteFailed');
       debugPrint('Failed to delete notification: $e');
       _pendingDeletedNotification = null;
       notifyListeners();
@@ -210,7 +225,7 @@ class NotificationProvider with ChangeNotifier {
       await _repository.addNotification(n);
       await loadNotifications();
     } catch (e) {
-      _errorMessage = 'notifications.restoreFailed'.tr();
+      _errorMessage = UiText.key('notifications.restoreFailed');
       debugPrint('Failed to restore notification: $e');
       notifyListeners();
     }
@@ -227,7 +242,7 @@ class NotificationProvider with ChangeNotifier {
       await _repository.deleteAllNotifications();
       await loadNotifications();
     } catch (e) {
-      _errorMessage = 'notifications.deleteFailed'.tr();
+      _errorMessage = UiText.key('notifications.deleteFailed');
       debugPrint('Failed to delete all notifications: $e');
       notifyListeners();
     }
@@ -254,14 +269,36 @@ class NotificationProvider with ChangeNotifier {
     await loadNotifications();
   }
 
+  /// Notifications are stored per user; this empties the screen and the next
+  /// sign-in reloads from that user's own store.
+  void reset() {
+    bumpResetEpoch();
+    _groupedNotifications = [];
+    _notifications = [];
+    _unreadCount = 0;
+    _isLoading = false;
+    _errorMessage = null;
+    _pendingDeletedNotification = null;
+    notifyListeners();
+  }
+
   /// Clear error message
   void clearError() {
     _errorMessage = null;
     notifyListeners();
   }
 
+  bool _disposed = false;
+
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
+
   @override
   void dispose() {
+    _disposed = true;
+    LocaleService.languageSwitches.removeListener(_onLanguageSwitched);
     _notificationsSubscription?.cancel();
     _unreadCountSubscription?.cancel();
     _fcmSubscription?.cancel();

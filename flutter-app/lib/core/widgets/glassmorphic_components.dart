@@ -1,9 +1,12 @@
+// ignore_for_file: deprecated_member_use_from_same_package
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Glassmorphic Card Widget
 /// Creates a frosted glass effect card with blur and gradient border
+@Deprecated('Legacy glassmorphism; use a plain Card on the surface tokens.')
 class GlassmorphicCard extends StatelessWidget {
   final Widget child;
   final double? width;
@@ -164,7 +167,8 @@ class _AnimatedProgressRingState extends State<AnimatedProgressRing>
             strokeWidth: widget.strokeWidth,
             progressColor: primaryColor,
             backgroundColor:
-                widget.backgroundColor ?? Colors.grey.withValues(alpha: 0.2),
+                widget.backgroundColor ??
+                Theme.of(context).colorScheme.outlineVariant,
             gradientColors: widget.gradientColors,
           ),
           child: SizedBox(
@@ -332,27 +336,26 @@ class _StreakFlameState extends State<StreakFlame>
                 Icon(
                   Icons.local_fire_department,
                   size: widget.size,
-                  color: widget.isActive ? AppColors.orange : Colors.grey,
+                  color: widget.isActive ? AppColors.orange : AppColors.grey500,
                 ),
                 Positioned(
                   bottom: 4,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
+                      horizontal: AppSpacing.sm,
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
                       color: widget.isActive
-                          ? Colors.orange.shade700
+                          ? AppColors.deepOrange
                           : AppColors.grey600,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: AppRadius.smAll,
                     ),
                     child: Text(
                       '${widget.streakCount}',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.surface,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: AppColors.surfaceLight,
                         fontWeight: FontWeight.bold,
-                        fontSize: 12,
                       ),
                     ),
                   ),
@@ -368,6 +371,9 @@ class _StreakFlameState extends State<StreakFlame>
 
 /// Shimmer Loading Widget
 /// Creates a shimmer effect for loading states
+@Deprecated(
+  'Use ShimmerContainer or the Skeleton* widgets in skeleton_loading.dart.',
+)
 class ShimmerLoading extends StatefulWidget {
   final Widget child;
   final bool isLoading;
@@ -476,7 +482,7 @@ class GradientStatCard extends StatelessWidget {
               gradientColors[1].withValues(alpha: 0.05),
             ],
           ),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           border: Border.all(
             color: gradientColors[0].withValues(alpha: 0.3),
             width: 1,
@@ -490,7 +496,7 @@ class GradientStatCard extends StatelessWidget {
               padding: EdgeInsets.all(8),
               decoration: BoxDecoration(
                 gradient: LinearGradient(colors: gradientColors),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Icon(
                 icon,
@@ -501,8 +507,7 @@ class GradientStatCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               value,
-              style: TextStyle(
-                fontSize: 24,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: gradientColors[0],
               ),
@@ -510,16 +515,17 @@ class GradientStatCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               title,
-              style: TextStyle(
-                fontSize: 12,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
                 fontWeight: FontWeight.w500,
-                color: AppColors.grey600,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
             if (subtitle != null)
               Text(
                 subtitle!,
-                style: TextStyle(fontSize: 11, color: AppColors.grey500),
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
               ),
           ],
         ),

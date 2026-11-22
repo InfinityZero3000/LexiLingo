@@ -70,7 +70,7 @@ class WebSpeechRecognition {
     _errorController = StreamController<String>.broadcast();
 
     if (!initialize(language: language, continuous: continuous)) {
-      _resultController!.addError('Speech recognition not supported');
+      _resultController!.addError('voice.recognitionUnsupported'.tr());
       return _resultController!.stream;
     }
 

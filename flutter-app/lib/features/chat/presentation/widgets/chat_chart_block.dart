@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class _ChartSeries {
   final String name;
@@ -59,13 +60,17 @@ class ChatChartCard extends StatelessWidget {
     final title = spec['title'] as String?;
 
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.fromLTRB(14, 12, 16, 10),
+      margin: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+      padding: const EdgeInsets.fromLTRB(14, AppSpacing.md, AppSpacing.lg, 10),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDarkCard : AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(12),
+        color: isDark
+            ? AppColors.surfaceDarkCard
+            : Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
-          color: isDark ? AppColors.borderDarkSoft : AppColors.grey200,
+          color: isDark
+              ? Theme.of(context).colorScheme.outlineVariant
+              : AppColors.grey200,
         ),
       ),
       child: Column(
@@ -73,11 +78,10 @@ class ChatChartCard extends StatelessWidget {
         children: [
           if (title != null && title.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
               child: Text(
                 title,
-                style: TextStyle(
-                  fontSize: 12,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: AppColorRoles.textSecondary(isDark),
                 ),
@@ -92,17 +96,23 @@ class ChatChartCard extends StatelessWidget {
               _ => _BarChartView(labels: labels, series: series),
             },
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           _Legend(
             isDark: isDark,
             entries: type == 'pie'
                 ? [
                     for (var i = 0; i < labels.length; i++)
-                      (label: labels[i], color: _seriesPalette[i % _seriesPalette.length]),
+                      (
+                        label: labels[i],
+                        color: _seriesPalette[i % _seriesPalette.length],
+                      ),
                   ]
                 : [
                     for (var i = 0; i < series.length; i++)
-                      (label: series[i].name, color: _seriesPalette[i % _seriesPalette.length]),
+                      (
+                        label: series[i].name,
+                        color: _seriesPalette[i % _seriesPalette.length],
+                      ),
                   ],
           ),
         ],
@@ -133,11 +143,10 @@ class _Legend extends StatelessWidget {
               height: 8,
               decoration: BoxDecoration(color: e.color, shape: BoxShape.circle),
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSpacing.xs),
             Text(
               e.label,
-              style: TextStyle(
-                fontSize: 11,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 color: AppColorRoles.textSecondary(isDark),
               ),
             ),
@@ -169,16 +178,22 @@ class _BarChartView extends StatelessWidget {
           drawVerticalLine: false,
           getDrawingHorizontalLine: (_) => FlLine(
             color: isDark
-                ? Colors.white.withValues(alpha: 0.07)
+                ? AppColors.onGradient.withValues(alpha: 0.07)
                 : Colors.black.withValues(alpha: 0.06),
             strokeWidth: 1,
           ),
         ),
         borderData: FlBorderData(show: false),
         titlesData: FlTitlesData(
-          leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
@@ -190,8 +205,7 @@ class _BarChartView extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
                     labels[i],
-                    style: TextStyle(
-                      fontSize: 10,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: AppColorRoles.textMuted(isDark),
                     ),
                   ),
@@ -209,7 +223,9 @@ class _BarChartView extends StatelessWidget {
                   BarChartRodData(
                     toY: i < series[s].values.length ? series[s].values[i] : 0,
                     width: series.length > 1 ? 8 : 16,
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(4),
+                    ),
                     color: _seriesPalette[s % _seriesPalette.length],
                   ),
               ],
@@ -242,16 +258,22 @@ class _LineChartView extends StatelessWidget {
           drawVerticalLine: false,
           getDrawingHorizontalLine: (_) => FlLine(
             color: isDark
-                ? Colors.white.withValues(alpha: 0.07)
+                ? AppColors.onGradient.withValues(alpha: 0.07)
                 : Colors.black.withValues(alpha: 0.06),
             strokeWidth: 1,
           ),
         ),
         borderData: FlBorderData(show: false),
         titlesData: FlTitlesData(
-          leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          leftTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          rightTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
+          topTitles: const AxisTitles(
+            sideTitles: SideTitles(showTitles: false),
+          ),
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
@@ -263,8 +285,7 @@ class _LineChartView extends StatelessWidget {
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
                     labels[i],
-                    style: TextStyle(
-                      fontSize: 10,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: AppColorRoles.textMuted(isDark),
                     ),
                   ),
@@ -314,10 +335,9 @@ class _PieChartView extends StatelessWidget {
               color: _seriesPalette[i % _seriesPalette.length],
               title: '${(series.values[i] / total * 100).round()}%',
               radius: 48,
-              titleStyle: const TextStyle(
-                fontSize: 11,
+              titleStyle: Theme.of(context).textTheme.labelSmall?.copyWith(
                 fontWeight: FontWeight.w700,
-                color: Colors.white,
+                color: AppColors.onGradient,
               ),
             ),
         ],

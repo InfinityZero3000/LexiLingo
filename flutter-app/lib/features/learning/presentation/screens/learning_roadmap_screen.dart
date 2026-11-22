@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'dart:ui';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/l10n/locale_keys.g.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
@@ -11,6 +12,7 @@ import 'package:lexilingo_app/features/learning/presentation/providers/learning_
 import 'package:lexilingo_app/features/learning/presentation/screens/learning_session_screen.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/roadmap_header_widget.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 // ─────────────────────────────────────────────────────────────
 // Layout constants
@@ -22,6 +24,17 @@ const double _kBannerH = 92.0; // height of unit chapter banner
 const double _kBannerTopMargin = 28.0; // gap above each banner
 const double _kTopPad = 12.0;
 const double _kBotPad = 120.0;
+const double _kLabelW = 144.0;
+const double _kEdgeMargin = 8.0;
+
+/// The art is a 2:3 portrait and the zigzag swings across 72% of the width,
+/// so past a phone-sized column the nodes drift off the art. 520 keeps a
+/// ~375px phone unchanged and ~380px of swing on wider screens.
+const double kRoadmapColumnMaxWidth = 520.0;
+
+const String _kBgPortrait = 'assets/background-roadmap/background-roadmap.png';
+const String _kBgLandscape =
+    'assets/background-roadmap/background-roadmap-2.png';
 
 /// Sine-wave x positions (normalized 0..1).
 /// 8-step cycle gives a smooth winding road from edge to edge.
@@ -136,8 +149,8 @@ class _LearningRoadmapScreenState extends State<LearningRoadmapScreen> {
       for (final lesson in unit.lessons) {
         final xNorm = _kXCycle[gi % _kXCycle.length];
         final cx = (xNorm * width).clamp(
-          _kNodeRadius + 8,
-          width - _kNodeRadius - 8,
+          _kNodeRadius + _kEdgeMargin,
+          width - _kNodeRadius - _kEdgeMargin,
         );
         final cy = y + _kNodeRadius;
         nodes.add(
@@ -161,38 +174,54 @@ class _LearningRoadmapScreenState extends State<LearningRoadmapScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage(
-              'assets/background-roadmap/background-roadmap.png',
+      // The art fills the whole window (cover, never fitHeight: that leaves bars
+      // on the side the picture does not span). Wide windows get the landscape
+      // picture, phones and tall windows the portrait one; the road stays a
+      // phone-width column on top of it.
+      body: LayoutBuilder(
+        builder: (context, box) => DecoratedBox(
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage(
+                box.maxWidth > box.maxHeight ? _kBgLandscape : _kBgPortrait,
+              ),
+              fit: BoxFit.cover,
+              alignment: Alignment.center,
             ),
-            fit: BoxFit.fitHeight,
-            alignment: Alignment.center,
           ),
-        ),
-        child: Consumer<LearningProvider>(
-          builder: (context, provider, _) {
-            if (provider.isLoadingRoadmap) {
-              return LoadingScreen(message: 'learning.loadingRoadmap'.tr());
-            }
-            if (provider.roadmapError != null) {
-              return _ErrorView(
-                error: provider.roadmapError!,
-                onRetry: () => provider.loadRoadmap(widget.courseId),
-              );
-            }
-            final roadmap = provider.courseRoadmap;
-            if (roadmap == null || roadmap.units.isEmpty) {
-              return const _EmptyView();
-            }
-            return _ZigzagRoadmap(
-              roadmap: roadmap,
-              courseId: widget.courseId,
-              buildLayouts: _buildLayouts,
-              totalH: _totalH,
-            );
-          },
+          child: Center(
+            child: ConstrainedBox(
+              key: const Key('roadmapColumn'),
+              constraints: const BoxConstraints(
+                maxWidth: kRoadmapColumnMaxWidth,
+              ),
+              child: Consumer<LearningProvider>(
+                builder: (context, provider, _) {
+                  if (provider.isLoadingRoadmap) {
+                    return LoadingScreen(
+                      message: 'learning.loadingRoadmap'.tr(),
+                    );
+                  }
+                  if (provider.roadmapError != null) {
+                    return _ErrorView(
+                      error: provider.roadmapError!,
+                      onRetry: () => provider.loadRoadmap(widget.courseId),
+                    );
+                  }
+                  final roadmap = provider.courseRoadmap;
+                  if (roadmap == null || roadmap.units.isEmpty) {
+                    return const _EmptyView();
+                  }
+                  return _ZigzagRoadmap(
+                    roadmap: roadmap,
+                    courseId: widget.courseId,
+                    buildLayouts: _buildLayouts,
+                    totalH: _totalH,
+                  );
+                },
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -239,6 +268,7 @@ class _ZigzagRoadmap extends StatelessWidget {
                       });
 
               return SizedBox(
+                key: const Key('roadmapZigzag'),
                 height: contentH,
                 child: Stack(
                   clipBehavior: Clip.none,
@@ -281,12 +311,21 @@ class _ZigzagRoadmap extends StatelessWidget {
                         top: n.center.dy - _kNodeRadius,
                         width: _kNodeDiameter,
                         height: _kNodeDiameter,
+                        key: ValueKey('roadmapNode-${n.globalIndex}'),
                         child: _EntranceFade(
                           index: n.globalIndex,
                           child: _LessonNode(
                             layout: n,
                             onTap: n.lesson.isLocked
-                                ? null
+                                ? () => ScaffoldMessenger.of(context)
+                                    ..hideCurrentSnackBar()
+                                    ..showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          LocaleKeys.course_lockedHint.tr(),
+                                        ),
+                                      ),
+                                    )
                                 : () async {
                                     await Navigator.push(
                                       context,
@@ -298,13 +337,12 @@ class _ZigzagRoadmap extends StatelessWidget {
                                       ),
                                     );
                                     if (!context.mounted) return;
-                                    context.read<LearningProvider>().loadRoadmap(
-                                      courseId,
-                                      refresh: true,
-                                    );
-                                    context.read<CourseProvider>().loadCourseDetail(
-                                      courseId,
-                                    );
+                                    context
+                                        .read<LearningProvider>()
+                                        .loadRoadmap(courseId, refresh: true);
+                                    context
+                                        .read<CourseProvider>()
+                                        .loadCourseDetail(courseId);
                                   },
                           ),
                         ),
@@ -314,9 +352,13 @@ class _ZigzagRoadmap extends StatelessWidget {
                       (n) => n.lesson.isCurrent,
                     ))
                       Positioned(
-                        left: n.center.dx - 72,
-                        top: n.center.dy - _kNodeRadius - 48,
-                        width: 144,
+                        key: const Key('roadmapCurrentLabel'),
+                        left: (n.center.dx - _kLabelW / 2).clamp(
+                          _kEdgeMargin,
+                          width - _kLabelW - _kEdgeMargin,
+                        ),
+                        top: max(0.0, n.center.dy - _kNodeRadius - 48),
+                        width: _kLabelW,
                         child: _CurrentLessonLabel(
                           lesson: n.lesson,
                           color: n.baseColor,
@@ -495,7 +537,7 @@ class _LessonNodeState extends State<_LessonNode>
                         right: 3,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
+                            horizontal: AppSpacing.xs,
                             vertical: 1,
                           ),
                           decoration: BoxDecoration(
@@ -582,10 +624,13 @@ class _StarsBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: 2,
+      ),
       decoration: BoxDecoration(
-        color: AppColors.warning,
-        borderRadius: BorderRadius.circular(8),
+        color: context.status.warning,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         boxShadow: [
           BoxShadow(color: Colors.black26, blurRadius: 3, offset: Offset(0, 1)),
         ],
@@ -631,10 +676,13 @@ class _CurrentLessonLabel extends StatelessWidget {
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: AppSpacing.sm,
+            ),
             decoration: BoxDecoration(
               color: color,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppRadius.md),
               boxShadow: [
                 BoxShadow(
                   color: color.withValues(alpha: 0.35),
@@ -648,9 +696,8 @@ class _CurrentLessonLabel extends StatelessWidget {
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(
+              style: Theme.of(context).textTheme.bodySmall!.copyWith(
                 color: Theme.of(context).colorScheme.surface,
-                fontSize: 12,
                 fontWeight: FontWeight.w600,
                 height: 1.2,
               ),
@@ -695,14 +742,14 @@ class _UnitBanner extends StatelessWidget {
     );
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
+      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [color, color.withValues(alpha: 0.75)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: color.withValues(alpha: 0.35),
@@ -712,7 +759,7 @@ class _UnitBanner extends StatelessWidget {
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 0, sigmaY: 0),
           child: Padding(
@@ -725,13 +772,12 @@ class _UnitBanner extends StatelessWidget {
                   height: 44,
                   decoration: BoxDecoration(
                     color: AppColors.surfaceLight.withValues(alpha: 0.32),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                   ),
                   child: Center(
                     child: Text(
                       '${unit.unitNumber}',
-                      style: TextStyle(
-                        fontSize: 22,
+                      style: Theme.of(context).textTheme.titleLarge!.copyWith(
                         fontWeight: FontWeight.w800,
                         color: AppColors.textDark,
                       ),
@@ -747,8 +793,7 @@ class _UnitBanner extends StatelessWidget {
                     children: [
                       Text(
                         unit.title,
-                        style: TextStyle(
-                          fontSize: 15,
+                        style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                           fontWeight: FontWeight.bold,
                           color: Theme.of(context).colorScheme.surface,
                           height: 1.2,
@@ -760,12 +805,12 @@ class _UnitBanner extends StatelessWidget {
                         SizedBox(height: 2),
                         Text(
                           unit.description!,
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.surface.withValues(alpha: 0.8),
-                          ),
+                          style: Theme.of(context).textTheme.labelSmall!
+                              .copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.surface.withValues(alpha: 0.8),
+                              ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -813,9 +858,8 @@ class _UnitProgressRing extends StatelessWidget {
           ),
           Text(
             '${unit.completedLessons}/${unit.totalLessons}',
-            style: TextStyle(
+            style: Theme.of(context).textTheme.labelSmall!.copyWith(
               color: Theme.of(context).colorScheme.surface,
-              fontSize: 11,
               fontWeight: FontWeight.bold,
             ),
           ),

@@ -5,11 +5,12 @@ Testing lesson start, answer submission, and lesson completion
 
 import pytest
 from httpx import AsyncClient
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import UTC, datetime
 
 from app.models.course import Course, Unit, Lesson
+from app.models.games import XPTransaction
 from app.models.user import User
 from app.models.progress import LessonAttempt, UserProgress, Streak
 from app.routes.learning import _answers_match, _speaking_answers_match
@@ -376,24 +377,52 @@ class TestLearningSession:
         assert progress.status == "completed"
         assert progress.score == 90
     
-    async def test_complete_lesson_already_completed(
+    async def test_complete_lesson_is_idempotent(
         self,
         async_client: AsyncClient,
         db_session: AsyncSession,
         auth_headers: dict,
-        test_lesson_attempt: LessonAttempt
+        test_user: User,
+        test_lesson_attempt: LessonAttempt,
     ):
-        """Test cannot complete already completed lesson"""
-        test_lesson_attempt.finished_at = datetime.now(UTC)
+        """A second complete replays the stored result and awards nothing."""
+        test_lesson_attempt.score = 90
+        test_lesson_attempt.xp_earned = 80
         await db_session.commit()
-        
+        url = f"/api/v1/learning/attempts/{test_lesson_attempt.id}/complete"
+
+        first = await async_client.post(url, headers=auth_headers)
+        assert first.status_code == 200
+        await db_session.refresh(test_user)
+        xp_after_first = test_user.total_xp
+        tx_count = await db_session.scalar(select(func.count(XPTransaction.id)))
+
+        second = await async_client.post(url, headers=auth_headers)
+
+        assert second.status_code == 200
+        data = second.json()["data"]
+        assert data["total_xp_earned"] == first.json()["data"]["total_xp_earned"] == 80
+        assert data["final_score"] == 90
+        assert data["stars_earned"] == 3
+        assert data["achievements_unlocked"] == []
+        await db_session.refresh(test_user)
+        assert test_user.total_xp == xp_after_first
+        assert await db_session.scalar(select(func.count(XPTransaction.id))) == tx_count
+
+    async def test_complete_unknown_attempt_is_404(
+        self,
+        async_client: AsyncClient,
+        db_session: AsyncSession,
+        auth_headers: dict,
+    ):
+        import uuid
+
         response = await async_client.post(
-            f"/api/v1/learning/attempts/{test_lesson_attempt.id}/complete",
-            headers=auth_headers
+            f"/api/v1/learning/attempts/{uuid.uuid4()}/complete",
+            headers=auth_headers,
         )
-        
-        assert response.status_code == 400
-        assert "Already completed" in response.json()["error"]["message"]
+
+        assert response.status_code == 404
 
 
 @pytest.mark.asyncio
@@ -490,7 +519,9 @@ class TestCourseRoadmap:
             assert [
                 lesson["lesson_number"] for lesson in unit_data["lessons"]
             ] == [1, 2]
-            assert unit_data["lessons"][0]["is_locked"] is False
+            # One chain across the whole course: only the very first lesson is open.
+            first = unit_data is units_data[0]
+            assert unit_data["lessons"][0]["is_locked"] is (not first)
             assert unit_data["lessons"][1]["is_locked"] is True
 
     async def test_roadmap_lesson_lock_state(

@@ -61,6 +61,18 @@ class CourseDetailEntity extends Equatable {
     userProgress,
     units,
   ];
+
+  /// First lesson, in course order, that is open and not yet passed.
+  LessonInRoadmapEntity? get nextOpenLesson {
+    for (final unit in units) {
+      for (final lesson in unit.lessons) {
+        if (!(lesson.isLocked ?? false) && !(lesson.isCompleted ?? false)) {
+          return lesson;
+        }
+      }
+    }
+    return null;
+  }
 }
 
 /// Unit with its lessons for roadmap display

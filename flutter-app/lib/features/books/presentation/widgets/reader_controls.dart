@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/entities/book_entities.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Drawer-style panel for adjusting reader display settings.
 ///
@@ -23,7 +24,7 @@ class ReaderControls extends StatelessWidget {
   Widget build(BuildContext context) {
     final accent = Theme.of(context).colorScheme.primary;
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+      padding: const EdgeInsets.fromLTRB(20, AppSpacing.sm, 20, 20),
       decoration: BoxDecoration(
         color: _bgColor(settings.theme),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
@@ -37,7 +38,7 @@ class ReaderControls extends StatelessWidget {
             child: Container(
               width: 40,
               height: 4,
-              margin: const EdgeInsets.only(bottom: 16),
+              margin: const EdgeInsets.only(bottom: AppSpacing.lg),
               decoration: BoxDecoration(
                 color: _textColor(settings.theme).withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
@@ -47,9 +48,8 @@ class ReaderControls extends StatelessWidget {
 
           Text(
             'books.readerSettings'.tr(),
-            style: TextStyle(
+            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
               fontWeight: FontWeight.w700,
-              fontSize: 16,
               color: _textColor(settings.theme),
             ),
           ),
@@ -98,18 +98,17 @@ class ReaderControls extends StatelessWidget {
               ),
               Text(
                 '${settings.fontSize.toInt()}px',
-                style: TextStyle(
-                  fontSize: 13,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: _textColor(settings.theme).withValues(alpha: 0.7),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
 
           // ── Theme ──────────────────────────────────
           _sectionLabel('books.readerTheme'.tr(), settings.theme),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -132,11 +131,11 @@ class ReaderControls extends StatelessWidget {
                 ReaderTheme.dark,
                 'books.themeDark'.tr(),
                 AppColors.readingNight,
-                Colors.white,
+                AppColors.onGradient,
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
 
           // ── Line Spacing ───────────────────────────
           _sectionLabel('books.lineSpacing'.tr(), settings.theme),
@@ -164,14 +163,13 @@ class ReaderControls extends StatelessWidget {
               ),
               Text(
                 settings.lineSpacing.toStringAsFixed(1),
-                style: TextStyle(
-                  fontSize: 13,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: _textColor(settings.theme).withValues(alpha: 0.7),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
         ],
       ),
     );
@@ -200,7 +198,7 @@ class ReaderControls extends StatelessWidget {
       selected: isSelected,
       child: InkWell(
         onTap: () => onChanged(settings.copyWith(theme: theme)),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           constraints: const BoxConstraints(minHeight: 44, minWidth: 72),
@@ -208,7 +206,7 @@ class ReaderControls extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
             color: bg,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppRadius.md),
             border: Border.all(
               color: isSelected ? accent : Colors.transparent,
               width: 2,
@@ -216,10 +214,9 @@ class ReaderControls extends StatelessWidget {
           ),
           child: Text(
             label,
-            style: TextStyle(
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
               color: fg,
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-              fontSize: 14,
             ),
           ),
         ),
@@ -245,7 +242,7 @@ class ReaderControls extends StatelessWidget {
       case ReaderTheme.sepia:
         return AppColors.readingSepiaText;
       case ReaderTheme.dark:
-        return Colors.white;
+        return AppColors.onGradient;
     }
   }
 }

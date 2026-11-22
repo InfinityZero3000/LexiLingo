@@ -1,5 +1,7 @@
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/vocab_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/widgets/new_deck_composer.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
@@ -64,7 +66,7 @@ class _QuickSaveWordSheetState extends State<_QuickSaveWordSheet> {
   final _selectedDeckIds = <String>{};
   bool _isSaving = false;
   bool _isCreating = false;
-  String? _error;
+  UiText? _error;
 
   Future<void> _saveWord() async {
     if (_isSaving) return;
@@ -105,11 +107,13 @@ class _QuickSaveWordSheetState extends State<_QuickSaveWordSheet> {
           ? 'vocabulary.savedToCollections'.tr(
               args: [result.normalizedWord, '$addedToDecks'],
             )
+          : result.alreadyInCollection && result.reviewScheduled
+          ? 'vocabulary.resavedForReview'.tr()
           : result.alreadyInCollection
-          ? '"${result.normalizedWord}" is already in your vocabulary.'
+          ? 'vocabulary.alreadyInVocabulary'.tr(args: [result.normalizedWord])
           : result.createdNewItem
-          ? 'Saved new word "${result.normalizedWord}" to vocabulary.'
-          : 'Saved "${result.normalizedWord}" to vocabulary.';
+          ? 'vocabulary.savedNewWord'.tr(args: [result.normalizedWord])
+          : 'vocabulary.savedWord'.tr(args: [result.normalizedWord]);
 
       if (!widget.hostContext.mounted) return;
       final messenger = ScaffoldMessenger.maybeOf(widget.hostContext);
@@ -126,7 +130,7 @@ class _QuickSaveWordSheetState extends State<_QuickSaveWordSheet> {
       if (!mounted) return;
       setState(() {
         _isSaving = false;
-        _error = 'errors.saveFailed'.tr();
+        _error = UiText.key('errors.saveFailed');
       });
 
       if (!widget.hostContext.mounted) return;
@@ -143,17 +147,26 @@ class _QuickSaveWordSheetState extends State<_QuickSaveWordSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
 
     final decks = context.watch<VocabProvider>().decks;
 
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
       child: Container(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.xl,
+          AppSpacing.md,
+          AppSpacing.xl,
+          AppSpacing.xl,
+        ),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          color: scheme.surface,
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppRadius.xl),
+          ),
         ),
         child: SingleChildScrollView(
           child: Column(
@@ -165,7 +178,7 @@ class _QuickSaveWordSheetState extends State<_QuickSaveWordSheet> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: isDark ? Colors.white24 : AppColors.grey300,
+                    color: scheme.outlineVariant,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -173,40 +186,36 @@ class _QuickSaveWordSheetState extends State<_QuickSaveWordSheet> {
               const SizedBox(height: 16),
               Text(
                 'vocabulary.saveToVocabulary'.tr(),
-                style: TextStyle(
-                  fontSize: 17,
+                style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : AppColors.textDark,
                 ),
               ),
               const SizedBox(height: 10),
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.md,
                 ),
                 decoration: BoxDecoration(
                   color: isDark
                       ? AppColors.surfaceDarkChat
                       : AppColors.primary.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Text(
                   widget.word,
-                  style: TextStyle(
-                    fontSize: 16,
+                  style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: isDark ? Colors.white : AppColors.primary,
+                    color: isDark ? scheme.onSurface : scheme.primary,
                   ),
                 ),
               ),
               const SizedBox(height: 16),
               Text(
                 'vocabulary.collectionPickerTitle'.tr(),
-                style: TextStyle(
-                  fontSize: 13,
+                style: theme.textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: isDark ? Colors.white70 : AppColors.textDark,
+                  color: scheme.onSurface,
                 ),
               ),
               const SizedBox(height: 8),
@@ -260,10 +269,9 @@ class _QuickSaveWordSheetState extends State<_QuickSaveWordSheet> {
               if (_error != null) ...[
                 const SizedBox(height: 10),
                 Text(
-                  _error!,
-                  style: const TextStyle(
-                    color: AppColors.errorBright,
-                    fontSize: 12,
+                  _error!.resolve(),
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: scheme.error,
                     fontWeight: FontWeight.w500,
                   ),
                 ),

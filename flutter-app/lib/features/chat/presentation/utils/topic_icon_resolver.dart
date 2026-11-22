@@ -6,8 +6,10 @@ class TopicIconResolver {
   const TopicIconResolver._();
 
   // One icon per category, so the picture means the same thing on every row.
-  static IconData forStory(StoryListItem story) =>
-      _categoryIcons[story.category.toLowerCase().trim()] ??
+  static IconData forStory(StoryListItem story) => forCategory(story.category);
+
+  static IconData forCategory(String category) =>
+      _categoryIcons[category.toLowerCase().trim().replaceAll(' ', '_')] ??
       Icons.forum_rounded;
 
   static const Map<String, IconData> _categoryIcons = {

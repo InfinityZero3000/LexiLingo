@@ -1,6 +1,9 @@
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/error/failures.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 
 /// Types of errors that can be displayed
 enum ErrorType { network, server, timeout, unauthorized, notFound, unknown }
@@ -30,6 +33,28 @@ class ErrorDisplayWidget extends StatelessWidget {
     return ErrorDisplayWidget(
       errorType: errorType,
       customMessage: message,
+      onRetry: onRetry,
+      compact: compact,
+    );
+  }
+
+  /// Create from a [Failure]: its type picks the icon and title, its own
+  /// message (when it carries one) the description.
+  factory ErrorDisplayWidget.fromFailure(
+    Failure failure, {
+    VoidCallback? onRetry,
+    bool compact = false,
+  }) {
+    final type = switch (failure) {
+      NetworkFailure() => ErrorType.network,
+      ServerFailure() => ErrorType.server,
+      UnauthorizedFailure() || AuthFailure() => ErrorType.unauthorized,
+      NotFoundFailure() => ErrorType.notFound,
+      _ => ErrorType.unknown,
+    };
+    return ErrorDisplayWidget(
+      errorType: type,
+      customMessage: UiText.failure(failure).resolve(),
       onRetry: onRetry,
       compact: compact,
     );
@@ -85,42 +110,41 @@ class ErrorDisplayWidget extends StatelessWidget {
       case ErrorType.unauthorized:
         return AppColors.warning;
       case ErrorType.notFound:
-        return Colors.grey;
+        return AppColors.textGrey;
     }
   }
 
   String get _title {
     switch (errorType) {
       case ErrorType.network:
-        return 'No Internet Connection';
+        return 'errors.noInternet'.tr();
       case ErrorType.server:
-        return 'Server Error';
+        return 'errors.serverError'.tr();
       case ErrorType.timeout:
-        return 'Request Timeout';
+        return 'errors.timeout'.tr();
       case ErrorType.unauthorized:
-        return 'Session Expired';
+        return 'errors.unauthorized'.tr();
       case ErrorType.notFound:
-        return 'Not Found';
+        return 'errors.notFound'.tr();
       case ErrorType.unknown:
-        return 'Something Went Wrong';
+        return 'errors.somethingWrong'.tr();
     }
   }
 
   String get _description {
     switch (errorType) {
       case ErrorType.network:
-        return 'Please check your internet connection and try again.';
+        return 'errors.networkRetry'.tr();
       case ErrorType.server:
-        return 'Our servers are having trouble. Please try again later.';
+        return 'errors.serverRetry'.tr();
       case ErrorType.timeout:
-        return 'The request took too long. Please try again.';
+        return 'errors.timeoutRetry'.tr();
       case ErrorType.unauthorized:
-        return 'Please log in again to continue.';
+        return 'errors.signInAgain'.tr();
       case ErrorType.notFound:
-        return 'The requested content could not be found.';
+        return 'errors.notFoundContent'.tr();
       case ErrorType.unknown:
-        return customMessage ??
-            'An unexpected error occurred. Please try again.';
+        return customMessage ?? 'errors.genericRetry'.tr();
     }
   }
 
@@ -138,7 +162,7 @@ class ErrorDisplayWidget extends StatelessWidget {
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _iconColor.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: _iconColor.withValues(alpha: 0.3)),
       ),
       child: Row(
@@ -192,7 +216,7 @@ class ErrorDisplayWidget extends StatelessWidget {
             Text(
               _description,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: Colors.grey[600],
+                color: theme.colorScheme.onSurfaceVariant,
               ),
               textAlign: TextAlign.center,
             ),
@@ -202,10 +226,10 @@ class ErrorDisplayWidget extends StatelessWidget {
                 onPressed: onRetry,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _iconColor,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.textInverted,
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
+                    horizontal: AppSpacing.xl,
+                    vertical: AppSpacing.md,
                   ),
                 ),
                 child: Text('common.tryAgain'.tr()),
@@ -238,20 +262,26 @@ class OfflineBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      color: Colors.orange.shade800,
+      padding: const EdgeInsets.symmetric(
+        vertical: AppSpacing.sm,
+        horizontal: 16,
+      ),
+      color: context.status.warning,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.wifi_off,
-            color: Theme.of(context).colorScheme.surface,
-            size: 18,
-          ),
-          SizedBox(width: 8),
-          Text(
-            'common.offline'.tr(),
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+          Icon(Icons.wifi_off, color: context.status.onWarning, size: 18),
+          const SizedBox(width: AppSpacing.sm),
+          Flexible(
+            child: Text(
+              'common.offline'.tr(),
+              style: TextStyle(
+                color: context.status.onWarning,
+                fontWeight: FontWeight.w500,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),

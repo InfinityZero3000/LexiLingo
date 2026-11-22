@@ -13,9 +13,8 @@ from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.cache import build_cache_key, delete_cached
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, get_current_verified_user
 from app.crud.gamification import WalletCRUD
 from app.models.gamification import WalletTransaction
 from app.models.user import User
@@ -90,7 +89,7 @@ async def get_my_referral_code(
 @router.post("/claim/{code}", response_model=ClaimResponse)
 async def claim_referral_code(
     code: str = Path(..., min_length=6, max_length=12),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_verified_user),
     db: AsyncSession = Depends(get_db),
 ) -> ClaimResponse:
     """Claim a referral code. Can only be used once, and not on your own code."""
@@ -177,8 +176,6 @@ async def claim_referral_code(
 
     locked_user.referred_by = referrer.id
     await db.commit()
-    await delete_cached(build_cache_key("wallet", user_id=str(referrer.id)))
-    await delete_cached(build_cache_key("wallet", user_id=str(locked_user.id)))
     logger.info("Referral claimed: %s referred %s", referrer.id, locked_user.id)
 
     return ClaimResponse(

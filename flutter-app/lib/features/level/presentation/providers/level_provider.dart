@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/utils/freshness.dart';
 import '../../domain/entities/level_entity.dart';
 import '../../domain/services/level_calculator.dart';
 
@@ -8,6 +9,9 @@ class LevelProvider with ChangeNotifier {
 
   LevelProvider({required ApiClient apiClient}) : _apiClient = apiClient;
 
+  int _generation = 0;
+  Future<void>? _levelLoad;
+  final Freshness _levelFreshness = Freshness();
   LevelStatus _levelStatus = LevelStatus.empty();
   bool _isLoading = false;
   String? _errorMessage;
@@ -213,6 +217,11 @@ class LevelProvider with ChangeNotifier {
 
   /// Reset to initial state
   void reset() {
+    _generation++;
+    _levelLoad = null;
+    _levelFreshness.invalidate();
+    _certifiedLevel = 'A1';
+    _levelVerified = true;
     _levelStatus = LevelStatus.empty();
     _isLoading = false;
     _errorMessage = null;
@@ -242,13 +251,29 @@ class LevelProvider with ChangeNotifier {
   ///
   /// Requires an [ApiClient] instance (passed in to keep provider loosely
   /// coupled from DI container).
-  Future<void> fetchLevelFull() async {
+  ///
+  /// [maxAge] lets passive callers skip a reload of data fetched that recently;
+  /// callers that just changed something leave it null and always fetch.
+  Future<void> fetchLevelFull({Duration? maxAge}) {
+    if (_levelFreshness.isFresh(maxAge)) return Future<void>.value();
+    final inFlight = _levelLoad;
+    if (inFlight != null) return inFlight;
+    final run = _fetchLevelFull();
+    _levelLoad = run;
+    return run.whenComplete(() {
+      if (identical(_levelLoad, run)) _levelLoad = null;
+    });
+  }
+
+  Future<void> _fetchLevelFull() async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
+    final generation = _generation;
     try {
       final data = await _apiClient.get('/users/me/level-full');
+      if (generation != _generation) return;
       final bool isFirstLoad = _rawLevelFull.isEmpty;
 
       _rawLevelFull = data;
@@ -288,13 +313,14 @@ class LevelProvider with ChangeNotifier {
 
       // Keep CEFR LevelStatus in sync for legacy display (no extra notifyListeners).
       _levelStatus = LevelCalculator.calculateLevelStatus(_totalXp);
+      _levelFreshness.mark();
     } catch (e) {
+      if (generation != _generation) return;
       _errorMessage = e.toString();
       debugPrint('fetchLevelFull error: $e');
-    } finally {
-      _isLoading = false;
-      notifyListeners();
     }
+    _isLoading = false;
+    notifyListeners();
   }
 
   /// Set loading state

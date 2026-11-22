@@ -1,7 +1,6 @@
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:lexilingo_app/core/di/service_locator.dart';
-import 'package:lexilingo_app/core/services/entitlement_service.dart';
-import 'package:lexilingo_app/core/services/purchases_service.dart';
+import 'package:lexilingo_app/core/services/premium_status.dart';
 import 'package:lexilingo_app/features/premium/presentation/screens/paywall_screen.dart';
 
 /// Wraps any widget that requires a premium subscription.
@@ -11,7 +10,15 @@ class PremiumGate extends StatefulWidget {
   final Widget child;
   final Widget? lockedChild;
 
-  const PremiumGate({super.key, required this.child, this.lockedChild});
+  /// Corners of the locked scrim; match the wrapped widget's own shape.
+  final BorderRadius borderRadius;
+
+  const PremiumGate({
+    super.key,
+    required this.child,
+    this.lockedChild,
+    this.borderRadius = BorderRadius.zero,
+  });
 
   @override
   State<PremiumGate> createState() => _PremiumGateState();
@@ -34,12 +41,7 @@ class _PremiumGateState extends State<PremiumGate> {
   /// through `require_premium`, so lying to this widget no longer buys access
   /// to a premium-gated endpoint — only to the UI around it.
   Future<void> _check() async {
-    bool value;
-    if (sl.isRegistered<EntitlementService>()) {
-      value = await sl<EntitlementService>().fetchCached();
-    } else {
-      value = await PurchasesService.instance.isPremium;
-    }
+    final value = await resolvePremium();
     if (mounted) setState(() => _isPremium = value);
   }
 
@@ -64,8 +66,8 @@ class _PremiumGateState extends State<PremiumGate> {
       },
       child:
           widget.lockedChild ??
-          ColoredBox(
-            color: Colors.black12,
+          ClipRRect(
+            borderRadius: widget.borderRadius,
             child: Stack(
               alignment: Alignment.center,
               children: [
@@ -82,7 +84,7 @@ class _PremiumGateState extends State<PremiumGate> {
                   right: 12,
                   child: Icon(
                     Icons.lock_rounded,
-                    color: Colors.white,
+                    color: AppColors.textInverted,
                     size: 20,
                   ),
                 ),

@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/features/level/domain/entities/level_history_entry.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/proficiency_provider.dart';
 
@@ -43,11 +44,12 @@ class _LevelHistoryTimelineState extends State<LevelHistoryTimeline> {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: theme.colorScheme.outlineVariant),
+        boxShadow: AppShadows.card(theme),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -108,8 +110,8 @@ class _LevelHistoryTimelineState extends State<LevelHistoryTimeline> {
           label: steps.map((s) => s.level).join(' → '),
           excludeSemantics: true,
           child: Wrap(
-            spacing: 4,
-            runSpacing: 6,
+            spacing: 6,
+            runSpacing: 8,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               if (steps.length > shown.length)
@@ -127,11 +129,10 @@ class _LevelHistoryTimelineState extends State<LevelHistoryTimeline> {
           ),
         ),
         const SizedBox(height: 10),
-        Text(
-          _lastChange(history, provider.assessedLevel),
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+        _LastChange(
+          text: _lastChange(history, steps, provider.assessedLevel),
+          icon: _lastIcon(history, steps),
+          color: _lastColor(theme.colorScheme, history, steps),
         ),
         const SizedBox(height: 10),
         if (ready)
@@ -154,23 +155,77 @@ class _LevelHistoryTimelineState extends State<LevelHistoryTimeline> {
     for (final entry in history) {
       if (entry.newLevel == steps.last.level) continue;
       steps.add(
-        _Step(entry.newLevel, !entry.isPromotion, chosen: entry.isSelfSet),
+        _Step(
+          entry.newLevel,
+          !_isUp(steps.last.level, entry.newLevel, entry.isPromotion),
+          chosen: entry.isSelfSet,
+        ),
       );
     }
     return steps;
   }
 
-  static String _lastChange(List<LevelHistoryEntry> history, String assessed) {
+  /// Direction between two chips; the entry's own flag only breaks a tie when
+  /// a level is not a CEFR code.
+  static bool _isUp(String from, String to, bool fallback) {
+    final a = _cefrOrder.indexOf(from.toUpperCase());
+    final b = _cefrOrder.indexOf(to.toUpperCase());
+    return a < 0 || b < 0 ? fallback : b > a;
+  }
+
+  static const _cefrOrder = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+
+  static bool _lastIsUp(List<LevelHistoryEntry> history, List<_Step> steps) {
+    final last = history.last;
+    final from = steps.length >= 2 ? steps[steps.length - 2].level : null;
+    return from == null
+        ? last.isPromotion
+        : _isUp(from, steps.last.level, last.isPromotion);
+  }
+
+  static IconData _lastIcon(List<LevelHistoryEntry> history, List<_Step> steps) {
+    if (history.isEmpty) return Icons.flag_rounded;
+    final last = history.last;
+    if (last.isSelfSet) return Icons.person_rounded;
+    if (last.isInitial) return Icons.flag_rounded;
+    return _lastIsUp(history, steps)
+        ? Icons.trending_up_rounded
+        : Icons.trending_down_rounded;
+  }
+
+  static Color _lastColor(
+    ColorScheme scheme,
+    List<LevelHistoryEntry> history,
+    List<_Step> steps,
+  ) {
+    if (history.isEmpty) return scheme.onSurfaceVariant;
+    final last = history.last;
+    if (last.isSelfSet || last.isInitial) return scheme.onSurfaceVariant;
+    return _lastIsUp(history, steps) ? scheme.primary : scheme.error;
+  }
+
+  static String _lastChange(
+    List<LevelHistoryEntry> history,
+    List<_Step> steps,
+    String assessed,
+  ) {
     if (history.isEmpty) {
       return 'profile.levelStart'.tr(namedArgs: {'level': assessed});
     }
     final entry = history.last;
+    // "Moved from X" names the chip before the current one, not the server's
+    // previous_level, which is the certified level and can differ from it.
+    final from = steps.length >= 2
+        ? steps[steps.length - 2].level
+        : entry.previousLevel;
     final text = entry.isSelfSet
         ? 'profile.levelSelfSet'.tr(namedArgs: {'level': entry.newLevel})
         : entry.isInitial
         ? 'profile.levelPlaced'.tr(namedArgs: {'level': entry.newLevel})
-        : (entry.isPromotion ? 'profile.levelPromoted' : 'profile.levelDemoted')
-              .tr(namedArgs: {'from': entry.previousLevel});
+        : (_lastIsUp(history, steps)
+                  ? 'profile.levelPromoted'
+                  : 'profile.levelDemoted')
+              .tr(namedArgs: {'from': from});
     return '$text · ${DateFormat.yMMMd().format(entry.triggeredAt)}';
   }
 }
@@ -206,21 +261,53 @@ class _StepChip extends StatelessWidget {
         : scheme.onPrimary;
 
     return Container(
-      constraints: const BoxConstraints(minWidth: 44, minHeight: 30),
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      alignment: Alignment.center,
+      constraints: const BoxConstraints(minWidth: 44),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: current ? tone : tone.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: tone, width: 1.5),
+        color: current ? tone : tone.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: current ? tone : tone.withValues(alpha: 0.5)),
       ),
       child: Text(
         step.level,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+        textAlign: TextAlign.center,
+        style: Theme.of(context).textTheme.labelLarge?.copyWith(
           color: current ? onTone : tone,
-          fontWeight: FontWeight.bold,
+          fontWeight: current ? FontWeight.w800 : FontWeight.w600,
         ),
       ),
+    );
+  }
+}
+
+class _LastChange extends StatelessWidget {
+  const _LastChange({
+    required this.text,
+    required this.icon,
+    required this.color,
+  });
+
+  final String text;
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

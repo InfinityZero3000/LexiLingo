@@ -6,6 +6,7 @@ import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/vocabulary_item_entity.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// One-row Word of the Day tile for Home. Owns its gutters so it takes no
 /// space at all when there is no word. Navigates to the full word screen.
@@ -21,7 +22,12 @@ class WordOfDayCard extends StatelessWidget {
           return const SizedBox.shrink();
         }
         return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.md,
+            AppSpacing.lg,
+            0,
+          ),
           child: word == null
               ? const SkeletonBox(height: 96, borderRadius: 20)
               : _WordCard(word: word),
@@ -49,7 +55,7 @@ class _WordCard extends StatelessWidget {
         onTap: () => Navigator.of(
           context,
         ).pushNamed('/vocabulary/word-of-day', arguments: word),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Ink(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -57,9 +63,14 @@ class _WordCard extends StatelessWidget {
               end: Alignment.bottomRight,
               colors: AppColorRoles.primaryGradient(isDark),
             ),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
           ),
-          padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            14,
+            AppSpacing.md,
+            14,
+          ),
           child: Row(
             children: [
               Expanded(

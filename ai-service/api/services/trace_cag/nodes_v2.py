@@ -634,13 +634,34 @@ def _closed_body() -> str:
     return body.replace('Rules for "errors"', _CLOSED_TYPES_LINE + '\nRules for "errors"', 1)
 
 
-def build_diagnosis_prompt(user_text: str, learner_level: str, closed: bool = False) -> str:
+_ENGLISH_EXPLANATION_LINE = '"explanation": "brief explanation in simple English"'
+
+
+def _explanation_line(explanation_language: str) -> str:
+    # Language names come from iso_to_language_name (a closed set); strip anything else.
+    lang = re.sub(r"[^A-Za-z ]", "", explanation_language or "").strip() or "English"
+    return (
+        f'"explanation": "one short sentence, at most 20 words, written in {lang}; '
+        f'keep the English words or phrases in quotes"'
+    )
+
+
+def build_diagnosis_prompt(
+    user_text: str,
+    learner_level: str,
+    closed: bool = False,
+    explanation_language: str = "English",
+) -> str:
     head = f"""Analyze this English sentence from a {learner_level} level learner:
 
 Sentence: "{user_text}"
 
 """
-    return head + (_closed_body() if closed else _DIAGNOSIS_BODY)
+    body = _closed_body() if closed else _DIAGNOSIS_BODY
+    if (explanation_language or "English").strip().lower() != "english":
+        # Applied after _closed_body() so its guard still sees only the static template.
+        body = body.replace(_ENGLISH_EXPLANATION_LINE, _explanation_line(explanation_language), 1)
+    return head + body
 
 
 async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
@@ -659,9 +680,15 @@ async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
     start_time = time.time()
     
     user_text = state.get("user_input", "")
-    learner_level = state.get("learner_profile", {}).get("level", "B1")
+    learner_profile = state.get("learner_profile", {})
+    learner_level = learner_profile.get("level", "B1")
+    explanation_language = learner_profile.get("explanation_language") or "English"
     benchmark_task = state.get("benchmark_task")
-    bridge = settings.KG_DIAGNOSIS_BRIDGE
+    # "llm": the model's diagnosis or nothing. A failed call yields no errors
+    # rather than the regex fallback, and labels are always the closed set so
+    # the client can name them.
+    llm_only = state.get("diagnosis_policy") == "llm"
+    bridge = "closed" if llm_only else settings.KG_DIAGNOSIS_BRIDGE
 
     if benchmark_task in {"multihop_qa", "retrieval_qa"}:
         return {
@@ -696,7 +723,9 @@ async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
         gateway = await get_gateway()
         
         # Build diagnosis prompt
-        diagnosis_prompt = build_diagnosis_prompt(user_text, learner_level, bridge == "closed")
+        diagnosis_prompt = build_diagnosis_prompt(
+            user_text, learner_level, bridge == "closed", explanation_language
+        )
 
         # Call local Qwen via ModelGateway (lazy loads if needed).
         # If local Qwen is unavailable (e.g., missing local weights), fall back
@@ -822,12 +851,17 @@ async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
             except (json.JSONDecodeError, TypeError) as e:
                 logger.warning(f"[diagnose_node] Failed to parse AI response: {e}")
                 # Fallback to rule-based
-                errors, root_causes = _rule_based_diagnosis(user_text, bridge)
+                errors, root_causes = ([], []) if llm_only else _rule_based_diagnosis(user_text, bridge)
         else:
             # Fallback to rule-based if AI fails
             logger.warning("[diagnose_node] AI diagnosis failed, using rules")
-            errors, root_causes = _rule_based_diagnosis(user_text, bridge)
+            errors, root_causes = ([], []) if llm_only else _rule_based_diagnosis(user_text, bridge)
         
+        if llm_only and not parsed:
+            # Ungraded, not error-free: callers must not record this turn as evidence.
+            confidence = 0.0
+            used_model = "llm_unavailable"
+
         latency_ms = int((time.time() - start_time) * 1000)
         logger.info(f"[diagnose_node] Found {len(errors)} errors, intent={intent}, latency={latency_ms}ms")
         
@@ -849,16 +883,16 @@ async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"[diagnose_node] Error: {e}")
         # Fallback
-        errors, root_causes = _rule_based_diagnosis(user_text, bridge)
+        errors, root_causes = ([], []) if llm_only else _rule_based_diagnosis(user_text, bridge)
         return {
             "diagnosis_intent": "correct",
             "diagnosis_errors": errors,
             "diagnosis_root_causes": root_causes,
-            "diagnosis_confidence": 0.5,
+            "diagnosis_confidence": 0.0 if llm_only else 0.5,
             "grammar_score": 0.7,
             "fluency_score": 0.7,
             "vocabulary_level": EvaluationAgent.estimate_vocab_level(user_text),
-            "models_used": ["rule_fallback"],
+            "models_used": ["llm_unavailable" if llm_only else "rule_fallback"],
         }
 
 
@@ -866,7 +900,7 @@ def _rule_based_diagnosis(text: str, bridge: Optional[str] = None) -> tuple:
     """Fallback rule-based diagnosis when AI is unavailable"""
     errors = []
     root_causes = []
-    
+
     rules = [
         (r"\bI goes\b", "subject_verb_agreement", "I go", "Use 'go' with 'I'"),
         (r"\bhe go\b", "third_person_s", "he goes", "Add -s for he/she/it"),
@@ -875,7 +909,7 @@ def _rule_based_diagnosis(text: str, bridge: Optional[str] = None) -> tuple:
         (r"\bhave went\b", "present_perfect", "have gone", "Use past participle with have"),
         (r"\ba apple\b", "article", "an apple", "Use 'an' before vowels"),
     ]
-    
+
     for pattern, err_type, correction, explanation in rules:
         match = re.search(pattern, text, re.IGNORECASE)
         if match:

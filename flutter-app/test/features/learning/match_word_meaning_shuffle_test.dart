@@ -47,8 +47,9 @@ void main() {
     for (final id in ['ex-1', 'ex-2', 'ex-3']) {
       final texts = await renderedTexts(tester, exerciseWithId(id));
 
-      expect(texts.take(keys.length), keys);
-      final right = texts.skip(keys.length).toList();
+      // Rows interleave the columns, so read each column by its own words.
+      expect(texts.where(keys.contains), keys);
+      final right = texts.where(values.contains).toList();
       expect(right.toSet(), values.toSet());
       if (right.join('|') != values.join('|')) shuffledAtLeastOnce = true;
     }

@@ -26,6 +26,7 @@ Language learning app (Duolingo-style). Stack:
 | `backend-service/scripts/seed_courses_directly.py` | Courses & exercises seed (calls `app.services.admin_seed_service` directly) |
 | `backend-service/scripts/generate_exercises_ai.py` | Fills lessons whose `content` is empty with AI-generated exercises (Groq) |
 | `backend-service/scripts/audit_course_content.py` | Reports/repairs published courses with unplayable lessons |
+| `backend-service/scripts/generate_ielts_paper.py` | Original IELTS Academic Reading drafts from the pinned open-licence passages in `ielts_passage_manifest.json`; pure rules in `app/services/ielts_paper_builder.py` |
 | `flutter-app/lib/features/learning/presentation/screens/learning_roadmap_screen.dart` | Duolingo-style zigzag roadmap |
 | `ai-service/api/services/trace_cag/` | TRACE-CAG multi-hop reasoning pipeline |
 
@@ -377,6 +378,13 @@ venv/bin/python3 scripts/audit_course_content.py --fix-counters
   Result: 7,780 approved, 2 quarantined. The planner teaches a word once per unit
   even when two parts of speech survive, because the lesson cursor advances a fixed
   number of entries and a skipped duplicate made consecutive lessons overlap.
+- **IELTS papers are generated, never copied.** `generate_ielts_paper.py` fetches only the
+  manifest's pinned passages (Wikipedia by `oldid` through the robots-allowed
+  `/wiki/<title>?oldid=` form, because `/api/` and `/w/` are `Disallow`ed there; Gutenberg
+  by ebook id; `.gov` pages), writes questions with qwen (reasoning on), then a blind second
+  pass must answer each one identically and quote evidence that really occurs in the passage.
+  Below 40 survivors the paper is refused. It lands `is_published=false` with `provenance`
+  for the PR #732 gate. Reading only; Listening is not generated.
 - `flutter-app/data/crawler/` (BBC) — **deleted 2026-08-20**. It was unreferenced
   anywhere, wrote to a `flutter-app/courses/` directory that does not exist, and
   its export format carried no lessons or exercises. Recover from git history if
@@ -472,10 +480,19 @@ untouched. Design, first switch and manual rollback: `docs/operations/AUTO_DEPLO
   from it. Never delete or reset it to "go source-free" — move those mounts first.
 - Compose, gateway and env changes are not in an image; roll them out by hand.
 
-**For anything auto-deploy does not cover, use `./scripts/deploy-one-shot.sh`.** It does the safe thing:
-`pull` → `up -d --remove-orphans` → per-service health wait → smoke test.
-Compose then recreates only what actually changed and leaves the old container
-running until the new one is up.
+**For anything auto-deploy does not cover, use `./scripts/deploy-one-shot.sh`.** It runs the
+same compose invocation as `auto-deploy.sh` (`docker-compose.yml` +
+`docker-compose.images.yml` + `/var/lib/lexilingo/auto-deploy/image-tags.env`), so
+backend and ai-service stay on the GHCR `sha-…` images and **it never builds**
+(`up -d --no-build`). Steps: take auto-deploy's `flock` on
+`/var/lib/lexilingo/auto-deploy/lock` → `pull` → pre-flight `up --dry-run` (prints what
+will be recreated) → `up -d --no-build --remove-orphans` → per-service health wait →
+smoke test. Compose recreates only what actually changed and leaves the old container
+running until the new one is up. Without `image-tags.env` it refuses rather than
+building; `--bootstrap-local-build` is the explicit escape for a fresh host and is itself
+refused once `image-tags.env` exists. `scripts/tests/test_deploy_one_shot.sh` (in the
+"Deploy Script Tests" CI job) fails if the script ever builds outside that flag.
+Rollback is putting the saved `image-tags.env.pre-<ts>` (in `.deploy/`) back.
 
 These three mistakes took ai-service down on 2026-08-14 and destroyed the
 rollback image. Each is banned on its own:
@@ -489,8 +506,12 @@ rollback image. Each is banned on its own:
 Also: `| tail -N` on a build hides all progress until it ends — log to a file
 and tail the file instead.
 
-**Before touching a live service**, keep an escape hatch. There is no image
-backup and no registry, so a lost tag is unrecoverable:
+**The rest of this section is the legacy local-build path** (pre-registry, and
+`--bootstrap-local-build`). On a registry host nothing is built on the VPS, and the
+rollback is the previous `sha-…` tag in `image-tags.env.prev`.
+
+**Before touching a live service on a locally built host**, keep an escape hatch.
+There is no image backup there, so a lost tag is unrecoverable:
 
 ```bash
 sudo docker tag lexilingo-ai-service:latest lexilingo-ai-service:rollback
@@ -541,6 +562,11 @@ Rules that exist because they were violated:
 - **`OnFailure` goes in `[Unit]`.** In `[Service]` systemd ignores it with only
   a log line, so failures alert nobody. Verify with
   `systemctl show -p OnFailure --value <unit>` — empty means broken.
+- **MongoDB runs with `--auth` (2026-11-16).** Root (`MONGO_ROOT_USER/PASSWORD`) is for
+  backup/restore and the container's own env; ai-service connects as `MONGO_APP_USER`
+  (readWrite on the app database only). All four live in `.env.production.secrets`; compose
+  refuses to start without them. On a fresh host `MONGO_INITDB_ROOT_*` creates root, but the
+  app user must be created by hand (`db.createUser` in the app DB).
 - **The server dumps cover the two databases only.** Uploaded media and
   `ai-service/data` live in the checkout and were never in them.
 - **The off-box copy is the developer's Mac.** `scripts/pull-backups-to-mac.sh --install`
@@ -577,6 +603,79 @@ This project has a code-review-graph knowledge graph. Prefer:
 - `get_impact_radius` over manual import tracing
 - `detect_changes` + `get_review_context` for code review
 - `query_graph` for caller/callee/test relationships
+
+## Flutter shared UI modules and the admin mobile app
+
+Reuse these from `flutter-app/lib/core/` before writing a screen's own: `showConfirm`
+(bottom-sheet confirm, `requireText` for type-to-confirm), `ViewStateBody` (skeleton /
+empty / error-with-retry / data), `PaginatedListController` + `PaginatedListView` with a
+`PageFetcher` (`page/page_size`, `page/per_page` or `limit/offset`), `DebouncedSearchField`,
+`FilterChipBar` / `SegmentedTabs`, `StatCard`, `StatusPill`, `AppTextField`, and
+`unwrapEnvelope` / `extractPage` (the backend mixes `{data}`, `{success,data}` and bare
+bodies). Tokens: `AppSpacing`, `AppRadius`, `kMinTapTarget`, `context.status`, `AppTextRoles`.
+
+The admin mobile app (`features/admin`) is built on them plus `AdminPermissions`
+(permissions from `/admin/rbac/me/permissions`; it hides UI only, the backend enforces),
+`AdminPalette` (`context.ac`, follows light and dark) and the `Admin*` widgets in
+`features/admin/shared/`. **By design it has no delete, bulk, file-upload or money
+actions** (permanent delete, role changes, wallet adjust, premium grant, gem limits,
+partner keys, bulk import); those rows link to the web admin. It is no longer frozen:
+new admin screens go here when they fit that rule, otherwise to `admin-service`.
+
+**There is no admin login on mobile.** The panel opens from the profile of a signed-in
+learner whose role is admin, and borrows that session: `LearnerSessionStore` reads the
+learner tokens and renews them through the shared `refreshBackendToken` (refresh tokens
+are single-use, so a second session would race the learner app for them). `AuthProvider`
+only checks `/users/me` for an admin role; no session closes the panel, a non-admin sees
+`/no-access`, a failed check offers a retry. Exit leaves the panel; it never logs the
+learner out.
+
+Adding a widget with `Card(`, `BoxDecoration(` or `showModalBottomSheet(` under
+`flutter-app/lib/` needs a line in `docs/ui/learner-tactile-style-inventory.json`, or
+`learner_surface_inventory_test` fails. `locale_keys.g.dart` is hand-appended on `dev`;
+regenerating it would drop keys still in use.
+
+## Flutter — per-account state (nothing of A's may be visible to B)
+
+On 2026-11-19 the same prod account showed 300 / 65 / 0 gems (the real balance was 0),
+badges came and went, and a second account tried to delete the first one's Lexi session
+(403). Cause: every root `ChangeNotifier` is an app-lifetime singleton and logout cleared
+only tokens plus seven providers. The rules that now hold it:
+
+- **One reset point: `UserSessionSync`** (`features/auth/presentation/user_session_sync.dart`).
+  A new root provider that holds per-user data gets a `reset()` and is added there; one
+  that holds none is added to the allowlist **with a reason** in
+  `test/features/auth/user_session_sync_guard_test.dart`, which fails otherwise. Register
+  it through `UserSessionSync.provider<T>()` — a reset must not construct a provider the
+  learner never opened. Stateful GetIt singletons (`KnownWordsService`,
+  `ListeningHistoryRecorder`, `PodcastAudioHandler`) are not providers, so the guard cannot
+  see them: add them to its hand-kept list and to `_resetServices`.
+- **An account switch is a sign-out.** `AuthWrapper` can see the user id change with no
+  signed-out frame in between (`SessionTracker`); it must run the same reset and the same
+  `AccountDataCleaner` before `afterSignIn`.
+- **Every async load that writes provider state checks `ResetEpoch`**
+  (`core/state/reset_epoch.dart`) after each `await`. A response that lands after `reset()`
+  belongs to the previous account and must be dropped, never re-queued — a retried flashcard
+  review would be sent under the next account's token.
+- **Storage: decide per key whether it is a cache or device-only data.** A cache of server
+  data is deleted on logout (`AccountDataCleaner`; per-user `LocalCacheService` entries
+  only, public offline caches stay). Device-only data (saved videos, podcast follows, book
+  progress, notifications, recents) is keyed `UserScopeService.scopedKey(...)`, and legacy
+  global values are claimed once by the first signed-in user (`setActiveUserId`) — never
+  deleted outright, never shown to a second account.
+- **Web has no persistent sync queue** (`BackgroundSyncQueueService` is off on web). Words
+  added on web live in a per-user pending list until `/vocabulary/collection/quick-save`
+  accepts them; a 400/409/422 drops the word, anything else keeps it. Never flush it under a
+  different account's token.
+- **A balance is never shown as 0 before it is known.** `GamificationProvider.wallet` is
+  null until loaded: the pill shows "—" (tap to retry on failure), the shop refuses to
+  decide "not enough gems" without it. The backend does not cache `/gamification/wallet` or
+  `/achievements/me`: they were stale for up to 30 s after any write that forgot to
+  invalidate, and `cache.py` once kept serving an in-memory copy after invalidation.
+- **Badge images resolve in this order** (`resolveBadgeImage`): bundled asset by slug →
+  `/media/...` via `ApiConfig.mediaBaseUrl` → absolute URL → placeholder. `achievements.badge_icon`
+  must never point at a git branch that may not exist (`@feature` did, 44 of 48 rows); the
+  backfill script and the admin page pin `@main`.
 
 ## Code Style
 

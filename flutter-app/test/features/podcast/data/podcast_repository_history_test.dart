@@ -111,7 +111,7 @@ void main() {
 
   test('one corrupt stored entry does not hide the rest', () async {
     SharedPreferences.setMockInitialValues({
-      'podcast_listening_history': [
+      'u:anonymous:podcast_listening_history': [
         'not json at all',
         '{"episode_guid":"ok","feed_url":"f","last_position_seconds":50,'
             '"updated_at":"2026-10-23T08:00:00.000"}',

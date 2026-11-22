@@ -6,6 +6,7 @@ import 'package:lexilingo_app/core/services/background_sync_queue_service.dart';
 import 'package:lexilingo_app/core/services/local_cache_service.dart';
 import 'package:lexilingo_app/core/services/user_scope_service.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class OfflineSyncCenterPage extends StatefulWidget {
   const OfflineSyncCenterPage({super.key});
@@ -34,6 +35,7 @@ class _OfflineSyncCenterPageState extends State<OfflineSyncCenterPage> {
   }
 
   Future<void> _loadSnapshot() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -68,6 +70,11 @@ class _OfflineSyncCenterPageState extends State<OfflineSyncCenterPage> {
         _errorMessage = e.toString();
         _isLoading = false;
       });
+      if (_snapshot != null) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('offlineSync.loadFailed'.tr())));
+      }
     }
   }
 
@@ -84,6 +91,12 @@ class _OfflineSyncCenterPageState extends State<OfflineSyncCenterPage> {
         ),
       );
       await _loadSnapshot();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('offlineSync.loadFailed'.tr())));
+      }
     } finally {
       if (mounted) setState(() => _isMutating = false);
     }
@@ -98,6 +111,9 @@ class _OfflineSyncCenterPageState extends State<OfflineSyncCenterPage> {
           content: Text('offlineSync.clearAllMessage'.tr()),
           actions: [
             TextButton(
+              style: TextButton.styleFrom(
+                minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+              ),
               onPressed: () => Navigator.pop(context, false),
               child: Text('common.cancel'.tr()),
             ),
@@ -120,6 +136,12 @@ class _OfflineSyncCenterPageState extends State<OfflineSyncCenterPage> {
         SnackBar(content: Text('offlineSync.allCacheCleared'.tr())),
       );
       await _loadSnapshot();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('offlineSync.loadFailed'.tr())));
+      }
     } finally {
       if (mounted) setState(() => _isMutating = false);
     }
@@ -127,12 +149,8 @@ class _OfflineSyncCenterPageState extends State<OfflineSyncCenterPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Scaffold(
-      backgroundColor: isDark
-          ? AppColors.backgroundDark
-          : AppColors.backgroundLight,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('offlineSync.title'.tr()),
         actions: [
@@ -203,8 +221,8 @@ class _ConnectionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final color = snapshot.isOnline
-        ? AppColors.greenSuccess
-        : AppColors.warning;
+        ? context.status.success
+        : context.status.warning;
 
     return _Panel(
       child: Row(
@@ -228,7 +246,7 @@ class _ConnectionCard extends StatelessWidget {
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
                   snapshot.isOnline
                       ? 'offlineSync.onlineSubtitle'.tr()
@@ -290,7 +308,7 @@ class _CacheCard extends StatelessWidget {
                 label: _cacheTypeLabel(entry.key),
                 value: '${entry.value}',
               ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           Row(
             children: [
               Expanded(
@@ -390,16 +408,12 @@ class _Panel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDarkMuted : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isDark ? AppColors.borderDarkSoft : AppColors.slate200,
-        ),
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       child: child,
     );
@@ -426,7 +440,7 @@ class _PanelTitle extends StatelessWidget {
     return Row(
       children: [
         _IconBadge(icon: icon, color: color),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpacing.md),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -549,7 +563,7 @@ class _ErrorState extends StatelessWidget {
               color: Theme.of(context).colorScheme.error,
               size: 42,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             Text(
               'offlineSync.loadFailed'.tr(),
               textAlign: TextAlign.center,
@@ -557,7 +571,7 @@ class _ErrorState extends StatelessWidget {
                 context,
               ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               message,
               textAlign: TextAlign.center,
@@ -565,11 +579,8 @@ class _ErrorState extends StatelessWidget {
                 color: AppColorRoles.textSecondary(isDark),
               ),
             ),
-            const SizedBox(height: 16),
-            FilledButton(
-              onPressed: onRetry,
-              child: Text('common.retry'.tr()),
-            ),
+            const SizedBox(height: AppSpacing.lg),
+            FilledButton(onPressed: onRetry, child: Text('common.retry'.tr())),
           ],
         ),
       ),

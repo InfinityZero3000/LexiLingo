@@ -25,13 +25,20 @@ class EntitlementService {
     }
   }
 
-  Future<bool> fetchCached({String entitlementId = 'premium'}) async {
+  /// `null` when the backend could not be reached, so callers can tell
+  /// "not premium" from "unknown".
+  Future<bool?> fetchActive({String entitlementId = 'premium'}) async {
     try {
-      final data = await apiClient.get('/entitlements/me?entitlement_id=$entitlementId');
+      final data = await apiClient.get(
+        '/entitlements/me?entitlement_id=$entitlementId',
+      );
       return data['active'] == true;
     } catch (e) {
-      debugPrint('EntitlementService.fetchCached error: $e');
-      return false;
+      debugPrint('EntitlementService.fetchActive error: $e');
+      return null;
     }
   }
+
+  Future<bool> fetchCached({String entitlementId = 'premium'}) async =>
+      await fetchActive(entitlementId: entitlementId) ?? false;
 }

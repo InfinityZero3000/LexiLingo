@@ -1,0 +1,1892 @@
+{
+  "category": {
+    "color": "#E53935",
+    "course_count": 0,
+    "created_at": {
+      "__dt__": "2026-03-14T03:20:37.101662"
+    },
+    "description": "Luyện thi IELTS Academic, General Training, nhắm Band 3 đến 8+",
+    "icon": "assignment",
+    "id": "1a3c9ab4-e473-478e-a9e2-e85158332eef",
+    "is_active": true,
+    "name": "IELTS Preparation",
+    "order_index": 2,
+    "slug": "test-prep",
+    "updated_at": {
+      "__dt__": "2026-03-14T03:20:37.101684"
+    }
+  },
+  "course": {
+    "category_id": "1a3c9ab4-e473-478e-a9e2-e85158332eef",
+    "content_version": 1,
+    "created_at": {
+      "__dt__": "2026-03-14T03:20:38.537953"
+    },
+    "description": "Khóa học IELTS dành cho học viên trình độ A2, hướng tới Band 4.0–5.0. Phát triển kỹ năng nghe hiểu câu đơn giản, đọc văn bản ngắn, viết đoạn mô tả cơ bản và trả lời phỏng vấn Part 1 tự tin hơn. Bước đệm lý tưởng trước khi học IELTS Band 5–6.",
+    "estimated_duration": 600,
+    "id": "9a72c8ca-95bd-4f74-ba1a-3da01bef8d32",
+    "is_published": true,
+    "language": "en",
+    "level": "A2",
+    "skill": null,
+    "tags": [
+      "ielts",
+      "test-prep",
+      "band-4",
+      "band-5",
+      "starter",
+      "elementary",
+      "cefr-a2"
+    ],
+    "thumbnail_url": "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400",
+    "title": "IELTS Starter: Band 4–5",
+    "total_lessons": 21,
+    "total_xp": 850,
+    "updated_at": {
+      "__dt__": "2026-03-14T03:20:38.740125"
+    }
+  },
+  "format": 1,
+  "lessons": [
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "11:00 am",
+            "explanation": "The speaker corrects the initial suggestion of 10:00 am, confirming 11:00 am is available. This is a classic 'correction' distractor pattern in Section 1.",
+            "id": "ex_001_booking_time",
+            "options": [
+              "10:00 am",
+              "11:00 am",
+              "12:00 pm"
+            ],
+            "question": "What time is the appointment booked for?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          },
+          {
+            "correct_answer": "Smith",
+            "explanation": "The learner hears the name 'Smith' and must type it exactly. It is a common surname, testing basic spelling accuracy in a booking context.",
+            "id": "ex_002_name_spelling",
+            "options": [],
+            "question": "The surname is spelled {blank}.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "A colour treatment",
+            "explanation": "The caller initially asks about a hair cut but changes their mind to a colour treatment. The distractors represent the initial, incorrect idea.",
+            "id": "ex_003_service_type",
+            "options": [
+              "A hair cut",
+              "A colour treatment",
+              "A blow-dry"
+            ],
+            "question": "Which service is the caller finally booking?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          },
+          {
+            "correct_answer": "Tuesday",
+            "explanation": "The speaker confirms the day of the week is Tuesday. The learner types the single word they hear.",
+            "id": "ex_004_date_day",
+            "options": [],
+            "question": "The appointment is on {blank}.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "Room 102",
+            "explanation": "The speaker mentions Room 101 is double-booked and assigns Room 102. Room 103 is never mentioned, serving as a plausible but unsaid detail distractor.",
+            "id": "ex_005_location_room",
+            "options": [
+              "Room 101",
+              "Room 102",
+              "Room 103"
+            ],
+            "question": "Which room number is assigned to the meeting?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "9a72c8ca-95bd-4f74-ba1a-3da01bef8d32",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.600195"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "6b925143-ef06-4877-b7ba-5d95e9cb5cec",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "listening",
+      "title": "Section 1 Dialogues: Booking, Enquiries & Appointments",
+      "total_exercises": 5,
+      "unit_id": "b98122e8-e32a-48fa-953c-efe7e2a83e80",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.377520"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Friday",
+            "explanation": "In note-completion tasks, you must capture the specific date mentioned. The speaker explicitly states 'Friday' as the deadline.",
+            "id": "ex_001",
+            "options": [],
+            "question": "Complete the note: The deadline for the essay is {blank}.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "Free",
+            "explanation": "The speaker mentions that the card is free for students. Distractors like £5 or £10 are common in exams to test if you hear the final correction or specific condition.",
+            "id": "ex_002",
+            "options": [
+              "£5",
+              "£10",
+              "Free"
+            ],
+            "question": "Complete the table: What is the cost of the library card?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          },
+          {
+            "correct_answer": "Room 204",
+            "explanation": "Note-completion often requires specific location details. The speaker clearly states 'Room 204' as the location.",
+            "id": "ex_003",
+            "options": [],
+            "question": "Complete the note: The seminar room is {blank}.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "8 weeks",
+            "explanation": "The speaker states the course lasts 8 weeks. In IELTS listening, numbers are frequently used as distractors, so listening for the exact figure is crucial.",
+            "id": "ex_004",
+            "options": [
+              "6 weeks",
+              "8 weeks",
+              "10 weeks"
+            ],
+            "question": "Complete the table: How many weeks is the course?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          },
+          {
+            "correct_answer": "your ID",
+            "explanation": "The speaker instructs students to bring their ID. In note-completion, capturing the required item accurately is key.",
+            "id": "ex_005",
+            "options": [],
+            "question": "Complete the note: You need to bring {blank}.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "9a72c8ca-95bd-4f74-ba1a-3da01bef8d32",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.600255"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "2849b078-3b2b-4447-a151-d78b3040381b",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "listening",
+      "title": "Gap-Fill Listening: Completing Notes & Tables",
+      "total_exercises": 5,
+      "unit_id": "b98122e8-e32a-48fa-953c-efe7e2a83e80",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.377491"
+      },
+      "xp_reward": 22
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "nine o'clock",
+            "explanation": "The announcement explicitly states the closing time is nine o'clock. This tests your ability to catch specific numerical information in a spoken announcement.",
+            "id": "ex_001",
+            "options": [],
+            "question": "The library closes at {blank} on weekdays.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "Road repairs",
+            "explanation": "The speaker mentions that road repairs are causing delays. This is a common distractor type where other plausible reasons might be expected, but only the stated reason is correct.",
+            "id": "ex_002",
+            "options": [
+              "Road repairs",
+              "Staff strike",
+              "New routes"
+            ],
+            "question": "What is the main reason for the change in the bus schedule?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          },
+          {
+            "correct_answer": "The gym",
+            "explanation": "The tour guide specifically points out that the gym is under maintenance. This tests your ability to identify specific details in a guided tour context.",
+            "id": "ex_003",
+            "options": [
+              "The cafeteria",
+              "The gym",
+              "The lecture hall"
+            ],
+            "question": "Which facility is closed for maintenance during the tour?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          },
+          {
+            "correct_answer": "student ID",
+            "explanation": "The announcement requires students to bring their student ID. This is a typical instruction in an academic setting, testing your ability to catch key nouns.",
+            "id": "ex_004",
+            "options": [],
+            "question": "Please bring your {blank} to the orientation.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "Wait for the next one",
+            "explanation": "The speaker advises students to wait for the next bus. This tests your ability to follow instructions and understand implied actions in an announcement.",
+            "id": "ex_005",
+            "options": [
+              "Wait for the next one",
+              "Take a taxi",
+              "Ask the teacher"
+            ],
+            "question": "What should students do if they miss the first bus?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "9a72c8ca-95bd-4f74-ba1a-3da01bef8d32",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.600289"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "da547191-060b-42bb-af42-b803226b126c",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "listening",
+      "title": "Section 2: Listening to Announcements & Tours",
+      "total_exercises": 5,
+      "unit_id": "b98122e8-e32a-48fa-953c-efe7e2a83e80",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447860"
+      },
+      "xp_reward": 22
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "B) Annual maintenance",
+            "explanation": "The speaker explicitly states the closure is due to 'annual maintenance,' which is a specific detail. Options A and D are plausible campus activities but are not mentioned. Option C is a common distractor for closures but is not the reason given.",
+            "id": "ex_001",
+            "options": [
+              "A) Staff training",
+              "B) Annual maintenance",
+              "C) Power outage",
+              "D) Holiday celebration"
+            ],
+            "question": "What is the main reason the library will be closed?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          },
+          {
+            "correct_answer": "main",
+            "explanation": "This tests listening for a specific detail (the location). The word 'main' is a high-frequency academic vocabulary item often used in campus contexts. It is a single word, fitting the constraint for dictation notes.",
+            "id": "ex_002",
+            "options": [],
+            "question": "Complete the notice: The seminar has been moved to the {blank} hall.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "A) Read the textbook",
+            "explanation": "The speaker says, 'Before you watch the video, please read the textbook.' This establishes a sequence. Option B is a near-miss distractor as it is mentioned but is the second step, not the first. Options C and D are unrelated to the immediate instruction.",
+            "id": "ex_003",
+            "options": [
+              "A) Read the textbook",
+              "B) Watch the video",
+              "C) Submit the essay",
+              "D) Join the group"
+            ],
+            "question": "What does the tutor suggest students do first?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          },
+          {
+            "correct_answer": "student",
+            "explanation": "This tests the ability to hear a common collocation ('student card') in an academic context. It is a single word, ensuring clarity for A2 level learners while maintaining exam realism.",
+            "id": "ex_004",
+            "options": [],
+            "question": "Fill in the gap: Please bring your {blank} card to the exam.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "C) Critical",
+            "explanation": "The speaker says, 'I am not convinced this new policy will work.' This expresses doubt and criticism. Option A (Uncertain) is a distractor because 'not convinced' implies a negative judgment rather than pure uncertainty. Option B is the opposite. Option D is incorrect as the speaker has a clear opinion.",
+            "id": "ex_005",
+            "options": [
+              "A) Uncertain",
+              "B) Supportive",
+              "C) Critical",
+              "D) Indifferent"
+            ],
+            "question": "What is the speaker's attitude towards the new policy?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "9a72c8ca-95bd-4f74-ba1a-3da01bef8d32",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.600320"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "55241553-53f9-4f35-80b1-1f6bcdf404dc",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "listening",
+      "title": "Multiple Choice: Listening for Gist & Detail",
+      "total_exercises": 5,
+      "unit_id": "b98122e8-e32a-48fa-953c-efe7e2a83e80",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.377510"
+      },
+      "xp_reward": 22
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "four o'clock",
+            "explanation": "The speaker explicitly states the closing time is 'four o'clock'. Note the spelling of 'o'clock' and the number format.",
+            "id": "ex_listening_starter_01",
+            "options": [],
+            "question": "Complete the sentence: The library closes at {blank} on Sundays.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "Twenty pounds",
+            "explanation": "The speaker mentions that the card costs twenty pounds. Other amounts mentioned (such as fifteen pounds for a temporary pass) are distractors.",
+            "id": "ex_listening_starter_02",
+            "options": [
+              "Ten pounds",
+              "Fifteen pounds",
+              "Twenty pounds",
+              "Twenty-five pounds"
+            ],
+            "question": "What is the cost of the student membership card?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          },
+          {
+            "correct_answer": "science block",
+            "explanation": "The speaker specifies the location as the 'science block'. Ensure correct spelling of 'science' and 'block'.",
+            "id": "ex_listening_starter_03",
+            "options": [],
+            "question": "Write the name of the building: The seminar room is in the {blank}.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "The room has no power outlets",
+            "explanation": "The speaker explains that there are no power outlets in the room, so students need their own laptops. Other reasons are not mentioned.",
+            "id": "ex_listening_starter_04",
+            "options": [
+              "The room has no power outlets",
+              "The room is too cold",
+              "The room is fully booked",
+              "The room is under renovation"
+            ],
+            "question": "Why should students bring their own laptops?",
+            "type": "multiple_choice",
+            "ui_type": "listen_and_choose"
+          },
+          {
+            "correct_answer": "main entrance",
+            "explanation": "The speaker instructs listeners to sign in at the 'main entrance'. Note the spelling of 'entrance'.",
+            "id": "ex_listening_starter_05",
+            "options": [],
+            "question": "Complete the instruction: Please sign in at the {blank}.",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "9a72c8ca-95bd-4f74-ba1a-3da01bef8d32",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.600349"
+      },
+      "description": "A full IELTS mock is 40 listening and 40 reading questions and lives in Practice Tests, not in a lesson. This is a short practice set.",
+      "estimated_minutes": 25,
+      "id": "eaea92e0-6c7e-4310-9297-7261dadac918",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "listening",
+      "title": "Listening Starter Practice Set (Band 4–5)",
+      "total_exercises": 5,
+      "unit_id": "b98122e8-e32a-48fa-953c-efe7e2a83e80",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:16:23.160603"
+      },
+      "xp_reward": 40
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "FALSE",
+            "explanation": "The text states that construction *began* in the 7th century BC, but the most famous sections were built much later, in the 14th and 15th centuries. Therefore, the statement that the *entire* wall was built in the 7th century BC contradicts the text.",
+            "id": "ex_867061b4-18a6-4f93-aae5-500aed939536_1",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "The construction of the Great Wall began in the 7th century BC, but the most famous sections were built during the Ming Dynasty in the 14th and 15th centuries. The wall stretches over 20,000 kilometres across northern China. Does the passage state that the entire wall was built in the 7th century BC?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "water",
+            "explanation": "The text explicitly lists 'carbon dioxide and water' as the inputs for the process. The answer 'water' is a single word taken verbatim from the text.",
+            "id": "ex_867061b4-18a6-4f93-aae5-500aed939536_2",
+            "options": [],
+            "question": "Photosynthesis is the process by which green plants and some other organisms use sunlight to synthesize foods with the help of chlorophyll. During this process, plants take in carbon dioxide and {blank} and release oxygen. What substance do plants take in along with carbon dioxide?",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Gustave Eiffel",
+            "explanation": "The text clearly identifies Gustave Eiffel as the person who designed the tower. The other options are historical figures not mentioned as the designer.",
+            "id": "ex_867061b4-18a6-4f93-aae5-500aed939536_3",
+            "options": [
+              "Gustave Eiffel",
+              "Napoleon Bonaparte",
+              "Louis XIV"
+            ],
+            "question": "The Eiffel Tower was designed by Gustave Eiffel for the 1889 World's Fair held in Paris. It was built to celebrate the centennial of the French Revolution. The tower is located on the Champ de Mars, near the Seine River. Who was the primary designer of the Eiffel Tower?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "NOT GIVEN",
+            "explanation": "The text mentions that Mars has two *small* moons. It does not provide information about the size of these moons relative to all other moons in the solar system. Therefore, the statement that it has the *largest* moon is not supported or contradicted by the text; the information is simply absent.",
+            "id": "ex_867061b4-18a6-4f93-aae5-500aed939536_4",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "Mars is the fourth planet from the Sun. It has two small moons, Phobos and Deimos. The surface of Mars is covered in red dust and rocks. Does the passage state that Mars has the largest moon in the solar system?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "Brazil",
+            "explanation": "The text implies the location by stating it covers the northern part of the continent, primarily within Brazil. 'Brazil' is the specific country mentioned in the text context (standard knowledge often paired with this simplified text structure for A2 learners, ensuring the answer is in the text: 'primarily within Brazil').",
+            "id": "ex_867061b4-18a6-4f93-aae5-500aed939536_5",
+            "options": [],
+            "question": "The Amazon Rainforest is located in South America. It covers much of the northern part of the continent, primarily within {blank}. The rainforest is home to a vast diversity of plant and animal life. In which country is the majority of the Amazon Rainforest located?",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "9a72c8ca-95bd-4f74-ba1a-3da01bef8d32",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.645895"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "867061b4-18a6-4f93-aae5-500aed939536",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "reading",
+      "title": "Reading for Specific Facts: Who, What, Where, When",
+      "total_exercises": 5,
+      "unit_id": "a9892d73-0720-4f6b-afec-bf5ddcb4625f",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447769"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "B. The instructions will specify a maximum limit, usually 'NO MORE THAN TWO WORDS' or 'THREE WORDS'.",
+            "explanation": "Short Answer tasks always include a word limit instruction (e.g., 'NO MORE THAN TWO WORDS'). Exceeding this limit results in a zero score for that item, even if the content is correct.",
+            "id": "ex_001_short_answer_strategy",
+            "options": [
+              "A. You can write as many words as you like as long as the meaning is correct.",
+              "B. The instructions will specify a maximum limit, usually 'NO MORE THAN TWO WORDS' or 'THREE WORDS'.",
+              "C. You must always write exactly one word to avoid penalties.",
+              "D. You should write full sentences to ensure clarity."
+            ],
+            "question": "In IELTS Reading Short Answer Questions, what is the primary rule regarding the number of words you can write in the answer box?\n\nOptions:\nA. You can write as many words as you like as long as the meaning is correct.\nB. The instructions will specify a maximum limit, usually 'NO MORE THAN TWO WORDS' or 'THREE WORDS'.\nC. You must always write exactly one word to avoid penalties.\nD. You should write full sentences to ensure clarity.",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "FALSE",
+            "explanation": "The text implies that scanning for keywords is the efficient method, not reading every word. Reading word-for-word is time-consuming and inefficient for specific detail questions.",
+            "id": "ex_002_scanning_technique",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "When searching for answers to Short Answer Questions, candidates should read every word of the text carefully from start to finish before looking at the questions. Does the strategy guide state that this is the most efficient method for finding specific details like dates or names?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "signposts",
+            "explanation": "The word 'signposts' is used in the text to describe nouns, names, and numbers that help locate information. It is a specific term often used in reading strategy lessons.",
+            "id": "ex_003_keyword_identification",
+            "options": [],
+            "question": "Read the following advice on handling Short Answer Questions:\n\n'Before you look at the text, underline the key information in your questions. Look for nouns, names, dates, or numbers. These specific details act as {blank} that help you locate the relevant paragraph quickly without reading the entire text.'\n\nWhat word fits in the blank?",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "FALSE",
+            "explanation": "The passage states the answer will be marked wrong. There is no mention of partial marks; the rule is absolute regarding word limits.",
+            "id": "ex_004_word_limit_penalty",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "Consider this rule for Short Answer Questions: 'If the instruction says NO MORE THAN TWO WORDS, and you write three words, your answer will be marked wrong even if the facts are correct.' Does the passage state that you receive partial marks for exceeding the word limit by only one word?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "exactly verbatim",
+            "explanation": "The text emphasizes copying words 'exactly verbatim'. This is a critical skill for Short Answer questions where spelling and exact wording matter.",
+            "id": "ex_005_source_accuracy",
+            "options": [],
+            "question": "Read the following text about answer accuracy:\n\n'When you find the answer in the text, do not try to rephrase it or use synonyms. You must copy the words {blank} from the text. If the text says \"approximately 500 people\", and the question asks for the number, you should write \"approximately 500\" if the word limit allows.'\n\nWhat two words fit in the blank?",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "9a72c8ca-95bd-4f74-ba1a-3da01bef8d32",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.645952"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "dda06f39-c019-4c34-9ddc-27a10910d52a",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "reading",
+      "title": "Short Answer Questions from Everyday Texts",
+      "total_exercises": 5,
+      "unit_id": "a9892d73-0720-4f6b-afec-bf5ddcb4625f",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447867"
+      },
+      "xp_reward": 22
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "invasions",
+            "explanation": "The text explicitly states that the wall 'was built to protect the empire from invasions'. The answer is a direct lexical match.",
+            "id": "ex_001",
+            "options": [],
+            "question": "Read the passage below and complete the sentence.\n\nThe construction of the Great Wall of China began during the Qin Dynasty. It was built to protect the empire from invasions. The wall stretches over thousands of kilometers across northern China.\n\nThe Great Wall was built to protect the empire from {blank}.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "FALSE",
+            "explanation": "The passage states that 'plants' make food via photosynthesis. Stating that animals do so contradicts the specific subject mentioned in the text.",
+            "id": "ex_002",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "Photosynthesis is the process by which plants make food. They use sunlight, water, and carbon dioxide. Oxygen is released as a byproduct. Does the passage state that animals use photosynthesis to make food?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "Robusta",
+            "explanation": "The text lists 'Arabica and Robusta' as the most common types. The answer is taken verbatim from the text.",
+            "id": "ex_003",
+            "options": [],
+            "question": "Read the passage below and complete the sentence.\n\nCoffee beans are seeds found inside the fruit of the coffee plant. They are roasted to bring out their flavor. The most common types are Arabica and Robusta.\n\nThe two common types of coffee beans are Arabica and {blank}.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "FALSE",
+            "explanation": "The text specifies '20 percent', which directly contradicts the statement claiming '50 percent'. This is a clear False.",
+            "id": "ex_004",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "The Amazon Rainforest produces 20 percent of the world's oxygen. It is home to many species of animals. Deforestation is a major threat to this ecosystem. Does the passage state that the Amazon Rainforest produces 50 percent of the world's oxygen?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "plastic",
+            "explanation": "The sentence lists three materials. The missing word is 'plastic', which appears verbatim in the source text.",
+            "id": "ex_005",
+            "options": [],
+            "question": "Read the passage below and complete the sentence.\n\nRecycling helps reduce waste in landfills. It conserves natural resources like trees and water. Common recyclable materials include paper, glass, and plastic.\n\nPaper, glass, and {blank} are common recyclable materials.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "9a72c8ca-95bd-4f74-ba1a-3da01bef8d32",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.645985"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "f6adb119-9ea6-4c0f-8584-386d7a1e3dea",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "reading",
+      "title": "Sentence Completion from Simple Passages",
+      "total_exercises": 5,
+      "unit_id": "a9892d73-0720-4f6b-afec-bf5ddcb4625f",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447906"
+      },
+      "xp_reward": 22
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "FALSE",
+            "explanation": "The text states that 'Many scholars believe...' and 'some argue that...', indicating a disagreement or at least different perspectives. Therefore, the statement that 'all scholars agree' is false based on the provided text.",
+            "id": "ex_001_tfn_g_intro",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "The study of ancient languages has become increasingly popular among university students in recent years. Many scholars believe that understanding dead languages provides insight into the social structures of early civilizations. However, some argue that the resources spent on these subjects could be better allocated to modern technology research. Does the passage state that all scholars agree on the value of studying ancient languages?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "preservation",
+            "explanation": "The word 'preservation' is explicitly stated in the text as the reason for restricting access. This tests the ability to identify key vocabulary in context.",
+            "id": "ex_002_fill_blank_voc",
+            "options": [],
+            "question": "Read the sentence below and fill in the gap with the correct word from the text. The text says: 'The library restricts access to rare books to ensure their {blank}.' What is the primary reason for restricting access?",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "FALSE",
+            "explanation": "The text contrasts the archaeological evidence (volcanic eruption) with local legends (invading army). Since the legends claim a different cause, the statement that legends confirm the volcanic theory is false.",
+            "id": "ex_003_tfn_g_specific",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "Recent archaeological findings suggest that the city was abandoned due to a sudden volcanic eruption. Carbon dating of the remains indicates this event occurred approximately 2,000 years ago. Local legends, however, claim the city was destroyed by an invading army. Does the passage state that the volcanic eruption theory is confirmed by local legends?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "15",
+            "explanation": "The number '15' is explicitly mentioned in the text as the percentage of participants who completed the survey. This tests attention to detail and numerical data extraction.",
+            "id": "ex_004_fill_blank_num",
+            "options": [],
+            "question": "Read the sentence below and fill in the gap with the correct number from the text. The report states: 'Only {blank} percent of the participants completed the survey within the first week.' What is the percentage of participants?",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "NOT GIVEN",
+            "explanation": "The text mentions the requirement to work from home and the aims of the policy, but it does not mention anything about financial bonuses. Since this information is not present in the text, the answer is Not Given.",
+            "id": "ex_005_tfn_g_ng",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "The new policy requires all employees to work from home on Fridays. This initiative aims to reduce office energy consumption and improve work-life balance. The company has not yet announced any details regarding the implementation schedule for the next quarter. Does the passage state that the company will provide financial bonuses for employees who work from home?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "9a72c8ca-95bd-4f74-ba1a-3da01bef8d32",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.646016"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "ca29badd-6f66-473e-83fd-78324a75dc1d",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "reading",
+      "title": "True / False / Not Given – Shorter Text Practice",
+      "total_exercises": 5,
+      "unit_id": "a9892d73-0720-4f6b-afec-bf5ddcb4625f",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447832"
+      },
+      "xp_reward": 22
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "FALSE",
+            "explanation": "The passage explicitly mentions that the Starter Mock Test is designed for Band 4-5 candidates and typically features simplified text structures, often implying a single or fewer complex passages compared to the full academic test. The statement contradicts the standard format description provided in the lesson introduction.",
+            "id": "ex_768e0bee-fb87-4ae9-8635-0cb42d0baeb3_1",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "The text states that the first section of the Reading Starter Mock Test contains three passages. Does the passage state that the first section of the Reading Starter Mock Test contains three passages?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "To provide a low-pressure introduction to test format and basic strategies",
+            "explanation": "The text explicitly states that the test is for A2 level candidates to become familiar with the format and focuses on basic strategies like skimming and scanning, rather than advanced skills or other test sections.",
+            "id": "ex_768e0bee-fb87-4ae9-8635-0cb42d0baeb3_2",
+            "options": [
+              "To assess advanced academic research skills",
+              "To provide a low-pressure introduction to test format and basic strategies",
+              "To practice writing essays under time pressure",
+              "To evaluate listening comprehension in a quiet environment"
+            ],
+            "question": "What is the primary purpose of the 'Reading Starter Mock Test' described in the lesson materials? The test is designed to help candidates at an A2 level become familiar with the format of the IELTS exam without the pressure of high-level academic vocabulary. It focuses on basic comprehension strategies such as skimming for general ideas and scanning for specific details. Which of the following best describes the main goal of this specific test?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "Band 4–5",
+            "explanation": "The text specifies that the course and the associated mock test are targeted at 'IELTS Starter: Band 4–5'. This phrase fits the grammatical context and accurately reflects the target proficiency level mentioned.",
+            "id": "ex_768e0bee-fb87-4ae9-8635-0cb42d0baeb3_3",
+            "options": [],
+            "question": "Complete the summary below. Choose NO MORE THAN THREE WORDS from the passage for each answer. The Reading Starter Mock Test is suitable for candidates who are at a {blank} level. It helps them understand the structure of the exam and practice finding answers in simple texts.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "FALSE",
+            "explanation": "The text emphasizes 'skimming for general ideas' and 'scanning for specific details'. Reading every single word carefully is known as 'close reading', which is generally discouraged in IELTS reading due to time constraints, even in starter tests. Therefore, the statement is false based on the strategies outlined.",
+            "id": "ex_768e0bee-fb87-4ae9-8635-0cb42d0baeb3_4",
+            "options": [
+              "TRUE",
+              "FALSE",
+              "NOT GIVEN"
+            ],
+            "question": "The lesson notes mention that candidates should read every single word carefully in the Reading Starter Mock Test to ensure they do not miss any details. Does the passage state that candidates should read every single word carefully in the Reading Starter Mock Test?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          },
+          {
+            "correct_answer": "Guess the answer and move to the next question",
+            "explanation": "The text explicitly advises candidates not to spend more than two minutes on a single question and to 'guess and move on' if the answer is not found. This aligns with the strategy of managing time effectively in the exam.",
+            "id": "ex_768e0bee-fb87-4ae9-8635-0cb42d0baeb3_5",
+            "options": [
+              "Leave it blank and return to it at the end",
+              "Guess the answer and move to the next question",
+              "Read the entire passage again from the start",
+              "Ask the examiner for clarification"
+            ],
+            "question": "According to the instructions for the Reading Starter Mock Test, what should a candidate do if they cannot find the answer to a question? The instructions advise that time management is crucial. Candidates are told not to spend more than two minutes on any single question. If the answer is not immediately found, they should guess and move on to the next one. What is the recommended action for a difficult question?",
+            "type": "multiple_choice",
+            "ui_type": "reading_comprehension"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "9a72c8ca-95bd-4f74-ba1a-3da01bef8d32",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.646046"
+      },
+      "description": "A full IELTS mock is 40 listening and 40 reading questions and lives in Practice Tests, not in a lesson. This is a short practice set.",
+      "estimated_minutes": 25,
+      "id": "768e0bee-fb87-4ae9-8635-0cb42d0baeb3",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "reading",
+      "title": "Reading Starter Practice Set (Band 4–5)",
+      "total_exercises": 5,
+      "unit_id": "a9892d73-0720-4f6b-afec-bf5ddcb4625f",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:16:23.160600"
+      },
+      "xp_reward": 40
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Apples",
+            "explanation": "Apples show the tallest bar for 2022, indicating the highest sales.",
+            "id": "ex_cbcb4ed2-c9fa-4031-bf86-1f28f9506434_1",
+            "options": [
+              "Apples",
+              "Bananas",
+              "Oranges",
+              "Grapes"
+            ],
+            "question": "According to the bar chart, which fruit had the highest sales in 2022?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "In the chart, Oranges have a higher bar than Bananas for 2021.",
+            "id": "ex_cbcb4ed2-c9fa-4031-bf86-1f28f9506434_2",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "The bar for Bananas in 2021 is taller than the bar for Oranges in 2021.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "increased",
+            "explanation": "The bar for Grapes rises from 2019 to 2020, showing an increase.",
+            "id": "ex_cbcb4ed2-c9fa-4031-bf86-1f28f9506434_3",
+            "options": [],
+            "question": "In 2020, the sales of Grapes {blank} compared to 2019.",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "Apples:Táo, Bananas:Chuối",
+            "explanation": "Táo is the Vietnamese word for Apples, Chuối for Bananas.",
+            "id": "ex_cbcb4ed2-c9fa-4031-bf86-1f28f9506434_4",
+            "options": [
+              "Apples",
+              "Bananas",
+              "Táo",
+              "Chuối"
+            ],
+            "question": "Match each fruit with its Vietnamese translation.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "Overall, fruit sales increased from 2019 to 2022. Apples were the most popular fruit each year.",
+            "explanation": "The answer mentions the upward trend and highlights the leading fruit.",
+            "id": "ex_cbcb4ed2-c9fa-4031-bf86-1f28f9506434_5",
+            "options": [],
+            "question": "Write two sentences describing the overall trend shown in the bar chart.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "9a72c8ca-95bd-4f74-ba1a-3da01bef8d32",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.699886"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "cbcb4ed2-c9fa-4031-bf86-1f28f9506434",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Task 1: Reading and Understanding Bar Charts",
+      "total_exercises": 5,
+      "unit_id": "05324917-8329-4664-b353-91793373b7e7",
+      "updated_at": {
+        "__dt__": "2026-08-19T07:22:34.836998"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "No, it includes specific numbers.",
+            "explanation": "An overview sentence should describe general trends or key features without specific data (e.g., 'sales reached 50%'). Specific numbers belong in the body paragraphs.",
+            "id": "ex_001_overview_identification",
+            "options": [
+              "Yes, it is a good overview.",
+              "No, it includes specific numbers.",
+              "No, it describes only one part of the chart."
+            ],
+            "question": "Read the following overview sentence. Does it correctly summarize the main trend without giving specific data points?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Overall, car sales rose while bicycle sales fell.",
+            "explanation": "This sentence captures the two main trends (increase and decrease) using a general verb (rose/fell) and the connector 'while', which is appropriate for an overview.",
+            "id": "ex_002_overview_writing",
+            "options": [],
+            "question": "Write a one-sentence overview for a bar chart showing that car sales increased while bicycle sales decreased over 10 years.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "has",
+            "explanation": "The subject 'the number' is singular, so it requires the singular auxiliary verb 'has' to form the present perfect tense correctly.",
+            "id": "ex_003_grammar_overview",
+            "options": [],
+            "question": "Correct the error in this overview sentence: 'Overall, the most significant feature is that the number of students {blank} increased significantly.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Overall, it is clear that...",
+            "explanation": "'Overall' is the standard signpost for an overview. 'In conclusion' is for Task 2 essays. 'To sum up' is less formal. The overview should state a general trend, not describe a specific graph part.",
+            "id": "ex_004_overview_vocabulary",
+            "options": [
+              "In conclusion, I think...",
+              "Overall, it is clear that...",
+              "To sum up, the first graph shows..."
+            ],
+            "question": "Which phrase is best for starting an overview sentence in IELTS Task 1?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "An overview should highlight general trends or major features. Including specific high/low figures makes it a detail sentence, which belongs in the body paragraphs, not the overview.",
+            "id": "ex_005_overview_false_detail",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "True or False: An overview sentence must include the highest and lowest figures from the chart to be accurate.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "9a72c8ca-95bd-4f74-ba1a-3da01bef8d32",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.699941"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "0fd73c21-0f26-4d14-a72d-bc1cc2132406",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "Task 1: Writing an Overview Sentence",
+      "total_exercises": 5,
+      "unit_id": "05324917-8329-4664-b353-91793373b7e7",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.377481"
+      },
+      "xp_reward": 22
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "but",
+            "explanation": "The sentence describes a general trend followed by a specific exception or contrast (the peak). The conjunction 'but' is required to link these contrasting ideas. 'And' would imply simple addition, while 'so' implies result.",
+            "id": "ex_001",
+            "options": [],
+            "question": "Correct the error in this sentence describing a trend: 'The number of visitors increased steadily between 2000 and 2010, {blank} peaked at 5 million in 2008.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "The price rose sharply last year.",
+            "explanation": "When referring to a finished time period ('last year'), the past simple tense ('rose') must be used. 'Has risen' is present perfect, which connects past to present. 'Is rising' is present continuous. 'Was rise' is grammatically incorrect.",
+            "id": "ex_002",
+            "options": [
+              "The price has risen sharply last year.",
+              "The price rose sharply last year.",
+              "The price is rising sharply last year.",
+              "The price was rise sharply last year."
+            ],
+            "question": "Which sentence correctly uses the past simple tense to describe a completed change in data?",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Sales of electric cars increased from 10% in 2015 to 25% in 2020.",
+            "explanation": "This is a basic overview sentence describing a trend. It correctly uses the past simple verb 'increased' and the prepositions 'from' and 'to' to show the starting and ending points of the change.",
+            "id": "ex_003",
+            "options": [],
+            "question": "Write one sentence to describe this trend: 'Sales of electric cars went from 10% in 2015 to 25% in 2020.' Use the word 'increase'.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "increase",
+            "explanation": "After the article 'a' and the adjective 'significant', we need a noun. 'Increase' functions as a noun here. 'Increasing' is a participle/adjective, 'increased' is a past tense verb or adjective, and 'increases' is a plural noun or verb.",
+            "id": "ex_004",
+            "options": [
+              "increase",
+              "increasing",
+              "increased",
+              "increases"
+            ],
+            "question": "Choose the correct preposition to complete the overview: 'Overall, there was a significant {blank} in the number of students.',",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "In 2010, men spent 2 hours on housework, whereas women spent 5 hours.",
+            "explanation": "The conjunction 'whereas' is used to contrast two different figures or groups. This sentence correctly juxtaposes the time spent by men and women, highlighting the difference.",
+            "id": "ex_005",
+            "options": [],
+            "question": "Write a sentence comparing two figures using 'whereas': 'In 2010, men spent 2 hours on housework. Women spent 5 hours.'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "9a72c8ca-95bd-4f74-ba1a-3da01bef8d32",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.699975"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "54cae9ef-52a2-433f-aa06-6c6a7eabd172",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "Task 1: Describing Simple Trends with Basic Vocabulary",
+      "total_exercises": 5,
+      "unit_id": "05324917-8329-4664-b353-91793373b7e7",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.377509"
+      },
+      "xp_reward": 22
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "Topic: Private cars in city centres; Instruction: Give your opinion on banning them.",
+            "explanation": "The question explicitly mentions 'private cars from city centres' as the subject and asks 'To what extent do you agree or disagree?', which requires stating a clear opinion.",
+            "id": "ex_e150bfa0-1ff9-462e-a6b8-0ea329c32735_1",
+            "options": [
+              "Topic: Public transport; Instruction: List the advantages of buses.",
+              "Topic: Private cars in city centres; Instruction: Give your opinion on banning them.",
+              "Topic: Environmental pollution; Instruction: Describe the causes of smog.",
+              "Topic: Urban planning; Instruction: Compare cities with and without cars."
+            ],
+            "question": "Task 2 Question: 'Some people think that governments should ban all private cars from city centres. To what extent do you agree or disagree?' Identify the main topic and the specific instruction for your essay.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "increasing",
+            "explanation": "The original phrase 'increasing number' was likely misinterpreted as 'the number is increasing'. However, to paraphrase 'an increasing number of people', we often say 'The number of people... is increasing'. The error here is using a noun phrase structure incorrectly or missing the verb form. A better correction for a common A2 error 'The number of people who own cars is grow rapidly' would be 'growing'. Let's adjust the question to fit the blank constraint better. Correct sentence: 'The number of private car owners is {blank} significantly.' Error in student writing: 'The number of private car owners is rise significantly.' Correction: 'rising'.",
+            "id": "ex_e150bfa0-1ff9-462e-a6b8-0ea329c32735_2",
+            "options": [],
+            "question": "Correct the error in this introduction sentence. The error is a common mistake when paraphrasing 'increasing number'. 'The number of people who own cars is {blank} rapidly.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Banning cars will reduce traffic congestion and air pollution.",
+            "explanation": "This option directly supports the argument that banning cars is positive by listing two key benefits: less traffic and cleaner air. The other options either support keeping cars or are irrelevant to the environmental/traffic argument.",
+            "id": "ex_e150bfa0-1ff9-462e-a6b8-0ea329c32735_3",
+            "options": [
+              "Cars are expensive for the government to tax.",
+              "Banning cars will reduce traffic congestion and air pollution.",
+              "People enjoy the freedom of driving their own vehicles.",
+              "Public transport is often late and unreliable."
+            ],
+            "question": "Brainstorming: You are writing an essay arguing that banning cars is a good idea. Which of the following is a valid supporting argument for this position?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Advantage/Disadvantage Essay: Discuss the pros and cons.",
+            "explanation": "The question explicitly asks for 'advantages and disadvantages', which corresponds to the Advantage/Disadvantage essay structure. You must discuss both sides, but you are not strictly required to give a personal opinion unless asked 'To what extent do you agree...'",
+            "id": "ex_e150bfa0-1ff9-462e-a6b8-0ea329c32735_4",
+            "options": [
+              "Discussion Essay: Discuss both views and give your opinion.",
+              "Advantage/Disadvantage Essay: Discuss the pros and cons.",
+              "Opinion Essay: State your opinion and give reasons.",
+              "Problem/Solution Essay: Identify problems and suggest solutions."
+            ],
+            "question": "Match the question type to the correct essay structure. Question: 'What are the advantages and disadvantages of working from home?'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "better",
+            "explanation": "The sentence compares city and country life. The word 'more' is already used with 'convenient'. For 'access', we often use 'better' or 'easier' in comparisons. However, looking at the grammar error 'they have access', it is grammatically correct but weak. Let's look for a clearer error. 'Many people believe that living in the city is more convenient than living in the country, because they have {blank} access to shops.' If the error is a missing article, it might be 'the access'. But 'access' is usually uncountable. Let's use a clearer error. 'The cost of living in the city is higher than {blank} in the country.' Error: missing 'that' or 'the one'. Correction: 'that'. This fits the 3-word limit.",
+            "id": "ex_e150bfa0-1ff9-462e-a6b8-0ea329c32735_5",
+            "options": [],
+            "question": "Identify and correct the grammatical error in this topic sentence. 'Many people believe that living in the city is more convenient than living in the country, because they have {blank} access to shops.' (The error is a missing article).",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "9a72c8ca-95bd-4f74-ba1a-3da01bef8d32",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.700006"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "e150bfa0-1ff9-462e-a6b8-0ea329c32735",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "Task 2 Intro: Understanding the Question & Brainstorming",
+      "total_exercises": 5,
+      "unit_id": "05324917-8329-4664-b353-91793373b7e7",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447878"
+      },
+      "xp_reward": 22
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "It is argued by some that high school students should be required to do voluntary work for their community without pay.",
+            "explanation": "This answer successfully paraphrases the original prompt by changing the subject ('Some people believe' -> 'It is argued by some') and using synonyms ('mandatory' -> 'required', 'unpaid' -> 'without pay'), which is a key skill for Task 2 introductions.",
+            "id": "ex_a1b2c3d4-e5f6-7890-abcd-ef1234567890_1",
+            "options": [
+              "It is argued by some that high school students should be required to do voluntary work for their community without pay.",
+              "High school programs are too busy to include unpaid community service.",
+              "Many people think that community service is a waste of time for high school students.",
+              "The government should pay high school students for doing community service."
+            ],
+            "question": "Write a sentence that paraphrases the following Task 2 question: 'Some people believe that unpaid community service should be a mandatory part of high school programs.'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "In my opinion",
+            "explanation": "Using both 'In my opinion' and 'I think' is grammatically redundant. For a Band 6+ score, you must avoid repetition. You should use either 'In my opinion, remote work...' or 'I think remote work...' but not both.",
+            "id": "ex_b2c3d4e5-f6a7-8901-bcde-f12345678901_2",
+            "options": [],
+            "question": "Correct the error in this introduction sentence: 'In my opinion, I think that remote work is beneficial.' The error is redundancy. Rewrite it using {blank} instead of the redundant phrase.",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "In conclusion, although traditional shops offer tactile experiences, online shopping provides superior convenience and variety, making it the preferred choice for modern consumers.",
+            "explanation": "A strong conclusion summarizes the main argument (convenience and variety) and restates the position clearly using formal language. Options B and C are too informal, and Option D is too vague and does not summarize the specific argument.",
+            "id": "ex_c3d4e5f6-a7b8-9012-cdef-123456789012_3",
+            "options": [
+              "In conclusion, although traditional shops offer tactile experiences, online shopping provides superior convenience and variety, making it the preferred choice for modern consumers.",
+              "So, online shopping is good because it is easy and you can buy many things.",
+              "To sum up, I hate traditional shops because they are crowded and the staff is rude.",
+              "In conclusion, this essay has discussed the two types of shopping and I have given my opinion."
+            ],
+            "question": "Choose the best concluding sentence for an essay arguing that 'online shopping is better than traditional shopping.'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "In conclusion",
+            "explanation": "Standard academic phrases for concluding an essay include 'In conclusion,' 'To conclude,' or 'In summary.' Starting with 'So' or 'And' is too informal for IELTS Task 2.",
+            "id": "ex_d4e5f6a7-b8c9-0123-defa-234567890123_4",
+            "options": [],
+            "question": "Identify the correct linking word to start a conclusion paragraph. '_________, it is clear that technology has changed education.'",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "I firmly believe that governments should implement a total ban on plastic bags to reduce environmental pollution.",
+            "explanation": "A thesis statement must clearly state the writer's position. Option A is just an outline, not an opinion. Option C is a balanced view but lacks a clear stance. Option D describes the debate but does not give the writer's opinion. Option B clearly states the position and the reason.",
+            "id": "ex_e5f6a7b8-c9d0-1234-efab-345678901234_5",
+            "options": [
+              "This essay will discuss both views and give my opinion.",
+              "I firmly believe that governments should implement a total ban on plastic bags to reduce environmental pollution.",
+              "Plastic bags are bad for the environment, but they are convenient.",
+              "Many people think plastic bags are a problem, and others disagree."
+            ],
+            "question": "Write a thesis statement for the following prompt: 'Should governments ban plastic bags?' Your answer must state your opinion clearly.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "9a72c8ca-95bd-4f74-ba1a-3da01bef8d32",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.700037"
+      },
+      "description": null,
+      "estimated_minutes": 22,
+      "id": "53c36a42-dc0d-43c0-be42-f54a2f4a100f",
+      "lesson_type": "lesson",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "Task 2: Writing a Basic Introduction & Conclusion",
+      "total_exercises": 5,
+      "unit_id": "05324917-8329-4664-b353-91793373b7e7",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.377508"
+      },
+      "xp_reward": 22
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "after which it decreased",
+            "explanation": "The original sentence contains a comma splice (joining two independent clauses with only a comma). In IELTS Writing Task 1, using a relative clause like 'after which' or a conjunction like 'and then' demonstrates better grammatical range and accuracy required for Band 6+.",
+            "id": "ex_836c358f-05f5-48a4-9371-520db6be1075_1",
+            "options": [],
+            "question": "Correct the error in this Task 1 sentence describing a line graph: 'The number of tourists increased steadily from 2000 to 2010, after that it decreased.' Replace the error with a correct relative clause or conjunction.",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Overall, while car sales experienced an upward trend, bicycle sales saw a significant decline.",
+            "explanation": "An overview must summarize the main trends without specific data points. Option 2 uses 'Overall' and contrasts the two main trends, which is essential for Task Achievement in Writing Task 1. Option 1 is too general, Option 3 is a specific detail, and Option 4 gives an opinion/reason not found in the chart.",
+            "id": "ex_836c358f-05f5-48a4-9371-520db6be1075_2",
+            "options": [
+              "The chart shows the number of cars and bicycles sold.",
+              "Overall, while car sales experienced an upward trend, bicycle sales saw a significant decline.",
+              "In 2010, more cars were sold than bicycles.",
+              "Cars are more popular than bicycles because they are faster."
+            ],
+            "question": "Which of the following is the best Overview sentence for a Task 1 chart showing that car sales rose while bicycle sales fell over 10 years?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "but it can be dangerous",
+            "explanation": "In English grammar, 'however' is an adverb, not a conjunction. You cannot join two independent clauses with a comma and 'however' (comma splice). You must use a conjunction like 'but' or split into two sentences with 'However;'.",
+            "id": "ex_836c358f-05f5-48a4-9371-520db6be1075_3",
+            "options": [],
+            "question": "Correct the error in this Task 2 essay sentence: 'Many people think that technology is good for children, however, it can be dangerous.' The error is at 'however'.",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          },
+          {
+            "correct_answer": "Dear Mr. Smith,",
+            "explanation": "In IELTS General Training Task 1, if the recipient is a neighbor you know slightly, a semi-formal tone is best. 'Dear Mr. Smith' is polite and appropriate. 'Dear Neighbor' is too impersonal, 'Hey you' is too informal/rude, and 'To whom it may concern' is too formal for someone you know.",
+            "id": "ex_836c358f-05f5-48a4-9371-520db6be1075_4",
+            "options": [
+              "Dear Neighbor,",
+              "Hey you,",
+              "To whom it may concern:",
+              "Dear Mr. Smith,"
+            ],
+            "question": "You are writing a General Training Task 1 letter to a neighbor about noise. Which opening is appropriate for a semi-formal letter?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "than those of oranges",
+            "explanation": "When comparing two items, you must compare equivalent things. You are comparing 'sales of apples' with 'sales of oranges', not 'sales' with 'oranges'. Using 'those of' replaces 'the sales of' to make the comparison logical and grammatically correct.",
+            "id": "ex_836c358f-05f5-48a4-9371-520db6be1075_5",
+            "options": [],
+            "question": "Correct the error in this Task 1 sentence comparing two bars: 'The sales of apples were higher than oranges.' The error is 'than oranges'.",
+            "type": "fill_blank",
+            "ui_type": "grammar_correction"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "9a72c8ca-95bd-4f74-ba1a-3da01bef8d32",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.700078"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "836c358f-05f5-48a4-9371-520db6be1075",
+      "lesson_type": "test",
+      "order_index": 6,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "writing",
+      "title": "Writing Starter Practice Test",
+      "total_exercises": 5,
+      "unit_id": "05324917-8329-4664-b353-91793373b7e7",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447761"
+      },
+      "xp_reward": 40
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "I work for a local bank as a junior accountant.",
+            "explanation": "This answer provides specific details (job title, employer type) which helps achieve a higher band score by demonstrating vocabulary range and grammatical accuracy.",
+            "id": "ex_c09b1923-85cc-45b8-8319-ecf221aefe1c_1",
+            "options": [
+              "I am work in bank.",
+              "I work for a local bank as a junior accountant.",
+              "Yes, I have job.",
+              "My father is engineer."
+            ],
+            "question": "Which of the following is a natural, fluent response to the Part 1 question: 'Do you work or are you a student?'",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "usually",
+            "explanation": "The word 'usually' is often reduced to /'ju:zli/ in natural speech. Practicing this weak form helps with fluency and rhythm.",
+            "id": "ex_c09b1923-85cc-45b8-8319-ecf221aefe1c_2",
+            "options": [],
+            "question": "Complete the phrase with the correct linking sound. 'I usually study {blank} in the evening.' (Target: strong-weak form of 'usually')",
+            "type": "translate",
+            "ui_type": "pronunciation_practice"
+          },
+          {
+            "correct_answer": "I live with my parents and younger brother.",
+            "explanation": "This directly answers the examiner's question with specific details about family members, which is required for a good score in Part 1.",
+            "id": "ex_c09b1923-85cc-45b8-8319-ecf221aefe1c_3",
+            "options": [
+              "I live with my parents and younger brother.",
+              "My house is big.",
+              "I like my home.",
+              "My parents are doctors."
+            ],
+            "question": "Select the best answer to the Part 1 question: 'Who do you live with?'",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "My sister; watch movies; she is funny",
+            "explanation": "This note-form plan covers all parts of the cue card. It provides key vocabulary ('sister', 'movies', 'funny') to trigger a fluent 2-minute speech.",
+            "id": "ex_c09b1923-85cc-45b8-8319-ecf221aefe1c_4",
+            "options": [],
+            "question": "Plan your answer to this Part 2 cue card: 'Describe a family member you spend a lot of time with.' Write 3-4 bullet points covering: Who they are, how you spend time together, and why you enjoy it.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "prefer",
+            "explanation": "The word 'prefer' has stress on the second syllable (/prɪ'fɜː/). Mastering this stress pattern makes your speech sound more natural and easier to understand.",
+            "id": "ex_c09b1923-85cc-45b8-8319-ecf221aefe1c_5",
+            "options": [],
+            "question": "Practice this common Part 1 phrase. 'I {blank} living in the city.' (Target: stress pattern of 'prefer')",
+            "type": "translate",
+            "ui_type": "pronunciation_practice"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "9a72c8ca-95bd-4f74-ba1a-3da01bef8d32",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.750596"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "c09b1923-85cc-45b8-8319-ecf221aefe1c",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "speaking",
+      "title": "Common Part 1 Topics: Work, Study, Home & Family",
+      "total_exercises": 5,
+      "unit_id": "717ae22b-b975-4f17-9b3c-edc97fe5e626",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447823"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "I enjoy cooking because it helps me relax after a busy day.",
+            "explanation": "This answer provides a clear reason ('because...') extending the initial statement, which is essential for achieving a Band 6+ in fluency and coherence.",
+            "id": "ex_001",
+            "options": [
+              "I enjoy cooking. It is fun.",
+              "I enjoy cooking because it helps me relax after a busy day.",
+              "Cooking is good for health.",
+              "I like food very much."
+            ],
+            "question": "I enjoy cooking because it helps me relax after a busy day.",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "for_example",
+            "explanation": "In natural speech, 'for' is often reduced to /fə/ and linked directly to 'example', creating a smooth flow rather than two distinct, stressed words.",
+            "id": "ex_002",
+            "options": [],
+            "question": "Practice linking the words in this phrase: 'for_example,' focusing on the weak form of 'for'.",
+            "type": "translate",
+            "ui_type": "pronunciation_practice"
+          },
+          {
+            "correct_answer": "I don't like shopping online because I prefer to see the products before I buy them.",
+            "explanation": "This response extends the negative opinion with a specific personal reason, demonstrating the ability to develop an idea beyond a simple 'yes' or 'no'.",
+            "id": "ex_003",
+            "options": [
+              "I don't like shopping online. It is slow.",
+              "I don't like shopping online because I prefer to see the products before I buy them.",
+              "Shopping online is expensive.",
+              "I like shopping in stores."
+            ],
+            "question": "I don't like shopping online because I prefer to see the products before I buy them.",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "City, because more jobs",
+            "explanation": "The plan must include a direct preference and a connecting word introducing a reason. This structure ensures the candidate does not give a one-word answer.",
+            "id": "ex_004",
+            "options": [],
+            "question": "Plan a longer answer to: 'Do you prefer living in a city or the countryside?' Include one reason using 'because' or 'since'.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "I usually read books in the evening, for instance, before I go to sleep.",
+            "explanation": "Using 'for instance' allows the speaker to provide a specific example that supports the general statement, adding detail and length to the answer.",
+            "id": "ex_005",
+            "options": [
+              "I read books. Books are good.",
+              "I usually read books in the evening, for instance, before I go to sleep.",
+              "Reading is interesting.",
+              "I like sleeping."
+            ],
+            "question": "I usually read books in the evening, for instance, before I go to sleep.",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "9a72c8ca-95bd-4f74-ba1a-3da01bef8d32",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.750653"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "94364df1-622f-4dd4-9268-18d84223c874",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "speaking",
+      "title": "Giving Longer Answers: Adding a Reason or Example",
+      "total_exercises": 5,
+      "unit_id": "717ae22b-b975-4f17-9b3c-edc97fe5e626",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447778"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "B. Preference: Home cooking. Reasons: Cost-effective, healthier ingredients. Contrast: Eating out is occasional, for social occasions only.",
+            "explanation": "Option B provides a structured plan with a clear opinion, supporting reasons, and a contrasting point, which allows for extended speech and complex sentence structures typical of Band 6-7. Option A is too fragmented, and Option C lacks the detail and complexity required for higher bands.",
+            "id": "ex_70c2d0f1-314b-4f7d-a665-9590f7459589_1",
+            "options": [
+              "A. Like home / cheap / healthy. Dislike restaurant / expensive / unhealthy.",
+              "B. Preference: Home cooking. Reasons: Cost-effective, healthier ingredients. Contrast: Eating out is occasional, for social occasions only.",
+              "C. I cook. It is good. I don't like restaurants. They are too far."
+            ],
+            "question": "Part 1: Food. The examiner asks: 'Do you prefer cooking at home or eating out?' Plan your answer using note form. Which of the following sets of notes best represents a Band 6-7 structure for this personal question?",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "take the bus",
+            "explanation": "The phrase 'take the bus' is a natural collocation for transport. The context 'avoids traffic jams' suggests public transport or cycling, but 'take the bus' fits the grammatical structure and common IELTS vocabulary for transport mode. This is a standard Band 7 response pattern: direct answer + reason.",
+            "id": "ex_70c2d0f1-314b-4f7d-a665-9590f7459589_2",
+            "options": [],
+            "question": "Part 1: Transport. Complete the model answer for the question: 'How do you usually travel to work or school?' Model: 'I usually {blank} to work because it is the most convenient option and avoids traffic jams.'",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "B. fresh ingredients",
+            "explanation": "The phrase 'fresh ingredients' requires clear articulation of the initial fricative /f/ and the nasal /ŋ/ in 'ingredients'. Stress should fall on the second syllable of 'ingre-DI-ents'. Linking 'fresh' to 'ingredients' involves a smooth transition from the /ʃ/ sound to the /ɪ/ vowel. This is a key area for fluency and pronunciation scoring.",
+            "id": "ex_70c2d0f1-314b-4f7d-a665-9590f7459589_3",
+            "options": [
+              "A. prepared with",
+              "B. fresh ingredients",
+              "C. cooked slowly"
+            ],
+            "question": "Part 2: Food. You are describing a traditional dish. Which phrase should you focus on for correct stress and linking in the sentence: 'It is prepared with fresh ingredients and cooked slowly over low heat.'?",
+            "type": "translate",
+            "ui_type": "pronunciation_practice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "Part 3 requires abstract discussion. A Band 7 candidate must analyze trends, causes, and effects. Merely listing examples (apps/games) without discussing social, psychological, or lifestyle implications (e.g., social isolation, connectivity, sedentary behavior) would result in a lower score for Task Response and Coherence & Cohesion. The answer must be analytical, not just descriptive.",
+            "id": "ex_70c2d0f1-314b-4f7d-a665-9590f7459589_4",
+            "options": [],
+            "question": "Part 3: Free Time. The examiner asks: 'How has technology changed the way people spend their free time?' Is the following statement true or false? 'A Band 7 candidate should only list apps and games without explaining the broader social impact.'",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "9a72c8ca-95bd-4f74-ba1a-3da01bef8d32",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.750684"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "70c2d0f1-314b-4f7d-a665-9590f7459589",
+      "lesson_type": "lesson",
+      "order_index": 3,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "speaking",
+      "title": "Food, Transport & Free Time – Fluency Practice",
+      "total_exercises": 4,
+      "unit_id": "717ae22b-b975-4f17-9b3c-edc97fe5e626",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.442800"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "actually I prefer swimming",
+            "explanation": "The word 'actually' signals a shift or correction from the initial statement. The speaker replaces 'gym' with 'swimming'.",
+            "id": "ex_001_self_correction_intro",
+            "options": [
+              "I usually go to the gym",
+              "actually I prefer swimming",
+              "I prefer swimming",
+              "go to the gym"
+            ],
+            "question": "Listen to the model answer and repeat it. The speaker corrects themselves. Which part of the sentence is the self-correction? Model: 'I usually go to the gym, actually I prefer swimming.'",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "Well",
+            "explanation": "'Well' is a standard discourse marker used to pause and organize thoughts before giving an answer, especially when the answer is not a simple 'yes' or 'no'.",
+            "id": "ex_002_filler_well_usage",
+            "options": [],
+            "question": "Complete the note plan for Part 1. You need a filler word to buy time before answering a difficult question. Question: 'Do you like reading?' Plan: {blank} ... I don't read much, but I enjoy news apps.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "Well, actually I think",
+            "explanation": "Focus on the smooth transition between 'Well' and 'actually'. The 'l' in Well links to the 'a' in actually. This sounds more fluent than choppy speech.",
+            "id": "ex_003_pronunciation_linking",
+            "options": [],
+            "question": "Practice the linking in this phrase. Repeat: 'Well, actually I think...'",
+            "type": "translate",
+            "ui_type": "pronunciation_practice"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "False. 'Um' is a filler word used to pause. The phrase 'I mean' is the signal for self-correction, changing London to Manchester.",
+            "id": "ex_004_self_correction_identify",
+            "options": [
+              "True",
+              "False"
+            ],
+            "question": "True or False: In the sentence 'I live in London, um, I mean I live in Manchester', the speaker is using 'um' to correct the city name.",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "Well, I missed a train, actually I was late for work",
+            "explanation": "This structure demonstrates the ability to use 'Well' to start and 'actually' to refine the story, which helps maintain fluency and coherence in Part 2.",
+            "id": "ex_005_part2_planning",
+            "options": [],
+            "question": "Part 2 Cue Card: Describe a mistake you made. Plan your answer using one filler word to start and one self-correction phrase. Format: [Filler] [Initial Idea] [Correction Phrase] [Corrected Idea].",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "9a72c8ca-95bd-4f74-ba1a-3da01bef8d32",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.750832"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "58fdda86-300e-47cb-bb98-6269d6c668fe",
+      "lesson_type": "lesson",
+      "order_index": 4,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "speaking",
+      "title": "Self-Correction & Filler Words: Um, Well, Actually",
+      "total_exercises": 5,
+      "unit_id": "717ae22b-b975-4f17-9b3c-edc97fe5e626",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.377512"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "I really enjoy living there because it is peaceful.",
+            "explanation": "Examiners look for a direct answer followed by a reason. 'Yes' is too short. 'It is nice' is vague. The third option provides a clear opinion and a simple reason, which is ideal for Band 5. The last option is too strong and unnatural.",
+            "id": "ex_1a2b3c4d-5e6f-7g8h-9i0j-1k2l3m4n5o6p",
+            "options": [
+              "Yes.",
+              "It is nice.",
+              "I really enjoy living there because it is peaceful.",
+              "My hometown is the best place in the world without any doubt."
+            ],
+            "question": "Part 1: Do you like your hometown? Plan your answer by selecting the best opening structure for a Band 5 response.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "that",
+            "explanation": "The relative pronoun 'that' connects the clause correctly. This sentence uses natural linking and clear structure, suitable for repetition practice to improve fluency in Part 2.",
+            "id": "ex_2b3c4d5e-6f7g-8h9i-0j1k-2l3m4n5o6p7q",
+            "options": [],
+            "question": "Part 2: Describe a book you read recently. Complete this sentence to practice a natural Band 7 response: 'I recently finished a novel {blank} was set in the 19th century.'",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "It’s very educational.",
+            "explanation": "This phrase allows practice of the /z/ sound linking 'It’s' to 'very' and the stress pattern of 'educational'. Linking and weak forms are key for higher speaking bands.",
+            "id": "ex_3c4d5e6f-7g8h-9i0j-1k2l-3m4n5o6p7q8r",
+            "options": [
+              "School is important.",
+              "The children are studying.",
+              "It’s very educational.",
+              "Go to school."
+            ],
+            "question": "Part 3: Discuss education. Which phrase contains a common linking sound that you should practice drilling for smooth speech?",
+            "type": "translate",
+            "ui_type": "pronunciation_practice"
+          },
+          {
+            "correct_answer": "Who the person is -> My teacher, Mrs. Smith",
+            "explanation": "For Part 2, you need specific details. 'My teacher, Mrs. Smith' is a concrete, personal detail that is easy to talk about for two minutes. 'A famous actor' is less personal and harder to describe in detail unless you know them well.",
+            "id": "ex_4d5e6f7g-8h9i-0j1k-2l3m-4n5o6p7q8r9s",
+            "options": [
+              "Who the person is -> My teacher, Mrs. Smith",
+              "Who the person is -> A famous actor",
+              "How you felt -> Sad",
+              "How you felt -> Confused"
+            ],
+            "question": "Part 2 Cue Card: Describe a person who helped you. Match the cue card point to the best note for your plan.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
+          },
+          {
+            "correct_answer": "False",
+            "explanation": "This is false. In Part 3, you should give developed answers (2-3 sentences), not long speeches. The examiner will stop you if you talk too long. Natural interaction is better than a monologue.",
+            "id": "ex_5e6f7g8h-9i0j-1k2l-3m4n-5o6p7q8r9s0t",
+            "options": [],
+            "question": "Part 3: Abstract Discussion. Is this statement a good strategy for Band 5? 'Always give a 5-minute speech to show you can talk a lot.'",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "9a72c8ca-95bd-4f74-ba1a-3da01bef8d32",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.750893"
+      },
+      "description": null,
+      "estimated_minutes": 20,
+      "id": "8a8a7a6f-53f3-4eb8-829f-5f87e12467c2",
+      "lesson_type": "test",
+      "order_index": 5,
+      "outcome": null,
+      "pass_threshold": 80,
+      "prerequisites": [],
+      "skill": "speaking",
+      "title": "Speaking Starter Mock (Band 4–5 Simulation)",
+      "total_exercises": 5,
+      "unit_id": "717ae22b-b975-4f17-9b3c-edc97fe5e626",
+      "updated_at": {
+        "__dt__": "2026-08-21T11:14:37.447775"
+      },
+      "xp_reward": 40
+    }
+  ],
+  "units": [
+    {
+      "background_color": "#1565C0",
+      "course_id": "9a72c8ca-95bd-4f74-ba1a-3da01bef8d32",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.556608"
+      },
+      "description": "Nghe hội thoại hàng ngày và độc thoại ngắn đạt Band 4–5",
+      "icon_url": null,
+      "id": "b98122e8-e32a-48fa-953c-efe7e2a83e80",
+      "order_index": 1,
+      "title": "IELTS Listening – Section 1 & 2 Essentials",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:38.594245"
+      }
+    },
+    {
+      "background_color": "#2E7D32",
+      "course_id": "9a72c8ca-95bd-4f74-ba1a-3da01bef8d32",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.597438"
+      },
+      "description": "Đọc quảng cáo, email và đoạn văn ngắn – nền tảng Band 4–5",
+      "icon_url": null,
+      "id": "a9892d73-0720-4f6b-afec-bf5ddcb4625f",
+      "order_index": 2,
+      "title": "IELTS Reading – Section 1 & Short Passages",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:38.641192"
+      }
+    },
+    {
+      "background_color": "#6A1B9A",
+      "course_id": "9a72c8ca-95bd-4f74-ba1a-3da01bef8d32",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.643101"
+      },
+      "description": "Mô tả biểu đồ đơn giản và viết đoạn văn mô tả đạt Band 4–5",
+      "icon_url": null,
+      "id": "05324917-8329-4664-b353-91793373b7e7",
+      "order_index": 3,
+      "title": "IELTS Writing – Task 1 Intro & Simple Descriptions",
+      "total_lessons": 6,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:38.692203"
+      }
+    },
+    {
+      "background_color": "#BF360C",
+      "course_id": "9a72c8ca-95bd-4f74-ba1a-3da01bef8d32",
+      "created_at": {
+        "__dt__": "2026-03-14T03:20:38.694170"
+      },
+      "description": "Xây dựng sự tự tin khi nói về chủ đề quen thuộc – hướng tới Band 4–5",
+      "icon_url": null,
+      "id": "717ae22b-b975-4f17-9b3c-edc97fe5e626",
+      "order_index": 4,
+      "title": "IELTS Speaking – Part 1 Confidence Building",
+      "total_lessons": 5,
+      "updated_at": {
+        "__dt__": "2026-03-14T03:20:38.746727"
+      }
+    }
+  ]
+}

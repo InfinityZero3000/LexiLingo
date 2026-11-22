@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/usecase/usecase.dart';
+import 'package:lexilingo_app/core/utils/freshness.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/user_progress_entity.dart';
 import 'package:lexilingo_app/features/progress/domain/usecases/get_course_progress_usecase.dart';
 import 'package:lexilingo_app/features/progress/domain/usecases/get_my_progress_usecase.dart';
@@ -14,6 +15,10 @@ class ProgressProvider with ChangeNotifier {
     required this.getMyProgressUseCase,
     required this.getCourseProgressUseCase,
   });
+
+  int _generation = 0;
+  Future<void>? _myProgressLoad;
+  final Freshness _myProgressFreshness = Freshness();
 
   // State
   bool _isLoading = false;
@@ -32,12 +37,28 @@ class ProgressProvider with ChangeNotifier {
       _progressStats?.courseProgress ?? [];
 
   /// Fetch user's overall progress
-  Future<void> fetchMyProgress() async {
+  ///
+  /// Concurrent calls share one request. [maxAge] lets passive callers skip a
+  /// reload of data fetched that recently.
+  Future<void> fetchMyProgress({Duration? maxAge}) {
+    if (_myProgressFreshness.isFresh(maxAge)) return Future<void>.value();
+    final inFlight = _myProgressLoad;
+    if (inFlight != null) return inFlight;
+    final run = _fetchMyProgress();
+    _myProgressLoad = run;
+    return run.whenComplete(() {
+      if (identical(_myProgressLoad, run)) _myProgressLoad = null;
+    });
+  }
+
+  Future<void> _fetchMyProgress() async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
+    final generation = _generation;
     final result = await getMyProgressUseCase(NoParams());
+    if (generation != _generation) return;
 
     result.fold(
       (failure) {
@@ -48,10 +69,14 @@ class ProgressProvider with ChangeNotifier {
       (progressStats) {
         _isLoading = false;
         _progressStats = progressStats;
+        _myProgressFreshness.mark();
         notifyListeners();
       },
     );
   }
+
+  /// The next passive [fetchMyProgress] refetches; call after learning activity.
+  void invalidateFreshness() => _myProgressFreshness.invalidate();
 
   /// Fetch course progress with units
   Future<void> fetchCourseProgress(String courseId) async {
@@ -59,7 +84,9 @@ class ProgressProvider with ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
 
+    final generation = _generation;
     final result = await getCourseProgressUseCase(courseId);
+    if (generation != _generation) return;
 
     result.fold(
       (failure) {
@@ -83,6 +110,9 @@ class ProgressProvider with ChangeNotifier {
 
   /// Reset state
   void reset() {
+    _generation++;
+    _myProgressLoad = null;
+    _myProgressFreshness.invalidate();
     _isLoading = false;
     _errorMessage = null;
     _progressStats = null;

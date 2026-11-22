@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:confetti/confetti.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
@@ -40,6 +41,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
   Timer? _timer;
   int _questionIndex = 0;
   int _timeLeft = 12;
+  int _freezeLeft = 0;
   int _correctCount = 0;
   int? _selectedIndex;
   bool _answered = false;
@@ -51,6 +53,8 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
   final Map<String, String> _submittedAnswers = {};
   final Set<int> _eliminatedIndices = {};
   bool _luckyCloverActive = false;
+  bool _luckyCloverRescue = false;
+  final List<String> _rescuedIds = [];
   int _scoreMultiplier = 1;
   final _random = Random();
 
@@ -85,6 +89,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
     setState(() {
       _gameLoaded = true;
       _timeLeft = game.timerSecondsPerQuestion;
+      _freezeLeft = 0;
       _selectedIndex = null;
       _answered = false;
       _verdict = null;
@@ -96,6 +101,10 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
     _timer = Timer.periodic(const Duration(seconds: 1), (t) {
       if (!mounted) {
         t.cancel();
+        return;
+      }
+      if (_freezeLeft > 0) {
+        setState(() => _freezeLeft--);
         return;
       }
       setState(() => _timeLeft--);
@@ -113,6 +122,9 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
     final q = game.questions[_questionIndex];
     switch (itemType) {
       case ShopItemEntity.effectTimeFreeze:
+        final seconds = (effects['seconds'] as num?)?.toInt() ?? 10;
+        setState(() => _freezeLeft += seconds);
+        break;
       case ShopItemEntity.effectExtraTime:
         final seconds = (effects['seconds'] as num?)?.toInt() ?? 10;
         setState(
@@ -142,7 +154,12 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
         });
         break;
       case ShopItemEntity.effectLuckyClover:
-        setState(() => _luckyCloverActive = true);
+        final rescue = effects['rescue'] == true;
+        setState(() {
+          _luckyCloverRescue =
+              (_luckyCloverActive && _luckyCloverRescue) || rescue;
+          _luckyCloverActive = true;
+        });
         break;
       case ShopItemEntity.effectScoreMultiplier:
         final multiplier = (effects['multiplier'] as num?)?.toInt() ?? 2;
@@ -182,9 +199,13 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
     final game = context.read<GamesProvider>().grammarQuiz!;
     final q = game.questions[_questionIndex];
     var correct = q.options[index] == q.correctAnswer;
-    if (!correct && _luckyCloverActive && _random.nextDouble() < 0.3) {
-      correct = true;
+    if (!correct && _luckyCloverActive) {
+      if (_luckyCloverRescue) {
+        correct = true;
+        _rescuedIds.add(q.id);
+      }
       _luckyCloverActive = false;
+      _luckyCloverRescue = false;
     }
     _submittedAnswers[q.id] = q.options[index];
     if (correct) _correctCount++;
@@ -275,6 +296,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
         score: _correctCount,
         totalQuestions: game.questions.length,
         correctAnswers: _correctCount,
+        rescuedIds: _rescuedIds,
         answers: [
           for (final q in game.questions)
             {'id': q.id, 'answer': _submittedAnswers[q.id] ?? ''},
@@ -302,12 +324,10 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
       score: _correctCount * _scoreMultiplier,
       totalQuestions: game.questions.length,
       correctAnswers: _correctCount,
+      rescuedIds: _rescuedIds,
       answers: [
         for (final question in game.questions)
-          {
-            'id': question.id,
-            'answer': _submittedAnswers[question.id] ?? '',
-          },
+          {'id': question.id, 'answer': _submittedAnswers[question.id] ?? ''},
       ],
     );
     if (!mounted) return;
@@ -351,257 +371,289 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
               message: 'games.loadFailed'.tr(),
               onRetry: () async {
                 await provider.loadGrammarQuiz();
-              if (mounted) _startQuestion();
-            },
-          );
-        }
-        if (game == null || game.questions.isEmpty) {
-          return GameLoadState(
-            message: 'games.emptyGame'.tr(),
-            onRetry: () async {
-              await provider.loadGrammarQuiz();
-              if (mounted) _startQuestion();
-            },
-          );
-        }
-        if (!_gameLoaded) {
-          return const Scaffold(
-            body: Center(child: LottieLoadingWidget.medium()),
-          );
-        }
-        final q = game.questions[_questionIndex];
+                if (mounted) _startQuestion();
+              },
+            );
+          }
+          if (game == null || game.questions.isEmpty) {
+            return GameLoadState(
+              message: 'games.emptyGame'.tr(),
+              onRetry: () async {
+                await provider.loadGrammarQuiz();
+                if (mounted) _startQuestion();
+              },
+            );
+          }
+          if (!_gameLoaded) {
+            return const Scaffold(
+              body: Center(child: LottieLoadingWidget.medium()),
+            );
+          }
+          final q = game.questions[_questionIndex];
 
-        return Scaffold(
-          appBar: AppBar(
-            backgroundColor: Theme.of(context).colorScheme.surface,
-            elevation: 0,
-            title: Text(
-              'grammarQuiz.questionProgress'.tr(
-                namedArgs: {
-                  'current': '${_questionIndex + 1}',
-                  'total': '${game.questions.length}',
-                },
-              ),
-              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
-            ),
-            actions: [
-              Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: Center(
-                  child: _TimerWidget(
-                    timeLeft: _timeLeft,
-                    total: game.timerSecondsPerQuestion,
-                  ),
+          return Scaffold(
+            appBar: AppBar(
+              backgroundColor: Theme.of(context).colorScheme.surface,
+              elevation: 0,
+              title: Text(
+                'grammarQuiz.questionProgress'.tr(
+                  namedArgs: {
+                    'current': '${_questionIndex + 1}',
+                    'total': '${game.questions.length}',
+                  },
+                ),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
-            ],
-          ),
-          body: ContentWidth(maxWidth: ContentWidth.reading, child: Stack(
-            children: [
-              Column(
-                children: [
-                  LinearProgressIndicator(
-                    value: _questionIndex / game.questions.length,
-                    backgroundColor: Theme.of(
-                      context,
-                    ).colorScheme.surfaceContainerHighest,
-                    color: AppColors.primary,
-                    minHeight: 4,
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.only(right: AppSpacing.md),
+                  child: Center(
+                    child: _TimerWidget(
+                      timeLeft: _timeLeft,
+                      total: game.timerSecondsPerQuestion,
+                      frozen: _freezeLeft > 0,
+                    ),
                   ),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      controller: _scroll,
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          GamePowerUpTray(
-                            availableTypes: _grammarQuizPowerUps,
-                            enabled: !_answered,
-                            onUse: _onPowerUpUsed,
-                          ),
-                          if (_luckyCloverActive)
-                            Padding(
-                              padding: EdgeInsets.only(top: 6),
-                              child: ActivePowerUpBadge(
-                                itemType: ShopItemEntity.effectLuckyClover,
-                                label: 'games.luckyCloverActive'.tr(),
+                ),
+              ],
+            ),
+            body: ContentWidth(
+              maxWidth: ContentWidth.reading,
+              child: Stack(
+                children: [
+                  Column(
+                    children: [
+                      LinearProgressIndicator(
+                        value: _questionIndex / game.questions.length,
+                        backgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.surfaceContainerHighest,
+                        color: AppColors.primary,
+                        minHeight: 4,
+                      ),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          controller: _scroll,
+                          padding: const EdgeInsets.all(AppSpacing.lg),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              GamePowerUpTray(
+                                availableTypes: _grammarQuizPowerUps,
+                                gameSessionId: context
+                                    .read<GamesProvider>()
+                                    .sessionIdFor(GameType.grammarQuiz),
+                                enabled: !_answered,
+                                onUse: _onPowerUpUsed,
                               ),
-                            ),
-                          const SizedBox(height: 12),
-                          // Topic chip
-                          Chip(
-                            label: Text(
-                              _formatTopic(game.topic),
-                              style: const TextStyle(
-                                color: AppColors.primary,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            backgroundColor: AppColors.primary.withValues(
-                              alpha: 0.1,
-                            ),
-                            side: const BorderSide(color: AppColors.primary),
-                          ),
-                          const SizedBox(height: 12),
-                          // Timer bar
-                          LinearProgressIndicator(
-                            value: _timeLeft / game.timerSecondsPerQuestion,
-                            backgroundColor: Theme.of(
-                              context,
-                            ).colorScheme.surfaceContainerHighest,
-                            color: _timeLeft > 4
-                                ? AppColors.primary
-                                : AppColors.errorBright,
-                            minHeight: 6,
-                          ),
-                          const SizedBox(height: 16),
-                          // Question
-                          Container(
-                            width: double.infinity,
-                            padding: EdgeInsets.all(18),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.surface,
-                              borderRadius: BorderRadius.circular(14),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.shadow.withValues(alpha: 0.05),
-                                  blurRadius: 6,
+                              if (_luckyCloverActive)
+                                Padding(
+                                  padding: EdgeInsets.only(top: AppSpacing.sm),
+                                  child: ActivePowerUpBadge(
+                                    itemType: ShopItemEntity.effectLuckyClover,
+                                    label: 'games.luckyCloverActive'.tr(),
+                                  ),
                                 ),
-                              ],
-                            ),
-                            child: Text(
-                              q.question,
-                              style: TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w600,
-                                color: Theme.of(context).colorScheme.onSurface,
-                                height: 1.5,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          // Answer cards
-                          ...List.generate(q.options.length, (i) {
-                            final eliminated = _eliminatedIndices.contains(i);
-                            Color bg = Theme.of(context).colorScheme.surface;
-                            Color border = Theme.of(
-                              context,
-                            ).colorScheme.outlineVariant;
-                            Color text = Theme.of(
-                              context,
-                            ).colorScheme.onSurface;
-                            IconData? icon;
-                            if (_answered) {
-                              if (q.options[i] == q.correctAnswer) {
-                                bg = AppColors.greenSuccess.withValues(
-                                  alpha: 0.1,
-                                );
-                                border = AppColors.greenSuccess;
-                                text = AppColors.greenSuccess;
-                                icon = Icons.check_circle_outline;
-                              } else if (i == _selectedIndex) {
-                                bg = Colors.red.withValues(alpha: 0.08);
-                                border = AppColors.errorBright;
-                                text = AppColors.errorBright;
-                                icon = Icons.cancel_outlined;
-                              }
-                            } else if (_selectedIndex == i) {
-                              bg = AppColors.primary.withValues(alpha: 0.1);
-                              border = AppColors.primary;
-                              text = AppColors.primary;
-                            } else if (eliminated) {
-                              bg = Theme.of(
-                                context,
-                              ).colorScheme.surfaceContainerHighest;
-                              text = Theme.of(
-                                context,
-                              ).colorScheme.onSurfaceVariant.withValues(
-                                alpha: 0.4,
-                              );
-                            }
-                            return GestureDetector(
-                              onTap: eliminated ? null : () => _selectAnswer(i),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 180),
-                                margin: const EdgeInsets.only(bottom: 10),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 14,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: bg,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: border, width: 1.5),
-                                ),
-                                child: Row(
-                                  children: [
-                                    if (icon != null) ...[
-                                      Icon(icon, color: border, size: 18),
-                                      const SizedBox(width: 8),
-                                    ],
-                                    Expanded(
-                                      child: Text(
-                                        q.options[i],
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                          color: text,
-                                        ),
+                              const SizedBox(height: AppSpacing.md),
+                              // Topic chip
+                              Chip(
+                                label: Text(
+                                  _formatTopic(game.topic),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.bold,
                                       ),
+                                ),
+                                backgroundColor: AppColors.primary.withValues(
+                                  alpha: 0.1,
+                                ),
+                                side: const BorderSide(
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.md),
+                              // Timer bar
+                              LinearProgressIndicator(
+                                value: _timeLeft / game.timerSecondsPerQuestion,
+                                backgroundColor: Theme.of(
+                                  context,
+                                ).colorScheme.surfaceContainerHighest,
+                                color: _timeLeft > 4
+                                    ? AppColors.primary
+                                    : AppColors.errorBright,
+                                minHeight: 6,
+                              ),
+                              const SizedBox(height: AppSpacing.lg),
+                              // Question
+                              Container(
+                                width: double.infinity,
+                                padding: EdgeInsets.all(AppSpacing.lg),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).colorScheme.surface,
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.md,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .shadow
+                                          .withValues(alpha: 0.05),
+                                      blurRadius: 6,
                                     ),
                                   ],
                                 ),
+                                child: Text(
+                                  q.question,
+                                  style: Theme.of(context).textTheme.titleMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurface,
+                                        height: 1.5,
+                                      ),
+                                ),
                               ),
-                            );
-                          }),
-                          if (_verdict != null) ...[
-                            const SizedBox(height: 8),
-                            AnswerFeedbackPanel(
-                              verdict: _verdict!,
-                              chosen: _selectedIndex == null
-                                  ? ''
-                                  : q.options[_selectedIndex!],
-                              correctAnswer: q.correctAnswer,
-                              explanation: q.explanation,
-                              extra: _masteryNote,
-                            ),
-                          ],
-                        ],
+                              const SizedBox(height: AppSpacing.lg),
+                              // Answer cards
+                              ...List.generate(q.options.length, (i) {
+                                final eliminated = _eliminatedIndices.contains(
+                                  i,
+                                );
+                                Color bg = Theme.of(
+                                  context,
+                                ).colorScheme.surface;
+                                Color border = Theme.of(
+                                  context,
+                                ).colorScheme.outlineVariant;
+                                Color text = Theme.of(
+                                  context,
+                                ).colorScheme.onSurface;
+                                IconData? icon;
+                                if (_answered) {
+                                  if (q.options[i] == q.correctAnswer) {
+                                    bg = AppColors.greenSuccess.withValues(
+                                      alpha: 0.1,
+                                    );
+                                    border = AppColors.greenSuccess;
+                                    text = AppColors.greenSuccess;
+                                    icon = Icons.check_circle_outline;
+                                  } else if (i == _selectedIndex) {
+                                    bg = Theme.of(
+                                      context,
+                                    ).colorScheme.error.withValues(alpha: 0.08);
+                                    border = AppColors.errorBright;
+                                    text = AppColors.errorBright;
+                                    icon = Icons.cancel_outlined;
+                                  }
+                                } else if (_selectedIndex == i) {
+                                  bg = AppColors.primary.withValues(alpha: 0.1);
+                                  border = AppColors.primary;
+                                  text = AppColors.primary;
+                                } else if (eliminated) {
+                                  bg = Theme.of(
+                                    context,
+                                  ).colorScheme.surfaceContainerHighest;
+                                  text = Theme.of(context)
+                                      .colorScheme
+                                      .onSurfaceVariant
+                                      .withValues(alpha: 0.4);
+                                }
+                                return GestureDetector(
+                                  onTap: eliminated
+                                      ? null
+                                      : () => _selectAnswer(i),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 180),
+                                    margin: const EdgeInsets.only(
+                                      bottom: AppSpacing.sm,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: AppSpacing.lg,
+                                      vertical: AppSpacing.lg,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: bg,
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.md,
+                                      ),
+                                      border: Border.all(
+                                        color: border,
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        if (icon != null) ...[
+                                          Icon(icon, color: border, size: 18),
+                                          const SizedBox(width: AppSpacing.sm),
+                                        ],
+                                        Expanded(
+                                          child: Text(
+                                            q.options[i],
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium
+                                                ?.copyWith(
+                                                  fontWeight: FontWeight.w500,
+                                                  color: text,
+                                                ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              }),
+                              if (_verdict != null) ...[
+                                const SizedBox(height: AppSpacing.sm),
+                                AnswerFeedbackPanel(
+                                  verdict: _verdict!,
+                                  chosen: _selectedIndex == null
+                                      ? ''
+                                      : q.options[_selectedIndex!],
+                                  correctAnswer: q.correctAnswer,
+                                  explanation: q.explanation,
+                                  extra: _masteryNote,
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
                       ),
+                      if (_answered)
+                        GameNextBar(
+                          label: _questionIndex + 1 >= game.questions.length
+                              ? 'games.answerFeedback.seeResults'.tr()
+                              : 'games.answerFeedback.next'.tr(),
+                          onPressed: _nextQuestion,
+                        ),
+                    ],
+                  ),
+                  // Confetti overlay (skill: gamification-confetti-win)
+                  Align(
+                    alignment: Alignment.topCenter,
+                    child: ConfettiWidget(
+                      confettiController: _confettiController,
+                      blastDirectionality: BlastDirectionality.explosive,
+                      numberOfParticles: 20,
+                      gravity: 0.4,
+                      colors: const [
+                        AppColors.primary,
+                        AppColors.accentYellow,
+                        AppColors.greenSuccessBright,
+                        AppColors.orange,
+                      ],
                     ),
                   ),
-                  if (_answered)
-                    GameNextBar(
-                      label: _questionIndex + 1 >= game.questions.length
-                          ? 'games.answerFeedback.seeResults'.tr()
-                          : 'games.answerFeedback.next'.tr(),
-                      onPressed: _nextQuestion,
-                    ),
                 ],
               ),
-              // Confetti overlay (skill: gamification-confetti-win)
-              Align(
-                alignment: Alignment.topCenter,
-                child: ConfettiWidget(
-                  confettiController: _confettiController,
-                  blastDirectionality: BlastDirectionality.explosive,
-                  numberOfParticles: 20,
-                  gravity: 0.4,
-                  colors: const [
-                    AppColors.primary,
-                    Colors.yellow,
-                    AppColors.greenSuccessBright,
-                    AppColors.orange,
-                  ],
-                ),
-              ),
-            ],
-          ),),
-        );
+            ),
+          );
         },
       ),
     );
@@ -611,7 +663,12 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
 class _TimerWidget extends StatelessWidget {
   final int timeLeft;
   final int total;
-  const _TimerWidget({required this.timeLeft, required this.total});
+  final bool frozen;
+  const _TimerWidget({
+    required this.timeLeft,
+    required this.total,
+    this.frozen = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -622,19 +679,30 @@ class _TimerWidget extends StatelessWidget {
         ? AppColors.orange
         : AppColors.errorBright;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
         border: Border.all(color: color),
       ),
-      child: Text(
-        '${timeLeft}s',
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-          color: color,
-          fontSize: 14,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (frozen) ...[
+            Icon(Icons.ac_unit_rounded, size: 14, color: color),
+            const SizedBox(width: AppSpacing.xs),
+          ],
+          Text(
+            '${timeLeft}s',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }

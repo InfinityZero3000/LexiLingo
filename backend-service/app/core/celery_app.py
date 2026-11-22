@@ -31,10 +31,12 @@ if Celery is not None:
             "app.tasks.event_worker",
             "app.tasks.learner_state",
             "app.tasks.notification_campaign",
+            "app.tasks.nurture",
             "app.tasks.ranking_agent",
             "app.tasks.reminders",
             "app.tasks.skill_history",
             "app.tasks.streak_reminders",
+            "app.tasks.vocabulary_enrichment",
             "app.tasks.word_of_day",
         ],
     )
@@ -76,6 +78,19 @@ if Celery is not None:
         "send-streak-alerts": {
             "task": "app.tasks.streak_reminders.send_streak_alerts",
             "schedule": crontab(hour=20, minute=0),
+        },
+        "send-activation-nudges": {
+            "task": "app.tasks.nurture.send_activation_nudges",
+            "schedule": crontab(minute=10),
+        },
+        # Hourly so each learner is caught in their own evening; dedupe is per local date.
+        "send-streak-risk-emails": {
+            "task": "app.tasks.nurture.send_streak_risk_emails",
+            "schedule": crontab(minute=20),
+        },
+        "send-weekly-summaries": {
+            "task": "app.tasks.nurture.send_weekly_summaries",
+            "schedule": crontab(hour=11, minute=0, day_of_week=0),
         },
         "send-word-of-day": {
             "task": "app.tasks.word_of_day.send_word_of_day",
@@ -126,6 +141,15 @@ if Celery is not None:
         "prefetch-podcasts": {
             "task": "app.tasks.content_prefetch_schedule.prefetch_podcasts",
             "schedule": crontab(minute=0, hour=0),
+        },
+        # Safety net for words saved while Groq was down or the broker was unreachable.
+        "enrich-incomplete-vocabulary": {
+            "task": "app.tasks.vocabulary_enrichment.enrich_incomplete_vocabulary",
+            "schedule": crontab(minute="*/30"),
+        },
+        "export-reference-corpus": {
+            "task": "app.tasks.vocabulary_enrichment.export_reference_corpus",
+            "schedule": crontab(hour=3, minute=15),
         },
     }
 else:

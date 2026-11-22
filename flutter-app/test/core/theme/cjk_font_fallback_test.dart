@@ -1,19 +1,18 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
-import 'package:lexilingo_app/core/theme/app_theme.dart';
 
+// CJK glyphs come from the platform (Android/iOS system fonts) and from
+// CanvasKit's on-demand Noto fallback on web, so no CJK font is bundled.
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
+  test('pubspec does not bundle a CJK font', () {
+    final pubspec = File('pubspec.yaml').readAsStringSync();
+    expect(pubspec, isNot(contains('NotoSans')));
+  });
 
-  test('app themes use the bundled CJK fallback', () {
-    for (final theme in [AppTheme.lightTheme, AppTheme.darkTheme]) {
-      expect(
-        theme.textTheme.bodyMedium?.fontFamilyFallback,
-        contains('NotoSansCJK'),
-      );
-      expect(
-        theme.textTheme.titleMedium?.fontFamilyFallback,
-        contains('NotoSansCJK'),
-      );
-    }
+  test('the theme does not name a bundled CJK family', () {
+    final theme = File('lib/core/theme/app_theme.dart').readAsStringSync();
+    expect(theme, isNot(contains('NotoSansCJK')));
+    expect(theme, isNot(contains('fontFamilyFallback')));
   });
 }

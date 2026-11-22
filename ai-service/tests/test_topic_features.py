@@ -194,7 +194,11 @@ class TestTopicFeatures:
         assert response["data"]["icon_key"] == "library"
         assert stored_doc["icon_key"] == "library"
         assert stored_doc["category"] == "education"
-        assert mock_redis.delete.call_count == 2
+        deleted = {call.args[0] for call in mock_redis.delete.call_args_list}
+        assert deleted == {
+            "topics:catalog:v2", "topics:catalog",
+            "kg:subgraph:story_library_study_group", "chat:context:story_library_study_group",
+        }
 
     @pytest.mark.asyncio
     async def test_admin_edit_topic_keeps_conversation_flow_it_was_not_sent(self, mock_mongodb, mock_redis):
@@ -242,11 +246,13 @@ class TestTopicFeatures:
         ])
         mock_mongodb["stories"].find = MagicMock(return_value=mock_cursor)
 
-        response = await list_admin_topics(limit=100, _key="admin", db=mock_mongodb)
+        with patch.object(StoryService, "list_sample_story_items", return_value=[]):
+            response = await list_admin_topics(limit=100, _key="admin", db=mock_mongodb)
 
         assert response["success"] is True
         assert response["data"]["total"] == 1
         assert response["data"]["topics"][0]["icon_key"] == "repair"
+        assert response["data"]["topics"][0]["source"] == "custom"
 
     @pytest.mark.asyncio
     async def test_topic_preloader_bundle(self, mock_mongodb, mock_redis, sample_story):

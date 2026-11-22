@@ -12,7 +12,7 @@ from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, get_current_user_optional
+from app.core.dependencies import get_current_user, get_current_user_optional, get_current_verified_user
 from app.core.cache import (
     build_cache_key,
     compute_cache_version,
@@ -139,22 +139,12 @@ async def get_my_achievements(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    """Current user's unlocked achievements.
+
+    Not cached: one small per-user join, and every unlock path (lessons, games,
+    vocabulary, streaks, challenges) would otherwise have to invalidate it.
+    The ones that did not made a newly earned badge missing for 30 s.
     """
-    Get current user's unlocked achievements.
-    
-    Returns all achievements the user has earned with unlock dates.
-    """
-    cache_key = build_cache_key("achievements_me", user_id=str(current_user.id))
-    cached = await get_cached(cache_key)
-    if cached:
-        response.headers["X-Cache-Version"] = compute_cache_version(cached)
-        response.headers["X-Cache-Source"] = "redis"
-        return ApiResponse(
-            success=True,
-            message=f"Retrieved {len(cached)} achievements",
-            data=cached
-        )
-    
     user_achievements = await AchievementCRUD.get_user_achievements_with_details(db, current_user.id)
     
     response_data = []
@@ -167,10 +157,7 @@ async def get_my_achievements(
             "is_showcased": ua.is_showcased
         })
     
-    await set_cached(cache_key, response_data, ttl=30)
     response.headers["X-Cache-Version"] = compute_cache_version(response_data)
-    response.headers["X-Cache-Source"] = "origin"
-    
     return ApiResponse(
         success=True,
         message=f"Retrieved {len(response_data)} achievements",
@@ -249,9 +236,6 @@ async def check_all_achievements(
         for a in unlocked
     ]
 
-    await delete_cached(build_cache_key("achievements_me", user_id=str(current_user.id)))
-    await delete_cached(build_cache_key("wallet", user_id=str(current_user.id)))
-    
     return ApiResponse(
         success=True,
         message=f"Checked all achievements. Unlocked {len(response_data)} new badges!",
@@ -318,18 +302,8 @@ async def get_my_wallet(
     
     Returns gem balance and totals.
     """
-    cache_key = build_cache_key("wallet", user_id=str(current_user.id))
-    cached = await get_cached(cache_key)
-    if cached:
-        return ApiResponse(
-            success=True,
-            message="Wallet retrieved successfully",
-            data=cached
-        )
-    
     wallet = await WalletCRUD.get_or_create_wallet(db, current_user.id)
     wallet_data = WalletResponse.model_validate(wallet).model_dump(mode="json")
-    await set_cached(cache_key, wallet_data, ttl=30)
     
     return ApiResponse(
         success=True,
@@ -596,7 +570,7 @@ async def get_shop_items(
 async def purchase_item(
     request: PurchaseRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_verified_user)
 ):
     """
     Purchase an item from the shop.
@@ -616,8 +590,6 @@ async def purchase_item(
     item = await ShopCRUD.get_item(db, request.item_id)
     wallet = await WalletCRUD.get_or_create_wallet(db, current_user.id)
 
-    await delete_cached(build_cache_key("wallet", user_id=str(current_user.id)))
-    
     return ApiResponse(
         success=True,
         message="Purchase successful",
@@ -737,7 +709,7 @@ async def use_inventory_item(
     
     effects_service = ItemEffectsService(db)
     success, message, effects = await effects_service.use_item(
-        current_user.id, request.inventory_id
+        current_user.id, request.inventory_id, request.game_session_id
     )
     
     if not success:
@@ -746,8 +718,6 @@ async def use_inventory_item(
             detail=message
         )
 
-    await delete_cached(build_cache_key("wallet", user_id=str(current_user.id)))
-    
     return ApiResponse(
         success=True,
         message=message,

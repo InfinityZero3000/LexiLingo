@@ -180,7 +180,7 @@ def render_card_facts(card: dict[str, Any], intents: set[str]) -> str:
         if name:
             lines.append(f"Name: {name}")
         if card.get("native_language"):
-            lines.append(f"Native language: {card['native_language']}")
+            lines.append(f"Mother tongue: {card['native_language']}")
         if card.get("member_since"):
             lines.append(f"Joined: {card['member_since']}")
         if card.get("goal"):
@@ -329,8 +329,11 @@ def render_profile_brief(card: dict[str, Any] | None, native_language_name: str)
     name = _first_name(card)
     if name:
         lines.append(f"First name: {name}")
+    # Background only. The reply language is the request's native_language,
+    # which the learner may point at the app language instead of this one;
+    # labelling both "native language" left the model two answers to follow.
     if native_language_name:
-        lines.append(f"Native language: {native_language_name}")
+        lines.append(f"Mother tongue: {native_language_name}")
 
     enrolled = card.get("enrolled_courses") or []
     if enrolled and isinstance(enrolled[0], dict) and enrolled[0].get("title"):
@@ -353,6 +356,16 @@ def render_profile_brief(card: dict[str, Any] | None, native_language_name: str)
     streak = int(card.get("streak_days") or 0)
     if streak >= _MIN_STREAK_TO_MENTION:
         lines.append(f"Practice streak: {streak} days")
+
+    completed = card.get("lessons_completed")
+    # Absent or null is unknown, not zero; the prompt carries recent history,
+    # so "not already" is what keeps this to once per conversation.
+    if isinstance(completed, int) and not isinstance(completed, bool) and completed == 0:
+        lines.append(
+            "Has not completed any lesson yet: if you have not already suggested "
+            "it in this conversation, end your reply with one short invitation to "
+            "start their first lesson (Learn tab, then Start). Do not repeat it."
+        )
 
     if not lines:
         return ""

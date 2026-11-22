@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:lexilingo_app/core/services/user_scope_service.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_config.dart';
@@ -177,13 +178,17 @@ class BookRepository {
     return BookQuiz.fromJson(data ?? {});
   }
 
+  /// Reading state is the learner's own and not on the server: keyed by user,
+  /// so it outlives a sign-out and never shows to the next account.
+  Future<String> _k(String base) => UserScopeService.scopedKey(base);
+
   // ── Reading Progress ──────────────────────────────────────────
 
   static const _progressKeyPrefix = 'book_progress_';
 
   Future<UserBook?> getProgress(String bookId) async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString('$_progressKeyPrefix$bookId');
+    final raw = prefs.getString(await _k('$_progressKeyPrefix$bookId'));
     if (raw == null) return null;
     return UserBook.fromJson(jsonDecode(raw) as Map<String, dynamic>);
   }
@@ -191,7 +196,7 @@ class BookRepository {
   Future<void> saveProgress(UserBook progress) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(
-      '$_progressKeyPrefix${progress.bookId}',
+      await _k('$_progressKeyPrefix${progress.bookId}'),
       jsonEncode(progress.toJson()),
     );
   }
@@ -200,9 +205,8 @@ class BookRepository {
   Future<List<UserBook>> getAllProgress() async {
     final prefs = await SharedPreferences.getInstance();
     final result = <UserBook>[];
-    for (final key in prefs.getKeys().where(
-      (k) => k.startsWith(_progressKeyPrefix),
-    )) {
+    final prefix = await _k(_progressKeyPrefix);
+    for (final key in prefs.getKeys().where((k) => k.startsWith(prefix))) {
       try {
         result.add(
           UserBook.fromJson(
@@ -226,7 +230,7 @@ class BookRepository {
   Future<void> saveReadingSnapshot(Book book) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(
-      '$_readingDataPrefix${book.id}',
+      await _k('$_readingDataPrefix${book.id}'),
       jsonEncode(book.toJson()),
     );
   }
@@ -251,8 +255,14 @@ class BookRepository {
     final entries = <ReadingEntry>[];
     for (final progress in inProgress) {
       final book =
-          _storedBook(prefs, '$_readingDataPrefix${progress.bookId}') ??
-          _storedBook(prefs, '$_savedBookDataPrefix${progress.bookId}');
+          _storedBook(
+            prefs,
+            await _k('$_readingDataPrefix${progress.bookId}'),
+          ) ??
+          _storedBook(
+            prefs,
+            await _k('$_savedBookDataPrefix${progress.bookId}'),
+          );
       if (book != null) {
         entries.add(ReadingEntry(book: book, progress: progress));
       }
@@ -278,36 +288,36 @@ class BookRepository {
 
   Future<bool> isBookSaved(String bookId) async {
     final prefs = await SharedPreferences.getInstance();
-    final ids = prefs.getStringList(_savedBooksKey) ?? [];
+    final ids = prefs.getStringList(await _k(_savedBooksKey)) ?? [];
     return ids.contains(bookId);
   }
 
   Future<void> saveBook(Book book) async {
     final prefs = await SharedPreferences.getInstance();
-    final ids = prefs.getStringList(_savedBooksKey) ?? [];
+    final ids = prefs.getStringList(await _k(_savedBooksKey)) ?? [];
     if (!ids.contains(book.id)) {
       ids.add(book.id);
-      await prefs.setStringList(_savedBooksKey, ids);
+      await prefs.setStringList(await _k(_savedBooksKey), ids);
     }
     // Persist enough data to restore book without API call
     final data = jsonEncode(book.toJson());
-    await prefs.setString('$_savedBookDataPrefix${book.id}', data);
+    await prefs.setString(await _k('$_savedBookDataPrefix${book.id}'), data);
   }
 
   Future<void> unsaveBook(String bookId) async {
     final prefs = await SharedPreferences.getInstance();
-    final ids = prefs.getStringList(_savedBooksKey) ?? [];
+    final ids = prefs.getStringList(await _k(_savedBooksKey)) ?? [];
     ids.remove(bookId);
-    await prefs.setStringList(_savedBooksKey, ids);
-    await prefs.remove('$_savedBookDataPrefix$bookId');
+    await prefs.setStringList(await _k(_savedBooksKey), ids);
+    await prefs.remove(await _k('$_savedBookDataPrefix$bookId'));
   }
 
   Future<List<Book>> getSavedBooks() async {
     final prefs = await SharedPreferences.getInstance();
-    final ids = prefs.getStringList(_savedBooksKey) ?? [];
+    final ids = prefs.getStringList(await _k(_savedBooksKey)) ?? [];
     final books = <Book>[];
     for (final id in ids) {
-      final raw = prefs.getString('$_savedBookDataPrefix$id');
+      final raw = prefs.getString(await _k('$_savedBookDataPrefix$id'));
       if (raw != null) {
         try {
           books.add(Book.fromJson(jsonDecode(raw) as Map<String, dynamic>));
@@ -323,7 +333,7 @@ class BookRepository {
 
   Future<List<Bookmark>> getBookmarks(String bookId) async {
     final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString('$_bookmarksKeyPrefix$bookId');
+    final raw = prefs.getString(await _k('$_bookmarksKeyPrefix$bookId'));
     if (raw == null) return [];
     final list = jsonDecode(raw) as List<dynamic>;
     return list
@@ -341,7 +351,7 @@ class BookRepository {
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(
-      '$_bookmarksKeyPrefix${bookmark.bookId}',
+      await _k('$_bookmarksKeyPrefix${bookmark.bookId}'),
       jsonEncode(updated.map((b) => b.toJson()).toList()),
     );
   }
@@ -351,7 +361,7 @@ class BookRepository {
     final updated = bookmarks.where((b) => b.page != page).toList();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(
-      '$_bookmarksKeyPrefix$bookId',
+      await _k('$_bookmarksKeyPrefix$bookId'),
       jsonEncode(updated.map((b) => b.toJson()).toList()),
     );
   }

@@ -41,7 +41,9 @@ class ExercisePalette {
       surface: isDark
           ? theme.colorScheme.surfaceContainerHighest
           : const Color(0xFFE8EFFF),
-      border: isDark ? AppColors.borderDarkSoft : const Color(0xFFCDD8F6),
+      border: isDark
+          ? Theme.of(context).colorScheme.outlineVariant
+          : const Color(0xFFCDD8F6),
       textPrimary: AppColorRoles.textPrimary(isDark),
       textSecondary: AppColorRoles.textSecondary(isDark),
       textMuted: AppColorRoles.textMuted(isDark),

@@ -17,9 +17,18 @@ class UserEntity {
   final String certifiedLevel;
   final bool levelVerified;
   final String nativeLanguage; // ISO code: vi, en, ja, ko, zh, fr, es
+
+  /// Which language Lexi explains in: [lexiReplyApp] follows the UI language,
+  /// [lexiReplyNative] uses [nativeLanguage].
+  final String lexiReplyLanguage;
+  static const lexiReplyApp = 'app';
+  static const lexiReplyNative = 'native';
   final int totalXp;
   final int numericLevel;
   final int currentStreak;
+
+  /// Null when the backend did not say, which is not the same as zero.
+  final int? lessonsCompleted;
   final DateTime? lastLogin;
   final String? lastLoginIp;
   final DateTime createdAt;
@@ -39,9 +48,11 @@ class UserEntity {
     this.certifiedLevel = 'A1',
     this.levelVerified = true,
     this.nativeLanguage = 'vi',
+    this.lexiReplyLanguage = lexiReplyApp,
     this.totalXp = 0,
     this.numericLevel = 1,
     this.currentStreak = 0,
+    this.lessonsCompleted,
     this.lastLogin,
     this.lastLoginIp,
     required this.createdAt,
@@ -62,9 +73,11 @@ class UserEntity {
     String? certifiedLevel,
     bool? levelVerified,
     String? nativeLanguage,
+    String? lexiReplyLanguage,
     int? totalXp,
     int? numericLevel,
     int? currentStreak,
+    int? lessonsCompleted,
     DateTime? lastLogin,
     String? lastLoginIp,
     DateTime? createdAt,
@@ -85,15 +98,21 @@ class UserEntity {
       certifiedLevel: certifiedLevel ?? this.certifiedLevel,
       levelVerified: levelVerified ?? this.levelVerified,
       nativeLanguage: nativeLanguage ?? this.nativeLanguage,
+      lexiReplyLanguage: lexiReplyLanguage ?? this.lexiReplyLanguage,
       totalXp: totalXp ?? this.totalXp,
       numericLevel: numericLevel ?? this.numericLevel,
       currentStreak: currentStreak ?? this.currentStreak,
+      lessonsCompleted: lessonsCompleted ?? this.lessonsCompleted,
       lastLogin: lastLogin ?? this.lastLogin,
       lastLoginIp: lastLoginIp ?? this.lastLoginIp,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
+
+  /// The language Lexi should explain in, given the one the UI shows.
+  String lexiReplyLanguageFor(String appLanguage) =>
+      lexiReplyLanguage == lexiReplyNative ? nativeLanguage : appLanguage;
 
   bool get canAccessAdminPanel {
     final normalizedRole = roleSlug.trim().toLowerCase();

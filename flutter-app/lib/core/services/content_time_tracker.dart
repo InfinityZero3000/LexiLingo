@@ -57,6 +57,7 @@ class ContentTimeTracker with WidgetsBindingObserver {
   int _awardedChunks = 0;
   DateTime? _lastActiveAt;
   bool _foreground = true;
+  bool _observing = false;
 
   static const _tick = Duration(seconds: 1);
 
@@ -71,7 +72,7 @@ class ContentTimeTracker with WidgetsBindingObserver {
   /// Begin counting. Safe to call once from `initState`.
   void start() {
     if (_ticker != null) return;
-    WidgetsBinding.instance.addObserver(this);
+    _observe();
     markActive();
     _ticker = Timer.periodic(_tick, (_) => _onTick());
   }
@@ -82,10 +83,18 @@ class ContentTimeTracker with WidgetsBindingObserver {
   /// learner would otherwise be paid for a chunk they did not spend, and the
   /// next visit starts its own count.
   void stop() {
-    if (_ticker == null) return;
-    _ticker!.cancel();
+    _ticker?.cancel();
     _ticker = null;
-    WidgetsBinding.instance.removeObserver(this);
+    if (_observing) {
+      WidgetsBinding.instance.removeObserver(this);
+      _observing = false;
+    }
+  }
+
+  void _observe() {
+    if (_observing) return;
+    WidgetsBinding.instance.addObserver(this);
+    _observing = true;
   }
 
   /// Something happened — a scroll, a page turn, a tap. Keeps ticks counting.
@@ -95,8 +104,13 @@ class ContentTimeTracker with WidgetsBindingObserver {
   ///
   /// The video player uses this: it counts how far playback advanced, so that
   /// dragging the scrubber forward credits nothing.
+  ///
+  /// Dropped while the app is backgrounded, like a ticker tick would be. The
+  /// first call also starts watching the lifecycle, so callers that never
+  /// `start()` the ticker still need `stop()` in `dispose`.
   void add(Duration delta) {
-    if (delta <= Duration.zero) return;
+    _observe();
+    if (!_foreground || delta <= Duration.zero) return;
     _elapsed += delta;
     _reportCompletedChunks();
   }
@@ -151,7 +165,9 @@ class ContentTimeTracker with WidgetsBindingObserver {
       );
     } catch (e) {
       // An already-credited chunk answers 409 — the dedup doing its job.
-      debugPrint('ContentTimeTracker($source): chunk $chunkIndex not awarded: $e');
+      debugPrint(
+        'ContentTimeTracker($source): chunk $chunkIndex not awarded: $e',
+      );
     }
   }
 }

@@ -73,7 +73,8 @@ class PodcastAudioHandler extends BaseAudioHandler with SeekHandler {
     );
     mediaItem.add(item);
 
-    final useLocal = !kIsWeb &&
+    final useLocal =
+        !kIsWeb &&
         episode.localPath != null &&
         File(episode.localPath!).existsSync();
 
@@ -87,6 +88,9 @@ class PodcastAudioHandler extends BaseAudioHandler with SeekHandler {
     await _player.setAudioSource(source);
     return true;
   }
+
+  /// Current playback speed, so a reopened player shows what is really set.
+  double get speed => _player.speed;
 
   /// Set playback speed (0.5x – 2.0x).
   @override

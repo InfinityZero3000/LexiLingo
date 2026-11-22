@@ -58,5 +58,9 @@ Every mail is a body fragment in `backend-service/app/templates/` rendered insid
   background images. A new mail needs its line in `HEROES` in `scripts/build_email_heroes.py`, then
   `python scripts/build_email_heroes.py --header-src <header.png> --footer-src <footer.png>` (needs Pillow; the
   source illustrations are kept outside the repo). `tests/test_email_templates.py` fails if a hero is missing.
-- `send_weekly_summary_email` and `send_streak_at_risk_email` exist but nothing calls them yet: both need an
-  opt-in preference first. Sending them without consent risks spam complaints against the domain.
+- Activation (day 1 and 3), streak-at-risk and weekly-summary mail go out from `app/services/nurture_service.py`
+  (beat tasks in `app/tasks/nurture.py`), only when `NURTURE_EMAILS_ENABLED=true`. They skip seed accounts,
+  unverified or inactive users and anyone with `user_reminder_preferences.nurture_emails_enabled = false`
+  (`PUT /users/me/reminder-preferences`). One `notifications` row per (user, type, period) is both the inbox entry
+  and the dedupe guard (unique index on `user_id, type, dedupe_key`). The activation mail has no hero of its own and
+  borrows `hero_welcome_email.jpg`.

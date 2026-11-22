@@ -9,11 +9,13 @@ from datetime import UTC, datetime
 from email.message import EmailMessage
 from email.utils import formataddr, parseaddr
 from pathlib import Path
+import uuid
 from urllib.parse import quote
 
 from fastapi.concurrency import run_in_threadpool
 
 from app.core.config import settings
+from app.services.email_unsubscribe import unsubscribe_headers, unsubscribe_url
 
 logger = logging.getLogger(__name__)
 
@@ -55,12 +57,18 @@ class EmailService:
 
     @classmethod
     def _render_html(
-        cls, template_name: str, context: dict[str, str], *, title: str, preheader: str
+        cls,
+        template_name: str,
+        context: dict[str, str],
+        *,
+        title: str,
+        preheader: str,
+        hero: str | None = None,
     ) -> str:
         """Render a body fragment inside the shared layout."""
         home_url = settings.APP_PUBLIC_URL.rstrip("/")
         assets = settings.EMAIL_ASSET_BASE_URL.rstrip("/")
-        hero = template_name.removesuffix(".html")
+        hero = hero or template_name.removesuffix(".html")
         return cls._render_template(
             "_layout.html",
             {
@@ -310,6 +318,7 @@ class EmailService:
         headers: dict[str, str] | None = None,
         html_extra: dict[str, str] | None = None,
         text_extra: dict[str, str] | None = None,
+        hero: str | None = None,
     ) -> bool:
         """Render `<template>.html/.txt` inside the shared layout and send it; never raises."""
         if not settings.SMTP_HOST:
@@ -333,7 +342,9 @@ class EmailService:
         message["To"] = to_email
         message.set_content(cls._render_template(f"{template}.txt", text_ctx))
         message.add_alternative(
-            cls._render_html(f"{template}.html", html_ctx, title=title, preheader=preheader),
+            cls._render_html(
+                f"{template}.html", html_ctx, title=title, preheader=preheader, hero=hero
+            ),
             subtype="html",
         )
         try:
@@ -357,6 +368,35 @@ class EmailService:
         )
 
     @classmethod
+    async def send_activation_nudge_email(
+        cls, *, to_email: str, display_name: str | None, user_id: uuid.UUID, day: int, start_link: str
+    ) -> bool:
+        """Day-1 / day-3 nudge for a verified learner who has not finished a lesson."""
+        settings_link = f"{settings.APP_PUBLIC_URL.rstrip('/')}/settings"
+        if day <= 1:
+            subject = "Your first LexiLingo lesson takes five minutes"
+            lead = "your account is ready, and your first lesson is ready when you are."
+        else:
+            subject = "Still want to start with LexiLingo?"
+            lead = "your first lesson is still waiting. One short lesson is enough to begin."
+        return await cls._send_templated(
+            to_email=to_email,
+            subject=subject,
+            template="activation_nudge_email",
+            ctx={
+                "display_name": display_name,
+                "lead": lead,
+                "start_link": start_link,
+                "settings_link": settings_link,
+                "unsubscribe_link": unsubscribe_url(user_id),
+            },
+            title=subject,
+            preheader="One tap opens your first lesson.",
+            headers=unsubscribe_headers(user_id),
+            hero="welcome_email",
+        )
+
+    @classmethod
     async def send_password_changed_email(cls, *, to_email: str, display_name: str | None) -> bool:
         """Security notice after a password change or reset."""
         changed_at = datetime.now(UTC).strftime("%d %b %Y, %H:%M UTC")
@@ -375,13 +415,14 @@ class EmailService:
         *,
         to_email: str,
         display_name: str | None,
+        user_id: uuid.UUID,
         xp: int,
         streak_days: int,
         words_learned: int,
         suggestion_title: str | None = None,
         suggestion_link: str | None = None,
     ) -> bool:
-        """Opt-in weekly recap; the caller must have checked the user's consent."""
+        """Weekly recap; the caller must have checked the user's nurture opt-out."""
         settings_link = f"{settings.APP_PUBLIC_URL.rstrip('/')}/settings"
         suggestion_html = suggestion_text = ""
         if suggestion_title and suggestion_link:
@@ -403,19 +444,20 @@ class EmailService:
                 "streak_days": max(0, streak_days),
                 "words_learned": max(0, words_learned),
                 "settings_link": settings_link,
+                "unsubscribe_link": unsubscribe_url(user_id),
             },
             title="Your week in LexiLingo",
             preheader=f"{max(0, xp):,} XP and a {max(0, streak_days)}-day streak this week.",
-            headers={"List-Unsubscribe": f"<{settings_link}>"},
+            headers=unsubscribe_headers(user_id),
             html_extra={"suggestion_block": suggestion_html},
             text_extra={"suggestion_block": suggestion_text},
         )
 
     @classmethod
     async def send_streak_at_risk_email(
-        cls, *, to_email: str, display_name: str | None, streak_days: int
+        cls, *, to_email: str, display_name: str | None, user_id: uuid.UUID, streak_days: int
     ) -> bool:
-        """Opt-in nudge for learners who have not practised today; the caller checks consent."""
+        """Nudge for learners who have not practised today; the caller checks the nurture opt-out."""
         settings_link = f"{settings.APP_PUBLIC_URL.rstrip('/')}/settings"
         days = max(0, streak_days)
         return await cls._send_templated(
@@ -428,10 +470,11 @@ class EmailService:
                 "day_noun": "day" if days == 1 else "days",
                 "practice_link": f"{settings.APP_PUBLIC_URL.rstrip('/')}{settings.REMINDER_REVIEW_ROUTE}",
                 "settings_link": settings_link,
+                "unsubscribe_link": unsubscribe_url(user_id),
             },
             title="Keep your streak alive",
             preheader=f"{days} {'day' if days == 1 else 'days'} in a row. A few minutes is enough.",
-            headers={"List-Unsubscribe": f"<{settings_link}>"},
+            headers=unsubscribe_headers(user_id),
         )
 
     @staticmethod

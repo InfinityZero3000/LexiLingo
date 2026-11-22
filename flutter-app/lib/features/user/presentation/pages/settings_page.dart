@@ -1,6 +1,7 @@
 import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/features/auth/presentation/user_session_sync.dart';
 import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import 'package:lexilingo_app/core/widgets/language_flag.dart';
 import 'package:flutter/services.dart';
@@ -11,9 +12,13 @@ import 'package:share_plus/share_plus.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/animated_ui_components.dart';
 import 'package:lexilingo_app/core/widgets/network_avatar_image.dart';
+import 'package:lexilingo_app/core/l10n/app_localizations.dart' show AppLocales;
+import 'package:lexilingo_app/features/auth/domain/entities/user_entity.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/user/presentation/pages/legal_page.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
+import 'package:lexilingo_app/features/user/presentation/widgets/nurture_emails_switch.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Settings page for user preferences
 class SettingsPage extends StatefulWidget {
@@ -24,6 +29,8 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
+  bool _signingOut = false;
+
   static const double _flagWidth = 48;
   static const double _flagHeight = 32;
 
@@ -36,6 +43,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _loadSettings() async {
+    if (!mounted) return;
     final authProvider = context.read<AuthProvider>();
     if (authProvider.currentUser != null) {
       await context.read<SettingsProvider>().loadSettings(
@@ -67,7 +75,7 @@ class _SettingsPageState extends State<SettingsPage> {
         child: settings.isLoading
             ? const Center(child: LottieLoadingWidget.medium())
             : ListView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSpacing.lg),
                 children: [
                   AnimatedListItem(
                     index: 0,
@@ -79,9 +87,19 @@ class _SettingsPageState extends State<SettingsPage> {
                       subtitle: 'settings.language_subtitle'.tr(),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   _buildLanguageSelector(context, settings),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: AppSpacing.xxl),
+                  if (context.watch<AuthProvider>().user != null) ...[
+                    _buildSectionHeader(
+                      context,
+                      title: 'settings.lexiReplyLanguage'.tr(),
+                      subtitle: 'settings.lexiReplyLanguage_subtitle'.tr(),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    _buildLexiReplyLanguage(context),
+                    const SizedBox(height: AppSpacing.xxl),
+                  ],
                   AnimatedListItem(
                     index: 1,
                     duration: const Duration(milliseconds: 300),
@@ -92,9 +110,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       subtitle: 'settings.notifications_subtitle'.tr(),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   _buildNotificationSettings(context, settings),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: AppSpacing.xxl),
                   AnimatedListItem(
                     index: 2,
                     duration: const Duration(milliseconds: 300),
@@ -105,9 +123,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       subtitle: 'settings.sound_subtitle'.tr(),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   _buildSoundSettings(context, settings),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: AppSpacing.xxl),
                   AnimatedListItem(
                     index: 3,
                     duration: const Duration(milliseconds: 300),
@@ -118,9 +136,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       subtitle: 'settings.theme_subtitle'.tr(),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   _buildThemeSelector(context, settings),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: AppSpacing.xxl),
                   AnimatedListItem(
                     index: 4,
                     duration: const Duration(milliseconds: 300),
@@ -131,9 +149,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       subtitle: 'settings.account_subtitle'.tr(),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   _buildAccountSection(context),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: AppSpacing.xxl),
                   AnimatedListItem(
                     index: 5,
                     duration: const Duration(milliseconds: 300),
@@ -144,9 +162,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       subtitle: 'offlineSync.settingsSubtitle'.tr(),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   _buildOfflineSyncSection(context),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: AppSpacing.xxl),
                   AnimatedListItem(
                     index: 6,
                     duration: const Duration(milliseconds: 300),
@@ -157,9 +175,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       subtitle: 'settings.referral_subtitle'.tr(),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   _buildReferralSection(context),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: AppSpacing.xxl),
                   AnimatedListItem(
                     index: 7,
                     duration: const Duration(milliseconds: 300),
@@ -170,7 +188,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       subtitle: 'settings.about_subtitle'.tr(),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md),
                   _buildAboutSection(context),
                   const SizedBox(height: 40),
                 ],
@@ -186,25 +204,27 @@ class _SettingsPageState extends State<SettingsPage> {
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
-      padding: const EdgeInsets.only(left: 4),
+      padding: const EdgeInsets.only(left: AppSpacing.xs),
       child: Row(
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-              ),
-              Text(
-                subtitle,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColorRoles.textMuted(isDark),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-            ],
+                Text(
+                  subtitle,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColorRoles.textMuted(isDark),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -221,9 +241,11 @@ class _SettingsPageState extends State<SettingsPage> {
 
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           children: SettingsProvider.availableLanguages.asMap().entries.map((
             entry,
@@ -235,23 +257,23 @@ class _SettingsPageState extends State<SettingsPage> {
               duration: const Duration(milliseconds: 200),
               delayPerItem: const Duration(milliseconds: 30),
               child: Padding(
-                padding: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                 child: InkWell(
                   onTap: () async {
                     // Update language - this will also update the app locale
                     await settings.updateLanguage(lang['code']!, context);
                   },
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
+                      horizontal: AppSpacing.lg,
+                      vertical: AppSpacing.md,
                     ),
                     decoration: BoxDecoration(
                       color: isSelected
                           ? primaryColor.withValues(alpha: 0.1)
                           : AppColors.surfaceLight.withValues(alpha: 0),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       border: isSelected
                           ? Border.all(color: primaryColor, width: 2)
                           : null,
@@ -259,7 +281,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     child: Row(
                       children: [
                         _buildFlagWidget(context, lang['code'] ?? 'en'),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: AppSpacing.md),
                         Expanded(
                           child: Text(
                             lang['name']!,
@@ -287,6 +309,109 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  Widget _buildLexiReplyLanguage(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    final user = auth.user!;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor = AppColorRoles.primary(isDark);
+    String nameOf(String code) =>
+        AppLocales.metadata[code]?['name'] ?? code.toUpperCase();
+    final options = [
+      (
+        value: UserEntity.lexiReplyApp,
+        label: 'settings.lexiReplyApp'.tr(
+          namedArgs: {'language': nameOf(context.locale.languageCode)},
+        ),
+        icon: Icons.translate_rounded,
+      ),
+      (
+        value: UserEntity.lexiReplyNative,
+        label: 'settings.lexiReplyNative'.tr(
+          namedArgs: {'language': nameOf(user.nativeLanguage)},
+        ),
+        icon: Icons.record_voice_over_rounded,
+      ),
+    ];
+
+    Future<void> choose(String value) async {
+      final messenger = ScaffoldMessenger.of(context);
+      final saved = await auth.updateLexiReplyLanguage(value);
+      if (!saved) {
+        messenger.showSnackBar(
+          SnackBar(content: Text('errors.saveFailed'.tr())),
+        );
+      }
+    }
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        child: Column(
+          children: [
+            for (final option in options)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                child: Builder(
+                  builder: (context) {
+                    final isSelected = user.lexiReplyLanguage == option.value;
+                    return InkWell(
+                      key: Key('settings-lexi-reply-${option.value}'),
+                      onTap: isSelected ? null : () => choose(option.value),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      child: Container(
+                        constraints: const BoxConstraints(minHeight: 48),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.lg,
+                          vertical: AppSpacing.md,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? primaryColor.withValues(alpha: 0.1)
+                              : null,
+                          borderRadius: BorderRadius.circular(AppRadius.md),
+                          border: isSelected
+                              ? Border.all(color: primaryColor, width: 2)
+                              : null,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              option.icon,
+                              color: isSelected
+                                  ? primaryColor
+                                  : AppColorRoles.textMuted(isDark),
+                            ),
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(
+                              child: Text(
+                                option.label,
+                                style: TextStyle(
+                                  fontWeight: isSelected
+                                      ? FontWeight.bold
+                                      : FontWeight.normal,
+                                  color: isSelected ? primaryColor : null,
+                                ),
+                              ),
+                            ),
+                            if (isSelected)
+                              Icon(Icons.check_circle, color: primaryColor),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildNotificationSettings(
     BuildContext context,
     SettingsProvider settings,
@@ -295,16 +420,24 @@ class _SettingsPageState extends State<SettingsPage> {
     final primaryColor = AppColorRoles.primary(isDark);
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           children: [
             // Enable/Disable toggle
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('settings.dailyReminder'.tr()),
+                Flexible(
+                  child: Text(
+                    'settings.dailyReminder'.tr(),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
                 Switch(
                   value: settings.notificationEnabled,
                   onChanged: (value) =>
@@ -323,13 +456,14 @@ class _SettingsPageState extends State<SettingsPage> {
               const Divider(),
               InkWell(
                 onTap: () async {
+                  final parts = settings.notificationTime.split(':');
                   final time = await showTimePicker(
                     context: context,
                     initialTime: TimeOfDay(
-                      hour: int.parse(settings.notificationTime.split(':')[0]),
-                      minute: int.parse(
-                        settings.notificationTime.split(':')[1],
-                      ),
+                      hour: int.tryParse(parts.first) ?? 9,
+                      minute: parts.length > 1
+                          ? int.tryParse(parts[1]) ?? 0
+                          : 0,
                     ),
                   );
                   if (time != null) {
@@ -339,11 +473,17 @@ class _SettingsPageState extends State<SettingsPage> {
                   }
                 },
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('settings.reminderTime'.tr()),
+                      Flexible(
+                        child: Text(
+                          'settings.reminderTime'.tr(),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                       Row(
                         children: [
                           Text(
@@ -353,7 +493,7 @@ class _SettingsPageState extends State<SettingsPage> {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppSpacing.sm),
                           const Icon(
                             Icons.chevron_right,
                             color: AppColors.grey500,
@@ -385,6 +525,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 _buildCadenceRow(context, settings, primaryColor),
               _buildMinDueCountRow(context, settings, primaryColor),
             ],
+            const Divider(),
+            NurtureEmailsSwitch(settings: settings, primaryColor: primaryColor),
           ],
         ),
       ),
@@ -399,7 +541,7 @@ class _SettingsPageState extends State<SettingsPage> {
     required Color primaryColor,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -487,7 +629,10 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
           IconButton(
             icon: const Icon(Icons.remove_circle_outline),
-            color: count <= 1 ? AppColors.grey400 : primaryColor,
+            color: count <= 1
+                ? Theme.of(context).colorScheme.onSurfaceVariant
+                : primaryColor,
+
             onPressed: count <= 1
                 ? null
                 : () => settings.updateReminderChannels(minDueCount: count - 1),
@@ -520,13 +665,21 @@ class _SettingsPageState extends State<SettingsPage> {
     final primaryColor = AppColorRoles.primary(isDark);
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('settings.sound_effects'.tr()),
+            Flexible(
+              child: Text(
+                'settings.sound_effects'.tr(),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
             Switch(
               value: settings.soundEnabled,
               onChanged: settings.updateSoundEnabled,
@@ -563,9 +716,11 @@ class _SettingsPageState extends State<SettingsPage> {
 
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: themes.map((theme) {
@@ -578,17 +733,17 @@ class _SettingsPageState extends State<SettingsPage> {
                 if (isSelected) return;
                 await settings.updateTheme(themeCode);
               },
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,
-                  vertical: 12,
+                  vertical: AppSpacing.md,
                 ),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? primaryColor.withValues(alpha: 0.1)
                       : null,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   border: isSelected
                       ? Border.all(color: primaryColor, width: 2)
                       : null,
@@ -602,15 +757,14 @@ class _SettingsPageState extends State<SettingsPage> {
                           : AppColorRoles.textMuted(isDark),
                       size: 28,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppSpacing.xs),
                     Text(
                       (theme['name'] as String).tr(),
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         fontWeight: isSelected
                             ? FontWeight.bold
                             : FontWeight.normal,
                         color: isSelected ? primaryColor : null,
-                        fontSize: 12,
                       ),
                     ),
                   ],
@@ -632,7 +786,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05),
@@ -646,7 +800,10 @@ class _SettingsPageState extends State<SettingsPage> {
           // User info row
           if (user != null)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: 14,
+              ),
               child: Row(
                 children: [
                   CircleAvatar(
@@ -664,17 +821,17 @@ class _SettingsPageState extends State<SettingsPage> {
                                     ? user.displayName[0]
                                     : user.email[0])
                                 .toUpperCase(),
-                            style: TextStyle(
-                              color: primaryColor,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                            ),
+                            style: Theme.of(context).textTheme.sectionTitle
+                                ?.copyWith(
+                                  color: primaryColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -683,18 +840,16 @@ class _SettingsPageState extends State<SettingsPage> {
                           user.displayName.isNotEmpty
                               ? user.displayName
                               : user.username,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 15,
-                          ),
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(fontWeight: FontWeight.w600),
                         ),
                         const SizedBox(height: 2),
                         Text(
                           user.email,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: AppColorRoles.textMuted(isDark),
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: AppColorRoles.textMuted(isDark),
+                              ),
                         ),
                       ],
                     ),
@@ -702,45 +857,65 @@ class _SettingsPageState extends State<SettingsPage> {
                 ],
               ),
             ),
-
-          if (user != null) Divider(height: 1, color: AppColors.grey200),
+          if (user != null)
+            Divider(
+              height: 1,
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
 
           // Sign out button
           InkWell(
-            onTap: () => _confirmSignOut(context),
+            onTap: _signingOut ? null : () => _confirmSignOut(context),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: 14,
+              ),
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(AppSpacing.sm),
                     decoration: BoxDecoration(
                       color: AppColors.errorBg,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                     child: Icon(
                       Icons.logout,
-                      color: AppColors.errorDark,
+                      color: Theme.of(context).colorScheme.error,
+
                       size: 20,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppSpacing.md),
                   Text(
                     'settings.sign_out'.tr(),
-                    style: TextStyle(
-                      fontSize: 15,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.w500,
-                      color: AppColors.errorDark,
+                      color: Theme.of(context).colorScheme.error,
                     ),
                   ),
                   const Spacer(),
-                  Icon(Icons.chevron_right, color: AppColors.grey400, size: 20),
+                  if (_signingOut)
+                    const SizedBox(
+                      key: Key('settings.signingOut'),
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  else
+                    Icon(
+                      Icons.chevron_right,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      size: 20,
+                    ),
                 ],
               ),
             ),
           ),
-
-          Divider(height: 1, color: AppColors.grey200),
+          Divider(
+            height: 1,
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
 
           // Delete account button
           InkWell(
@@ -749,32 +924,42 @@ class _SettingsPageState extends State<SettingsPage> {
               bottom: Radius.circular(16),
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.lg,
+                vertical: 14,
+              ),
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(AppSpacing.sm),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFE4E4),
-                      borderRadius: BorderRadius.circular(8),
+                      color: AppColors.errorBg,
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                     child: const Icon(
                       Icons.delete_forever_rounded,
-                      color: Color(0xFFB91C1C),
+                      color: AppColors.errorDark,
                       size: 20,
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'settings.delete_account'.tr(),
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFFB91C1C),
+                  const SizedBox(width: AppSpacing.md),
+                  Flexible(
+                    child: Text(
+                      'settings.delete_account'.tr(),
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.errorDark,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const Spacer(),
-                  Icon(Icons.chevron_right, color: AppColors.grey400, size: 20),
+                  Icon(
+                    Icons.chevron_right,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    size: 20,
+                  ),
                 ],
               ),
             ),
@@ -791,7 +976,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05),
@@ -802,16 +987,19 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
       child: InkWell(
         onTap: () => Navigator.pushNamed(context, '/offline-sync'),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: 14,
+          ),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(AppSpacing.sm),
                 decoration: BoxDecoration(
                   color: primaryColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Icon(
                   Icons.cloud_done_outlined,
@@ -819,30 +1007,32 @@ class _SettingsPageState extends State<SettingsPage> {
                   size: 20,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.md),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'offlineSync.title'.tr(),
-                      style: const TextStyle(
-                        fontSize: 15,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       'offlineSync.entrySubtitle'.tr(),
-                      style: TextStyle(
-                        fontSize: 13,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: AppColorRoles.textMuted(isDark),
                       ),
                     ),
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right, color: AppColors.grey400, size: 20),
+              Icon(
+                Icons.chevron_right,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                size: 20,
+              ),
             ],
           ),
         ),
@@ -855,25 +1045,28 @@ class _SettingsPageState extends State<SettingsPage> {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
           color: isDark
-              ? Colors.white.withValues(alpha: 0.08)
-              : Colors.black.withValues(alpha: 0.06),
+              ? AppColors.onGradient.withValues(alpha: 0.08)
+              : Theme.of(context).colorScheme.shadow.withValues(alpha: 0.06),
         ),
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: AppSpacing.xs,
+        ),
         leading: Container(
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: Colors.green.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(10),
+            color: context.status.success.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(AppRadius.md),
           ),
-          child: const Icon(
+          child: Icon(
             Icons.card_giftcard_rounded,
-            color: Colors.green,
+            color: context.status.success,
             size: 20,
           ),
         ),
@@ -883,7 +1076,7 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         subtitle: Text(
           'settings.invite_friends_subtitle'.tr(),
-          style: const TextStyle(fontSize: 12),
+          style: Theme.of(context).textTheme.bodySmall,
         ),
         trailing: const Icon(Icons.chevron_right, size: 20),
         onTap: () => _showReferralSheet(context),
@@ -913,16 +1106,16 @@ class _SettingsPageState extends State<SettingsPage> {
                 height: 4,
                 margin: const EdgeInsets.only(bottom: 20),
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: Theme.of(context).colorScheme.outlineVariant,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.card_giftcard_rounded,
                 size: 48,
-                color: Colors.green,
+                color: context.status.success,
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md),
               Text(
                 'settings.invite_title'.tr(),
                 style: Theme.of(ctx).textTheme.headlineSmall?.copyWith(
@@ -930,15 +1123,16 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               Text(
                 'settings.invite_desc'.tr(),
-                style: Theme.of(
-                  ctx,
-                ).textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.xl),
               FutureBuilder<Map<String, dynamic>>(
                 future: referralFuture,
                 builder: (ctx, snap) {
@@ -950,10 +1144,14 @@ class _SettingsPageState extends State<SettingsPage> {
                       children: [
                         Text(
                           'notifications.somethingWentWrong'.tr(),
-                          style: const TextStyle(color: Colors.grey),
+                          style: TextStyle(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: AppSpacing.md),
                         OutlinedButton(
                           child: Text('home.reload'.tr()),
                           onPressed: () => setSheetState(() {
@@ -974,10 +1172,12 @@ class _SettingsPageState extends State<SettingsPage> {
                           vertical: 14,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.green.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(12),
+                          color: context.status.success.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                           border: Border.all(
-                            color: Colors.green.withValues(alpha: 0.3),
+                            color: context.status.success.withValues(
+                              alpha: 0.3,
+                            ),
                           ),
                         ),
                         child: Row(
@@ -985,18 +1185,18 @@ class _SettingsPageState extends State<SettingsPage> {
                           children: [
                             Text(
                               code ?? '',
-                              style: const TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 4,
-                                color: Colors.green,
-                              ),
+                              style: Theme.of(context).textTheme.headlineMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 4,
+                                    color: context.status.success,
+                                  ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: AppSpacing.md),
                             IconButton(
-                              icon: const Icon(
+                              icon: Icon(
                                 Icons.copy_rounded,
-                                color: Colors.green,
+                                color: context.status.success,
                               ),
                               onPressed: () {
                                 Clipboard.setData(
@@ -1012,14 +1212,13 @@ class _SettingsPageState extends State<SettingsPage> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppSpacing.sm),
                       Text(
                         'settings.referral_count'.tr(
                           namedArgs: {'count': total.toString()},
                         ),
-                        style: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 13,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -1027,7 +1226,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         icon: const Icon(Icons.share_rounded),
                         label: Text('settings.share_invite'.tr()),
                         style: FilledButton.styleFrom(
-                          backgroundColor: Colors.green,
+                          backgroundColor: context.status.success,
+
                           minimumSize: const Size(double.infinity, 48),
                         ),
                         onPressed: () {
@@ -1054,7 +1254,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: Theme.of(context).colorScheme.shadow.withValues(alpha: 0.05),
@@ -1078,7 +1278,11 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
           ),
-          Divider(height: 1, color: AppColors.grey200),
+          Divider(
+            height: 1,
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
+
           _buildAboutRow(
             context,
             icon: Icons.description_outlined,
@@ -1093,25 +1297,29 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
             ),
           ),
-          Divider(height: 1, color: AppColors.grey200),
+          Divider(
+            height: 1,
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
+
           FutureBuilder<PackageInfo>(
             future: PackageInfo.fromPlatform(),
             builder: (context, snapshot) {
               final version = snapshot.data?.version ?? '—';
               return Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
+                  horizontal: AppSpacing.lg,
                   vertical: 14,
                 ),
                 child: Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(AppSpacing.sm),
                       decoration: BoxDecoration(
                         color: AppColorRoles.primary(
                           isDark,
                         ).withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
                       child: Icon(
                         Icons.info_outline,
@@ -1119,11 +1327,10 @@ class _SettingsPageState extends State<SettingsPage> {
                         size: 20,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: AppSpacing.md),
                     Text(
                       'settings.version'.tr(namedArgs: {'version': version}),
-                      style: TextStyle(
-                        fontSize: 15,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: AppColorRoles.textMuted(isDark),
                       ),
                     ),
@@ -1151,24 +1358,33 @@ class _SettingsPageState extends State<SettingsPage> {
           ? const BorderRadius.vertical(bottom: Radius.circular(16))
           : BorderRadius.zero,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: 14,
+        ),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(AppSpacing.sm),
               decoration: BoxDecoration(
                 color: AppColorRoles.primary(isDark).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               child: Icon(icon, color: AppColorRoles.primary(isDark), size: 20),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.md),
             Text(
               label,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
             ),
             const Spacer(),
-            Icon(Icons.chevron_right, color: AppColors.grey400, size: 20),
+            Icon(
+              Icons.chevron_right,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              size: 20,
+            ),
           ],
         ),
       ),
@@ -1179,20 +1395,26 @@ class _SettingsPageState extends State<SettingsPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+        ),
         title: Text('settings.delete_account'.tr()),
         content: Text('settings.delete_account_confirm'.tr()),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+            ),
             onPressed: () => Navigator.pop(ctx, false),
             child: Text('common.cancel'.tr()),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFB91C1C),
-              foregroundColor: Colors.white,
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.errorDark,
+              foregroundColor: AppColors.onGradient,
+
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
             ),
             onPressed: () => Navigator.pop(ctx, true),
@@ -1222,20 +1444,26 @@ class _SettingsPageState extends State<SettingsPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+        ),
         title: Text('settings.sign_out'.tr()),
         content: Text('settings.sign_out_confirm'.tr()),
         actions: [
           TextButton(
+            style: TextButton.styleFrom(
+              minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+            ),
             onPressed: () => Navigator.pop(ctx, false),
             child: Text('common.cancel'.tr()),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.errorDark,
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+
               foregroundColor: AppColors.surfaceLight,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
             ),
             onPressed: () => Navigator.pop(ctx, true),
@@ -1245,11 +1473,53 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     );
 
-    if (confirmed == true && context.mounted) {
-      await context.read<AuthProvider>().signOut();
-      if (context.mounted) {
-        Navigator.of(context).popUntil((route) => route.isFirst);
+    if (confirmed != true || !context.mounted || _signingOut) return;
+    final auth = context.read<AuthProvider>();
+    final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final flush = UserSessionSync.beforeSignOut(context);
+    setState(() => _signingOut = true);
+    try {
+      final done = await performSignOut(
+        flushPending: () => flush,
+        signOut: auth.signOut,
+        isSignedOut: () => !auth.isAuthenticated,
+        popToRoot: () => navigator.popUntil((route) => route.isFirst),
+      );
+      if (!done) {
+        messenger.showSnackBar(
+          SnackBar(content: Text('errors.genericRetry'.tr())),
+        );
       }
+    } finally {
+      if (mounted) setState(() => _signingOut = false);
     }
   }
+}
+
+/// Deliberate sign-out, in the order that has no race.
+///
+/// Work still on its way goes out first, while the token is valid. Then the
+/// session ends. Only then, and only if it did end, does the app return to its
+/// first route: that pop makes the home screen refresh its progress, and it
+/// does so only for a signed-in learner, so popping earlier would fire requests
+/// that race the token being cleared (a 401 there reads as an expired session).
+/// `AuthProvider.signOut` swallows its errors and leaves the learner signed in;
+/// that is reported by returning false, with no pop.
+@visibleForTesting
+Future<bool> performSignOut({
+  required Future<void> Function() flushPending,
+  required Future<void> Function() signOut,
+  required bool Function() isSignedOut,
+  required void Function() popToRoot,
+}) async {
+  try {
+    await flushPending();
+  } catch (_) {
+    // Undelivered work is dropped; it must not stop the learner signing out.
+  }
+  await signOut();
+  if (!isSignedOut()) return false;
+  popToRoot();
+  return true;
 }

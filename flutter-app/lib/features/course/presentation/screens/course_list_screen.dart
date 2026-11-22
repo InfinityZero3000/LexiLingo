@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/core/widgets/tap_target.dart';
 // ignore: depend_on_referenced_packages
 import 'package:lexilingo_app/core/network/course_network_image.dart';
@@ -10,11 +11,24 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/course/presentation/providers/course_provider.dart';
 import 'package:lexilingo_app/features/course/presentation/screens/course_detail_screen.dart';
 import 'package:lexilingo_app/features/course/presentation/screens/category_detail_screen.dart';
+import 'package:lexilingo_app/features/course/presentation/utils/course_tag_label.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_category_entity.dart';
 
 /// Course List Screen
 /// Displays courses in horizontal scrolling sections grouped by category
+/// Decorative cover gradients; picked by course-id hash, fixed in both themes.
+const _courseCardGradients = <List<Color>>[
+  [AppColors.primary, AppColors.purple],
+  [AppColors.purple, Color(0xFFf5576c)],
+  [Color(0xFF4facfe), Color(0xFF00f2fe)],
+  [Color(0xFF43e97b), Color(0xFF38f9d7)],
+  [Color(0xFFfa709a), Color(0xFFfee140)],
+  [Color(0xFF30cfd0), Color(0xFF330867)],
+  [Color(0xFFa8edea), Color(0xFFfed6e3)],
+  [Color(0xFFff9a9e), Color(0xFFfecfef)],
+];
+
 class CourseListScreen extends StatefulWidget {
   const CourseListScreen({super.key});
 
@@ -108,7 +122,12 @@ class _CourseListScreenState extends State<CourseListScreen> {
                     automaticallyImplyLeading: false,
                     titleSpacing: 0,
                     title: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                      padding: const EdgeInsets.fromLTRB(
+                        20,
+                        AppSpacing.md,
+                        20,
+                        0,
+                      ),
                       child: Row(
                         children: [
                           // A tab in MainScreen, but also pushed as a
@@ -121,7 +140,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
                               color: primaryAccent,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
                             ),
                             child: Icon(
                               Icons.explore,
@@ -144,7 +163,11 @@ class _CourseListScreenState extends State<CourseListScreen> {
                                   provider.courses.length,
                                 ),
                                 style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(color: Colors.grey[600]),
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                    ),
                               ),
                             ],
                           ),
@@ -156,13 +179,15 @@ class _CourseListScreenState extends State<CourseListScreen> {
                                   color: provider.hasActiveFilters
                                       ? primaryAccent
                                       : primaryAccent.withValues(alpha: 0.14),
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.md,
+                                  ),
                                 ),
                                 child: IconButton(
                                   icon: Icon(
                                     Icons.tune_rounded,
                                     color: provider.hasActiveFilters
-                                        ? Colors.white
+                                        ? AppColors.textInverted
                                         : primaryAccent,
                                   ),
                                   onPressed: () => _showFilterSheet(context),
@@ -177,7 +202,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
                                     width: 8,
                                     height: 8,
                                     decoration: BoxDecoration(
-                                      color: Colors.amber,
+                                      color: AppColors.warning,
                                       shape: BoxShape.circle,
                                       border: Border.all(
                                         color: Theme.of(
@@ -286,8 +311,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
           return _CategorySection(
             categoryId: levelKey,
             title: levelKey,
-            description:
-                'course.courseCount'.plural(courses.length),
+            description: 'course.courseCount'.plural(courses.length),
             icon: _getLevelIcon(levelKey),
             color: _getLevelColor(levelKey, isDark: isDark),
             courses: courses,
@@ -323,8 +347,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
           return _CategorySection(
             categoryId: category.id,
             title: category.name,
-            description:
-                'course.courseCount'.plural(categoryCourses.length),
+            description: 'course.courseCount'.plural(categoryCourses.length),
             icon: _parseCategoryIcon(category.icon ?? 'book'),
             color: _parseCategoryColor(category.color, isDark: isDark),
             courses: categoryCourses,
@@ -441,7 +464,7 @@ class _CourseListScreenState extends State<CourseListScreen> {
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       builder: (context) => const _FilterSheet(),
     );
@@ -456,9 +479,14 @@ class _CourseBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.xs,
+        AppSpacing.lg,
+        12,
+      ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         child: Stack(
           children: [
             // Banner image
@@ -476,7 +504,7 @@ class _CourseBanner extends StatelessWidget {
                   begin: Alignment.centerRight,
                   end: Alignment.centerLeft,
                   colors: [
-                    (isDark ? Colors.black : const Color(0xFF0D47A1))
+                    (isDark ? AppColors.slate900 : AppColors.primaryDark)
                         .withValues(alpha: 0.55),
                     Colors.transparent,
                   ],
@@ -494,13 +522,13 @@ class _CourseBanner extends StatelessWidget {
                 children: [
                   Text(
                     'course.startLearning'.tr(),
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: AppColors.textInverted,
+
                       fontWeight: FontWeight.bold,
                       shadows: [
                         Shadow(
-                          color: Colors.black.withValues(alpha: 0.4),
+                          color: AppColors.slate900.withValues(alpha: 0.4),
                           blurRadius: 6,
                         ),
                       ],
@@ -510,13 +538,13 @@ class _CourseBanner extends StatelessWidget {
                   Text(
                     'course.pickCoursePrompt'.tr(),
                     textAlign: TextAlign.right,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontSize: 12,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textInverted.withValues(alpha: 0.9),
+
                       height: 1.4,
                       shadows: [
                         Shadow(
-                          color: Colors.black.withValues(alpha: 0.3),
+                          color: AppColors.slate900.withValues(alpha: 0.3),
                           blurRadius: 4,
                         ),
                       ],
@@ -541,7 +569,11 @@ class _CategorySection extends StatelessWidget {
   final IconData icon;
   final Color color;
   final List<CourseEntity> courses;
-  final void Function(CourseEntity course, String heroTag, String fallbackThumbnailUrl)
+  final void Function(
+    CourseEntity course,
+    String heroTag,
+    String fallbackThumbnailUrl,
+  )
   onCourseTap;
   final VoidCallback? onSeeAll;
 
@@ -567,8 +599,8 @@ class _CategorySection extends StatelessWidget {
         // Category Header
         Padding(
           padding: EdgeInsets.symmetric(
-            horizontal: isCompactMobile ? 14 : 16,
-            vertical: isCompactMobile ? 6 : 8,
+            horizontal: isCompactMobile ? 14 : AppSpacing.lg,
+            vertical: isCompactMobile ? 6 : AppSpacing.sm,
           ),
           child: Row(
             children: [
@@ -576,7 +608,7 @@ class _CategorySection extends StatelessWidget {
                 padding: EdgeInsets.all(isCompactMobile ? 7 : 8),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Icon(
                   icon,
@@ -597,9 +629,9 @@ class _CategorySection extends StatelessWidget {
                     ),
                     Text(
                       description,
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),
@@ -619,7 +651,7 @@ class _CategorySection extends StatelessWidget {
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: EdgeInsets.symmetric(
-              horizontal: isCompactMobile ? 10 : 12,
+              horizontal: isCompactMobile ? 10 : AppSpacing.md,
             ),
             itemCount: courses.length,
             itemExtent: (isCompactMobile ? 150.0 : 170.0) + 8,
@@ -680,10 +712,13 @@ class _HorizontalCourseCard extends StatelessWidget {
 
     return Container(
       width: cardWidth,
-      margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: 4,
+      ),
       child: Card(
         elevation: 1.5,
-        shadowColor: Colors.black26,
+        shadowColor: AppColors.slate900.withValues(alpha: 0.26),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(cardRadius),
         ),
@@ -716,7 +751,7 @@ class _HorizontalCourseCard extends StatelessWidget {
                               end: Alignment.bottomCenter,
                               colors: [
                                 Colors.transparent,
-                                Colors.black.withValues(alpha: 0.5),
+                                AppColors.slate900.withValues(alpha: 0.5),
                               ],
                             ),
                           ),
@@ -728,18 +763,20 @@ class _HorizontalCourseCard extends StatelessWidget {
                           left: 8,
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
+                              horizontal: AppSpacing.sm,
+                              vertical: AppSpacing.xs,
                             ),
                             decoration: BoxDecoration(
                               color: _getLevelColor(
                                 course.level,
                                 isDark: isDark,
                               ).withValues(alpha: 0.9),
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.2),
+                                  color: AppColors.slate900.withValues(
+                                    alpha: 0.2,
+                                  ),
                                   blurRadius: 4,
                                   offset: const Offset(0, 2),
                                 ),
@@ -747,11 +784,12 @@ class _HorizontalCourseCard extends StatelessWidget {
                             ),
                             child: Text(
                               course.level,
-                              style: TextStyle(
-                                color: AppColors.surfaceLight,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: Theme.of(context).textTheme.labelSmall
+                                  ?.copyWith(
+                                    color: AppColors.surfaceLight,
+
+                                    fontWeight: FontWeight.bold,
+                                  ),
                             ),
                           ),
                         ),
@@ -762,15 +800,17 @@ class _HorizontalCourseCard extends StatelessWidget {
                           right: 8,
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
+                              horizontal: AppSpacing.sm,
+                              vertical: AppSpacing.xs,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.amber.withValues(alpha: 0.9),
-                              borderRadius: BorderRadius.circular(12),
+                              color: AppColors.warning.withValues(alpha: 0.9),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.2),
+                                  color: AppColors.slate900.withValues(
+                                    alpha: 0.2,
+                                  ),
                                   blurRadius: 4,
                                   offset: const Offset(0, 2),
                                 ),
@@ -787,11 +827,12 @@ class _HorizontalCourseCard extends StatelessWidget {
                                 const SizedBox(width: 4),
                                 Text(
                                   '${course.totalXp}',
-                                  style: TextStyle(
-                                    color: AppColors.surfaceLight,
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  style: Theme.of(context).textTheme.labelSmall
+                                      ?.copyWith(
+                                        color: AppColors.surfaceLight,
+
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                 ),
                               ],
                             ),
@@ -819,102 +860,116 @@ class _HorizontalCourseCard extends StatelessWidget {
                           scrollDirection: Axis.horizontal,
                           child: Row(
                             children: [
-                            // Language chip (INT + en)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 7,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Theme.of(context)
-                                        .colorScheme
-                                        .primaryContainer
-                                        .withValues(alpha: 0.7),
-                                    Theme.of(context)
-                                        .colorScheme
-                                        .primaryContainer
-                                        .withValues(alpha: 0.5),
-                                  ],
+                              // Language chip (INT + en)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 7,
+                                  vertical: 3,
                                 ),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 4,
-                                      vertical: 1,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Theme.of(context)
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Theme.of(context)
                                           .colorScheme
-                                          .primary
-                                          .withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      _getLanguageCode(course.language),
-                                      style: TextStyle(
-                                        fontSize: 9,
-                                        fontWeight: FontWeight.bold,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.primary,
+                                          .primaryContainer
+                                          .withValues(alpha: 0.7),
+                                      Theme.of(context)
+                                          .colorScheme
+                                          .primaryContainer
+                                          .withValues(alpha: 0.5),
+                                    ],
+                                  ),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.md,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: AppSpacing.xs,
+                                        vertical: 1,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary
+                                            .withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        _getLanguageCode(course.language),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelSmall
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.primary,
+                                            ),
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    _getLanguageLabel(course.language),
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onPrimaryContainer,
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      _getLanguageLabel(course.language),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onPrimaryContainer,
+                                          ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                            // Learner-facing tags only. Internal seed/crawl
-                            // metadata stays in data for filtering/imports.
-                            ...displayTags.map(
-                              (tag) => Padding(
-                                padding: const EdgeInsets.only(left: 5),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 7,
-                                    vertical: 3,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isDark
-                                        ? Colors.white.withValues(alpha: 0.08)
-                                        : AppColors.grey100,
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(
-                                      color: isDark
-                                          ? Colors.white24
-                                          : AppColors.grey300,
-                                      width: 0.8,
+                              // Learner-facing tags only. Internal seed/crawl
+                              // metadata stays in data for filtering/imports.
+                              ...displayTags.map(
+                                (tag) => Padding(
+                                  padding: const EdgeInsets.only(left: 5),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 7,
+                                      vertical: 3,
                                     ),
-                                  ),
-                                  child: Text(
-                                    tag,
-                                    style: TextStyle(
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w600,
+                                    decoration: BoxDecoration(
                                       color: isDark
-                                          ? Colors.white70
-                                          : AppColors.grey700,
+                                          ? AppColors.textInverted.withValues(
+                                              alpha: 0.08,
+                                            )
+                                          : AppColors.grey100,
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.md,
+                                      ),
+                                      border: Border.all(
+                                        color: isDark
+                                            ? AppColors.textInverted.withValues(
+                                                alpha: 0.24,
+                                              )
+                                            : AppColors.grey300,
+                                        width: 0.8,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      tag,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                            color: isDark
+                                                ? AppColors.textOnDarkSecondary
+                                                : AppColors.grey700,
+                                          ),
                                     ),
                                   ),
                                 ),
                               ),
-                            ),
                             ],
                           ),
                         ),
@@ -928,7 +983,9 @@ class _HorizontalCourseCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: titleFontSize,
                           fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : Colors.black87,
+                          color: isDark
+                              ? AppColors.textOnDarkPrimary
+                              : AppColors.textDark,
                           height: 1.15,
                         ),
                         maxLines: 2,
@@ -941,6 +998,7 @@ class _HorizontalCourseCard extends StatelessWidget {
                       Row(
                         children: [
                           _buildStatChip(
+                            context,
                             icon: Icons.book_outlined,
                             value: '${course.totalLessons}',
                             color: AppColorRoles.primary(isDark),
@@ -964,8 +1022,8 @@ class _HorizontalCourseCard extends StatelessWidget {
                           child: LinearProgressIndicator(
                             value: (course.userProgress ?? 0) / 100,
                             backgroundColor: isDark
-                                ? Colors.grey[700]
-                                : Colors.grey[200],
+                                ? AppColors.grey700
+                                : AppColors.grey200,
                             minHeight: 4,
                             valueColor: AlwaysStoppedAnimation<Color>(
                               _getProgressColor(
@@ -1217,40 +1275,27 @@ class _HorizontalCourseCard extends StatelessWidget {
   String _formatCourseTag(String tag) {
     final key = _normalizeTagKey(tag);
     const aliases = {
-      'vocab': 'Vocabulary',
-      'vocabulary': 'Vocabulary',
-      'grammar': 'Grammar',
-      'conversation': 'Conversation',
-      'speaking': 'Speaking',
-      'listening': 'Listening',
-      'reading': 'Reading',
-      'writing': 'Writing',
-      'pronunciation': 'Pronunciation',
-      'business': 'Business',
-      'travel': 'Travel',
-      'exam': 'Exam Prep',
+      'vocab': 'vocabulary',
+      'vocabulary': 'vocabulary',
+      'grammar': 'grammar',
+      'conversation': 'conversation',
+      'speaking': 'speaking',
+      'listening': 'listening',
+      'reading': 'reading',
+      'writing': 'writing',
+      'pronunciation': 'pronunciation',
+      'business': 'business',
+      'travel': 'travel',
+      'exam': 'exam',
     };
     final alias = aliases[key];
-    if (alias != null) return alias;
+    if (alias != null) return 'course.tag.$alias'.tr();
 
-    return key
-        .split('_')
-        .where((part) => part.isNotEmpty)
-        .map((part) => '${part[0].toUpperCase()}${part.substring(1)}')
-        .join(' ');
+    return courseTagLabel(tag);
   }
 
   List<Color> _getGradientFromHash(int hash) {
-    final gradients = [
-      [AppColors.primary, AppColors.purple],
-      [AppColors.purple, const Color(0xFFf5576c)],
-      [const Color(0xFF4facfe), const Color(0xFF00f2fe)],
-      [const Color(0xFF43e97b), const Color(0xFF38f9d7)],
-      [const Color(0xFFfa709a), const Color(0xFFfee140)],
-      [const Color(0xFF30cfd0), const Color(0xFF330867)],
-      [const Color(0xFFa8edea), const Color(0xFFfed6e3)],
-      [const Color(0xFFff9a9e), const Color(0xFFfecfef)],
-    ];
+    final gradients = _courseCardGradients;
     return gradients[hash.abs() % gradients.length];
   }
 
@@ -1333,7 +1378,7 @@ class _HorizontalCourseCard extends StatelessWidget {
       case 'beginner':
         return AppColors.greenSuccessBright;
       case 'elementary':
-        return Colors.lightGreen;
+        return AppColors.greenSuccessSoft;
       case 'intermediate':
         return AppColors.orange;
       case 'upper-intermediate':
@@ -1351,16 +1396,20 @@ class _HorizontalCourseCard extends StatelessWidget {
     return AppColorRoles.primary(isDark);
   }
 
-  Widget _buildStatChip({
+  Widget _buildStatChip(
+    BuildContext context, {
     required IconData icon,
     required String value,
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 3,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1369,8 +1418,7 @@ class _HorizontalCourseCard extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             value,
-            style: TextStyle(
-              fontSize: 10,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w600,
               color: color,
             ),
@@ -1382,13 +1430,16 @@ class _HorizontalCourseCard extends StatelessWidget {
 
   Widget _buildProgressChip(BuildContext context, double progress) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 3,
+      ),
       decoration: BoxDecoration(
         color: _getProgressColor(
           progress,
           isDark: Theme.of(context).brightness == Brightness.dark,
         ).withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1404,8 +1455,7 @@ class _HorizontalCourseCard extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             '${progress.toStringAsFixed(0)}%',
-            style: TextStyle(
-              fontSize: 10,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w600,
               color: _getProgressColor(
                 progress,
@@ -1435,20 +1485,24 @@ class _FilterSheetState extends State<_FilterSheet> {
   late String _sortOrder;
 
   static const List<(String, String?, Color)> _levels = [
-    ('All', null, Colors.grey),
-    ('Beginner', 'Beginner', AppColors.greenSuccessBright),
-    ('Elementary', 'Elementary', Colors.lightGreen),
-    ('Pre-Intermediate', 'Pre-Intermediate', Colors.teal),
-    ('Intermediate', 'Intermediate', AppColors.orange),
-    ('Upper-Intermediate', 'Upper-Intermediate', AppColors.deepOrange),
-    ('Advanced', 'Advanced', AppColors.errorBright),
+    ('course.langAll', null, AppColors.grey500),
+    ('course.difficulty.beginner', 'Beginner', AppColors.greenSuccessBright),
+    ('course.difficulty.elementary', 'Elementary', AppColors.greenSuccessSoft),
+    ('course.difficulty.preIntermediate', 'Pre-Intermediate', AppColors.teal),
+    ('course.difficulty.intermediate', 'Intermediate', AppColors.orange),
+    (
+      'course.difficulty.upperIntermediate',
+      'Upper-Intermediate',
+      AppColors.deepOrange,
+    ),
+    ('course.difficulty.advanced', 'Advanced', AppColors.errorBright),
   ];
 
   static const _sortOptions = [
-    ('Default', 'default', Icons.sort),
-    ('Most Lessons', 'lessons', Icons.book_outlined),
-    ('Highest XP', 'xp', Icons.star_outline),
-    ('A → Z', 'az', Icons.sort_by_alpha),
+    ('course.sort.default', 'default', Icons.sort),
+    ('course.sort.lessons', 'lessons', Icons.book_outlined),
+    ('course.sort.xp', 'xp', Icons.star_outline),
+    ('course.sort.az', 'az', Icons.sort_by_alpha),
   ];
 
   @override
@@ -1516,13 +1570,15 @@ class _FilterSheetState extends State<_FilterSheet> {
         return Container(
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppRadius.xl),
+            ),
           ),
           child: Column(
             children: [
               // Handle + header (fixed)
               Padding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                padding: const EdgeInsets.fromLTRB(20, AppSpacing.md, 20, 0),
                 child: Column(
                   children: [
                     Center(
@@ -1530,7 +1586,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                         width: 40,
                         height: 4,
                         decoration: BoxDecoration(
-                          color: Colors.grey[300],
+                          color: AppColors.grey300,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -1542,7 +1598,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             color: primaryAccent,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
                           ),
                           child: Icon(
                             Icons.tune_rounded,
@@ -1551,11 +1607,13 @@ class _FilterSheetState extends State<_FilterSheet> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Text(
-                          'course.filterCourses'.tr(),
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                        Flexible(
+                          child: Text(
+                            'course.filterCourses'.tr(),
+                            style: Theme.of(context).textTheme.titleLarge
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                         const Spacer(),
@@ -1563,7 +1621,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                           TextButton(
                             onPressed: _clearAll,
                             style: TextButton.styleFrom(
-                              foregroundColor: Colors.red[400],
+                              foregroundColor: AppColors.errorBright,
                             ),
                             child: Text('common.clear'.tr()),
                           ),
@@ -1579,7 +1637,7 @@ class _FilterSheetState extends State<_FilterSheet> {
               Expanded(
                 child: ListView(
                   controller: scrollController,
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                  padding: const EdgeInsets.fromLTRB(20, AppSpacing.lg, 20, 16),
                   children: [
                     // ── Language ──────────────────────────────────────
                     _SectionHeader(label: 'common.language'.tr()),
@@ -1591,7 +1649,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                         _Chip(
                           label: 'course.langAll'.tr(),
                           isSelected: _language == null,
-                          color: Colors.grey,
+                          color: AppColors.grey500,
                           onTap: () => setState(() => _language = null),
                         ),
                         _Chip(
@@ -1641,7 +1699,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                       children: _levels
                           .map(
                             (e) => _Chip(
-                              label: e.$1,
+                              label: e.$1.tr(),
                               isSelected: _level == e.$2,
                               color: e.$3,
                               onTap: () => setState(() => _level = e.$2),
@@ -1662,7 +1720,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                           _Chip(
                             label: 'course.langAll'.tr(),
                             isSelected: _categorySlug == null,
-                            color: Colors.grey,
+                            color: AppColors.grey500,
                             onTap: () => setState(() => _categorySlug = null),
                           ),
                           ...categories.map(
@@ -1695,18 +1753,18 @@ class _FilterSheetState extends State<_FilterSheet> {
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
+                          horizontal: AppSpacing.lg,
+                          vertical: AppSpacing.md,
                         ),
                         decoration: BoxDecoration(
                           color: _enrolledOnly
-                              ? Colors.amber[700]!.withValues(alpha: 0.12)
-                              : Colors.grey.withValues(alpha: 0.07),
-                          borderRadius: BorderRadius.circular(14),
+                              ? AppColors.warningDark.withValues(alpha: 0.12)
+                              : AppColors.grey500.withValues(alpha: 0.07),
+                          borderRadius: BorderRadius.circular(AppRadius.lg),
                           border: Border.all(
                             color: _enrolledOnly
-                                ? Colors.amber[700]!
-                                : Colors.grey.withValues(alpha: 0.25),
+                                ? AppColors.warningDark
+                                : AppColors.grey500.withValues(alpha: 0.25),
                           ),
                         ),
                         child: Row(
@@ -1715,20 +1773,25 @@ class _FilterSheetState extends State<_FilterSheet> {
                               Icons.school,
                               size: 18,
                               color: _enrolledOnly
-                                  ? Colors.amber[700]
-                                  : Colors.grey,
+                                  ? AppColors.warningDark
+                                  : AppColors.grey500,
                             ),
                             const SizedBox(width: 10),
-                            Text(
-                              'course.showEnrolledOnly'.tr(),
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                                color: _enrolledOnly
-                                    ? Colors.amber[700]
-                                    : (isDark
-                                          ? Colors.white70
-                                          : Colors.black87),
+                            Flexible(
+                              child: Text(
+                                'course.showEnrolledOnly'.tr(),
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.w600,
+
+                                      color: _enrolledOnly
+                                          ? AppColors.warningDark
+                                          : (isDark
+                                                ? AppColors.textOnDarkSecondary
+                                                : AppColors.textDark),
+                                    ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             const Spacer(),
@@ -1736,10 +1799,9 @@ class _FilterSheetState extends State<_FilterSheet> {
                               value: _enrolledOnly,
                               onChanged: (v) =>
                                   setState(() => _enrolledOnly = v),
-                              activeThumbColor: Colors.amber[700],
-                              activeTrackColor: Colors.amber[700]!.withValues(
-                                alpha: 0.4,
-                              ),
+                              activeThumbColor: AppColors.warningDark,
+                              activeTrackColor: AppColors.warningDark
+                                  .withValues(alpha: 0.4),
                             ),
                           ],
                         ),
@@ -1757,14 +1819,14 @@ class _FilterSheetState extends State<_FilterSheet> {
                       children: _sortOptions
                           .map(
                             (s) => _Chip(
-                              label: s.$1,
+                              label: s.$1.tr(),
                               isSelected: _sortOrder == s.$2,
                               color: AppColors.primary,
                               prefix: Icon(
                                 s.$3,
                                 size: 14,
                                 color: _sortOrder == s.$2
-                                    ? Colors.white
+                                    ? AppColors.textInverted
                                     : AppColors.primary,
                               ),
                               onTap: () => setState(() => _sortOrder = s.$2),
@@ -1782,7 +1844,7 @@ class _FilterSheetState extends State<_FilterSheet> {
               Container(
                 padding: EdgeInsets.fromLTRB(
                   20,
-                  12,
+                  AppSpacing.md,
                   20,
                   12 + MediaQuery.of(context).padding.bottom,
                 ),
@@ -1790,7 +1852,9 @@ class _FilterSheetState extends State<_FilterSheet> {
                   color: Theme.of(context).colorScheme.surface,
                   border: Border(
                     top: BorderSide(
-                      color: isDark ? Colors.white12 : Colors.black12,
+                      color: isDark
+                          ? AppColors.borderDarkSoft
+                          : AppColors.grey300,
                     ),
                   ),
                 ),
@@ -1802,14 +1866,13 @@ class _FilterSheetState extends State<_FilterSheet> {
                     style: FilledButton.styleFrom(
                       backgroundColor: primaryAccent,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(AppRadius.lg),
                       ),
                     ),
                     child: Text(
                       'course.applyFilters'.tr(),
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         fontWeight: FontWeight.bold,
-                        fontSize: 15,
                       ),
                     ),
                   ),
@@ -1845,7 +1908,9 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       label,
-      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+      style: Theme.of(
+        context,
+      ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
     );
   }
 }
@@ -1872,13 +1937,16 @@ class _Chip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: 8,
+        ),
         decoration: BoxDecoration(
           gradient: isSelected
               ? LinearGradient(colors: [color, color.withValues(alpha: 0.8)])
               : null,
           color: isSelected ? null : color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(
             color: isSelected ? color : color.withValues(alpha: 0.3),
             width: isSelected ? 0 : 1,
@@ -1899,10 +1967,9 @@ class _Chip extends StatelessWidget {
             if (prefix != null) ...[prefix!, const SizedBox(width: 6)],
             Text(
               label,
-              style: TextStyle(
-                color: isSelected ? Colors.white : color,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: isSelected ? AppColors.textInverted : color,
                 fontWeight: FontWeight.w600,
-                fontSize: 13,
               ),
             ),
             if (isSelected) ...[
@@ -1931,19 +1998,21 @@ class _LangBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.xs,
+        vertical: 1,
+      ),
       decoration: BoxDecoration(
         color: isSelected
-            ? Colors.white.withValues(alpha: 0.2)
+            ? AppColors.textInverted.withValues(alpha: 0.2)
             : color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
         code,
-        style: TextStyle(
-          fontSize: 10,
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
           fontWeight: FontWeight.bold,
-          color: isSelected ? Colors.white : color,
+          color: isSelected ? AppColors.textInverted : color,
         ),
       ),
     );

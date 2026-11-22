@@ -26,6 +26,7 @@ from fastapi import (
 from fastapi.websockets import WebSocketDisconnect
 
 from api.core.auth import AuthenticatedUser, _decode_backend_jwt, get_current_user
+from api.core.auth_revocation import revocation_reason
 from api.core.config import settings
 from api.core.audit_emitter import emit_ai_audit_event
 from api.core.quota_guard import default_token_cost_for_endpoint, enforce_user_quota
@@ -63,7 +64,7 @@ def _validate_audio_magic(header: bytes) -> bool:
     return False
 
 
-def _websocket_user_id(websocket: WebSocket) -> str | None:
+async def _websocket_user_id(websocket: WebSocket) -> str | None:
     # Tokens must come via Authorization header only — query params appear in access logs.
     header = websocket.headers.get("authorization", "")
     token = header[7:].strip() if header.lower().startswith("bearer ") else ""
@@ -71,7 +72,9 @@ def _websocket_user_id(websocket: WebSocket) -> str | None:
     if not payload or payload.get("type") != "access":
         return None
     sub = payload.get("sub") if payload else None
-    return str(sub) if sub else None
+    if not sub or await revocation_reason(token, str(sub)):
+        return None
+    return str(sub)
 
 
 async def _ensure_duplex_session_owner(session_id: str, user_id: str) -> None:
@@ -130,7 +133,7 @@ async def stream_audio(websocket: WebSocket):
 
         user_id = await consume_voice_ticket(ticket)
     else:
-        user_id = _websocket_user_id(websocket)
+        user_id = await _websocket_user_id(websocket)
     if not user_id:
         await send_json(
             {

@@ -4,6 +4,7 @@ import 'package:lexilingo_app/core/widgets/quick_save_word_sheet.dart';
 
 import 'chat_chart_block.dart';
 import 'markdown_message_content.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// One piece of an AI message: plain markdown, or a fenced rich block.
 class ChatSegment {
@@ -16,10 +17,7 @@ class ChatSegment {
 }
 
 const _kinds = 'chart|callout|vocab|fix|steps';
-final _closedFence = RegExp(
-  '```($_kinds)[ \\t]*\\n(.*?)```',
-  dotAll: true,
-);
+final _closedFence = RegExp('```($_kinds)[ \\t]*\\n(.*?)```', dotAll: true);
 final _openFence = RegExp('```($_kinds)[ \\t]*(\\n|\$)');
 
 /// Splits [content] so rich fences render as their own widgets instead of
@@ -29,7 +27,8 @@ List<ChatSegment> splitChatBlocks(String content) {
   final out = <ChatSegment>[];
   var pos = 0;
   for (final m in _closedFence.allMatches(content)) {
-    if (m.start > pos) out.add(ChatSegment.markdown(content.substring(pos, m.start)));
+    if (m.start > pos)
+      out.add(ChatSegment.markdown(content.substring(pos, m.start)));
     out.add(ChatSegment.block(m.group(1)!, m.group(2)!.trim()));
     pos = m.end;
   }
@@ -41,7 +40,10 @@ List<ChatSegment> splitChatBlocks(String content) {
 }
 
 /// [saveSource] enables the bookmark on vocab cards (`sourceType`, `sourceReference`).
-Widget buildChatBlock(ChatSegment s, {({String type, String? ref})? saveSource}) => switch (s.kind) {
+Widget buildChatBlock(
+  ChatSegment s, {
+  ({String type, String? ref})? saveSource,
+}) => switch (s.kind) {
   'chart' => ChatChartCard(rawSpec: s.body),
   'callout' => ChatCalloutCard(body: s.body),
   'vocab' => ChatVocabCard(body: s.body, saveSource: saveSource),
@@ -83,11 +85,11 @@ class _Card extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: accent.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: accent.withValues(alpha: 0.35)),
       ),
       child: child,
@@ -118,8 +120,11 @@ class ChatCalloutCard extends StatelessWidget {
 
     final (icon, color) = switch (kind) {
       'tip' => (Icons.lightbulb_rounded, AppColors.warningDark),
-      'warning' => (Icons.warning_amber_rounded, AppColors.errorDark),
-      'example' => (Icons.format_quote_rounded, AppColors.greenSuccess),
+      'warning' => (
+        Icons.warning_amber_rounded,
+        Theme.of(context).colorScheme.error,
+      ),
+      'example' => (Icons.format_quote_rounded, context.status.success),
       _ => (Icons.info_rounded, AppColorRoles.primary(isDark)),
     };
     return _Card(
@@ -131,7 +136,7 @@ class ChatCalloutCard extends StatelessWidget {
             padding: const EdgeInsets.only(top: 2),
             child: Icon(icon, size: 18, color: color),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.sm),
           Expanded(child: _md(text, isDark)),
         ],
       ),
@@ -166,23 +171,35 @@ class ChatVocabCard extends StatelessWidget {
             children: [
               Text(
                 word,
-                style: TextStyle(
-                  fontSize: 16,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: primary,
                 ),
               ),
               if (f['pos'] != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: primary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
                   ),
-                  child: Text(f['pos']!, style: TextStyle(fontSize: 12, color: primary)),
+                  child: Text(
+                    f['pos']!,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: primary),
+                  ),
                 ),
               if (f['ipa'] != null)
-                Text(f['ipa']!, style: TextStyle(fontSize: 12, color: muted)),
+                Text(
+                  f['ipa']!,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: muted),
+                ),
               if (saveSource != null)
                 InkWell(
                   onTap: () => showQuickSaveWordSheet(
@@ -195,30 +212,36 @@ class ChatVocabCard extends StatelessWidget {
                     translation: f['vi'],
                     partOfSpeech: f['pos'],
                   ),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                   child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Icon(Icons.bookmark_add_outlined, size: 20, color: primary),
+                    padding: const EdgeInsets.all(AppSpacing.sm),
+                    child: Icon(
+                      Icons.bookmark_add_outlined,
+                      size: 20,
+                      color: primary,
+                    ),
                   ),
                 ),
             ],
           ),
           if (f['meaning'] != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             _md(f['meaning']!, isDark),
           ],
           if (f['vi'] != null) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             _md(f['vi']!, isDark, color: primary),
           ],
           if (f['example'] != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(Icons.format_quote_rounded, size: 16, color: muted),
-                const SizedBox(width: 4),
-                Expanded(child: _md(f['example']!, isDark, size: 12, color: muted)),
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(
+                  child: _md(f['example']!, isDark, size: 12, color: muted),
+                ),
               ],
             ),
           ],
@@ -240,8 +263,10 @@ class ChatFixCard extends StatelessWidget {
     final wrong = f['wrong'];
     final right = f['right'];
     if (wrong == null || right == null) return const SizedBox.shrink();
-    final bad = isDark ? AppColors.errorBright : AppColors.errorDark;
-    final good = isDark ? AppColors.greenSuccessBright : AppColors.greenSuccess;
+    final bad = isDark
+        ? Theme.of(context).colorScheme.error
+        : Theme.of(context).colorScheme.error;
+    final good = isDark ? context.status.success : context.status.success;
 
     Widget line(IconData icon, Color color, Widget text) => Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -250,7 +275,7 @@ class ChatFixCard extends StatelessWidget {
           padding: const EdgeInsets.only(top: 2),
           child: Icon(icon, size: 16, color: color),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: AppSpacing.sm),
         Expanded(child: text),
       ],
     );
@@ -265,19 +290,23 @@ class ChatFixCard extends StatelessWidget {
             bad,
             Text(
               wrong,
-              style: TextStyle(
-                fontSize: 14,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 height: 1.5,
                 color: bad,
                 decoration: TextDecoration.lineThrough,
               ),
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.xs),
           line(Icons.check_rounded, good, _md(right, isDark, color: good)),
           if (f['why'] != null) ...[
-            const SizedBox(height: 8),
-            _md(f['why']!, isDark, size: 12, color: AppColorRoles.textSecondary(isDark)),
+            const SizedBox(height: AppSpacing.sm),
+            _md(
+              f['why']!,
+              isDark,
+              size: 12,
+              color: AppColorRoles.textSecondary(isDark),
+            ),
           ],
         ],
       ),
@@ -298,7 +327,9 @@ class ChatStepsCard extends StatelessWidget {
         if (line.trim().isNotEmpty)
           (
             line.split('|').first.trim(),
-            line.contains('|') ? line.substring(line.indexOf('|') + 1).trim() : '',
+            line.contains('|')
+                ? line.substring(line.indexOf('|') + 1).trim()
+                : '',
           ),
     ];
     if (steps.isEmpty) return const SizedBox.shrink();
@@ -314,40 +345,55 @@ class ChatStepsCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   SizedBox(
-                    width: 24,
+                    width: AppSpacing.xl,
                     child: Column(
                       children: [
                         Container(
                           width: 24,
                           height: 24,
                           alignment: Alignment.center,
-                          decoration: BoxDecoration(color: primary, shape: BoxShape.circle),
+                          decoration: BoxDecoration(
+                            color: primary,
+                            shape: BoxShape.circle,
+                          ),
                           child: Text(
                             '${i + 1}',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: isDark ? AppColors.surfaceDarkInk : AppColors.textInverted,
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                  color: isDark
+                                      ? AppColors.surfaceDarkInk
+                                      : AppColors.textInverted,
+                                ),
                           ),
                         ),
                         if (i < steps.length - 1)
                           Expanded(
-                            child: Container(width: 2, color: primary.withValues(alpha: 0.35)),
+                            child: Container(
+                              width: 2,
+                              color: primary.withValues(alpha: 0.35),
+                            ),
                           ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppSpacing.md),
                   Expanded(
                     child: Padding(
-                      padding: EdgeInsets.only(bottom: i < steps.length - 1 ? 12 : 0),
+                      padding: EdgeInsets.only(
+                        bottom: i < steps.length - 1 ? 12 : 0,
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _md('**${steps[i].$1}**', isDark),
                           if (steps[i].$2.isNotEmpty)
-                            _md(steps[i].$2, isDark, size: 12, color: AppColorRoles.textSecondary(isDark)),
+                            _md(
+                              steps[i].$2,
+                              isDark,
+                              size: 12,
+                              color: AppColorRoles.textSecondary(isDark),
+                            ),
                         ],
                       ),
                     ),

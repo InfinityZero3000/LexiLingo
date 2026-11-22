@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:easy_localization/easy_localization.dart';
@@ -20,6 +21,12 @@ import '../pages/welcome_page.dart';
 import '../pages/onboarding_page.dart';
 import '../pages/pre_auth_questions_page.dart';
 import 'package:lexilingo_app/features/level/presentation/level_sync.dart';
+import 'session_sync_gate.dart';
+import 'package:lexilingo_app/core/navigation/learner_route.dart';
+import 'package:lexilingo_app/features/onboarding/domain/entities/start_learning_target.dart';
+import 'package:lexilingo_app/features/onboarding/presentation/pages/start_learning_page.dart';
+import 'package:lexilingo_app/features/onboarding/presentation/providers/start_learning_provider.dart';
+import 'package:lexilingo_app/features/onboarding/presentation/start_learning_launcher.dart';
 import 'package:lexilingo_app/features/lexi_chat/presentation/providers/lexi_chat_provider.dart';
 
 class AuthWrapper extends StatefulWidget {
@@ -31,9 +38,9 @@ class AuthWrapper extends StatefulWidget {
 
 class _AuthWrapperState extends State<AuthWrapper> {
   bool _showOnboarding = false;
+  bool _startingLearning = false;
   bool _showPreAuthWelcome = false;
   bool _showPreAuthQuestions = false;
-  bool _wasAuthenticated = false;
   bool _isResolvingFlow = false;
   bool _isResolvingPreAuthFlow = false;
   bool _isShowingRegister = false;
@@ -66,6 +73,14 @@ class _AuthWrapperState extends State<AuthWrapper> {
     final prefs = await SharedPreferences.getInstance();
     final shouldShowWelcome =
         prefs.getBool(AppConstants.firstTimeUserKey) ?? true;
+    final savedAnswers = prefs.getString(_preAuthAnswersKey);
+    if (_pendingPreAuthAnswers == null && savedAnswers != null) {
+      try {
+        _pendingPreAuthAnswers = PreAuthAnswers.fromJson(
+          jsonDecode(savedAnswers) as Map<String, dynamic>,
+        );
+      } catch (_) {}
+    }
 
     if (!mounted) return;
     setState(() {
@@ -205,6 +220,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
     await prefs.setBool(_onboardingCompletedKey(userId), true);
     await prefs.setString(_onboardingConfigKey(userId), jsonEncode(config));
     await prefs.remove(_preAuthAnswersKey);
+    _pendingPreAuthAnswers = null;
 
     await authProvider.submitOnboarding(
       answers.toJson(),
@@ -224,8 +240,29 @@ class _AuthWrapperState extends State<AuthWrapper> {
     if (!mounted) return;
     setState(() {
       _showOnboarding = false;
+      _startingLearning = true;
     });
     authProvider.clearJustLoggedIn();
+  }
+
+  void _finishStartLearning(StartLearningTarget? target) {
+    if (!mounted) return;
+    setState(() => _startingLearning = false);
+    if (target == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      LearnerRoute.push<void>(
+        context,
+        (_) => StartLearningLauncher.sessionFor(target),
+      );
+    });
+  }
+
+  Future<String?> _takePlacementTest(AuthProvider authProvider) async {
+    await Navigator.of(context).pushNamed('/placement-test');
+    if (!mounted) return null;
+    await authProvider.refreshCurrentUser();
+    return authProvider.currentUser?.cefrLevel;
   }
 
   String _themeColorForGoal(String goal) {
@@ -247,45 +284,61 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-
-    // Show loading while checking auth state
-    if (authProvider.isCheckingAuth) {
-      return Scaffold(body: LoadingScreen(message: 'common.loading'.tr()));
-    }
-
-    // Detect when user just logged in
-    if (authProvider.isAuthenticated && !_wasAuthenticated) {
-      _wasAuthenticated = true;
-      _flowResolvedForUserId = null;
-      _showOnboarding = false;
-      final userId = authProvider.currentUser?.id;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+    final auth = context.read<AuthProvider>();
+    return SessionSyncGate(
+      listenable: auth,
+      read: () => SessionSnapshot(
+        checking: auth.isCheckingAuth,
+        authenticated: auth.isAuthenticated,
+        userId: auth.currentUser?.id,
+      ),
+      onSignedOut: () {
+        _showOnboarding = false;
+        _startingLearning = false;
+        _flowResolvedForUserId = null;
+        _entitlementSyncedForUserId = null;
+        _preAuthFlowResolved = false;
+        _pendingPreAuthAnswers = null;
+        unawaited(
+          SharedPreferences.getInstance().then(
+            (p) => p.remove(_preAuthAnswersKey),
+          ),
+        );
+        _showPreAuthWelcome = false;
+        _showPreAuthQuestions = false;
+        _isShowingRegister = false;
+      },
+      onSignedIn: () {
+        _flowResolvedForUserId = null;
+        _showOnboarding = false;
+      },
+      onSessionStart: (context) {
+        final userId = auth.currentUser?.id;
         // Load user settings when authenticated
         if (userId != null) {
           context.read<SettingsProvider>().loadSettings(userId, context);
         }
         // Lexi falls back to what the app sends when the learner card is
         // slow; it used to send a fixed B1 for everyone.
-        final level = authProvider.currentUser?.cefrLevel;
+        final level = auth.currentUser?.cefrLevel;
         if (level != null) {
           context.read<LexiChatProvider>().setLearnerLevel(level);
         }
-        _resolvePostAuthFlow(authProvider);
-        _syncEntitlements(authProvider);
-      });
-    }
+      },
+      onSessionStarted: () {
+        _resolvePostAuthFlow(auth);
+        _syncEntitlements(auth);
+      },
+      child: _buildBody(context),
+    );
+  }
 
-    // Reset state when user logs out
-    if (!authProvider.isAuthenticated && _wasAuthenticated) {
-      _wasAuthenticated = false;
-      _showOnboarding = false;
-      _flowResolvedForUserId = null;
-      _entitlementSyncedForUserId = null;
-      _preAuthFlowResolved = false;
-      _showPreAuthWelcome = false;
-      _showPreAuthQuestions = false;
-      _isShowingRegister = false;
+  Widget _buildBody(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+
+    // Show loading while checking auth state
+    if (authProvider.isCheckingAuth) {
+      return Scaffold(body: LoadingScreen(message: 'common.loading'.tr()));
     }
 
     if (authProvider.isAuthenticated && !_isResolvingFlow) {
@@ -313,6 +366,15 @@ class _AuthWrapperState extends State<AuthWrapper> {
       } else if (_showOnboarding) {
         currentPage = OnboardingPage(
           onComplete: (answers) => _completeOnboarding(authProvider, answers),
+          onTakePlacementTest: () => _takePlacementTest(authProvider),
+        );
+      } else if (_startingLearning) {
+        currentPage = ChangeNotifierProvider<StartLearningProvider>(
+          create: (_) => di.sl<StartLearningProvider>(),
+          child: StartLearningPage(
+            onStarted: _finishStartLearning,
+            onSkip: () => _finishStartLearning(null),
+          ),
         );
       } else {
         currentPage = const LearnerTheme(child: MainScreen());
@@ -350,7 +412,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
         );
       } else {
         currentPage = _isShowingRegister
-            ? const RegisterPage()
+            ? RegisterPage(initialName: _pendingPreAuthAnswers?.name)
             : const LoginPage();
       }
     }
@@ -390,7 +452,9 @@ class _AuthWrapperState extends State<AuthWrapper> {
       child: KeyedSubtree(
         key: ValueKey<String>(
           authProvider.isAuthenticated
-              ? (_showOnboarding ? 'onboarding' : 'main')
+              ? (_showOnboarding
+                    ? 'onboarding'
+                    : (_startingLearning ? 'start-learning' : 'main'))
               : (_showPreAuthWelcome
                     ? 'welcome'
                     : (_isShowingRegister ? 'register' : 'login')),

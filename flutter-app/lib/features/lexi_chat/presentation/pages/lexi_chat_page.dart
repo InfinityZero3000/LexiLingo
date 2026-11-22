@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/utils/chat_input_limit.dart';
 import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'dart:async';
@@ -18,6 +19,7 @@ import 'package:lexilingo_app/core/voice/duplex_voice_phase.dart';
 import 'package:provider/provider.dart';
 import 'package:record/record.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/features/auth/domain/entities/user_entity.dart';
 import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.dart';
@@ -30,6 +32,7 @@ import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_memor
 import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_suggestion_bar.dart';
 import 'package:lexilingo_app/features/voice/data/datasources/speech_recognition_service.dart';
 import 'package:lexilingo_app/features/voice/domain/usecases/assess_pronunciation_usecase.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Lexi Chat Page — Minimalist design with clean conversation UI.
 ///
@@ -64,6 +67,7 @@ class _LexiChatPageState extends State<LexiChatPage>
 
   // Voice recording (mobile/desktop)
   final AudioRecorder _recorder = AudioRecorder();
+  String? _recordingPath;
   bool _isRecording = false;
   bool _isTranscribing = false;
   Timer? _recordingTimer;
@@ -144,12 +148,11 @@ class _LexiChatPageState extends State<LexiChatPage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Runs after initState and again whenever the active locale changes
-    // (e.g. switched in Settings while this page stays alive under the
-    // bottom-nav IndexedStack), keeping Lexi's native-language hint in
-    // sync with whatever the UI is currently displaying.
+    // Runs after initState and again whenever the locale or the learner's
+    // reply-language choice changes, even while this page stays alive under
+    // the bottom-nav IndexedStack.
     _chat = context.read<LexiChatProvider>();
-    _chat.setNativeLanguage(_nativeLanguage);
+    _chat.setNativeLanguage(_replyLanguage());
   }
 
   @override
@@ -185,6 +188,7 @@ class _LexiChatPageState extends State<LexiChatPage>
       () async => _webSpeechSub?.cancel(),
       () async {
         if (_isRecording) await _recorder.cancel();
+        _discardRecordingFile();
       },
       () async {
         await _duplexVoice?.stop();
@@ -206,6 +210,13 @@ class _LexiChatPageState extends State<LexiChatPage>
     });
   }
 
+  void _discardRecordingFile() {
+    final path = _recordingPath;
+    _recordingPath = null;
+    if (path == null || kIsWeb) return;
+    unawaited(File(path).delete().then<void>((_) {}).catchError((Object _) {}));
+  }
+
   String get _userId {
     try {
       return Provider.of<AuthProvider>(context, listen: false).user?.id ??
@@ -215,8 +226,22 @@ class _LexiChatPageState extends State<LexiChatPage>
     }
   }
 
-  String get _nativeLanguage =>
-      LocaleService.normalizeLanguageCode(context.locale.languageCode);
+  /// Subscribes to the user, so flipping the setting re-runs
+  /// didChangeDependencies.
+  String _replyLanguage() {
+    final appLanguage = LocaleService.normalizeLanguageCode(
+      context.locale.languageCode,
+    );
+    UserEntity? user;
+    try {
+      user = Provider.of<AuthProvider>(context).user;
+    } on ProviderNotFoundException {
+      user = null;
+    }
+    return LocaleService.normalizeLanguageCode(
+      user?.lexiReplyLanguageFor(appLanguage) ?? appLanguage,
+    );
+  }
 
   @override
   void dispose() {
@@ -228,6 +253,7 @@ class _LexiChatPageState extends State<LexiChatPage>
     _scrollController.dispose();
     _focusNode.dispose();
     _recorder.dispose();
+    _discardRecordingFile();
     _recordingTimer?.cancel();
     _webSpeechSub?.cancel();
     _webSpeech?.dispose();
@@ -330,7 +356,12 @@ class _LexiChatPageState extends State<LexiChatPage>
         ? DuplexVoicePhase.connecting
         : phase;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.sm,
+        AppSpacing.lg,
+        AppSpacing.md,
+      ),
       child: ValueListenableBuilder<double>(
         valueListenable: client?.inputLevel ?? ValueNotifier(0),
         builder: (context, level, _) => DuplexVoicePanel(
@@ -375,6 +406,7 @@ class _LexiChatPageState extends State<LexiChatPage>
   Future<void> _sendMessage() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
+    if (context.read<LexiChatProvider>().isSending) return;
     _controller.clear();
 
     final provider = context.read<LexiChatProvider>();
@@ -385,6 +417,7 @@ class _LexiChatPageState extends State<LexiChatPage>
   }
 
   Future<void> _sendQuickReply(String text) async {
+    if (context.read<LexiChatProvider>().isSending) return;
     _controller.text = text;
     await _sendMessage();
   }
@@ -416,13 +449,14 @@ class _LexiChatPageState extends State<LexiChatPage>
         _controller.selection = TextSelection.collapsed(offset: display.length);
       },
       onError: (error) {
+        if (!mounted) return;
         setState(() => _isWebSpeechActive = false);
         _showSnack(
           'lexiChat.sttFailed'.tr(namedArgs: {'error': error.toString()}),
         );
       },
       onDone: () {
-        if (_isWebSpeechActive) {
+        if (mounted && _isWebSpeechActive) {
           setState(() => _isWebSpeechActive = false);
         }
       },
@@ -444,7 +478,7 @@ class _LexiChatPageState extends State<LexiChatPage>
     final epoch = _voiceEpoch;
     try {
       final hasPermission = await _recorder.hasPermission();
-      if (epoch != _voiceEpoch) return;
+      if (!mounted || epoch != _voiceEpoch) return;
       if (!hasPermission) {
         _showSnack('lexiChat.micPermissionRequired'.tr());
         return;
@@ -457,8 +491,10 @@ class _LexiChatPageState extends State<LexiChatPage>
         const RecordConfig(encoder: AudioEncoder.aacLc, numChannels: 1),
         path: recordingPath,
       );
-      if (epoch != _voiceEpoch) {
+      _recordingPath = recordingPath;
+      if (!mounted || epoch != _voiceEpoch) {
         await _recorder.cancel();
+        _discardRecordingFile();
         return;
       }
 
@@ -467,7 +503,9 @@ class _LexiChatPageState extends State<LexiChatPage>
         _recordingDuration = Duration.zero;
       });
 
+      _recordingTimer?.cancel();
       _recordingTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (!mounted) return;
         setState(() => _recordingDuration += const Duration(seconds: 1));
       });
     } catch (e) {
@@ -483,24 +521,32 @@ class _LexiChatPageState extends State<LexiChatPage>
 
     try {
       final path = await _recorder.stop();
-      if (!mounted || epoch != _voiceEpoch) return;
+      if (!mounted || epoch != _voiceEpoch) {
+        _discardRecordingFile();
+        return;
+      }
       setState(() {
         _isRecording = false;
         _isTranscribing = true;
       });
 
       if (path == null) {
+        _discardRecordingFile();
         setState(() => _isTranscribing = false);
         return;
       }
 
       final file = File(path);
-      if (!await file.exists()) {
+      final exists = await file.exists();
+      if (!mounted) return;
+      if (!exists) {
+        _discardRecordingFile();
         _showSnack('lexiChat.audioReadError'.tr());
         setState(() => _isTranscribing = false);
         return;
       }
       final bytes = await file.readAsBytes();
+      _discardRecordingFile();
 
       if (!mounted) return;
       final chatProvider = context.read<LexiChatProvider>();
@@ -513,6 +559,11 @@ class _LexiChatPageState extends State<LexiChatPage>
         return;
       }
 
+      if (chatProvider.isSending) {
+        _showSnack('lexiChat.voice.busyBanner'.tr());
+        return;
+      }
+
       _controller.text = transcript;
       _controller.selection = TextSelection.collapsed(
         offset: transcript.length,
@@ -522,6 +573,7 @@ class _LexiChatPageState extends State<LexiChatPage>
       await _sendMessage();
       unawaited(_assessAndAttachPronunciation(bytes, transcript));
     } catch (e) {
+      _discardRecordingFile();
       if (!mounted) return;
       setState(() {
         _isRecording = false;
@@ -578,6 +630,7 @@ class _LexiChatPageState extends State<LexiChatPage>
   }
 
   void _showSnack(String msg) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(msg), duration: const Duration(seconds: 2)),
     );
@@ -633,13 +686,18 @@ class _LexiChatPageState extends State<LexiChatPage>
 
   // ── Minimalist Header ────────────────────────────────────────────────────
   Widget _buildHeader(bool isDark) {
-    final iconColor = isDark ? Colors.white70 : AppColors.textDark;
+    final iconColor = isDark
+        ? AppColors.textOnDarkSecondary
+        : Theme.of(context).colorScheme.onSurface;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
+      ),
       decoration: BoxDecoration(
         color: isDark
             ? AppColors.surfaceDark.withValues(alpha: 0.95)
-            : Colors.white.withValues(alpha: 0.95),
+            : Theme.of(context).colorScheme.surface.withValues(alpha: 0.95),
         border: Border(
           bottom: BorderSide(
             color: isDark ? AppColors.surfaceDarkChat : AppColors.chatBgLight,
@@ -652,7 +710,9 @@ class _LexiChatPageState extends State<LexiChatPage>
           // A tab in MainScreen, but also pushed as `/lexi` — only then can it pop.
           if (ModalRoute.of(context)?.canPop ?? false)
             AppBackButton(
-              color: isDark ? Colors.white70 : AppColors.textDark,
+              color: isDark
+                  ? AppColors.textOnDarkSecondary
+                  : Theme.of(context).colorScheme.onSurface,
               onPressed: () => Navigator.of(context).pop(),
             ),
           IconButton(
@@ -660,7 +720,7 @@ class _LexiChatPageState extends State<LexiChatPage>
             onPressed: () => _scaffoldKey.currentState?.openDrawer(),
             tooltip: 'lexiChat.tooltipSessionHistory'.tr(),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: AppSpacing.xs),
           // Title
           Expanded(
             child:
@@ -671,10 +731,11 @@ class _LexiChatPageState extends State<LexiChatPage>
                   children: [
                     Text(
                       'lexiChat.title'.tr(),
-                      style: TextStyle(
-                        fontSize: 19,
+                      style: Theme.of(context).textTheme.heading?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: isDark ? Colors.white : AppColors.textDark,
+                        color: isDark
+                            ? AppColors.textOnDarkPrimary
+                            : Theme.of(context).colorScheme.onSurface,
                         letterSpacing: -0.3,
                       ),
                     ),
@@ -689,17 +750,19 @@ class _LexiChatPageState extends State<LexiChatPage>
                             provider.isLexiThinking || provider.isLexiTyping;
                         return Text(
                           status,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isActive
-                                ? AppColorRoles.primary(isDark)
-                                : (isDark
-                                      ? Colors.white54
-                                      : AppColors.textGrey),
-                            fontWeight: isActive
-                                ? FontWeight.w600
-                                : FontWeight.w500,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: isActive
+                                    ? AppColorRoles.primary(isDark)
+                                    : (isDark
+                                          ? AppColors.textOnDarkMuted
+                                          : Theme.of(
+                                              context,
+                                            ).colorScheme.onSurfaceVariant),
+                                fontWeight: isActive
+                                    ? FontWeight.w600
+                                    : FontWeight.w500,
+                              ),
                         );
                       },
                     ),
@@ -722,7 +785,11 @@ class _LexiChatPageState extends State<LexiChatPage>
                           : Icons.volume_off_rounded,
                       color: provider.ttsEnabled
                           ? AppColorRoles.primary(isDark)
-                          : (isDark ? Colors.white38 : AppColors.textGrey),
+                          : (isDark
+                                ? AppColors.textOnDarkMuted
+                                : Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant),
                       size: 22,
                     ),
                     onPressed: provider.toggleTts,
@@ -737,7 +804,11 @@ class _LexiChatPageState extends State<LexiChatPage>
                             : Icons.closed_caption_disabled_rounded,
                         color: provider.captionsVisible
                             ? AppColorRoles.primary(isDark)
-                            : (isDark ? Colors.white38 : AppColors.textGrey),
+                            : (isDark
+                                  ? AppColors.textOnDarkMuted
+                                  : Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant),
                         size: 22,
                       ),
                       onPressed: () => provider.setCaptionsVisible(
@@ -770,17 +841,24 @@ class _LexiChatPageState extends State<LexiChatPage>
             return Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    AppSpacing.md,
+                    AppSpacing.sm,
+                    AppSpacing.sm,
+                  ),
                   child: Row(
                     children: [
                       Expanded(
                         child: Text(
                           'lexiChat.sessionsDrawerTitle'.tr(),
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: isDark ? Colors.white : AppColors.textDark,
-                          ),
+                          style: Theme.of(context).textTheme.sectionTitle
+                              ?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: isDark
+                                    ? AppColors.textOnDarkPrimary
+                                    : Theme.of(context).colorScheme.onSurface,
+                              ),
                         ),
                       ),
                       IconButton(
@@ -802,8 +880,10 @@ class _LexiChatPageState extends State<LexiChatPage>
                             'lexiChat.noSessions'.tr(),
                             style: TextStyle(
                               color: isDark
-                                  ? Colors.white54
-                                  : AppColors.textGrey,
+                                  ? AppColors.textOnDarkMuted
+                                  : Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
                             ),
                           ),
                         )
@@ -856,6 +936,12 @@ class _LexiChatPageState extends State<LexiChatPage>
                                                 ),
                                                 actions: [
                                                   TextButton(
+                                                    style: TextButton.styleFrom(
+                                                      minimumSize: const Size(
+                                                        kMinTapTarget,
+                                                        kMinTapTarget,
+                                                      ),
+                                                    ),
                                                     onPressed: () =>
                                                         Navigator.pop(context),
                                                     child: Text(
@@ -863,7 +949,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                                                           .tr(),
                                                     ),
                                                   ),
-                                                  ElevatedButton(
+                                                  FilledButton(
                                                     onPressed: () =>
                                                         Navigator.pop(
                                                           context,
@@ -953,12 +1039,13 @@ class _LexiChatPageState extends State<LexiChatPage>
               mainAxisSize: MainAxisSize.min,
               children: [
                 LottieLoadingWidget.medium(),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.md),
                 Text(
                   'lexiChat.startingConversation'.tr(),
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isDark ? Colors.white54 : AppColors.textGrey,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: isDark
+                        ? AppColors.textOnDarkMuted
+                        : Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -973,20 +1060,23 @@ class _LexiChatPageState extends State<LexiChatPage>
 
         return ListView.builder(
           controller: _scrollController,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.md,
+          ),
           itemCount: messages.length + (isResponding ? 1 : 0),
           itemBuilder: (context, index) {
             // Typing indicator at the end
             if (index == messages.length && isResponding) {
               return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.only(bottom: AppSpacing.md),
                 child: LexiTypingIndicator(isThinking: provider.isLexiThinking),
               );
             }
 
             final message = messages[index];
             return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.only(bottom: AppSpacing.md),
               child: LexiDialogueBubble(
                 message: message,
                 onPlayAudio: message.hasAudio
@@ -1033,11 +1123,16 @@ class _LexiChatPageState extends State<LexiChatPage>
   Widget _buildInputBar(bool isDark) {
     if (_showVoicePanel) return _buildVoicePanelBar();
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        AppSpacing.md,
+      ),
       decoration: BoxDecoration(
         color: isDark
             ? AppColors.surfaceDark.withValues(alpha: 0.95)
-            : Colors.white.withValues(alpha: 0.95),
+            : Theme.of(context).colorScheme.surface.withValues(alpha: 0.95),
         border: Border(
           top: BorderSide(
             color: isDark ? AppColors.surfaceDarkChat : AppColors.chatBgLight,
@@ -1052,23 +1147,26 @@ class _LexiChatPageState extends State<LexiChatPage>
             Container(
               width: double.infinity,
               margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm,
+              ),
               decoration: BoxDecoration(
                 color:
                     (_isWebSpeechActive
-                            ? Colors.blue
+                            ? Theme.of(context).colorScheme.primary
                             : _isTranscribing
-                            ? Colors.orange
-                            : Colors.red)
+                            ? AppColors.orange
+                            : Theme.of(context).colorScheme.error)
                         .withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 border: Border.all(
                   color:
                       (_isWebSpeechActive
-                              ? Colors.blue
+                              ? Theme.of(context).colorScheme.primary
                               : _isTranscribing
-                              ? Colors.orange
-                              : Colors.red)
+                              ? AppColors.orange
+                              : Theme.of(context).colorScheme.error)
                           .withValues(alpha: 0.2),
                 ),
               ),
@@ -1076,11 +1174,11 @@ class _LexiChatPageState extends State<LexiChatPage>
                 children: [
                   if (_isTranscribing)
                     const SizedBox(
-                      width: 16,
-                      height: 16,
+                      width: AppSpacing.lg,
+                      height: AppSpacing.lg,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.orange,
+                        color: AppColors.orange,
                       ),
                     )
                   else
@@ -1089,29 +1187,33 @@ class _LexiChatPageState extends State<LexiChatPage>
                           ? Icons.graphic_eq
                           : Icons.pause_rounded,
                       color: _isWebSpeechActive
-                          ? Colors.blue
-                          : AppColors.errorBright,
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.error,
                       size: 16,
                     ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _isTranscribing
-                        ? 'lexiChat.transcribingStatus'.tr()
-                        : _isWebSpeechActive
-                        ? 'lexiChat.webSpeechRecording'.tr()
-                        : 'lexiChat.recordingStatus'.tr(
-                            namedArgs: {
-                              'seconds': _recordingDuration.inSeconds
-                                  .toString(),
-                            },
-                          ),
-                    style: TextStyle(
-                      color: _isWebSpeechActive
-                          ? Colors.blue
-                          : _isTranscribing
-                          ? Colors.orange
-                          : AppColors.errorBright,
-                      fontWeight: FontWeight.w600,
+                  const SizedBox(width: AppSpacing.sm),
+                  Flexible(
+                    child: Text(
+                      _isTranscribing
+                          ? 'lexiChat.transcribingStatus'.tr()
+                          : _isWebSpeechActive
+                          ? 'lexiChat.webSpeechRecording'.tr()
+                          : 'lexiChat.recordingStatus'.tr(
+                              namedArgs: {
+                                'seconds': _recordingDuration.inSeconds
+                                    .toString(),
+                              },
+                            ),
+                      style: TextStyle(
+                        color: _isWebSpeechActive
+                            ? Theme.of(context).colorScheme.primary
+                            : _isTranscribing
+                            ? AppColors.orange
+                            : Theme.of(context).colorScheme.error,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -1134,17 +1236,22 @@ class _LexiChatPageState extends State<LexiChatPage>
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: _quickReplies.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    separatorBuilder: (_, __) =>
+                        const SizedBox(width: AppSpacing.sm),
                     itemBuilder: (context, index) {
                       final text = _quickReplies[index];
                       return ActionChip(
                         label: Text(text, overflow: TextOverflow.ellipsis),
                         onPressed: () =>
                             _sendQuickReply(_quickReplyPrompts[index]),
-                        labelStyle: TextStyle(
-                          fontSize: 11,
-                          color: isDark ? Colors.white70 : AppColors.textGrey,
-                        ),
+                        labelStyle: Theme.of(context).textTheme.labelSmall
+                            ?.copyWith(
+                              color: isDark
+                                  ? AppColors.textOnDarkSecondary
+                                  : Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                            ),
                         side: BorderSide(
                           color: isDark
                               ? AppColors.surfaceDarkChat
@@ -1165,7 +1272,7 @@ class _LexiChatPageState extends State<LexiChatPage>
             children: [
               // Voice recording button
               _buildVoiceButton(isDark),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.md),
               // Text input
               Expanded(
                 child: Container(
@@ -1173,7 +1280,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                     color: isDark
                         ? AppColors.surfaceDarkInk
                         : AppColors.backgroundLight,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
                     border: Border.all(
                       color: isDark
                           ? AppColors.surfaceDarkChat
@@ -1188,26 +1295,33 @@ class _LexiChatPageState extends State<LexiChatPage>
                     onSubmitted: (_) => _sendMessage(),
                     maxLines: 4,
                     minLines: 1,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: isDark ? Colors.white : AppColors.textDark,
+                    inputFormatters: chatInputFormatters,
+                    buildCounter: buildChatInputCounter,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: isDark
+                          ? AppColors.textOnDarkPrimary
+                          : Theme.of(context).colorScheme.onSurface,
                     ),
                     decoration: InputDecoration(
                       hintText: 'lexiChat.inputHint'.tr(),
-                      hintStyle: TextStyle(
-                        color: isDark ? Colors.white38 : AppColors.textGrey,
-                        fontSize: 14,
-                      ),
+                      hintStyle: Theme.of(context).textTheme.bodyMedium
+                          ?.copyWith(
+                            color: isDark
+                                ? AppColors.textOnDarkMuted
+                                : Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                          ),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
+                        horizontal: AppSpacing.lg,
+                        vertical: AppSpacing.md,
                       ),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: AppSpacing.md),
               // Send button
               Consumer<LexiChatProvider>(
                 builder: (_, provider, __) {
@@ -1216,7 +1330,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                     height: 44,
                     decoration: BoxDecoration(
                       color: AppColorRoles.primary(isDark),
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(AppRadius.md),
                       boxShadow: [
                         BoxShadow(
                           color: AppColorRoles.primary(
@@ -1234,7 +1348,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                             : Icons.send_rounded,
                         color: isDark
                             ? AppColors.slate900
-                            : AppColors.surfaceLight,
+                            : Theme.of(context).colorScheme.surface,
                         size: 20,
                       ),
                       onPressed: provider.isSending ? null : _sendMessage,
@@ -1255,10 +1369,10 @@ class _LexiChatPageState extends State<LexiChatPage>
 
     // Active color depends on mode
     final activeColor = _isWebSpeechActive
-        ? Colors.blue
+        ? Theme.of(context).colorScheme.primary
         : _isTranscribing
-        ? Colors.orange
-        : Colors.red;
+        ? AppColors.orange
+        : Theme.of(context).colorScheme.error;
 
     Widget button = AnimatedContainer(
       duration: const Duration(milliseconds: 200),
@@ -1268,7 +1382,7 @@ class _LexiChatPageState extends State<LexiChatPage>
         color: isActive
             ? activeColor.withValues(alpha: 0.1)
             : (isDark ? AppColors.surfaceDarkChat : AppColors.backgroundLight),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
           color: isActive
               ? activeColor.withValues(alpha: 0.3)
@@ -1283,7 +1397,7 @@ class _LexiChatPageState extends State<LexiChatPage>
                 height: 18,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  color: Colors.orange,
+                  color: AppColors.orange,
                 ),
               ),
             )
@@ -1295,7 +1409,9 @@ class _LexiChatPageState extends State<LexiChatPage>
                   : Icons.mic_none_rounded,
               color: isActive
                   ? activeColor
-                  : (isDark ? Colors.white54 : AppColors.textGrey),
+                  : (isDark
+                        ? AppColors.textOnDarkMuted
+                        : Theme.of(context).colorScheme.onSurfaceVariant),
               size: 20,
             ),
     );

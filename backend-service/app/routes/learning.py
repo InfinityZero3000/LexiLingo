@@ -59,7 +59,16 @@ from app.services.rank_service import (
     calculate_rank as calc_rank
 )
 
+from app.services.lesson_unlock import (
+    LOCKED_DETAIL,
+    is_lesson_locked,
+    next_playable_lesson_id,
+    sequence_locked_ids,
+)
+
 logger = logging.getLogger(__name__)
+
+OUT_OF_HEARTS_DETAIL = "out_of_hearts"
 
 router = APIRouter(prefix="/learning", tags=["Learning Sessions"])
 
@@ -101,7 +110,13 @@ async def start_lesson(
         )
     )
     existing = result.scalar_one_or_none()
-    
+
+    if existing and existing.lives_remaining <= 0:
+        existing.finished_at = datetime.now(timezone.utc)
+        existing.passed = False
+        await db.flush()
+        existing = None
+
     if existing:
         return ApiResponse(
             success=True,
@@ -119,6 +134,9 @@ async def start_lesson(
             )
         )
     
+    if await is_lesson_locked(db, current_user.id, lesson):
+        raise HTTPException(status.HTTP_409_CONFLICT, LOCKED_DETAIL)
+
     # Determine total questions dynamically from lesson content or demo fallback
     total_questions = lesson.exercise_count
     if total_questions == 0:
@@ -177,7 +195,9 @@ async def get_lesson_content(
     
     if not lesson:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Lesson not found")
-    
+    if await is_lesson_locked(db, current_user.id, lesson):
+        raise HTTPException(status.HTTP_409_CONFLICT, LOCKED_DETAIL)
+
     # Parse exercises from lesson.content (JSON field)
     exercises = []
     if lesson.content and isinstance(lesson.content, dict):
@@ -571,6 +591,8 @@ async def submit_answer(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Attempt not found")
     if attempt.finished_at is not None:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "Lesson completed")
+    if attempt.lives_remaining <= 0:
+        raise HTTPException(status.HTTP_409_CONFLICT, OUT_OF_HEARTS_DETAIL)
     
     # Get lesson to validate answer
     lesson_result = await db.execute(select(Lesson).where(Lesson.id == attempt.lesson_id))
@@ -742,54 +764,8 @@ async def _validate_answer(
 
 
 async def _find_next_lesson(db: AsyncSession, current_lesson: Lesson) -> Optional[UUID]:
-    """Return the UUID of the next lesson after current_lesson.
-
-    Checks same-unit lessons by order_index first, then falls back to the
-    first lesson of the next unit (ordered by order_index).
-    """
-    unit_result = await db.execute(select(Unit).where(Unit.id == current_lesson.unit_id))
-    unit = unit_result.scalar_one_or_none()
-    if not unit:
-        return None
-
-    next_in_unit = await db.execute(
-        select(Lesson)
-        .where(
-            and_(
-                Lesson.unit_id == unit.id,
-                Lesson.order_index > current_lesson.order_index,
-            )
-        )
-        .order_by(Lesson.order_index)
-        .limit(1)
-    )
-    nxt = next_in_unit.scalar_one_or_none()
-    if nxt:
-        return nxt.id
-
-    next_unit = await db.execute(
-        select(Unit)
-        .where(
-            and_(
-                Unit.course_id == unit.course_id,
-                Unit.order_index > unit.order_index,
-            )
-        )
-        .order_by(Unit.order_index)
-        .limit(1)
-    )
-    nu = next_unit.scalar_one_or_none()
-    if not nu:
-        return None
-
-    first_in_next = await db.execute(
-        select(Lesson)
-        .where(Lesson.unit_id == nu.id)
-        .order_by(Lesson.order_index)
-        .limit(1)
-    )
-    first = first_in_next.scalar_one_or_none()
-    return first.id if first else None
+    """The next playable lesson in the course, across units, or None."""
+    return await next_playable_lesson_id(db, current_lesson)
 
 
 async def _skill_results_for_attempt(
@@ -997,6 +973,42 @@ def _text_similarity(first: str, second: str) -> float:
     return (longest_length - previous[-1]) / longest_length
 
 
+def _stars_for_score(score: float) -> int:
+    """Stars awarded for a lesson score."""
+    if score >= 90:
+        return 3
+    if score >= 80:
+        return 2
+    if score >= 70:
+        return 1
+    return 0
+
+
+def _lesson_complete_payload(
+    attempt: LessonAttempt, next_lesson_id: UUID | None, achievements: list
+) -> LessonCompleteResponse:
+    """Response body for a finished attempt."""
+    return LessonCompleteResponse(
+        attempt_id=attempt.id,
+        passed=attempt.passed,
+        final_score=attempt.score,
+        total_xp_earned=attempt.xp_earned,
+        time_spent_seconds=attempt.time_spent_ms // 1000,
+        accuracy=(
+            attempt.correct_answers / attempt.total_questions * 100
+            if attempt.total_questions > 0
+            else 0
+        ),
+        stars_earned=_stars_for_score(attempt.score),
+        next_lesson_unlocked=next_lesson_id,
+        achievements_unlocked=achievements,
+        total_questions=attempt.total_questions,
+        correct_answers=attempt.correct_answers,
+        wrong_answers=attempt.total_questions - attempt.correct_answers,
+        hints_used=attempt.hints_used,
+    )
+
+
 @router.post("/attempts/{attempt_id}/complete", response_model=ApiResponse[LessonCompleteResponse])
 async def complete_lesson(
     attempt_id: UUID,
@@ -1017,29 +1029,28 @@ async def complete_lesson(
     
     if not attempt:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Attempt not found")
-    if attempt.finished_at is not None:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Already completed")
-    
+
     # Get lesson info for course_id
     result = await db.execute(select(Lesson).where(Lesson.id == attempt.lesson_id))
     lesson = result.scalar_one_or_none()
     if not lesson:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Lesson not found")
+
+    if attempt.finished_at is not None:
+        # A retry after a lost response: replay the stored result, award nothing.
+        next_id = await _find_next_lesson(db, lesson) if attempt.passed else None
+        return ApiResponse(
+            success=True,
+            message="Congratulations!" if attempt.passed else "Keep practicing!",
+            data=_lesson_complete_payload(attempt, next_id, []),
+        )
     
     # Complete
     attempt.finished_at = datetime.now(timezone.utc)
     pass_threshold = lesson.pass_threshold or 80.0
     attempt.passed = attempt.score >= pass_threshold
     
-    # Stars
-    if attempt.score >= 90:
-        stars = 3
-    elif attempt.score >= 80:
-        stars = 2
-    elif attempt.score >= 70:
-        stars = 1
-    else:
-        stars = 0
+    stars = _stars_for_score(attempt.score)
     
     # Update UserProgress
     result = await db.execute(
@@ -1190,14 +1201,9 @@ async def complete_lesson(
     except Exception as e:
         logger.warning("Proficiency update error: %s", e)
 
-    await delete_cached(build_cache_key("achievements_me", user_id=str(current_user.id)))
-    await delete_cached(build_cache_key("wallet", user_id=str(current_user.id)))
     await delete_cached(build_cache_key("progress_me", user_id=str(current_user.id)))
     await delete_cached(build_cache_key("progress_xp", user_id=str(current_user.id)))
     await delete_cached(build_cache_key("progress_streak", user_id=str(current_user.id)))
-
-    time_sec = attempt.time_spent_ms // 1000
-    accuracy = (attempt.correct_answers / attempt.total_questions * 100) if attempt.total_questions > 0 else 0
 
     next_lesson_id = None
     if attempt.passed:
@@ -1206,25 +1212,11 @@ async def complete_lesson(
     return ApiResponse(
         success=True,
         message="Congratulations!" if attempt.passed else "Keep practicing!",
-        data=LessonCompleteResponse(
-            attempt_id=attempt.id,
-            passed=attempt.passed,
-            final_score=attempt.score,
-            total_xp_earned=attempt.xp_earned,
-            time_spent_seconds=time_sec,
-            accuracy=accuracy,
-            stars_earned=stars,
-            next_lesson_unlocked=next_lesson_id,
-            # check_achievements_for_user returns rich dicts (id, name, badge…)
-            # but both this schema and the Flutter model expect bare ids. Passing
-            # the dicts raised ValidationError, so completing a lesson 500'd for
-            # any learner who actually unlocked something — the reward moment.
-            achievements_unlocked=[a["id"] for a in unlocked_achievements],
-            total_questions=attempt.total_questions,
-            correct_answers=attempt.correct_answers,
-            wrong_answers=attempt.total_questions - attempt.correct_answers,
-            hints_used=attempt.hints_used
-        )
+        # check_achievements_for_user returns rich dicts but the schema and the
+        # Flutter model expect bare ids; passing the dicts 500'd the reward moment.
+        data=_lesson_complete_payload(
+            attempt, next_lesson_id, [a["id"] for a in unlocked_achievements]
+        ),
     )
 
 
@@ -1303,6 +1295,10 @@ async def get_course_roadmap(
         for unit in sorted(course.units, key=lambda unit: unit.order_index)
         if playable_lessons[unit.id]
     ]
+    locked_ids = sequence_locked_ids(
+        [lesson for unit in sorted_units for lesson in playable_lessons[unit.id]],
+        passed_ids,
+    )
     for unit_number, unit in enumerate(sorted_units, start=1):
         lessons_items = []
         unit_completed = 0
@@ -1311,15 +1307,7 @@ async def get_course_roadmap(
         for lesson_index, lesson in enumerate(sorted_lessons):
             progress = progress_map.get(lesson.id)
 
-            previous_lesson = (
-                sorted_lessons[lesson_index - 1]
-                if lesson_index > 0
-                else None
-            )
-            is_locked = (
-                previous_lesson is not None
-                and previous_lesson.id not in passed_ids
-            )
+            is_locked = lesson.id in locked_ids
 
             is_completed = lesson.id in passed_ids
             if is_completed:

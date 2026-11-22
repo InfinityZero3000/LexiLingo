@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'dart:async';
 
 import 'package:easy_localization/easy_localization.dart';
@@ -6,10 +7,11 @@ import 'package:lexilingo_app/core/navigation/learner_route.dart';
 import 'package:lexilingo_app/core/services/analytics_service.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
-import 'package:lexilingo_app/features/course/presentation/screens/course_detail_screen.dart';
+import 'package:lexilingo_app/features/course/presentation/continue_lesson_launcher.dart';
 import 'package:lexilingo_app/features/course/presentation/screens/course_list_screen.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_ui_components.dart';
+import 'package:lexilingo_app/features/onboarding/presentation/start_learning_launcher.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 
@@ -19,7 +21,7 @@ class ContinueLearningCard extends StatelessWidget {
   const ContinueLearningCard({
     super.key,
     this.rotationInterval = const Duration(seconds: 6),
-    this.borderRadius = const BorderRadius.all(Radius.circular(20)),
+    this.borderRadius = const BorderRadius.all(Radius.circular(AppRadius.xl)),
   });
 
   final Duration rotationInterval;
@@ -160,7 +162,7 @@ class _RotatingLearningCardState extends State<_RotatingLearningCard> {
     final isDark = theme.brightness == Brightness.dark;
     final scheme = theme.colorScheme;
     final fill = isDark ? scheme.surfaceContainerHighest : AppColors.primary;
-    final fg = isDark ? scheme.onSurface : Colors.white;
+    final fg = isDark ? scheme.onSurface : AppColors.textInverted;
     final track = fg.withValues(alpha: 0.24);
     final progress = activeCourse == null
         ? 0.0
@@ -179,10 +181,11 @@ class _RotatingLearningCardState extends State<_RotatingLearningCard> {
         topic: promptCourse.tags.isNotEmpty ? promptCourse.tags.first : null,
         source: _showReminder ? 'home_learning_reminder' : 'home_continue',
       );
-      LearnerRoute.push(
-        context,
-        (_) => CourseDetailScreen(courseId: promptCourse.id),
-      );
+      if (activeCourse == null) {
+        StartLearningLauncher.open(context, courseId: promptCourse.id);
+        return;
+      }
+      ContinueLessonLauncher.open(context, promptCourse.id);
     }
 
     Widget courseContent(CourseEntity course) => _ContinueCourseContent(
@@ -308,7 +311,7 @@ class _ContinueCourseContent extends StatelessWidget {
                     children: [
                       Expanded(
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(999),
+                          borderRadius: BorderRadius.circular(AppRadius.pill),
                           child: LinearProgressIndicator(
                             minHeight: 6,
                             value: progress,

@@ -7,6 +7,13 @@ from typing import Literal, Optional
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
+def _fits_bcrypt(v: str) -> str:
+    # bcrypt hashes at most 72 bytes and bcrypt 5 raises past that, which surfaced as a 500.
+    if len(v.encode("utf-8")) > 72:
+        raise ValueError("Password must be at most 72 bytes")
+    return v
+
+
 class RegisterRequest(BaseModel):
     """Registration request."""
     email: EmailStr
@@ -34,7 +41,7 @@ class RegisterRequest(BaseModel):
             raise ValueError('Password must contain at least 1 number')
         if not re.search(r'[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\/~`]', v):
             raise ValueError('Password must contain at least 1 special character')
-        return v
+        return _fits_bcrypt(v)
 
 
 class LoginRequest(BaseModel):
@@ -73,6 +80,11 @@ class ChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str = Field(..., min_length=8, max_length=100)
 
+    @field_validator('new_password')
+    @classmethod
+    def validate_bcrypt_length(cls, v: str) -> str:
+        return _fits_bcrypt(v)
+
 
 # ===== New schemas for missing endpoints =====
 
@@ -97,6 +109,11 @@ class ResetPasswordRequest(BaseModel):
     token: str = Field(..., description="Password reset token from email")
     new_password: str = Field(..., min_length=8, max_length=100)
 
+    @field_validator('new_password')
+    @classmethod
+    def validate_bcrypt_length(cls, v: str) -> str:
+        return _fits_bcrypt(v)
+
 
 class VerifyEmailRequest(BaseModel):
     """Verify email with token."""
@@ -104,7 +121,18 @@ class VerifyEmailRequest(BaseModel):
 
 
 class VerifyEmailResponse(BaseModel):
-    """Verify email response."""
+    """Verify email response.
+
+    The first time an address is verified the response also carries a session, shaped like
+    LoginResponse, so the link signs the learner in. Already-verified links carry none.
+    """
     verified: bool
     message: str
+    access_token: Optional[str] = None
+    refresh_token: Optional[str] = None
+    token_type: Optional[str] = None
+    user_id: Optional[str] = None
+    username: Optional[str] = None
+    email: Optional[str] = None
+    role: Optional[str] = None
 

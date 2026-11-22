@@ -252,7 +252,9 @@ class Settings(BaseSettings):
         if any("localhost" in origin or "127.0.0.1" in origin for origin in origins):
             raise ValueError("Localhost CORS origins are not allowed when ENVIRONMENT=production")
 
-        if "devtunnels.ms" in self.CORS_ALLOW_ORIGIN_REGEX or "github.dev" in self.CORS_ALLOW_ORIGIN_REGEX:
+        # The value is a regex, so real dots arrive escaped ("devtunnels\.ms").
+        unescaped_regex = self.CORS_ALLOW_ORIGIN_REGEX.replace("\\", "")
+        if "devtunnels.ms" in unescaped_regex or "github.dev" in unescaped_regex:
             raise ValueError("Broad development tunnel CORS regex is not allowed in production")
 
         if self.CONTENT_ETL_ENABLED:

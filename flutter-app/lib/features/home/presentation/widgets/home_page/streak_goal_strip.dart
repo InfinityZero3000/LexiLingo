@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -39,7 +40,12 @@ class StreakGoalStrip extends StatelessWidget {
             : 0.0;
 
         return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.md,
+            AppSpacing.lg,
+            0,
+          ),
           child: Material(
             color: Colors.transparent,
             child: Ink(
@@ -47,11 +53,11 @@ class StreakGoalStrip extends StatelessWidget {
                 variant: TactileSurfaceVariant.elevated,
                 fill: isDark
                     ? theme.colorScheme.surfaceContainerHighest
-                    : Colors.white,
+                    : theme.colorScheme.surface,
                 accent: streakDays > 0
                     ? AppColors.deepOrange
                     : AppColorRoles.primary(isDark),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
                 diagnosticId: 'home-streak-goal',
               ),
               child: IntrinsicHeight(
@@ -69,13 +75,18 @@ class StreakGoalStrip extends StatelessWidget {
                         ),
                         child: InkWell(
                           borderRadius: const BorderRadius.horizontal(
-                            left: Radius.circular(18),
+                            left: Radius.circular(AppRadius.lg),
                           ),
                           onTap: streak == null
                               ? null
                               : () => showPointsCalendarDialog(context, streak),
                           child: Padding(
-                            padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+                            padding: const EdgeInsets.fromLTRB(
+                              AppSpacing.lg,
+                              AppSpacing.md,
+                              AppSpacing.sm,
+                              12,
+                            ),
                             child: ExcludeSemantics(
                               child: Row(
                                 children: [
@@ -147,13 +158,13 @@ class StreakGoalStrip extends StatelessWidget {
                       ),
                       child: InkWell(
                         borderRadius: const BorderRadius.horizontal(
-                          right: Radius.circular(18),
+                          right: Radius.circular(AppRadius.lg),
                         ),
                         onTap: () => showDailyGoalSheet(context, home),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 12,
+                            horizontal: AppSpacing.lg,
+                            vertical: AppSpacing.md,
                           ),
                           child: ExcludeSemantics(
                             child: Column(
@@ -249,7 +260,7 @@ class _Flame extends StatelessWidget {
       child: const Icon(
         Icons.local_fire_department_rounded,
         size: 28,
-        color: Colors.white,
+        color: AppColors.textInverted,
       ),
     );
   }

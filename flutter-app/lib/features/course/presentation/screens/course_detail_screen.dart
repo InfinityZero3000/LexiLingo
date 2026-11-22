@@ -1,6 +1,8 @@
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/core/network/course_network_image.dart';
 import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/l10n/locale_keys.g.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/lottie_loading_widget.dart';
 import 'package:provider/provider.dart';
@@ -9,6 +11,7 @@ import 'package:lexilingo_app/features/course/domain/entities/course_detail_enti
 import 'package:lexilingo_app/features/learning/presentation/screens/learning_session_screen.dart';
 import 'package:lexilingo_app/features/learning/presentation/screens/learning_roadmap_screen.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/features/onboarding/presentation/start_learning_launcher.dart';
 
 /// Course Detail Screen
 /// Shows course roadmap with units and lessons
@@ -63,7 +66,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                     Text(
                       provider.detailError!,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 16),
+                      style: Theme.of(context).textTheme.bodyLarge,
                     ),
                     const SizedBox(height: 16),
                     ElevatedButton(
@@ -81,23 +84,24 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
               return Center(child: Text('course.notFound'.tr()));
             }
 
+            final nextLessonId = course.nextOpenLesson?.id;
+
             return CustomScrollView(
               slivers: [
                 // Compact App Bar with smaller title
                 SliverAppBar(
                   pinned: true,
                   backgroundColor: Theme.of(context).primaryColor,
-                  foregroundColor: Colors.white,
+                  foregroundColor: AppColors.textInverted,
                   elevation: 0,
                   titleSpacing: 0,
                   title: Text(
                     course.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: Theme.of(context).colorScheme.surface,
                       fontWeight: FontWeight.w600,
-                      fontSize: 20,
                     ),
                   ),
                 ),
@@ -116,7 +120,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                         if (course.description != null) ...[
                           Text(
                             course.description!,
-                            style: const TextStyle(fontSize: 16),
+                            style: Theme.of(context).textTheme.bodyLarge,
                           ),
                           const SizedBox(height: 16),
                         ],
@@ -167,10 +171,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                 children: [
                                   Text(
                                     'course.yourProgress'.tr(),
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                    style: Theme.of(context).textTheme.bodyLarge
+                                        ?.copyWith(fontWeight: FontWeight.bold),
                                   ),
                                   const SizedBox(height: 12),
                                   LinearProgressIndicator(
@@ -187,13 +189,15 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                             '0',
                                       },
                                     ),
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: AppColorRoles.textSecondary(
-                                        Theme.of(context).brightness ==
-                                            Brightness.dark,
-                                      ),
-                                    ),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          color: AppColorRoles.textSecondary(
+                                            Theme.of(context).brightness ==
+                                                Brightness.dark,
+                                          ),
+                                        ),
                                   ),
                                 ],
                               ),
@@ -243,7 +247,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                                   : () => _enrollInCourse(context, provider),
                               style: ElevatedButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
+                                  vertical: AppSpacing.lg,
                                 ),
                               ),
                             ),
@@ -256,10 +260,8 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                         const SizedBox(height: 8),
                         Text(
                           'course.learningRoadmap'.tr(),
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 16),
                       ],
@@ -275,6 +277,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                       unit: unit,
                       unitNumber: index + 1,
                       courseId: course.id,
+                      nextLessonId: nextLessonId,
                     );
                   }, childCount: course.units.length),
                 ),
@@ -293,31 +296,9 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     BuildContext context,
     CourseProvider provider,
   ) async {
+    await StartLearningLauncher.open(context, courseId: widget.courseId);
     if (!mounted) return;
-    final messenger = ScaffoldMessenger.of(context);
-    provider.clearEnrollmentMessages();
-
-    final success = await provider.enrollInCourse(widget.courseId);
-
-    if (!mounted) return;
-
-    if (success) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            provider.enrollmentSuccess ?? 'course.enrolledSuccess'.tr(),
-          ),
-          backgroundColor: AppColors.greenSuccessBright,
-        ),
-      );
-    } else {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(provider.enrollmentError ?? 'course.enrollFailed'.tr()),
-          backgroundColor: AppColors.errorBright,
-        ),
-      );
-    }
+    provider.loadCourseDetail(widget.courseId);
   }
 
   Widget _buildCourseHeroCard(BuildContext context, CourseDetailEntity course) {
@@ -338,7 +319,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.18),
+            color: AppColors.slate900.withValues(alpha: 0.18),
             blurRadius: 18,
             offset: const Offset(0, 8),
           ),
@@ -386,7 +367,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                 end: Alignment.bottomCenter,
                 colors: [
                   Colors.transparent,
-                  Colors.black.withValues(alpha: 0.7),
+                  AppColors.slate900.withValues(alpha: 0.7),
                 ],
               ),
             ),
@@ -478,19 +459,25 @@ class _UnitCard extends StatelessWidget {
   final UnitWithLessonsEntity unit;
   final int unitNumber;
   final String courseId;
+  final String? nextLessonId;
 
   const _UnitCard({
     required this.unit,
     required this.unitNumber,
     required this.courseId,
+    this.nextLessonId,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: 8,
+      ),
       child: ExpansionTile(
+        initiallyExpanded: unit.lessons.any((l) => l.id == nextLessonId),
         leading: CircleAvatar(
           backgroundColor: _parseColor(unit.backgroundColor, isDark),
           child: Text(
@@ -513,7 +500,11 @@ class _UnitCard extends StatelessWidget {
               )
             : null,
         children: unit.lessons.map((lesson) {
-          return _LessonTile(lesson: lesson, courseId: courseId);
+          return _LessonTile(
+            lesson: lesson,
+            courseId: courseId,
+            isNext: lesson.id == nextLessonId,
+          );
         }).toList(),
       ),
     );
@@ -535,8 +526,13 @@ class _UnitCard extends StatelessWidget {
 class _LessonTile extends StatelessWidget {
   final LessonInRoadmapEntity lesson;
   final String courseId;
+  final bool isNext;
 
-  const _LessonTile({required this.lesson, required this.courseId});
+  const _LessonTile({
+    required this.lesson,
+    required this.courseId,
+    this.isNext = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -549,10 +545,20 @@ class _LessonTile extends StatelessWidget {
       title: Text(
         lesson.title,
         style: TextStyle(
-          color: isLocked ? Colors.grey : null,
+          color: isLocked ? AppColors.grey500 : null,
           decoration: isCompleted ? TextDecoration.lineThrough : null,
+          fontWeight: isNext ? FontWeight.bold : null,
         ),
       ),
+      subtitle: isNext
+          ? Text(
+              LocaleKeys.course_nextUp.tr(),
+              style: TextStyle(
+                color: AppColorRoles.primary(isDark),
+                fontWeight: FontWeight.w600,
+              ),
+            )
+          : null,
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -568,7 +574,7 @@ class _LessonTile extends StatelessWidget {
           if (isCompleted)
             const Icon(Icons.check_circle, color: AppColors.greenSuccessBright)
           else if (isLocked)
-            const Icon(Icons.lock, color: Colors.grey)
+            const Icon(Icons.lock, color: AppColors.grey500)
           else
             Icon(
               Icons.play_circle_outline,
@@ -577,7 +583,11 @@ class _LessonTile extends StatelessWidget {
         ],
       ),
       onTap: isLocked
-          ? null
+          ? () => ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(
+                SnackBar(content: Text(LocaleKeys.course_lockedHint.tr())),
+              )
           : () async {
               await Navigator.push(
                 context,
@@ -605,7 +615,7 @@ class _LessonTile extends StatelessWidget {
 
     if (isLocked) {
       iconData = Icons.lock;
-      color = Colors.grey;
+      color = AppColors.grey500;
     } else if (isCompleted) {
       iconData = Icons.check_circle;
       color = AppColors.greenSuccessBright;
@@ -633,7 +643,7 @@ class _LessonTile extends StatelessWidget {
           break;
         case 'writing':
           iconData = Icons.edit;
-          color = Colors.indigo;
+          color = AppColors.primaryDark;
           break;
         case 'quiz':
           iconData = Icons.quiz;
@@ -641,7 +651,7 @@ class _LessonTile extends StatelessWidget {
           break;
         default:
           iconData = Icons.article;
-          color = Colors.grey;
+          color = AppColors.grey500;
       }
     }
 

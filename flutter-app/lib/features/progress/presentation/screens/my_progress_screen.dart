@@ -5,11 +5,14 @@ import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
+import 'package:lexilingo_app/features/level/presentation/providers/proficiency_provider.dart';
+import 'package:lexilingo_app/features/level/presentation/widgets/level_history_timeline.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/progress_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/progress_card.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/course_progress_card.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/content_activity_tab.dart';
 import 'package:lexilingo_app/features/progress/presentation/widgets/xp_line_chart.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// My Progress Screen
 /// Displays user's overall progress statistics
@@ -20,14 +23,37 @@ class MyProgressScreen extends StatefulWidget {
   State<MyProgressScreen> createState() => _MyProgressScreenState();
 }
 
-class _MyProgressScreenState extends State<MyProgressScreen> {
+class _MyProgressScreenState extends State<MyProgressScreen>
+    with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ProgressProvider>().fetchMyProgress();
-      context.read<HomeProvider>().loadWeeklyProgress();
-    });
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refresh());
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) _refresh();
+  }
+
+  /// Stale numbers stay on screen while this runs; each provider only swaps
+  /// them when the new response arrives.
+  Future<void> _refresh() {
+    if (!mounted) return Future.value();
+    final proficiency = context.read<ProficiencyProvider>();
+    return Future.wait([
+      context.read<ProgressProvider>().fetchMyProgress(),
+      context.read<HomeProvider>().loadWeeklyProgress(),
+      proficiency.loadProfile(),
+      proficiency.loadHistory(force: true),
+    ]);
   }
 
   @override
@@ -37,35 +63,37 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
       body: ContentWidth(
         child: Consumer<ProgressProvider>(
           builder: (context, progressProvider, child) {
-            if (progressProvider.isLoading) {
+            if (progressProvider.isLoading &&
+                progressProvider.summary == null) {
               return LoadingScreen(message: 'progress.loadingProgress'.tr());
             }
 
-            if (progressProvider.errorMessage != null) {
+            if (progressProvider.errorMessage != null &&
+                progressProvider.summary == null) {
               return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      size: 64,
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      progressProvider.errorMessage!,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyLarge,
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: () {
-                        progressProvider.fetchMyProgress();
-                        context.read<HomeProvider>().loadWeeklyProgress();
-                      },
-                      child: Text('common.retry'.tr()),
-                    ),
-                  ],
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(AppSpacing.xl),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 64,
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      Text(
+                        progressProvider.errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                      const SizedBox(height: AppSpacing.xl),
+                      FilledButton(
+                        onPressed: _refresh,
+                        child: Text('common.retry'.tr()),
+                      ),
+                    ],
+                  ),
                 ),
               );
             }
@@ -80,13 +108,19 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
             }
 
             return RefreshIndicator(
-              onRefresh: () => Future.wait([
-                progressProvider.fetchMyProgress(),
-                context.read<HomeProvider>().loadWeeklyProgress(),
-              ]),
+              onRefresh: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                await _refresh();
+                final error = progressProvider.errorMessage;
+                if (mounted && error != null) {
+                  messenger
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(SnackBar(content: Text(error)));
+                }
+              },
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSpacing.lg),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -143,12 +177,16 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
                       ],
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSpacing.xl),
+
+                    const LevelHistoryTimeline(),
+
+                    const SizedBox(height: AppSpacing.xl),
 
                     // Weekly Overview Charts
                     _WeeklyOverviewSection(),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppSpacing.xl),
 
                     // Course Progress
                     Text(
@@ -157,12 +195,12 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.md),
 
                     if (courseProgressList.isEmpty)
                       Card(
                         child: Padding(
-                          padding: const EdgeInsets.all(24),
+                          padding: const EdgeInsets.all(AppSpacing.xl),
                           child: Center(
                             child: Column(
                               children: [
@@ -173,7 +211,7 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
                                     context,
                                   ).colorScheme.onSurfaceVariant,
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: AppSpacing.sm),
                                 Text(
                                   'profile.noEnrolledCoursesYet'.tr(),
                                   style: Theme.of(context).textTheme.bodyLarge,
@@ -214,11 +252,11 @@ class _MyProgressScreenState extends State<MyProgressScreen> {
     IconData icon,
   ) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
       child: Row(
         children: [
           Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
-          SizedBox(width: 12),
+          SizedBox(width: AppSpacing.md),
           Expanded(
             child: Text(label, style: Theme.of(context).textTheme.bodyLarge),
           ),
@@ -277,7 +315,7 @@ class _WeeklyOverviewSectionState extends State<_WeeklyOverviewSection>
                 context,
               ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               'progress.weeklySummary'.tr(
                 namedArgs: {
@@ -286,16 +324,15 @@ class _WeeklyOverviewSectionState extends State<_WeeklyOverviewSection>
                   'days': '${weekly.daysActive}',
                 },
               ),
-              style: TextStyle(
-                fontSize: 13,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppColorRoles.textMuted(isDark),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             Container(
               decoration: BoxDecoration(
                 color: isDark ? AppColors.surfaceDarkMuted : AppColors.grey100,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: TabBar(
                 controller: _tabController,
@@ -303,14 +340,13 @@ class _WeeklyOverviewSectionState extends State<_WeeklyOverviewSection>
                 dividerColor: Colors.transparent,
                 indicator: BoxDecoration(
                   color: primary,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 labelColor: AppColors.surfaceLight,
                 unselectedLabelColor: AppColorRoles.textMuted(isDark),
-                labelStyle: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
+                labelStyle: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
                 isScrollable: false,
                 labelPadding: EdgeInsets.zero,
                 tabs: [
@@ -321,7 +357,7 @@ class _WeeklyOverviewSectionState extends State<_WeeklyOverviewSection>
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             SizedBox(
               height: 200,
               child: TabBarView(

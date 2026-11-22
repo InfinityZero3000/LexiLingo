@@ -1,5 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/features/games/presentation/theme/game_palette.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/games/domain/entities/game_entities.dart';
 
@@ -41,12 +43,12 @@ class DailyChallengeCard extends StatelessWidget {
           gradient: completed
               ? null
               : const LinearGradient(
-                  colors: [AppColors.primary, Color(0xFF5B9BF5)],
+                  colors: GamePalette.skySoftGradient,
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
           color: completed ? AppColors.grey200 : null,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: completed
               ? []
               : [
@@ -57,7 +59,7 @@ class DailyChallengeCard extends StatelessWidget {
                   ),
                 ],
         ),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Row(
           children: [
             // Icon circle
@@ -68,7 +70,7 @@ class DailyChallengeCard extends StatelessWidget {
                 shape: BoxShape.circle,
                 color: completed
                     ? AppColors.grey300
-                    : Colors.white.withValues(alpha: 0.2),
+                    : AppColors.textInverted.withValues(alpha: 0.2),
               ),
               alignment: Alignment.center,
               child: completed
@@ -83,7 +85,7 @@ class DailyChallengeCard extends StatelessWidget {
                       size: 26,
                     ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: AppSpacing.lg),
 
             // Description + timer
             Expanded(
@@ -94,63 +96,65 @@ class DailyChallengeCard extends StatelessWidget {
                     completed
                         ? 'games.challengeCompleted'.tr()
                         : 'games.dailyChallengeLabel'.tr(),
-                    style: TextStyle(
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.w800,
-                      fontSize: 13,
-                      color: completed ? AppColors.textGrey : Colors.white70,
+                      color: completed
+                          ? AppColors.textGrey
+                          : AppColors.textInverted.withValues(alpha: 0.7),
                     ),
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     challenge.description,
-                    style: TextStyle(
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                      color: completed ? AppColors.textDark : Colors.white,
+                      color: completed
+                          ? AppColors.textDark
+                          : AppColors.textInverted,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     'games.resetsTomorrow'.tr(),
-                    style: TextStyle(
-                      fontSize: 11,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: completed
                           ? AppColors.textGrey
-                          : Colors.white.withValues(alpha: 0.7),
+                          : AppColors.textInverted.withValues(alpha: 0.7),
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: AppSpacing.sm),
 
             // 2x XP badge (only when incomplete)
             if (!completed)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.sm,
+                  vertical: AppSpacing.sm,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.accentYellow,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       '${challenge.bonusMultiplier}x',
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         fontWeight: FontWeight.bold,
-                        fontSize: 16,
                         color: AppColors.surfaceLight,
                         height: 1,
                       ),
                     ),
                     Text(
                       'XP',
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         fontWeight: FontWeight.bold,
-                        fontSize: 10,
                         color: AppColors.surfaceLight,
                       ),
                     ),

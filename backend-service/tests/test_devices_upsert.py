@@ -56,3 +56,15 @@ async def test_upsert_moves_device_to_the_registering_user():
     update_clause = sql.split("DO UPDATE SET", 1)[1]
     assert "user_id" in update_clause
     assert "device_type" in update_clause
+
+
+async def test_reregister_without_token_keeps_the_stored_token():
+    db = _FakeDb()
+    user = SimpleNamespace(id=uuid4())
+    request = DeviceRegisterRequest(device_id="dev-1", device_type="android")
+
+    await register_device(request, db=db, current_user=user)
+
+    sql = str(db.statements[0].compile(dialect=postgresql.dialect()))
+    update_clause = sql.split("DO UPDATE SET", 1)[1]
+    assert "coalesce(excluded.fcm_token, user_devices.fcm_token)" in update_clause.lower()

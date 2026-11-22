@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/features/voice/presentation/providers/tts_settings_provider.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// TTS Speed Selector Widget
 /// Allows users to select playback speed for Text-to-Speech
@@ -35,22 +37,24 @@ class TtsSpeedSelector extends StatelessWidget {
     return InkWell(
       onTap: () => settings.cycleSpeed(),
       onLongPress: () => _showSpeedDialog(context, settings),
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(AppRadius.lg),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: 6,
+        ),
         decoration: BoxDecoration(
           color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.speed, size: 16, color: Theme.of(context).primaryColor),
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSpacing.xs),
             Text(
               settings.speedLabel,
-              style: TextStyle(
-                fontSize: 12,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w600,
                 color: Theme.of(context).primaryColor,
               ),
@@ -71,7 +75,7 @@ class TtsSpeedSelector extends StatelessWidget {
       children: [
         if (showLabel)
           Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
             child: Text(
               'voice.playbackSpeed'.tr(),
               style: Theme.of(
@@ -90,7 +94,7 @@ class TtsSpeedSelector extends StatelessWidget {
               onSelected: (_) => settings.setPlaybackSpeed(speed),
               selectedColor: Theme.of(context).primaryColor,
               labelStyle: TextStyle(
-                color: isSelected ? Colors.white : null,
+                color: isSelected ? AppColors.onGradient : null,
                 fontWeight: isSelected ? FontWeight.bold : null,
               ),
             );
@@ -117,7 +121,7 @@ class TtsSpeedSelector extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -125,23 +129,27 @@ class TtsSpeedSelector extends StatelessWidget {
             Row(
               children: [
                 const Icon(Icons.speed, size: 24),
-                const SizedBox(width: 12),
-                Text(
-                  'voice.playbackSpeed'.tr(),
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                const SizedBox(width: AppSpacing.md),
+                Flexible(
+                  child: Text(
+                    'voice.playbackSpeed'.tr(),
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               'voice.playbackSpeedDescription'.tr(),
               style: Theme.of(
                 context,
               ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.xl),
             ...TtsSettingsProvider.speedOptions.map((speed) {
               final isSelected = settings.playbackSpeed == speed;
               return ListTile(
@@ -168,7 +176,7 @@ class TtsSpeedSelector extends StatelessWidget {
                 },
               );
             }),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
           ],
         ),
       ),
@@ -237,13 +245,15 @@ class TtsSpeedButton extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               'voice.selectPlaybackSpeed'.tr(),
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: Theme.of(
+                context,
+              ).textTheme.sectionTitle?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 20),
             Wrap(
@@ -260,7 +270,7 @@ class TtsSpeedButton extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
-                      vertical: 12,
+                      vertical: AppSpacing.md,
                     ),
                     decoration: BoxDecoration(
                       color: isSelected
@@ -272,14 +282,16 @@ class TtsSpeedButton extends StatelessWidget {
                       speed == 1.0 ? 'Normal' : '${speed}x',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: isSelected ? Colors.white : Colors.black87,
+                        color: isSelected
+                            ? AppColors.onGradient
+                            : Colors.black87,
                       ),
                     ),
                   ),
                 );
               }).toList(),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
           ],
         ),
       ),

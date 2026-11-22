@@ -5,11 +5,12 @@ import json
 import logging
 import re
 import time
+import unicodedata
 import uuid
 from contextlib import suppress
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, AsyncGenerator, Callable, Coroutine
+from typing import Any, AsyncGenerator, Callable, Coroutine, Iterable
 
 from api.repositories.topic_chat_repository import TopicChatRepository
 from api.services.lexi_chat_service import HEARTBEAT_INTERVAL_S
@@ -32,6 +33,28 @@ SAFE_FIXED_RESPONSE = (
     "I'm sorry, I can't respond right now. "
     "Please try again shortly."
 )
+
+# The LLM's diagnosis or none: no regex fallback, closed labels (nodes_v2.diagnose_node).
+_TOPIC_DIAGNOSIS_POLICY = "llm"
+
+_EXPLAIN_IN_NATIVE = ("A1", "A2", "B1")
+
+
+async def build_topic_learner_profile(user_id: str | None, story_level: str) -> dict[str, Any]:
+    """`level` stays the story's (it sets the persona's difficulty); only the
+    language of correction explanations follows the learner: native up to B1,
+    English from B2. Without a card it falls back to the story level."""
+    from api.services.learner_card import card_level, get_learner_card
+    from api.utils.languages import iso_to_language_name
+
+    card = await get_learner_card(user_id) if user_id else None
+    level = card_level(card) or str(story_level or "B1").upper()
+    native = iso_to_language_name(str((card or {}).get("native_language") or ""))
+    return {
+        "level": story_level,
+        "explanation_language": native if level in _EXPLAIN_IN_NATIVE else "English",
+    }
+
 
 _PRIMARY_TIMEOUT = _env_float("TOPIC_TRACECAG_TIMEOUT_SEC", 12.0)
 _RETRY_TIMEOUT = _env_float("TOPIC_TRACECAG_RETRY_TIMEOUT_SEC", 6.0)
@@ -129,6 +152,8 @@ async def call_tracecag_with_retry(
     """Primary TraceCAG call -> degraded retry -> SAFE_FIXED_RESPONSE fallback."""
     from api.services.orchestrator import get_orchestrator
 
+    learner_profile = await build_topic_learner_profile(user_id, difficulty_level)
+
     try:
         graph_start = time.time()
         orchestrator = await get_orchestrator()
@@ -137,10 +162,10 @@ async def call_tracecag_with_retry(
                 user_input=message,
                 session_id=session_id,
                 user_id=user_id,
-                learner_profile={"level": difficulty_level},
+                learner_profile=learner_profile,
                 conversation_history=conversation_history[-6:],
                 retrieval_policy="rapid",
-                diagnosis_policy="rules",
+                diagnosis_policy=_TOPIC_DIAGNOSIS_POLICY,
                 generation_policy="auto",
                 topic_system_prompt=topic_system_prompt,
                 kg_seed_concepts=kg_seeds or None,
@@ -178,11 +203,11 @@ async def call_tracecag_with_retry(
                 user_input=message,
                 session_id=session_id,
                 user_id=user_id,
-                learner_profile={"level": difficulty_level},
+                learner_profile=learner_profile,
                 conversation_history=[],
                 cache_policy="off",
                 retrieval_policy="rapid",
-                diagnosis_policy="rules",
+                diagnosis_policy=_TOPIC_DIAGNOSIS_POLICY,
                 generation_policy="auto",
                 topic_system_prompt=topic_system_prompt,
             ),
@@ -217,6 +242,68 @@ async def call_tracecag_with_retry(
                 "fallback_used": True,
             },
         )
+
+
+def _norm_prompt(text: str) -> str:
+    folded = unicodedata.normalize("NFKC", text or "").casefold()
+    return " ".join(folded.split()).rstrip(" .!?,;:")
+
+
+def is_scripted_prompt(message: str, story_prompts: Iterable[str] | None) -> bool:
+    """True when the learner sent one of the app's own suggested prompts verbatim."""
+    target = _norm_prompt(message)
+    return bool(target) and any(_norm_prompt(p) == target for p in (story_prompts or []))
+
+
+async def is_scripted_turn(session: dict[str, Any], message: str, db: Any) -> bool:
+    """Check the session's story prompts (stored at start; older sessions fall back to the story)."""
+    prompts = session.get("suggested_prompts")
+    if prompts is None and session.get("story_id"):
+        try:
+            from api.services.story_service import StoryService
+
+            story = await StoryService(db).get_story_by_id(session["story_id"])
+            prompts = (story.suggested_prompts if story else None) or []
+        except Exception as exc:
+            logger.warning("Scripted-prompt lookup failed (treated as typed): %s", exc)
+            prompts = []
+    return is_scripted_prompt(message, prompts)
+
+
+def turn_was_graded(trace: dict[str, Any] | None) -> bool:
+    """False when the diagnosis could not run: such a turn is ungraded, and
+    recording it would score it as error-free."""
+    if not trace:
+        return False
+    scores = trace.get("scores") if isinstance(trace.get("scores"), dict) else {}
+    confidence = scores.get("diagnosis_confidence", trace.get("diagnosis_confidence", 1.0))
+    try:
+        return float(confidence) > 0.0
+    except (TypeError, ValueError):
+        return True
+
+
+def build_turn_hints(
+    response: str,
+    diagnosis_errors: list[dict[str, Any]] | None,
+    user_text: str,
+    scripted: bool,
+) -> tuple[str, Any, list[dict[str, Any]]]:
+    """Shared by the JSON route and the SSE stream: (clean_text, hints, accepted_errors).
+
+    Corrections come from the diagnosis only, and only when grounded in the
+    learner's message. A scripted (app-suggested) message gets none, and
+    nothing about it may be recorded as learner evidence.
+    """
+    from api.services.educational_hints_parser import EducationalHintsParser
+
+    clean, hints = EducationalHintsParser.parse(response)
+    if scripted:
+        return clean, hints, []
+    hints, accepted = EducationalHintsParser.corrections_from_diagnosis(
+        hints, diagnosis_errors, user_text
+    )
+    return clean, hints, accepted
 
 
 async def persist_topic_turn(
@@ -264,6 +351,7 @@ async def stream_tracecag_topic_message(
     quota: Any,
     start_time: float,
     request_id: str,
+    scripted: bool = False,
     primary_timeout: float = _PRIMARY_TIMEOUT,
     retry_timeout: float = _RETRY_TIMEOUT,
 ) -> AsyncGenerator[str, None]:
@@ -282,11 +370,12 @@ async def stream_tracecag_topic_message(
     response, never raw provider deltas, so internal markers can't leak.
     """
     from api.core.audit_emitter import emit_ai_audit_event
-    from api.services.educational_hints_parser import EducationalHintsParser
     from api.services.orchestrator import get_orchestrator
     from api.services.trace_cag.nodes_v2 import build_generation_prompt, stream_llm_tokens
 
     yield "event: thinking\ndata: {}\n\n"
+
+    learner_profile = await build_topic_learner_profile(user_id, difficulty_level)
 
     orchestrator = None
     try:
@@ -308,10 +397,10 @@ async def stream_tracecag_topic_message(
             user_input=message,
             session_id=session_id,
             user_id=user_id,
-            learner_profile={"level": difficulty_level},
+            learner_profile=learner_profile,
             conversation_history=hist,
             retrieval_policy="rapid",
-            diagnosis_policy="rules",
+            diagnosis_policy=_TOPIC_DIAGNOSIS_POLICY,
             topic_system_prompt=topic_system_prompt,
             cache_policy="off",
         )
@@ -398,13 +487,15 @@ async def stream_tracecag_topic_message(
             "fallback_used": True,
         }
 
-    clean_response, parsed_hints = EducationalHintsParser.parse(ai_response)
-    if raw_state is not None:
-        parsed_hints = EducationalHintsParser.merge_diagnosis_errors(
-            parsed_hints, raw_state.get("diagnosis_errors")
-        )
+    clean_response, parsed_hints, accepted_errors = build_turn_hints(
+        ai_response,
+        raw_state.get("diagnosis_errors") if raw_state is not None else None,
+        message,
+        scripted,
+    )
+    if accepted_errors:
         from api.core.redis_client import record_learner_errors
-        await record_learner_errors(user_id, raw_state.get("diagnosis_errors"))
+        await record_learner_errors(user_id, accepted_errors)
     display_response = sanitize_topic_response(clean_response or ai_response)
 
     educational_hints_dict = None
@@ -422,7 +513,7 @@ async def stream_tracecag_topic_message(
         repo=repo,
     )
 
-    if raw_state is not None:
+    if raw_state is not None and not scripted and turn_was_graded(raw_state):
         try:
             from api.services.learner_observation_spool import persist_trace_observations
 

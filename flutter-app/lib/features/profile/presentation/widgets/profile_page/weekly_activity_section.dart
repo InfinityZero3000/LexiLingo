@@ -6,6 +6,8 @@ import 'package:lexilingo_app/features/user/domain/entities/weekly_activity_enti
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
+import 'package:lexilingo_app/core/widgets/tap_target.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 void _showWeeklyActivityDetail(
   BuildContext context,
@@ -35,15 +37,21 @@ class WeeklyActivitySection extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 16,
+                horizontal: AppSpacing.lg,
+                vertical: AppSpacing.lg,
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'profile.weeklyActivity'.tr(),
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Flexible(
+                    child: Text(
+                      'profile.weeklyActivity'.tr(),
+                      style: Theme.of(context).textTheme.sectionTitle?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                   GestureDetector(
                     onTap: activities.isNotEmpty
@@ -54,16 +62,16 @@ class WeeklyActivitySection extends StatelessWidget {
                       children: [
                         Text(
                           'profile.last7Days'.tr(),
-                          style: TextStyle(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                                fontWeight: FontWeight.w500,
+                              ),
                         ),
                         if (activities.isNotEmpty) ...[
-                          const SizedBox(width: 4),
+                          const SizedBox(width: AppSpacing.xs),
                           Icon(
                             Icons.chevron_right,
                             size: 16,
@@ -83,7 +91,7 @@ class WeeklyActivitySection extends StatelessWidget {
                   ? SizedBox(
                       width: double.infinity,
                       child: Padding(
-                        padding: const EdgeInsets.all(24.0),
+                        padding: const EdgeInsets.all(AppSpacing.xl),
                         child: ShimmerContainer(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,7 +107,7 @@ class WeeklyActivitySection extends StatelessWidget {
                                     (index) => Expanded(
                                       child: Padding(
                                         padding: const EdgeInsets.symmetric(
-                                          horizontal: 4,
+                                          horizontal: AppSpacing.xs,
                                         ),
                                         child: SkeletonBox(
                                           height: 20.0 + (index % 3) * 30.0,
@@ -125,7 +133,7 @@ class WeeklyActivitySection extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: AppSpacing.lg),
                               Row(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceAround,
@@ -134,13 +142,13 @@ class WeeklyActivitySection extends StatelessWidget {
                                   (index) => const Column(
                                     children: [
                                       SkeletonCircle(size: 20),
-                                      SizedBox(height: 4),
+                                      SizedBox(height: AppSpacing.xs),
                                       SkeletonBox(
                                         width: 40,
                                         height: 16,
                                         borderRadius: 4,
                                       ),
-                                      SizedBox(height: 4),
+                                      SizedBox(height: AppSpacing.xs),
                                       SkeletonBox(
                                         width: 60,
                                         height: 12,
@@ -158,7 +166,7 @@ class WeeklyActivitySection extends StatelessWidget {
                   : activities.isEmpty
                   ? Center(
                       child: Padding(
-                        padding: const EdgeInsets.all(24.0),
+                        padding: const EdgeInsets.all(AppSpacing.xl),
                         child: Text(
                           activityError == null || activityError.isEmpty
                               ? 'profile.noActivityDataYet'.tr()
@@ -218,19 +226,23 @@ class WeeklyActivitySection extends StatelessWidget {
                               child: Center(
                                 child: Text(
                                   dayLabel,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                    color: isDark
-                                        ? AppColors.grey500
-                                        : AppColors.grey600,
-                                  ),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w500,
+                                        color: isDark
+                                            ? Theme.of(
+                                                context,
+                                              ).colorScheme.onSurfaceVariant
+                                            : Theme.of(
+                                                context,
+                                              ).colorScheme.onSurfaceVariant,
+                                      ),
                                 ),
                               ),
                             );
                           }).toList(),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: AppSpacing.lg),
                         // Summary stats
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -240,7 +252,7 @@ class WeeklyActivitySection extends StatelessWidget {
                               value:
                                   '${activities.fold<int>(0, (sum, a) => sum + a.xpEarned)}',
                               icon: Icons.star,
-                              color: AppColors.warning,
+                              color: context.status.warning,
                             ),
                             _ActivityStat(
                               label: 'profile.lessons'.tr(),
@@ -254,7 +266,7 @@ class WeeklyActivitySection extends StatelessWidget {
                               value:
                                   '${activities.fold<int>(0, (sum, a) => sum + a.vocabularyLearned)}',
                               icon: Icons.abc,
-                              color: AppColors.greenSuccessBright,
+                              color: context.status.success,
                             ),
                           ],
                         ),
@@ -286,14 +298,18 @@ class _ActivityStat extends StatelessWidget {
     return Column(
       children: [
         Icon(icon, size: 20, color: color),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.xs),
         Text(
           value,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
         ),
         Text(
           label,
-          style: const TextStyle(fontSize: 11, color: AppColors.grey600),
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
       ],
     );
@@ -330,11 +346,16 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
       builder: (_, scrollController) {
         return Container(
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1A1A2E) : Colors.white,
+            color: isDark
+                ? AppColors.readingNight
+                : Theme.of(context).colorScheme.surface,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
+                color: Theme.of(
+                  context,
+                ).colorScheme.shadow.withValues(alpha: 0.2),
+
                 blurRadius: 20,
                 offset: const Offset(0, -4),
               ),
@@ -344,11 +365,12 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
             children: [
               // Drag handle
               Container(
-                margin: const EdgeInsets.only(top: 12),
+                margin: const EdgeInsets.only(top: AppSpacing.md),
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.grey400,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -358,35 +380,38 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'profile.weeklyActivity'.tr(),
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'profile.weeklyActivity'.tr(),
+                            style: Theme.of(context).textTheme.heading
+                                ?.copyWith(fontWeight: FontWeight.bold),
                           ),
-                        ),
-                        Text(
-                          'profile.last7DaysDetailedBreakdown'.tr(),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant,
+                          Text(
+                            'profile.last7DaysDetailedBreakdown'.tr(),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                    GestureDetector(
+                    TapTarget(
                       onTap: () => Navigator.pop(context),
                       child: Container(
-                        padding: const EdgeInsets.all(8),
+                        padding: const EdgeInsets.all(AppSpacing.sm),
                         decoration: BoxDecoration(
                           color: isDark
-                              ? Colors.white.withValues(alpha: 0.08)
-                              : Colors.black.withValues(alpha: 0.06),
+                              ? AppColors.onGradient.withValues(alpha: 0.08)
+                              : Theme.of(
+                                  context,
+                                ).colorScheme.shadow.withValues(alpha: 0.06),
+
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(Icons.close, size: 16),
@@ -399,29 +424,31 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,
-                  vertical: 8,
+                  vertical: AppSpacing.sm,
                 ),
                 child: Row(
                   children: [
                     _SummaryChip(
                       icon: Icons.star,
-                      color: AppColors.warning,
+                      color: context.status.warning,
+
                       label: 'profile.xpValue'.tr(
                         namedArgs: {'xp': '$totalXP'},
                       ),
                       sublabel: 'profile.total'.tr(),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpacing.sm),
                     _SummaryChip(
                       icon: Icons.menu_book,
                       color: primary,
                       label: '$totalLessons',
                       sublabel: 'profile.lessons'.tr(),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpacing.sm),
                     _SummaryChip(
                       icon: Icons.abc,
-                      color: AppColors.greenSuccessBright,
+                      color: context.status.success,
+
                       label: '$totalWords',
                       sublabel: 'profile.words'.tr(),
                     ),
@@ -433,7 +460,7 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
               Expanded(
                 child: ListView.builder(
                   controller: scrollController,
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                   itemCount: activities.length,
                   itemBuilder: (context, index) {
                     final a = activities[index];
@@ -450,17 +477,19 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
 
                     return Container(
                       margin: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 4,
+                        horizontal: AppSpacing.lg,
+                        vertical: AppSpacing.xs,
                       ),
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: isBest
                             ? primary.withValues(alpha: isDark ? 0.15 : 0.08)
                             : (isDark
-                                  ? Colors.white.withValues(alpha: 0.04)
-                                  : Colors.black.withValues(alpha: 0.03)),
-                        borderRadius: BorderRadius.circular(14),
+                                  ? AppColors.onGradient.withValues(alpha: 0.04)
+                                  : Theme.of(context).colorScheme.shadow
+                                        .withValues(alpha: 0.03)),
+
+                        borderRadius: BorderRadius.circular(AppRadius.md),
                         border: Border.all(
                           color: isBest
                               ? primary.withValues(alpha: 0.4)
@@ -478,21 +507,25 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
                                   children: [
                                     Text(
                                       dayName,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 14,
-                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                     ),
                                     if (shortDate.isNotEmpty) ...[
                                       const SizedBox(width: 6),
                                       Text(
                                         shortDate,
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.onSurfaceVariant,
-                                        ),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.onSurfaceVariant,
+                                            ),
                                       ),
                                     ],
                                   ],
@@ -501,16 +534,18 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
                               if (isBest)
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
+                                    horizontal: AppSpacing.sm,
                                     vertical: 2,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.warning.withValues(
+                                    color: context.status.warning.withValues(
                                       alpha: 0.15,
                                     ),
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.sm,
+                                    ),
                                     border: Border.all(
-                                      color: AppColors.warning.withValues(
+                                      color: context.status.warning.withValues(
                                         alpha: 0.5,
                                       ),
                                     ),
@@ -521,16 +556,18 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
                                       Icon(
                                         Icons.emoji_events,
                                         size: 12,
-                                        color: AppColors.warning,
+                                        color: context.status.warning,
                                       ),
                                       SizedBox(width: 3),
                                       Text(
                                         'profile.bestDay'.tr(),
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          color: AppColors.warning,
-                                          fontWeight: FontWeight.w600,
-                                        ),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .labelSmall
+                                            ?.copyWith(
+                                              color: context.status.warning,
+                                              fontWeight: FontWeight.w600,
+                                            ),
                                       ),
                                     ],
                                   ),
@@ -562,11 +599,11 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
                                   'profile.xpValue'.tr(
                                     namedArgs: {'xp': '${a.xpEarned}'},
                                   ),
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: primary,
-                                  ),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: primary,
+                                      ),
                                 ),
                               ],
                             ),
@@ -578,12 +615,12 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
                               if (a.xpEarned == 0)
                                 Text(
                                   'profile.noActivity'.tr(),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurfaceVariant,
-                                  ),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onSurfaceVariant,
+                                      ),
                                 )
                               else ...[
                                 _MiniStat(
@@ -595,10 +632,11 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
                                     },
                                   ),
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: AppSpacing.md),
                                 _MiniStat(
                                   icon: Icons.abc,
-                                  color: AppColors.greenSuccessBright,
+                                  color: context.status.success,
+
                                   value: 'profile.wordsCount'.tr(
                                     namedArgs: {
                                       'count': '${a.vocabularyLearned}',
@@ -642,10 +680,13 @@ class _SummaryChip extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+        padding: const EdgeInsets.symmetric(
+          vertical: 10,
+          horizontal: AppSpacing.md,
+        ),
         decoration: BoxDecoration(
           color: color.withValues(alpha: isDark ? 0.12 : 0.08),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: color.withValues(alpha: 0.25)),
         ),
         child: Row(
@@ -657,16 +698,14 @@ class _SummaryChip extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: TextStyle(
-                    fontSize: 13,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: color,
                   ),
                 ),
                 Text(
                   sublabel,
-                  style: TextStyle(
-                    fontSize: 10,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
@@ -696,11 +735,10 @@ class _MiniStat extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 14, color: color),
-        const SizedBox(width: 4),
+        const SizedBox(width: AppSpacing.xs),
         Text(
           value,
-          style: TextStyle(
-            fontSize: 12,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),

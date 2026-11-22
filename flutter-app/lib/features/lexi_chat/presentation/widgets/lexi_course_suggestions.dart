@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/navigation/learner_route.dart';
 import 'package:lexilingo_app/features/course/presentation/screens/course_detail_screen.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_message.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Real courses the server attached to a reply, rendered as tappable cards.
 ///
@@ -20,12 +21,12 @@ class LexiCourseSuggestions extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.only(top: 12),
+      padding: const EdgeInsets.only(top: AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.only(left: 2, bottom: 8),
+            padding: const EdgeInsets.only(left: 2, bottom: AppSpacing.sm),
             child: Text(
               'lexiChat.suggestedCoursesLabel'.tr(),
               style: theme.textTheme.labelSmall?.copyWith(
@@ -66,7 +67,7 @@ class _CourseCard extends StatelessWidget {
       width: 208,
       child: Material(
         color: colors.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: () => LearnerRoute.push(
@@ -74,7 +75,7 @@ class _CourseCard extends StatelessWidget {
             (_) => CourseDetailScreen(courseId: course.courseId),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(AppSpacing.md),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -83,7 +84,7 @@ class _CourseCard extends StatelessWidget {
                     if (course.level != null && course.level!.isNotEmpty)
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
+                          horizontal: AppSpacing.sm,
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
@@ -106,7 +107,7 @@ class _CourseCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 Text(
                   course.title,
                   maxLines: 2,

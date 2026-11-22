@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'dart:async';
-import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/services/quick_save_vocabulary_service.dart';
+import 'package:lexilingo_app/core/state/reset_epoch.dart';
 import 'package:lexilingo_app/core/usecase/usecase.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/vocab_word.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/word_translation.dart';
@@ -33,7 +34,7 @@ class DictionaryLookupResult {
   });
 }
 
-class VocabProvider extends ChangeNotifier {
+class VocabProvider extends ChangeNotifier with ResetEpoch {
   static const int _backendCollectionPageSize = 100;
 
   final GetWordsUseCase getWordsUseCase;
@@ -42,7 +43,7 @@ class VocabProvider extends ChangeNotifier {
   final QuickSaveVocabularyService? _quickSaveService;
   StreamSubscription<QuickSaveVocabularyResult>? _savedWordsSubscription;
   List<VocabWord> _words = [];
-  String? _errorMessage;
+  UiText? _errorMessage;
   bool _isLoading = false;
   String? _selectedTag;
 
@@ -60,12 +61,10 @@ class VocabProvider extends ChangeNotifier {
     _savedWordsSubscription = _quickSaveService?.savedWords.listen((_) {
       unawaited(loadWords());
     });
-    unawaited(loadWords());
-    unawaited(loadDecks());
   }
 
   List<VocabWord> get words => _words;
-  String? get errorMessage => _errorMessage;
+  String? get errorMessage => _errorMessage?.resolve();
   bool get isLoading => _isLoading;
   String? get selectedTag => _selectedTag;
 
@@ -92,13 +91,15 @@ class VocabProvider extends ChangeNotifier {
   bool get isLookingUp => _isLookingUp;
 
   Future<void> loadWords() async {
+    final epoch = resetEpoch;
     _isLoading = true;
     notifyListeners();
 
     final result = await getWordsUseCase(NoParams());
+    if (isStale(epoch)) return;
     result.fold(
       (failure) {
-        _errorMessage = _getFailureMessage(failure);
+        _errorMessage = (_getFailureMessage(failure));
         _words = [];
       },
       (words) {
@@ -111,6 +112,7 @@ class VocabProvider extends ChangeNotifier {
     if (_apiClient != null) {
       try {
         final backendWords = await _fetchBackendCollection();
+        if (isStale(epoch)) return;
         final localWordSet = {for (final w in _words) w.word.toLowerCase()};
         final merged = [
           ..._words,
@@ -125,6 +127,18 @@ class VocabProvider extends ChangeNotifier {
     }
 
     _isLoading = false;
+    notifyListeners();
+  }
+
+  void reset() {
+    bumpResetEpoch();
+    _words = [];
+    _decks = [];
+    _errorMessage = null;
+    _isLoading = false;
+    _selectedTag = null;
+    _lookupResult = null;
+    _isLookingUp = false;
     notifyListeners();
   }
 
@@ -273,7 +287,7 @@ class VocabProvider extends ChangeNotifier {
     bool success = false;
     result.fold(
       (failure) {
-        _errorMessage = _getFailureMessage(failure);
+        _errorMessage = (_getFailureMessage(failure));
       },
       (_) {
         _errorMessage = null;
@@ -284,15 +298,15 @@ class VocabProvider extends ChangeNotifier {
     return success;
   }
 
-  String _getFailureMessage(Failure failure) {
+  UiText _getFailureMessage(Failure failure) {
     if (failure is ServerFailure) {
-      return failure.message;
+      return UiText.failure(failure);
     } else if (failure is NetworkFailure) {
-      return 'errors.networkRetry'.tr();
+      return UiText.key('errors.networkRetry');
     } else if (failure is CacheFailure) {
-      return 'errors.localStorage'.tr();
+      return UiText.key('errors.localStorage');
     } else {
-      return 'errors.genericRetry'.tr();
+      return UiText.key('errors.genericRetry');
     }
   }
 
@@ -302,11 +316,13 @@ class VocabProvider extends ChangeNotifier {
 
   Future<void> loadDecks() async {
     if (_apiClient == null) return;
+    final epoch = resetEpoch;
     _isLoading = true;
     notifyListeners();
 
     try {
       final response = await _apiClient.get('/vocabulary/decks');
+      if (isStale(epoch)) return;
       final items = response['data'] ?? response;
       if (items is List) {
         _decks = items
@@ -317,7 +333,7 @@ class VocabProvider extends ChangeNotifier {
       }
       _errorMessage = null;
     } catch (e) {
-      _errorMessage = 'errors.loadFailed'.tr();
+      _errorMessage = UiText.key('errors.loadFailed');
       debugPrint('Failed to load decks: $e');
     } finally {
       _isLoading = false;
@@ -354,7 +370,7 @@ class VocabProvider extends ChangeNotifier {
       await loadDecks();
       return VocabularyDeck.fromJson(data as Map<String, dynamic>);
     } catch (e) {
-      _errorMessage = 'vocabulary.createDeckFailed'.tr();
+      _errorMessage = UiText.key('vocabulary.createDeckFailed');
       debugPrint('Failed to create deck: $e');
       return null;
     } finally {
@@ -373,7 +389,7 @@ class VocabProvider extends ChangeNotifier {
       await loadDecks();
       return true;
     } catch (e) {
-      _errorMessage = 'vocabulary.addToDeckFailed'.tr();
+      _errorMessage = UiText.key('vocabulary.addToDeckFailed');
       debugPrint('Failed to add word to deck: $e');
       return false;
     }
@@ -391,7 +407,7 @@ class VocabProvider extends ChangeNotifier {
       await loadDecks();
       return true;
     } catch (e) {
-      _errorMessage = 'vocabulary.removeFromDeckFailed'.tr();
+      _errorMessage = UiText.key('vocabulary.removeFromDeckFailed');
       debugPrint('Failed to remove word from deck: $e');
       return false;
     }
@@ -406,7 +422,7 @@ class VocabProvider extends ChangeNotifier {
       await loadDecks();
       return true;
     } catch (e) {
-      _errorMessage = 'vocabulary.deleteDeckFailed'.tr();
+      _errorMessage = UiText.key('vocabulary.deleteDeckFailed');
       debugPrint('Failed to delete deck: $e');
       return false;
     } finally {

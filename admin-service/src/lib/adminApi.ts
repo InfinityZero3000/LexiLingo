@@ -1,5 +1,6 @@
 import { apiFetch } from "./api";
 import { ENV } from "./env";
+import type { IeltsPassageProvenance } from "./ieltsProvenance";
 import exerciseTypesContract from "../../../contracts/content-agent/exercise-types-v1.json";
 
 export type AdminResponse<T> = {
@@ -30,6 +31,8 @@ const asAdminResponse = <T>(payload: T | AdminResponse<T>): AdminResponse<T> => 
 
 export type TopicDifficulty = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
 
+export type TopicSource = "custom" | "builtin";
+
 export type TopicItem = {
   story_id: string;
   title: { en: string; vi: string };
@@ -39,6 +42,8 @@ export type TopicItem = {
   icon_key?: string | null;
   suggested_prompts?: string[];
   tags?: string[];
+  /** custom = saved from this panel; builtin = bundled with the service, read-only. */
+  source?: TopicSource;
 };
 
 export type TopicsAdminPayload = {
@@ -46,10 +51,88 @@ export type TopicsAdminPayload = {
   total: number;
 };
 
-export const listTopicStoriesAdmin = async () =>
-  apiFetch<AdminResponse<TopicsAdminPayload>>(`${ENV.aiAdminUrl}/topics?limit=200`);
+/** Extra keys (collocations, common_error, ...) ride along untouched. */
+export type TopicVocabulary = {
+  term: string;
+  definition: string;
+  example_in_story: string;
+  part_of_speech?: string;
+  [extra: string]: unknown;
+};
 
-export const createTopicStoryAdmin = async (payload: {
+export type TopicGrammar = {
+  grammar_structure: string;
+  explanation: string;
+  usage_in_story?: string;
+  examples: string[];
+  [extra: string]: unknown;
+};
+
+export type TopicPersona = {
+  name: string;
+  role: string;
+  personality: string;
+  speaking_style: string;
+  background: string;
+};
+
+export type TopicContext = { setting: string; scenario: string; objectives: string[] };
+
+export type TopicFull = TopicItem & {
+  role_persona?: TopicPersona | null;
+  context_description?: TopicContext | null;
+  conversation_flow?: { opening_prompt: string; checkpoints?: string[] } | null;
+  vocabulary_list?: TopicVocabulary[];
+  grammar_points?: TopicGrammar[];
+};
+
+export type TopicMeta = {
+  category: string;
+  icon_key: string;
+  /** "low" = no clue or a tie between two icons: the admin should check it. */
+  confidence: "high" | "low";
+  matched: string[];
+};
+
+export type TopicDraft = {
+  title_vi: string;
+  category: string;
+  icon_key: string;
+  difficulty_level: TopicDifficulty;
+  estimated_minutes: number;
+  role_persona: TopicPersona;
+  context_description: TopicContext;
+  opening_prompt: string;
+  suggested_prompts: string[];
+  vocabulary_list: TopicVocabulary[];
+  grammar_points: TopicGrammar[];
+};
+
+export const listTopicStoriesAdmin = async () =>
+  apiFetch<AdminResponse<TopicsAdminPayload>>(`${ENV.aiAdminUrl}/topics?limit=300`);
+
+export const getTopicStoryAdmin = async (storyId: string) =>
+  apiFetch<AdminResponse<TopicFull>>(`${ENV.aiAdminUrl}/topics/${encodeURIComponent(storyId)}`);
+
+export const suggestTopicMetaAdmin = async (title: string, tags: string[] = []) =>
+  apiFetch<AdminResponse<TopicMeta>>(`${ENV.aiAdminUrl}/topics/suggest-meta`, {
+    method: "POST",
+    body: JSON.stringify({ title, tags }),
+  });
+
+/** AI draft for the admin to review; nothing is saved. Can take up to ~40 s. */
+export const draftTopicStoryAdmin = async (payload: {
+  title_en: string;
+  difficulty_level: TopicDifficulty;
+  category?: string;
+  notes?: string;
+}) =>
+  apiFetch<AdminResponse<{ draft: TopicDraft; warnings: string[] }>>(`${ENV.aiAdminUrl}/topics/draft`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
+export type TopicSavePayload = {
   story_id?: string;
   title: { en: string; vi: string };
   difficulty_level: TopicDifficulty;
@@ -60,7 +143,13 @@ export const createTopicStoryAdmin = async (payload: {
   suggested_prompts?: string[];
   tags?: string[];
   is_published?: boolean;
-}) =>
+  role_persona?: TopicPersona;
+  context_description?: TopicContext;
+  vocabulary_list?: TopicVocabulary[];
+  grammar_points?: TopicGrammar[];
+};
+
+export const createTopicStoryAdmin = async (payload: TopicSavePayload) =>
   apiFetch<AdminResponse<TopicItem>>(`${ENV.aiAdminUrl}/topics`, {
     method: "POST",
     body: JSON.stringify(payload),
@@ -122,8 +211,15 @@ export type QuestionItem = {
   is_active: boolean;
 };
 
-export const listQuestions = async () =>
-  apiFetch<AdminResponse<QuestionItem[]>>(`${ENV.backendUrl}/admin/questions?limit=100&offset=0`);
+export type QuestionFilter = { level?: string; q?: string; question_type?: string; limit?: number };
+
+export const listQuestions = async (filter: QuestionFilter = {}) => {
+  const params = new URLSearchParams({ limit: String(filter.limit ?? 100), offset: "0" });
+  if (filter.level) params.set("level", filter.level);
+  if (filter.q) params.set("q", filter.q);
+  if (filter.question_type) params.set("question_type", filter.question_type);
+  return apiFetch<AdminResponse<QuestionItem[]>>(`${ENV.backendUrl}/admin/questions?${params}`);
+};
 
 export const createQuestion = async (payload: Partial<QuestionItem>) =>
   apiFetch<AdminResponse<QuestionItem>>(`${ENV.backendUrl}/admin/questions`, {
@@ -784,6 +880,7 @@ export type IeltsTest = {
   target_band?: string | null;
   slug?: string | null;
   content?: Record<string, unknown> | null;
+  provenance?: { passages?: IeltsPassageProvenance[] } | null;
   is_published: boolean;
   question_count: number;
   attempt_count: number;
@@ -848,3 +945,27 @@ export const uploadIeltsAudio = async (file: File) => {
     { method: "POST", body: formData }
   );
 };
+
+// ============================================================================
+// Banner image upload
+// ============================================================================
+
+export const uploadBannerImage = async (file: File): Promise<AdminResponse<{ url: string; filename: string }>> => {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiFetch<AdminResponse<{ url: string; filename: string }>>(
+    `${ENV.backendUrl}/admin/upload/banner`,
+    { method: "POST", body: formData }
+  );
+};
+
+// ============================================================================
+// AI exercise drafts
+// ============================================================================
+
+// Returns a draft only — nothing is saved until updateLessonContent is called.
+export const generateLessonExercises = async (lessonId: string) =>
+  apiFetch<AdminResponse<{ exercises: Exercise[] }>>(
+    `${ENV.backendUrl}/admin/lessons/${lessonId}/generate-exercises`,
+    { method: "POST" }
+  );

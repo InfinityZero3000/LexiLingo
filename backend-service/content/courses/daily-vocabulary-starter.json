@@ -1,0 +1,472 @@
+{
+  "category": {
+    "color": null,
+    "course_count": 4,
+    "created_at": {
+      "__dt__": "2026-06-30T15:13:15.217762"
+    },
+    "description": "Vocabulary building and retention",
+    "icon": null,
+    "id": "8a24e0d9-9722-4b8e-a12a-2349e0eaca2c",
+    "is_active": true,
+    "name": "Vocabulary",
+    "order_index": 1,
+    "slug": "vocabulary",
+    "updated_at": {
+      "__dt__": "2026-06-30T15:13:32.819051"
+    }
+  },
+  "course": {
+    "category_id": "8a24e0d9-9722-4b8e-a12a-2349e0eaca2c",
+    "content_version": 1,
+    "created_at": {
+      "__dt__": "2026-08-14T08:06:02.975181"
+    },
+    "description": "Learn essential words and phrases for daily life.",
+    "estimated_duration": 80,
+    "id": "4b0d0223-6073-4e05-b172-ff25a3d1189c",
+    "is_published": true,
+    "language": "en",
+    "level": "A1",
+    "skill": "vocabulary",
+    "tags": [
+      "vocabulary",
+      "daily-life",
+      "beginner"
+    ],
+    "thumbnail_url": "https://images.unsplash.com/photo-1434030216411-0b793f4b4173",
+    "title": "Daily Vocabulary Starter",
+    "total_lessons": 2,
+    "total_xp": 120,
+    "updated_at": {
+      "__dt__": "2026-08-18T04:17:07.523198"
+    }
+  },
+  "format": 1,
+  "lessons": [
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "aunt",
+            "explanation": "Father's sister is aunt.",
+            "id": "ex_v1_1",
+            "options": [
+              {
+                "id": "0",
+                "is_correct": true,
+                "text": "aunt"
+              },
+              {
+                "id": "1",
+                "is_correct": false,
+                "text": "uncle"
+              }
+            ],
+            "question": "Your father's sister is your ___.",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "father:Male parent, mother:Female parent",
+            "explanation": "Father is male parent, mother is female.",
+            "id": "ex_v1_2",
+            "options": [
+              "father",
+              "mother",
+              "Male parent",
+              "Female parent"
+            ],
+            "question": "Match the family words with meanings.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "father",
+            "explanation": "Mother's husband is father.",
+            "id": "ex_v1_3",
+            "question": "Complete: 'My mother's husband is my {blank}.'",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "mother:female parent, sister:female sibling",
+            "explanation": "Fast match.",
+            "id": "ex_v1_4",
+            "options": [
+              "mother",
+              "sister",
+              "female parent",
+              "female sibling"
+            ],
+            "question": "Match: mother, sister",
+            "type": "matching",
+            "ui_type": "cognitive_fluidity"
+          },
+          {
+            "correct_answer": "Anh chị em ruột",
+            "explanation": "A sibling is a brother or sister.",
+            "id": "ex_v1_5",
+            "options": [
+              {
+                "id": "0",
+                "is_correct": true,
+                "text": "Anh chị em ruột"
+              },
+              {
+                "id": "1",
+                "is_correct": false,
+                "text": "Cha mẹ"
+              },
+              {
+                "id": "2",
+                "is_correct": false,
+                "text": "Ông bà"
+              },
+              {
+                "id": "3",
+                "is_correct": false,
+                "text": "Hàng xóm"
+              }
+            ],
+            "question": "Learn: 'Sibling'",
+            "type": "multiple_choice",
+            "ui_type": "vocabulary_flashcard"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "Cousin is child of aunt/uncle.",
+            "id": "ex_v1_6",
+            "options": [
+              {
+                "id": "0",
+                "is_correct": true,
+                "text": "True"
+              },
+              {
+                "id": "1",
+                "is_correct": false,
+                "text": "False"
+              }
+            ],
+            "question": "True or False: 'Cousin' is the child of your aunt or uncle.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "this is my brother",
+            "explanation": "Sentence structure.",
+            "id": "ex_v1_7",
+            "options": [
+              {
+                "id": "0",
+                "text": "this"
+              },
+              {
+                "id": "1",
+                "text": "is"
+              },
+              {
+                "id": "2",
+                "text": "my"
+              },
+              {
+                "id": "3",
+                "text": "brother"
+              }
+            ],
+            "question": "Arrange: 'my / this / is / brother'",
+            "type": "reorder",
+            "ui_type": "arrange_the_sentence"
+          },
+          {
+            "correct_answer": "brother",
+            "explanation": "Anh trai is brother.",
+            "id": "ex_v1_8",
+            "options": [
+              {
+                "id": "0",
+                "is_correct": true,
+                "text": "brother"
+              },
+              {
+                "id": "1",
+                "is_correct": false,
+                "text": "sister"
+              }
+            ],
+            "question": "Translation of: 'Anh trai'",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "My grandmother is nice",
+            "explanation": "Practice speaking.",
+            "id": "ex_v1_9",
+            "question": "Repeat: 'My grandmother is nice.'",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "He is my uncle",
+            "explanation": "Type what you hear.",
+            "id": "ex_v1_10",
+            "question": "Dictation: Listen and write '{blank}'",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "4b0d0223-6073-4e05-b172-ff25a3d1189c",
+      "created_at": {
+        "__dt__": "2026-08-14T08:06:02.977996"
+      },
+      "description": "Describe people in your family.",
+      "estimated_minutes": 10,
+      "id": "43facaeb-a891-48f3-b9fd-7771b1f4ac1c",
+      "lesson_type": "lesson",
+      "order_index": 1,
+      "outcome": null,
+      "pass_threshold": 70,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Family Members",
+      "total_exercises": 10,
+      "unit_id": "5b084639-88b8-4316-9f5f-30889ec205f1",
+      "updated_at": {
+        "__dt__": "2026-08-19T02:32:24.997059"
+      },
+      "xp_reward": 20
+    },
+    {
+      "content": {
+        "exercises": [
+          {
+            "correct_answer": "kitchen",
+            "explanation": "Kitchen is for cooking.",
+            "id": "ex_v2_1",
+            "options": [
+              {
+                "id": "0",
+                "is_correct": true,
+                "text": "kitchen"
+              },
+              {
+                "id": "1",
+                "is_correct": false,
+                "text": "bedroom"
+              }
+            ],
+            "question": "You cook meals in the ___.",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "bedroom:bed, kitchen:fridge",
+            "explanation": "Bed in bedroom, fridge in kitchen.",
+            "id": "ex_v2_2",
+            "options": [
+              "bedroom",
+              "kitchen",
+              "bed",
+              "fridge"
+            ],
+            "question": "Match rooms with objects.",
+            "type": "matching",
+            "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "bedroom",
+            "explanation": "Bedroom is for sleeping.",
+            "id": "ex_v2_3",
+            "question": "Complete: 'I sleep in my {blank}.'",
+            "type": "fill_blank",
+            "ui_type": "fill_in_the_blank"
+          },
+          {
+            "correct_answer": "True",
+            "explanation": "Sofa in living room.",
+            "id": "ex_v2_4",
+            "options": [
+              {
+                "id": "0",
+                "is_correct": true,
+                "text": "True"
+              },
+              {
+                "id": "1",
+                "is_correct": false,
+                "text": "False"
+              }
+            ],
+            "question": "True or False: A sofa is typically placed in the living room.",
+            "type": "true_false",
+            "ui_type": "true_or_false"
+          },
+          {
+            "correct_answer": "the bed is in the bedroom",
+            "explanation": "Correct sentence structure.",
+            "id": "ex_v2_5",
+            "options": [
+              {
+                "id": "0",
+                "text": "the"
+              },
+              {
+                "id": "1",
+                "text": "bed"
+              },
+              {
+                "id": "2",
+                "text": "is"
+              },
+              {
+                "id": "3",
+                "text": "in"
+              },
+              {
+                "id": "4",
+                "text": "the"
+              },
+              {
+                "id": "5",
+                "text": "bedroom"
+              }
+            ],
+            "question": "Arrange: 'in / the / bed / is / bedroom / the'",
+            "type": "reorder",
+            "ui_type": "arrange_the_sentence"
+          },
+          {
+            "correct_answer": "bathroom",
+            "explanation": "Phòng tắm is bathroom.",
+            "id": "ex_v2_6",
+            "options": [
+              {
+                "id": "0",
+                "is_correct": true,
+                "text": "bathroom"
+              },
+              {
+                "id": "1",
+                "is_correct": false,
+                "text": "garden"
+              }
+            ],
+            "question": "Translation of: 'Phòng tắm'",
+            "type": "translate",
+            "ui_type": "translation_choice"
+          },
+          {
+            "correct_answer": "The desk is clean",
+            "explanation": "Evaluate pronunciation.",
+            "id": "ex_v2_7",
+            "question": "Repeat: 'The desk is clean.'",
+            "type": "translate",
+            "ui_type": "speaking_repeat"
+          },
+          {
+            "correct_answer": "Open the window",
+            "explanation": "Write what you hear.",
+            "id": "ex_v2_8",
+            "question": "Dictation: Listen and write '{blank}'",
+            "type": "fill_blank",
+            "ui_type": "dictation"
+          },
+          {
+            "correct_answer": "Table",
+            "explanation": "Card with table.",
+            "id": "ex_v2_9",
+            "options": [
+              {
+                "id": "0",
+                "is_correct": true,
+                "text": "Table"
+              },
+              {
+                "id": "1",
+                "is_correct": false,
+                "text": "Chair"
+              }
+            ],
+            "question": "Select the image that shows a table.",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
+          },
+          {
+            "correct_answer": "Đồ đạc trong phòng",
+            "explanation": "Furniture and appliances in a room.",
+            "id": "ex_v2_10",
+            "options": [
+              {
+                "id": "0",
+                "is_correct": true,
+                "text": "Đồ đạc trong phòng"
+              },
+              {
+                "id": "1",
+                "is_correct": false,
+                "text": "Quần áo mùa đông"
+              },
+              {
+                "id": "2",
+                "is_correct": false,
+                "text": "Dụng cụ nhà bếp"
+              },
+              {
+                "id": "3",
+                "is_correct": false,
+                "text": "Cây cảnh ngoài vườn"
+              }
+            ],
+            "question": "Learn: 'Furnishings'",
+            "type": "multiple_choice",
+            "ui_type": "vocabulary_flashcard"
+          }
+        ],
+        "version": 1
+      },
+      "content_version": 1,
+      "course_id": "4b0d0223-6073-4e05-b172-ff25a3d1189c",
+      "created_at": {
+        "__dt__": "2026-08-14T08:06:02.978011"
+      },
+      "description": "Talk about places and things at home.",
+      "estimated_minutes": 10,
+      "id": "756db209-abb1-4f9d-9df1-441600665330",
+      "lesson_type": "lesson",
+      "order_index": 2,
+      "outcome": null,
+      "pass_threshold": 70,
+      "prerequisites": [],
+      "skill": null,
+      "title": "Rooms and Objects",
+      "total_exercises": 10,
+      "unit_id": "5b084639-88b8-4316-9f5f-30889ec205f1",
+      "updated_at": {
+        "__dt__": "2026-08-19T02:32:24.997087"
+      },
+      "xp_reward": 20
+    }
+  ],
+  "units": [
+    {
+      "background_color": "#0F766E",
+      "course_id": "4b0d0223-6073-4e05-b172-ff25a3d1189c",
+      "created_at": {
+        "__dt__": "2026-08-14T08:06:02.976441"
+      },
+      "description": "Words you use every day at home.",
+      "icon_url": null,
+      "id": "5b084639-88b8-4316-9f5f-30889ec205f1",
+      "order_index": 1,
+      "title": "Home and Family",
+      "total_lessons": 2,
+      "updated_at": {
+        "__dt__": "2026-08-14T08:06:02.976446"
+      }
+    }
+  ]
+}

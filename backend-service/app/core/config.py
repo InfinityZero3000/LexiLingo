@@ -26,7 +26,7 @@ class Settings(BaseSettings):
 
     # Application
     APP_NAME: str = "LexiLingo Backend Service"
-    APP_VERSION: str = "1.14.0"
+    APP_VERSION: str = "1.15.0"
     APP_ENV: str = "development"
     API_V1_PREFIX: str = "/api/v1"
     DEBUG: bool = False
@@ -103,6 +103,7 @@ class Settings(BaseSettings):
     JWT_AUDIENCE: str = "lexilingo-services"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    REFRESH_REUSE_GRACE_SECONDS: int = 30
 
     # CORS
     # ENABLE_APP_CORS: explicit override (takes priority over GATEWAY_HANDLES_CORS).
@@ -322,6 +323,16 @@ class Settings(BaseSettings):
     # Set to your load balancer IP(s) in production; leave empty for dev/direct deployments.
     TRUSTED_PROXIES: str = ""
 
+    # Groq (vocabulary auto-translation; comma-separated pool like ai-service)
+    GROQ_API_KEYS: str | None = None
+    GROQ_API_KEY: str | None = None
+    VOCAB_AUTO_TRANSLATE_ENABLED: bool = True
+    # The worker runs concurrency=1 and also sends reminders; keep a sweep to ~1-2 min.
+    VOCAB_ENRICH_SWEEP_BATCH: int = 10
+    VOCAB_ENRICH_DELAY_SECONDS: float = 6.0
+    # Private reference corpus export; empty disables the daily export task.
+    REFERENCE_CORPUS_DIR: str = ""
+
     # Reminder scheduler (disabled by default for safe rollout)
     REMINDERS_ENABLED: bool = False
     REMINDER_DRY_RUN: bool = True
@@ -329,6 +340,18 @@ class Settings(BaseSettings):
     REMINDER_SCAN_INTERVAL_SECONDS: int = 300
     REMINDER_MAX_LATENESS_MINUTES: int = 180
     REMINDER_DEFAULT_TIMEZONE: str = "Asia/Ho_Chi_Minh"
+
+    # Activation / streak-at-risk / weekly-summary mail. Off: the tasks run and
+    # log how many they would have sent, and send nothing.
+    NURTURE_EMAILS_ENABLED: bool = False
+    NURTURE_START_ROUTE: str = "/courses"
+    NURTURE_STREAK_LOCAL_HOUR: int = 20
+    NURTURE_MAX_PER_RUN: int = 200
+    # Resend's free tier is 100 a day and shares it with verification and
+    # password-reset mail, so nurture may use only part of it.
+    NURTURE_DAILY_BUDGET: int = 60
+    # Resend allows 2 requests a second by default.
+    NURTURE_SEND_DELAY_SECONDS: float = 0.6
 
     # Event Worker — drains the content_interaction Redis Stream and
     # recomputes recommender insights off the request path.
@@ -346,6 +369,10 @@ class Settings(BaseSettings):
     # Where scripts/backup-prod.sh and verify-backup.sh leave their status files (mounted read-only).
     BACKUP_STATE_DIR: str = "/var/lib/lexilingo"
     APP_PUBLIC_URL: str = "https://lexilingo.me"
+    # Origin of this API as a mail client reaches it; the one-click unsubscribe link is built on it.
+    API_PUBLIC_URL: str = "https://api.lexilingo.me"
+    # Signs unsubscribe links. Empty derives a key from SECRET_KEY; changing it revokes every link already sent.
+    EMAIL_UNSUBSCRIBE_SECRET: str = ""
     # Origin that serves /media (e.g. https://api.lexilingo.me); empty falls back to the request's own origin.
     MEDIA_PUBLIC_BASE_URL: str = ""
 

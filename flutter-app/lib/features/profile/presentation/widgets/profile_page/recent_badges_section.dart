@@ -10,6 +10,7 @@ import 'package:lexilingo_app/features/profile/presentation/providers/profile_pr
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class RecentBadgesSection extends StatefulWidget {
   const RecentBadgesSection({super.key});
@@ -37,33 +38,8 @@ class _RecentBadgesSectionState extends State<RecentBadgesSection>
     super.dispose();
   }
 
-  bool _hasRenderableBadgeImage(UserAchievementEntity badge) {
-    final achievement = badge.achievement;
-
-    if (achievement.category.toLowerCase() == 'xp') {
-      return false;
-    }
-
-    final networkBadge = achievement.badgeIcon?.trim();
-    final networkBadgeUri = networkBadge != null && networkBadge.isNotEmpty
-        ? Uri.tryParse(networkBadge)
-        : null;
-    final hasValidNetworkBadge =
-        networkBadgeUri != null &&
-        (networkBadgeUri.scheme == 'http' ||
-            networkBadgeUri.scheme == 'https') &&
-        networkBadgeUri.host.isNotEmpty;
-    if (hasValidNetworkBadge) {
-      return true;
-    }
-
-    final lookupKey = (achievement.slug ?? achievement.id).trim();
-    if (lookupKey.isEmpty) {
-      return false;
-    }
-
-    return BadgeAssetMapper.hasRenderableBadge(lookupKey);
-  }
+  bool _isVisible(UserAchievementEntity badge) =>
+      badge.achievement.category.toLowerCase() != 'xp';
 
   /// Build empty badges placeholder
   Widget _buildEmptyBadges() {
@@ -76,10 +52,12 @@ class _RecentBadgesSectionState extends State<RecentBadgesSection>
             size: 40,
             color: AppColors.grey500,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             'profile.completeLessonsToEarnBadges'.tr(),
-            style: const TextStyle(color: AppColors.grey600, fontSize: 12),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ],
       ),
@@ -152,10 +130,12 @@ class _RecentBadgesSectionState extends State<RecentBadgesSection>
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             achievement.name,
-            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w500),
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w500),
             overflow: TextOverflow.ellipsis,
           ),
         ],
@@ -163,46 +143,38 @@ class _RecentBadgesSectionState extends State<RecentBadgesSection>
     );
   }
 
+  /// Only supplies the alpha the shine is masked with; the badge itself, or
+  /// its placeholder, is drawn by [AchievementBadge] underneath.
   Widget _buildBadgeShineMask(UserAchievementEntity badge, double badgeSize) {
     final achievement = badge.achievement;
-
-    final networkBadge = achievement.badgeIcon?.trim();
-    final networkBadgeUri = networkBadge != null && networkBadge.isNotEmpty
-        ? Uri.tryParse(networkBadge)
-        : null;
-    final hasValidNetworkBadge =
-        networkBadgeUri != null &&
-        (networkBadgeUri.scheme == 'http' ||
-            networkBadgeUri.scheme == 'https') &&
-        networkBadgeUri.host.isNotEmpty;
-
-    if (hasValidNetworkBadge) {
-      return ClipOval(
-        child: Image.network(
-          networkBadge!,
-          width: badgeSize,
-          height: badgeSize,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-        ),
-      );
+    final image = resolveBadgeImage(
+      slug: achievement.slug ?? achievement.id,
+      badgeIcon: achievement.badgeIcon,
+    );
+    switch (image.kind) {
+      case BadgeImageKind.asset:
+        return ClipOval(
+          child: Image.asset(
+            image.value!,
+            width: badgeSize,
+            height: badgeSize,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+          ),
+        );
+      case BadgeImageKind.network:
+        return ClipOval(
+          child: Image.network(
+            image.value!,
+            width: badgeSize,
+            height: badgeSize,
+            fit: BoxFit.cover,
+            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+          ),
+        );
+      case BadgeImageKind.none:
+        return const SizedBox.shrink();
     }
-
-    final lookupKey = (achievement.slug ?? achievement.id).trim();
-    final assetPath = BadgeAssetMapper.getBadgeAsset(lookupKey);
-    if (assetPath != null) {
-      return ClipOval(
-        child: Image.asset(
-          assetPath,
-          width: badgeSize,
-          height: badgeSize,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-        ),
-      );
-    }
-
-    return const SizedBox.shrink();
   }
 
   @override
@@ -211,19 +183,23 @@ class _RecentBadgesSectionState extends State<RecentBadgesSection>
       builder: (context, provider, child) {
         final badges = provider.recentBadges;
         final isLoading = provider.isLoadingBadges;
-        final visibleBadges = badges.where(_hasRenderableBadgeImage).toList();
+        final visibleBadges = badges.where(_isVisible).toList();
 
         return Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(AppSpacing.lg),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'profile.recentBadges'.tr(),
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
+                  Flexible(
+                    child: Text(
+                      'profile.recentBadges'.tr(),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   TextButton(
@@ -246,9 +222,12 @@ class _RecentBadgesSectionState extends State<RecentBadgesSection>
                   ? ShimmerContainer(
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.lg,
+                        ),
                         itemCount: 4,
-                        separatorBuilder: (_, __) => const SizedBox(width: 16),
+                        separatorBuilder: (_, __) =>
+                            const SizedBox(width: AppSpacing.lg),
                         itemBuilder: (context, index) {
                           return const SkeletonCircle(size: 80);
                         },
@@ -261,7 +240,8 @@ class _RecentBadgesSectionState extends State<RecentBadgesSection>
                       // Room above/below so the badge shadow isn't clipped.
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                       itemCount: visibleBadges.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 16),
+                      separatorBuilder: (_, __) =>
+                          const SizedBox(width: AppSpacing.lg),
                       itemBuilder: (context, index) {
                         final badge = visibleBadges[index];
                         return _buildBadgeItemFromEntity(badge);

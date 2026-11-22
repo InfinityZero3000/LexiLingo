@@ -1,3 +1,5 @@
+import 'package:lexilingo_app/core/network/http_status.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:lexilingo_app/core/network/api_client.dart';
@@ -34,26 +36,11 @@ class LexiChatDataSource {
 
   LexiChatDataSource({required this.apiClient});
 
-  bool _isSessionNotFoundError(Object error) {
-    final msg = error.toString().toLowerCase();
-    return msg.contains('status 404') ||
-        msg.contains('404') ||
-        msg.contains('not found');
-  }
+  bool _isSessionNotFoundError(Object error) => httpStatusOf(error) == 404;
 
-  bool _isUnauthorizedError(Object error) {
-    final msg = error.toString().toLowerCase();
-    return msg.contains('unauthorized') ||
-        msg.contains('status 401') ||
-        msg.contains('401');
-  }
+  bool _isUnauthorizedError(Object error) => httpStatusOf(error) == 401;
 
-  bool _isForbiddenError(Object error) {
-    final msg = error.toString().toLowerCase();
-    return msg.contains('status 403') ||
-        msg.contains('403') ||
-        msg.contains('forbidden');
-  }
+  bool _isForbiddenError(Object error) => httpStatusOf(error) == 403;
 
   bool _isSessionAccessError(Object error) {
     return _isSessionNotFoundError(error) || _isForbiddenError(error);
@@ -156,7 +143,7 @@ class LexiChatDataSource {
     text = text.replaceAll(RegExp(r'\n{3,}'), '\n\n').trim();
 
     if (text.isEmpty) {
-      return 'Squawk! I had a small glitch. Can you ask that again?';
+      return 'lexiChat.smallGlitch'.tr();
     }
 
     return text;
@@ -268,7 +255,7 @@ class LexiChatDataSource {
       content: _sanitizeAssistantContent(
         data['lexi_response'] ??
             data['response'] ??
-            'Squawk! Something went wrong.',
+            'lexiChat.somethingWrong'.tr(),
       ),
       timestamp: DateTime.now(),
       audioBase64: data['audio_base64'],

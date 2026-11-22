@@ -14,6 +14,7 @@ class GameSessionCompleteRequest(BaseModel):
     answers: list[GameAnswerSubmission] = Field(default_factory=list)
     client_duration_seconds: int | None = Field(default=None, ge=0, le=86400)
     hints_used: int = Field(default=0, ge=0, le=20)
+    rescued_ids: list[str] = Field(default_factory=list, max_length=200)
 
 
 class GameSessionCompleteResponse(BaseModel):
@@ -27,4 +28,5 @@ class GameSessionCompleteResponse(BaseModel):
     xp_awarded: int
     award_status: str
     duration_seconds: int
+    rescued_count: int = 0
     xp_result: dict[str, Any] | None = None

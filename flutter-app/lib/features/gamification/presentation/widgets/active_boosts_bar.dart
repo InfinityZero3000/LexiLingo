@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/inventory_item.dart';
@@ -9,26 +10,62 @@ import 'package:lexilingo_app/features/gamification/presentation/providers/gamif
 import 'package:easy_localization/easy_localization.dart';
 
 /// Horizontal bar displaying all currently active boosts with live countdown.
-/// Returns [SizedBox.shrink] when there are no active boosts.
-class ActiveBoostsBar extends StatelessWidget {
+/// Returns [SizedBox.shrink] when there are no active boosts. A boost
+/// disappears the moment its countdown reaches zero and the inventory is
+/// refreshed in the background.
+class ActiveBoostsBar extends StatefulWidget {
   const ActiveBoostsBar({super.key});
+
+  @override
+  State<ActiveBoostsBar> createState() => _ActiveBoostsBarState();
+}
+
+class _ActiveBoostsBarState extends State<ActiveBoostsBar> {
+  Timer? _ticker;
+  int _lastCount = 0;
+
+  @override
+  void dispose() {
+    _ticker?.cancel();
+    super.dispose();
+  }
+
+  void _syncTicker(int count) {
+    if (count > 0 && _ticker == null) {
+      _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted) setState(() {});
+      });
+    } else if (count == 0) {
+      _ticker?.cancel();
+      _ticker = null;
+    }
+    if (count < _lastCount) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.read<GamificationProvider>().loadInventory();
+      });
+    }
+    _lastCount = count;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Consumer<GamificationProvider>(
       builder: (context, provider, _) {
         final boosts = provider.activeBoosts;
+        _syncTicker(boosts.length);
         if (boosts.isEmpty) return const SizedBox.shrink();
 
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.lg,
+            vertical: AppSpacing.sm,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'gamification.activeBoosts'.tr(),
-                style: TextStyle(
-                  fontSize: 10,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.1,
                   color: AppColorRoles.textMuted(
@@ -36,13 +73,13 @@ class ActiveBoostsBar extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: AppSpacing.sm),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: boosts.map((boost) {
                     return Padding(
-                      padding: const EdgeInsets.only(right: 8),
+                      padding: const EdgeInsets.only(right: AppSpacing.sm),
                       child: _BoostPill(boost: boost),
                     );
                   }).toList(),
@@ -56,46 +93,23 @@ class ActiveBoostsBar extends StatelessWidget {
   }
 }
 
-class _BoostPill extends StatefulWidget {
+class _BoostPill extends StatelessWidget {
   final InventoryItemEntity boost;
   const _BoostPill({required this.boost});
 
   @override
-  State<_BoostPill> createState() => _BoostPillState();
-}
-
-class _BoostPillState extends State<_BoostPill> {
-  late Timer _timer;
-  late Duration _remaining;
-
-  @override
-  void initState() {
-    super.initState();
-    _remaining = widget.boost.remainingDuration ?? Duration.zero;
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) return;
-      final r = widget.boost.remainingDuration ?? Duration.zero;
-      setState(() => _remaining = r);
-      if (_remaining == Duration.zero) _timer.cancel();
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer.cancel();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final effectType = widget.boost.item.effectType ?? '';
+    final effectType = boost.item.effectType ?? '';
     final boostColor = _colorForEffect(effectType);
     final icon = _iconForEffect(effectType);
     final label = _labelForEffect(effectType);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: boostColor.withValues(alpha: isDark ? 0.18 : 0.10),
         borderRadius: BorderRadius.circular(99),
@@ -105,32 +119,30 @@ class _BoostPillState extends State<_BoostPill> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 14, color: boostColor),
-          const SizedBox(width: 6),
+          const SizedBox(width: AppSpacing.sm),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
               fontWeight: FontWeight.w700,
               color: boostColor,
             ),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: AppSpacing.sm),
           Container(
             width: 1,
             height: 12,
             color: boostColor.withValues(alpha: 0.3),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: AppSpacing.sm),
           Icon(
             Icons.timer_outlined,
             size: 12,
             color: boostColor.withValues(alpha: 0.8),
           ),
-          const SizedBox(width: 3),
+          const SizedBox(width: AppSpacing.xs),
           Text(
-            _formatDuration(_remaining),
-            style: TextStyle(
-              fontSize: 11,
+            _formatDuration(boost.remainingDuration ?? Duration.zero),
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
               fontWeight: FontWeight.w600,
               color: boostColor.withValues(alpha: 0.9),
             ),
@@ -173,6 +185,6 @@ class _BoostPillState extends State<_BoostPill> {
     ShopItemEntity.effectStreakFreeze => 'Freeze',
     ShopItemEntity.effectUnlimitedHearts => '∞ Hearts',
     ShopItemEntity.effectHintRefill => 'Hints',
-    _ => widget.boost.item.name,
+    _ => boost.item.name,
   };
 }

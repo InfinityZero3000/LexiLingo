@@ -11,6 +11,26 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 
+/// Badge artwork palette. Illustration colours stay fixed in both themes.
+abstract final class _BadgeColors {
+  static const blue = Color(0xFF2196F3);
+  static const blueMid = Color(0xFF1976D2);
+  static const blueDeep = Color(0xFF1565C0);
+  static const purpleMid = Color(0xFF7B1FA2);
+  static const purpleDeep = Color(0xFF6A1B9A);
+  static const violet = Color(0xFF673AB7);
+  static const violetDeep = Color(0xFF512DA8);
+  static const indigo = Color(0xFF3F51B5);
+  static const indigoDeep = Color(0xFF303F9F);
+  static const cyan = Color(0xFF00BCD4);
+  static const cyanDeep = Color(0xFF0097A7);
+  static const greenDeep = Color(0xFF388E3C);
+  static const lime = Color(0xFF689F38);
+  static const amber = Color(0xFFFFA000);
+  static const goldenrod = Color(0xFFDAA520);
+  static const flame = Color(0xFFE64A19);
+}
+
 /// Badge shape types
 enum BadgeShape {
   circle,
@@ -67,11 +87,11 @@ class BadgeConfig {
       case BadgeRarity.common:
         return [AppColors.grey500, AppColors.grey600]; // Gray
       case BadgeRarity.rare:
-        return [const Color(0xFF2196F3), const Color(0xFF1565C0)]; // Blue
+        return [_BadgeColors.blue, _BadgeColors.blueDeep]; // Blue
       case BadgeRarity.epic:
-        return [const Color(0xFF9C27B0), const Color(0xFF6A1B9A)]; // Purple
+        return [AppColors.purple, _BadgeColors.purpleDeep]; // Purple
       case BadgeRarity.legendary:
-        return [AppColors.gold, const Color(0xFFFFA000)]; // Gold
+        return [AppColors.gold, _BadgeColors.amber]; // Gold
     }
   }
 
@@ -79,13 +99,13 @@ class BadgeConfig {
   Color get glowColor {
     switch (rarity) {
       case BadgeRarity.common:
-        return Colors.grey.withValues(alpha: 0.3);
+        return AppColors.grey500.withValues(alpha: 0.3);
       case BadgeRarity.rare:
-        return Colors.blue.withValues(alpha: 0.4);
+        return _BadgeColors.blue.withValues(alpha: 0.4);
       case BadgeRarity.epic:
         return AppColors.purple.withValues(alpha: 0.5);
       case BadgeRarity.legendary:
-        return Colors.amber.withValues(alpha: 0.6);
+        return AppColors.warning.withValues(alpha: 0.6);
     }
   }
 }
@@ -161,7 +181,7 @@ class _GeneratedBadgeState extends State<GeneratedBadge>
 
   Widget _buildIcon() {
     final iconSize = widget.size * 0.4;
-    final color = widget.config.isLocked ? Colors.grey : Colors.white;
+    final color = widget.config.isLocked ? AppColors.grey500 : Colors.white;
 
     if (widget.config.isLocked) {
       return Icon(Icons.lock, size: iconSize, color: color);
@@ -263,7 +283,7 @@ class BadgePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3
       ..color = config.isLocked
-          ? Colors.grey
+          ? AppColors.grey500
           : colors[1].withValues(alpha: 0.8);
 
     canvas.drawCircle(center, radius, borderPaint);
@@ -422,7 +442,7 @@ class BadgePainter extends CustomPainter {
     final borderPaint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2
-      ..color = config.isLocked ? Colors.grey : colors[1];
+      ..color = config.isLocked ? AppColors.grey500 : colors[1];
 
     canvas.drawPath(path, borderPaint);
   }
@@ -481,7 +501,7 @@ class AchievementBadgeTemplates {
       rarity: rarity,
       icon: Icons.local_fire_department,
       primaryColor: AppColors.deepOrange,
-      secondaryColor: const Color(0xFFE64A19),
+      secondaryColor: _BadgeColors.flame,
     );
   }
 
@@ -502,8 +522,8 @@ class AchievementBadgeTemplates {
       shape: BadgeShape.circle,
       rarity: rarity,
       icon: Icons.school,
-      primaryColor: const Color(0xFF4CAF50),
-      secondaryColor: const Color(0xFF388E3C),
+      primaryColor: AppColors.greenSuccessBright,
+      secondaryColor: _BadgeColors.greenDeep,
     );
   }
 
@@ -525,7 +545,7 @@ class AchievementBadgeTemplates {
       rarity: rarity,
       icon: Icons.star,
       primaryColor: AppColors.gold,
-      secondaryColor: const Color(0xFFFFA000),
+      secondaryColor: _BadgeColors.amber,
     );
   }
 
@@ -546,8 +566,8 @@ class AchievementBadgeTemplates {
       shape: BadgeShape.diamond,
       rarity: rarity,
       icon: Icons.translate,
-      primaryColor: const Color(0xFF00BCD4),
-      secondaryColor: const Color(0xFF0097A7),
+      primaryColor: _BadgeColors.cyan,
+      secondaryColor: _BadgeColors.cyanDeep,
     );
   }
 
@@ -558,7 +578,7 @@ class AchievementBadgeTemplates {
       rarity: BadgeRarity.epic,
       icon: Icons.military_tech,
       primaryColor: AppColors.gold,
-      secondaryColor: Color(0xFFDAA520),
+      secondaryColor: _BadgeColors.goldenrod,
     );
   }
 
@@ -579,8 +599,8 @@ class AchievementBadgeTemplates {
       shape: BadgeShape.hexagon,
       rarity: rarity,
       icon: Icons.mic,
-      primaryColor: const Color(0xFF9C27B0),
-      secondaryColor: const Color(0xFF7B1FA2),
+      primaryColor: AppColors.purple,
+      secondaryColor: _BadgeColors.purpleMid,
     );
   }
 
@@ -601,8 +621,8 @@ class AchievementBadgeTemplates {
       shape: BadgeShape.banner,
       rarity: rarity,
       icon: Icons.workspace_premium,
-      primaryColor: const Color(0xFF3F51B5),
-      secondaryColor: const Color(0xFF303F9F),
+      primaryColor: _BadgeColors.indigo,
+      secondaryColor: _BadgeColors.indigoDeep,
     );
   }
 
@@ -615,33 +635,33 @@ class AchievementBadgeTemplates {
     switch (levelCode.toUpperCase()) {
       case 'A1':
         rarity = BadgeRarity.common;
-        primary = const Color(0xFF8BC34A);
-        secondary = const Color(0xFF689F38);
+        primary = AppColors.greenSuccessSoft;
+        secondary = _BadgeColors.lime;
         break;
       case 'A2':
         rarity = BadgeRarity.common;
-        primary = const Color(0xFF4CAF50);
-        secondary = const Color(0xFF388E3C);
+        primary = AppColors.greenSuccessBright;
+        secondary = _BadgeColors.greenDeep;
         break;
       case 'B1':
         rarity = BadgeRarity.rare;
-        primary = const Color(0xFF2196F3);
-        secondary = const Color(0xFF1976D2);
+        primary = _BadgeColors.blue;
+        secondary = _BadgeColors.blueMid;
         break;
       case 'B2':
         rarity = BadgeRarity.epic;
-        primary = const Color(0xFF673AB7);
-        secondary = const Color(0xFF512DA8);
+        primary = _BadgeColors.violet;
+        secondary = _BadgeColors.violetDeep;
         break;
       case 'C1':
         rarity = BadgeRarity.epic;
-        primary = const Color(0xFF9C27B0);
-        secondary = const Color(0xFF7B1FA2);
+        primary = AppColors.purple;
+        secondary = _BadgeColors.purpleMid;
         break;
       case 'C2':
         rarity = BadgeRarity.legendary;
         primary = AppColors.gold;
-        secondary = const Color(0xFFFFA000);
+        secondary = _BadgeColors.amber;
         break;
       default:
         rarity = BadgeRarity.common;

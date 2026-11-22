@@ -1,10 +1,12 @@
+import 'package:lexilingo_app/core/widgets/stat_card.dart';
 import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 import '../../domain/entities/educational_hints.dart';
-import 'package:lexilingo_app/core/theme/app_theme.dart';
+import '../helpers/grammar_label.dart';
 import 'markdown_message_content.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 // These cards use fixed light backgrounds, so markdown is always rendered light.
 Widget _md(String text, TextStyle style) => MarkdownMessageContent(
@@ -81,22 +83,17 @@ class EducationalHintsCard extends StatelessWidget {
           // Encouragement
           if (hints.encouragement != null && hints.encouragement!.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.only(top: 4),
+              padding: const EdgeInsets.only(top: AppSpacing.xs),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
-                    Icons.thumb_up,
-                    size: 14,
-                    color: AppColors.greenSuccessBright,
-                  ),
-                  const SizedBox(width: 4),
+                  Icon(Icons.thumb_up, size: 14, color: context.status.success),
+                  const SizedBox(width: AppSpacing.xs),
                   Flexible(
                     child: Text(
                       hints.encouragement!,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.greenSuccessBright,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: context.status.success,
                         fontStyle: FontStyle.italic,
                       ),
                     ),
@@ -111,7 +108,7 @@ class EducationalHintsCard extends StatelessWidget {
 }
 
 /// Grammar Correction Badge
-/// Shows original error and corrected version
+/// Shows the learner's wrong text, the corrected text and a one-line reason.
 class GrammarCorrectionBadge extends StatelessWidget {
   final GrammarCorrection correction;
   final VoidCallback? onSave;
@@ -126,201 +123,181 @@ class GrammarCorrectionBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.orange.shade50,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orange.shade200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header
-          Row(
+    final original = correction.original.trim();
+    final corrected = correction.corrected.trim();
+    if (original.isEmpty || corrected.isEmpty) return const SizedBox.shrink();
+
+    final theme = Theme.of(context);
+    final status = context.status;
+    final textTheme = theme.textTheme;
+    final ink = status.onWarningContainer;
+    final explanation = correction.explanation.trim();
+    final labelKey = grammarLabelIsInformative(correction.errorType)
+        ? grammarLabelKey(correction.errorType)
+        : null;
+    final showPractice =
+        onPractice != null && grammarLabelHasPractice(correction.errorType);
+
+    // Material, not a decorated Container, so the save button's ink shows.
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Material(
+        color: status.warningContainer,
+        borderRadius: AppRadius.mdAll,
+        clipBehavior: Clip.antiAlias,
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.edit_note, size: 16, color: Colors.orange.shade700),
-              const SizedBox(width: 4),
-              Text(
-                'chat.grammarCorrection'.tr(),
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.orange.shade700,
-                ),
-              ),
-              if (correction.errorType != null)
-                Padding(
-                  padding: const EdgeInsets.only(left: 8),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
+              Row(
+                children: [
+                  Expanded(
+                    child: Wrap(
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.xs,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.edit_note, size: 18, color: ink),
+                            const SizedBox(width: AppSpacing.xs),
+                            Flexible(
+                              child: Text(
+                                'chat.fixSuggestion'.tr(),
+                                style: textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: ink,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (labelKey != null)
+                          StatusPill(
+                            label: labelKey.tr(),
+                            tone: StatusTone.warning,
+                          ),
+                      ],
                     ),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.shade100,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      correction.errorType!,
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: Colors.orange.shade800,
+                  ),
+                  if (onSave != null)
+                    Semantics(
+                      button: true,
+                      label: 'chat.saveCorrection'.tr(),
+                      child: ExcludeSemantics(
+                        child: InkResponse(
+                          onTap: onSave,
+                          radius: kMinTapTarget / 2,
+                          child: TapTargetBox(
+                            child: Icon(
+                              Icons.bookmark_add_outlined,
+                              size: 20,
+                              color: ink,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              _CorrectionLine(
+                icon: Icons.close_rounded,
+                iconColor: theme.colorScheme.error,
+                child: Text(
+                  original,
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: ink,
+                    decoration: TextDecoration.lineThrough,
                   ),
                 ),
-              if (onSave != null) ...[
-                const Spacer(),
-                InkWell(
-                  onTap: onSave,
-                  borderRadius: BorderRadius.circular(6),
-                  child: Padding(
-                    padding: const EdgeInsets.all(2),
-                    child: Icon(
-                      Icons.bookmark_add_outlined,
-                      size: 16,
-                      color: Colors.orange.shade700,
-                    ),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              _CorrectionLine(
+                icon: Icons.check_rounded,
+                iconColor: status.success,
+                child: _themedMd(
+                  context,
+                  corrected,
+                  textTheme.bodyMedium!.copyWith(
+                    color: ink,
+                    fontWeight: FontWeight.w600,
                   ),
+                ),
+              ),
+              if (explanation.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.sm),
+                _themedMd(
+                  context,
+                  explanation,
+                  textTheme.bodySmall!.copyWith(color: ink),
                 ),
               ],
+              if (showPractice)
+                Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.sm),
+                  child: ActionChip(
+                    avatar: Icon(
+                      Icons.fitness_center_rounded,
+                      size: 14,
+                      color: ink,
+                    ),
+                    label: Text(
+                      'chat.practiceThisAction'.tr(),
+                      style: textTheme.bodySmall?.copyWith(color: ink),
+                    ),
+                    onPressed: onPractice,
+                    backgroundColor: theme.colorScheme.surface,
+                    side: BorderSide.none,
+                    visualDensity: TapTargetBox.applies(context)
+                        ? VisualDensity.standard
+                        : VisualDensity.compact,
+                  ),
+                ),
             ],
           ),
-          const SizedBox(height: 8),
-
-          // Original vs Corrected
-          if (correction.original.isNotEmpty)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Original (struck through)
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.close, size: 14, color: Colors.red.shade400),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: Text(
-                            correction.original,
-                            style: TextStyle(
-                              decoration: TextDecoration.lineThrough,
-                              color: Colors.red.shade700,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 8),
-                  child: Icon(Icons.arrow_forward, size: 16),
-                ),
-                // Corrected
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.green.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.check,
-                          size: 14,
-                          color: Colors.green.shade600,
-                        ),
-                        const SizedBox(width: 4),
-                        Flexible(
-                          child: _md(
-                            correction.corrected,
-                            TextStyle(
-                              color: Colors.green.shade700,
-                              fontWeight: FontWeight.w500,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-          // Explanation
-          const SizedBox(height: 8),
-          Container(
-            padding: EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceLight,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(Icons.lightbulb, size: 14, color: Colors.amber.shade600),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _md(
-                    correction.explanation,
-                    const TextStyle(fontSize: 12, color: AppColors.textDark),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Rule name
-          if (correction.rule != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                'chat.correctionRule'.tr(namedArgs: {'rule': correction.rule!}),
-                style: TextStyle(
-                  fontSize: 11,
-                  color: AppColors.grey600,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ),
-
-          if (onPractice != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: ActionChip(
-                avatar: Icon(
-                  Icons.fitness_center_rounded,
-                  size: 14,
-                  color: Colors.orange.shade700,
-                ),
-                label: Text(
-                  'chat.practiceThisAction'.tr(),
-                  style: TextStyle(fontSize: 12, color: Colors.orange.shade700),
-                ),
-                onPressed: onPractice,
-                backgroundColor: Colors.orange.shade100,
-                side: BorderSide.none,
-                visualDensity: TapTargetBox.applies(context)
-                    ? VisualDensity.standard
-                    : VisualDensity.compact,
-              ),
-            ),
-        ],
+        ),
       ),
     );
   }
 }
+
+class _CorrectionLine extends StatelessWidget {
+  const _CorrectionLine({
+    required this.icon,
+    required this.iconColor,
+    required this.child,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Icon(icon, size: 16, color: iconColor),
+        ),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(child: child),
+      ],
+    );
+  }
+}
+
+Widget _themedMd(BuildContext context, String text, TextStyle style) =>
+    MarkdownMessageContent(
+      content: text,
+      isDark: Theme.of(context).brightness == Brightness.dark,
+      selectable: false,
+      baseTextStyle: style,
+    );
 
 /// Vocabulary Hint Card
 /// Shows vocabulary definition and example
@@ -339,11 +316,11 @@ class VocabularyHintCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: Colors.blue.shade50,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(color: Colors.blue.shade200),
       ),
       child: Column(
@@ -353,21 +330,20 @@ class VocabularyHintCard extends StatelessWidget {
           Row(
             children: [
               Icon(Icons.book, size: 16, color: Colors.blue.shade700),
-              const SizedBox(width: 4),
+              const SizedBox(width: AppSpacing.xs),
               Expanded(
                 child: Row(
                   children: [
                     Text(
                       hint.term,
-                      style: TextStyle(
-                        fontSize: 14,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Colors.blue.shade700,
                       ),
                     ),
                     if (hint.partOfSpeech != null)
                       Padding(
-                        padding: const EdgeInsets.only(left: 8),
+                        padding: const EdgeInsets.only(left: AppSpacing.sm),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 6,
@@ -379,10 +355,8 @@ class VocabularyHintCard extends StatelessWidget {
                           ),
                           child: Text(
                             hint.partOfSpeech!,
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Colors.blue.shade800,
-                            ),
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(color: Colors.blue.shade800),
                           ),
                         ),
                       ),
@@ -392,14 +366,19 @@ class VocabularyHintCard extends StatelessWidget {
               // Pronunciation
               if (hint.pronunciation != null)
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: AppSpacing.sm,
+                    vertical: AppSpacing.xs,
+                  ),
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   child: Text(
                     hint.pronunciation!,
-                    style: TextStyle(fontSize: 11, color: Colors.blue.shade600),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: Colors.blue.shade600,
+                    ),
                   ),
                 ),
               if (onPracticePronunciation != null)
@@ -430,40 +409,41 @@ class VocabularyHintCard extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
 
           // Definition
           _md(
             hint.definition,
-            const TextStyle(fontSize: 13, color: AppColors.textDark),
+            Theme.of(context).textTheme.bodySmall!.copyWith(
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
           ),
 
           // Example
           if (hint.example != null && hint.example!.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.only(top: AppSpacing.sm),
               child: Container(
-                padding: EdgeInsets.all(8),
+                padding: EdgeInsets.all(AppSpacing.sm),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceLight,
-                  borderRadius: BorderRadius.circular(8),
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.edit_note_rounded,
                       size: 14,
-                      color: Colors.grey,
+                      color: Theme.of(context).colorScheme.outline,
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: AppSpacing.xs),
                     Expanded(
                       child: _md(
                         hint.example!,
-                        TextStyle(
-                          fontSize: 12,
+                        Theme.of(context).textTheme.bodySmall!.copyWith(
                           fontStyle: FontStyle.italic,
-                          color: AppColors.grey700,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ),
@@ -496,7 +476,10 @@ class TopicProgressIndicator extends StatelessWidget {
     final progress = totalSteps > 0 ? currentStep / totalSteps : 0.0;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
       ),
@@ -508,28 +491,28 @@ class TopicProgressIndicator extends StatelessWidget {
             children: [
               Text(
                 stepLabel ?? 'Progress',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
               ),
               Text(
                 '$currentStep / $totalSteps',
-                style: TextStyle(
-                  fontSize: 12,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).primaryColor,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.xs),
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 6,
-              backgroundColor: AppColors.grey200,
+              backgroundColor: Theme.of(
+                context,
+              ).colorScheme.surfaceContainerHighest,
             ),
           ),
         ],
@@ -566,28 +549,30 @@ class _ExpandableHintsToggleState extends State<ExpandableHintsToggle> {
         // Toggle button
         InkWell(
           onTap: () => setState(() => _isExpanded = !_isExpanded),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(AppRadius.sm),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md,
+              vertical: 6,
+            ),
             decoration: BoxDecoration(
               color: Colors.purple.shade50,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
               border: Border.all(color: Colors.purple.shade200),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.school, size: 14, color: Colors.purple.shade600),
-                const SizedBox(width: 4),
+                const SizedBox(width: AppSpacing.xs),
                 Text(
                   'chat.learningHintsCount'.plural(totalHints),
-                  style: TextStyle(
-                    fontSize: 12,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Colors.purple.shade700,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: AppSpacing.xs),
                 Icon(
                   _isExpanded ? Icons.expand_less : Icons.expand_more,
                   size: 16,
@@ -601,7 +586,7 @@ class _ExpandableHintsToggleState extends State<ExpandableHintsToggle> {
         // Expanded hints
         if (_isExpanded)
           Padding(
-            padding: const EdgeInsets.only(top: 8),
+            padding: const EdgeInsets.only(top: AppSpacing.sm),
             child: EducationalHintsCard(hints: widget.hints),
           ),
       ],

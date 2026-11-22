@@ -10,9 +10,13 @@ import '../providers/auth_provider.dart';
 import 'login_page.dart';
 import 'email_verification_pending_page.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class RegisterPage extends StatefulWidget {
-  const RegisterPage({super.key});
+  /// The name the pre-sign-up questions already asked for.
+  final String? initialName;
+
+  const RegisterPage({super.key, this.initialName});
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
@@ -20,7 +24,9 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
-  final _fullNameController = TextEditingController();
+  late final _fullNameController = TextEditingController(
+    text: widget.initialName,
+  );
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -64,23 +70,30 @@ class _RegisterPageState extends State<RegisterPage> {
     required IconData icon,
     Widget? suffixIcon,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final outline = isDark
+        ? AppColors.textOnDarkMuted
+        : const Color(0xFFD7DEE7);
     return InputDecoration(
       hintText: hint,
       prefixIcon: Icon(icon),
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: Theme.of(context).colorScheme.surface,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.lg,
+      ),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(24),
-        borderSide: const BorderSide(color: Color(0xFFD7DEE7)),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderSide: BorderSide(color: outline),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(24),
-        borderSide: const BorderSide(color: Color(0xFFD7DEE7)),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        borderSide: BorderSide(color: outline),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         borderSide: const BorderSide(color: AppColors.accentMint, width: 1.6),
       ),
     );
@@ -91,6 +104,11 @@ class _RegisterPageState extends State<RegisterPage> {
     final authProvider = Provider.of<AuthProvider>(context);
     final theme = Theme.of(context);
     final textTheme = theme.textTheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final strongText = AppColorRoles.textPrimary(isDark);
+    final mutedText = isDark
+        ? AppColors.textOnDarkMuted
+        : const Color(0xFF3E536B);
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -99,7 +117,10 @@ class _RegisterPageState extends State<RegisterPage> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 480),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: AppSpacing.sm,
+              ),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -120,6 +141,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             );
                           },
                           icon: Icons.arrow_back,
+                          color: strongText,
                         ),
                         Expanded(
                           child: Text(
@@ -127,7 +149,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             textAlign: TextAlign.center,
                             style: textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF0B132B),
+                              color: strongText,
                             ),
                           ),
                         ),
@@ -139,15 +161,15 @@ class _RegisterPageState extends State<RegisterPage> {
                       'auth.startJourney'.tr(),
                       style: textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF0B132B),
+                        color: strongText,
                         height: 1.1,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.md),
                     Text(
                       'auth.joinLearners'.tr(),
                       style: textTheme.titleMedium?.copyWith(
-                        color: const Color(0xFF3E536B),
+                        color: mutedText,
                         height: 1.35,
                       ),
                     ),
@@ -297,7 +319,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       },
                     ),
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.lg),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -314,15 +336,19 @@ class _RegisterPageState extends State<RegisterPage> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          side: const BorderSide(color: Color(0xFFB8C7D9)),
+                          side: BorderSide(
+                            color: isDark
+                                ? AppColors.textOnDarkMuted
+                                : const Color(0xFFB8C7D9),
+                          ),
                         ),
                         Expanded(
                           child: Padding(
-                            padding: const EdgeInsets.only(top: 12),
+                            padding: const EdgeInsets.only(top: AppSpacing.md),
                             child: RichText(
                               text: TextSpan(
                                 style: textTheme.bodyLarge?.copyWith(
-                                  color: const Color(0xFF3E536B),
+                                  color: mutedText,
                                 ),
                                 children: [
                                   TextSpan(text: 'auth.termsPrefix'.tr()),
@@ -349,7 +375,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       ],
                     ),
                     if (_showTermsError) ...[
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppSpacing.xs),
                       Text(
                         'auth.pleaseAcceptTerms'.tr(),
                         style: textTheme.bodyMedium?.copyWith(
@@ -359,10 +385,10 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ],
 
-                    const SizedBox(height: 16),
+                    const SizedBox(height: AppSpacing.lg),
                     SizedBox(
                       height: 58,
-                      child: ElevatedButton(
+                      child: FilledButton(
                         onPressed: authProvider.isLoading
                             ? null
                             : () async {
@@ -389,9 +415,23 @@ class _RegisterPageState extends State<RegisterPage> {
                                   displayName: _fullNameController.text.trim(),
                                 );
 
-                                // If registration succeeded, navigate to email verification page.
                                 if (authProvider.errorMessage == null &&
                                     mounted) {
+                                  // Sign straight in: an unverified account may learn, and
+                                  // Home keeps asking it to verify. An older backend still
+                                  // refuses, which falls back to the inbox page.
+                                  await authProvider.signInWithEmailPassword(
+                                    _emailController.text.trim(),
+                                    _passwordController.text,
+                                  );
+                                  if (!mounted) return;
+                                  if (authProvider.isAuthenticated) {
+                                    nav.pushNamedAndRemoveUntil(
+                                      '/',
+                                      (_) => false,
+                                    );
+                                    return;
+                                  }
                                   nav.pushReplacement(
                                     MaterialPageRoute(
                                       builder: (_) =>
@@ -402,7 +442,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                   );
                                 }
                               },
-                        style: ElevatedButton.styleFrom(
+                        style: FilledButton.styleFrom(
                           backgroundColor: AppColors.accentMint,
                           foregroundColor: const Color(0xFF0B132B),
                           shape: RoundedRectangleBorder(
@@ -418,10 +458,8 @@ class _RegisterPageState extends State<RegisterPage> {
                               )
                             : Text(
                                 'auth.createAccount'.tr(),
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                ),
+                                style: Theme.of(context).textTheme.sectionTitle
+                                    ?.copyWith(fontWeight: FontWeight.w800),
                               ),
                       ),
                     ),
@@ -429,22 +467,34 @@ class _RegisterPageState extends State<RegisterPage> {
                     const SizedBox(height: 28),
                     Row(
                       children: [
-                        const Expanded(
-                          child: Divider(color: Color(0xFFD7DEE7)),
+                        Expanded(
+                          child: Divider(
+                            color: isDark
+                                ? AppColors.textOnDarkMuted
+                                : const Color(0xFFD7DEE7),
+                          ),
                         ),
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                          ),
                           child: Text(
                             'auth.orContinueWith'.tr(),
                             style: textTheme.labelLarge?.copyWith(
-                              color: const Color(0xFF8C9AAF),
+                              color: isDark
+                                  ? AppColors.textOnDarkMuted
+                                  : const Color(0xFF8C9AAF),
                               fontWeight: FontWeight.w700,
                               letterSpacing: 0.5,
                             ),
                           ),
                         ),
-                        const Expanded(
-                          child: Divider(color: Color(0xFFD7DEE7)),
+                        Expanded(
+                          child: Divider(
+                            color: isDark
+                                ? AppColors.textOnDarkMuted
+                                : const Color(0xFFD7DEE7),
+                          ),
                         ),
                       ],
                     ),
@@ -461,14 +511,16 @@ class _RegisterPageState extends State<RegisterPage> {
                         icon: const Icon(Icons.g_mobiledata, size: 30),
                         label: Text(
                           'auth.continueWithGoogle'.tr(),
-                          style: const TextStyle(
-                            color: Color(0xFF0B132B),
-                            fontWeight: FontWeight.w700,
-                            fontSize: 18,
-                          ),
+                          style: Theme.of(context).textTheme.sectionTitle
+                              ?.copyWith(
+                                color: Color(0xFF0B132B),
+                                fontWeight: FontWeight.w700,
+                              ),
                         ),
                         style: OutlinedButton.styleFrom(
-                          backgroundColor: AppColors.surfaceLight,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.surface,
                           side: const BorderSide(color: Color(0xFFD7DEE7)),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(28),
@@ -477,10 +529,10 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
 
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.md),
                     SizedBox(
                       height: 58,
-                      child: ElevatedButton.icon(
+                      child: FilledButton.icon(
                         onPressed: authProvider.isLoading
                             ? null
                             : () async {
@@ -488,17 +540,17 @@ class _RegisterPageState extends State<RegisterPage> {
                               },
                         icon: Icon(
                           Icons.facebook,
-                          color: AppColors.surfaceLight,
+                          color: Theme.of(context).colorScheme.surface,
                         ),
                         label: Text(
                           'auth.continueWithFacebook'.tr(),
-                          style: TextStyle(
-                            color: AppColors.surfaceLight,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 18,
-                          ),
+                          style: Theme.of(context).textTheme.sectionTitle
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.surface,
+                                fontWeight: FontWeight.w700,
+                              ),
                         ),
-                        style: ElevatedButton.styleFrom(
+                        style: FilledButton.styleFrom(
                           backgroundColor: const Color(0xFF0B132B),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(28),
@@ -515,7 +567,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           Text(
                             'auth.alreadyHaveAccount'.tr(),
                             style: textTheme.titleMedium?.copyWith(
-                              color: const Color(0xFF3E536B),
+                              color: mutedText,
                             ),
                           ),
                           TapTarget(
@@ -543,27 +595,27 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
 
                     if (authProvider.errorMessage != null) ...[
-                      const SizedBox(height: 16),
+                      const SizedBox(height: AppSpacing.lg),
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(AppSpacing.md),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFFF3F3),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                           border: Border.all(color: const Color(0xFFFFCFCF)),
                         ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.error_outline,
-                              color: AppColors.errorBright,
+                              color: Theme.of(context).colorScheme.error,
                             ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: SelectableText(
                                 authProvider.errorMessage!,
-                                style: const TextStyle(
-                                  color: AppColors.errorDark,
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.error,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -572,7 +624,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                       ),
                     ],
-                    if (kIsWeb) const SizedBox(height: 24),
+                    if (kIsWeb) const SizedBox(height: AppSpacing.xl),
                   ],
                 ),
               ),

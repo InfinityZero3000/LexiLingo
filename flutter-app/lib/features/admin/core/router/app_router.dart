@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../features/auth/presentation/login_screen.dart';
+import '../../features/auth/presentation/admin_gate_screens.dart';
 import '../../features/auth/presentation/auth_provider.dart';
 import '../../features/dashboard/presentation/dashboard_screen.dart';
 import '../../features/curriculum/presentation/curriculum_screen.dart';
 import '../../features/curriculum/presentation/course_detail_screen.dart';
 import '../../features/curriculum/presentation/units_lessons_screen.dart';
 import '../../features/users/presentation/users_screen.dart';
-import '../../features/users/presentation/user_stats_screen.dart';
+import '../../features/users/presentation/user_detail_screen.dart';
+import '../../features/gem_ledger/presentation/gem_ledger_screen.dart';
 import '../../features/settings/presentation/settings_screen.dart';
 import '../../features/analytics/presentation/analytics_screen.dart';
 import '../../features/vocabulary/presentation/vocabulary_screen.dart';
@@ -19,47 +20,92 @@ import '../../features/super_admin/presentation/admin_management_screen.dart';
 import '../../features/system_logs/presentation/logs_screen.dart';
 import '../../features/ads/presentation/ads_screen.dart';
 import '../../features/topics/presentation/topics_screen.dart';
+import '../../features/categories/presentation/categories_screen.dart';
+import '../../features/ielts/presentation/ielts_screen.dart';
 import '../../features/system_settings/presentation/system_settings_screen.dart';
 import '../../features/content_lab/presentation/content_lab_screen.dart';
 import '../../features/content_qa/presentation/content_qa_screen.dart';
 import '../../features/notification_campaign/presentation/notification_campaign_screen.dart';
 import '../../features/ranking_agent/presentation/ranking_agent_screen.dart';
 import '../../features/lesson_exercises/presentation/lesson_exercises_screen.dart';
+import '../../features/system/presentation/screens/ai_quality_screen.dart';
+import '../../features/system/presentation/screens/ops_center_screen.dart';
+import '../../features/system/presentation/screens/roles_screen.dart';
 import '../../shared/widgets/admin_shell.dart';
-import '../storage/token_storage.dart';
+import '../navigation/admin_access.dart';
+import '../permissions/admin_permissions.dart';
+import '../../features/auth/data/auth_repository.dart' show AdminUser;
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
-/// Routes accessible only to super admins.
-const _superAdminPaths = ['/super/dashboard', '/super/admins'];
+const _gatePaths = {'/splash', '/no-access', '/load-error'};
 
-GoRouter createRouter(AuthProvider authProvider) {
+/// Where to send the admin from [location], or null to let them stay.
+///
+/// There is no login: the panel borrows the learner session. While the
+/// account is being checked (or the panel is closing, with no session) it
+/// waits on /splash; an account without an admin role gets /no-access; a
+/// failed check gets /load-error. Once signed in as an admin, a route the
+/// role may not open (a super-admin page, a permission it lacks) goes to
+/// /dashboard.
+@visibleForTesting
+String? adminRedirect({
+  required AuthState state,
+  required String location,
+  required AdminUser? user,
+  required AdminPermissions permissions,
+}) {
+  String gate(String path) => location == path ? '' : path;
+  switch (state) {
+    case AuthState.unknown:
+    case AuthState.unauthenticated:
+      final to = gate('/splash');
+      return to.isEmpty ? null : to;
+    case AuthState.forbidden:
+      final to = gate('/no-access');
+      return to.isEmpty ? null : to;
+    case AuthState.failed:
+      final to = gate('/load-error');
+      return to.isEmpty ? null : to;
+    case AuthState.authenticated:
+      break;
+  }
+  if (_gatePaths.contains(location)) return '/dashboard';
+  final allowed = adminMayOpen(
+    location,
+    isSuperAdmin: user?.isSuperAdmin ?? false,
+    permissions: permissions,
+  );
+  return allowed ? null : '/dashboard';
+}
+
+GoRouter createRouter(AuthProvider authProvider, AdminPermissions permissions) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/dashboard',
-    refreshListenable: authProvider,
-    redirect: (context, state) async {
-      final hasToken = await TokenStorage.hasToken();
-      final loc = state.matchedLocation;
-
-      final onAuth = loc.startsWith('/login');
-
-      if (!hasToken && !onAuth) return '/login';
-      if (hasToken && onAuth) return '/dashboard';
-
-      final onSuperAdmin = _superAdminPaths.any((p) => loc.startsWith(p));
-      if (onSuperAdmin && hasToken && !authProvider.isSuperAdmin) {
-        return '/dashboard';
-      }
-
-      return null;
-    },
+    initialLocation: '/splash',
+    refreshListenable: Listenable.merge([authProvider, permissions]),
+    redirect: (context, state) => adminRedirect(
+      state: authProvider.state,
+      location: state.matchedLocation,
+      user: authProvider.user,
+      permissions: permissions,
+    ),
     routes: [
       GoRoute(
-        path: '/login',
+        path: '/splash',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (_, __) => const LoginScreen(),
+        builder: (_, __) => const AdminSplashScreen(),
+      ),
+      GoRoute(
+        path: '/no-access',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => const AdminNoAccessScreen(),
+      ),
+      GoRoute(
+        path: '/load-error',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (_, __) => const AdminLoadErrorScreen(),
       ),
       ShellRoute(
         navigatorKey: _shellNavigatorKey,
@@ -107,9 +153,11 @@ GoRouter createRouter(AuthProvider authProvider) {
             ],
           ),
           GoRoute(
-            path: '/topics',
-            builder: (_, __) => const TopicsScreen(),
+            path: '/categories',
+            builder: (_, __) => const CategoriesScreen(),
           ),
+          GoRoute(path: '/topics', builder: (_, __) => const TopicsScreen()),
+          GoRoute(path: '/ielts', builder: (_, __) => const IeltsScreen()),
           GoRoute(
             path: '/vocabulary',
             builder: (_, __) => const VocabularyScreen(),
@@ -122,10 +170,7 @@ GoRouter createRouter(AuthProvider authProvider) {
             path: '/content-lab',
             builder: (_, __) => const ContentLabScreen(),
           ),
-          GoRoute(
-            path: '/analytics',
-            builder: (_, __) => const AnalyticsScreen(),
-          ),
+          GoRoute(path: '/analytics', builder: (_, __) => AnalyticsScreen()),
 
           // ── Users ─────────────────────────────────────────────────────────
           GoRoute(
@@ -133,12 +178,16 @@ GoRouter createRouter(AuthProvider authProvider) {
             builder: (_, __) => const UsersScreen(),
             routes: [
               GoRoute(
-                path: ':id/stats',
+                path: ':id',
                 parentNavigatorKey: _rootNavigatorKey,
                 builder: (_, state) =>
-                    UserStatsScreen(userId: state.pathParameters['id']!),
+                    UserDetailScreen(userId: state.pathParameters['id']!),
               ),
             ],
+          ),
+          GoRoute(
+            path: '/gem-ledger',
+            builder: (_, __) => const GemLedgerScreen(),
           ),
 
           // ── Gamification ──────────────────────────────────────────────────
@@ -148,14 +197,8 @@ GoRouter createRouter(AuthProvider authProvider) {
           ),
 
           // ── System ────────────────────────────────────────────────────────
-          GoRoute(
-            path: '/ads',
-            builder: (_, __) => const AdsScreen(),
-          ),
-          GoRoute(
-            path: '/logs',
-            builder: (_, __) => const LogsScreen(),
-          ),
+          GoRoute(path: '/ads', builder: (_, __) => const AdsScreen()),
+          GoRoute(path: '/logs', builder: (_, __) => LogsScreen()),
           GoRoute(
             path: '/content-qa',
             builder: (_, __) => const ContentQaScreen(),
@@ -168,13 +211,16 @@ GoRouter createRouter(AuthProvider authProvider) {
             path: '/ranking-agent',
             builder: (_, __) => const RankingAgentScreen(),
           ),
+          GoRoute(path: '/ops', builder: (_, __) => OpsCenterScreen()),
+          GoRoute(path: '/ai-quality', builder: (_, __) => AiQualityScreen()),
+          GoRoute(path: '/roles', builder: (_, __) => RolesScreen()),
           GoRoute(
             path: '/system-health',
-            builder: (_, __) => const SystemHealthScreen(),
+            builder: (_, __) => SystemHealthScreen(),
           ),
           GoRoute(
             path: '/system-settings',
-            builder: (_, __) => const SystemSettingsScreen(),
+            builder: (_, __) => SystemSettingsScreen(),
           ),
           GoRoute(
             path: '/settings',
@@ -188,7 +234,7 @@ GoRouter createRouter(AuthProvider authProvider) {
           ),
           GoRoute(
             path: '/super/admins',
-            builder: (_, __) => const AdminManagementScreen(),
+            builder: (_, __) => AdminManagementScreen(),
           ),
         ],
       ),

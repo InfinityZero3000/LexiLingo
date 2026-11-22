@@ -14,6 +14,7 @@ class ReminderPreferenceResponse(BaseModel):
     enabled: bool
     push_enabled: bool
     email_enabled: bool
+    nurture_emails_enabled: bool = True
     reminder_time_local: str
     timezone: str
     min_due_count: int
@@ -29,6 +30,7 @@ class ReminderPreferenceUpdate(BaseModel):
     enabled: bool | None = None
     push_enabled: bool | None = None
     email_enabled: bool | None = None
+    nurture_emails_enabled: bool | None = None
     reminder_time_local: str | None = Field(default=None, pattern=r"^\d{2}:\d{2}$")
     timezone: str | None = Field(default=None, min_length=1, max_length=64)
     min_due_count: int | None = Field(default=None, ge=1, le=1000)

@@ -4,6 +4,8 @@ library;
 import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/features/achievements/presentation/theme/achievement_palette.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
@@ -32,6 +34,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   Future<void> _loadData() async {
     final provider = context.read<AchievementProvider>();
     await provider.loadAll();
+    if (!mounted || provider.error != null) return;
     final newlyUnlocked = await provider.checkAchievements();
     if (newlyUnlocked.isNotEmpty && mounted) {
       await AchievementUnlockOverlay.show(
@@ -75,6 +78,31 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
               );
             }
 
+            if (provider.allAchievements.isEmpty) {
+              return RefreshIndicator(
+                onRefresh: _loadData,
+                child: LayoutBuilder(
+                  builder: (context, constraints) => SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight,
+                      ),
+                      child: Center(
+                        child: EmptyStateWidget(
+                          title: 'achievements.emptyTitle'.tr(),
+                          description: 'achievements.emptyBody'.tr(),
+                          actionLabel: 'achievements.emptyAction'.tr(),
+                          onAction: () =>
+                              Navigator.of(context).pushNamed('/courses'),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }
+
             final categories = provider.achievementsByCategory;
 
             return RefreshIndicator(
@@ -97,7 +125,9 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                       ),
 
                   // Bottom padding
-                  const SliverPadding(padding: EdgeInsets.only(bottom: 24)),
+                  const SliverPadding(
+                    padding: EdgeInsets.only(bottom: AppSpacing.xl),
+                  ),
                 ],
               ),
             );
@@ -113,7 +143,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     final total = provider.totalCount;
 
     return Container(
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.all(AppSpacing.lg),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -124,7 +154,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: theme.primaryColor.withValues(alpha: 0.3),
@@ -148,13 +178,13 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     'achievements.unlockedCount'.tr(
                       namedArgs: {'unlocked': '$unlocked', 'total': '$total'},
                     ),
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      color: Colors.white70,
+                      color: AppColors.textInverted.withValues(alpha: 0.7),
                     ),
                   ),
                 ],
@@ -163,14 +193,13 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 progress: percentage / 100,
                 size: 70,
                 strokeWidth: 8,
-                backgroundColor: Colors.white24,
-                progressColor: Colors.white,
+                backgroundColor: AppColors.textInverted.withValues(alpha: 0.24),
+                progressColor: AppColors.textInverted,
                 child: Text(
                   '${percentage.toStringAsFixed(0)}%',
-                  style: TextStyle(
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: AppColors.surfaceLight,
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
                   ),
                 ),
               ),
@@ -193,12 +222,17 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
 
     return [
       SliverPadding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.lg,
+          AppSpacing.lg,
+          AppSpacing.sm,
+        ),
         sliver: SliverToBoxAdapter(
           child: Row(
             children: [
               Icon(categoryIcon, size: 24),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.sm),
               Text(
                 categoryName,
                 style: theme.textTheme.titleMedium?.copyWith(
@@ -208,14 +242,16 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
               const Spacer(),
               Text(
                 '${achievements.where((a) => provider.isUnlocked(a.id)).length}/${achievements.length}',
-                style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
               ),
             ],
           ),
         ),
       ),
       SliverPadding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
         sliver: SliverGrid(
           gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
             maxCrossAxisExtent: 132,
@@ -312,7 +348,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -322,7 +358,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
               height: 4,
               margin: const EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: Theme.of(context).colorScheme.outline,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -332,7 +368,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
               isUnlocked: isUnlocked,
               size: 100,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             // Name
             Text(
               achievement.name,
@@ -340,13 +376,16 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             // Rarity badge
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.xs,
+              ),
               decoration: BoxDecoration(
                 color: rarityColor.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Text(
                 achievement.rarityDisplayName,
@@ -356,16 +395,16 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             // Description
             Text(
               achievement.description,
               style: theme.textTheme.bodyLarge?.copyWith(
-                color: Colors.grey[600],
+                color: Theme.of(context).colorScheme.outline,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
             // Rewards
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -377,28 +416,36 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
                     AppColors.warning,
                   ),
                 if (achievement.xpReward > 0 && achievement.gemsReward > 0)
-                  const SizedBox(width: 12),
+                  const SizedBox(width: AppSpacing.md),
                 if (achievement.gemsReward > 0)
                   _buildRewardBadge(
                     Icons.diamond,
                     '${achievement.gemsReward} Gems',
-                    Colors.cyan,
+                    AchievementPalette.cyan,
                   ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: AppSpacing.xl),
             // Status
             if (!isUnlocked)
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.lock, size: 16, color: Colors.grey),
-                  const SizedBox(width: 4),
-                  Text(
-                    'achievements.completeToUnlock'.tr(),
-                    style: TextStyle(
-                      color: Colors.grey[500],
-                      fontStyle: FontStyle.italic,
+                  Icon(
+                    Icons.lock,
+                    size: 16,
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  Flexible(
+                    child: Text(
+                      'achievements.completeToUnlock'.tr(),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.outline,
+                        fontStyle: FontStyle.italic,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -407,25 +454,33 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.check_circle, size: 16, color: Colors.green[600]),
-                  const SizedBox(width: 4),
-                  Text(
-                    'achievements.achievementUnlocked'.tr(),
-                    style: TextStyle(
-                      color: Colors.green[600],
-                      fontWeight: FontWeight.bold,
+                  Icon(
+                    Icons.check_circle,
+                    size: 16,
+                    color: context.status.success,
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  Flexible(
+                    child: Text(
+                      'achievements.achievementUnlocked'.tr(),
+                      style: TextStyle(
+                        color: context.status.success,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               FilledButton.icon(
                 icon: const Icon(Icons.share_rounded, size: 18),
                 label: Text('achievements.share'.tr()),
                 onPressed: () => _shareAchievement(achievement),
               ),
             ],
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.lg),
           ],
         ),
       ),
@@ -433,27 +488,31 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
   }
 
   void _shareAchievement(AchievementEntity achievement) {
-    final text =
-        '🏆 I just unlocked "${achievement.name}" on LexiLingo!\n'
-        '${achievement.description}\n\n'
-        'Join me and start learning English today! 🌟\n'
-        '#LexiLingo #LanguageLearning';
+    final text = 'achievements.shareText'.tr(
+      namedArgs: {
+        'name': achievement.name,
+        'description': achievement.description,
+      },
+    );
     Share.share(text);
   }
 
   Widget _buildRewardBadge(IconData icon, String text, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 16, color: color),
-          const SizedBox(width: 4),
+          const SizedBox(width: AppSpacing.xs),
           Text(
             text,
             style: TextStyle(fontWeight: FontWeight.bold, color: color),

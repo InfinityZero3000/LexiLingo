@@ -14,6 +14,7 @@ from datetime import UTC, datetime
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
+from app.core.token_blacklist import InactiveUserFlag
 from app.crud.user import UserCRUD
 from app.models.user import User
 from app.services.cefr_level_service import (
@@ -23,8 +24,12 @@ from app.services.cefr_level_service import (
     normalise_level,
     publish_level_change,
 )
-from app.schemas.user import UserResponse, UserUpdate
+from app.schemas.user import UserResponse, UserUpdate, lexi_reply_language_of
+from app.schemas.start_learning import StartLearningRequest, StartLearningResponse
+from app.crud.course import CourseCRUD
+from app.services.start_learning_service import find_start_target
 from app.services.learner_state import bump_learner_state_epoch
+from app.services.lessons_completed import count_completed_lessons
 from app.schemas.common import MessageResponse, ApiResponse
 from app.schemas.level import (
     LevelFullResponse,
@@ -58,7 +63,7 @@ def _safe_int(value, default: int) -> int:
         return default
 
 
-def _serialize_user_response(user: User) -> UserResponse:
+def _serialize_user_response(user: User, lessons_completed: int = 0) -> UserResponse:
     normalized_level = _safe_str(getattr(user, "level", None), "A1").upper()
     role_slug = _safe_str(getattr(user, "role_slug", None), "user")
     role_level = _safe_int(getattr(user, "role_level", None), 0)
@@ -70,6 +75,9 @@ def _serialize_user_response(user: User) -> UserResponse:
         display_name=getattr(user, "display_name", None),
         native_language=_safe_str(getattr(user, "native_language", None), "vi"),
         target_language=_safe_str(getattr(user, "target_language", None), "en"),
+        lexi_reply_language=lexi_reply_language_of(
+            getattr(user, "lexi_reply_language", None)
+        ),
         level=normalized_level,
         avatar_url=getattr(user, "avatar_url", None),
         is_active=bool(getattr(user, "is_active", True)),
@@ -85,6 +93,7 @@ def _serialize_user_response(user: User) -> UserResponse:
         goal=getattr(user, "goal", None),
         interest=getattr(user, "interest", None),
         total_xp=_safe_int(getattr(user, "total_xp", None), 0),
+        lessons_completed=lessons_completed,
         numeric_level=_safe_int(getattr(user, "numeric_level", None), 1),
         rank=_safe_str(getattr(user, "rank", None), "bronze"),
         rank_score=float(getattr(user, "rank_score", 0) or 0),
@@ -119,7 +128,9 @@ async def get_current_user_profile(
     apply_rank_info_to_user(current_user, rank_info)
     await db.commit()
     
-    return _serialize_user_response(current_user)
+    return _serialize_user_response(
+        current_user, await count_completed_lessons(db, current_user.id)
+    )
 
 
 @router.put("/me", response_model=UserResponse)
@@ -166,7 +177,9 @@ async def update_current_user_profile(
     await db.refresh(current_user)
     await publish_level_change(level_change)
 
-    return _serialize_user_response(current_user)
+    return _serialize_user_response(
+        current_user, await count_completed_lessons(db, current_user.id)
+    )
 
 
 _AVATAR_MEDIA_DIR = Path("/app/data/media")
@@ -211,7 +224,9 @@ async def upload_current_user_avatar(
     current_user.avatar_url = f"{origin}/media/avatars/{name}"
     await db.commit()
     await db.refresh(current_user)
-    return _serialize_user_response(current_user)
+    return _serialize_user_response(
+        current_user, await count_completed_lessons(db, current_user.id)
+    )
 
 
 @router.delete("/me", response_model=MessageResponse)
@@ -226,6 +241,7 @@ async def delete_current_user(
     """
     current_user.is_active = False
     await db.commit()
+    await InactiveUserFlag.sync(current_user.id, False)
     
     return MessageResponse(
         message="Account deactivated successfully",
@@ -239,7 +255,9 @@ async def permanently_delete_current_user(
     db: AsyncSession = Depends(get_db),
 ):
     """GDPR hard delete — removes all user data permanently."""
+    user_id = current_user.id
     await delete_user_permanently(db, current_user)
+    await InactiveUserFlag.sync(user_id, False)
     return MessageResponse(
         message="Account permanently deleted",
         detail="All user data has been permanently removed.",
@@ -358,3 +376,33 @@ async def get_weekly_activity_route(
 ):
     activity = await get_weekly_activity(db, current_user)
     return ApiResponse(success=True, data=activity, message="Weekly activity retrieved successfully")
+
+
+@router.post("/me/start-learning", response_model=ApiResponse[StartLearningResponse])
+async def start_learning(
+    payload: StartLearningRequest | None = None,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Enroll in the best-fitting course and return the first lesson to play."""
+    from app.routes.courses import enroll_in_course
+
+    target = await find_start_target(
+        db, current_user, payload.course_id if payload else None
+    )
+    if target is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No playable lesson is available yet",
+        )
+    already = await CourseCRUD.is_user_enrolled(db, current_user.id, target.course.id)
+    if not already:
+        await enroll_in_course(target.course.id, db=db, current_user=current_user)
+    return ApiResponse(
+        data=StartLearningResponse(
+            course_id=target.course.id,
+            course_title=target.course.title,
+            first_lesson_id=target.lesson_id,
+            already_enrolled=already,
+        )
+    )

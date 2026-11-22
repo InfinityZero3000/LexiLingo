@@ -13,6 +13,8 @@ import '../providers/book_provider.dart';
 import '../widgets/book_card.dart';
 import 'book_quiz_screen.dart';
 import 'book_reader_screen.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 
 /// Book detail screen: the cover on a blurred copy of itself, the actions
 /// that matter (read, save, download, quiz) and the learner's progress.
@@ -72,33 +74,36 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                 children: [
                   _Header(book: book),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
+                    padding: const EdgeInsets.fromLTRB(
+                      20,
+                      AppSpacing.xl,
+                      20,
+                      40,
+                    ),
                     child: Consumer<BookProvider>(
                       builder: (context, provider, _) => Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           _Actions(book: book, provider: provider),
                           if (_hasProgress(provider)) ...[
-                            const SizedBox(height: 24),
+                            const SizedBox(height: AppSpacing.xl),
                             _ProgressCard(progress: provider.currentProgress!),
                           ],
                           if (book.description.isNotEmpty) ...[
-                            const SizedBox(height: 24),
+                            const SizedBox(height: AppSpacing.xl),
                             Text(
                               'books.about'.tr(),
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                              ),
+                              style: Theme.of(context).textTheme.sectionTitle
+                                  ?.copyWith(fontWeight: FontWeight.w700),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: AppSpacing.sm),
                             Text(
                               book.description,
-                              style: TextStyle(
-                                fontSize: 14,
-                                height: 1.6,
-                                color: contentMuted(context),
-                              ),
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    height: 1.6,
+                                    color: contentMuted(context),
+                                  ),
                             ),
                           ],
                         ],
@@ -199,13 +204,17 @@ class _Header extends StatelessWidget {
                   width: _cover.width,
                   height: _cover.height,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: AppSpacing.xl),
                 Text(
                   book.title,
                   textAlign: TextAlign.center,
                   maxLines: 4,
                   overflow: TextOverflow.ellipsis,
-                  style: contentDisplay(context, size: 24, color: Colors.white),
+                  style: contentDisplay(
+                    context,
+                    size: 24,
+                    color: AppColors.onGradient,
+                  ),
                 ),
                 if (book.author.isNotEmpty) ...[
                   const SizedBox(height: 6),
@@ -214,24 +223,25 @@ class _Header extends StatelessWidget {
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: _onScrim, fontSize: 14),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: _onScrim),
                   ),
                 ],
                 if (book.subject.isNotEmpty) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     book.subject,
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: Color(0xB3FFFFFF),
-                      fontSize: 12,
                       fontStyle: FontStyle.italic,
                     ),
                   ),
                 ],
-                const SizedBox(height: 16),
+                const SizedBox(height: AppSpacing.lg),
                 Wrap(
                   alignment: WrapAlignment.center,
                   crossAxisAlignment: WrapCrossAlignment.center,
@@ -248,13 +258,12 @@ class _Header extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(icon, size: 16, color: _onScrim),
-                          const SizedBox(width: 4),
+                          const SizedBox(width: AppSpacing.xs),
                           Text(
                             label,
-                            style: const TextStyle(
-                              color: _onScrim,
-                              fontSize: 12,
-                            ),
+                            style: Theme.of(
+                              context,
+                            ).textTheme.bodySmall?.copyWith(color: _onScrim),
                           ),
                         ],
                       ),
@@ -292,10 +301,9 @@ class _Actions extends StatelessWidget {
           label: Text((started ? 'books.continueCta' : 'books.startCta').tr()),
           style: FilledButton.styleFrom(
             minimumSize: const Size.fromHeight(52),
-            textStyle: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
+            textStyle: Theme.of(
+              context,
+            ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(26),
             ),
@@ -305,29 +313,58 @@ class _Actions extends StatelessWidget {
             MaterialPageRoute(builder: (_) => BookReaderScreen(book: book)),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
         _downloadButton(context),
-        if (started) ...[
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
-            icon: const Icon(PhosphorIconsBold.exam),
-            label: Text('books.chapterQuiz'.tr()),
-            style: _outlined(context),
-            onPressed: () => Navigator.push(
+        const SizedBox(height: AppSpacing.md),
+        _quizButton(context),
+      ],
+    );
+  }
+
+  Widget _quizButton(BuildContext context) {
+    final access = provider.quizAccess;
+    final section = access.section;
+    final locked = access.kind == QuizAccessKind.locked;
+    final button = OutlinedButton.icon(
+      icon: const Icon(PhosphorIconsBold.exam),
+      label: Text(
+        (access.kind == QuizAccessKind.review
+                ? 'books.reviewSection'
+                : 'books.sectionQuiz')
+            .tr(namedArgs: {'section': '${section ?? 1}'}),
+      ),
+      style: _outlined(context),
+      onPressed: locked
+          ? null
+          : () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => const BookQuizScreen(chapter: 1),
+                builder: (_) => BookQuizScreen(section: section!),
               ),
             ),
-          ),
-        ],
+    );
+    if (!locked) return button;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        button,
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          'books.quizLockedHint'.tr(),
+          textAlign: TextAlign.center,
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: contentMuted(context)),
+        ),
       ],
     );
   }
 
   ButtonStyle _outlined(BuildContext context) => OutlinedButton.styleFrom(
     minimumSize: const Size.fromHeight(52),
-    textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+    textStyle: Theme.of(
+      context,
+    ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
     side: BorderSide(color: Theme.of(context).colorScheme.outline),
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
   );
@@ -360,7 +397,9 @@ class _Actions extends StatelessWidget {
           ? null
           : provider.downloadBook,
     );
-    return isDownloaded ? button : PremiumGate(child: button);
+    return isDownloaded
+        ? button
+        : PremiumGate(borderRadius: BorderRadius.circular(26), child: button);
   }
 }
 
@@ -381,11 +420,11 @@ class _ProgressCard extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(
         color: scheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: scheme.outlineVariant),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -394,23 +433,21 @@ class _ProgressCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'books.readingProgress'.tr(),
-                    style: const TextStyle(
-                      fontSize: 14,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
                 Text(
                   '$percent%',
-                  style: TextStyle(
-                    fontSize: 14,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: scheme.primary,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             ClipRRect(
               borderRadius: BorderRadius.circular(3),
               child: LinearProgressIndicator(
@@ -420,7 +457,7 @@ class _ProgressCard extends StatelessWidget {
                 backgroundColor: scheme.onSurface.withValues(alpha: 0.12),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               'books.pageProgress'.tr(
                 namedArgs: {
@@ -428,7 +465,9 @@ class _ProgressCard extends StatelessWidget {
                   'total': '${progress.totalPages}',
                 },
               ),
-              style: TextStyle(fontSize: 12, color: contentMuted(context)),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: contentMuted(context)),
             ),
           ],
         ),

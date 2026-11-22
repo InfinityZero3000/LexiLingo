@@ -5,7 +5,7 @@ Extended for Phase 1: Authentication & Secure User Foundation
 
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import String, Boolean, Integer, Float, ForeignKey, Index
+from sqlalchemy import String, Boolean, Integer, Float, ForeignKey, Index, CheckConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -16,6 +16,12 @@ class User(Base):
     """User model for authentication and profile."""
     
     __tablename__ = "users"
+    __table_args__ = (
+        CheckConstraint(
+            "lexi_reply_language IN ('app', 'native')",
+            name="ck_users_lexi_reply_language",
+        ),
+    )
     
     # Primary key
     id: Mapped[uuid.UUID] = mapped_column(
@@ -37,6 +43,11 @@ class User(Base):
     # Learning preferences
     native_language: Mapped[str] = mapped_column(String(10), default="vi")
     target_language: Mapped[str] = mapped_column(String(10), default="en")
+    # Which language Lexi explains in: "app" follows the UI language the client
+    # sends, "native" uses native_language above. The client resolves it.
+    lexi_reply_language: Mapped[str] = mapped_column(
+        String(10), default="app", server_default="app", nullable=False
+    )
     level: Mapped[str] = mapped_column(String(20), default="A1")  # A1, A2, B1, B2, C1, C2
     # Highest level a test has confirmed. `level` is the working level the
     # learner studies at and may set themselves; rank and badges read this one.
@@ -202,7 +213,10 @@ class RefreshToken(Base):
         index=True
     )
     
-    token: Mapped[str] = mapped_column(String(500), unique=True, nullable=False, index=True)
+    # Legacy raw value: nullable and no longer written; dropped in a follow-up release.
+    token: Mapped[str | None] = mapped_column(String(500), unique=True, nullable=True, index=True)
+    token_hash: Mapped[str | None] = mapped_column(String(64), unique=True, nullable=True, index=True)
+    family_id: Mapped[uuid.UUID | None] = mapped_column(GUID(), nullable=True, index=True)
     device_id: Mapped[str] = mapped_column(String(255), nullable=True)
     
     is_revoked: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -211,6 +225,7 @@ class RefreshToken(Base):
     expires_at: Mapped[datetime] = mapped_column(TZDateTime, nullable=False)
     created_at: Mapped[datetime] = mapped_column(TZDateTime, default=lambda: datetime.now(timezone.utc))
     revoked_at: Mapped[datetime] = mapped_column(TZDateTime, nullable=True)
+    rotated_at: Mapped[datetime | None] = mapped_column(TZDateTime, nullable=True)
     
     def __repr__(self) -> str:
-        return f"<RefreshToken {self.token[:16]}...>"
+        return f"<RefreshToken {self.id}>"

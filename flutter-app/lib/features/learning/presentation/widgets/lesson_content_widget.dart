@@ -4,6 +4,7 @@ import '../../domain/entities/lesson_entity.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/quick_save_selection_area.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Lesson Content Widget for Fill in Blank and Translation exercises
 class LessonContentWidget extends StatefulWidget {
@@ -48,7 +49,7 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accentColor = AppColorRoles.primary(isDark);
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(AppSpacing.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -56,7 +57,7 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
           Card(
             elevation: 2,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
             ),
             child: Padding(
               padding: const EdgeInsets.all(20),
@@ -65,8 +66,7 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                 children: [
                   Text(
                     _getExerciseTypeLabel(),
-                    style: TextStyle(
-                      fontSize: 12,
+                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
                       color: Colors.grey[600],
                       fontWeight: FontWeight.w600,
                       letterSpacing: 1,
@@ -105,10 +105,10 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                   if (widget.exercise.hint != null) ...[
                     const SizedBox(height: 16),
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(AppSpacing.md),
                       decoration: BoxDecoration(
                         color: accentColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,11 +126,8 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                               contextSentence: widget.exercise.hint!,
                               child: Text(
                                 widget.exercise.hint!,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: accentColor,
-                                  height: 1.4,
-                                ),
+                                style: Theme.of(context).textTheme.bodyMedium!
+                                    .copyWith(color: accentColor, height: 1.4),
                               ),
                             ),
                           ),
@@ -153,37 +150,37 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
             maxLines: widget.exercise.type == ExerciseType.translate ? 3 : 1,
             decoration: InputDecoration(
               hintText: widget.exercise.type == ExerciseType.translate
-                  ? 'Type your translation here...'
-                  : 'Fill in the blank...',
+                  ? 'learning.hintTranslation'.tr()
+                  : 'learning.hintFillBlank'.tr(),
               filled: true,
               fillColor: widget.isAnswered
                   ? (widget.isCorrect!
-                            ? AppColors.greenSuccessBright
-                            : AppColors.errorBright)
+                            ? context.status.success
+                            : Theme.of(context).colorScheme.error)
                         .withValues(alpha: 0.1)
                   : Colors.grey[50],
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 borderSide: BorderSide(color: Colors.grey[300]!, width: 2),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 borderSide: BorderSide(color: Colors.grey[300]!, width: 2),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 borderSide: BorderSide(
                   color: Theme.of(context).primaryColor,
                   width: 2,
                 ),
               ),
               disabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 borderSide: BorderSide(
                   color: widget.isAnswered
                       ? (widget.isCorrect!
-                            ? AppColors.greenSuccessBright
-                            : AppColors.errorBright)
+                            ? context.status.success
+                            : Theme.of(context).colorScheme.error)
                       : Colors.grey[300]!,
                   width: 2,
                 ),
@@ -192,12 +189,12 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                   ? Icon(
                       widget.isCorrect! ? Icons.check_circle : Icons.cancel,
                       color: widget.isCorrect!
-                          ? AppColors.greenSuccessBright
-                          : AppColors.errorBright,
+                          ? context.status.success
+                          : Theme.of(context).colorScheme.error,
                     )
                   : null,
             ),
-            style: const TextStyle(fontSize: 16),
+            style: Theme.of(context).textTheme.bodyLarge!,
             textCapitalization: TextCapitalization.sentences,
             onSubmitted: (value) {
               if (!widget.isAnswered && value.trim().isNotEmpty) {
@@ -219,17 +216,16 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                 }
               },
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
               ),
               child: Text(
                 'learning.checkAnswer'.tr(),
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge!.copyWith(fontWeight: FontWeight.bold),
               ),
             ),
 
@@ -241,16 +237,16 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                   ? Colors.green.withValues(alpha: 0.1)
                   : AppColors.orange.withValues(alpha: 0.1),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 side: BorderSide(
                   color: widget.isCorrect!
-                      ? AppColors.greenSuccessBright
+                      ? context.status.success
                       : AppColors.orange,
                   width: 1,
                 ),
               ),
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSpacing.lg),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -261,7 +257,7 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                               ? Icons.check_circle
                               : Icons.info_outline,
                           color: widget.isCorrect!
-                              ? AppColors.greenSuccessBright
+                              ? context.status.success
                               : AppColors.orange,
                         ),
                         const SizedBox(width: 8),
@@ -269,13 +265,13 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                           widget.isCorrect!
                               ? 'learning.correct'.tr()
                               : 'learning.notQuite'.tr(),
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: widget.isCorrect!
-                                ? AppColors.greenSuccessBright
-                                : AppColors.orange,
-                          ),
+                          style: Theme.of(context).textTheme.bodyLarge!
+                              .copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: widget.isCorrect!
+                                    ? context.status.success
+                                    : AppColors.orange,
+                              ),
                         ),
                       ],
                     ),
@@ -284,8 +280,7 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                       const SizedBox(height: 12),
                       Text(
                         'learning.correctAnswer'.tr(),
-                        style: TextStyle(
-                          fontSize: 14,
+                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                           fontWeight: FontWeight.w600,
                           color: Colors.grey[700],
                         ),
@@ -297,10 +292,8 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                         contextSentence: widget.exercise.correctAnswer,
                         child: Text(
                           widget.exercise.correctAnswer,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.bodyLarge!
+                              .copyWith(fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
@@ -315,7 +308,9 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                         contextSentence: widget.exercise.explanation!,
                         child: Text(
                           widget.exercise.explanation!,
-                          style: const TextStyle(fontSize: 14, height: 1.5),
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium!.copyWith(height: 1.5),
                         ),
                       ),
                     ],
@@ -332,11 +327,11 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
   String _getExerciseTypeLabel() {
     switch (widget.exercise.type) {
       case ExerciseType.fillInBlank:
-        return 'FILL IN THE BLANK';
+        return 'learning.exerciseType.fillBlank'.tr();
       case ExerciseType.translate:
-        return 'TRANSLATION';
+        return 'learning.exerciseType.translation'.tr();
       default:
-        return 'EXERCISE';
+        return 'learning.exerciseType.exercise'.tr();
     }
   }
 }

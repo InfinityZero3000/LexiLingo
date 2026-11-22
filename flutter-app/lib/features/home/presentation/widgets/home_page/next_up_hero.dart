@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -51,23 +52,30 @@ class _NextUpHeroState extends State<NextUpHero> {
         theme.extension<AppTactileTheme>() ?? AppTactileTheme.from(theme);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        0,
+      ),
       child: Container(
         clipBehavior: Clip.antiAlias,
         decoration: tactile.decoration(
           variant: TactileSurfaceVariant.elevated,
           fill: isDark
               ? theme.colorScheme.surfaceContainerHighest
-              : Colors.white,
+              : theme.colorScheme.surface,
           accent: AppColorRoles.primary(isDark),
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           diagnosticId: 'home-next-up',
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const ContinueLearningCard(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(AppRadius.xl),
+              ),
             ),
             Consumer3<
               HomeProvider,
@@ -92,7 +100,12 @@ class _NextUpHeroState extends State<NextUpHero> {
                 final dueCount = _dueVocabularyCount ?? 0;
 
                 return Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.sm,
+                    AppSpacing.xs,
+                    AppSpacing.sm,
+                    8,
+                  ),
                   child: Column(
                     children: [
                       Row(
@@ -171,10 +184,13 @@ class _HeroTaskRow extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         onTap: loading ? null : onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.sm,
+            vertical: 8,
+          ),
           child: Row(
             children: [
               Container(
@@ -182,7 +198,7 @@ class _HeroTaskRow extends StatelessWidget {
                 height: 40,
                 decoration: BoxDecoration(
                   color: task.color.withValues(alpha: isDark ? 0.22 : 0.14),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Icon(task.icon, color: task.color, size: 21),
               ),
@@ -221,17 +237,17 @@ class _HeroTaskRow extends StatelessWidget {
               if (badge != null) ...[
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
+                    horizontal: AppSpacing.sm,
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
                     color: task.color,
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
                   ),
                   child: Text(
                     badge!,
                     style: theme.textTheme.labelMedium?.copyWith(
-                      color: Colors.white,
+                      color: AppColors.textInverted,
                       fontWeight: FontWeight.w800,
                     ),
                   ),

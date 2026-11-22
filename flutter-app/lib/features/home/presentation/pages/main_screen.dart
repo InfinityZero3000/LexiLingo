@@ -1,9 +1,13 @@
+import 'package:lexilingo_app/core/utils/freshness.dart';
+import 'package:lexilingo_app/features/progress/presentation/providers/progress_provider.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../../../chat/presentation/providers/story_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import 'package:lexilingo_app/core/navigation/deferred_prefetch.dart';
 import 'home_page.dart';
 import '../../../course/presentation/screens/course_list_screen.dart';
 import '../../../practice/presentation/pages/practice_lab_page.dart';
@@ -17,12 +21,24 @@ import '../../../gamification/presentation/widgets/starter_reward_dialog.dart';
 import '../../../level/presentation/providers/level_provider.dart';
 import '../../../progress/presentation/providers/streak_provider.dart';
 import 'package:lexilingo_app/core/services/app_navigation_service.dart';
+import '../../domain/progressive_unlock.dart';
 import '../providers/home_provider.dart';
 
 class MainScreen extends StatefulWidget {
   final int initialIndex;
 
   const MainScreen({super.key, this.initialIndex = 0});
+
+  static const int learningTab = 1;
+  static const int lexiTab = 2;
+
+  /// Switches the enclosing MainScreen to [index]; false when there is none.
+  static bool switchTab(BuildContext context, int index) {
+    final state = context.findAncestorStateOfType<_MainScreenState>();
+    if (state == null) return false;
+    state._selectTab(index);
+    return true;
+  }
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -56,6 +72,17 @@ const _tabs = <({IconData icon, IconData activeIcon, String label})>[
   ),
 ];
 
+/// Signed out, every progress request would go out with no token and 401, and
+/// popping back to this screen during a sign-out is exactly when that happens.
+@visibleForTesting
+bool progressRefreshDue({
+  required bool authenticated,
+  required DateTime? last,
+  required DateTime now,
+}) =>
+    authenticated &&
+    (last == null || now.difference(last) >= const Duration(seconds: 2));
+
 class _MainScreenState extends State<MainScreen> with RouteAware {
   late int _currentIndex;
   bool _lexiWarmedUp = false;
@@ -72,7 +99,8 @@ class _MainScreenState extends State<MainScreen> with RouteAware {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final route = ModalRoute.of(context);
-    if (route != null) AppNavigationService.routeObserver.subscribe(this, route);
+    if (route != null)
+      AppNavigationService.routeObserver.subscribe(this, route);
   }
 
   @override
@@ -82,18 +110,36 @@ class _MainScreenState extends State<MainScreen> with RouteAware {
   }
 
   @override
-  void didPopNext() => _refreshProgress();
+  void didPopNext() => _refreshProgress(afterActivity: true);
 
-  void _refreshProgress() {
+  // A tab switch is passive and may reuse data loaded moments ago; coming back
+  // from a pushed screen (a lesson, a game) is not, so it always refetches.
+  void _refreshProgress({bool afterActivity = false}) {
     final now = DateTime.now();
-    final last = _lastProgressRefresh;
-    if (last != null && now.difference(last) < const Duration(seconds: 2)) {
+    if (!progressRefreshDue(
+      authenticated: context.read<AuthProvider>().isAuthenticated,
+      last: _lastProgressRefresh,
+      now: now,
+    )) {
       return;
     }
     _lastProgressRefresh = now;
-    context.read<HomeProvider>().refreshWeeklyProgressSilently();
-    context.read<LevelProvider>().fetchLevelFull();
-    context.read<StreakProvider>().loadStreak();
+    final maxAge = afterActivity ? null : kPassiveReloadWindow;
+    context.read<HomeProvider>().refreshWeeklyProgressSilently(maxAge: maxAge);
+    context.read<LevelProvider>().fetchLevelFull(maxAge: maxAge);
+    context.read<StreakProvider>().loadStreak(maxAge: maxAge);
+    final auth = context.read<AuthProvider>();
+    if (afterActivity) {
+      auth.invalidateFreshness();
+      context.read<ProgressProvider>().invalidateFreshness();
+    }
+    if (secondaryFeaturesLocked(
+      flagEnabled: ApiConfig.progressiveUnlock,
+      lessonsCompleted: auth.currentUser?.lessonsCompleted,
+      totalXp: auth.currentUser?.totalXp,
+    )) {
+      auth.refreshCurrentUser(maxAge: maxAge);
+    }
   }
 
   Widget _buildPage(int index) {
@@ -124,9 +170,17 @@ class _MainScreenState extends State<MainScreen> with RouteAware {
     _getPage(_currentIndex);
     if (_currentIndex == 2) {
       _lexiWarmedUp = true;
-      _warmupAiModels();
+      // Model warm-up is not first-paint data; let the first frame's requests go first.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Future<void>.delayed(const Duration(seconds: 1), () {
+          if (mounted) _warmupAiModels();
+        });
+      });
     }
     _triggerPreWarming();
+    prefetchDeferredFeatures(
+      isSignedIn: () => mounted && context.read<AuthProvider>().isAuthenticated,
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _showPendingStarterReward();
     });
@@ -241,11 +295,12 @@ class _MainScreenState extends State<MainScreen> with RouteAware {
 
   Widget _buildNavigationRail(BuildContext context, double width) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surface = Theme.of(context).colorScheme.surface;
     final extended = width >= 1100;
 
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : Colors.white,
+        color: surface,
         border: Border(
           right: BorderSide(
             color: isDark ? AppColors.surfaceDarkMuted : AppColors.slate200,
@@ -277,11 +332,16 @@ class _MainScreenState extends State<MainScreen> with RouteAware {
   Widget _buildBottomNavigationBar(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return SafeArea(
-      minimum: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      minimum: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        0,
+        AppSpacing.md,
+        AppSpacing.md,
+      ),
       child: Container(
         decoration: BoxDecoration(
-          color: isDark ? AppColors.surfaceDark : Colors.white,
-          borderRadius: BorderRadius.circular(24),
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: AppRadius.xlAll,
           boxShadow: [
             BoxShadow(
               color: isDark
@@ -293,7 +353,7 @@ class _MainScreenState extends State<MainScreen> with RouteAware {
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           child: BottomNavigationBar(
             currentIndex: _currentIndex,
             type: BottomNavigationBarType.fixed,

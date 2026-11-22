@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/network/envelope.dart';
 import '../../../core/network/api_client.dart';
 
 class RankingAgentJob {
@@ -24,7 +25,8 @@ class RankingAgentJob {
     this.artifact,
   });
 
-  factory RankingAgentJob.fromJson(Map<String, dynamic> json) => RankingAgentJob(
+  factory RankingAgentJob.fromJson(Map<String, dynamic> json) =>
+      RankingAgentJob(
         id: json['id']?.toString() ?? '',
         jobType: json['job_type']?.toString() ?? '',
         status: json['status']?.toString() ?? '',
@@ -43,15 +45,16 @@ class RankingAgentJob {
 
   static Map<String, dynamic> _map(dynamic value) =>
       value is Map ? Map<String, dynamic>.from(value) : <String, dynamic>{};
-  static List<String> _strings(dynamic value) =>
-      value is List ? value.map((item) => item.toString()).toList() : <String>[];
+  static List<String> _strings(dynamic value) => value is List
+      ? value.map((item) => item.toString()).toList()
+      : <String>[];
 
   bool get isActive => const {
-        'queued',
-        'calculating',
-        'validating',
-        'applying',
-      }.contains(status);
+    'queued',
+    'calculating',
+    'validating',
+    'applying',
+  }.contains(status);
   bool get canApply => status == 'preview_ready' && blockingErrors.isEmpty;
   int get progressPercent =>
       ((progress['percent'] as num?)?.round() ?? 0).clamp(0, 100);
@@ -77,25 +80,30 @@ class RankingAgentPreview {
 
 class RankingAgentRepository {
   static const _jobs = '/admin/ranking-agent/jobs';
-  final _api = ApiClient.instance;
+  ApiClient get _api => ApiClient.instance;
 
   Map<String, dynamic> _data(Map<String, dynamic> response) =>
       response['data'] is Map
-          ? Map<String, dynamic>.from(response['data'] as Map)
-          : <String, dynamic>{};
+      ? Map<String, dynamic>.from(response['data'] as Map)
+      : <String, dynamic>{};
 
   Future<RankingAgentJob> createJob(Map<String, dynamic> payload) async =>
       RankingAgentJob.fromJson(_data(await _api.post(_jobs, data: payload)));
 
-  Future<List<RankingAgentJob>> listJobs({int limit = 50, int offset = 0}) async {
-    final response = await _api.get(_jobs, params: {'limit': limit, 'offset': offset});
-    final data = response['data'];
-    return data is List
-        ? data
-            .whereType<Map>()
-            .map((item) => RankingAgentJob.fromJson(Map<String, dynamic>.from(item)))
-            .toList()
-        : <RankingAgentJob>[];
+  Future<List<RankingAgentJob>> listJobs({
+    int limit = 50,
+    int offset = 0,
+  }) async {
+    final body = await _api.getData(
+      _jobs,
+      params: {'limit': limit, 'offset': offset},
+    );
+    return extractPage(body).items
+        .whereType<Map>()
+        .map(
+          (item) => RankingAgentJob.fromJson(Map<String, dynamic>.from(item)),
+        )
+        .toList();
   }
 
   Future<RankingAgentJob> getJob(String id) async =>

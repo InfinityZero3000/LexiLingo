@@ -12,6 +12,7 @@ class Settings {
   final int emailCadenceDays;
   final int reminderMinDueCount;
   final String reminderTimezone;
+  final bool nurtureEmailsEnabled;
 
   const Settings({
     required this.id,
@@ -27,6 +28,7 @@ class Settings {
     this.emailCadenceDays = 7,
     this.reminderMinDueCount = 1,
     this.reminderTimezone = "Asia/Ho_Chi_Minh",
+    this.nurtureEmailsEnabled = true,
   });
 
   Settings copyWith({
@@ -43,6 +45,7 @@ class Settings {
     int? emailCadenceDays,
     int? reminderMinDueCount,
     String? reminderTimezone,
+    bool? nurtureEmailsEnabled,
   }) {
     return Settings(
       id: id ?? this.id,
@@ -58,6 +61,7 @@ class Settings {
       emailCadenceDays: emailCadenceDays ?? this.emailCadenceDays,
       reminderMinDueCount: reminderMinDueCount ?? this.reminderMinDueCount,
       reminderTimezone: reminderTimezone ?? this.reminderTimezone,
+      nurtureEmailsEnabled: nurtureEmailsEnabled ?? this.nurtureEmailsEnabled,
     );
   }
 }

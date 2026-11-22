@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select, and_, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.content_licenses import find_passage_entry, license_url
 from app.core.database import AsyncSessionLocal, get_db
 from app.core.dependencies import get_current_user
 from app.clients.ai_service_client import grade_ielts_submission
@@ -84,6 +85,34 @@ def _strip_answers(content: dict | None) -> dict:
     return clean
 
 
+def _learner_content(test: IeltsTest) -> dict:
+    """The stripped paper, with each reading passage's licence notice attached."""
+    clean = _strip_answers(test.content)
+    provenance = test.provenance if isinstance(test.provenance, dict) else {}
+    entries = [e for e in provenance.get("passages") or [] if isinstance(e, dict)]
+    if not entries:
+        return clean
+    for section in clean.get("sections") or []:
+        if not isinstance(section, dict) or (section.get("skill") or "").lower() != "reading":
+            continue
+        for index, part in enumerate(section.get("parts") or [], start=1):
+            if not isinstance(part, dict):
+                continue
+            entry = find_passage_entry(
+                entries,
+                part.get("order") or index,
+                part.get("passage_title") or part.get("title"),
+            )
+            if not entry:
+                continue
+            part["attribution"] = entry.get("attribution")
+            part["license_id"] = entry.get("license_id")
+            part["license_url"] = license_url(entry.get("license_id"))
+            part["source_url"] = entry.get("source_url")
+            part["adapted"] = bool(entry.get("adapted"))
+    return clean
+
+
 def _summarize(test: IeltsTest) -> IeltsTestSummary:
     content = test.content or {}
     sections = content.get("sections") or []
@@ -128,7 +157,7 @@ async def get_test(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Test not found")
     summary = _summarize(test)
     return ApiResponse(
-        data={**summary.model_dump(), "content": _strip_answers(test.content)}
+        data={**summary.model_dump(), "content": _learner_content(test)}
     )
 
 
@@ -173,7 +202,7 @@ async def start_attempt(
             "skill_scope": attempt.skill_scope,
             "answers": attempt.answers or {},
             "started_at": attempt.started_at.isoformat() if attempt.started_at else None,
-            "content": _strip_answers(test.content),
+            "content": _learner_content(test),
         }
     )
 

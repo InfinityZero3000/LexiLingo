@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/language_switcher_button.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Get Started page for first-time visitors before authentication.
 class WelcomePage extends StatefulWidget {
@@ -62,8 +63,8 @@ class _WelcomePageState extends State<WelcomePage>
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
+                      horizontal: AppSpacing.lg,
+                      vertical: AppSpacing.md,
                     ),
                     child: Row(
                       children: [
@@ -82,7 +83,9 @@ class _WelcomePageState extends State<WelcomePage>
                                 color: const Color(
                                   0xFF30E8E8,
                                 ).withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.md,
+                                ),
                               ),
                               child: const Icon(
                                 Icons.language,
@@ -106,13 +109,18 @@ class _WelcomePageState extends State<WelcomePage>
                   ),
                   Expanded(
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lg,
+                        AppSpacing.xs,
+                        AppSpacing.lg,
+                        20,
+                      ),
                       child: Column(
                         children: [
                           AspectRatio(
                             aspectRatio: 1,
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(24),
+                              borderRadius: BorderRadius.circular(AppRadius.xl),
                               child: Image.asset(
                                 'assets/out-app/banner-start.png',
                                 fit: BoxFit.contain,
@@ -126,7 +134,7 @@ class _WelcomePageState extends State<WelcomePage>
                             style: theme.textTheme.headlineMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: isDark
-                                  ? Colors.white
+                                  ? AppColors.onGradient
                                   : AppColors.surfaceDarkInput,
                             ),
                           ),
@@ -137,30 +145,34 @@ class _WelcomePageState extends State<WelcomePage>
                             style: theme.textTheme.bodyLarge?.copyWith(
                               color: isDark
                                   ? Colors.white70
-                                  : AppColors.textSlateLight,
+                                  : Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
                             ),
                           ),
-                          const SizedBox(height: 24),
+                          const SizedBox(height: AppSpacing.xl),
                           SizedBox(
                             width: double.infinity,
                             height: 56,
-                            child: ElevatedButton.icon(
+                            child: FilledButton.icon(
                               onPressed: widget.onGetStarted,
                               icon: const Icon(Icons.arrow_forward),
                               label: Text(
                                 'onboarding.getStarted'.tr(),
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
-                              style: ElevatedButton.styleFrom(
+                              style: FilledButton.styleFrom(
                                 backgroundColor: AppColors.accentMint,
                                 foregroundColor: AppColors.accentMintDark,
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.md,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: AppSpacing.md),
                           SizedBox(
                             width: double.infinity,
                             height: 56,
@@ -171,7 +183,9 @@ class _WelcomePageState extends State<WelcomePage>
                                   color: Color(0x4430E8E8),
                                 ),
                                 shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.md,
+                                  ),
                                 ),
                               ),
                               child: Text(
@@ -216,12 +230,18 @@ class _WelcomePageState extends State<WelcomePage>
                                   'https://lh3.googleusercontent.com/aida-public/AB6AXuDh8w9mHRMsKUobp8aWGqHZ6LXaOhoFOEUKCtsCii3VAtwJ1dru5bV3TQmgY2th7h3XUiqCgytuEmX0QpvJuw7SGDjbFRMYnrIhUJGoPGjveUPiBOtBsJb_EzeFHClWbFIeLtFDAyIQAiYAYTGyu4qy3j9Pm7Vc9LUpvzFWn5Evm_DrjsioVgYlxaZFwso-vTgvsdnPYB2vreATNgeOVQPxS1DFpbXSUSFQ7RuF5oO20KOeONIEz5PEDrxZ09B_mm7RNbGAy_HdUHE',
                                 ),
                               ),
-                              Text(
-                                'onboarding.globalCommunity'.tr(),
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: isDark
-                                      ? AppColors.textMuted
-                                      : AppColors.textSlateLight,
+                              Flexible(
+                                child: Text(
+                                  'onboarding.globalCommunity'.tr(),
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: isDark
+                                        ? AppColors.textMuted
+                                        : Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],
@@ -248,15 +268,17 @@ class _WelcomePageState extends State<WelcomePage>
         Text(
           label,
           style: theme.textTheme.labelSmall?.copyWith(
-            color: isDark ? AppColors.textMuted : AppColors.textSlateLight,
+            color: isDark
+                ? AppColors.textMuted
+                : Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.xs),
         Text(
           value,
           style: theme.textTheme.titleMedium?.copyWith(
             fontWeight: FontWeight.bold,
-            color: isDark ? Colors.white : const Color(0xFF334155),
+            color: isDark ? AppColors.onGradient : const Color(0xFF334155),
           ),
         ),
       ],
@@ -268,7 +290,7 @@ class _WelcomePageState extends State<WelcomePage>
       width: 32,
       height: 32,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         border: Border.all(
           color: Theme.of(context).colorScheme.surface,
           width: 1.5,

@@ -14,6 +14,7 @@ import '../widgets/book_card.dart';
 import '../widgets/book_hero.dart';
 import 'book_detail_screen.dart';
 import 'book_reader_screen.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Library screen: a hero for what to read next, then curated shelves by CEFR
 /// level, with global search.
@@ -91,9 +92,32 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
     provider.loadSavedBooks();
   }
 
+  /// False when the book's progress could not be loaded; the learner is told
+  /// and can retry instead of landing on an empty detail screen.
+  Future<bool> _prepare(Book book) async {
+    final provider = context.read<BookProvider>();
+    await provider.openBook(book);
+    if (!mounted) return false;
+    if (provider.currentBook?.id != book.id || !provider.openFailed) {
+      return provider.currentBook?.id == book.id;
+    }
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text('bookReader.couldNotLoad'.tr()),
+          behavior: SnackBarBehavior.floating,
+          action: SnackBarAction(
+            label: 'common.retry'.tr(),
+            onPressed: () => _openBook(book),
+          ),
+        ),
+      );
+    return false;
+  }
+
   Future<void> _openBook(Book book) async {
-    await context.read<BookProvider>().openBook(book);
-    if (!mounted) return;
+    if (!await _prepare(book) || !mounted) return;
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => BookDetailScreen(book: book)),
@@ -103,8 +127,7 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
 
   /// Straight back into the reader, at the saved page.
   Future<void> _continue(Book book) async {
-    await context.read<BookProvider>().openBook(book);
-    if (!mounted) return;
+    if (!await _prepare(book) || !mounted) return;
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => BookReaderScreen(book: book)),
@@ -138,7 +161,12 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
 
   Widget _buildHeader(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.sm,
+        AppSpacing.sm,
+        AppSpacing.sm,
+        AppSpacing.sm,
+      ),
       child: Row(
         children: [
           AppBackButton(onPressed: () => Navigator.pop(context)),
@@ -169,7 +197,7 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
     final scheme = Theme.of(context).colorScheme;
     final muted = contentMuted(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+      padding: const EdgeInsets.fromLTRB(20, AppSpacing.xs, 20, AppSpacing.lg),
       child: TextField(
         controller: _searchController,
         autofocus: true,
@@ -180,7 +208,9 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
         },
         decoration: InputDecoration(
           hintText: 'books.searchPlaceholder'.tr(),
-          hintStyle: TextStyle(color: muted, fontSize: 14),
+          hintStyle: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: muted),
           prefixIcon: Icon(PhosphorIconsBold.magnifyingGlass, color: muted),
           filled: true,
           fillColor: scheme.surface,
@@ -230,7 +260,7 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
         sliver: SliverList.separated(
           itemCount: provider.searchResults.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 12),
+          separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
           itemBuilder: (context, i) => _SearchResultTile(
             book: provider.searchResults[i],
             onTap: () => _openBook(provider.searchResults[i]),
@@ -271,10 +301,13 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
     }
 
     final hero = _heroItems(provider);
-    final topics = ['books.filterAll'.tr(), ...BookProvider.kTopics];
+    final topics = [
+      'books.filterAll'.tr(),
+      ...BookProvider.kTopics.map(_topicLabel),
+    ];
     final topicIndex = provider.selectedTopic == null
         ? 0
-        : topics.indexOf(provider.selectedTopic!).clamp(0, topics.length - 1);
+        : BookProvider.kTopics.indexOf(provider.selectedTopic!) + 1;
 
     return [
       if (hero.isNotEmpty)
@@ -296,7 +329,7 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
         ),
       SliverToBoxAdapter(
         child: Padding(
-          padding: const EdgeInsets.only(top: 24),
+          padding: const EdgeInsets.only(top: AppSpacing.xl),
           child: ContentChipBar(
             labels: topics,
             selected: topicIndex,
@@ -341,7 +374,10 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
     return [
       SliverToBoxAdapter(
         child: Padding(
-          padding: const EdgeInsets.only(top: 24, bottom: 12),
+          padding: const EdgeInsets.only(
+            top: AppSpacing.xl,
+            bottom: AppSpacing.md,
+          ),
           child: ContentSectionHeader(title: title),
         ),
       ),
@@ -353,7 +389,7 @@ class _BookLibraryScreenState extends State<BookLibraryScreen> {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 20),
             itemCount: books.length + (loadingMore ? 1 : 0),
-            separatorBuilder: (_, _) => const SizedBox(width: 16),
+            separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.lg),
             itemBuilder: (context, i) {
               if (i == books.length) {
                 return const Center(child: LottieLoadingWidget.tiny());
@@ -409,20 +445,20 @@ class _SearchResultTile extends StatelessWidget {
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: scheme.surface,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(color: scheme.outlineVariant),
           ),
           child: Material(
             type: MaterialType.transparency,
             child: InkWell(
               onTap: onTap,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(AppSpacing.md),
                 child: Row(
                   children: [
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                       child: SizedBox(
                         width: 56,
                         height: 84,
@@ -434,7 +470,7 @@ class _SearchResultTile extends StatelessWidget {
                               ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: AppSpacing.md),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -443,23 +479,21 @@ class _SearchResultTile extends StatelessWidget {
                             book.title,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              height: 1.3,
-                            ),
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  height: 1.3,
+                                ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: AppSpacing.xs),
                           Text(
                             book.author,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: contentMuted(context),
-                            ),
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: contentMuted(context)),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: AppSpacing.sm),
                           CefrBadge(
                             level: book.cefrLevel,
                             size: CefrBadgeSize.small,
@@ -467,7 +501,7 @@ class _SearchResultTile extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpacing.sm),
                     Icon(
                       PhosphorIconsBold.caretRight,
                       size: 16,
@@ -482,4 +516,15 @@ class _SearchResultTile extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Genres stay English in the provider: they are the catalogue's query terms.
+String _topicLabel(String topic) {
+  final words = topic.toLowerCase().split(' ');
+  final id =
+      words.first +
+      words.skip(1).map((w) => w[0].toUpperCase() + w.substring(1)).join();
+  final key = 'books.topic.$id';
+  final translated = key.tr();
+  return translated == key ? topic : translated;
 }

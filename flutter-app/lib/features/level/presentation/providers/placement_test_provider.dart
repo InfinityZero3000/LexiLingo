@@ -1,5 +1,5 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 
 import '../../data/datasources/proficiency_data_source.dart';
 
@@ -13,8 +13,8 @@ class PlacementTestProvider with ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
-  String? _errorMessage;
-  String? get errorMessage => _errorMessage;
+  UiText? _errorMessage;
+  String? get errorMessage => _errorMessage?.resolve();
 
   List<Map<String, dynamic>> _questions = [];
   List<Map<String, dynamic>> get questions => _questions;
@@ -33,7 +33,7 @@ class PlacementTestProvider with ChangeNotifier {
       _questions = List<Map<String, dynamic>>.from(response['questions'] ?? []);
       _errorMessage = null;
     } catch (e) {
-      _errorMessage = 'errors.loadFailed'.tr();
+      _errorMessage = UiText.key('errors.loadFailed');
       debugPrint('Failed to load placement test: $e');
       _questions = [];
     } finally {
@@ -49,6 +49,7 @@ class PlacementTestProvider with ChangeNotifier {
     Map<String, int> answers,
     int timeTakenSeconds,
   ) async {
+    if (_isLoading) return false;
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
@@ -62,7 +63,7 @@ class PlacementTestProvider with ChangeNotifier {
       _errorMessage = null;
       return true;
     } catch (e) {
-      _errorMessage = 'errors.submitFailed'.tr();
+      _errorMessage = UiText.key('errors.submitFailed');
       debugPrint('Failed to submit placement test: $e');
       return false;
     } finally {

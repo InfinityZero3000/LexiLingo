@@ -37,6 +37,9 @@ class _FakeRepo extends BookRepository {
   }) async => quiz;
 
   @override
+  Future<String> fetchBookText(Book book) async => 'word ' * 4000;
+
+  @override
   Future<UserBook?> getProgress(String bookId) async => null;
 
   @override
@@ -100,7 +103,7 @@ Future<void> _pump(
               ).copyWith(textScaler: TextScaler.linear(textScale)),
               child: child!,
             ),
-            home: const BookQuizScreen(chapter: 1),
+            home: const BookQuizScreen(section: 1),
           ),
         ),
       ),
@@ -200,8 +203,8 @@ void main() {
       await _pump(tester, _quiz(2), theme: dark);
       await tester.tap(find.text('Right'));
       await tester.pumpAndSettle();
-      final button = tester.widget<ElevatedButton>(
-        find.widgetWithText(ElevatedButton, 'Next question'),
+      final button = tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, 'Next question'),
       );
       final fg = button.style!.foregroundColor!.resolve({})!;
       expect(

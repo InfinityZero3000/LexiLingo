@@ -4,6 +4,7 @@
 library;
 
 // ignore: depend_on_referenced_packages
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 // ── Game Types ────────────────────────────────────────────────────────────────
@@ -25,14 +26,7 @@ enum GameType {
     GameType.hangman => 'hangman',
   };
 
-  String get displayName => switch (this) {
-    GameType.wordScramble => 'Word Scramble',
-    GameType.fillBlank => 'Fill in the Blank',
-    GameType.matching => 'Matching Game',
-    GameType.spellingBee => 'Spelling Bee',
-    GameType.grammarQuiz => 'Grammar Quiz',
-    GameType.hangman => 'Hangman',
-  };
+  String get displayName => 'games.type.$name.name'.tr();
 
   IconData get icon => switch (this) {
     GameType.wordScramble => Icons.sort_by_alpha_rounded,
@@ -43,14 +37,7 @@ enum GameType {
     GameType.hangman => Icons.extension_rounded,
   };
 
-  String get description => switch (this) {
-    GameType.wordScramble => 'Arrange scrambled letters to form words',
-    GameType.fillBlank => 'Choose the correct word to complete the sentence',
-    GameType.matching => 'Match words with their definitions',
-    GameType.spellingBee => 'Listen and type the word you hear',
-    GameType.grammarQuiz => 'Test your grammar knowledge',
-    GameType.hangman => 'Guess the word letter by letter',
-  };
+  String get description => 'games.type.$name.description'.tr();
 }
 
 // ── GameWord ──────────────────────────────────────────────────────────────────
@@ -248,7 +235,8 @@ class ScrambleWord {
       xpValue: xpValue ?? this.xpValue,
       letterCount: letterCount ?? this.letterCount,
       cefrLevel: cefrLevel ?? this.cefrLevel,
-      vietnameseTranslation: vietnameseTranslation ?? this.vietnameseTranslation,
+      vietnameseTranslation:
+          vietnameseTranslation ?? this.vietnameseTranslation,
     );
   }
 }
@@ -597,7 +585,8 @@ class SpellingBeeWord {
       xpFull: xpFull ?? this.xpFull,
       xpPartial: xpPartial ?? this.xpPartial,
       maxReplays: maxReplays ?? this.maxReplays,
-      vietnameseTranslation: vietnameseTranslation ?? this.vietnameseTranslation,
+      vietnameseTranslation:
+          vietnameseTranslation ?? this.vietnameseTranslation,
     );
   }
 }
@@ -858,7 +847,8 @@ class HangmanGame {
       maxLives: maxLives ?? this.maxLives,
       baseXp: baseXp ?? this.baseXp,
       availableCategories: availableCategories ?? this.availableCategories,
-      vietnameseTranslation: vietnameseTranslation ?? this.vietnameseTranslation,
+      vietnameseTranslation:
+          vietnameseTranslation ?? this.vietnameseTranslation,
     );
   }
 }

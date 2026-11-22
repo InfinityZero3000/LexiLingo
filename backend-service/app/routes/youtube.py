@@ -65,7 +65,12 @@ def _raise_youtube_api_error(response: httpx.Response) -> None:
     http_code = _YOUTUBE_API_ERROR_CODES.get(
         response.status_code, status.HTTP_503_SERVICE_UNAVAILABLE
     )
-    logger.warning(f"YouTube API error {response.status_code}: {msg}")
+    if "API key not valid" in msg or "API_KEY_INVALID" in response.text:
+        # Our key is dead, not the caller's input: say 503 and make ops see it.
+        logger.error(f"YouTube API key rejected by Google: {msg}")
+        http_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    else:
+        logger.warning(f"YouTube API error {response.status_code}: {msg}")
     raise HTTPException(status_code=http_code, detail=f"YouTube API: {msg}")
 
 
@@ -342,7 +347,8 @@ async def get_captions(
 
     Returns list of caption segments with start/end times.
     """
-    cache_key = f"youtube:captions:{video_id}:{lang}"
+    # v2: v1 entries cached YouTube blocking as "no captions" for 7 days / 1 year
+    cache_key = f"youtube:captions:v2:{video_id}:{lang}"
     cache_service = APICacheService(db)
 
     try:
@@ -355,12 +361,23 @@ async def get_captions(
             redis_ttl=604800,       # 7 days
             db_ttl=31536000,        # 1 year
         )
+        segments = result.data if result else []
         return {
             "video_id": video_id,
             "language": lang,
-            "segments": result.data if result else [],
+            "segments": segments,
+            "status": "ok" if segments else "none",
             "source": result.source if result else "error",
             "is_stale": result.is_stale if result else False,
+        }
+    except CaptionsUnavailable:
+        return {
+            "video_id": video_id,
+            "language": lang,
+            "segments": [],
+            "status": "unavailable",
+            "source": "error",
+            "is_stale": False,
         }
     except QuotaExhaustedError as e:
         raise HTTPException(
@@ -692,91 +709,90 @@ async def _youtube_search(
     }
 
 
+class CaptionsUnavailable(Exception):
+    """YouTube could not be asked (IP block, network, parse): not the same as "no captions"."""
+
+
+def _caption_segments(transcript) -> list[dict]:
+    from dataclasses import asdict
+
+    segments = []
+    for entry in transcript:
+        try:
+            entry_dict = asdict(entry)
+        except TypeError:
+            entry_dict = entry
+        start_ms = int(entry_dict.get("start", 0) * 1000)
+        duration_ms = int(entry_dict.get("duration", 0) * 1000)
+        text = entry_dict.get("text", "").strip()
+        if text and text != "\n":
+            segments.append({"start_ms": start_ms, "end_ms": start_ms + duration_ms, "text": text})
+    return segments
+
+
 async def _fetch_captions_transcript_api(video_id: str, lang: str = "en") -> list[dict]:
     """
     Fetch captions using youtube-transcript-api.
 
-    No OAuth needed — uses public transcript endpoints.
-    Tries requested language first, then falls back to English variants.
+    Returns [] only when the video really has none (that answer is cached).
+    Raises CaptionsUnavailable when YouTube could not be asked, so the caller
+    never caches a block as "no subtitles".
     """
+    loop = asyncio.get_running_loop()
     try:
-        from youtube_transcript_api import YouTubeTranscriptApi
-        from dataclasses import asdict
+        transcript = await loop.run_in_executor(None, lambda: _get_transcript_sync(video_id, lang))
+        return _caption_segments(transcript)
+    except CaptionsUnavailable as e:
+        logger.info(f"Transcript API unavailable for {video_id}: {e}, falling back to timedtext")
+        segments = await _fetch_captions_timedtext(video_id, lang)
+        if segments:
+            return segments
+        raise
 
-        # Run sync library in a thread pool to avoid blocking the event loop
-        loop = asyncio.get_running_loop()
-        transcript = await loop.run_in_executor(
-            None,
-            lambda: _get_transcript_sync(video_id, lang),
+
+def _get_transcript_sync(video_id: str, lang: str):
+    """Entries, or [] when the video has no captions; raises CaptionsUnavailable otherwise."""
+    try:
+        from youtube_transcript_api import (
+            AgeRestricted,
+            InvalidVideoId,
+            NoTranscriptFound,
+            TranscriptsDisabled,
+            VideoUnavailable,
+            VideoUnplayable,
+            YouTubeTranscriptApi,
         )
-
-        if transcript is None:
-            logger.info(f"Transcript is None for {video_id}, falling back to timedtext")
-            return await _fetch_captions_timedtext(video_id, lang)
-
-        segments = []
-        for entry in transcript:
-            try:
-                entry_dict = asdict(entry)
-            except TypeError:
-                entry_dict = entry
-
-            start_ms = int(entry_dict.get("start", 0) * 1000)
-            duration_ms = int(entry_dict.get("duration", 0) * 1000)
-            text = entry_dict.get("text", "").strip()
-            if text and text != "\n":
-                segments.append({
-                    "start_ms": start_ms,
-                    "end_ms": start_ms + duration_ms,
-                    "text": text,
-                })
-
-        return segments
-
-    except Exception as e:
-        logger.info(f"Transcript API failed for {video_id}: {e}, falling back to timedtext")
-        return await _fetch_captions_timedtext(video_id, lang)
-
-
-def _get_transcript_sync(video_id: str, lang: str) -> list | None:
-    """Sync wrapper for YouTubeTranscriptApi (runs in thread pool)."""
-    try:
-        from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound
         import requests
+    except ImportError as e:
+        raise CaptionsUnavailable(f"transcript library missing: {e}") from e
 
-        session = requests.Session()
-        if settings.YOUTUBE_TRANSCRIPT_PROXY_URL:
-            session.proxies = {
-                "https": settings.YOUTUBE_TRANSCRIPT_PROXY_URL,
-                "http": settings.YOUTUBE_TRANSCRIPT_PROXY_URL,
-            }
-        api = YouTubeTranscriptApi(http_client=session)
+    no_captions = (
+        TranscriptsDisabled, NoTranscriptFound, VideoUnavailable,
+        VideoUnplayable, InvalidVideoId, AgeRestricted,
+    )
 
-        # Try requested lang, then en, then any available
-        lang_variants = [lang, "en", "en-US", "en-GB"]
-        # Deduplicate while preserving order
-        seen: set[str] = set()
-        langs_to_try: list[str] = []
-        for l in lang_variants:
-            if l not in seen:
-                seen.add(l)
-                langs_to_try.append(l)
+    session = requests.Session()
+    if settings.YOUTUBE_TRANSCRIPT_PROXY_URL:
+        session.proxies = {
+            "https": settings.YOUTUBE_TRANSCRIPT_PROXY_URL,
+            "http": settings.YOUTUBE_TRANSCRIPT_PROXY_URL,
+        }
+    api = YouTubeTranscriptApi(http_client=session)
 
+    # Requested language first, then English variants, then any auto-generated track.
+    langs_to_try = list(dict.fromkeys([lang, "en", "en-US", "en-GB"]))
+    try:
         try:
             return api.fetch(video_id, languages=langs_to_try)
-        except Exception as e:
-            logger.info(f"youtube-transcript-api fetch failed, trying list transcripts: {e}")
-            try:
-                transcript_list = api.list(video_id)
-                for transcript in transcript_list:
-                    if transcript.is_generated:
-                        return transcript.fetch()
-            except Exception as e2:
-                logger.info(f"youtube-transcript-api list failed: {e2}")
-            return None
+        except NoTranscriptFound:
+            for transcript in api.list(video_id):
+                if transcript.is_generated:
+                    return transcript.fetch()
+            return []
+    except no_captions:
+        return []
     except Exception as e:
-        logger.info(f"youtube-transcript-api call failed inside _get_transcript_sync: {e}")
-        return None
+        raise CaptionsUnavailable(f"{type(e).__name__}") from e
 
 
 async def _fetch_captions_timedtext(video_id: str, lang: str = "en") -> list[dict]:

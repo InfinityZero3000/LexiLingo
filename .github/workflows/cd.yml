@@ -3,17 +3,91 @@ name: CD
 on:
   push:
     branches: [dev]
+  # By hand: redeploy production after Vercel's daily limit held a push back, or build a
+  # preview of any branch (`gh workflow run cd.yml --ref <branch> -f environment=preview`).
+  # Vercel's Git integration is off (vercel.json `git.deploymentEnabled: false`): every PR
+  # push created a preview, cancelled or not, and those used up the Hobby plan's 100
+  # deployments a day. This workflow is the only deploy path.
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "What to deploy"
+        type: choice
+        options: [both, web, admin]
+        default: both
+      environment:
+        description: "production deploys only from dev; preview works from any branch"
+        type: choice
+        options: [production, preview]
+        default: production
+
+# Deploys go out through the Vercel CLI with repository secrets; the GITHUB_TOKEN only checks out.
+permissions:
+  contents: read
+  actions: read
 
 concurrency:
-  group: cd-${{ github.ref }}
+  group: cd-${{ github.ref }}-${{ inputs.environment || 'production' }}
   cancel-in-progress: true
 
 jobs:
+  # The Hobby plan allows 100 deployments a day. Deploying both apps on every push to dev,
+  # backend-only pushes included, used that up by mid-morning on 2026-11-16 and froze the web
+  # app for the rest of the day. Each app now deploys only when its own files changed.
+  changes:
+    name: What changed
+    runs-on: ubuntu-latest
+    outputs:
+      web: ${{ steps.diff.outputs.web }}
+      admin: ${{ steps.diff.outputs.admin }}
+      vercel_env: ${{ steps.diff.outputs.vercel_env }}
+      prod_flag: ${{ steps.diff.outputs.prod_flag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - id: diff
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET: ${{ inputs.target }}
+          ENVIRONMENT: ${{ inputs.environment || 'production' }}
+        run: |
+          if [ "$ENVIRONMENT" = production ] && [ "$GITHUB_REF" != refs/heads/dev ]; then
+            echo "::error::Production deploys only from dev (got $GITHUB_REF). Use environment=preview."
+            exit 1
+          fi
+          echo "vercel_env=$ENVIRONMENT" >> "$GITHUB_OUTPUT"
+          if [ "$ENVIRONMENT" = production ]; then echo "prod_flag=--prod" >> "$GITHUB_OUTPUT"; fi
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            [ "$TARGET" != admin ] && echo "web=true" >> "$GITHUB_OUTPUT"
+            [ "$TARGET" != web ] && echo "admin=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Diff against the last push run that finished green, not the previous push: a newer
+          # push cancels a running deploy, and a deploy can fail (daily limit), so the previous
+          # push's changes may never have shipped. A failed or cancelled run never becomes a base.
+          BASE="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/cd.yml/runs?branch=dev&event=push&status=success&per_page=1" \
+            --jq '.workflow_runs[0].head_sha // empty' || true)"
+          if [ -z "$BASE" ] || ! git cat-file -e "${BASE}^{commit}" 2>/dev/null; then
+            # No known good base: deploy both rather than guess.
+            echo "web=true" >> "$GITHUB_OUTPUT"; echo "admin=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          echo "Changes since $BASE (last successful CD run):"
+          changed="$(git diff --name-only "$BASE" "$GITHUB_SHA")"
+          printf '%s\n' "$changed"
+          # This file holds the build config (API URLs, env), so editing it changes both
+          # builds; #814 changed only the web API URL here and shipped nothing.
+          grep -qE '^(flutter-app/|\.github/workflows/cd\.yml$)' <<<"$changed" && echo "web=true" >> "$GITHUB_OUTPUT"
+          grep -qE '^(admin-service/|\.github/workflows/cd\.yml$)' <<<"$changed" && echo "admin=true" >> "$GITHUB_OUTPUT"
+          true
+
   # ──────────────────────────────────────────────
   # Flutter Web → Vercel
   # ──────────────────────────────────────────────
   deploy-flutter-web:
     name: Deploy Flutter Web → Vercel
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
 
     defaults:
@@ -21,10 +95,10 @@ jobs:
         working-directory: flutter-app
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Flutter
-        uses: subosito/flutter-action@v2
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
         with:
           # Pinned: phosphor_flutter 2.1.0 extends IconData, which is final from Flutter 3.47 on.
           flutter-version: 3.38.9
@@ -32,7 +106,7 @@ jobs:
           cache: true
 
       - name: Set up Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 20
 
@@ -63,13 +137,18 @@ jobs:
       - name: Create public env config for build
         env:
           GOOGLE_SERVER_CLIENT_ID: ${{ vars.GOOGLE_SERVER_CLIENT_ID }}
+          FCM_VAPID_KEY: ${{ vars.FCM_VAPID_KEY }}
         run: |
           : "${GOOGLE_SERVER_CLIENT_ID:?Set GOOGLE_SERVER_CLIENT_ID repository variable}"
+          # Same origin as the page: the Cloudflare Worker route
+          # www.lexilingo.me/api/* proxies to api.lexilingo.me. Calling api.
+          # directly made every new URL pay a CORS preflight (~0.4-1.2 s from
+          # VN to the origin in DE). Mobile builds keep api.lexilingo.me.
           cat > assets/env/prod_config <<'EOF'
           ENVIRONMENT=production
-          API_BASE_URL=https://api.lexilingo.me/api/v1
+          API_BASE_URL=https://www.lexilingo.me/api/v1
           API_BASE_URL_FALLBACK=
-          AI_SERVICE_URL=https://api.lexilingo.me/api/v1
+          AI_SERVICE_URL=https://www.lexilingo.me/api/v1
           AI_SERVICE_URL_FALLBACK=
           ENABLE_VOICE_FEATURE=true
           ENABLE_GAMIFICATION=true
@@ -77,9 +156,13 @@ jobs:
           DEBUG_MODE=false
           EOF
           printf 'GOOGLE_SERVER_CLIENT_ID=%s\n' "$GOOGLE_SERVER_CLIENT_ID" >> assets/env/prod_config
+          if [ -n "$FCM_VAPID_KEY" ]; then printf 'FCM_VAPID_KEY=%s\n' "$FCM_VAPID_KEY" >> assets/env/prod_config; fi
 
       - name: Build Flutter web (release)
         run: flutter build web --release --no-pub
+
+      - name: Fingerprint fonts so they can be cached as immutable
+        run: python3 scripts/fingerprint_web_fonts.py build/web
 
       - name: Verify vocabulary collection API compatibility
         run: |
@@ -103,27 +186,34 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FLUTTER }}
-        run: vercel pull --yes --environment=production --token "$VERCEL_TOKEN"
+          VERCEL_ENVIRONMENT: ${{ needs.changes.outputs.vercel_env }}
+        run: vercel pull --yes --environment="$VERCEL_ENVIRONMENT" --token "$VERCEL_TOKEN"
 
       - name: Build Vercel prebuilt output
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FLUTTER }}
-        run: vercel build --prod --token "$VERCEL_TOKEN"
+          PROD_FLAG: ${{ needs.changes.outputs.prod_flag }}
+        run: vercel build ${PROD_FLAG:+"$PROD_FLAG"} --token "$VERCEL_TOKEN"
 
       - name: Deploy to Vercel (prebuilt)
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_FLUTTER }}
-        run: vercel deploy --prebuilt --prod --token "$VERCEL_TOKEN"
+          PROD_FLAG: ${{ needs.changes.outputs.prod_flag }}
+        run: |
+          url="$(vercel deploy --prebuilt ${PROD_FLAG:+"$PROD_FLAG"} --token "$VERCEL_TOKEN")"
+          echo "Deployed: $url" | tee -a "$GITHUB_STEP_SUMMARY"
 
   # ──────────────────────────────────────────────
   # Admin Dashboard → Vercel
   # ──────────────────────────────────────────────
   deploy-admin:
     name: Deploy Admin Dashboard → Vercel
+    needs: changes
+    if: needs.changes.outputs.admin == 'true'
     runs-on: ubuntu-latest
 
     defaults:
@@ -131,15 +221,15 @@ jobs:
         working-directory: admin-service
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v6
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
         with:
           package_json_file: admin-service/package.json
 
       - name: Set up Node.js
-        uses: actions/setup-node@v7
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "24"
           cache: pnpm
@@ -156,21 +246,26 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
-        run: vercel pull --yes --environment=production --token "$VERCEL_TOKEN"
+          VERCEL_ENVIRONMENT: ${{ needs.changes.outputs.vercel_env }}
+        run: vercel pull --yes --environment="$VERCEL_ENVIRONMENT" --token "$VERCEL_TOKEN"
 
       - name: Build Vercel prebuilt output
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
-        run: vercel build --prod --token "$VERCEL_TOKEN"
+          PROD_FLAG: ${{ needs.changes.outputs.prod_flag }}
+        run: vercel build ${PROD_FLAG:+"$PROD_FLAG"} --token "$VERCEL_TOKEN"
 
       - name: Deploy to Vercel (prebuilt)
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
-        run: vercel deploy --prebuilt --prod --token "$VERCEL_TOKEN"
+          PROD_FLAG: ${{ needs.changes.outputs.prod_flag }}
+        run: |
+          url="$(vercel deploy --prebuilt ${PROD_FLAG:+"$PROD_FLAG"} --token "$VERCEL_TOKEN")"
+          echo "Deployed: $url" | tee -a "$GITHUB_STEP_SUMMARY"
 
   # Backend and ai-service images are built by the `images` job in ci.yml,
   # after the tests pass, and deployed by scripts/auto-deploy.sh on the VPS.

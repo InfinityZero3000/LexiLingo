@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/game_icon.dart';
@@ -17,12 +18,14 @@ class GamePowerUpTray extends StatelessWidget {
   final List<String> availableTypes;
   final void Function(String itemType, Map<String, dynamic> effects) onUse;
   final bool enabled;
+  final String? gameSessionId;
 
   const GamePowerUpTray({
     super.key,
     required this.availableTypes,
     required this.onUse,
     this.enabled = true,
+    this.gameSessionId,
   });
 
   @override
@@ -40,7 +43,7 @@ class GamePowerUpTray extends StatelessWidget {
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: entries.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.sm),
             itemBuilder: (context, index) {
               final entry = entries[index];
               final quantity = entry.owned.fold<int>(
@@ -53,6 +56,7 @@ class GamePowerUpTray extends StatelessWidget {
                 itemName: entry.owned.first.item.name,
                 quantity: quantity,
                 enabled: enabled,
+                gameSessionId: gameSessionId,
                 onUsed: onUse,
               );
             },
@@ -69,6 +73,7 @@ class _PowerUpButton extends StatefulWidget {
   final String itemName;
   final int quantity;
   final bool enabled;
+  final String? gameSessionId;
   final void Function(String itemType, Map<String, dynamic> effects) onUsed;
 
   const _PowerUpButton({
@@ -77,6 +82,7 @@ class _PowerUpButton extends StatefulWidget {
     required this.itemName,
     required this.quantity,
     required this.enabled,
+    required this.gameSessionId,
     required this.onUsed,
   });
 
@@ -92,7 +98,10 @@ class _PowerUpButtonState extends State<_PowerUpButton> {
     setState(() => _isUsing = true);
     final effects = await context
         .read<GamificationProvider>()
-        .useItemWithEffects(widget.inventoryId);
+        .useItemWithEffects(
+          widget.inventoryId,
+          gameSessionId: widget.gameSessionId,
+        );
     if (!mounted) return;
     setState(() => _isUsing = false);
     if (effects != null) {
@@ -116,7 +125,7 @@ class _PowerUpButtonState extends State<_PowerUpButton> {
             height: 48,
             decoration: BoxDecoration(
               color: AppColors.purple.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
               border: Border.all(
                 color: AppColors.purple.withValues(alpha: 0.35),
               ),
@@ -135,27 +144,26 @@ class _PowerUpButtonState extends State<_PowerUpButton> {
                           ),
                         )
                       : (icon != null
-                          ? AppGameIcon(icon, size: 26)
-                          : const Icon(Icons.bolt, size: 26)),
+                            ? AppGameIcon(icon, size: 26)
+                            : const Icon(Icons.bolt, size: 26)),
                 ),
                 Positioned(
                   right: -4,
                   top: -4,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 5,
+                      horizontal: AppSpacing.xs,
                       vertical: 1,
                     ),
                     decoration: BoxDecoration(
                       color: AppColors.purple,
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
                     child: Text(
                       '${widget.quantity}',
-                      style: const TextStyle(
-                        fontSize: 10,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: AppColors.textInverted,
                       ),
                     ),
                   ),
@@ -176,27 +184,33 @@ class ActivePowerUpBadge extends StatelessWidget {
   final String itemType;
   final String label;
 
-  const ActivePowerUpBadge({super.key, required this.itemType, required this.label});
+  const ActivePowerUpBadge({
+    super.key,
+    required this.itemType,
+    required this.label,
+  });
 
   @override
   Widget build(BuildContext context) {
     final icon = gamePowerUpIcons[itemType];
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.sm,
+      ),
       decoration: BoxDecoration(
         color: AppColors.purple.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.purple.withValues(alpha: 0.35)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) AppGameIcon(icon, size: 16),
-          const SizedBox(width: 6),
+          const SizedBox(width: AppSpacing.sm),
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 12,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
               fontWeight: FontWeight.bold,
               color: AppColors.purple,
             ),

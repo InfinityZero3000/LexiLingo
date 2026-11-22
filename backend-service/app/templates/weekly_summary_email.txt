@@ -8,6 +8,7 @@ Your last 7 days in LexiLingo:
 
 {suggestion_block}Open LexiLingo: {settings_link}
 
-You get this recap because you turned on weekly summaries. Change that in settings: {settings_link}
+A recap of your week, sent while you are active. Unsubscribe: {unsubscribe_link}
+Or change it in settings: {settings_link}
 
 LexiLingo Team

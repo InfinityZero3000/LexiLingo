@@ -47,4 +47,19 @@ void main() {
     expect((await emittedResult).vocabularyId, 'vocab-1');
     service.dispose();
   });
+
+  test('parses review_scheduled and defaults it to false for old servers', () {
+    final scheduled = QuickSaveVocabularyResult.fromJson({
+      'normalized_word': 'resilient',
+      'already_in_collection': true,
+      'review_scheduled': true,
+    });
+    final legacy = QuickSaveVocabularyResult.fromJson({
+      'normalized_word': 'resilient',
+      'already_in_collection': true,
+    });
+
+    expect(scheduled.reviewScheduled, isTrue);
+    expect(legacy.reviewScheduled, isFalse);
+  });
 }

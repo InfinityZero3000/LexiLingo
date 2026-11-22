@@ -1,10 +1,11 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
+import 'package:lexilingo_app/core/utils/freshness.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
 import 'package:lexilingo_app/features/course/domain/usecases/get_courses_usecase.dart';
 import 'package:lexilingo_app/features/course/domain/usecases/get_enrolled_courses_usecase.dart';
 import 'package:lexilingo_app/features/user/domain/entities/user.dart';
-import 'package:lexilingo_app/features/user/domain/entities/daily_goal.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/weekly_progress_entity.dart';
 import 'package:lexilingo_app/features/progress/domain/usecases/get_weekly_progress_usecase.dart';
 import 'package:lexilingo_app/features/vocabulary/domain/entities/vocabulary_item_entity.dart';
@@ -28,6 +29,10 @@ class HomeProvider with ChangeNotifier {
     this.vocabularyRepository,
   });
 
+  int _generation = 0;
+  Future<void>? _weeklyLoad;
+  final Freshness _weeklyFreshness = Freshness();
+
   // State: Featured Courses
   List<CourseEntity> _featuredCourses = [];
   bool _isLoadingCourses = false;
@@ -40,9 +45,9 @@ class HomeProvider with ChangeNotifier {
 
   // State: User Dashboard
   User? _currentUser;
-  DailyGoal? _todayGoal;
+  int? _goalTarget;
   bool _isLoadingDashboard = false;
-  String? _dashboardError;
+  UiText? _dashboardError;
 
   // State: Weekly Progress (Task 1.3)
   WeeklyProgressEntity _weeklyProgress = WeeklyProgressEntity.empty();
@@ -60,7 +65,7 @@ class HomeProvider with ChangeNotifier {
   String? get coursesError => _coursesError;
   String? get enrolledError => _enrolledError;
   // Only show critical errors (courses/dashboard), not enrolled error which is secondary
-  String? get errorMessage => _coursesError ?? _dashboardError;
+  String? get errorMessage => _coursesError ?? _dashboardError?.resolve();
 
   User? get currentUser => _currentUser;
   String get userName =>
@@ -77,54 +82,67 @@ class HomeProvider with ChangeNotifier {
   WeeklyProgressEntity get weeklyProgress => _weeklyProgress;
   bool get isLoadingWeekly => _isLoadingWeekly;
 
-  DailyGoal? get todayGoal => _todayGoal;
   VocabularyItemEntity? get wordOfDay => _wordOfDay;
   bool get isLoadingWordOfDay => _isLoadingWordOfDay;
 
-  // Weekly progress is the server's record of today's XP; _todayGoal only
-  // carries the target, so changing the goal must never change what was earned.
-  int get dailyXP =>
-      _weeklyProgress.todayProgress?.xpEarned ?? _todayGoal?.earnedXP ?? 0;
-  int get dailyGoalXP => _todayGoal?.targetXP ?? 50;
+  // Weekly progress is the server's record of today's XP, so changing the goal
+  // must never change what was earned. The persisted target lives in
+  // SettingsProvider; this only mirrors a change made from the home sheet.
+  bool get hasDailyXP => _weeklyProgress.todayProgress != null;
+  int get dailyXP => _weeklyProgress.todayProgress?.xpEarned ?? 0;
+  int get dailyGoalXP => _goalTarget ?? 50;
   double get dailyProgressPercentage {
     final goal = dailyGoalXP;
     return goal > 0 ? (dailyXP / goal).clamp(0.0, 1.0) : 0.0;
   }
 
   bool get isLoadingDashboard => _isLoadingDashboard;
-  String? get dashboardError => _dashboardError;
+  String? get dashboardError => _dashboardError?.resolve();
 
   bool get isLoading =>
       _isLoadingCourses || _isLoadingDashboard || _isLoadingWeekly;
 
   /// Load weekly progress for home screen chart (Task 1.3)
-  Future<void> loadWeeklyProgress() async {
-    if (getWeeklyProgressUseCase == null) return;
+  Future<void> loadWeeklyProgress({Duration? maxAge}) {
+    if (getWeeklyProgressUseCase == null) return Future<void>.value();
+    if (_weeklyFreshness.isFresh(maxAge)) return Future<void>.value();
+    final inFlight = _weeklyLoad;
+    if (inFlight != null) return inFlight;
+    final run = _loadWeeklyProgress();
+    _weeklyLoad = run;
+    return run.whenComplete(() {
+      if (identical(_weeklyLoad, run)) _weeklyLoad = null;
+    });
+  }
 
+  Future<void> _loadWeeklyProgress() async {
     _isLoadingWeekly = true;
     notifyListeners();
 
+    final generation = _generation;
     final result = await getWeeklyProgressUseCase!.call();
+    if (generation != _generation) return;
 
-    result.fold(
-      (failure) {
-        // Graceful degradation - keep empty data
-        _weeklyProgress = WeeklyProgressEntity.empty();
-      },
-      (data) {
-        _weeklyProgress = data;
-      },
-    );
+    result.fold((failure) {}, (data) {
+      _weeklyProgress = data;
+      _weeklyFreshness.mark();
+    });
 
     _isLoadingWeekly = false;
     notifyListeners();
   }
 
-  Future<void> refreshWeeklyProgressSilently() async {
+  Future<void> refreshWeeklyProgressSilently({Duration? maxAge}) async {
     if (getWeeklyProgressUseCase == null) return;
+    if (_weeklyFreshness.isFresh(maxAge)) return;
+    final inFlight = _weeklyLoad;
+    if (inFlight != null) return inFlight;
+    final generation = _generation;
     final result = await getWeeklyProgressUseCase!.call();
+    if (generation != _generation) return;
     result.fold((_) {}, (data) {
       _weeklyProgress = data;
+      _weeklyFreshness.mark();
       notifyListeners();
     });
   }
@@ -135,14 +153,15 @@ class HomeProvider with ChangeNotifier {
     _coursesError = null;
     notifyListeners();
 
+    final generation = _generation;
     final result = await getCoursesUseCase(
       const GetCoursesParams(page: 1, pageSize: 6),
     );
+    if (generation != _generation) return;
 
     result.fold(
       (failure) {
         _coursesError = failure.message;
-        _featuredCourses = [];
       },
       (data) {
         final (courses, _) = data;
@@ -161,12 +180,13 @@ class HomeProvider with ChangeNotifier {
     _enrolledError = null;
     notifyListeners();
 
+    final generation = _generation;
     final result = await getEnrolledCoursesUseCase(page: 1, pageSize: 10);
+    if (generation != _generation) return;
 
     result.fold(
       (failure) {
         _enrolledError = failure.message;
-        _enrolledCourses = [];
       },
       (data) {
         final (courses, _) = data;
@@ -185,57 +205,17 @@ class HomeProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Update today's goal
-  void setTodayGoal(DailyGoal? goal) {
-    _todayGoal = goal;
-    notifyListeners();
-  }
-
-  /// Update only the target XP for today's goal while preserving progress.
+  /// Mirror the target XP chosen by the learner.
   void updateDailyGoalTarget(int targetXP) {
-    final now = DateTime.now();
-    final currentGoal = _todayGoal;
-
-    _todayGoal =
-        currentGoal?.copyWith(targetXP: targetXP) ??
-        DailyGoal(
-          id: 1,
-          userId: _currentUser?.id ?? 'guest',
-          date: now,
-          targetXP: targetXP,
-          earnedXP: dailyXP,
-        );
+    _goalTarget = targetXP;
     notifyListeners();
   }
 
   /// Load dashboard data (user stats, goals, etc.)
   Future<void> loadDashboard(User user) async {
-    _isLoadingDashboard = true;
     _dashboardError = null;
+    _currentUser = user;
     notifyListeners();
-
-    try {
-      // Set current user
-      _currentUser = user;
-
-      // Load today's goal (mock data for now)
-      _todayGoal = DailyGoal(
-        id: 1, // Mock ID
-        userId: user.id,
-        date: DateTime.now(),
-        targetXP: 50,
-        earnedXP: 20,
-      );
-
-      _dashboardError = null;
-    } catch (e) {
-      _dashboardError = 'home.dashboardLoadFailed'.tr(
-        namedArgs: {'error': e.toString()},
-      );
-    } finally {
-      _isLoadingDashboard = false;
-      notifyListeners();
-    }
   }
 
   /// Refresh all home screen data
@@ -253,7 +233,9 @@ class HomeProvider with ChangeNotifier {
     if (vocabularyRepository == null) return;
     _isLoadingWordOfDay = true;
     notifyListeners();
+    final generation = _generation;
     final result = await vocabularyRepository!.getWordOfDay();
+    if (generation != _generation) return;
     result.fold((_) {}, (word) => _wordOfDay = word);
     _isLoadingWordOfDay = false;
     notifyListeners();
@@ -264,24 +246,33 @@ class HomeProvider with ChangeNotifier {
     await Future.wait([
       loadFeaturedCourses(),
       loadEnrolledCourses(),
-      loadWeeklyProgress(),
+      loadWeeklyProgress(maxAge: kPassiveReloadWindow),
       loadWordOfDay(),
     ]);
   }
 
   /// Clear all state
   void clear() {
+    _generation++;
+    _weeklyLoad = null;
+    _weeklyFreshness.invalidate();
     _featuredCourses = [];
     _coursesError = null;
     _isLoadingCourses = false;
 
     _currentUser = null;
-    _todayGoal = null;
+    _goalTarget = null;
     _dashboardError = null;
     _isLoadingDashboard = false;
 
     _weeklyProgress = WeeklyProgressEntity.empty();
     _isLoadingWeekly = false;
+
+    _enrolledCourses = [];
+    _enrolledError = null;
+    _isLoadingEnrolled = false;
+    _wordOfDay = null;
+    _isLoadingWordOfDay = false;
 
     notifyListeners();
   }

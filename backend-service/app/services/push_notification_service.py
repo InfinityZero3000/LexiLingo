@@ -176,3 +176,35 @@ class PushNotificationService:
         except Exception as exc:  # pragma: no cover - external IO
             logger.exception("Failed to send word-of-day push: %s", exc)
             return False
+
+    async def send_nurture(
+        self,
+        *,
+        tokens: list[str],
+        kind: str,
+        title: str,
+        body: str,
+        route: str,
+    ) -> bool:
+        """Send an activation nudge; `kind` becomes the data `type`."""
+        clean_tokens = [t for t in tokens if t]
+        if not clean_tokens:
+            return False
+
+        try:
+            _init_firebase_app()
+        except Exception as exc:
+            logger.warning("Firebase not configured; skipping nurture push: %s", exc)
+            return False
+
+        message = messaging.MulticastMessage(
+            notification=messaging.Notification(title=title, body=body),
+            data={"type": kind, "route": route},
+            tokens=clean_tokens,
+        )
+        try:
+            response = await run_in_threadpool(messaging.send_each_for_multicast, message)
+            return int(getattr(response, "success_count", 0) or 0) > 0
+        except Exception as exc:  # pragma: no cover - external IO
+            logger.exception("Failed to send nurture push: %s", exc)
+            return False

@@ -1,0 +1,57 @@
+{
+  "_comment": "Pinned open-licence passage sources for scripts/generate_ielts_paper.py. Nothing outside this list is ever fetched. Wikipedia entries are fixed to an oldid revision; Gutenberg to an ebook id; US-government pages to one URL (public domain as federal works).",
+  "passages": [
+    {
+      "id": "wp-antikythera",
+      "kind": "wikipedia",
+      "title": "Antikythera mechanism",
+      "revision": 1385204759,
+      "license_id": "CC-BY-SA-4.0"
+    },
+    {
+      "id": "wp-mycorrhiza",
+      "kind": "wikipedia",
+      "title": "Mycorrhiza",
+      "revision": 1383329194,
+      "license_id": "CC-BY-SA-4.0"
+    },
+    {
+      "id": "wp-urban-heat-island",
+      "kind": "wikipedia",
+      "title": "Urban heat island",
+      "revision": 1385830841,
+      "license_id": "CC-BY-SA-4.0"
+    },
+    {
+      "id": "wp-printing-press",
+      "kind": "wikipedia",
+      "title": "Printing press",
+      "revision": 1384322441,
+      "license_id": "CC-BY-SA-4.0"
+    },
+    {
+      "id": "wp-coral-bleaching",
+      "kind": "wikipedia",
+      "title": "Coral bleaching",
+      "revision": 1385821491,
+      "license_id": "CC-BY-SA-4.0"
+    },
+    {
+      "id": "pg-darwin-worms",
+      "kind": "gutenberg",
+      "title": "The Formation of Vegetable Mould Through the Action of Worms",
+      "author": "Charles Darwin",
+      "ebook_id": 2355,
+      "start_marker": "EARTH-WORMS are distributed throughout the world",
+      "license_id": "LicenseRef-Public-Domain"
+    },
+    {
+      "id": "gov-nasa-ocean-carbon",
+      "kind": "us_gov",
+      "title": "The Ocean's Carbon Balance",
+      "publisher": "NASA Earth Observatory",
+      "url": "https://earthobservatory.nasa.gov/features/OceanCarbon",
+      "license_id": "LicenseRef-US-Gov-Public-Domain"
+    }
+  ]
+}

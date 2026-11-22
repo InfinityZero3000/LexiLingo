@@ -11,6 +11,7 @@ import 'package:record/record.dart';
 import '../../../voice/presentation/providers/voice_provider.dart';
 import '../../domain/services/speaking_answer_matcher.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 typedef StartLessonRecording = Future<void> Function();
 typedef StopLessonRecording = Future<Uint8List> Function();
@@ -135,9 +136,7 @@ class _LessonSpeakingRecorderState extends State<LessonSpeakingRecorder> {
   Future<void> _startDefaultRecording() async {
     final hasPermission = await _recorder.hasPermission();
     if (!hasPermission) {
-      throw StateError(
-        'voice.micPermissionSettings'.tr(),
-      );
+      throw StateError('voice.micPermissionSettings'.tr());
     }
 
     String path;
@@ -286,7 +285,9 @@ class _LessonSpeakingRecorderState extends State<LessonSpeakingRecorder> {
       children: [
         Semantics(
           button: true,
-          label: _isRecording ? 'voice.stopRecording'.tr() : 'voice.startRecording'.tr(),
+          label: _isRecording
+              ? 'voice.stopRecording'.tr()
+              : 'voice.startRecording'.tr(),
           child: GestureDetector(
             key: const Key('lesson-speaking-mic'),
             onTap: _handleTap,
@@ -310,7 +311,7 @@ class _LessonSpeakingRecorderState extends State<LessonSpeakingRecorder> {
               ),
               child: _isProcessing
                   ? Padding(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(AppSpacing.xl),
                       child: CircularProgressIndicator(
                         strokeWidth: 3,
                         color: primary,
@@ -327,8 +328,7 @@ class _LessonSpeakingRecorderState extends State<LessonSpeakingRecorder> {
         const SizedBox(height: 12),
         Text(
           _statusLabel,
-          style: TextStyle(
-            fontSize: 13,
+          style: Theme.of(context).textTheme.bodyMedium!.copyWith(
             color: _state == _SpeakingRecorderState.rejected
                 ? Colors.red
                 : secondary,
@@ -342,29 +342,39 @@ class _LessonSpeakingRecorderState extends State<LessonSpeakingRecorder> {
           const SizedBox(height: 4),
           Text(
             _formattedDuration,
-            style: TextStyle(fontSize: 12, color: secondary),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall!.copyWith(color: secondary),
           ),
         ],
         if (_transcript != null && _transcript!.isNotEmpty) ...[
           const SizedBox(height: 8),
           Text(
             '${'voice.youSaid'.tr()} "$_transcript"',
-            style: TextStyle(fontSize: 12, color: secondary),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall!.copyWith(color: secondary),
             textAlign: TextAlign.center,
           ),
         ],
         if (_similarity != null && !_isApproved) ...[
           const SizedBox(height: 4),
           Text(
-            'voice.matchPercent'.tr(namedArgs: {'percent': '${(_similarity! * 100).round()}'}),
-            style: TextStyle(fontSize: 12, color: secondary),
+            'voice.matchPercent'.tr(
+              namedArgs: {'percent': '${(_similarity! * 100).round()}'},
+            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall!.copyWith(color: secondary),
           ),
         ],
         if (_errorMessage != null) ...[
           const SizedBox(height: 6),
           Text(
             _errorMessage!,
-            style: const TextStyle(fontSize: 12, color: Colors.red),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall!.copyWith(color: Colors.red),
             textAlign: TextAlign.center,
           ),
         ],

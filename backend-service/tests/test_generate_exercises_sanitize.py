@@ -1,11 +1,6 @@
-"""Guard for scripts/generate_exercises_ai.py::sanitize_exercises."""
+"""Guard for app.services.exercise_generation::sanitize_exercises."""
 
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
-
-from generate_exercises_ai import (
+from app.services.exercise_generation import (
     exercises_from_payload,
     lesson_is_varied,
     needs_regeneration,
@@ -197,3 +192,26 @@ def test_type_is_derived_from_ui_type_not_taken_from_the_model():
 
 def test_unknown_ui_type_is_rejected():
     assert sanitize_exercises([_mc(ui_type="made_up_type")]) == []
+
+
+def test_rejects_pairs_that_do_not_match_the_options():
+    assert sanitize_exercises([
+        _mc(ui_type="match_word_to_meaning",
+            options=["dog", "cat", "con chó", "con mèo"],
+            correct_answer="dog:con mèo, bird:con chim")
+    ]) == []
+
+
+def test_rejects_pairs_joined_without_the_grader_separator():
+    assert sanitize_exercises([
+        _mc(ui_type="match_word_to_meaning",
+            options=["dog", "cat", "con chó", "con mèo"],
+            correct_answer="dog:con chó|cat:con mèo")
+    ]) == []
+
+
+def test_rejects_gap_answer_missing_from_its_options():
+    assert sanitize_exercises([
+        _mc(ui_type="fill_in_the_blank", options=["go", "goes"],
+            question="She {blank} to work.", correct_answer="went")
+    ]) == []

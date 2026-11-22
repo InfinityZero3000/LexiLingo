@@ -153,7 +153,11 @@ def test_youtube_transcript_proxy_is_optional(monkeypatch, proxy_url, expected_p
     api.fetch.return_value = ["caption"]
     transcript_module = types.ModuleType("youtube_transcript_api")
     transcript_module.YouTubeTranscriptApi = MagicMock(return_value=api)
-    transcript_module.NoTranscriptFound = type("NoTranscriptFound", (Exception,), {})
+    for name in (
+        "NoTranscriptFound", "TranscriptsDisabled", "VideoUnavailable",
+        "VideoUnplayable", "InvalidVideoId", "AgeRestricted",
+    ):
+        setattr(transcript_module, name, type(name, (Exception,), {}))
     monkeypatch.setitem(sys.modules, "requests", requests_module)
     monkeypatch.setitem(sys.modules, "youtube_transcript_api", transcript_module)
     monkeypatch.setattr(youtube.settings, "YOUTUBE_TRANSCRIPT_PROXY_URL", proxy_url)

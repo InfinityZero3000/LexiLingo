@@ -1,7 +1,7 @@
-import 'dart:convert';
-import '../../../core/network/api_client.dart';
+import 'package:dio/dio.dart';
 import '../../../core/constants/api_endpoints.dart';
-import '../../../core/storage/token_storage.dart';
+import '../../../core/network/api_client.dart';
+import '../../../core/storage/admin_session_store.dart';
 
 class AdminUser {
   final String id;
@@ -30,8 +30,11 @@ class AdminUser {
   /// here has a learner account to go back to.
   bool get hasUserZoneAccess => hasUserAccount;
 
+  /// Whether the account may use the panel at all.
+  bool get mayUsePanel => isAdmin || isSuperAdmin;
+
   factory AdminUser.fromJson(Map<String, dynamic> json) {
-    final roleSlug = (json['role_slug'] ?? json['role'] ?? 'admin').toString();
+    final roleSlug = (json['role_slug'] ?? json['role'] ?? 'user').toString();
     final roleLevel = _roleLevelFromJson(json, roleSlug);
 
     return AdminUser(
@@ -75,122 +78,31 @@ class AdminUser {
 }
 
 class AuthRepository {
-  final _api = ApiClient.instance;
+  AuthRepository({ApiClient? api, AdminSessionStore? store})
+    : _api = api ?? ApiClient.instance,
+      _store = store ?? const LearnerSessionStore();
 
-  Future<void> requestOtp(String email) async {
-    await _api.post(ApiEndpoints.adminRequestOtp, data: {'email': email});
-  }
+  final ApiClient _api;
+  final AdminSessionStore _store;
 
-  Future<AdminUser> verifyOtp(String email, String otp) async {
-    final resp = await _api.post(
-      ApiEndpoints.adminVerifyOtp,
-      data: {'email': email, 'otp': otp},
-    );
-
-    return _persistAdminSession(_unwrapData(resp), fallbackEmail: email);
-  }
-
-  Future<AdminUser> loginWithGoogle(String idToken) async {
-    final resp = await _api.post(
-      ApiEndpoints.googleLogin,
-      data: {'id_token': idToken, 'source': 'admin'},
-    );
-    final data = _unwrapData(resp);
-    final email =
-        (data['user'] as Map?)?['email']?.toString() ??
-        data['email']?.toString() ??
-        '';
-    return _persistAdminSession(data, fallbackEmail: email);
-  }
-
+  /// The signed-in learner as the panel sees them, or null when there is no
+  /// session (nothing stored, or the server rejected it). Other failures
+  /// throw, so the caller can offer a retry.
   Future<AdminUser?> getMe() async {
+    final token = await _store.accessToken();
+    if (token == null || token.isEmpty) return null;
     try {
-      final json = await TokenStorage.getUser();
-      if (json != null) {
-        final fresh = await _api.get(ApiEndpoints.me);
-        final userJson = _unwrapData(fresh);
-        await TokenStorage.saveUser(jsonEncode(userJson));
-        return AdminUser.fromJson(userJson);
-      }
-    } catch (_) {
-      final json = await TokenStorage.getUser();
-      if (json != null) {
-        return AdminUser.fromJson(jsonDecode(json));
-      }
+      final resp = await _api.get(ApiEndpoints.me);
+      return AdminUser.fromJson(_asStringKeyMap(resp['data']) ?? resp);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) return null;
+      rethrow;
     }
-    return null;
-  }
-
-  Future<void> logout() async {
-    try {
-      await _api.post(
-        ApiEndpoints.logout,
-        data: {'refresh_token': await TokenStorage.getRefreshToken() ?? ''},
-      );
-    } catch (_) {}
-    await TokenStorage.clear();
-  }
-
-  Future<AdminUser> _persistAdminSession(
-    Map<String, dynamic> data, {
-    required String fallbackEmail,
-  }) async {
-    final accessToken = data['access_token']?.toString();
-    if (accessToken == null || accessToken.isEmpty) {
-      throw StateError('Missing access token');
-    }
-
-    await TokenStorage.saveTokens(
-      accessToken: accessToken,
-      refreshToken: data['refresh_token']?.toString() ?? '',
-    );
-
-    final userJson =
-        _asStringKeyMap(data['user']) ??
-        _userFromFlatLogin(data, fallbackEmail: fallbackEmail);
-
-    final user = AdminUser.fromJson(userJson);
-    await TokenStorage.saveUser(jsonEncode(userJson));
-    return user;
-  }
-
-  Map<String, dynamic> _unwrapData(Map<String, dynamic> resp) {
-    return _asStringKeyMap(resp['data']) ?? resp;
   }
 
   Map<String, dynamic>? _asStringKeyMap(dynamic value) {
     if (value is Map<String, dynamic>) return value;
     if (value is Map) return Map<String, dynamic>.from(value);
     return null;
-  }
-
-  Map<String, dynamic> _userFromFlatLogin(
-    Map<String, dynamic> data, {
-    required String fallbackEmail,
-  }) {
-    final roleSlug = (data['role'] ?? data['role_slug'] ?? 'user')
-        .toString()
-        .toLowerCase();
-    final roleLevel = _roleLevel(roleSlug);
-    final email = (data['email'] ?? fallbackEmail).toString();
-    final username = (data['username'] ?? email.split('@').first).toString();
-
-    return {
-      'id': data['user_id']?.toString() ?? data['id']?.toString() ?? '',
-      'email': email,
-      'username': username,
-      'display_name': data['display_name']?.toString() ?? username,
-      'avatar_url': data['avatar_url'],
-      'role_slug': roleSlug,
-      'role_level': roleLevel,
-      'is_super_admin': roleLevel >= 2,
-      'is_admin': roleLevel >= 1,
-    };
-  }
-
-  int _roleLevel(String roleSlug) {
-    if (roleSlug == 'super_admin') return 2;
-    if (roleSlug == 'admin') return 1;
-    return 0;
   }
 }

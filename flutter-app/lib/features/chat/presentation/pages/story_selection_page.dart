@@ -9,6 +9,7 @@ import '../../domain/entities/story.dart';
 import '../providers/story_provider.dart';
 import '../utils/topic_icon_resolver.dart';
 import 'topic_chat_page.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Story Selection Page - Modern Redesign
 class StorySelectionPage extends StatefulWidget {
@@ -142,7 +143,12 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
                 children: [
                   // Search Bar
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.lg,
+                      AppSpacing.xs,
+                      AppSpacing.lg,
+                      AppSpacing.xs,
+                    ),
                     child: _buildSearchBar(theme, isDark),
                   ),
 
@@ -187,8 +193,8 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
     return Container(
       height: 56,
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDarkMuted : Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: isDark ? AppColors.surfaceDarkMuted : AppColors.onGradient,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
             color: AppColors.backgroundDark.withValues(
@@ -218,7 +224,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
           ),
           filled: false,
           isCollapsed: true,
-          contentPadding: const EdgeInsets.only(right: 16),
+          contentPadding: const EdgeInsets.only(right: AppSpacing.lg),
           border: InputBorder.none,
           enabledBorder: InputBorder.none,
           focusedBorder: InputBorder.none,
@@ -230,7 +236,10 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
   Widget _buildFilterChips(ThemeData theme, bool isDark) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.sm,
+      ),
       child: Row(
         children: [
           _buildChip(
@@ -242,7 +251,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
             theme,
             isDark,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.sm),
           _buildChip(
             'storySelection.filterBeginner'.tr(),
             _selectedDifficulty == DifficultyLevel.A1 ||
@@ -253,7 +262,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
             theme,
             isDark,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.sm),
           _buildChip(
             'storySelection.filterIntermediate'.tr(),
             _selectedDifficulty == DifficultyLevel.B1 ||
@@ -264,7 +273,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
             theme,
             isDark,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.sm),
           _buildChip(
             'storySelection.filterAdvanced'.tr(),
             _selectedDifficulty == DifficultyLevel.C1 ||
@@ -291,12 +300,15 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xl,
+          vertical: 10,
+        ),
         decoration: BoxDecoration(
           color: isSelected
               ? accent
-              : (isDark ? AppColors.surfaceDarkMuted : Colors.white),
-          borderRadius: BorderRadius.circular(999),
+              : (isDark ? AppColors.surfaceDarkMuted : AppColors.onGradient),
+          borderRadius: BorderRadius.circular(AppRadius.pill),
           border: isSelected
               ? null
               : Border.all(
@@ -318,12 +330,11 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
         ),
         child: Text(
           label,
-          style: TextStyle(
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             color: isSelected
                 ? AppColors.slate900
                 : AppColorRoles.textSecondary(isDark),
             fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            fontSize: 14,
           ),
         ),
       ),
@@ -352,7 +363,10 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
           // The "See all" label that sat here had no tap handler and the
           // list already shows every topic.
           return Padding(
-            padding: const EdgeInsets.only(bottom: 16, top: 8),
+            padding: const EdgeInsets.only(
+              bottom: AppSpacing.lg,
+              top: AppSpacing.sm,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -360,8 +374,7 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
                   'storySelection.popularScenariosTitle'.tr(),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 20,
+                  style: Theme.of(context).textTheme.heading?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: AppColorRoles.textPrimary(isDark),
                   ),
@@ -403,6 +416,9 @@ class _StorySelectionPageState extends State<StorySelectionPage> {
       body: 'storySelection.noMatchBody'.tr(),
       actions: [
         TextButton(
+          style: TextButton.styleFrom(
+            minimumSize: const Size(kMinTapTarget, kMinTapTarget),
+          ),
           onPressed: _clearFilters,
           child: Text('storySelection.clearFilters'.tr()),
         ),
@@ -456,7 +472,7 @@ class _EmptyState extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(icon, size: 56, color: AppColorRoles.textMuted(isDark)),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               Text(
                 title,
                 textAlign: TextAlign.center,
@@ -465,7 +481,7 @@ class _EmptyState extends StatelessWidget {
                   color: AppColorRoles.textPrimary(isDark),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               Text(
                 body,
                 textAlign: TextAlign.center,
@@ -508,15 +524,15 @@ class _TopicListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
-            color: isDark ? AppColors.surfaceDarkMuted : Colors.white,
-            borderRadius: BorderRadius.circular(16),
+            color: isDark ? AppColors.surfaceDarkMuted : AppColors.onGradient,
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             border: Border.all(
               color:
                   (isDark ? AppColorRoles.primary(isDark) : theme.primaryColor)
@@ -544,7 +560,7 @@ class _TopicListItem extends StatelessWidget {
                               ? AppColorRoles.primary(isDark)
                               : theme.primaryColor)
                           .withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Icon(
                   TopicIconResolver.forStory(story),
@@ -554,7 +570,7 @@ class _TopicListItem extends StatelessWidget {
                   size: 28,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: AppSpacing.lg),
               // Info
               Expanded(
                 child: Column(
@@ -562,9 +578,8 @@ class _TopicListItem extends StatelessWidget {
                   children: [
                     Text(
                       story.title.en,
-                      style: TextStyle(
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         fontWeight: FontWeight.bold,
-                        fontSize: 16,
                         color: AppColorRoles.textPrimary(isDark),
                       ),
                     ),
@@ -572,20 +587,24 @@ class _TopicListItem extends StatelessWidget {
                     Row(
                       children: [
                         CefrBadge(level: story.difficultyLevel.shortName),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppSpacing.sm),
                         Icon(
                           Icons.timer_outlined,
                           size: 14,
                           color: AppColorRoles.textMuted(isDark),
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'course.durationMin'.tr(
-                            namedArgs: {'count': '${story.estimatedMinutes}'},
-                          ),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppColorRoles.textMuted(isDark),
+                        const SizedBox(width: AppSpacing.xs),
+                        Flexible(
+                          child: Text(
+                            'course.durationMin'.tr(
+                              namedArgs: {'count': '${story.estimatedMinutes}'},
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: AppColorRoles.textMuted(isDark),
+                                ),
                           ),
                         ),
                       ],

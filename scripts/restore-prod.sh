@@ -95,7 +95,7 @@ if [[ "${SKIP_SAFETY}" != true ]]; then
     MONGO_DB="${MONGO_DB:-lexilingo}"
     log "Snapshotting current MongoDB -> ${SAFETY_MONGO}"
     ${DOCKER_COMPOSE_CMD} exec -T -e MONGO_DB="${MONGO_DB}" mongodb sh -lc \
-      'mongodump --archive --gzip --db "$MONGO_DB"' > "${SAFETY_MONGO}"
+      'mongodump --uri "mongodb://$MONGO_INITDB_ROOT_USERNAME:$MONGO_INITDB_ROOT_PASSWORD@localhost:27017/?authSource=admin" --archive --gzip --db "$MONGO_DB"' > "${SAFETY_MONGO}"
     assert_gzip_intact "${SAFETY_MONGO}" "safety snapshot (mongo)"
   fi
 else
@@ -128,7 +128,7 @@ fi
 
 if [[ -n "${MONGO_BACKUP}" ]]; then
   log "Restoring MongoDB from ${MONGO_BACKUP}"
-  ${DOCKER_COMPOSE_CMD} exec -T mongodb sh -lc 'mongorestore --archive --gzip --drop' < "${MONGO_BACKUP}"
+  ${DOCKER_COMPOSE_CMD} exec -T mongodb sh -lc 'mongorestore --uri "mongodb://$MONGO_INITDB_ROOT_USERNAME:$MONGO_INITDB_ROOT_PASSWORD@localhost:27017/?authSource=admin" --archive --gzip --drop' < "${MONGO_BACKUP}"
   log "MongoDB restored"
 fi
 

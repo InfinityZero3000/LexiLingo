@@ -1,12 +1,13 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:lexilingo_app/features/social/data/repositories/social_repository.dart';
 import 'package:lexilingo_app/features/social/domain/entities/social_entities.dart';
+import 'package:lexilingo_app/core/state/reset_epoch.dart';
 
 /// Social Provider
 /// Manages followers, following, and activity feed state
-class SocialProvider extends ChangeNotifier {
+class SocialProvider extends ChangeNotifier with ResetEpoch {
   final SocialRepository _repo;
 
   SocialProvider({required SocialRepository repository}) : _repo = repository;
@@ -41,7 +42,7 @@ class SocialProvider extends ChangeNotifier {
   List<UserSocialProfileEntity> _searchResults = [];
   bool _isSearching = false;
   String _searchQuery = '';
-  String? _searchError;
+  UiText? _searchError;
 
   // ============== Suggested Friends State ==============
   List<UserSocialProfileEntity> _suggestedUsers = [];
@@ -52,21 +53,21 @@ class SocialProvider extends ChangeNotifier {
   // ============== Nearby Users State (Phase 2) ==============
   List<UserSocialProfileEntity> _nearbyUsers = [];
   bool _isLoadingNearby = false;
-  String? _nearbyError;
+  UiText? _nearbyError;
   bool _isNearbyEnabled = false;
   double _nearbyRadiusKm = 25;
 
   List<UserSocialProfileEntity> get searchResults => _searchResults;
   bool get isSearching => _isSearching;
   String get searchQuery => _searchQuery;
-  String? get searchError => _searchError;
+  String? get searchError => _searchError?.resolve();
   List<UserSocialProfileEntity> get suggestedUsers => _suggestedUsers;
   bool get isLoadingSuggestions => _isLoadingSuggestions;
   String? get suggestionsError => _suggestionsError;
   bool get hasMoreSuggestions => _hasMoreSuggestions;
   List<UserSocialProfileEntity> get nearbyUsers => _nearbyUsers;
   bool get isLoadingNearby => _isLoadingNearby;
-  String? get nearbyError => _nearbyError;
+  String? get nearbyError => _nearbyError?.resolve();
   bool get isNearbyEnabled => _isNearbyEnabled;
   double get nearbyRadiusKm => _nearbyRadiusKm;
 
@@ -74,6 +75,7 @@ class SocialProvider extends ChangeNotifier {
   Future<void> loadActivityFeed({bool refresh = false}) async {
     if (_isLoadingFeed) return;
 
+    final epoch = resetEpoch;
     _isLoadingFeed = true;
     _feedError = null;
     if (refresh) {
@@ -85,6 +87,7 @@ class SocialProvider extends ChangeNotifier {
     try {
       final offset = refresh ? 0 : _activityFeed.length;
       final result = await _repo.getActivityFeed(limit: 20, offset: offset);
+      if (isStale(epoch)) return;
 
       if (refresh) {
         _activityFeed = result.activities;
@@ -93,11 +96,14 @@ class SocialProvider extends ChangeNotifier {
       }
       _hasMoreFeed = result.hasMore;
     } catch (e) {
+      if (isStale(epoch)) return;
       _feedError = e.toString();
       debugPrint('Error loading activity feed: $e');
     } finally {
-      _isLoadingFeed = false;
-      notifyListeners();
+      if (!isStale(epoch)) {
+        _isLoadingFeed = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -105,6 +111,7 @@ class SocialProvider extends ChangeNotifier {
   Future<void> loadFollowers(String userId, {bool refresh = false}) async {
     if (_isLoadingFollowers) return;
 
+    final epoch = resetEpoch;
     _isLoadingFollowers = true;
     if (refresh) _followers = [];
     notifyListeners();
@@ -116,6 +123,7 @@ class SocialProvider extends ChangeNotifier {
         limit: 50,
         offset: offset,
       );
+      if (isStale(epoch)) return;
 
       if (refresh) {
         _followers = result.users;
@@ -126,14 +134,17 @@ class SocialProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error loading followers: $e');
     } finally {
-      _isLoadingFollowers = false;
-      notifyListeners();
+      if (!isStale(epoch)) {
+        _isLoadingFollowers = false;
+        notifyListeners();
+      }
     }
   }
 
   Future<void> loadFollowing(String userId, {bool refresh = false}) async {
     if (_isLoadingFollowing) return;
 
+    final epoch = resetEpoch;
     _isLoadingFollowing = true;
     if (refresh) _following = [];
     notifyListeners();
@@ -145,6 +156,7 @@ class SocialProvider extends ChangeNotifier {
         limit: 50,
         offset: offset,
       );
+      if (isStale(epoch)) return;
 
       if (refresh) {
         _following = result.users;
@@ -155,8 +167,10 @@ class SocialProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('Error loading following: $e');
     } finally {
-      _isLoadingFollowing = false;
-      notifyListeners();
+      if (!isStale(epoch)) {
+        _isLoadingFollowing = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -164,8 +178,10 @@ class SocialProvider extends ChangeNotifier {
 
   /// Returns `null` on success, or an error message string to show as SnackBar.
   Future<String?> followUser(String userId) async {
+    final epoch = resetEpoch;
     try {
       await _repo.followUser(userId);
+      if (isStale(epoch)) return null;
       _updateFollowState(userId, true);
       return null;
     } catch (e) {
@@ -176,8 +192,10 @@ class SocialProvider extends ChangeNotifier {
 
   /// Returns `null` on success, or an error message string to show as SnackBar.
   Future<String?> unfollowUser(String userId) async {
+    final epoch = resetEpoch;
     try {
       await _repo.unfollowUser(userId);
+      if (isStale(epoch)) return null;
       _updateFollowState(userId, false);
       return null;
     } catch (e) {
@@ -231,8 +249,13 @@ class SocialProvider extends ChangeNotifier {
   }
 
   // ============== Search Methods ==============
-  Future<void> searchUsers(String query) async {
+  int _searchSeq = 0;
+
+  Future<void> searchUsers(String rawQuery) async {
+    final query = rawQuery.trim();
+    final seq = ++_searchSeq;
     if (query.length < 2) {
+      _isSearching = false;
       _searchResults = [];
       _searchQuery = '';
       notifyListeners();
@@ -245,18 +268,25 @@ class SocialProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _searchResults = await _repo.searchUsers(query);
+      final results = await _repo.searchUsers(query);
+      if (seq != _searchSeq) return;
+      _searchResults = results;
     } catch (e) {
+      if (seq != _searchSeq) return;
       debugPrint('Error searching users: $e');
       _searchResults = [];
-      _searchError = 'social.searchFailed'.tr();
+      _searchError = UiText.key('social.searchFailed');
     } finally {
-      _isSearching = false;
-      notifyListeners();
+      if (seq == _searchSeq) {
+        _isSearching = false;
+        notifyListeners();
+      }
     }
   }
 
   void clearSearch() {
+    _searchSeq++;
+    _isSearching = false;
     _searchResults = [];
     _searchQuery = '';
     _searchError = null;
@@ -269,6 +299,7 @@ class SocialProvider extends ChangeNotifier {
   }) async {
     if (_isLoadingSuggestions) return;
 
+    final epoch = resetEpoch;
     _isLoadingSuggestions = true;
     _suggestionsError = null;
     if (refresh) {
@@ -280,6 +311,7 @@ class SocialProvider extends ChangeNotifier {
     try {
       final offset = refresh ? 0 : _suggestedUsers.length;
       final users = await _repo.getSuggestions(limit: limit, offset: offset);
+      if (isStale(epoch)) return;
 
       if (refresh) {
         _suggestedUsers = users;
@@ -288,17 +320,21 @@ class SocialProvider extends ChangeNotifier {
       }
       _hasMoreSuggestions = users.length >= limit;
     } catch (e) {
+      if (isStale(epoch)) return;
       _suggestionsError = e.toString();
       debugPrint('Error loading friend suggestions: $e');
     } finally {
-      _isLoadingSuggestions = false;
-      notifyListeners();
+      if (!isStale(epoch)) {
+        _isLoadingSuggestions = false;
+        notifyListeners();
+      }
     }
   }
 
   Future<void> loadNearbyUsers({int limit = 10, double radiusKm = 25}) async {
     if (_isLoadingNearby) return;
 
+    final epoch = resetEpoch;
     _isLoadingNearby = true;
     _nearbyError = null;
     _nearbyRadiusKm = radiusKm;
@@ -306,10 +342,11 @@ class SocialProvider extends ChangeNotifier {
 
     try {
       final granted = await _syncLocationAndCheckPermission();
+      if (isStale(epoch)) return;
       if (!granted) {
         _nearbyUsers = [];
         _isNearbyEnabled = false;
-        _nearbyError ??= 'social.locationPermissionDenied'.tr();
+        _nearbyError ??= UiText.key('social.locationPermissionDenied');
         return;
       }
 
@@ -317,14 +354,18 @@ class SocialProvider extends ChangeNotifier {
         limit: limit,
         radiusKm: radiusKm,
       );
+      if (isStale(epoch)) return;
       _nearbyUsers = result.users;
       _isNearbyEnabled = result.locationEnabled;
     } catch (e) {
-      _nearbyError = 'errors.genericRetry'.tr();
+      if (isStale(epoch)) return;
+      _nearbyError = UiText.key('errors.genericRetry');
       debugPrint('Error loading nearby users: $e');
     } finally {
-      _isLoadingNearby = false;
-      notifyListeners();
+      if (!isStale(epoch)) {
+        _isLoadingNearby = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -336,7 +377,7 @@ class SocialProvider extends ChangeNotifier {
       _nearbyError = null;
       notifyListeners();
     } catch (e) {
-      _nearbyError = 'errors.genericRetry'.tr();
+      _nearbyError = UiText.key('errors.genericRetry');
       debugPrint('Error disabling nearby sharing: $e');
       notifyListeners();
     }
@@ -354,7 +395,7 @@ class SocialProvider extends ChangeNotifier {
 
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      _nearbyError = 'social.locationServicesDisabled'.tr();
+      _nearbyError = UiText.key('social.locationServicesDisabled');
       return false;
     }
 
@@ -373,5 +414,34 @@ class SocialProvider extends ChangeNotifier {
     );
 
     return true;
+  }
+
+  void reset() {
+    bumpResetEpoch();
+    _searchSeq++;
+    _activityFeed = [];
+    _isLoadingFeed = false;
+    _feedError = null;
+    _hasMoreFeed = true;
+    _followers = [];
+    _following = [];
+    _isLoadingFollowers = false;
+    _isLoadingFollowing = false;
+    _followersCount = 0;
+    _followingCount = 0;
+    _searchResults = [];
+    _isSearching = false;
+    _searchQuery = '';
+    _searchError = null;
+    _suggestedUsers = [];
+    _isLoadingSuggestions = false;
+    _suggestionsError = null;
+    _hasMoreSuggestions = true;
+    _nearbyUsers = [];
+    _isLoadingNearby = false;
+    _nearbyError = null;
+    _isNearbyEnabled = false;
+    _nearbyRadiusKm = 25;
+    notifyListeners();
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:flutter/services.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/shop_item.dart';
@@ -25,8 +26,8 @@ class BoostPurchaseAnimation extends StatefulWidget {
     return showGeneralDialog(
       context: context,
       barrierDismissible: false,
-      barrierLabel: 'Boost',
-      barrierColor: Colors.black.withValues(alpha: 0.45),
+      barrierLabel: 'shop.boost'.tr(),
+      barrierColor: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.45),
       transitionDuration: const Duration(milliseconds: 250),
       transitionBuilder: (ctx, anim, _, child) =>
           FadeTransition(opacity: anim, child: child),
@@ -123,11 +124,10 @@ class _BoostPurchaseAnimationState extends State<BoostPurchaseAnimation>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(icon, size: 56, color: boostColor),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.sm),
                   Text(
                     'gamification.activated'.tr(),
-                    style: TextStyle(
-                      fontSize: 13,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.w700,
                       color: boostColor,
                     ),

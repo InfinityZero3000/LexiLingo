@@ -32,7 +32,7 @@ class EmptyStateWidget extends StatefulWidget {
       icon: Icons.school_outlined,
       title: 'emptyState.noCourses'.tr(),
       description: 'emptyState.noCoursesDesc'.tr(),
-      iconColor: Colors.blue,
+      iconColor: AppColors.primary,
     );
   }
 
@@ -78,7 +78,7 @@ class EmptyStateWidget extends StatefulWidget {
       description: query != null
           ? 'emptyState.noResultsForQuery'.tr(namedArgs: {'query': query})
           : 'emptyState.noResultsDesc'.tr(),
-      iconColor: Colors.grey,
+      iconColor: AppColors.textGrey,
     );
   }
 

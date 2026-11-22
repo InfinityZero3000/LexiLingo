@@ -13,13 +13,14 @@ import anyio
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request, status
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.exc import IntegrityError
 
 
 from app.core.database import get_db
 from app.core.config import settings
 from app.core.dependencies import get_current_user
+from app.core import login_lockout
 from app.core.redis import RedisClient
 from app.core.security import (
     get_password_hash,
@@ -40,6 +41,8 @@ from app.services.auth_service import (
     register_user,
     authenticate_user,
     save_refresh_token,
+    find_refresh_token,
+    revoke_refresh_family,
     get_role_id as _get_role_id,
     ensure_unique_username as _ensure_unique_username,
     issue_token_pair,
@@ -49,7 +52,7 @@ from app.schemas.auth import (
     ChangePasswordRequest, GoogleLoginRequest, FacebookLoginRequest, ForgotPasswordRequest,
     ResetPasswordRequest, VerifyEmailRequest, VerifyEmailResponse, LogoutRequest
 )
-from app.schemas.user import UserResponse
+from app.schemas.user import UserResponse, lexi_reply_language_of
 from app.schemas.common import MessageResponse, ErrorCodes, ErrorDetail, ErrorResponse
 
 logger = logging.getLogger(__name__)
@@ -135,6 +138,9 @@ def _build_user_response(user: User) -> UserResponse:
         display_name=user.display_name,
         native_language=_safe_str(getattr(user, "native_language", None), "vi"),
         target_language=_safe_str(getattr(user, "target_language", None), "en"),
+        lexi_reply_language=lexi_reply_language_of(
+            getattr(user, "lexi_reply_language", None)
+        ),
         level=_safe_str(getattr(user, "level", None), "A1"),
         avatar_url=getattr(user, "avatar_url", None),
         is_active=bool(getattr(user, "is_active", True)),
@@ -184,6 +190,16 @@ async def _audit_admin_login(
         logger.warning("Admin login audit row not written", exc_info=True)
 
 
+def _email_verification_token(user: User) -> str:
+    # One builder for register and resend: register once built its own payload without
+    # "purpose", and /verify-email rejected every link it ever mailed.
+    from app.core.security import create_verification_token
+    return create_verification_token(
+        {"sub": str(user.id), "email": user.email, "purpose": "email_verify"},
+        expires_minutes=1440,
+    )
+
+
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register(
     request: RegisterRequest,
@@ -200,11 +216,7 @@ async def register(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email or username already registered")
 
     try:
-        from app.core.security import create_verification_token
-        token = create_verification_token(
-            {"sub": str(user.id), "email": user.email, "type": "email_verification"},
-            expires_minutes=1440,
-        )
+        token = _email_verification_token(user)
         await EmailService.send_verification_email(
             to_email=user.email, token=token, display_name=user.display_name,
         )
@@ -227,11 +239,7 @@ async def resend_verification_email(
     # Always return 200 to avoid email enumeration
     if can_send and user and not user.is_verified:
         try:
-            from app.core.security import create_verification_token
-            token = create_verification_token(
-                {"sub": str(user.id), "email": user.email, "purpose": "email_verify"},
-                expires_minutes=1440,
-            )
+            token = _email_verification_token(user)
             background_tasks.add_task(
                 EmailService.send_verification_email,
                 user.email,
@@ -248,24 +256,24 @@ async def login(
     request: LoginRequest,
     db: AsyncSession = Depends(get_db),
 ):
+    await login_lockout.ensure_not_locked(request.email)
     user = await authenticate_user(db, request.email, request.password, _DUMMY_HASH)
     if not user:
+        retry_after = await login_lockout.record_failure(request.email)
+        if retry_after:
+            raise login_lockout.locked_response(retry_after)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    await login_lockout.reset(request.email)
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User account is inactive")
-    # Local (email/password) accounts must verify their email before a session
-    # is issued. Google/Facebook logins set is_verified from the provider's
-    # own email_verified claim at account-creation time, so this never blocks
-    # OAuth users.
-    if not user.is_verified:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Email not verified. Please check your inbox for a verification link before logging in.",
-        )
+    # An unverified account may sign in and learn: blocking login until the link was opened
+    # lost the learners who never opened it. What a throwaway signup could farm (referral
+    # pay-outs, spending gems) needs get_current_verified_user instead, and the app keeps
+    # asking for verification with a banner. Admin login still requires it.
 
     user_id = str(user.id)
     username = user.username
@@ -318,19 +326,38 @@ async def refresh_token(
             detail="Invalid token type - expected refresh token"
         )
     
-    # FIX: Verify token exists and is valid in DB
-    result = await db.execute(
-        select(RefreshToken).where(
-            RefreshToken.token == request.refresh_token,
-            RefreshToken.is_revoked == False,
-            RefreshToken.is_used == False,
-            RefreshToken.expires_at > datetime.now(timezone.utc)
-        )
-    )
-    db_token = result.scalar_one_or_none()
-    
+    db_token = await find_refresh_token(db, request.refresh_token, for_update=True)
+
     if not db_token:
-        # Potential reuse attack or revoked token
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token"
+        )
+
+    now = datetime.now(timezone.utc)
+    within_grace = (
+        db_token.is_used
+        and not db_token.is_revoked
+        and db_token.rotated_at is not None
+        and db_token.expires_at > now
+        and (now - db_token.rotated_at).total_seconds() <= settings.REFRESH_REUSE_GRACE_SECONDS
+    )
+    if within_grace:
+        # Two tabs, or a retry after a lost response: not an attack, keep the family alive.
+        logger.info("Refresh token reused within grace: family %s", db_token.family_id)
+    elif db_token.is_used or db_token.is_revoked:
+        # A rotated token was presented again: one of its holders is not the owner.
+        await revoke_refresh_family(db, db_token)
+        await db.commit()
+        logger.warning(
+            "Refresh token reuse: family %s revoked for user %s", db_token.family_id, db_token.user_id
+        )
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired refresh token"
+        )
+
+    if db_token.expires_at <= datetime.now(timezone.utc):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired refresh token"
@@ -363,24 +390,18 @@ async def refresh_token(
             detail="User not found or inactive"
         )
 
-    # A refresh token issued before email verification (or for an account
-    # that was since unverified) must not keep renewing access forever —
-    # otherwise the 7-day rotation window silently bypasses /login's check.
-    if not user.is_verified:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Email not verified. Please check your inbox for a verification link before logging in.",
-        )
+    # Unverified accounts may keep their session, as at /login; see the note there.
 
-    # FIX: Implement token rotation
-    db_token.is_used = True
+    if not within_grace:
+        db_token.is_used = True
+        db_token.rotated_at = now
     
     # Create new tokens
     access_token = create_access_token({"sub": str(user.id)})
     new_refresh_token = create_refresh_token({"sub": str(user.id)})
     
-    # Save new refresh token
-    await save_refresh_token(db,user.id, new_refresh_token)
+    await save_refresh_token(db, user.id, new_refresh_token, db_token.family_id, commit=False)
+    await db.commit()
     
     return TokenResponse(
         access_token=access_token,
@@ -413,13 +434,9 @@ async def logout(
     """
     if request.refresh_token:
         # FIX: Revoke token in DB
-        result = await db.execute(
-            select(RefreshToken).where(RefreshToken.token == request.refresh_token)
-        )
-        db_token = result.scalar_one_or_none()
+        db_token = await find_refresh_token(db, request.refresh_token)
         if db_token:
-            db_token.is_revoked = True
-            db_token.revoked_at = datetime.now(timezone.utc)
+            await revoke_refresh_family(db, db_token)
             await db.commit()
 
     if authorization and authorization.lower().startswith("bearer "):
@@ -577,6 +594,12 @@ async def google_login(
 
         # Admin-allowlisted link, or Google vouching for a local account's email →
         # link google to this account.
+        if email_verified and not user.is_verified and user.has_local_auth:
+            # Whoever registered this address never proved they own it, and unverified
+            # accounts can now sign in. The real owner just proved it through Google,
+            # so the password and sessions the registrant holds must not survive.
+            user.hashed_password = await get_password_hash_async(uuid.uuid4().hex)
+            await _revoke_all_refresh_tokens(db, user.id)
         user.add_provider("google")
         user.is_verified = email_verified or user.is_verified
         user.avatar_url = google_info.get("picture") or user.avatar_url
@@ -717,6 +740,16 @@ async def facebook_login(
     )
 
 
+async def _revoke_all_refresh_tokens(db: AsyncSession, user_id: uuid.UUID) -> None:
+    # A new password must end every other session: a stolen refresh token kept renewing
+    # access for its full 7 days after the owner reset the password.
+    await db.execute(
+        update(RefreshToken)
+        .where(RefreshToken.user_id == user_id, RefreshToken.is_revoked.is_(False))
+        .values(is_revoked=True)
+    )
+
+
 @router.post("/change-password", response_model=MessageResponse)
 async def change_password(
     request: ChangePasswordRequest,
@@ -746,6 +779,7 @@ async def change_password(
     # Update password
     current_user.hashed_password = await get_password_hash_async(request.new_password)
     current_user.updated_at = datetime.now(timezone.utc)
+    await _revoke_all_refresh_tokens(db, current_user.id)
     await db.commit()
     background_tasks.add_task(
         EmailService.send_password_changed_email,
@@ -792,9 +826,10 @@ async def forgot_password(
             detail="Check your email inbox."
         )
     
-    # Create reset token (1 hour expiry)
+    # Create reset token (1 hour expiry), bound to the current password hash so it works once.
+    from app.core.security import password_fingerprint
     reset_token = create_verification_token(
-        {"sub": str(user.id), "purpose": "password_reset"},
+        {"sub": str(user.id), "purpose": "password_reset", "pfp": password_fingerprint(user.hashed_password)},
         expires_minutes=60
     )
     
@@ -820,15 +855,16 @@ async def reset_password(
     """
     Reset password using token from email.
     """
-    from app.core.security import decode_verification_token
-    
-    # Verify token
-    user_id = decode_verification_token(request.token, "password_reset")
+    from app.core.security import decode_verification_payload, password_fingerprint
+
+    invalid = HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Invalid or expired reset token"
+    )
+    payload = decode_verification_payload(request.token, "password_reset")
+    user_id = payload.get("sub") if payload else None
     if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired reset token"
-        )
+        raise invalid
     
     # Find user
     result = await db.execute(
@@ -842,9 +878,15 @@ async def reset_password(
             detail="User not found"
         )
     
+    # The token was issued for the password the account had then; once that changed (this
+    # reset, or any other), the token is spent.
+    if payload.get("pfp") != password_fingerprint(user.hashed_password):
+        raise invalid
+
     # Update password
     user.hashed_password = await get_password_hash_async(request.new_password)
     user.updated_at = datetime.now(timezone.utc)
+    await _revoke_all_refresh_tokens(db, user.id)
     await db.commit()
     background_tasks.add_task(
         EmailService.send_password_changed_email,
@@ -905,9 +947,24 @@ async def verify_email(
         display_name=user.display_name,
     )
 
+    # Opening the link is proof of the inbox, the same proof a password reset relies on, so it
+    # signs the learner in instead of sending them back to a login form. Only on this first
+    # transition: the "already verified" branch above returns no session, so a link is a
+    # one-time login.
+    user_id = str(user.id)
+    access_token, refresh_token = issue_token_pair(user_id)
+    await save_refresh_token(db, user.id, refresh_token)
+
     return VerifyEmailResponse(
         verified=True,
-        message="Email verified successfully"
+        message="Email verified successfully",
+        access_token=access_token,
+        refresh_token=refresh_token,
+        token_type="bearer",
+        user_id=user_id,
+        username=user.username,
+        email=user.email,
+        role=user.role_slug if hasattr(user, "role_slug") else "user",
     )
 
 
@@ -931,6 +988,8 @@ async def admin_login(
     if not email or not password:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email and password are required")
 
+    await login_lockout.ensure_not_locked(email)
+
     result = await db.execute(select(User).where(User.email == email))
     user = result.scalar_one_or_none()
 
@@ -939,10 +998,14 @@ async def admin_login(
 
     if not user or not password_ok:
         await _audit_admin_login(db, http_request, "failed", None, email=email)
+        retry_after = await login_lockout.record_failure(email)
+        if retry_after:
+            raise login_lockout.locked_response(retry_after)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
         )
+    await login_lockout.reset(email)
 
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User account is inactive")

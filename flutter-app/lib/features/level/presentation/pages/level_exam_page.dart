@@ -7,6 +7,7 @@ import 'package:lexilingo_app/features/level/presentation/level_sync.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/level_exam_provider.dart';
 import 'package:lexilingo_app/features/level/presentation/widgets/test_answer_option.dart';
 import 'package:provider/provider.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// The CEFR promotion exam. Pops `true` when the certified level went up.
 class LevelExamPage extends StatefulWidget {
@@ -40,6 +41,11 @@ class _LevelExamPageState extends State<LevelExamPage> {
 
   Future<void> _submit(LevelExamProvider exam) async {
     final promoted = await exam.submit();
+    if (mounted && exam.result == null && exam.sitting) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('levelExam.gateError'.tr())));
+    }
     if (promoted && mounted) {
       _promoted = true;
       await LevelSync.afterLevelChange(context);
@@ -70,7 +76,10 @@ class _LevelExamPageState extends State<LevelExamPage> {
         appBar: AppBar(title: Text('levelExam.title'.tr())),
         body: SafeArea(
           child: ContentWidth(
-            child: Padding(padding: const EdgeInsets.all(16), child: body),
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: body,
+            ),
           ),
         ),
       ),
@@ -119,17 +128,17 @@ class _Gate extends StatelessWidget {
           size: 48,
           color: theme.colorScheme.primary,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.lg),
         Text(
           message,
           style: theme.textTheme.titleMedium,
           textAlign: TextAlign.center,
         ),
         if (reason == 'not_ready' && blockers.isNotEmpty) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.lg),
           for (final blocker in blockers)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -138,7 +147,7 @@ class _Gate extends StatelessWidget {
                     size: 16,
                     color: theme.colorScheme.outline,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: Text('$blocker', style: theme.textTheme.bodyMedium),
                   ),
@@ -170,9 +179,9 @@ class _Intro extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
         Text('levelExam.introBody'.tr(), style: theme.textTheme.bodyMedium),
-        const SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.xl),
         FilledButton(
           style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
           onPressed: exam.loading ? null : exam.start,
@@ -233,16 +242,16 @@ class _Sitting extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         LinearProgressIndicator(
           value: (exam.index + 1) / exam.questions.length,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.lg),
         Expanded(
           child: ListView(
             children: [
               Text(question.prompt, style: theme.textTheme.titleMedium),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               for (final (i, option) in question.options.indexed)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 10),
@@ -269,7 +278,7 @@ class _Sitting extends StatelessWidget {
                 child: Text('levelExam.previous'.tr()),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: FilledButton(
                 style: FilledButton.styleFrom(
@@ -310,7 +319,7 @@ class _Result extends StatelessWidget {
           size: 56,
           color: passed ? theme.colorScheme.primary : theme.colorScheme.outline,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
         Text(
           passed
               ? 'levelExam.passedTitle'.tr(
@@ -322,7 +331,7 @@ class _Result extends StatelessWidget {
           ),
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.lg),
         for (final section in sections)
           ListTile(
             leading: Icon(
@@ -343,7 +352,7 @@ class _Result extends StatelessWidget {
               ),
             ),
           ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         Text(
           passed
               ? 'levelExam.certifiedNow'.tr(
@@ -355,7 +364,7 @@ class _Result extends StatelessWidget {
           style: theme.textTheme.bodyMedium,
           textAlign: TextAlign.center,
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.xl),
         FilledButton(
           style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(52)),
           onPressed: onDone,

@@ -23,6 +23,7 @@ import 'package:lexilingo_app/features/games/di/games_di.dart';
 import 'package:lexilingo_app/features/podcast/di/podcast_di.dart';
 import 'package:lexilingo_app/features/books/di/books_di.dart';
 import 'package:lexilingo_app/features/lexi_chat/di/lexi_chat_di.dart';
+import 'package:lexilingo_app/features/onboarding/di/onboarding_di.dart';
 
 export 'service_locator.dart';
 
@@ -43,6 +44,7 @@ Future<void> initializeDependencies({bool skipDatabase = false}) async {
   registerAchievementModule(); // Achievement/Badge system
   registerNotificationModule(); // Notification system
   registerLevelModule(); // Level/XP system
+  registerOnboardingModule(); // One-call start-learning
   registerIeltsModule(); // IELTS mock tests
   registerGamificationModule(); // Shop, Wallet, Leaderboard
   registerSocialModule(); // Friends, Activity Feed

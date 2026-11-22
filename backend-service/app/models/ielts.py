@@ -65,6 +65,15 @@ class IeltsTest(Base):
     content: Mapped[dict | None] = mapped_column(PortableJSON, nullable=True)
     is_published: Mapped[bool] = mapped_column(default=False, nullable=False)
 
+    # Where each reading passage came from, checked before the draft -> published
+    # transition. Null means unrecorded. Shape:
+    #   {"passages": [{"section": "reading:1", "title": "...", "source_url": "...",
+    #                  "license_id": "...", "attribution": "...", "retrieved_at": "..."}],
+    #    "generator": {...optional...}}
+    # `section` is "reading:<part order>"; `title` may match the part's passage_title
+    # instead. license_id comes from app.core.content_licenses.
+    provenance: Mapped[dict | None] = mapped_column(PortableJSON, nullable=True)
+
     created_by: Mapped[uuid.UUID | None] = mapped_column(
         GUID(), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )

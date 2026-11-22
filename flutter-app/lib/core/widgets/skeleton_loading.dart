@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
@@ -16,11 +17,15 @@ class ShimmerContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final scheme = Theme.of(context).colorScheme;
     return Shimmer.fromColors(
-      baseColor: baseColor ?? (isDark ? Colors.grey[700]! : Colors.grey[300]!),
+      baseColor: baseColor ?? scheme.surfaceContainerHighest,
       highlightColor:
-          highlightColor ?? (isDark ? Colors.grey[600]! : Colors.grey[100]!),
+          highlightColor ??
+          Color.alphaBlend(
+            scheme.onSurface.withValues(alpha: 0.06),
+            scheme.surfaceContainerHighest,
+          ),
       child: child,
     );
   }
@@ -104,11 +109,12 @@ class SkeletonCard extends StatelessWidget {
       child: Container(
         height: height ?? 120,
         margin:
-            margin ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            margin ??
+            const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 8),
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: Row(
           children: [
@@ -172,11 +178,14 @@ class SkeletonVocabCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return ShimmerContainer(
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        margin: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: 6,
+        ),
         padding: EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: Row(
           children: [
@@ -213,7 +222,10 @@ class SkeletonHomeSection extends StatelessWidget {
         children: [
           // Section title
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.lg,
+              vertical: 12,
+            ),
             child: SkeletonText(width: 150, height: 22),
           ),
           // Horizontal cards
@@ -228,7 +240,7 @@ class SkeletonHomeSection extends StatelessWidget {
                 margin: EdgeInsets.symmetric(horizontal: 4),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
               ),
             ),
@@ -247,7 +259,10 @@ class SkeletonRoadmapNode extends StatelessWidget {
   Widget build(BuildContext context) {
     return ShimmerContainer(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.xl,
+          vertical: 8,
+        ),
         child: Row(
           children: [
             const SkeletonCircle(size: 60),
@@ -284,7 +299,7 @@ class SkeletonProgressStats extends StatelessWidget {
         padding: EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: Column(
           children: [
@@ -307,6 +322,113 @@ class SkeletonProgressStats extends StatelessWidget {
               height: 8,
               borderRadius: 4,
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Placeholder for a [StatCard] while its numbers load.
+class StatCardSkeleton extends StatelessWidget {
+  const StatCardSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return ShimmerContainer(
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: BoxDecoration(
+          color: scheme.surface,
+          borderRadius: AppRadius.lgAll,
+        ),
+        child: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                SkeletonBox(width: 36, height: 36, borderRadius: 10),
+                Spacer(),
+                SkeletonBox(width: 48, height: 22, borderRadius: 6),
+              ],
+            ),
+            SizedBox(height: AppSpacing.md),
+            SkeletonBox(width: 80, height: 10, borderRadius: 4),
+            SizedBox(height: AppSpacing.sm),
+            SkeletonBox(width: 60, height: 28, borderRadius: 4),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Placeholder for a titled card holding a chart or list.
+class SectionCardSkeleton extends StatelessWidget {
+  const SectionCardSkeleton({super.key, this.contentHeight = 120});
+
+  final double contentHeight;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return ShimmerContainer(
+      child: Container(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        decoration: BoxDecoration(
+          color: scheme.surface,
+          borderRadius: AppRadius.lgAll,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                SkeletonBox(width: 120, height: 16, borderRadius: 4),
+                SkeletonBox(width: 60, height: 24, borderRadius: 12),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            const SkeletonBox(width: 160, height: 12, borderRadius: 4),
+            const SizedBox(height: AppSpacing.lg),
+            SkeletonBox(height: contentHeight, borderRadius: 8),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Placeholder for a list row with an avatar, two lines and a trailing pill.
+class ListRowSkeleton extends StatelessWidget {
+  const ListRowSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const ShimmerContainer(
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.md,
+        ),
+        child: Row(
+          children: [
+            SkeletonBox(width: 36, height: 36, borderRadius: 18),
+            SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SkeletonBox(width: 120, height: 12, borderRadius: 4),
+                  SizedBox(height: 6),
+                  SkeletonBox(width: 160, height: 10, borderRadius: 4),
+                ],
+              ),
+            ),
+            SizedBox(width: AppSpacing.md),
+            SkeletonBox(width: 56, height: 22, borderRadius: 11),
           ],
         ),
       ),

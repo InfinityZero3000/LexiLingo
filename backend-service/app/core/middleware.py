@@ -32,6 +32,9 @@ def _build_strict_limits(is_dev: bool) -> Dict[str, int]:
             "/api/v1/auth/admin/request-otp": 50,
             "/api/v1/auth/admin/verify-otp": 100,
             "/api/v1/proficiency/record-exercises": 120,
+            "/api/v1/news/full-content": 300,
+            "/api/v1/youtube/search": 300,
+            "/api/v1/podcasts/search": 300,
         }
     return {
         "/api/v1/auth/login": 10,           # 10 req/min — brute-force protection
@@ -44,6 +47,12 @@ def _build_strict_limits(is_dev: bool) -> Dict[str, int]:
         # Client-graded quiz results. A news quiz posts one batch and a book
         # quiz one result per answer, so a real learner stays far under this.
         "/api/v1/proficiency/record-exercises": 20,
+        # Anonymous, and each call fetches third-party content on demand (a
+        # scraped page, 100 YouTube quota units, a PodcastIndex query). The app
+        # sends no token to them, so they cannot require login; per-IP it is.
+        "/api/v1/news/full-content": 30,
+        "/api/v1/youtube/search": 20,
+        "/api/v1/podcasts/search": 20,
     }
 
 try:
@@ -475,9 +484,10 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
-        response.headers["Content-Security-Policy"] = (
-            "default-src 'self'; frame-ancestors 'none'; object-src 'none';"
-        )
+        if "Content-Security-Policy" not in response.headers:
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'self'; frame-ancestors 'none'; object-src 'none';"
+            )
         response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         return response

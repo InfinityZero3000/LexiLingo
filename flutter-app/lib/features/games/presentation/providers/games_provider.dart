@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../../data/repositories/games_repository.dart';
 import '../../domain/entities/game_entities.dart';
+import 'package:lexilingo_app/core/state/reset_epoch.dart';
 
 enum GameAwardStatus { idle, submitting, awarded, failed, alreadyAwarded }
 
@@ -10,19 +11,21 @@ class _PendingGameCompletion {
   final List<Map<String, String>> answers;
   final int? durationSeconds;
   final int hintsUsed;
+  final List<String> rescuedIds;
 
   const _PendingGameCompletion({
     required this.sessionId,
     required this.answers,
     required this.durationSeconds,
     required this.hintsUsed,
+    required this.rescuedIds,
   });
 }
 
 /// State management for English Games + XP System.
 ///
 /// Phase 3: English Games.
-class GamesProvider extends ChangeNotifier {
+class GamesProvider extends ChangeNotifier with ResetEpoch {
   final GamesRepository _repository;
 
   GamesProvider({GamesRepository? repository})
@@ -94,22 +97,28 @@ class GamesProvider extends ChangeNotifier {
   // ── Load XP Profile ───────────────────────────────────────────────────────
 
   Future<void> loadXPProfile() async {
+    final epoch = resetEpoch;
     _setLoading(true);
     try {
-      _xpProfile = await _repository.getXPProfile();
+      final loaded = await _repository.getXPProfile();
+      if (isStale(epoch)) return;
+      _xpProfile = loaded;
       _error = null;
     } catch (e) {
+      if (isStale(epoch)) return;
       _error = e.toString();
     } finally {
-      _setLoading(false);
+      if (!isStale(epoch)) _setLoading(false);
     }
   }
 
   // ── Load Leaderboard ──────────────────────────────────────────────────────
 
   Future<void> loadLeaderboard() async {
+    final epoch = resetEpoch;
     try {
       final result = await _repository.getLeaderboard();
+      if (isStale(epoch)) return;
       _leaderboard = (result['entries'] as List<dynamic>? ?? [])
           .map((e) => LeaderboardUser.fromJson(e as Map<String, dynamic>))
           .toList();
@@ -126,115 +135,139 @@ class GamesProvider extends ChangeNotifier {
   Future<void> loadWordScramble({int count = 10}) async {
     _resetAwardState();
     _wordScramble = null;
+    final epoch = resetEpoch;
     _setLoading(true);
     _currentGame = GameType.wordScramble;
     try {
-      _wordScramble = await _repository.getWordScramble(
+      final loaded = await _repository.getWordScramble(
         level: _selectedLevel,
         count: count,
       );
+      if (isStale(epoch)) return;
+      _wordScramble = loaded;
       _gameStartTime = DateTime.now();
       _error = null;
     } catch (e) {
+      if (isStale(epoch)) return;
       _error = e.toString();
     } finally {
-      _setLoading(false);
+      if (!isStale(epoch)) _setLoading(false);
     }
   }
 
   Future<void> loadFillBlank({int count = 8}) async {
     _resetAwardState();
     _fillBlank = null;
+    final epoch = resetEpoch;
     _setLoading(true);
     _currentGame = GameType.fillBlank;
     try {
-      _fillBlank = await _repository.getFillBlank(
+      final loaded = await _repository.getFillBlank(
         level: _selectedLevel,
         count: count,
       );
+      if (isStale(epoch)) return;
+      _fillBlank = loaded;
       _gameStartTime = DateTime.now();
       _error = null;
     } catch (e) {
+      if (isStale(epoch)) return;
       _error = e.toString();
     } finally {
-      _setLoading(false);
+      if (!isStale(epoch)) _setLoading(false);
     }
   }
 
   Future<void> loadMatchingGame({String variant = 'definition'}) async {
     _resetAwardState();
     _matching = null;
+    final epoch = resetEpoch;
     _setLoading(true);
     _currentGame = GameType.matching;
     try {
-      _matching = await _repository.getMatchingGame(
+      final loaded = await _repository.getMatchingGame(
         level: _selectedLevel,
         variant: variant,
       );
+      if (isStale(epoch)) return;
+      _matching = loaded;
       _gameStartTime = DateTime.now();
       _error = null;
     } catch (e) {
+      if (isStale(epoch)) return;
       _error = e.toString();
     } finally {
-      _setLoading(false);
+      if (!isStale(epoch)) _setLoading(false);
     }
   }
 
   Future<void> loadSpellingBee({int count = 8}) async {
     _resetAwardState();
     _spellingBee = null;
+    final epoch = resetEpoch;
     _setLoading(true);
     _currentGame = GameType.spellingBee;
     try {
-      _spellingBee = await _repository.getSpellingBee(
+      final loaded = await _repository.getSpellingBee(
         level: _selectedLevel,
         count: count,
       );
+      if (isStale(epoch)) return;
+      _spellingBee = loaded;
       _gameStartTime = DateTime.now();
       _error = null;
     } catch (e) {
+      if (isStale(epoch)) return;
       _error = e.toString();
     } finally {
-      _setLoading(false);
+      if (!isStale(epoch)) _setLoading(false);
     }
   }
 
   Future<void> loadGrammarQuiz({String? topic, int count = 10}) async {
     _resetAwardState();
     _grammarQuiz = null;
+    final epoch = resetEpoch;
     _setLoading(true);
     _currentGame = GameType.grammarQuiz;
     try {
-      _grammarQuiz = await _repository.getGrammarQuiz(
+      final loaded = await _repository.getGrammarQuiz(
         level: _selectedLevel,
         topic: topic,
         count: count,
       );
+      if (isStale(epoch)) return;
+      _grammarQuiz = loaded;
       _gameStartTime = DateTime.now();
       _error = null;
     } catch (e) {
+      if (isStale(epoch)) return;
       _error = e.toString();
     } finally {
-      _setLoading(false);
+      if (!isStale(epoch)) _setLoading(false);
     }
   }
 
   Future<void> loadHangman({String? category}) async {
     _resetAwardState();
     _hangman = null;
+    final epoch = resetEpoch;
     _setLoading(true);
     _currentGame = GameType.hangman;
     try {
-      _hangman = await _repository.getHangmanGame(
+      final loaded = await _repository.getHangmanGame(
         level: _selectedLevel,
         category: category,
       );
+      if (isStale(epoch)) return;
+      _hangman = loaded;
       _gameStartTime = DateTime.now();
       _error = null;
     } catch (e) {
+      if (isStale(epoch)) return;
       _error = e.toString();
     } finally {
-      _setLoading(false);
+      if (!isStale(epoch)) _setLoading(false);
     }
   }
 
@@ -249,6 +282,7 @@ class GamesProvider extends ChangeNotifier {
     required List<Map<String, String>> answers,
     String? sessionId,
     int hintsUsed = 0,
+    List<String> rescuedIds = const [],
   }) async {
     if (_awardStatus == GameAwardStatus.submitting) return null;
     if (_awardStatus == GameAwardStatus.awarded && _lastXPResult != null) {
@@ -282,9 +316,12 @@ class GamesProvider extends ChangeNotifier {
 
     _pendingCompletion = _PendingGameCompletion(
       sessionId: resolvedSessionId,
-      answers: answers.map((answer) => Map<String, String>.from(answer)).toList(),
+      answers: answers
+          .map((answer) => Map<String, String>.from(answer))
+          .toList(),
       durationSeconds: durationSeconds,
       hintsUsed: hintsUsed,
+      rescuedIds: List<String>.from(rescuedIds),
     );
     return _submitPendingCompletion();
   }
@@ -302,6 +339,7 @@ class GamesProvider extends ChangeNotifier {
     final pending = _pendingCompletion;
     if (pending == null) return null;
 
+    final epoch = resetEpoch;
     _awardStatus = GameAwardStatus.submitting;
     _awardError = null;
     notifyListeners();
@@ -311,7 +349,9 @@ class GamesProvider extends ChangeNotifier {
         answers: pending.answers,
         clientDurationSeconds: pending.durationSeconds,
         hintsUsed: pending.hintsUsed,
+        rescuedIds: pending.rescuedIds,
       );
+      if (isStale(epoch)) return null;
       _lastXPResult = result;
       _awardStatus = GameAwardStatus.awarded;
       if (_lastGameResult != null) {
@@ -331,6 +371,7 @@ class GamesProvider extends ChangeNotifier {
       }
       return result;
     } catch (e) {
+      if (isStale(epoch)) return null;
       _awardStatus = GameAwardStatus.failed;
       _awardError = e.toString();
       debugPrint('XP award error: $e');
@@ -341,6 +382,8 @@ class GamesProvider extends ChangeNotifier {
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
+
+  String sessionIdFor(GameType gameType) => _sessionIdFor(gameType);
 
   String _sessionIdFor(GameType gameType) => switch (gameType) {
     GameType.wordScramble => _wordScramble?.sessionId ?? '',
@@ -361,6 +404,27 @@ class GamesProvider extends ChangeNotifier {
     _awardStatus = GameAwardStatus.idle;
     _awardError = null;
     _pendingCompletion = null;
+  }
+
+  void reset() {
+    bumpResetEpoch();
+    _isLoading = false;
+    _error = null;
+    _selectedLevel = 'A1';
+    _currentGame = null;
+    _gameStartTime = null;
+    _wordScramble = null;
+    _fillBlank = null;
+    _matching = null;
+    _spellingBee = null;
+    _grammarQuiz = null;
+    _hangman = null;
+    _xpProfile = null;
+    _leaderboard = [];
+    _currentUserLeaderboard = null;
+    _lastGameResult = null;
+    _resetAwardState();
+    notifyListeners();
   }
 
   void clearError() {

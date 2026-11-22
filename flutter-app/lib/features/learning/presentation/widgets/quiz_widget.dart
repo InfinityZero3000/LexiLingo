@@ -1,8 +1,10 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import '../../domain/entities/lesson_entity.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/quick_save_selection_area.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Quiz Widget for Multiple Choice and True/False exercises
 class QuizWidget extends StatefulWidget {
@@ -68,7 +70,7 @@ class _QuizWidgetState extends State<QuizWidget>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accentColor = AppColorRoles.primary(isDark);
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(AppSpacing.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -76,7 +78,7 @@ class _QuizWidgetState extends State<QuizWidget>
           Card(
             elevation: 2,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
             ),
             child: Padding(
               padding: const EdgeInsets.all(20),
@@ -85,8 +87,7 @@ class _QuizWidgetState extends State<QuizWidget>
                 children: [
                   Text(
                     _getQuestionTypeLabel(),
-                    style: TextStyle(
-                      fontSize: 12,
+                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
                       color: Colors.grey[600],
                       fontWeight: FontWeight.w600,
                       letterSpacing: 1,
@@ -125,10 +126,10 @@ class _QuizWidgetState extends State<QuizWidget>
                   if (widget.exercise.hint != null) ...[
                     const SizedBox(height: 16),
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(AppSpacing.md),
                       decoration: BoxDecoration(
                         color: accentColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
                       child: Row(
                         children: [
@@ -145,10 +146,8 @@ class _QuizWidgetState extends State<QuizWidget>
                               contextSentence: widget.exercise.hint!,
                               child: Text(
                                 widget.exercise.hint!,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: accentColor,
-                                ),
+                                style: Theme.of(context).textTheme.bodyMedium!
+                                    .copyWith(color: accentColor),
                               ),
                             ),
                           ),
@@ -176,11 +175,11 @@ class _QuizWidgetState extends State<QuizWidget>
             if (showResult) {
               if (isCorrectAnswer) {
                 backgroundColor = Colors.green.withValues(alpha: 0.1);
-                borderColor = AppColors.greenSuccessBright;
+                borderColor = context.status.success;
                 icon = Icons.check_circle;
               } else if (isSelected && !isCorrectAnswer) {
                 backgroundColor = Colors.red.withValues(alpha: 0.1);
-                borderColor = AppColors.errorBright;
+                borderColor = Theme.of(context).colorScheme.error;
                 icon = Icons.cancel;
               }
             } else if (isSelected) {
@@ -191,7 +190,7 @@ class _QuizWidgetState extends State<QuizWidget>
             }
 
             return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.only(bottom: AppSpacing.md),
               child: InkWell(
                 onTap: widget.isAnswered
                     ? null
@@ -199,13 +198,13 @@ class _QuizWidgetState extends State<QuizWidget>
                         setState(() => _selectedAnswer = option);
                         widget.onAnswer(option);
                       },
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppRadius.md),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppSpacing.lg),
                   decoration: BoxDecoration(
                     color: backgroundColor ?? Colors.grey[50],
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     border: Border.all(
                       color: borderColor ?? Colors.grey[300]!,
                       width: 2,
@@ -216,20 +215,20 @@ class _QuizWidgetState extends State<QuizWidget>
                       Expanded(
                         child: Text(
                           option,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: isSelected
-                                ? FontWeight.w600
-                                : FontWeight.normal,
-                          ),
+                          style: Theme.of(context).textTheme.bodyLarge!
+                              .copyWith(
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
+                              ),
                         ),
                       ),
                       if (showResult && icon != null)
                         Icon(
                           icon,
                           color: isCorrectAnswer
-                              ? AppColors.greenSuccessBright
-                              : AppColors.errorBright,
+                              ? context.status.success
+                              : Theme.of(context).colorScheme.error,
                         ),
                     ],
                   ),
@@ -248,16 +247,16 @@ class _QuizWidgetState extends State<QuizWidget>
                     ? Colors.green.withValues(alpha: 0.1)
                     : AppColors.orange.withValues(alpha: 0.1),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                   side: BorderSide(
                     color: widget.isCorrect!
-                        ? AppColors.greenSuccessBright
+                        ? context.status.success
                         : AppColors.orange,
                     width: 1,
                   ),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppSpacing.lg),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -268,19 +267,21 @@ class _QuizWidgetState extends State<QuizWidget>
                                 ? Icons.check_circle
                                 : Icons.info_outline,
                             color: widget.isCorrect!
-                                ? AppColors.greenSuccessBright
+                                ? context.status.success
                                 : AppColors.orange,
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            widget.isCorrect! ? 'Correct!' : 'Not quite',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: widget.isCorrect!
-                                  ? AppColors.greenSuccessBright
-                                  : AppColors.orange,
-                            ),
+                            widget.isCorrect!
+                                ? 'learning.correct'.tr()
+                                : 'vocabQuiz.incorrect'.tr(),
+                            style: Theme.of(context).textTheme.bodyLarge!
+                                .copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: widget.isCorrect!
+                                      ? context.status.success
+                                      : AppColors.orange,
+                                ),
                           ),
                         ],
                       ),
@@ -291,7 +292,9 @@ class _QuizWidgetState extends State<QuizWidget>
                         contextSentence: widget.exercise.explanation!,
                         child: Text(
                           widget.exercise.explanation!,
-                          style: const TextStyle(fontSize: 14, height: 1.5),
+                          style: Theme.of(
+                            context,
+                          ).textTheme.bodyMedium!.copyWith(height: 1.5),
                         ),
                       ),
                     ],
@@ -308,11 +311,11 @@ class _QuizWidgetState extends State<QuizWidget>
   String _getQuestionTypeLabel() {
     switch (widget.exercise.type) {
       case ExerciseType.multipleChoice:
-        return 'MULTIPLE CHOICE';
+        return 'learning.exerciseType.multipleChoice'.tr();
       case ExerciseType.trueFalse:
-        return 'TRUE OR FALSE';
+        return 'learning.exerciseType.trueFalse'.tr();
       default:
-        return 'QUESTION';
+        return 'learning.exerciseType.question'.tr();
     }
   }
 }

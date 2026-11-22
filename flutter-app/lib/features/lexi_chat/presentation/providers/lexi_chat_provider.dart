@@ -1,11 +1,15 @@
-import 'dart:async';
-import 'dart:convert';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/utils/chat_input_limit.dart';
+import 'dart:async';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexilingo_app/core/di/core_di.dart';
+import 'package:lexilingo_app/core/network/http_status.dart';
+import 'package:lexilingo_app/core/state/reset_epoch.dart';
 import 'package:lexilingo_app/core/services/encrypted_local_cache_service.dart';
 import 'package:lexilingo_app/core/services/background_sync_queue_service.dart';
 import 'package:lexilingo_app/core/services/user_scope_service.dart';
@@ -27,7 +31,7 @@ const _tag = 'LexiChatProvider';
 ///  - TTS audio playback
 ///  - Loading / error states
 ///  - Typing animation state
-class LexiChatProvider extends ChangeNotifier {
+class LexiChatProvider extends ChangeNotifier with ResetEpoch {
   final LexiChatRepository repository;
   final AiApiClient _aiClient;
   static const String _savedSessionsKey = 'lexi_saved_sessions';
@@ -40,10 +44,11 @@ class LexiChatProvider extends ChangeNotifier {
       BackgroundSyncQueueService.instance;
   StreamSubscription<SyncQueueItem>? _syncQueueSub;
   bool _isDisposed = false;
+  late final Future<void> _savedSessionsLoaded;
 
   LexiChatProvider({required this.repository, required AiApiClient aiClient})
     : _aiClient = aiClient {
-    _loadSavedSessions();
+    _savedSessionsLoaded = _loadSavedSessions();
     _syncQueueSub = _syncQueue.onItemProcessed.listen(_onQueueItemProcessed);
   }
 
@@ -81,7 +86,7 @@ class LexiChatProvider extends ChangeNotifier {
   bool _isLexiThinking = false;
   bool _isLexiTyping = false;
   bool _isRestoringSession = false;
-  String? _error;
+  UiText? _error;
   bool _ttsEnabled = true;
   bool _ttsExplicitlySet = false;
   double _ttsSpeed = 1.0;
@@ -114,7 +119,7 @@ class LexiChatProvider extends ChangeNotifier {
   bool get isLexiThinking => _isLexiThinking;
   bool get isLexiTyping => _isLexiTyping;
   bool get isLexiResponding => _isLexiThinking || _isLexiTyping;
-  String? get error => _error;
+  String? get error => _error?.resolve();
   bool get hasSession => _session != null;
   bool get ttsEnabled => _ttsEnabled;
   double get ttsSpeed => _ttsSpeed;
@@ -164,19 +169,11 @@ class LexiChatProvider extends ChangeNotifier {
     return '${_ttsSpeed}x';
   }
 
-  bool _isUnauthorizedError(Object error) {
-    final normalized = error.toString().toLowerCase();
-    return normalized.contains('unauthorized') ||
-        normalized.contains('status 401') ||
-        normalized.contains('401');
-  }
+  bool _isUnauthorizedError(Object error) => httpStatusOf(error) == 401;
 
-  bool _isForbiddenSessionError(Object error) {
-    final normalized = error.toString().toLowerCase();
-    return normalized.contains('forbidden') ||
-        normalized.contains('status 403') ||
-        normalized.contains('403');
-  }
+  bool _isForbiddenSessionError(Object error) => httpStatusOf(error) == 403;
+
+  bool _isMissingSessionError(Object error) => httpStatusOf(error) == 404;
 
   String get learnerLevel => _learnerLevel;
   String get nativeLanguage => _nativeLanguage;
@@ -189,12 +186,15 @@ class LexiChatProvider extends ChangeNotifier {
 
   // ── Session ────────────────────────────────────────────────────────────────
   Future<void> startSession(String userId) async {
+    final epoch = resetEpoch;
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      _session = await repository.createSession(userId: userId);
+      final created = await repository.createSession(userId: userId);
+      if (isStale(epoch)) return;
+      _session = created;
       _upsertSessionSummary(
         LexiSessionSummary(
           sessionId: _session!.sessionId,
@@ -214,11 +214,7 @@ class LexiChatProvider extends ChangeNotifier {
         LexiMessage(
           id: 'greeting',
           role: 'assistant',
-          content:
-              "Squawk! Hey there, adventurer! I'm Lexi, your English buddy. "
-              "Let's go on a learning adventure together!\n\n"
-              "You can type or speak — I'll help you practice English. "
-              "What would you like to talk about?",
+          content: 'lexiChat.greetingMessage'.tr(),
           timestamp: DateTime.now(),
         ),
       );
@@ -227,9 +223,10 @@ class LexiChatProvider extends ChangeNotifier {
       unawaited(syncSessions(userId));
       notifyListeners();
     } catch (e) {
+      if (isStale(epoch)) return;
       _error = _isUnauthorizedError(e)
-          ? 'errors.sessionExpired'.tr()
-          : 'errors.sessionStartFailed'.tr();
+          ? UiText.key('errors.sessionExpired')
+          : UiText.key('errors.sessionStartFailed');
       _isLoading = false;
       logError(_tag, 'Failed to start session: $e');
       notifyListeners();
@@ -241,33 +238,70 @@ class LexiChatProvider extends ChangeNotifier {
   }
 
   Future<void> restoreLatestSession(String userId) async {
-    if (_isRestoringSession || _session != null) return;
+    if (_isRestoringSession) return;
+    final current = _session;
+    if (current != null) {
+      if (current.userId == userId) return;
+      _clearConversation();
+    }
 
+    final epoch = resetEpoch;
     _isRestoringSession = true;
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      await syncSessions(userId);
+      // Saved sessions come from local storage; a remote sync landing before
+      // them would otherwise be overwritten by the stale local list.
+      await _savedSessionsLoaded;
+      if (isStale(epoch)) return;
       await _removeSessionsForOtherUsers(userId);
 
+      // The session list and the shown session's messages are independent
+      // requests, so they go out together: on web each one also pays a CORS
+      // preflight to a server an ocean away, and doing them in series was most
+      // of the time this page took to open.
+      final sync = syncSessions(userId);
       if (_sessions.isNotEmpty) {
-        await selectSession(_sessions.first);
+        final shown = _sessions.first;
+        await selectSession(shown);
+        await sync;
+        if (isStale(epoch)) return;
+        await _removeSessionsForOtherUsers(userId);
+        final newest = _sessions.isEmpty ? null : _sessions.first;
+        // Only jump when another device was active after this one last
+        // looked; otherwise reopening an older conversation would be yanked
+        // away from the learner a second after it appeared.
+        if (newest != null &&
+            newest.sessionId != shown.sessionId &&
+            newest.updatedAt.isAfter(shown.updatedAt) &&
+            _session?.sessionId == shown.sessionId &&
+            !_isSending) {
+          await selectSession(newest);
+        }
       } else {
-        await startSession(userId);
+        await sync;
+        if (isStale(epoch)) return;
+        await _removeSessionsForOtherUsers(userId);
+        if (_sessions.isNotEmpty) {
+          await selectSession(_sessions.first);
+        } else {
+          await startSession(userId);
+        }
       }
     } catch (e) {
-      _error = 'errors.sessionStartFailed'.tr();
+      _error = UiText.key('errors.sessionStartFailed');
       _isLoading = false;
       logWarn(_tag, 'Failed to restore session: $e');
       notifyListeners();
     } finally {
-      _isRestoringSession = false;
+      if (!isStale(epoch)) _isRestoringSession = false;
     }
   }
 
   Future<void> selectSession(LexiSessionSummary summary) async {
+    final epoch = resetEpoch;
     _isLoading = true;
     _error = null;
     notifyListeners();
@@ -285,6 +319,7 @@ class LexiChatProvider extends ChangeNotifier {
       );
 
       final cachedPage = await _getCachedFirstPage(summary);
+      if (isStale(epoch)) return;
       if (cachedPage != null && cachedPage.messages.isNotEmpty) {
         _messages
           ..clear()
@@ -300,6 +335,7 @@ class LexiChatProvider extends ChangeNotifier {
         sessionId: summary.sessionId,
         limit: _messagesPageSize,
       );
+      if (isStale(epoch)) return;
 
       var loaded = page.messages;
       _hasMoreMessages = page.hasMore;
@@ -308,6 +344,7 @@ class LexiChatProvider extends ChangeNotifier {
       if (loaded.isEmpty && summary.messageCount > 0) {
         // Fallback for older servers that don't support paged contract yet.
         loaded = await repository.getMessages(sessionId: summary.sessionId);
+        if (isStale(epoch)) return;
         _hasMoreMessages = false;
         _nextMessageCursor = null;
       }
@@ -322,20 +359,17 @@ class LexiChatProvider extends ChangeNotifier {
         hasMore: _hasMoreMessages,
         nextCursor: _nextMessageCursor,
       );
+      if (isStale(epoch)) return;
 
       if (loaded.isEmpty) {
         if (summary.messageCount > 0) {
-          _error = 'lexiChat.historyUnavailable'.tr();
+          _error = UiText.key('lexiChat.historyUnavailable');
         }
         _messages.add(
           LexiMessage(
             id: 'greeting',
             role: 'assistant',
-            content:
-                "Squawk! Hey there, adventurer! I'm Lexi, your English buddy. "
-                "Let's go on a learning adventure together!\n\n"
-                "You can type or speak — I'll help you practice English. "
-                "What would you like to talk about?",
+            content: 'lexiChat.greetingMessage'.tr(),
             timestamp: DateTime.now(),
           ),
         );
@@ -346,24 +380,17 @@ class LexiChatProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     } catch (e) {
-      final err = e.toString().toLowerCase();
-      if (err.contains('404') || err.contains('not found')) {
+      if (isStale(epoch)) return;
+      if (_isMissingSessionError(e)) {
         _sessions.removeWhere((s) => s.sessionId == summary.sessionId);
         await _saveSessions();
         await startSession(summary.userId);
-        _error = 'errors.sessionExpiredOnServer'.tr();
+        _error = UiText.key('errors.sessionExpiredOnServer');
         return;
       }
 
       if (_isForbiddenSessionError(e)) {
-        _sessions.removeWhere((s) => s.sessionId == summary.sessionId);
-        await _saveSessions();
-        _session = null;
-        _messages.clear();
-        _isLoadingMoreMessages = false;
-        _hasMoreMessages = false;
-        _nextMessageCursor = null;
-        _error = 'errors.sessionOtherAccount'.tr();
+        await _dropForbiddenSession(summary.sessionId);
         _isLoading = false;
         notifyListeners();
         return;
@@ -376,8 +403,8 @@ class LexiChatProvider extends ChangeNotifier {
       }
 
       _error = _isUnauthorizedError(e)
-          ? 'errors.sessionExpired'.tr()
-          : 'errors.loadFailed'.tr();
+          ? UiText.key('errors.sessionExpired')
+          : UiText.key('errors.loadFailed');
       logWarn(_tag, 'Failed to load session: $e');
       _isLoading = false;
       notifyListeners();
@@ -387,51 +414,135 @@ class LexiChatProvider extends ChangeNotifier {
   Future<void> loadOlderMessages() async {
     if (_session == null || _isLoadingMoreMessages || !_hasMoreMessages) return;
 
+    final epoch = resetEpoch;
+    final sessionId = _session!.sessionId;
     _isLoadingMoreMessages = true;
     notifyListeners();
 
     try {
       final page = await repository.getMessagesPaged(
-        sessionId: _session!.sessionId,
+        sessionId: sessionId,
         limit: _messagesPageSize,
         cursor: _nextMessageCursor,
       );
+      if (isStale(epoch)) return;
 
       if (page.messages.isNotEmpty) {
         _messages.insertAll(0, page.messages);
         await _cacheCurrentMessages();
+        if (isStale(epoch)) return;
       }
       _hasMoreMessages = page.hasMore;
       _nextMessageCursor = page.nextCursor;
     } catch (e) {
-      _error = 'errors.loadFailed'.tr();
+      if (isStale(epoch)) return;
+      _error = UiText.key('errors.loadFailed');
       logWarn(_tag, 'Failed to load older messages: $e');
     } finally {
-      _isLoadingMoreMessages = false;
-      notifyListeners();
+      if (!isStale(epoch)) {
+        _isLoadingMoreMessages = false;
+        notifyListeners();
+      }
     }
   }
 
   Future<void> renameSession(String sessionId, String title) async {
     final idx = _sessions.indexWhere((s) => s.sessionId == sessionId);
     if (idx == -1) return;
-    await repository.renameSession(sessionId: sessionId, title: title.trim());
-    _sessions[idx] = _sessions[idx].copyWith(title: title.trim());
+    final epoch = resetEpoch;
+    try {
+      await repository.renameSession(sessionId: sessionId, title: title.trim());
+    } catch (e) {
+      if (isStale(epoch)) return;
+      await _failSessionAction(sessionId, e, 'rename');
+      return;
+    }
+    if (isStale(epoch)) return;
+    final at = _sessions.indexWhere((s) => s.sessionId == sessionId);
+    if (at != -1) {
+      _sessions[at] = _sessions[at].copyWith(title: title.trim());
+    }
     await _saveSessions();
     notifyListeners();
   }
 
   Future<void> deleteSession(String sessionId) async {
-    await repository.deleteSession(sessionId: sessionId);
-    _sessions.removeWhere((s) => s.sessionId == sessionId);
-    if (_session?.sessionId == sessionId) {
-      _session = null;
-      _messages.clear();
-      _isLoadingMoreMessages = false;
-      _hasMoreMessages = false;
-      _nextMessageCursor = null;
+    final epoch = resetEpoch;
+    try {
+      await repository.deleteSession(sessionId: sessionId);
+    } catch (e) {
+      if (isStale(epoch)) return;
+      // Already gone on the server is what the learner asked for.
+      if (!_isMissingSessionError(e)) {
+        await _failSessionAction(sessionId, e, 'delete');
+        return;
+      }
     }
+    if (isStale(epoch)) return;
+    _sessions.removeWhere((s) => s.sessionId == sessionId);
+    if (_session?.sessionId == sessionId) _clearConversation();
     await _saveSessions();
+    notifyListeners();
+  }
+
+  Future<void> _failSessionAction(
+    String sessionId,
+    Object error,
+    String action,
+  ) async {
+    logWarn(_tag, 'Failed to $action session $sessionId: $error');
+    if (_isForbiddenSessionError(error)) {
+      await _dropForbiddenSession(sessionId);
+    } else if (_isMissingSessionError(error)) {
+      _sessions.removeWhere((s) => s.sessionId == sessionId);
+      await _saveSessions();
+      if (_session?.sessionId == sessionId) _clearConversation();
+      _error = UiText.key('errors.sessionExpiredOnServer');
+    } else {
+      _error = _isUnauthorizedError(error)
+          ? UiText.key('errors.sessionExpired')
+          : UiText.key('errors.genericRetry');
+    }
+    notifyListeners();
+  }
+
+  Future<void> _dropForbiddenSession(String sessionId) async {
+    _sessions.removeWhere((s) => s.sessionId == sessionId);
+    await _saveSessions();
+    if (_session?.sessionId == sessionId) _clearConversation();
+    _error = UiText.key('errors.sessionOtherAccount');
+  }
+
+  void _clearConversation() {
+    _session = null;
+    _messages.clear();
+    _isLoadingMoreMessages = false;
+    _hasMoreMessages = false;
+    _nextMessageCursor = null;
+  }
+
+  /// Drops everything that belongs to the signed-in learner. Called on sign-out
+  /// and on an account switch, so the next learner starts from a blank chat.
+  void reset() {
+    bumpResetEpoch();
+    _typingStageTimer?.cancel();
+    _typingStageTimer = null;
+    unawaited(_ttsPlayer.stop().catchError((_) {}));
+    _clearConversation();
+    _sessions.clear();
+    _revealedCaptions.clear();
+    _isLoading = false;
+    _isSending = false;
+    _isLoadingSessions = false;
+    _isLexiThinking = false;
+    _isLexiTyping = false;
+    _isRestoringSession = false;
+    _voiceTurnActive = false;
+    _responseStateStartedAt = null;
+    _error = null;
+    _learnerLevel = 'B1';
+    _nativeLanguage = 'vi';
+    unawaited(_secureStorage.delete(key: _savedSessionsKey).catchError((_) {}));
     notifyListeners();
   }
 
@@ -439,9 +550,11 @@ class LexiChatProvider extends ChangeNotifier {
   Future<void> sendMessage(String text, {String? userId}) async {
     if (text.trim().isEmpty || _isSending) return;
 
+    final epoch = resetEpoch;
     final uid = userId ?? 'demo_user';
     if (_session == null) {
       await startSession(uid);
+      if (isStale(epoch)) return;
     }
     final sessionId = _session?.sessionId ?? '';
     final requestId = _buildRequestId(uid, sessionId);
@@ -471,6 +584,7 @@ class LexiChatProvider extends ChangeNotifier {
         nativeLanguage: _nativeLanguage,
         idempotencyKey: requestId,
       );
+      if (isStale(epoch)) return;
 
       final idx = _messages.indexWhere((m) => m.id == requestId);
       if (idx != -1) {
@@ -486,8 +600,10 @@ class LexiChatProvider extends ChangeNotifier {
 
       _messages.add(response);
       await _cacheCurrentMessages();
+      if (isStale(epoch)) return;
       _touchSession(sessionId, messageDelta: 2);
       await _endLexiResponseState();
+      if (isStale(epoch)) return;
       _isSending = false;
       notifyListeners();
 
@@ -496,15 +612,21 @@ class LexiChatProvider extends ChangeNotifier {
         await _playTtsAudio(response.audioBase64!);
       }
     } catch (e) {
+      if (isStale(epoch)) return;
       await _endLexiResponseState();
+      if (isStale(epoch)) return;
       _isSending = false;
       if (_isUnauthorizedError(e)) {
-        _error = 'errors.sessionExpired'.tr();
+        _error = UiText.key('errors.sessionExpired');
         logError(_tag, 'Send rejected as unauthorized: $e');
         notifyListeners();
         return;
       }
-      _error = 'lexiChat.offlineQueued'.tr();
+      if (isMessageTooLongError(e)) {
+        _rejectTooLongMessage(requestId, e);
+        return;
+      }
+      _error = UiText.key('lexiChat.offlineQueued');
       logError(_tag, 'Send failed, message queued: $e');
 
       await _enqueuePendingLexiMessage(
@@ -587,7 +709,7 @@ class LexiChatProvider extends ChangeNotifier {
         (message) => message.id == assistantId && message.content.isEmpty,
       );
       _error = type == 'voice.error'
-          ? 'Voice service is temporarily unavailable.'
+          ? const UiText.raw('Voice service is temporarily unavailable.')
           : null;
       notifyListeners();
     }
@@ -656,9 +778,11 @@ class LexiChatProvider extends ChangeNotifier {
   Future<void> sendMessageStreaming(String text, {String? userId}) async {
     if (text.trim().isEmpty || _isSending) return;
 
+    final epoch = resetEpoch;
     final uid = userId ?? 'demo_user';
     if (_session == null) {
       await startSession(uid);
+      if (isStale(epoch)) return;
     }
     final sessionId = _session?.sessionId ?? '';
     final requestId = _buildRequestId(uid, sessionId);
@@ -703,6 +827,9 @@ class LexiChatProvider extends ChangeNotifier {
         learnerLevel: _learnerLevel,
         nativeLanguage: _nativeLanguage,
       )) {
+        // A reset ends the turn: leaving the loop cancels the stream, so
+        // nothing more is appended and no reply audio is played.
+        if (isStale(epoch)) return;
         switch (event) {
           case LexiStreamThinking():
             _isLexiThinking = true;
@@ -743,7 +870,7 @@ class LexiChatProvider extends ChangeNotifier {
                   ? serverText
                   : (accumulated.isNotEmpty
                         ? accumulated
-                        : 'Squawk! Something went quiet. Can you ask that again?');
+                        : 'lexiChat.wentQuiet'.tr());
               _messages[idx] = LexiMessage(
                 id: messageId.isNotEmpty ? messageId : placeholderId,
                 role: 'assistant',
@@ -773,6 +900,7 @@ class LexiChatProvider extends ChangeNotifier {
             }
 
             await _cacheCurrentMessages();
+            if (isStale(epoch)) return;
             _touchSession(sessionId, messageDelta: 2);
             _isLexiThinking = false;
             _isLexiTyping = false;
@@ -796,6 +924,7 @@ class LexiChatProvider extends ChangeNotifier {
         }
       }
 
+      if (isStale(epoch)) return;
       if (!receivedDone) {
         await _handleIncompleteStream(
           text: text,
@@ -806,6 +935,7 @@ class LexiChatProvider extends ChangeNotifier {
         );
       }
     } catch (e) {
+      if (isStale(epoch)) return;
       logError(_tag, 'sendMessageStreaming exception: $e');
       await _retryNonStreamingSend(
         text: text,
@@ -871,8 +1001,15 @@ class LexiChatProvider extends ChangeNotifier {
     _isSending = false;
 
     if (_isUnauthorizedError(reason)) {
-      _error = 'errors.sessionExpired'.tr();
+      _error = UiText.key('errors.sessionExpired');
       logError(_tag, 'Stream rejected as unauthorized: $reason');
+      notifyListeners();
+      return;
+    }
+
+    if (isMessageTooLongError(reason)) {
+      _error = messageTooLongText();
+      logWarn(_tag, 'Stream rejected as too long: $reason');
       notifyListeners();
       return;
     }
@@ -881,12 +1018,22 @@ class LexiChatProvider extends ChangeNotifier {
     await sendMessage(text, userId: userId);
   }
 
+  // The server will refuse this text every time, so it is neither queued nor retried.
+  void _rejectTooLongMessage(String requestId, Object cause) {
+    _messages.removeWhere((m) => m.id == requestId);
+    _error = messageTooLongText();
+    logWarn(_tag, 'Send rejected as too long: $cause');
+    notifyListeners();
+  }
+
   Future<void> sendVoiceMessage(String audioBase64, {String? userId}) async {
     if (_isSending) return;
 
+    final epoch = resetEpoch;
     final uid = userId ?? 'demo_user';
     if (_session == null) {
       await startSession(uid);
+      if (isStale(epoch)) return;
     }
     final sessionId = _session?.sessionId ?? '';
 
@@ -899,7 +1046,7 @@ class LexiChatProvider extends ChangeNotifier {
       LexiMessage(
         id: 'voice_${DateTime.now().millisecondsSinceEpoch}',
         role: 'user',
-        content: 'Voice message...',
+        content: 'lexiChat.voiceMessagePlaceholder'.tr(),
         timestamp: DateTime.now(),
       ),
     );
@@ -916,11 +1063,14 @@ class LexiChatProvider extends ChangeNotifier {
         learnerLevel: _learnerLevel,
         nativeLanguage: _nativeLanguage,
       );
+      if (isStale(epoch)) return;
 
       _messages.add(response);
       await _cacheCurrentMessages();
+      if (isStale(epoch)) return;
       _touchSession(sessionId, messageDelta: 2);
       await _endLexiResponseState();
+      if (isStale(epoch)) return;
       _isSending = false;
       notifyListeners();
 
@@ -928,11 +1078,13 @@ class LexiChatProvider extends ChangeNotifier {
         await _playTtsAudio(response.audioBase64!);
       }
     } catch (e) {
+      if (isStale(epoch)) return;
       await _endLexiResponseState();
+      if (isStale(epoch)) return;
       _isSending = false;
       _error = _isUnauthorizedError(e)
-          ? 'errors.sessionExpired'.tr()
-          : 'lexiChat.voiceProcessingFailed'.tr();
+          ? UiText.key('errors.sessionExpired')
+          : UiText.key('lexiChat.voiceProcessingFailed');
       logError(_tag, 'Voice processing failed: $e');
       notifyListeners();
     }
@@ -972,12 +1124,13 @@ class LexiChatProvider extends ChangeNotifier {
   // ── TTS Playback ──────────────────────────────────────────────────────────
   Future<void> _playTtsAudio(String base64Audio) async {
     if (_audioMuted) return;
+    final epoch = resetEpoch;
     try {
       final bytes = base64Decode(base64Audio);
       final uri = Uri.dataFromBytes(bytes, mimeType: 'audio/mpeg');
       await _ttsPlayer.setUrl(uri.toString());
       await _ttsPlayer.setSpeed(_ttsSpeed);
-      if (_audioMuted) return;
+      if (_audioMuted || isStale(epoch)) return;
       await _ttsPlayer.play();
     } catch (e) {
       logWarn(_tag, 'TTS playback failed: $e');
@@ -1116,9 +1269,10 @@ class LexiChatProvider extends ChangeNotifier {
   }
 
   Future<void> syncSessions(String userId) async {
+    final epoch = resetEpoch;
     try {
       final remote = await repository.getSessions(userId: userId);
-      if (remote.isEmpty) return;
+      if (remote.isEmpty || isStale(epoch)) return;
 
       _sessions
         ..clear()

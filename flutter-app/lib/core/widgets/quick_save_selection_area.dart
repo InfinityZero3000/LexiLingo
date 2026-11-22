@@ -1,5 +1,5 @@
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:flutter/material.dart';
-import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/quick_save_word_sheet.dart';
 import 'package:easy_localization/easy_localization.dart';
 
@@ -55,9 +55,12 @@ class _QuickSaveSelectionAreaState extends State<QuickSaveSelectionArea> {
                 final messenger = ScaffoldMessenger.maybeOf(hostContext);
                 messenger?.showSnackBar(
                   SnackBar(
-                    content: Text('vocabulary.selectOneWord'.tr()),
+                    content: Text(
+                      'vocabulary.selectOneWord'.tr(),
+                      style: TextStyle(color: context.status.onWarning),
+                    ),
                     behavior: SnackBarBehavior.floating,
-                    backgroundColor: AppColors.orange,
+                    backgroundColor: context.status.warning,
                   ),
                 );
                 return;

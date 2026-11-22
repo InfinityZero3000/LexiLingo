@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -26,11 +27,16 @@ class PromoBannerSection extends StatelessWidget {
             theme.extension<AppTactileTheme>() ?? AppTactileTheme.from(theme);
 
         return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.md,
+            AppSpacing.lg,
+            0,
+          ),
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(AppRadius.xl),
               onTap: banner.linkUrl == null
                   ? null
                   : () => launchUrl(
@@ -42,9 +48,9 @@ class PromoBannerSection extends StatelessWidget {
                   variant: TactileSurfaceVariant.interactive,
                   fill: isDark
                       ? theme.colorScheme.surfaceContainerHighest
-                      : Colors.white,
+                      : Theme.of(context).colorScheme.surface,
                   accent: accent,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
                   diagnosticId: 'home-promo-banner',
                 ),
                 child: Column(
@@ -55,7 +61,7 @@ class PromoBannerSection extends StatelessWidget {
                       children: [
                         ClipRRect(
                           borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(18),
+                            top: Radius.circular(AppRadius.lg),
                           ),
                           child: AspectRatio(
                             aspectRatio: 16 / 7,
@@ -74,7 +80,7 @@ class PromoBannerSection extends StatelessWidget {
                             onPressed: () => provider.dismiss(banner.id),
                             tooltip: 'common.close'.tr(),
                             icon: const Icon(Icons.close_rounded),
-                            color: Colors.white,
+                            color: AppColors.textInverted,
                             style: IconButton.styleFrom(
                               backgroundColor: Colors.black.withValues(
                                 alpha: 0.35,

@@ -5,6 +5,7 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/level_provider.dart';
 import 'package:lexilingo_app/features/level/domain/entities/level_entity.dart';
 import 'package:lexilingo_app/features/level/domain/services/level_calculator.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Icon for a CEFR level code (A1–C2)
 IconData _cefrIcon(String cefrCode) {
@@ -93,12 +94,15 @@ class LevelBadge extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: 6,
+        ),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [tierColor, tierColor.withValues(alpha: 0.8)],
           ),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(AppRadius.lg),
           boxShadow: [
             BoxShadow(
               color: tierColor.withValues(alpha: 0.3),
@@ -115,13 +119,12 @@ class LevelBadge extends StatelessWidget {
               size: 16,
               color: Theme.of(context).colorScheme.surface,
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: AppSpacing.xs),
             Text(
               tierCode,
-              style: TextStyle(
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.surface,
                 fontWeight: FontWeight.bold,
-                fontSize: 14,
               ),
             ),
           ],
@@ -166,15 +169,22 @@ class LevelProgressCard extends StatelessWidget {
             padding: EdgeInsets.all(cardPadding),
             decoration: BoxDecoration(
               color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.shadow.withValues(alpha: 0.05),
+
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
               ],
-              border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
+              border: Border.all(
+                color: Theme.of(
+                  context,
+                ).colorScheme.outline.withValues(alpha: 0.1),
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -186,7 +196,7 @@ class LevelProgressCard extends StatelessWidget {
                         padding: EdgeInsets.all(iconPadding),
                         decoration: BoxDecoration(
                           color: accent.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(AppRadius.md),
                         ),
                         child: Icon(
                           Icons.workspace_premium_rounded,
@@ -194,7 +204,7 @@ class LevelProgressCard extends StatelessWidget {
                           color: accent,
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -223,7 +233,10 @@ class LevelProgressCard extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(
-                                    color: AppColors.textGrey,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+
                                     fontSize: xpLineFontSize,
                                   ),
                             ),
@@ -242,7 +255,7 @@ class LevelProgressCard extends StatelessWidget {
                             padding: EdgeInsets.all(iconPadding),
                             decoration: BoxDecoration(
                               color: accent.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(AppRadius.md),
                             ),
                             child: Icon(
                               Icons.workspace_premium_rounded,
@@ -274,7 +287,10 @@ class LevelProgressCard extends StatelessWidget {
 
                                 style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(
-                                      color: AppColors.textGrey,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+
                                       fontSize: xpLineFontSize,
                                     ),
                               ),
@@ -297,7 +313,11 @@ class LevelProgressCard extends StatelessWidget {
                           Text(
                             'profile.totalXp'.tr(),
                             style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(color: AppColors.textGrey),
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
                           ),
                         ],
                       ),
@@ -327,7 +347,10 @@ class LevelProgressCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4),
                       child: LinearProgressIndicator(
                         value: progress,
-                        backgroundColor: AppColors.grey200,
+                        backgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.outlineVariant,
+
                         valueColor: AlwaysStoppedAnimation<Color>(accent),
                         minHeight: progressHeight,
                       ),
@@ -344,7 +367,8 @@ class LevelProgressCard extends StatelessWidget {
                       maxLines: compact ? 1 : null,
                       overflow: compact ? TextOverflow.ellipsis : null,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.textGrey,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+
                         fontSize: toNextFontSize,
                       ),
                     ),
@@ -398,7 +422,8 @@ class LevelDetailsSheet extends StatelessWidget {
                     height: 4,
                     margin: const EdgeInsets.only(bottom: 20),
                     decoration: BoxDecoration(
-                      color: AppColors.grey300,
+                      color: Theme.of(context).colorScheme.outlineVariant,
+
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -410,12 +435,12 @@ class LevelDetailsSheet extends StatelessWidget {
                   title: 'home.englishProficiency'.tr(),
                   subtitle: 'home.proficiencySubtitle'.tr(),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.md),
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppSpacing.lg),
                   decoration: BoxDecoration(
                     color: cefrColor.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     border: Border.all(
                       color: cefrColor.withValues(alpha: 0.35),
                     ),
@@ -423,7 +448,7 @@ class LevelDetailsSheet extends StatelessWidget {
                   child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(AppSpacing.md),
                         decoration: BoxDecoration(
                           color: cefrColor.withValues(alpha: 0.15),
                           shape: BoxShape.circle,
@@ -434,7 +459,7 @@ class LevelDetailsSheet extends StatelessWidget {
                           color: cefrColor,
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: AppSpacing.lg),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -461,8 +486,12 @@ class LevelDetailsSheet extends StatelessWidget {
                   ),
                 ),
 
-                const SizedBox(height: 24),
-                Divider(color: Colors.grey.withValues(alpha: 0.2)),
+                const SizedBox(height: AppSpacing.xl),
+                Divider(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.outline.withValues(alpha: 0.2),
+                ),
                 const SizedBox(height: 20),
 
                 // ── Section 2: Activity Level ──
@@ -471,14 +500,16 @@ class LevelDetailsSheet extends StatelessWidget {
                   title: 'home.activityLevel'.tr(),
                   subtitle: 'home.activityLevelSubtitle'.tr(),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.md),
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppSpacing.lg),
                   decoration: BoxDecoration(
                     color: Theme.of(context).cardColor,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(AppRadius.md),
                     border: Border.all(
-                      color: Colors.grey.withValues(alpha: 0.1),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.outline.withValues(alpha: 0.1),
                     ),
                   ),
                   child: Column(
@@ -509,17 +540,20 @@ class LevelDetailsSheet extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppSpacing.md),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
                           value: lp.displayLevelProgress,
-                          backgroundColor: AppColors.grey200,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.outlineVariant,
+
                           valueColor: AlwaysStoppedAnimation<Color>(accent),
                           minHeight: 8,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: AppSpacing.sm),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -542,7 +576,7 @@ class LevelDetailsSheet extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: AppSpacing.xs),
                       Text(
                         'profile.xpToNextLevel'.tr(
                           namedArgs: {
@@ -592,7 +626,7 @@ class _SectionHeader extends StatelessWidget {
               size: 18,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.sm),
             Text(
               title,
               style: Theme.of(

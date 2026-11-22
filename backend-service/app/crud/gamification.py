@@ -10,14 +10,12 @@ from sqlalchemy import select, func, and_, or_, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 
-from app.core.cache import build_cache_key, delete_cached
 from app.models.gamification import (
     Achievement, UserAchievement, UserWallet, WalletTransaction,
     LeaderboardEntry, UserFollowing, ActivityFeed, ShopItem, UserInventory
 )
 from app.models.user import User
 from app.crud.leaderboard import competition_rank
-from app.core.cache import build_cache_key, delete_cached
 
 
 # ============================================================================
@@ -238,7 +236,6 @@ class WalletCRUD:
         if commit:
             await db.commit()
             await db.refresh(wallet)
-            await delete_cached(build_cache_key("wallet", user_id=str(user_id)))
         else:
             await db.flush()
             # commit=False: caller owns the outer transaction and must
@@ -298,7 +295,6 @@ class WalletCRUD:
         if commit:
             await db.commit()
             await db.refresh(wallet)
-            await delete_cached(build_cache_key("wallet", user_id=str(user_id)))
         else:
             await db.flush()
             # commit=False: caller owns the outer transaction and must

@@ -1,13 +1,15 @@
+import 'package:lexilingo_app/core/services/user_scope_service.dart';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/repositories/youtube_repository.dart';
 import '../../domain/entities/youtube_entities.dart';
+import 'package:lexilingo_app/core/state/reset_epoch.dart';
 
 /// State management for YouTube feature.
 ///
 /// Phase 1: YouTube Video Integration.
-class YouTubeProvider extends ChangeNotifier {
+class YouTubeProvider extends ChangeNotifier with ResetEpoch {
   final YouTubeRepository _repository;
 
   YouTubeProvider({YouTubeRepository? repository})
@@ -17,6 +19,7 @@ class YouTubeProvider extends ChangeNotifier {
   List<YouTubeChannel> _channels = [];
   List<YouTubeVideo> _searchResults = [];
   List<CaptionSegment> _captions = [];
+  CaptionsStatus _captionsStatus = CaptionsStatus.loading;
   String? _nextPageToken;
   bool _isLoading = false;
   bool _isSearching = false;
@@ -29,6 +32,7 @@ class YouTubeProvider extends ChangeNotifier {
   // ── Saved videos (persisted) ──
   // videoId -> SavedVideo (insertion order = save order, newest first via LinkedHashMap)
   final Map<String, SavedVideo> _savedVideos = {};
+  // Per learner and not on the server: stored under a user-scoped key.
   static const _prefsSavedKey = 'youtube_saved_videos';
 
   // ── Watch History (persisted) ──
@@ -52,6 +56,7 @@ class YouTubeProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isSearching => _isSearching;
   bool get isLoadingCaptions => _isLoadingCaptions;
+  CaptionsStatus get captionsStatus => _captionsStatus;
   String? get error => _error;
   String get searchQuery => _searchQuery;
   String get activeChannelName => _activeChannelName;
@@ -77,10 +82,23 @@ class YouTubeProvider extends ChangeNotifier {
   // ── Init ──
 
   /// Load persisted saved videos from SharedPreferences.
-  Future<void> loadSavedVideos() async {
+  Future<void> loadSavedVideos() => _loaded = _loadStored();
+
+  /// The stored lists must be in memory before anything rewrites them: a save
+  /// writes the whole list from memory, and after a reset memory is empty
+  /// until the explore screen has been opened.
+  Future<void>? _loaded;
+
+  Future<void> _ensureLoaded() => _loaded ?? loadSavedVideos();
+
+  Future<void> _loadStored() async {
+    final epoch = resetEpoch;
     try {
       final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_prefsSavedKey);
+      final raw = prefs.getString(
+        await UserScopeService.scopedKey(_prefsSavedKey),
+      );
+      if (isStale(epoch)) return;
       if (raw != null) {
         final list = jsonDecode(raw) as List<dynamic>;
         for (final item in list) {
@@ -90,12 +108,17 @@ class YouTubeProvider extends ChangeNotifier {
       }
 
       // Also load watch history
-      final rawHist = prefs.getString(_prefsHistoryKey);
+      final rawHist = prefs.getString(
+        await UserScopeService.scopedKey(_prefsHistoryKey),
+      );
+      if (isStale(epoch)) return;
       if (rawHist != null) {
         final listHist = jsonDecode(rawHist) as List<dynamic>;
         _watchHistory.clear();
         for (final item in listHist) {
-          _watchHistory.add(YouTubeVideo.fromJson(item as Map<String, dynamic>));
+          _watchHistory.add(
+            YouTubeVideo.fromJson(item as Map<String, dynamic>),
+          );
         }
       }
       notifyListeners();
@@ -104,10 +127,13 @@ class YouTubeProvider extends ChangeNotifier {
 
   /// Load persisted watch history from SharedPreferences.
   Future<void> loadWatchHistory() async {
+    final epoch = resetEpoch;
     try {
       final prefs = await SharedPreferences.getInstance();
-      final raw = prefs.getString(_prefsHistoryKey);
-      if (raw == null) return;
+      final raw = prefs.getString(
+        await UserScopeService.scopedKey(_prefsHistoryKey),
+      );
+      if (isStale(epoch) || raw == null) return;
       final list = jsonDecode(raw) as List<dynamic>;
       _watchHistory.clear();
       for (final item in list) {
@@ -135,10 +161,15 @@ class YouTubeProvider extends ChangeNotifier {
     }
   }
 
+  int _resultsEpoch = 0;
+  int _captionsEpoch = 0;
+
   /// Search for videos by query.
   Future<void> searchVideos(String query, {String? channelId}) async {
     if (query.length < 2) return;
+    final epoch = ++_resultsEpoch;
 
+    _isLoading = false;
     _searchQuery = query;
     _activeChannelName = '';
     _activeChannelId = '';
@@ -153,20 +184,25 @@ class YouTubeProvider extends ChangeNotifier {
         query: query,
         channelId: channelId,
       );
+      if (epoch != _resultsEpoch) return;
       _searchResults = result.videos;
       _nextPageToken = result.nextPageToken;
     } catch (e) {
+      if (epoch != _resultsEpoch) return;
       _error = e.toString();
     } finally {
-      _isSearching = false;
-      notifyListeners();
+      if (epoch == _resultsEpoch) {
+        _isSearching = false;
+        notifyListeners();
+      }
     }
   }
 
   /// Load next page of search results or channel videos.
   Future<void> loadMoreResults() async {
-    if (_nextPageToken == null || _isSearching) return;
+    if (_nextPageToken == null || _isSearching || _isLoading) return;
 
+    final epoch = _resultsEpoch;
     _isSearching = true;
     notifyListeners();
 
@@ -184,13 +220,17 @@ class YouTubeProvider extends ChangeNotifier {
           pageToken: _nextPageToken,
         );
       }
+      if (epoch != _resultsEpoch) return;
       _searchResults.addAll(result.videos);
       _nextPageToken = result.nextPageToken;
     } catch (e) {
+      if (epoch != _resultsEpoch) return;
       _error = e.toString();
     } finally {
-      _isSearching = false;
-      notifyListeners();
+      if (epoch == _resultsEpoch) {
+        _isSearching = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -201,6 +241,8 @@ class YouTubeProvider extends ChangeNotifier {
     String channelId, {
     String channelName = '',
   }) async {
+    final epoch = ++_resultsEpoch;
+    _isSearching = false;
     _isLoading = true;
     _error = null;
     _searchResults = [];
@@ -213,29 +255,42 @@ class YouTubeProvider extends ChangeNotifier {
 
     try {
       final result = await _repository.getChannelVideos(channelId);
+      if (epoch != _resultsEpoch) return;
       _searchResults = result.videos;
       _nextPageToken = result.nextPageToken;
     } catch (e) {
+      if (epoch != _resultsEpoch) return;
       _error = e.toString();
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      if (epoch == _resultsEpoch) {
+        _isLoading = false;
+        notifyListeners();
+      }
     }
   }
 
-  /// Load captions for a video.
+  /// Load captions for a video; call again to retry after [CaptionsStatus.unavailable].
   Future<void> loadCaptions(String videoId, {String lang = 'en'}) async {
+    final epoch = ++_captionsEpoch;
     _isLoadingCaptions = true;
+    _captionsStatus = CaptionsStatus.loading;
     _captions = [];
     notifyListeners();
 
     try {
-      _captions = await _repository.getCaptions(videoId, lang: lang);
+      final result = await _repository.getCaptions(videoId, lang: lang);
+      if (epoch != _captionsEpoch) return;
+      _captions = result.segments;
+      _captionsStatus = result.status;
     } catch (e) {
       debugPrint('Failed to load captions: $e');
+      if (epoch != _captionsEpoch) return;
+      _captionsStatus = CaptionsStatus.unavailable;
     } finally {
-      _isLoadingCaptions = false;
-      notifyListeners();
+      if (epoch == _captionsEpoch) {
+        _isLoadingCaptions = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -250,12 +305,14 @@ class YouTubeProvider extends ChangeNotifier {
   // ── Save / Unsave Videos ──
 
   Future<void> saveVideo(YouTubeVideo video) async {
+    await _ensureLoaded();
     _savedVideos[video.videoId] = SavedVideo.fromVideo(video);
     notifyListeners();
     await _persistSavedVideos();
   }
 
   Future<void> unsaveVideo(String videoId) async {
+    await _ensureLoaded();
     _savedVideos.remove(videoId);
     notifyListeners();
     await _persistSavedVideos();
@@ -265,7 +322,10 @@ class YouTubeProvider extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       final list = _savedVideos.values.map((v) => v.toJson()).toList();
-      await prefs.setString(_prefsSavedKey, jsonEncode(list));
+      await prefs.setString(
+        await UserScopeService.scopedKey(_prefsSavedKey),
+        jsonEncode(list),
+      );
     } catch (_) {}
   }
 
@@ -283,6 +343,7 @@ class YouTubeProvider extends ChangeNotifier {
     String? contextSentence,
   }) async {
     final memKey = '${word.toLowerCase()}:$lang';
+    final epoch = resetEpoch;
 
     WordTranslation result;
 
@@ -294,10 +355,11 @@ class YouTubeProvider extends ChangeNotifier {
         lang: lang,
         context: contextSentence ?? '',
       );
+      if (isStale(epoch)) return result;
       _translationMemCache[memKey] = result;
     }
 
-    if (videoId != null) {
+    if (videoId != null && !isStale(epoch)) {
       final withCtx = result.copyWith(contextSentence: contextSentence);
       _addToHistory(videoId, withCtx);
       return withCtx;
@@ -320,6 +382,7 @@ class YouTubeProvider extends ChangeNotifier {
   // ── Watch History Actions ──
 
   Future<void> addToHistory(YouTubeVideo video) async {
+    await _ensureLoaded();
     _watchHistory.removeWhere((v) => v.videoId == video.videoId);
     _watchHistory.insert(0, video);
     if (_watchHistory.length > 20) {
@@ -330,6 +393,7 @@ class YouTubeProvider extends ChangeNotifier {
   }
 
   Future<void> clearWatchHistory() async {
+    await _ensureLoaded();
     _watchHistory.clear();
     notifyListeners();
     await _persistWatchHistory();
@@ -339,13 +403,17 @@ class YouTubeProvider extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       final list = _watchHistory.map((v) => v.toJson()).toList();
-      await prefs.setString(_prefsHistoryKey, jsonEncode(list));
+      await prefs.setString(
+        await UserScopeService.scopedKey(_prefsHistoryKey),
+        jsonEncode(list),
+      );
     } catch (_) {}
   }
 
   // ── Recommendations Actions ──
 
   Future<void> loadRecommendations() async {
+    final epoch = resetEpoch;
     _isLoadingRecommendations = true;
     _error = null;
     notifyListeners();
@@ -370,12 +438,16 @@ class YouTubeProvider extends ChangeNotifier {
         channelId: channelId,
         maxResults: 10,
       );
+      if (isStale(epoch)) return;
       _recommendedVideos = result.videos;
     } catch (e) {
+      if (isStale(epoch)) return;
       _error = e.toString();
     } finally {
-      _isLoadingRecommendations = false;
-      notifyListeners();
+      if (!isStale(epoch)) {
+        _isLoadingRecommendations = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -400,6 +472,24 @@ class YouTubeProvider extends ChangeNotifier {
     _translationMemCache.clear();
     _videoTranslationHistory.clear();
     clearSearch();
+  }
+
+  /// Drops everything tied to the signed-in learner. Saved videos and watch
+  /// history live under a per-user storage key, so they come back on sign-in.
+  void reset() {
+    bumpResetEpoch();
+    _loaded = null;
+    _channels = [];
+    _captions = [];
+    _captionsStatus = CaptionsStatus.loading;
+    _isLoading = false;
+    _isLoadingCaptions = false;
+    _isSearching = false;
+    _savedVideos.clear();
+    _watchHistory.clear();
+    _recommendedVideos = [];
+    _isLoadingRecommendations = false;
+    clearAll();
   }
 
   /// Clear error state.

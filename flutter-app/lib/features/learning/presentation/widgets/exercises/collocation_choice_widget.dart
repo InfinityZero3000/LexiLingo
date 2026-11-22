@@ -3,6 +3,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/features/learning/domain/entities/lesson_entity.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_palette.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_chrome.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 // ═══════════════════════════════════════════════════════════════
 // 7. Collocation Choice
@@ -32,7 +33,7 @@ class CollocationChoiceWidget extends StatelessWidget {
     final mainWord = _extractMainWord();
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 16),
+      padding: const EdgeInsets.fromLTRB(20, AppSpacing.xl, 20, AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -52,7 +53,9 @@ class CollocationChoiceWidget extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             'lesson.exercise.collocationInstruction'.tr(),
-            style: TextStyle(fontSize: 13, color: colors.textSecondary),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium!.copyWith(color: colors.textSecondary),
           ),
           const SizedBox(height: 20),
           if (mainWord.isNotEmpty) ...[
@@ -61,7 +64,7 @@ class CollocationChoiceWidget extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 20),
               decoration: BoxDecoration(
                 color: colors.surface,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
                 border: Border.all(
                   color: colors.primary.withValues(alpha: 0.3),
                 ),
@@ -70,8 +73,7 @@ class CollocationChoiceWidget extends StatelessWidget {
                 children: [
                   Text(
                     'lesson.exercise.mainVerb'.tr(),
-                    style: TextStyle(
-                      fontSize: 11,
+                    style: Theme.of(context).textTheme.labelSmall!.copyWith(
                       fontWeight: FontWeight.w700,
                       color: colors.primary,
                       letterSpacing: 1.2,
@@ -80,8 +82,7 @@ class CollocationChoiceWidget extends StatelessWidget {
                   const SizedBox(height: 6),
                   Text(
                     mainWord,
-                    style: TextStyle(
-                      fontSize: 32,
+                    style: Theme.of(context).textTheme.headlineLarge!.copyWith(
                       fontWeight: FontWeight.w800,
                       color: colors.primary,
                     ),
@@ -95,7 +96,7 @@ class CollocationChoiceWidget extends StatelessWidget {
             final sel = userAnswer == opt;
             final corr = exercise.correctAnswer == opt;
             return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.only(bottom: AppSpacing.md),
               child: ExerciseOptionCard(
                 text: opt,
                 showRadio: true,
@@ -112,7 +113,7 @@ class CollocationChoiceWidget extends StatelessWidget {
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
                 color: colors.surface,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppRadius.lg),
               ),
               child: Row(
                 children: [
@@ -127,8 +128,7 @@ class CollocationChoiceWidget extends StatelessWidget {
                       'lesson.exercise.hintLabel'.tr(
                         namedArgs: {'hint': exercise.hint!},
                       ),
-                      style: TextStyle(
-                        fontSize: 13,
+                      style: Theme.of(context).textTheme.bodyMedium!.copyWith(
                         color: colors.textSecondary,
                         height: 1.4,
                       ),

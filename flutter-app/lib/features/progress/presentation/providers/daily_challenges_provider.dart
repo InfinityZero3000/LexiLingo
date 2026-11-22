@@ -1,5 +1,5 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
+import 'package:lexilingo_app/core/l10n/ui_text.dart';
 import 'package:lexilingo_app/features/progress/domain/entities/daily_challenge_entity.dart';
 import 'package:lexilingo_app/features/progress/domain/repositories/progress_repository.dart';
 
@@ -12,10 +12,25 @@ class DailyChallengesProvider extends ChangeNotifier {
   DailyChallengesProvider({required ProgressRepository repository})
     : _repository = repository;
 
+  int _generation = 0;
+  Future<void>? _challengesLoad;
+  bool _disposed = false;
+
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
   // State
   DailyChallengesResponse? _challengesResponse;
   bool _isLoading = false;
-  String? _errorMessage;
+  UiText? _errorMessage;
   final Set<String> _claimedRewards = {};
   bool _bonusClaimedLocally = false;
 
@@ -24,7 +39,7 @@ class DailyChallengesProvider extends ChangeNotifier {
   List<DailyChallengeEntity> get challenges =>
       _challengesResponse?.challenges ?? [];
   bool get isLoading => _isLoading;
-  String? get errorMessage => _errorMessage;
+  String? get errorMessage => _errorMessage?.resolve();
 
   /// Total number of challenges
   int get totalChallenges => _challengesResponse?.totalChallenges ?? 0;
@@ -57,16 +72,28 @@ class DailyChallengesProvider extends ChangeNotifier {
       challenges.any((c) => c.id == challengeId && c.isClaimed);
 
   /// Load daily challenges from API
-  Future<void> loadChallenges() async {
+  Future<void> loadChallenges() {
+    final inFlight = _challengesLoad;
+    if (inFlight != null) return inFlight;
+    final run = _loadChallenges();
+    _challengesLoad = run;
+    return run.whenComplete(() {
+      if (identical(_challengesLoad, run)) _challengesLoad = null;
+    });
+  }
+
+  Future<void> _loadChallenges() async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
+    final generation = _generation;
     final result = await _repository.getDailyChallenges();
+    if (generation != _generation) return;
 
     result.fold(
       (failure) {
-        _errorMessage = failure.message;
+        _errorMessage = UiText.failure(failure);
       },
       (response) {
         _challengesResponse = response;
@@ -85,7 +112,7 @@ class DailyChallengesProvider extends ChangeNotifier {
   Future<bool> claimReward(String challengeId) async {
     // Check if already claimed
     if (_claimedRewards.contains(challengeId)) {
-      _errorMessage = 'dailyChallenges.rewardAlreadyClaimed'.tr();
+      _errorMessage = UiText.key('dailyChallenges.rewardAlreadyClaimed');
       notifyListeners();
       return false;
     }
@@ -98,7 +125,7 @@ class DailyChallengesProvider extends ChangeNotifier {
 
     // Check if completed
     if (!challenge.isCompleted) {
-      _errorMessage = 'dailyChallenges.challengeNotCompleted'.tr();
+      _errorMessage = UiText.key('dailyChallenges.challengeNotCompleted');
       notifyListeners();
       return false;
     }
@@ -106,12 +133,14 @@ class DailyChallengesProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
+    final generation = _generation;
     final result = await _repository.claimChallengeReward(challengeId);
+    if (generation != _generation) return false;
 
     bool success = false;
     result.fold(
       (failure) {
-        _errorMessage = failure.message;
+        _errorMessage = UiText.failure(failure);
       },
       (data) {
         _claimedRewards.add(challengeId);
@@ -131,10 +160,12 @@ class DailyChallengesProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
+    final generation = _generation;
     final result = await _repository.claimDailyBonus();
+    if (generation != _generation) return false;
 
     bool success = false;
-    result.fold((failure) => _errorMessage = failure.message, (_) {
+    result.fold((failure) => _errorMessage = UiText.failure(failure), (_) {
       _bonusClaimedLocally = true;
       success = true;
     });
@@ -157,6 +188,8 @@ class DailyChallengesProvider extends ChangeNotifier {
 
   /// Reset state (for logout)
   void reset() {
+    _generation++;
+    _challengesLoad = null;
     _challengesResponse = null;
     _isLoading = false;
     _errorMessage = null;
