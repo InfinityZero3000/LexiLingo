@@ -128,6 +128,21 @@ async def test_the_list_shows_builtin_topics_after_custom_ones_without_duplicate
 
 
 @pytest.mark.asyncio
+async def test_a_full_page_of_custom_topics_does_not_push_the_builtin_ones_out():
+    from api.routes.admin import list_admin_topics
+
+    docs = [
+        {"story_id": f"story_c{i}", "title": {"en": f"C{i}", "vi": "x"}, "difficulty_level": "B1", "category": "work"}
+        for i in range(5)
+    ]
+    with patch.object(StoryService, "list_sample_story_items", return_value=[_builtin()]):
+        out = await list_admin_topics(limit=5, _key="k", db=_db(docs=docs))
+
+    sources = [r["source"] for r in out["data"]["topics"]]
+    assert sources == ["custom"] * 5 + ["builtin"]
+
+
+@pytest.mark.asyncio
 async def test_a_builtin_topic_cannot_be_overwritten_by_a_new_save():
     from api.routes.admin import create_admin_topic
 

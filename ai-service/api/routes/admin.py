@@ -362,7 +362,6 @@ async def list_admin_topics(
         if item.story_id not in seen:
             seen.add(item.story_id)
             rows.append(_list_row(item, "builtin"))
-    rows = rows[:cap]
     return {"success": True, "data": {"topics": rows, "total": len(rows)}}
 
 
