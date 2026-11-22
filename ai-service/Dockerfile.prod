@@ -57,8 +57,8 @@ COPY service ./service
 RUN SECRET_KEY=build-time-import-check-not-a-runtime-secret \
     python -c "import defusedxml, typer; from api.services.content_etl.cli import app; import api.main"
 
-RUN mkdir -p /app/models /app/logs /tmp/lexilingo-stt && \
-    chown -R appuser:appuser /app /tmp/lexilingo-stt
+RUN mkdir -p /app/models /app/logs /tmp/lexilingo-stt /data/content-etl && \
+    chown -R appuser:appuser /app /tmp/lexilingo-stt /data/content-etl
 
 USER appuser
 
