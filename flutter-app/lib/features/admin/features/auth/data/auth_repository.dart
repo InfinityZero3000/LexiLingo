@@ -34,7 +34,7 @@ class AdminUser {
   bool get mayUsePanel => isAdmin || isSuperAdmin;
 
   factory AdminUser.fromJson(Map<String, dynamic> json) {
-    final roleSlug = (json['role_slug'] ?? json['role'] ?? 'admin').toString();
+    final roleSlug = (json['role_slug'] ?? json['role'] ?? 'user').toString();
     final roleLevel = _roleLevelFromJson(json, roleSlug);
 
     return AdminUser(
