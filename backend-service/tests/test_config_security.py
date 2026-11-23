@@ -71,3 +71,20 @@ def test_firebase_credentials_file_outside_repo_is_accepted():
     }
     settings = Settings(**kwargs)
     assert settings.is_production
+
+
+@pytest.mark.parametrize("host", ["vercel", "netlify"])
+def test_shared_hosting_wildcard_is_rejected(host):
+    with pytest.raises(ValueError, match="vercel.app"):
+        Settings(
+            **BASE_PROD_KWARGS,
+            CORS_ALLOW_ORIGIN_REGEX=rf"https?://([a-zA-Z0-9-]+\.)*{host}\.app(:\d+)?",
+        )
+
+
+def test_exact_vercel_alias_in_regex_is_accepted():
+    settings = Settings(
+        **BASE_PROD_KWARGS,
+        CORS_ALLOW_ORIGIN_REGEX=r"https?://([a-zA-Z0-9-]+\.)*lexilingo\.me(:\d+)?|https://lexilingo\.vercel\.app",
+    )
+    assert settings.is_production
