@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 import time
 
 
-CERTIFICATE_SCHEMA_VERSION = 4
+CERTIFICATE_SCHEMA_VERSION = 5
 # ponytail: keeps the pre-fix effective bound (evidence_drift 0.20 + 0.15a <= tau_reuse 0.25 <=> a <= 1/3); fixed before measuring, not tuned
 UNVERIFIED_EVIDENCE_MAX_AGE_RATIO = 1 / 3
 BASE_REQUIRED_DIMENSIONS = frozenset({
@@ -46,6 +46,7 @@ class L1Request:
     freshness_class: str = ""
     native_language: str = ""
     user_scope: str = ""
+    context_digest: str = ""
     schema_version: int = CERTIFICATE_SCHEMA_VERSION
     required_dimensions: set[str] = field(default_factory=lambda: set(BASE_REQUIRED_DIMENSIONS))
 
@@ -71,6 +72,7 @@ class L1Candidate:
     freshness_class: str = ""
     native_language: str = ""
     user_scope: str = ""
+    context_digest: str = ""
     schema_version: int = CERTIFICATE_SCHEMA_VERSION
     required_dimensions: set[str] = field(default_factory=lambda: set(BASE_REQUIRED_DIMENSIONS))
     created_at: float = 0.0
@@ -129,6 +131,9 @@ def decide_l1_reuse(
     # Unconditional (not a required dimension): an artifact belongs to exactly one learner.
     if request.user_scope != candidate.user_scope:
         reasons.append("mismatch:user_scope")
+    # Also unconditional: a follow-up means something else in another conversation.
+    if request.context_digest != candidate.context_digest:
+        reasons.append("mismatch:context")
 
     required = set(request.required_dimensions) | set(candidate.required_dimensions) | BASE_REQUIRED_DIMENSIONS
     for dimension in sorted(required):

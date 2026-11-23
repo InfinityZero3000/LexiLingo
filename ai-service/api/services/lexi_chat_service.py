@@ -1068,15 +1068,19 @@ async def stream_lexi_chat(
     lexi_response = ""
     model_used = "stream_llm"
     cache_hit = bool(raw_state.get("cache_hit")) and bool(raw_state.get("tutor_response"))
+    # The graph ended at ask_clarify: its question is the answer, and no context was retrieved for an LLM.
+    clarification = (
+        not cache_hit and raw_state.get("strategy") == "ask" and bool(raw_state.get("tutor_response"))
+    )
 
     # 3. Token streaming
-    if cache_hit:
-        # Cache hit: deliver words quickly — no LLM round-trip needed.
+    if cache_hit or clarification:
+        # Already answered: deliver words quickly — no LLM round-trip needed.
         lexi_response = _sanitize_lexi_response(
             str(raw_state["tutor_response"]),
             expected_language=request.native_language,
         )
-        model_used = f"cached_{raw_state.get('cache_layer', 'L0')}"
+        model_used = "trace-cag_clarify" if clarification else f"cached_{raw_state.get('cache_layer', 'L0')}"
         for word in lexi_response.split(" "):
             yield f"event: chunk\ndata: {json.dumps({'text': word + ' '})}\n\n"
             await asyncio.sleep(0.012)
@@ -1118,10 +1122,11 @@ async def stream_lexi_chat(
             # GROQ_API_KEY's presence, which stays true even when Groq is down.
             model_used = f"{provider_info.get('provider', 'unknown')}/{provider_info.get('model', 'unknown')}"
 
-    if not cache_hit and lexi_response and model_used != "trace-cag_safe_response":
+    if not cache_hit and not clarification and lexi_response and model_used != "trace-cag_safe_response":
         try:
             from api.services.trace_cag.benchmark.ranking import _update_ranker_from_generation
             from api.services.trace_cag.cache_utils import _write_cache_entry
+            from api.services.trace_cag.generate import _state_with_policy_dependency, cache_write_allowed
 
             overall_for_cache = EvaluationAgent.compute_overall_score(
                 grammar_score, fluency_score, vocab_level
@@ -1131,9 +1136,9 @@ async def stream_lexi_chat(
                 response=lexi_response,
                 retrieval_trace=list(raw_state.get("retrieval_trace") or []),
             )
-            if raw_state.get("cache_policy", "on") == "on":
+            if raw_state.get("cache_policy", "on") == "on" and cache_write_allowed(raw_state):
                 await _write_cache_entry(
-                    raw_state,
+                    _state_with_policy_dependency(raw_state),
                     lexi_response,
                     str(raw_state.get("strategy") or "feedback"),
                     diag_errors,

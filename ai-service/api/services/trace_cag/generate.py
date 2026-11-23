@@ -59,6 +59,17 @@ def _state_with_policy_dependency(state: TraceCAGState) -> TraceCAGState:
         ],
     }
 
+
+def cache_write_allowed(state: Dict[str, Any]) -> bool:
+    """A web-grounded answer goes stale fast: cache it only once its chunk has earned promotion."""
+    top_ids = [str(item.get("item_id") or "") for item in (state.get("retrieval_trace") or [])[:3]]
+    external = [item_id.removeprefix("ext_") for item_id in top_ids if item_id.startswith("ext_")]
+    if not external:
+        return True
+    doc_service = get_doc_intel_service()
+    return any(doc_service.should_promote_to_cache(chunk_id) for chunk_id in external)
+
+
 _LOCAL_LLAMA_CORE_SYSTEM_PROMPT = (
     "You are Lexi, an expert English tutor. "
     "Provide grounded, concise and actionable feedback. "
@@ -603,7 +614,8 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
 
         if state.get("cache_policy", "on") == "on":
             try:
-                await _write_cache_entry(_state_with_policy_dependency(state), response, strategy, errors, overall_score, context, model_used=model_used)
+                if cache_write_allowed(state):
+                    await _write_cache_entry(_state_with_policy_dependency(state), response, strategy, errors, overall_score, context, model_used=model_used)
             except Exception as e:
                 logger.debug(f"[generate_node] Cache write failed: {e}")
 
@@ -906,22 +918,7 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
     # Store response in Redis cache for future hits
     if state.get("cache_policy", "on") == "on" and model_used != "safe_tutor_fallback":
         try:
-            # ── Tiered Cache Management (L0/L1 Promotion) ─────────────
-            # Nếu thông tin từ L2 được sử dụng, kiểm tra thăng hạng
-            doc_service = get_doc_intel_service()
-            trace = state.get("retrieval_trace", [])
-            is_l2_used = any(t.get("item_id", "").startswith("ext_") for t in trace[:3])
-
-            if is_l2_used:
-                for t in trace[:3]:
-                    if t.get("item_id", "").startswith("ext_"):
-                        chunk_id = str(t.get("item_id") or "").replace("ext_", "")
-                        if doc_service.should_promote_to_cache(chunk_id):
-                            logger.info(f"[cache_promotion] Chunk {chunk_id[:8]} promoted to L1 cache")
-                            await _write_cache_entry(_state_with_policy_dependency(state), response, strategy, errors, overall_score, context)
-                            break
-            else:
-                # Mặc định cache cho các luồng KG/Rules để tối ưu tốc độ
+            if cache_write_allowed(state):
                 await _write_cache_entry(_state_with_policy_dependency(state), response, strategy, errors, overall_score, context)
         except Exception as e:
             logger.debug(f"[generate_node] Cache write failed: {e}")

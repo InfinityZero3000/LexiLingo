@@ -166,11 +166,11 @@ async def test_anonymous_request_bypasses_cache_and_writes_nothing():
 
 
 @pytest.mark.asyncio
-async def test_certificate_records_schema4_and_scope():
+async def test_certificate_records_schema_and_scope():
     await _write("alice", QUESTION)
     certificate = next(iter(cache_mod._MEM_RESPONSE_CACHE.values()))[1]["admissibility_certificate"]
-    assert CERTIFICATE_SCHEMA_VERSION == 4
-    assert certificate["schema_version"] == 4
+    assert CERTIFICATE_SCHEMA_VERSION == 5
+    assert certificate["schema_version"] == 5
     assert certificate["user_scope"] == cache_mod._user_cache_scope({"user_id": "alice"})
 
 
