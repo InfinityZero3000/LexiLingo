@@ -210,7 +210,9 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
         padding: const EdgeInsets.fromLTRB(20, AppSpacing.md, 20, 28),
         decoration: BoxDecoration(
           color: isDark ? AppColors.surfaceDark : AppColors.textInverted,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppRadius.xl),
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1428,7 +1430,9 @@ class _WordTranslationSheetState extends State<_WordTranslationSheet> {
       ),
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : AppColors.textInverted,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.xl),
+        ),
       ),
       child: FutureBuilder<WordTranslation>(
         future: _translationFuture,

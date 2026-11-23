@@ -653,7 +653,7 @@ class _GamesHubScreenState extends State<GamesHubScreen>
                 colors: [color, color.withValues(alpha: 0.75)],
               ),
               borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(8),
+                top: Radius.circular(AppRadius.sm),
               ),
             ),
             alignment: Alignment.center,

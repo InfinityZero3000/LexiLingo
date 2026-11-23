@@ -31467,6 +31467,58 @@
           "intermediateFill": null
         }
       }
+    },
+    {
+      "id": "lib/core/widgets/app_surface.dart::_AppSurfaceState::DecoratedBox::0",
+      "path": "lib/core/widgets/app_surface.dart",
+      "entryPoint": "surface",
+      "symbol": "_AppSurfaceState",
+      "callKind": "DecoratedBox",
+      "ordinal": 0,
+      "line": 57,
+      "category": "eligible",
+      "group": 3,
+      "status": "migrated",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
+    },
+    {
+      "id": "lib/core/theme/app_tactile_theme.dart::AppTactileTheme::BoxDecoration::1",
+      "path": "lib/core/theme/app_tactile_theme.dart",
+      "entryPoint": "surface",
+      "symbol": "AppTactileTheme",
+      "callKind": "BoxDecoration",
+      "ordinal": 1,
+      "line": 76,
+      "category": "eligible",
+      "group": 3,
+      "status": "migrated",
+      "colors": {
+        "light": {
+          "accent": "0xFF000000",
+          "fill": "0xFFFFFFFF",
+          "pageBackground": "0xFFFFFFFF",
+          "intermediateFill": null
+        },
+        "dark": {
+          "accent": "0xFFFFFFFF",
+          "fill": "0xFF121212",
+          "pageBackground": "0xFF121212",
+          "intermediateFill": null
+        }
+      }
     }
   ],
   "boundaries": [

@@ -195,9 +195,7 @@ class TranscriptPanel extends StatelessWidget {
                   context,
                 ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.xl),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
               ),
             ),
           ],

@@ -148,7 +148,7 @@ class _EmptyNotificationWidgetState extends State<EmptyNotificationWidget>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         gradient: LinearGradient(
           colors: [
             isDark ? accent : Theme.of(context).colorScheme.primary,
@@ -172,9 +172,7 @@ class _EmptyNotificationWidgetState extends State<EmptyNotificationWidget>
           foregroundColor: Theme.of(context).colorScheme.onPrimary,
           shadowColor: Colors.transparent,
           padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(30),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

@@ -197,9 +197,7 @@ class _NewsQuizScreenState extends State<NewsQuizScreen>
                 backgroundColor: cefrColor,
                 disabledBackgroundColor: cefrColor.withValues(alpha: 0.3),
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.lg),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
                 textStyle: Theme.of(
                   context,
                 ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),

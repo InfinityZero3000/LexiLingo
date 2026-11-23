@@ -130,7 +130,7 @@ class _StreakMilestoneOverlayState extends State<StreakMilestoneOverlay>
                 ),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
-                  borderRadius: BorderRadius.circular(32),
+                  borderRadius: BorderRadius.circular(AppRadius.xl),
                   boxShadow: [
                     BoxShadow(
                       color: fireOrange.withValues(alpha: 0.3),

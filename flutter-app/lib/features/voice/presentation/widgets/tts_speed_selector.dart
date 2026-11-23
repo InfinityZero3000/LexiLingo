@@ -118,7 +118,7 @@ class TtsSpeedSelector extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       builder: (context) => Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),
@@ -242,7 +242,7 @@ class TtsSpeedButton extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       builder: (context) => Container(
         padding: const EdgeInsets.all(AppSpacing.xl),
@@ -276,7 +276,7 @@ class TtsSpeedButton extends StatelessWidget {
                       color: isSelected
                           ? Theme.of(context).primaryColor
                           : Colors.grey[200],
-                      borderRadius: BorderRadius.circular(25),
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
                     ),
                     child: Text(
                       speed == 1.0 ? 'Normal' : '${speed}x',

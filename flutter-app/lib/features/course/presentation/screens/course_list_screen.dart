@@ -14,6 +14,7 @@ import 'package:lexilingo_app/features/course/presentation/screens/category_deta
 import 'package:lexilingo_app/features/course/presentation/utils/course_tag_label.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_category_entity.dart';
+import 'package:lexilingo_app/core/widgets/app_surface.dart';
 
 /// Course List Screen
 /// Displays courses in horizontal scrolling sections grouped by category
@@ -704,7 +705,7 @@ class _HorizontalCourseCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final cardWidth = compact ? 150.0 : 170.0;
-    final cardRadius = compact ? 14.0 : 16.0;
+    const cardRadius = AppRadius.lg;
     final contentPadding = compact ? 10.0 : 12.0;
     final titleFontSize = compact ? 13.0 : 14.0;
     final imageAspectRatio = compact ? 16 / 9 : 16 / 10;
@@ -716,330 +717,323 @@ class _HorizontalCourseCard extends StatelessWidget {
         horizontal: AppSpacing.xs,
         vertical: 4,
       ),
-      child: Card(
-        elevation: 1.5,
-        shadowColor: AppColors.slate900.withValues(alpha: 0.26),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(cardRadius),
-        ),
-        child: InkWell(
-          onTap: () => onTap(_getCourseImageUrl()),
-          borderRadius: BorderRadius.circular(cardRadius),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Enhanced Hero Thumbnail with gradient overlay
-              Hero(
-                tag: heroTag,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(cardRadius),
-                  ),
-                  child: AspectRatio(
-                    aspectRatio: imageAspectRatio,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        // Background image or placeholder
-                        _buildCourseThumbnail(context),
-
-                        // Gradient overlay for better text visibility
-                        Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.transparent,
-                                AppColors.slate900.withValues(alpha: 0.5),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        // Level badge
-                        Positioned(
-                          top: 8,
-                          left: 8,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.sm,
-                              vertical: AppSpacing.xs,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _getLevelColor(
-                                course.level,
-                                isDark: isDark,
-                              ).withValues(alpha: 0.9),
-                              borderRadius: BorderRadius.circular(AppRadius.md),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.slate900.withValues(
-                                    alpha: 0.2,
-                                  ),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Text(
-                              course.level,
-                              style: Theme.of(context).textTheme.labelSmall
-                                  ?.copyWith(
-                                    color: AppColors.surfaceLight,
-
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                            ),
-                          ),
-                        ),
-
-                        // XP badge (bottom right)
-                        Positioned(
-                          bottom: 8,
-                          right: 8,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppSpacing.sm,
-                              vertical: AppSpacing.xs,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppColors.warning.withValues(alpha: 0.9),
-                              borderRadius: BorderRadius.circular(AppRadius.md),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.slate900.withValues(
-                                    alpha: 0.2,
-                                  ),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.star,
-                                  size: 12,
-                                  color: AppColors.surfaceLight,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${course.totalXp}',
-                                  style: Theme.of(context).textTheme.labelSmall
-                                      ?.copyWith(
-                                        color: AppColors.surfaceLight,
-
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+      child: AppSurface(
+        radius: BorderRadius.circular(cardRadius),
+        onTap: () => onTap(_getCourseImageUrl()),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Enhanced Hero Thumbnail with gradient overlay
+            Hero(
+              tag: heroTag,
+              child: ClipRRect(
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(cardRadius),
                 ),
-              ),
-
-              // Content
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.all(contentPadding),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                child: AspectRatio(
+                  aspectRatio: imageAspectRatio,
+                  child: Stack(
+                    fit: StackFit.expand,
                     children: [
-                      // Tags row — horizontally scrollable, above title. The
-                      // fade says "more to the right" instead of a hard cut
-                      // through the last chip.
-                      ClipRect(
-                        child: SingleChildScrollView(
-                          physics: const NeverScrollableScrollPhysics(),
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              // Language chip (INT + en)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 7,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      Theme.of(context)
-                                          .colorScheme
-                                          .primaryContainer
-                                          .withValues(alpha: 0.7),
-                                      Theme.of(context)
-                                          .colorScheme
-                                          .primaryContainer
-                                          .withValues(alpha: 0.5),
-                                    ],
-                                  ),
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.md,
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: AppSpacing.xs,
-                                        vertical: 1,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .primary
-                                            .withValues(alpha: 0.1),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: Text(
-                                        _getLanguageCode(course.language),
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .labelSmall
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.bold,
-                                              color: Theme.of(
-                                                context,
-                                              ).colorScheme.primary,
-                                            ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      _getLanguageLabel(course.language),
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelSmall
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.w600,
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.onPrimaryContainer,
-                                          ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              // Learner-facing tags only. Internal seed/crawl
-                              // metadata stays in data for filtering/imports.
-                              ...displayTags.map(
-                                (tag) => Padding(
-                                  padding: const EdgeInsets.only(left: 5),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 7,
-                                      vertical: 3,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isDark
-                                          ? AppColors.textInverted.withValues(
-                                              alpha: 0.08,
-                                            )
-                                          : AppColors.grey100,
-                                      borderRadius: BorderRadius.circular(
-                                        AppRadius.md,
-                                      ),
-                                      border: Border.all(
-                                        color: isDark
-                                            ? AppColors.textInverted.withValues(
-                                                alpha: 0.24,
-                                              )
-                                            : AppColors.grey300,
-                                        width: 0.8,
-                                      ),
-                                    ),
-                                    child: Text(
-                                      tag,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelSmall
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.w600,
-                                            color: isDark
-                                                ? AppColors.textOnDarkSecondary
-                                                : AppColors.grey700,
-                                          ),
-                                    ),
-                                  ),
-                                ),
-                              ),
+                      // Background image or placeholder
+                      _buildCourseThumbnail(context),
+
+                      // Gradient overlay for better text visibility
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.transparent,
+                              AppColors.slate900.withValues(alpha: 0.5),
                             ],
                           ),
                         ),
                       ),
 
-                      const SizedBox(height: 4),
-
-                      // Title
-                      Text(
-                        course.title,
-                        style: TextStyle(
-                          fontSize: titleFontSize,
-                          fontWeight: FontWeight.bold,
-                          color: isDark
-                              ? AppColors.textOnDarkPrimary
-                              : AppColors.textDark,
-                          height: 1.15,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-
-                      const Spacer(),
-
-                      // Stats row with icons
-                      Row(
-                        children: [
-                          _buildStatChip(
-                            context,
-                            icon: Icons.book_outlined,
-                            value: '${course.totalLessons}',
-                            color: AppColorRoles.primary(isDark),
+                      // Level badge
+                      Positioned(
+                        top: 8,
+                        left: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm,
+                            vertical: AppSpacing.xs,
                           ),
-                          const SizedBox(width: 8),
-                          if (course.isEnrolled == true)
-                            Expanded(
-                              child: _buildProgressChip(
-                                context,
-                                course.userProgress ?? 0,
+                          decoration: BoxDecoration(
+                            color: _getLevelColor(
+                              course.level,
+                              isDark: isDark,
+                            ).withValues(alpha: 0.9),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.slate900.withValues(
+                                  alpha: 0.2,
+                                ),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
                               ),
-                            ),
-                        ],
-                      ),
+                            ],
+                          ),
+                          child: Text(
+                            course.level,
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: AppColors.surfaceLight,
 
-                      // Progress or Enroll indicator
-                      if (course.isEnrolled == true) ...[
-                        const SizedBox(height: 4),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: (course.userProgress ?? 0) / 100,
-                            backgroundColor: isDark
-                                ? AppColors.grey700
-                                : AppColors.grey200,
-                            minHeight: 4,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              _getProgressColor(
-                                course.userProgress ?? 0,
-                                isDark: isDark,
-                              ),
-                            ),
+                                  fontWeight: FontWeight.bold,
+                                ),
                           ),
                         ),
-                      ],
+                      ),
+
+                      // XP badge (bottom right)
+                      Positioned(
+                        bottom: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.sm,
+                            vertical: AppSpacing.xs,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.warning.withValues(alpha: 0.9),
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.slate900.withValues(
+                                  alpha: 0.2,
+                                ),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.star,
+                                size: 12,
+                                color: AppColors.surfaceLight,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${course.totalXp}',
+                                style: Theme.of(context).textTheme.labelSmall
+                                    ?.copyWith(
+                                      color: AppColors.surfaceLight,
+
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+
+            // Content
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.all(contentPadding),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Tags row — horizontally scrollable, above title. The
+                    // fade says "more to the right" instead of a hard cut
+                    // through the last chip.
+                    ClipRect(
+                      child: SingleChildScrollView(
+                        physics: const NeverScrollableScrollPhysics(),
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            // Language chip (INT + en)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Theme.of(context)
+                                        .colorScheme
+                                        .primaryContainer
+                                        .withValues(alpha: 0.7),
+                                    Theme.of(context)
+                                        .colorScheme
+                                        .primaryContainer
+                                        .withValues(alpha: 0.5),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.md,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: AppSpacing.xs,
+                                      vertical: 1,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .primary
+                                          .withValues(alpha: 0.1),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      _getLanguageCode(course.language),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .labelSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.primary,
+                                          ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    _getLanguageLabel(course.language),
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelSmall
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onPrimaryContainer,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // Learner-facing tags only. Internal seed/crawl
+                            // metadata stays in data for filtering/imports.
+                            ...displayTags.map(
+                              (tag) => Padding(
+                                padding: const EdgeInsets.only(left: 5),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 7,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isDark
+                                        ? AppColors.textInverted.withValues(
+                                            alpha: 0.08,
+                                          )
+                                        : AppColors.grey100,
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.md,
+                                    ),
+                                    border: Border.all(
+                                      color: isDark
+                                          ? AppColors.textInverted.withValues(
+                                              alpha: 0.24,
+                                            )
+                                          : AppColors.grey300,
+                                      width: 0.8,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    tag,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelSmall
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          color: isDark
+                                              ? AppColors.textOnDarkSecondary
+                                              : AppColors.grey700,
+                                        ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 4),
+
+                    // Title
+                    Text(
+                      course.title,
+                      style: TextStyle(
+                        fontSize: titleFontSize,
+                        fontWeight: FontWeight.bold,
+                        color: isDark
+                            ? AppColors.textOnDarkPrimary
+                            : AppColors.textDark,
+                        height: 1.15,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+
+                    const Spacer(),
+
+                    // Stats row with icons
+                    Row(
+                      children: [
+                        _buildStatChip(
+                          context,
+                          icon: Icons.book_outlined,
+                          value: '${course.totalLessons}',
+                          color: AppColorRoles.primary(isDark),
+                        ),
+                        const SizedBox(width: 8),
+                        if (course.isEnrolled == true)
+                          Expanded(
+                            child: _buildProgressChip(
+                              context,
+                              course.userProgress ?? 0,
+                            ),
+                          ),
+                      ],
+                    ),
+
+                    // Progress or Enroll indicator
+                    if (course.isEnrolled == true) ...[
+                      const SizedBox(height: 4),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: (course.userProgress ?? 0) / 100,
+                          backgroundColor: isDark
+                              ? AppColors.grey700
+                              : AppColors.grey200,
+                          minHeight: 4,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            _getProgressColor(
+                              course.userProgress ?? 0,
+                              isDark: isDark,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -1866,7 +1860,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                     style: FilledButton.styleFrom(
                       backgroundColor: primaryAccent,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
+                        borderRadius: AppRadius.mdAll,
                       ),
                     ),
                     child: Text(

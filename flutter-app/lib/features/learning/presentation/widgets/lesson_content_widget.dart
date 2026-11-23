@@ -161,17 +161,23 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                   : Colors.grey[50],
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                borderSide: BorderSide(color: Colors.grey[300]!, width: 2),
+                borderSide: BorderSide(
+                  color: Colors.grey[300]!,
+                  width: AppBorderWidth.regular,
+                ),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
-                borderSide: BorderSide(color: Colors.grey[300]!, width: 2),
+                borderSide: BorderSide(
+                  color: Colors.grey[300]!,
+                  width: AppBorderWidth.regular,
+                ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.md),
                 borderSide: BorderSide(
                   color: Theme.of(context).primaryColor,
-                  width: 2,
+                  width: AppBorderWidth.regular,
                 ),
               ),
               disabledBorder: OutlineInputBorder(
@@ -182,7 +188,7 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                             ? context.status.success
                             : Theme.of(context).colorScheme.error)
                       : Colors.grey[300]!,
-                  width: 2,
+                  width: AppBorderWidth.regular,
                 ),
               ),
               suffixIcon: widget.isAnswered
@@ -242,7 +248,7 @@ class _LessonContentWidgetState extends State<LessonContentWidget> {
                   color: widget.isCorrect!
                       ? context.status.success
                       : AppColors.orange,
-                  width: 1,
+                  width: AppBorderWidth.hairline,
                 ),
               ),
               child: Padding(

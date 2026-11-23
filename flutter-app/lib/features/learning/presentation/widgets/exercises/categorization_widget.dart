@@ -173,7 +173,7 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
                                   !widget.isAnswered
                               ? colors.primary
                               : colors.border,
-                          width: 1.5,
+                          width: AppBorderWidth.regular,
                         ),
                       ),
                       child: Column(
@@ -305,12 +305,12 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                       border: Border.all(
                         color: sel ? colors.primary : colors.border,
-                        width: 1.5,
+                        width: AppBorderWidth.regular,
                       ),
                       boxShadow: [
                         BoxShadow(
                           color: colors.shadow,
-                          blurRadius: 4,
+                          blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
                       ],

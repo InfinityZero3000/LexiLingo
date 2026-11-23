@@ -132,7 +132,7 @@ class _SourceRow extends StatelessWidget {
               color: source.hasActivity
                   ? primary.withValues(alpha: 0.12)
                   : (isDark ? AppColors.surfaceDarkMuted : AppColors.grey100),
-              borderRadius: BorderRadius.circular(9),
+              borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: Icon(
               _icons[source.source] ?? Icons.play_circle_outline_rounded,

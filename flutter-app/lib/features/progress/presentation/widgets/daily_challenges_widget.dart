@@ -384,7 +384,9 @@ class _DailyChallengesSheetState extends State<DailyChallengesSheet> {
     return Container(
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : theme.scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.xl),
+        ),
       ),
       padding: const EdgeInsets.all(AppSpacing.xl),
       child: Column(

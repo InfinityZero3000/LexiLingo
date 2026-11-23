@@ -68,7 +68,9 @@ class LexiCorrectionsSheet extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : AppColors.onGradient,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.xl),
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

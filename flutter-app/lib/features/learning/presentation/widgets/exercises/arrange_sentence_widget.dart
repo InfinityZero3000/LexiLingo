@@ -124,7 +124,7 @@ class _ArrangeSentenceWidgetState extends State<ArrangeSentenceWidget> {
               border: Border.all(
                 color: gradedColor ?? colors.border,
                 style: BorderStyle.solid,
-                width: 1.5,
+                width: AppBorderWidth.regular,
               ),
             ),
             child: _placed.isEmpty
@@ -223,11 +223,14 @@ class _ArrangeSentenceWidgetState extends State<ArrangeSentenceWidget> {
                         decoration: BoxDecoration(
                           color: colors.card,
                           borderRadius: BorderRadius.circular(AppRadius.pill),
-                          border: Border.all(color: colors.border, width: 1.5),
+                          border: Border.all(
+                            color: colors.border,
+                            width: AppBorderWidth.regular,
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: colors.shadow,
-                              blurRadius: 5,
+                              blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
                           ],

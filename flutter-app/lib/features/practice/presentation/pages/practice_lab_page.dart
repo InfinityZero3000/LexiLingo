@@ -14,6 +14,7 @@ import 'package:lexilingo_app/features/practice/presentation/widgets/practice_la
 import 'package:lexilingo_app/features/vocabulary/due_vocabulary_count.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/core/widgets/app_surface.dart';
 
 class PracticeLabPage extends StatefulWidget {
   const PracticeLabPage({super.key});
@@ -211,13 +212,8 @@ class _PracticeLabHero extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = AppColorRoles.primary(isDark);
 
-    return Container(
+    return AppSurface(
       padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -399,98 +395,80 @@ class _PracticeLabSkillCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surface = Theme.of(context).colorScheme.surface;
-    final borderColor = item.recommended
-        ? item.color.withValues(alpha: isDark ? 0.65 : 0.45)
-        : Theme.of(context).colorScheme.outlineVariant;
 
-    return Material(
-      color: surface,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        child: Container(
-          padding: EdgeInsets.all(compact ? 14 : 16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            border: Border.all(color: borderColor),
+    return AppSurface(
+      onTap: onTap,
+      accent: item.recommended ? item.color : null,
+      padding: EdgeInsets.all(compact ? 14 : 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Container(
+            width: compact ? 44 : 50,
+            height: compact ? 44 : 50,
+            decoration: BoxDecoration(
+              color: item.color.withValues(alpha: isDark ? 0.2 : 0.12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Icon(item.icon, color: item.color, size: compact ? 22 : 25),
           ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                width: compact ? 44 : 50,
-                height: compact ? 44 : 50,
-                decoration: BoxDecoration(
-                  color: item.color.withValues(alpha: isDark ? 0.2 : 0.12),
-                  borderRadius: BorderRadius.circular(AppRadius.md),
-                ),
-                child: Icon(
-                  item.icon,
-                  color: item.color,
-                  size: compact ? 22 : 25,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            item.titleKey.tr(),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.titleMedium
-                                ?.copyWith(fontWeight: FontWeight.w900),
-                          ),
-                        ),
-                        if (item.recommended) ...[
-                          const SizedBox(width: AppSpacing.sm),
-                          _RecommendedPill(color: item.color),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      item.subtitleKey.tr(),
-                      maxLines: compact ? 2 : 3,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColorRoles.textSecondary(isDark),
-                        height: 1.3,
+                    Expanded(
+                      child: Text(
+                        item.titleKey.tr(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w900),
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 6,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        _SmallChip(
-                          icon: Icons.schedule_rounded,
-                          label: item.estimateKey.tr(),
-                        ),
-                        _SmallChip(
-                          icon: Icons.play_arrow_rounded,
-                          label: item.actionKey.tr(),
-                        ),
-                      ],
+                    if (item.recommended) ...[
+                      const SizedBox(width: AppSpacing.sm),
+                      _RecommendedPill(color: item.color),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  item.subtitleKey.tr(),
+                  maxLines: compact ? 2 : 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColorRoles.textSecondary(isDark),
+                    height: 1.3,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    _SmallChip(
+                      icon: Icons.schedule_rounded,
+                      label: item.estimateKey.tr(),
+                    ),
+                    _SmallChip(
+                      icon: Icons.play_arrow_rounded,
+                      label: item.actionKey.tr(),
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 10),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: AppColorRoles.textSecondary(isDark),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          const SizedBox(width: 10),
+          Icon(
+            Icons.chevron_right_rounded,
+            color: AppColorRoles.textSecondary(isDark),
+          ),
+        ],
       ),
     );
   }
@@ -505,17 +483,10 @@ class _LockedPracticeLabCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final surface = Theme.of(context).colorScheme.surface;
 
-    return Container(
+    return AppSurface(
+      accent: AppColors.gold,
       padding: EdgeInsets.all(compact ? 14 : 16),
-      decoration: BoxDecoration(
-        color: surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: AppColors.gold.withValues(alpha: isDark ? 0.65 : 0.5),
-        ),
-      ),
       child: Row(
         children: [
           Container(
@@ -555,7 +526,7 @@ class _LockedPracticeLabCard extends StatelessWidget {
                       ),
                       decoration: BoxDecoration(
                         color: AppColors.gold.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(999),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
                       child: Text(
                         'practiceLab.premiumOnly'.tr(),
@@ -610,7 +581,7 @@ class _RecommendedPill extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
       ),
       child: Text(
         'practiceLab.focus'.tr(),
@@ -671,60 +642,53 @@ class _IeltsEntryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => DeferredPage(
-              loadLibrary: ielts_tests.loadLibrary,
-              builder: (_) => ielts_tests.IeltsTestsPage(),
+    return AppSurface(
+      accent: theme.colorScheme.primary,
+      padding: const EdgeInsets.all(16),
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => DeferredPage(
+            loadLibrary: ielts_tests.loadLibrary,
+            builder: (_) => ielts_tests.IeltsTestsPage(),
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primaryContainer,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Icon(
+              Icons.school_outlined,
+              color: theme.colorScheme.onPrimaryContainer,
             ),
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(AppRadius.md),
+          const SizedBox(width: AppSpacing.lg),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'practiceLab.ielts.title'.tr(),
+                  style: theme.textTheme.titleMedium,
                 ),
-                child: Icon(
-                  Icons.school_outlined,
-                  color: theme.colorScheme.onPrimaryContainer,
+                const SizedBox(height: 2),
+                Text(
+                  'practiceLab.ielts.subtitle'.tr(),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
-              ),
-              const SizedBox(width: AppSpacing.lg),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'practiceLab.ielts.title'.tr(),
-                      style: theme.textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'practiceLab.ielts.subtitle'.tr(),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Icon(
-                Icons.chevron_right,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+          const SizedBox(width: AppSpacing.sm),
+          Icon(Icons.chevron_right, color: theme.colorScheme.onSurfaceVariant),
+        ],
       ),
     );
   }

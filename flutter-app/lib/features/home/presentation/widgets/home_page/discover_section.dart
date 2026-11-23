@@ -160,7 +160,7 @@ class _DiscoverSectionState extends State<DiscoverSection> {
                     child: Container(
                       clipBehavior: Clip.antiAlias,
                       decoration: tactile.decoration(
-                        variant: TactileSurfaceVariant.elevated,
+                        variant: TactileSurfaceVariant.clean,
                         fill: isDark
                             ? theme.colorScheme.surfaceContainerHighest
                             : theme.colorScheme.surface,

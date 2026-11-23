@@ -490,7 +490,10 @@ class _LessonNodeState extends State<_LessonNode>
                       height: _kNodeDiameter,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: color, width: 2.5),
+                        border: Border.all(
+                          color: color,
+                          width: AppBorderWidth.regular,
+                        ),
                       ),
                     ),
                   ),
@@ -632,7 +635,7 @@ class _StarsBadge extends StatelessWidget {
         color: context.status.warning,
         borderRadius: BorderRadius.circular(AppRadius.sm),
         boxShadow: [
-          BoxShadow(color: Colors.black26, blurRadius: 3, offset: Offset(0, 1)),
+          BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 1)),
         ],
       ),
       child: Row(
@@ -686,7 +689,7 @@ class _CurrentLessonLabel extends StatelessWidget {
               boxShadow: [
                 BoxShadow(
                   color: color.withValues(alpha: 0.35),
-                  blurRadius: 12,
+                  blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
               ],
@@ -753,7 +756,7 @@ class _UnitBanner extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: color.withValues(alpha: 0.35),
-            blurRadius: 12,
+            blurRadius: 8,
             offset: const Offset(0, 5),
           ),
         ],

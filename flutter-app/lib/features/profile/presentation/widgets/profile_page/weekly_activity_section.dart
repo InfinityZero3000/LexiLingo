@@ -349,7 +349,9 @@ class _WeeklyActivityDetailSheet extends StatelessWidget {
             color: isDark
                 ? AppColors.readingNight
                 : Theme.of(context).colorScheme.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppRadius.xl),
+            ),
             boxShadow: [
               BoxShadow(
                 color: Theme.of(

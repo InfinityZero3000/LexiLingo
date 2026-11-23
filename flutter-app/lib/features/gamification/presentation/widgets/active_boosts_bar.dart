@@ -112,7 +112,7 @@ class _BoostPill extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         color: boostColor.withValues(alpha: isDark ? 0.18 : 0.10),
-        borderRadius: BorderRadius.circular(99),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         border: Border.all(color: boostColor.withValues(alpha: 0.4), width: 1),
       ),
       child: Row(

@@ -74,7 +74,7 @@ class _ContentQaScreenState extends State<ContentQaScreen> {
       useSafeArea: true,
       backgroundColor: context.toneCanvas,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       builder: (_) => _JobDetailSheet(
         job: job,

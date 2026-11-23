@@ -55,7 +55,10 @@ class ListeningChoiceWidget extends StatelessWidget {
             decoration: BoxDecoration(
               color: colors.card,
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              border: Border.all(color: colors.border, width: 1.5),
+              border: Border.all(
+                color: colors.border,
+                width: AppBorderWidth.regular,
+              ),
             ),
             child: Column(
               children: [

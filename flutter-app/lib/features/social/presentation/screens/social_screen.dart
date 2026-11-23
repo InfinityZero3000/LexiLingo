@@ -956,7 +956,9 @@ class _SearchUsersSheetState extends State<_SearchUsersSheet> {
         height: math.min(media.size.height * 0.8, available),
         decoration: BoxDecoration(
           color: Theme.of(context).scaffoldBackgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppRadius.xl),
+          ),
         ),
         child: Column(
           children: [

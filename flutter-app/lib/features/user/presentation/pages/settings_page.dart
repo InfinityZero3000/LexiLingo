@@ -921,7 +921,7 @@ class _SettingsPageState extends State<SettingsPage> {
           InkWell(
             onTap: () => _confirmDeleteAccount(context),
             borderRadius: const BorderRadius.vertical(
-              bottom: Radius.circular(16),
+              bottom: Radius.circular(AppRadius.lg),
             ),
             child: Padding(
               padding: const EdgeInsets.symmetric(
@@ -1093,7 +1093,7 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSheetState) => Padding(
@@ -1355,7 +1355,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return InkWell(
       onTap: onTap,
       borderRadius: isLast
-          ? const BorderRadius.vertical(bottom: Radius.circular(16))
+          ? const BorderRadius.vertical(bottom: Radius.circular(AppRadius.lg))
           : BorderRadius.zero,
       child: Padding(
         padding: const EdgeInsets.symmetric(
@@ -1413,9 +1413,7 @@ class _SettingsPageState extends State<SettingsPage> {
               backgroundColor: AppColors.errorDark,
               foregroundColor: AppColors.onGradient,
 
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
             ),
             onPressed: () => Navigator.pop(ctx, true),
             child: Text('settings.delete_account_confirm_btn'.tr()),
@@ -1462,9 +1460,7 @@ class _SettingsPageState extends State<SettingsPage> {
               backgroundColor: Theme.of(context).colorScheme.error,
 
               foregroundColor: AppColors.surfaceLight,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
             ),
             onPressed: () => Navigator.pop(ctx, true),
             child: Text('settings.sign_out'.tr()),
