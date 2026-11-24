@@ -44,6 +44,34 @@ def test_clean_facts_rejects_unsafe_or_unlisted(key, value, text):
     assert clean_facts({key: value}, text) == {}
 
 
+@pytest.mark.parametrize(
+    "key,value,text",
+    [
+        ("interests", "music", "Why do we say 'I am interested in music' and not 'interested at'?"),
+        ("interests", "music", 'Is "I like music" correct?'),
+        ("interests", "music", "Is “I love music” or ‘I like music’ better?"),
+        ("occupation", "a doctor", "How do I say 'I am a doctor' politely?"),
+        ("interests", "music", "What is the difference between I like music and I love music?"),
+        ("goal", "pass IELTS", "When do we use I want to pass IELTS and I will pass IELTS?"),
+    ],
+)
+def test_clean_facts_ignores_example_sentences_and_grammar_questions(key, value, text):
+    assert clean_facts({key: value}, text) == {}
+
+
+@pytest.mark.parametrize(
+    "key,value,text",
+    [
+        ("interests", "music", "I am interested in music, I'm sure"),
+        ("interests", "music", "I like music, don't you?"),
+        ("occupation", "a nurse", "I am a nurse. What is the difference between 'affect' and 'effect'?"),
+        ("interests", "football", "I love football and 'my hobby' is also reading"),
+    ],
+)
+def test_clean_facts_keeps_self_statements_next_to_quotes_and_apostrophes(key, value, text):
+    assert clean_facts({key: value}, text) == {key: value}
+
+
 def test_clean_facts_ignores_non_mapping():
     assert clean_facts(["Thang"], "Thang") == {}
     assert clean_facts(None, "Thang") == {}
