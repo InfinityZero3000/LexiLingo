@@ -70,6 +70,7 @@ class CacheAdmissibilityCertificate(TypedDict, total=False):
     level: str
     native_language: str
     user_scope: str
+    context_digest: str
     profile_epoch: int
     policy_version: str
     kg_version: str

@@ -45,6 +45,7 @@ from api.services.trace_cag.dependencies import (
     policy_version_token,
 )
 from api.services.trace_cag.invalidation import (
+    _MEM_DEPENDENCY_TOKENS,
     observe_dependency_tokens,
     pop_dependent_artifacts_redis,
     recheck_dependency_snapshot,
@@ -121,6 +122,7 @@ def _build_admissibility_certificate(
         level=str(fingerprint.get("level") or ""),
         native_language=str(fingerprint.get("native_language") or ""),
         user_scope=user_scope,
+        context_digest=_context_digest(state.get("conversation_history")),
         profile_epoch=_hint_profile_epoch(state_hints, profile_epoch),
         policy_version=str(state_hints.get("policy_version") or policy_version_token()),
         kg_version=str(state_hints.get("kg_version") or f"kg_schema_v{_GRAPH_SCHEMA_VERSION}"),
@@ -256,6 +258,7 @@ def _build_l1_request_signature(
         freshness_class="",
         native_language=str(fingerprint.get("native_language") or ""),
         user_scope=user_scope,
+        context_digest=_context_digest(conversation_history),
         schema_version=CERTIFICATE_SCHEMA_VERSION,
         required_dimensions=required_dimensions,
     )
@@ -322,6 +325,7 @@ def _build_l1_candidate_signature(
         freshness_class=str(certificate.get("freshness_class") or ""),
         native_language=str(certificate.get("native_language") or candidate_fp.get("native_language") or ""),
         user_scope=str(certificate.get("user_scope") or ""),
+        context_digest=str(certificate.get("context_digest") or ""),
         schema_version=int(certificate.get("schema_version") or 1),
         required_dimensions={str(item) for item in (certificate.get("required_dimensions") or [])},
         created_at=float(entry.get("created_at") or time.time()),
@@ -634,13 +638,39 @@ def _benchmark_cache_scope(state: TraceCAGState) -> str:
     return str((state.get("benchmark_metadata") or {}).get("_benchmark_mode") or "").strip().lower()
 
 
-def _build_cache_key(user_scope: "str | None", user_input: str, level: str, benchmark_scope: str = "") -> str:
+def _context_digest(history: Optional[Sequence[Mapping[str, Any]]]) -> str:
+    """The last two exchanges, in both history shapes the prompt builder accepts."""
+    turns: list[tuple[str, str]] = []
+    for message in history or []:
+        if not isinstance(message, Mapping):
+            continue
+        if message.get("role") and message.get("content"):
+            turns.append((str(message["role"]), str(message["content"])))
+        elif message.get("user"):
+            turns.append(("user", str(message["user"])))
+            if message.get("ai"):
+                turns.append(("assistant", str(message["ai"])))
+    recent = [(role, " ".join(text.split()).lower()) for role, text in turns[-4:]]
+    if not recent:
+        return ""
+    return hashlib.sha256(json.dumps(recent, ensure_ascii=False).encode()).hexdigest()[:16]
+
+
+def _build_cache_key(
+    user_scope: "str | None",
+    user_input: str,
+    level: str,
+    benchmark_scope: str = "",
+    context_digest: str = "",
+) -> str:
     """The one place a response-cache key is built. It had been open-coded in
     both the read and the write path, so a change to one silently diverged."""
     normalized = user_input.strip().lower()
     raw = f"{user_scope}||{normalized}||{level}" if user_scope else f"{normalized}||{level}"
     if benchmark_scope:
         raw = f"{raw}||{benchmark_scope}"
+    if context_digest:
+        raw = f"{raw}||ctx:{context_digest}"
     return hashlib.md5(raw.encode()).hexdigest()
 
 
@@ -953,7 +983,10 @@ async def _write_cache_entry(
     if not user_scope:
         return
 
-    cache_key = _build_cache_key(user_scope, user_input, level, _benchmark_cache_scope(state))
+    cache_key = _build_cache_key(
+        user_scope, user_input, level, _benchmark_cache_scope(state),
+        _context_digest(state.get("conversation_history")),
+    )
     graph_bucket = _build_graph_bucket(
         user_input,
         level,
@@ -1091,6 +1124,16 @@ async def invalidate_dependency(dependency_key: str, new_version: str) -> set[st
     except Exception as exc:
         logger.debug("[invalidate_dependency] Redis invalidation failed: %s", exc)
     return artifact_keys
+
+
+async def publish_dependency_version(dependency_key: str, version: str) -> None:
+    """Move a dependency to the version this request read, so answers built on the old one stop serving."""
+    current = _MEM_DEPENDENCY_TOKENS.get(dependency_key)
+    if current is None or current == version:
+        return
+    if current.isdigit() and version.isdigit() and int(version) < int(current):
+        return  # a late read of an older epoch must not roll the token back
+    await invalidate_dependency(dependency_key, version)
 
 
 # ============================================================
@@ -1294,7 +1337,9 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
         return _with_adaptive(merged)
 
     normalized = user_input.strip().lower()
-    cache_key = _build_cache_key(user_scope, user_input, level, _benchmark_cache_scope(state))
+    cache_key = _build_cache_key(
+        user_scope, user_input, level, _benchmark_cache_scope(state), _context_digest(conversation_history),
+    )
     l1_request = _build_l1_request_signature(
         # The user-scope HMAC belongs in cache keys/buckets only.  Feeding it
         # to semantic extractors creates a synthetic entity and makes an

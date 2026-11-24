@@ -19,6 +19,7 @@ from api.services.trace_cag.env_helpers import _env_float, _env_int, _clip01, kg
 from api.services.trace_cag.retrieval_ranker import get_retrieval_ranker
 from api.services.learner_overlay import rank_with_learner_overlay
 from api.core.config import settings
+from api.services.trace_cag.cache_utils import publish_dependency_version
 from api.services.trace_cag.dependencies import dependency_record, stable_version_token
 
 from api.services.trace_cag.kg_utils import (
@@ -45,6 +46,16 @@ _FUSION_ALPHA = 0.5   # KG structural relevance weight
 _FUSION_BETA = 0.3    # Vector similarity weight
 _FUSION_GAMMA = 0.2   # Recency bonus weight
 _RECENCY_LAMBDA = 0.01  # Decay rate for recency bonus
+
+
+
+def _evidence_scope(state: Dict[str, Any], retrieval_policy: str) -> str:
+    """Learners can retrieve different evidence for one question, so each gets its own token."""
+    owner = "" if state.get("benchmark_metadata") else str(state.get("user_id") or "")
+    text = str(state.get("user_input") or "").strip().lower()
+    material = f"{retrieval_policy}:{text}"
+    return stable_version_token(f"{owner}:{material}" if owner else material, prefix="query")
+
 
 _retrieval_v3_instance = None
 _retrieval_v3_lock = asyncio.Lock()
@@ -653,11 +664,20 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
     # entry for that question fails its own freshness recheck against a token
     # it never wrote (confirmed: retrieval_trace identical, only the recorded
     # dependency version differs across modes for the same query).
-    query_scope = stable_version_token(
-        f"{retrieval_policy}:{user_input.strip().lower()}", prefix="query"
-    )
+    query_scope = _evidence_scope(state, retrieval_policy)
     state_hints = (state.get("benchmark_metadata") or {}).get("_tracecag_state") or {}
     source_version = str(state_hints.get("source_version") or evidence_version)
+    if state.get("user_id") and not state.get("benchmark_metadata"):
+        try:
+            await asyncio.wait_for(
+                asyncio.gather(
+                    publish_dependency_version(f"evidence:retrieval:{query_scope}", evidence_version),
+                    publish_dependency_version(f"source:retrieval:{query_scope}", source_version),
+                ),
+                timeout=0.25,
+            )
+        except (asyncio.TimeoutError, TimeoutError):
+            logger.debug("[retrieve_node] Evidence invalidation exceeded its budget")
 
     return {
         "vector_hits": vector_hits,

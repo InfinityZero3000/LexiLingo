@@ -188,7 +188,7 @@ async def test_cache_gate_l1_near_hit_accepts_cache_entry_dict(monkeypatch):
             "session_turn": 0,
         },
         "admissibility_certificate": {
-            "schema_version": 4,
+            "schema_version": cache_mod.CERTIFICATE_SCHEMA_VERSION,
             "user_scope": _scope(),
             "required_dimensions": ["intent", "level", "profile_epoch", "policy_version", "kg_version", "answer_target"],
             "query_norm": candidate_input.lower(),
@@ -271,7 +271,7 @@ async def test_cache_gate_l1_patches_safe_qa_paraphrase(monkeypatch):
             "session_turn": 0,
         },
         "admissibility_certificate": {
-            "schema_version": 4,
+            "schema_version": cache_mod.CERTIFICATE_SCHEMA_VERSION,
             "user_scope": _scope(),
             "required_dimensions": ["intent", "level", "profile_epoch", "policy_version", "kg_version", "answer_target"],
             "query_norm": candidate_input.lower(),
