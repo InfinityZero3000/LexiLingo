@@ -110,6 +110,7 @@ class CacheEntry(TypedDict, total=False):
     diagnosis_errors: List[Dict[str, Any]]
     diagnosis_root_causes: List[str]
     kg_seed_concepts: List[str]
+    struggling_concept: str  # the root cause the reply reinforced, "" if none
     overall_score: float
     grammar_score: float
     fluency_score: float

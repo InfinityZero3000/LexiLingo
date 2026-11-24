@@ -1153,7 +1153,9 @@ async def test_scenario_l1_invalidation_on_version_change():
         )
 
         # Confirm L1 bucket was written
-        epoch = _cache_mod._profile_epoch({"level": "B2"})
+        # input_node versions a signed-in learner's profile by what the prompt reads.
+        profile = {"level": "B2"}
+        epoch = _cache_mod._profile_epoch({**profile, "_profile_version": _cache_mod.prompt_profile_version(profile)})
         bucket = _cache_mod._build_graph_bucket(
             trace.user_input, "B2", "correct", epoch, [],
             user_scope=_cache_mod._user_cache_scope({"user_id": "test_user"}),

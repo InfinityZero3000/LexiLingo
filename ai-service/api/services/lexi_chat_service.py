@@ -70,11 +70,8 @@ def _turn_usage(
     diagnosis_billed: bool,
     generation_attempted: bool,
 ) -> Dict[str, Any]:
-    """Provider tokens of this turn's LLM calls.
-
-    "provider": every billed call reported usage. "partial": one was billed and reported nothing,
-    so the sum is a floor. "none": no LLM call (a cache hit, a clarifying question).
-    """
+    """Provider tokens of this turn's LLM calls, and whether every billed call reported them."""
+    # provider: all billed calls reported. partial: one did not, the sum is a floor. none: no LLM call.
     generated = generation if generation.get("source") == "provider" else {}
     keys = ("prompt_tokens", "completion_tokens", "cached_tokens")
     total: Dict[str, Any] = {k: int(diagnosis.get(k) or 0) + int(generated.get(k) or 0) for k in keys}
@@ -285,6 +282,8 @@ class _CardContext(NamedTuple):
     courses: Tuple[Any, ...] = ()
     # Merged into learner_profile: level, goal, interest, profile_brief.
     profile: Dict[str, str] = {}
+    # False when the card did not arrive in time: this turn's prompt lacks part of the profile.
+    resolved: bool = False
 
 
 async def _resolve_learner_card(user_id: str, user_text: str) -> _CardContext:
@@ -346,6 +345,7 @@ async def _resolve_learner_card(user_id: str, user_text: str) -> _CardContext:
                 for item in course_suggestions(card, intents)
             ),
             profile=profile,
+            resolved=True,
         )
     except asyncio.CancelledError:
         raise
@@ -639,6 +639,7 @@ async def run_lexi_pipeline(
                 "level": request.learner_level,
                 "native_language": iso_to_language_name(request.native_language),
                 **card_ctx.profile,
+                "_profile_complete": card_ctx.resolved,
                 **({"session_recap": session_recap} if session_recap else {}),
                 **({"learner_facts": learner_facts} if learner_facts else {}),
                 **({"memory": memory_block} if memory_block else {}),
@@ -1025,6 +1026,7 @@ async def stream_lexi_chat(
                     "level": request.learner_level,
                     "native_language": iso_to_language_name(request.native_language),
                     **card_ctx.profile,
+                    "_profile_complete": card_ctx.resolved,
                     **({"session_recap": session_recap} if session_recap else {}),
                     **({"learner_facts": learner_facts} if learner_facts else {}),
                     **({"memory": memory_block} if memory_block else {}),

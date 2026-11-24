@@ -245,6 +245,12 @@ class LearnerStateClient:
 _CLIENT: LearnerStateClient | None = None
 
 
+async def read_learner_state(user_id: str, concept_ids: list[str]) -> LearnerStateResult:
+    """One learner-state read under the configured deadline; [] reads only the epoch and profile."""
+    deadline = time.monotonic() + (settings.LEARNER_STATE_DEADLINE_MS / 1000.0)
+    return await get_learner_state_client().batch_get(str(user_id), concept_ids, deadline=deadline)
+
+
 def get_learner_state_client() -> LearnerStateClient:
     """Return the process-wide pooled learner-state client."""
     global _CLIENT
