@@ -4,6 +4,8 @@ Redis-backed sliding window rate limiter for multi-worker safety.
 
 import time
 import logging
+from typing import Optional, Tuple
+
 import redis.asyncio as redis
 
 logger = logging.getLogger(__name__)
@@ -18,6 +20,11 @@ def _sum_token_members(members) -> int:
         except (IndexError, ValueError):
             logger.warning("Ignoring malformed TPM limiter member")
     return total
+
+def voice_rpm_cap(rpm_limit: int, safety: float) -> int:
+    """Voice requests one key admits per minute; the Lua admission and the admin view share it."""
+    return max(1, int(rpm_limit * safety))
+
 
 class RedisRateLimiter:
     """
@@ -39,50 +46,56 @@ class RedisRateLimiter:
         self.rpd_limit = rpd_limit
         self.safety = safety
 
-    async def can_request(self, estimated_tokens: int = 600) -> bool:
-        """Check if request is within limits."""
+    def blocked_by(self, rpm: int, tpm: int, rpd: int, estimated_tokens: int = 0) -> Optional[str]:
+        """The window that refuses a request of this size, or None; the one admission rule."""
+        if rpd >= self.rpd_limit * self.safety:
+            return "rpd"
+        if rpm >= self.rpm_limit * self.safety:
+            return "rpm"
+        if tpm + estimated_tokens >= self.tpm_limit * self.safety:
+            return "tpm"
+        return None
+
+    async def window_counts(self) -> Tuple[int, int, int]:
+        """Requests and tokens used in the current minute, and requests in the current day."""
         now = time.time()
         minute_ago = now - 60
         day_ago = now - 86400
-
-        # Keys
         rpm_key = f"{self.prefix}:rpm"
         tpm_key = f"{self.prefix}:tpm"
         rpd_key = f"{self.prefix}:rpd"
 
+        async with self.redis.pipeline() as pipe:
+            pipe.zremrangebyscore(rpm_key, 0, minute_ago)
+            pipe.zremrangebyscore(tpm_key, 0, minute_ago)
+            pipe.zremrangebyscore(rpd_key, 0, day_ago)
+            await pipe.execute()
+
+        async with self.redis.pipeline() as pipe:
+            pipe.zcard(rpm_key)
+            pipe.zrange(tpm_key, 0, -1)
+            pipe.zcard(rpd_key)
+            results = await pipe.execute()
+        return results[0], _sum_token_members(results[1]), results[2]
+
+    async def voice_state(self) -> Tuple[int, bool]:
+        """Voice requests in the current minute and whether a voice lease is held."""
+        async with self.redis.pipeline(transaction=False) as pipe:
+            pipe.zcount(f"{self.prefix}:voice:rpm", time.time() - 60, "+inf")
+            pipe.exists(f"{self.prefix}:voice:lease")
+            count, lease = await pipe.execute()
+        return count, bool(lease)
+
+    async def can_request(self, estimated_tokens: int = 600) -> bool:
+        """Check if request is within limits."""
         try:
-            # Clean old entries
-            async with self.redis.pipeline() as pipe:
-                pipe.zremrangebyscore(rpm_key, 0, minute_ago)
-                pipe.zremrangebyscore(tpm_key, 0, minute_ago)
-                pipe.zremrangebyscore(rpd_key, 0, day_ago)
-                await pipe.execute()
-
-            # Get counts
-            async with self.redis.pipeline() as pipe:
-                pipe.zcard(rpm_key)
-                pipe.zrange(tpm_key, 0, -1)
-                pipe.zcard(rpd_key)
-                results = await pipe.execute()
-
-            rpm_count = results[0]
-            tpm_count = _sum_token_members(results[1])
-            rpd_count = results[2]
-
-            if rpm_count >= self.rpm_limit * self.safety:
-                logger.warning(f"RateLimit ({self.prefix}) RPM near limit: {rpm_count}/{self.rpm_limit}")
-                return False
-            
-            if tpm_count + estimated_tokens >= self.tpm_limit * self.safety:
-                logger.warning(f"RateLimit ({self.prefix}) TPM near limit: {tpm_count}/{self.tpm_limit}")
-                return False
-
-            if rpd_count >= self.rpd_limit * self.safety:
-                logger.warning(f"RateLimit ({self.prefix}) RPD near limit: {rpd_count}/{self.rpd_limit}")
-                return False
-
-            return True
-
+            rpm_count, tpm_count, rpd_count = await self.window_counts()
+            blocked = self.blocked_by(rpm_count, tpm_count, rpd_count, estimated_tokens)
+            if blocked:
+                used, limit = {"rpm": (rpm_count, self.rpm_limit), "tpm": (tpm_count, self.tpm_limit),
+                               "rpd": (rpd_count, self.rpd_limit)}[blocked]
+                logger.warning(f"RateLimit ({self.prefix}) {blocked.upper()} near limit: {used}/{limit}")
+            return blocked is None
         except Exception as e:
             logger.error(f"Rate limiter error: {e}")
             return True # Fallback to allowing request on Redis failure

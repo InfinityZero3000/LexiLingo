@@ -7,6 +7,7 @@ X-Admin-Key server-side rather than accept one from the caller.
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import httpx
 import pytest
 from fastapi.routing import APIRoute
 
@@ -115,3 +116,37 @@ async def test_draft_waits_longer_than_other_forwards_and_ids_are_encoded(monkey
     assert draft_timeout.read >= 60
     assert plain_timeout.read < draft_timeout.read
     assert http.request.await_args.args[1].endswith("/admin/topics/a%2Fb%20c")
+
+
+@pytest.mark.asyncio
+async def test_monitoring_forwards_to_the_ai_router_not_the_admin_router(monkeypatch):
+    monkeypatch.setenv("AI_ADMIN_API_KEY", "server-secret")
+    seen: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return httpx.Response(200, json={"turns": 3})
+
+    real_client = httpx.AsyncClient
+    monkeypatch.setattr(
+        admin_ai_proxy.httpx, "AsyncClient",
+        lambda **kw: real_client(transport=httpx.MockTransport(handler), **kw),
+    )
+
+    await admin_ai_proxy.chat_monitoring(window="7d", _admin=MagicMock())
+    await admin_ai_proxy.llm_key_monitoring(_admin=MagicMock())
+    await admin_ai_proxy.observation_spool_monitoring(_admin=MagicMock())
+
+    chat, keys, spool = seen
+    assert chat.url.path.endswith("/ai/monitoring/chat") and chat.url.params["window"] == "7d"
+    assert keys.url.path.endswith("/ai/monitoring/llm-keys")
+    assert spool.url.path.endswith("/ai/monitoring/observation-spool")
+    assert all(r.headers["X-Admin-Key"] == "server-secret" for r in seen)
+    assert not any("/admin/monitoring" in r.url.path for r in seen)
+
+
+def test_monitoring_routes_need_the_ops_permission():
+    routes = [r for r in router.routes if isinstance(r, APIRoute) and "/monitoring/" in r.path]
+    assert len(routes) == 3
+    for route in routes:
+        assert get_current_admin in _dependency_calls(route)

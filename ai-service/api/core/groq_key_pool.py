@@ -10,7 +10,7 @@ from typing import List, Optional, Tuple
 
 import redis.asyncio as redis
 
-from api.core.rate_limiter import RedisRateLimiter
+from api.core.rate_limiter import RedisRateLimiter, voice_rpm_cap
 
 logger = logging.getLogger(__name__)
 
@@ -144,7 +144,7 @@ class GroqKeyPool:
                     f"{limiter.prefix}:voice:rpm",
                     now,
                     token,
-                    max(1, int(limiter.rpm_limit * limiter.safety)),
+                    voice_rpm_cap(limiter.rpm_limit, limiter.safety),
                     _VOICE_LEASE_MS,
                 )
             except Exception as exc:
@@ -196,6 +196,34 @@ class GroqKeyPool:
     @property
     def count(self) -> int:
         return len(self._keys)
+
+    async def usage_snapshot(self, estimated_tokens: int = 600) -> List[dict]:
+        """Per-index limiter state for the admin page; never touches key strings."""
+        counts, voice = await asyncio.gather(
+            asyncio.gather(*(limiter.window_counts() for limiter in self._limiters)),
+            asyncio.gather(*(limiter.voice_state() for limiter in self._limiters)),
+        )
+        rows = []
+        for idx, limiter in enumerate(self._limiters):
+            rpm, tpm, rpd = counts[idx]
+            voice_rpm, lease = voice[idx]
+            blocked = limiter.blocked_by(rpm, tpm, rpd, estimated_tokens)
+            if blocked == "rpd":
+                state = "exhausted"
+            elif blocked or voice_rpm >= voice_rpm_cap(limiter.rpm_limit, limiter.safety):
+                state = "cooling"
+            elif lease:
+                state = "busy"
+            else:
+                state = "available"
+            rows.append({
+                "index": idx, "state": state,
+                "rpm": rpm, "rpm_limit": limiter.rpm_limit,
+                "tpm": tpm, "tpm_limit": limiter.tpm_limit,
+                "rpd": rpd, "rpd_limit": limiter.rpd_limit,
+                "voice_rpm": voice_rpm,
+            })
+        return rows
 
     async def record_usage(self, api_key: str, tokens_used: int) -> None:
         """Record usage for a specific API key."""

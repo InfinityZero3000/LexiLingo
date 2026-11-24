@@ -44,6 +44,7 @@ const DatabasePage = lazy(() => import("./pages/DatabasePage").then(m => ({ defa
 const AiModelsPage = lazy(() => import("./pages/AiModelsPage").then(m => ({ default: m.AiModelsPage })));
 const ActivationFunnelPage = lazy(() => import("./pages/ActivationFunnelPage").then(m => ({ default: m.ActivationFunnelPage })));
 const ContentAnalyticsPage = lazy(() => import("./pages/ContentAnalyticsPage").then(m => ({ default: m.ContentAnalyticsPage })));
+const AiMonitoringPage = lazy(() => import("./pages/AiMonitoringPage").then(m => ({ default: m.AiMonitoringPage })));
 const AiQualityDashboardPage = lazy(() => import("./pages/AiQualityDashboardPage").then(m => ({ default: m.AiQualityDashboardPage })));
 const SystemSettingsPage = lazy(() => import("./pages/SystemSettingsPage").then(m => ({ default: m.SystemSettingsPage })));
 const AdminManagementPage = lazy(() => import("./pages/AdminManagementPage").then(m => ({ default: m.AdminManagementPage })));
@@ -85,6 +86,7 @@ const AppRoutes = () => {
     { to: "/admin/ads", permission: "banners:read", label: t.nav.bannerAds, icon: <Megaphone size={18} />, group: growth },
     { to: "/admin/gem-ledger", permission: "gifts:read", label: t.nav.gemLedger, icon: <Gem size={18} />, group: growth },
     { to: "/admin/ai-quality", permission: "ops:read", label: t.nav.aiQuality, icon: <Gauge size={18} />, group: system },
+    { to: "/admin/ai-monitoring", permission: "ops:read", label: t.nav.aiMonitoring, icon: <Bot size={18} />, group: system },
     { to: "/admin/logs", permission: "rbac:read", label: t.nav.logs, icon: <ScrollText size={18} />, group: system },
     { to: "/admin/roles", permission: "rbac:read", label: t.nav.roles, icon: <KeyRound size={18} />, group: system },
     { to: "/admin/ops", permission: "ops:read", label: t.nav.opsCenter, icon: <Radar size={18} />, group: system },
@@ -131,6 +133,7 @@ const AppRoutes = () => {
               <Route path="/admin/content-analytics" element={<ContentAnalyticsPage />} />
               <Route path="/admin/activation" element={<ActivationFunnelPage />} />
               <Route path="/admin/ai-quality" element={<AiQualityDashboardPage />} />
+              <Route path="/admin/ai-monitoring" element={<AiMonitoringPage />} />
               <Route path="/admin/vocabulary" element={<VocabularyPage />} />
               <Route path="/admin/achievements" element={<AchievementsPage />} />
               <Route path="/admin/shop" element={<ShopPage />} />

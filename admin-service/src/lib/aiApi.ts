@@ -30,6 +30,87 @@ export const getMonitoringDashboard = async () => {
   return apiFetch<MonitoringDashboard>(`${ENV.aiUrl}/ai/monitoring/dashboard`);
 };
 
+// ─── Lexi chat + LLM key pool (admin proxy: the ai-service admin key stays server-side) ───
+
+export type AiWindow = "1h" | "24h" | "7d";
+export type Percentiles = { p50: number | null; p95: number | null };
+export type LatencyBlock = { latency_ms: Percentiles; ttft_ms: Percentiles; first_chunk_ms: Percentiles };
+export type ShareRow = { turns: number; share: number | null };
+
+export type ChatMonitoring = {
+  window: AiWindow;
+  generated_at: string;
+  turns: number;
+  topic_turns: number;
+  errors: number;
+  error_rate: number | null;
+  latency: { all: LatencyBlock; hit: LatencyBlock; miss: LatencyBlock };
+  tokens: {
+    prompt_sum: number;
+    completion_sum: number;
+    cached_sum: number;
+    prompt_avg: number | null;
+    completion_avg: number | null;
+    cached_avg: number | null;
+    per_turn: number | null;
+    reported_turns: number;
+    partial_turns: number;
+    usage_source: Record<string, ShareRow>;
+  };
+  cache: {
+    hit_rate: number | null;
+    layers: Record<string, ShareRow>;
+    bypass: Record<string, ShareRow>;
+    l1_shadow: {
+      compared: number | null;
+      low_similarity: number | null;
+      low_similarity_rate: number | null;
+      f1_distribution: Array<{ from: number; count: number }>;
+    };
+  };
+  learner_state: { degraded: number; degraded_rate: number | null };
+  models: Array<{ model: string; turns: number }>;
+  series: Array<{ ts: string; turns: number; p95_latency_ms: number | null; tokens: number }>;
+};
+
+export type SpoolMonitoring = {
+  queue_depth: number;
+  by_status: Record<string, number>;
+  dead: number;
+  delivered: number;
+  receiver_off_since_start: number;
+  dead_since_start: number;
+  worker_loop_errors_since_start: number;
+};
+
+export type LlmKeyState = "available" | "busy" | "cooling" | "exhausted";
+export type LlmKeyRow = {
+  index: number;
+  state: LlmKeyState;
+  rpm: number;
+  rpm_limit: number;
+  tpm: number;
+  tpm_limit: number;
+  rpd: number;
+  rpd_limit: number;
+  voice_rpm: number;
+};
+export type LlmKeyMonitoring = {
+  mode: "pool" | "unpooled";
+  model: string;
+  keys: LlmKeyRow[];
+  totals: { keys: number } & Record<LlmKeyState, number>;
+};
+
+export const getChatMonitoring = (window: AiWindow) =>
+  apiFetch<ChatMonitoring>(`${ENV.aiAdminUrl}/monitoring/chat?window=${window}`);
+
+export const getSpoolMonitoring = () =>
+  apiFetch<SpoolMonitoring>(`${ENV.aiAdminUrl}/monitoring/observation-spool`);
+
+export const getLlmKeyMonitoring = () =>
+  apiFetch<LlmKeyMonitoring>(`${ENV.aiAdminUrl}/monitoring/llm-keys`);
+
 // ─── Backend monitoring ───────────────────────────────────────────────────────
 
 export type SystemMetrics = {
