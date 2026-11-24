@@ -12,6 +12,8 @@ import api.services.trace_cag.cache_utils as cache_mod
 def _learner_scope(monkeypatch):
     monkeypatch.setattr(cache_mod.settings, "SECRET_KEY", "test-secret")
     monkeypatch.setattr(cache_mod.settings, "LEARNER_STATE_MODE", "off")
+    # With L1 off every rejection test below would pass without reaching the rule it names.
+    monkeypatch.setattr(cache_mod.settings, "TRACECAG_L1_MODE", "on")
     cache_mod._MEM_RESPONSE_CACHE.clear()
     cache_mod._MEM_GRAPH_BUCKETS.clear()
 
@@ -188,7 +190,7 @@ async def test_cache_gate_l1_near_hit_accepts_cache_entry_dict(monkeypatch):
             "session_turn": 0,
         },
         "admissibility_certificate": {
-            "schema_version": 4,
+            "schema_version": cache_mod.CERTIFICATE_SCHEMA_VERSION,
             "user_scope": _scope(),
             "required_dimensions": ["intent", "level", "profile_epoch", "policy_version", "kg_version", "answer_target"],
             "query_norm": candidate_input.lower(),
@@ -271,7 +273,7 @@ async def test_cache_gate_l1_patches_safe_qa_paraphrase(monkeypatch):
             "session_turn": 0,
         },
         "admissibility_certificate": {
-            "schema_version": 4,
+            "schema_version": cache_mod.CERTIFICATE_SCHEMA_VERSION,
             "user_scope": _scope(),
             "required_dimensions": ["intent", "level", "profile_epoch", "policy_version", "kg_version", "answer_target"],
             "query_norm": candidate_input.lower(),

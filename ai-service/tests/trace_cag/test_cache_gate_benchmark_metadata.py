@@ -38,7 +38,7 @@ async def test_cache_gate_enforces_benchmark_evidence_certificate(
             "session_turn": 0,
         },
         "admissibility_certificate": {
-            "schema_version": 4,
+            "schema_version": cache_mod.CERTIFICATE_SCHEMA_VERSION,
             "user_scope": scope,
             "required_dimensions": ["intent", "level", "profile_epoch", "policy_version", "kg_version", "answer_target", "evidence_hash"],
             "query_norm": query.lower(),

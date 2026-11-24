@@ -597,7 +597,34 @@ async def submit_answer(
     # Get lesson to validate answer
     lesson_result = await db.execute(select(Lesson).where(Lesson.id == attempt.lesson_id))
     lesson = lesson_result.scalar_one_or_none()
-    
+
+    already_correct = (
+        await db.execute(
+            select(QuestionAttempt.id)
+            .where(
+                QuestionAttempt.lesson_attempt_id == attempt_id,
+                QuestionAttempt.question_id == str(request.question_id),
+                QuestionAttempt.is_correct.is_(True),
+            )
+            .limit(1)
+        )
+    ).scalar_one_or_none()
+    if already_correct is not None:
+        return ApiResponse(
+            success=True,
+            message="Already answered correctly.",
+            data=AnswerSubmitResponse(
+                question_attempt_id=already_correct,
+                is_correct=True,
+                correct_answer=None,
+                explanation=None,
+                xp_earned=0,
+                lives_remaining=attempt.lives_remaining,
+                hints_remaining=max(0, 3 + attempt.bonus_hints - attempt.hints_used),
+                current_score=float(attempt.score),
+            ),
+        )
+
     # Validate answer against lesson content
     is_correct, correct_answer, explanation, concept_id = await _validate_answer(
         lesson=lesson,

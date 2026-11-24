@@ -16,6 +16,7 @@ import logging
 import os
 import re
 import json
+import math
 import time
 import unicodedata
 from typing import Dict, Any, List, Optional, Sequence
@@ -36,10 +37,11 @@ from api.services.trace_cag.llm_client import (
     _qwen_no_think_messages,
     _qwen_reasoning_overrides,
     _throttled_post_json,
+    provider_usage,
 )
 
 # PCC cache R/W helpers used by the generation path
-from api.services.trace_cag.cache_utils import _detect_native_request
+from api.services.trace_cag.cache_utils import _detect_native_request, publish_dependency_version
 
 # Façade re-exports: graph.py imports cache_gate_node from this module, and the
 # cache-gate tests reach these helpers through the nodes_v2 namespace.
@@ -116,6 +118,17 @@ def _note_input_redis_degraded(part: str, exc: Optional[BaseException]) -> None:
         _input_redis_warned_at[part] = now
         logger.warning("[input_node] Redis %s read failed, continuing without it: %s", part, exc or "budget exceeded")
 
+
+
+def _unit_score(value: Any, default: float) -> float:
+    """A model's JSON can hold null, text or NaN here, and the router compares this number."""
+    if isinstance(value, bool):
+        return default
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return default
+    return min(max(number, 0.0), 1.0) if math.isfinite(number) else default
 
 
 async def input_node(state: TraceCAGState) -> Dict[str, Any]:
@@ -239,7 +252,17 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
         profile_version = str(learner_profile.get("_learner_state_epoch") or "")
         if not profile_version:
             profile_version = stable_version_token(learner_profile, prefix="profile")
-        
+        profile_key = f"learner:{user_id or 'anonymous'}:profile"
+        if user_id and not state.get("benchmark_metadata"):
+            try:
+                # The in-memory token moves before the first await, so a slow Redis cannot leave a stale answer servable.
+                await _asyncio.wait_for(
+                    publish_dependency_version(profile_key, profile_version),
+                    timeout=_input_redis_budget_seconds(),
+                )
+            except (_asyncio.TimeoutError, TimeoutError):
+                _note_input_redis_degraded("invalidate", None)
+
         return {
             "learner_profile": learner_profile,
             "conversation_history": conversation_history,
@@ -247,7 +270,7 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
             "models_used": ["redis_cache"],
             "latency_ms": latency_ms,
             "dependency_events": [dependency_record(
-                f"learner:{user_id or 'anonymous'}:profile",
+                profile_key,
                 "learner",
                 profile_version,
                 "learner-state" if epoch_result is not None else "request-profile",
@@ -764,6 +787,7 @@ async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
         
         used_model = "qwen_grammar"
         parsed = False
+        diagnosis_usage: Dict[str, int] = {}
 
         if not (result.get("success") and result.get("data")):
             from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
@@ -794,7 +818,11 @@ async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
                         from api.services.trace_cag.benchmark.qa_generation import _ledger_add
 
                         _ledger_add("diagnose", data, wall_started=_started, response=resp)
-                        tokens = data.get("usage", {}).get("total_tokens", 150)
+                        diagnosis_usage = provider_usage(data) or {}
+                        tokens = (
+                            diagnosis_usage["prompt_tokens"] + diagnosis_usage["completion_tokens"]
+                            if diagnosis_usage else data.get("usage", {}).get("total_tokens", 150)
+                        )
                         await record_groq_key_usage(groq_key, tokens)
                         content = data["choices"][0]["message"]["content"]
                         result = {"success": True, "data": content}
@@ -843,9 +871,9 @@ async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
 
                 root_causes = root_causes_for(errors, bridge)
                 intent = ai_data.get("intent", "correct")
-                confidence = ai_data.get("confidence", 0.9)
-                grammar_score = ai_data.get("grammar_score", 0.8)
-                fluency_score = ai_data.get("fluency_score", 0.8)
+                confidence = _unit_score(ai_data.get("confidence"), 0.9)
+                grammar_score = _unit_score(ai_data.get("grammar_score"), 0.8)
+                fluency_score = _unit_score(ai_data.get("fluency_score"), 0.8)
                 parsed = True
                 
             except (json.JSONDecodeError, TypeError) as e:
@@ -875,6 +903,7 @@ async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
             "fluency_score": fluency_score,
             "vocabulary_level": EvaluationAgent.estimate_vocab_level(user_text),
             "models_used": [used_model],
+            "diagnosis_usage": diagnosis_usage,
         }
         if bridge == "closed" and parsed:
             diagnosis["diagnosis_label_invalid"] = count_invalid_labels(errors)
