@@ -27,6 +27,7 @@ from api.services.trace_cag.llm_client import (
     _qwen_no_think_messages,
     _qwen_reasoning_overrides,
     _throttled_post_json,
+    provider_usage,
 )
 from api.services.trace_cag.cache_utils import _write_cache_entry
 from api.services.trace_cag.dependencies import dependency_record, policy_version_token
@@ -390,6 +391,8 @@ async def stream_llm_tokens(
 
     groq_admitted = False
     groq_model_used = resolve_groq_model()
+    # Filled by whichever provider served the tokens; the caller reports it as this turn's cost.
+    usage: Dict[str, int] = {}
 
     async def _try_groq() -> "AsyncGenerator[str, None]":
         nonlocal groq_admitted
@@ -422,6 +425,7 @@ async def stream_llm_tokens(
                     "max_tokens": max_tokens,
                     "temperature": 0.7,
                     "stream": True,
+                    "stream_options": {"include_usage": True},
                     **_qwen_reasoning_overrides(groq_model),
                 },
                 timeout=25.0,
@@ -447,6 +451,9 @@ async def stream_llm_tokens(
                                 str(obj["error"])[:300],
                             )
                             return
+                        usage.update(provider_usage(obj) or {})
+                        if not obj.get("choices"):
+                            continue
                         delta = obj["choices"][0]["delta"].get("content") or ""
                         if delta:
                             tokens_yielded += len(delta.split())
@@ -460,7 +467,8 @@ async def stream_llm_tokens(
             if groq_key:
                 try:
                     try:
-                        await record_groq_key_usage(groq_key, max(50, tokens_yielded + 50))
+                        spent = usage["prompt_tokens"] + usage["completion_tokens"] if usage else max(50, tokens_yielded + 50)
+                        await record_groq_key_usage(groq_key, spent)
                     except Exception as exc:
                         logger.warning("[stream_llm_tokens] Groq usage accounting failed: %s", exc)
                 finally:
@@ -498,6 +506,13 @@ async def stream_llm_tokens(
                     data = line[6:]
                     try:
                         obj = json.loads(data)
+                        meta = obj.get("usageMetadata") or {}
+                        if "promptTokenCount" in meta:
+                            usage.update(
+                                prompt_tokens=int(meta.get("promptTokenCount") or 0),
+                                completion_tokens=int(meta.get("candidatesTokenCount") or 0),
+                                cached_tokens=int(meta.get("cachedContentTokenCount") or 0),
+                            )
                         text = (
                             obj.get("candidates", [{}])[0]
                             .get("content", {})
@@ -514,18 +529,29 @@ async def stream_llm_tokens(
 
     # Try Groq first; if it yields nothing, fall back to Gemini
     got_tokens = False
+    words = 0
     groq_stream = _try_groq()
     try:
         async for token in groq_stream:
             got_tokens = True
+            words += len(token.split())
             yield token
     finally:
         await groq_stream.aclose()
+
+    def _report_usage() -> None:
+        if provider_info is not None:
+            provider_info["usage"] = (
+                {**usage, "cached_tokens": usage.get("cached_tokens", 0), "source": "provider"}
+                if usage
+                else {"prompt_tokens": 0, "completion_tokens": words, "cached_tokens": 0, "source": "estimated"}
+            )
 
     if got_tokens:
         if provider_info is not None:
             provider_info["provider"] = "groq"
             provider_info["model"] = groq_model_used
+        _report_usage()
         return
 
     if not allow_gemini_fallback:
@@ -536,10 +562,12 @@ async def stream_llm_tokens(
     gemini_yielded = False
     async for token in _try_gemini():
         gemini_yielded = True
+        words += len(token.split())
         yield token
     if gemini_yielded and provider_info is not None:
         provider_info["provider"] = "gemini"
         provider_info["model"] = "gemini-2.0-flash"
+        _report_usage()
 
 
 async def generate_node(state: TraceCAGState) -> Dict[str, Any]:

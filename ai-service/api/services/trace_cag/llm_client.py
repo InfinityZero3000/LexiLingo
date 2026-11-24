@@ -90,6 +90,18 @@ def _qwen_reasoning_overrides(model: str) -> Dict[str, Any]:
     return {"reasoning_effort": "none"} if _is_qwen_model(model) else {}
 
 
+def provider_usage(payload: Dict[str, Any]) -> Optional[Dict[str, int]]:
+    """Token counts an OpenAI-style body or stream chunk reports; Groq streams also nest them under x_groq."""
+    usage = payload.get("usage") or (payload.get("x_groq") or {}).get("usage")
+    if not isinstance(usage, dict) or "prompt_tokens" not in usage:
+        return None
+    return {
+        "prompt_tokens": int(usage.get("prompt_tokens") or 0),
+        "completion_tokens": int(usage.get("completion_tokens") or 0),
+        "cached_tokens": int((usage.get("prompt_tokens_details") or {}).get("cached_tokens") or 0),
+    }
+
+
 # Values that actually enable thinking, probed against Groq 2026-10-10 on
 # qwen/qwen3.8-27b: "default" is a no-op indistinguishable from "none" (5
 # completion tokens, empty reasoning), while low/medium/high each produce ~89

@@ -37,6 +37,7 @@ from api.services.trace_cag.llm_client import (
     _qwen_no_think_messages,
     _qwen_reasoning_overrides,
     _throttled_post_json,
+    provider_usage,
 )
 
 # PCC cache R/W helpers used by the generation path
@@ -786,6 +787,7 @@ async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
         
         used_model = "qwen_grammar"
         parsed = False
+        diagnosis_usage: Dict[str, int] = {}
 
         if not (result.get("success") and result.get("data")):
             from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
@@ -816,6 +818,7 @@ async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
                         from api.services.trace_cag.benchmark.qa_generation import _ledger_add
 
                         _ledger_add("diagnose", data, wall_started=_started, response=resp)
+                        diagnosis_usage = provider_usage(data) or {}
                         tokens = data.get("usage", {}).get("total_tokens", 150)
                         await record_groq_key_usage(groq_key, tokens)
                         content = data["choices"][0]["message"]["content"]
@@ -897,6 +900,7 @@ async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
             "fluency_score": fluency_score,
             "vocabulary_level": EvaluationAgent.estimate_vocab_level(user_text),
             "models_used": [used_model],
+            "diagnosis_usage": diagnosis_usage,
         }
         if bridge == "closed" and parsed:
             diagnosis["diagnosis_label_invalid"] = count_invalid_labels(errors)

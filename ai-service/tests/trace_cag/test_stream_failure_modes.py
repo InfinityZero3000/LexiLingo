@@ -93,7 +93,7 @@ async def test_error_frame_before_any_token_falls_back_to_gemini(rig):
     rig.clients["gemini"] = _Client(_Resp(200, gemini("from gemini")))
     text, info = await collect()
     assert text == "from gemini"
-    assert info == {"provider": "gemini", "model": "gemini-2.0-flash"}
+    assert (info["provider"], info["model"]) == ("gemini", "gemini-2.0-flash")
 
 
 @pytest.mark.asyncio

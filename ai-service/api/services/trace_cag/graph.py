@@ -220,7 +220,9 @@ class TraceCAGPipeline:
             # Add total latency
             total_latency_ms = int((time.time() - start_time) * 1000)
             final_state["latency_ms"] = total_latency_ms
-            record_turn_metrics(final_state)
+            # A streamed turn records itself once generation is done; this latency would be analysis only.
+            if generation_policy != "skip":
+                record_turn_metrics(final_state)
 
             logger.info(
                 f"[TraceCAG] Completed in {total_latency_ms}ms, "

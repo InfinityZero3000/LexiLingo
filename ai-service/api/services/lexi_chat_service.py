@@ -63,6 +63,17 @@ def _turn_skill(input_type: str | None) -> str:
     return "speaking" if (input_type or "").strip().lower() == "voice" else "writing"
 
 
+def _turn_usage(diagnosis: Dict[str, int], generation: Dict[str, Any]) -> Dict[str, Any]:
+    """Provider tokens of the diagnosis and generation calls; "estimated" if either part was guessed."""
+    keys = ("prompt_tokens", "completion_tokens", "cached_tokens")
+    total: Dict[str, Any] = {k: int(diagnosis.get(k) or 0) + int(generation.get(k) or 0) for k in keys}
+    if generation.get("source") == "estimated":
+        total["source"] = "estimated"
+    else:
+        total["source"] = "provider" if (diagnosis or generation) else "none"
+    return total
+
+
 # ─── Request / Response Models ───────────────────────────────────────────────
 class LexiChatRequest(BaseModel):
     """Request to chat with Lexi."""
@@ -992,6 +1003,7 @@ async def stream_lexi_chat(
         learner_facts, suggested_courses = card_ctx.facts, list(card_ctx.courses)
         effective_level = card_ctx.profile.get("level", request.learner_level)
         memory_block = await memory_task
+        cache_bypass = "facts" if learner_facts else ("memory" if memory_block else "")
         ctx_task = asyncio.create_task(
             orchestrator.pipeline.analyze_for_streaming(
                 user_input=user_text,
@@ -1067,6 +1079,9 @@ async def stream_lexi_chat(
 
     lexi_response = ""
     model_used = "stream_llm"
+    first_token_at: Optional[float] = None
+    first_chunk_at: Optional[float] = None
+    provider_info: dict = {}
     cache_hit = bool(raw_state.get("cache_hit")) and bool(raw_state.get("tutor_response"))
     # The graph ended at ask_clarify: its question is the answer, and no context was retrieved for an LLM.
     clarification = (
@@ -1081,6 +1096,7 @@ async def stream_lexi_chat(
             expected_language=request.native_language,
         )
         model_used = "trace-cag_clarify" if clarification else f"cached_{raw_state.get('cache_layer', 'L0')}"
+        first_token_at = first_chunk_at = time.time()
         for word in lexi_response.split(" "):
             yield f"event: chunk\ndata: {json.dumps({'text': word + ' '})}\n\n"
             await asyncio.sleep(0.012)
@@ -1088,7 +1104,6 @@ async def stream_lexi_chat(
         # Cache miss: buffer provider tokens, sanitize the complete response,
         # then deliver it as SSE chunks so token-spanning internal markers
         # can never reach the client.
-        provider_info: dict = {}
         try:
             system_prompt, llm_messages = build_generation_prompt(raw_state)
             tokens: list[str] = []
@@ -1098,6 +1113,7 @@ async def stream_lexi_chat(
                 user_input=user_text,
                 provider_info=provider_info,
             ):
+                first_token_at = first_token_at or time.time()
                 tokens.append(token)
             raw_response = "".join(tokens).strip()
             lexi_response = (
@@ -1108,6 +1124,7 @@ async def stream_lexi_chat(
                 if raw_response
                 else ""
             )
+            first_chunk_at = time.time() if lexi_response else None
             for word in lexi_response.split(" ") if lexi_response else []:
                 yield f"event: chunk\ndata: {json.dumps({'text': word + ' '})}\n\n"
         except Exception as gen_err:
@@ -1250,6 +1267,31 @@ async def stream_lexi_chat(
         "vocabulary_level": vocab_level,
     }
     total_ms = int((time.time() - start_time) * 1000)
+    from api.services.trace_cag import turn_metrics
+    from api.services.trace_cag.cache_utils import _token_f1
+
+    turn_cost = _turn_usage(raw_state.get("diagnosis_usage") or {}, provider_info.get("usage") or {})
+    shadow = str(raw_state.get("l1_shadow_response") or "")
+    stream_meta = {
+        "ttft_ms": int((first_token_at - start_time) * 1000) if first_token_at else None,
+        "first_chunk_ms": int((first_chunk_at - start_time) * 1000) if first_chunk_at else None,
+        "usage": turn_cost,
+        "cache_layer": str(raw_state.get("cache_layer") or "L0") if cache_hit else "none",
+        "cache_bypass": cache_bypass,
+        "l1_shadow_f1": round(_token_f1(shadow, lexi_response), 3) if shadow else None,
+    }
+    turn_metrics.record_turn_metrics({
+        **raw_state,
+        **stream_meta,
+        "latency_ms": total_ms,
+        "cache_hit": cache_hit,
+        "prompt_tokens": turn_cost["prompt_tokens"],
+        "completion_tokens": turn_cost["completion_tokens"],
+        "cached_tokens": turn_cost["cached_tokens"],
+        "usage_source": turn_cost["source"],
+        "generation_policy": "stream",
+        "models_used": [*(raw_state.get("models_used") or []), model_used],
+    })
     done_payload = json.dumps({
         "message_id": message_id,
         "session_id": session_id,
@@ -1277,6 +1319,7 @@ async def stream_lexi_chat(
             "latency_ms": total_ms,
             "model_used": model_used,
             "cache_hit": cache_hit,
+            **stream_meta,
             **observation_meta,
             "quota": {
                 "rpm_used": quota.rpm_used,

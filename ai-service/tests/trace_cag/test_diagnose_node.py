@@ -161,6 +161,32 @@ class TestDiagnoseNode:
             assert result["models_used"][0].startswith("groq/")
 
     @pytest.mark.asyncio
+    async def test_diagnose_reports_the_groq_usage_it_spent(self, state_with_input, mock_model_gateway):
+        mock_model_gateway.execute_task.return_value = {"success": False}
+        groq_resp = MagicMock()
+        groq_resp.status_code = 200
+        groq_resp.json.return_value = {
+            "choices": [{"message": {"content": '{"errors": [], "intent": "correct", "confidence": 0.9}'}}],
+            "usage": {"prompt_tokens": 310, "completion_tokens": 25, "total_tokens": 335},
+        }
+
+        with patch(
+            "api.services.trace_cag.nodes_v2.get_gateway",
+            return_value=mock_model_gateway,
+        ), patch(
+            "api.core.groq_key_pool.get_available_groq_key",
+            new=AsyncMock(return_value="fake-groq-key"),
+        ), patch(
+            "api.services.trace_cag.nodes_v2._throttled_post_json",
+            new=AsyncMock(return_value=groq_resp),
+        ):
+            from api.services.trace_cag.nodes_v2 import diagnose_node
+
+            result = await diagnose_node(state_with_input)
+
+        assert result["diagnosis_usage"] == {"prompt_tokens": 310, "completion_tokens": 25, "cached_tokens": 0}
+
+    @pytest.mark.asyncio
     async def test_diagnose_sets_scores(self, state_with_input, mock_model_gateway):
         """Test that diagnose_node sets fluency and grammar scores."""
         mock_model_gateway.execute_task.return_value = {

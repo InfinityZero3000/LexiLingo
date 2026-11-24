@@ -181,6 +181,7 @@ class TraceCAGState(TypedDict, total=False):
     diagnosis_root_causes: List[str]  # concept IDs
     diagnosis_label_invalid: int  # closed bridge only: errors whose type is not one of the 24 labels
     diagnosis_confidence: float  # 0.0 - 1.0
+    diagnosis_usage: Dict[str, int]  # provider tokens the diagnosis call spent
     
     # ============================================
     # Retrieval (Vector + KG combined)
