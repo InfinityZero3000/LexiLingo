@@ -27,7 +27,7 @@ export type MonitoringDashboard = {
 };
 
 export const getMonitoringDashboard = async () => {
-  return apiFetch<MonitoringDashboard>(`${ENV.aiUrl}/ai/monitoring/dashboard`);
+  return apiFetch<MonitoringDashboard>(`${ENV.aiAdminUrl}/monitoring/dashboard`);
 };
 
 // ─── Lexi chat + LLM key pool (admin proxy: the ai-service admin key stays server-side) ───

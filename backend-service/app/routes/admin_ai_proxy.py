@@ -82,6 +82,13 @@ async def llm_key_monitoring(
     return await _forward("GET", "/monitoring/llm-keys", prefix="/ai")
 
 
+@router.get("/monitoring/dashboard")
+async def dashboard_monitoring(
+    _admin: User = Depends(require_resource("ops")),
+) -> Any:
+    return await _forward("GET", "/monitoring/dashboard", prefix="/ai")
+
+
 @router.get("/topics")
 async def list_topics(
     limit: int = Query(default=200, le=500),
