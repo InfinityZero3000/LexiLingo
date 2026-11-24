@@ -20,6 +20,7 @@ import json
 import logging
 import re
 import time
+from collections import Counter
 from dataclasses import asdict, replace
 from typing import Any, Dict, Mapping, Optional, Sequence
 
@@ -105,10 +106,12 @@ def _build_admissibility_certificate(
         relation_path = next(iter(relation_hints), "")
 
     required_dimensions = set(BASE_REQUIRED_DIMENSIONS)
+    # retrieval_meta stays out of this: the gate runs before retrieval, so a dimension it
+    # supplied could never be met by a request and every entry would be missing_required.
     dependencies = {
-        "evidence_hash": state_hints.get("evidence_hash") or retrieval_meta.get("evidence_hash"),
-        "source_version": state_hints.get("source_version") or retrieval_meta.get("source_version"),
-        "freshness_class": state_hints.get("freshness_class") or retrieval_meta.get("freshness_class"),
+        "evidence_hash": state_hints.get("evidence_hash"),
+        "source_version": state_hints.get("source_version"),
+        "freshness_class": state_hints.get("freshness_class"),
         "relation_path": relation_path,
         "native_language": fingerprint.get("native_language"),
     }
@@ -133,7 +136,10 @@ def _build_admissibility_certificate(
         relation_path=str(relation_path or ""),
         concepts=[str(item) for item in concepts],
         graph_fingerprint=str(state_hints.get("graph_fingerprint") or retrieval_meta.get("graph_fingerprint") or ""),
-        patchable_slots=[str(item) for item in (state_hints.get("patchable_slots") or [])],
+        patchable_slots=[
+            str(item)
+            for item in (state_hints.get("patchable_slots") or (["wording"] if _wording_patchable(state) else []))
+        ],
         dependencies=[asdict(event) for event in dependency_trace],
         created_at=now,
     )
@@ -346,6 +352,90 @@ def _build_l1_candidate_signature(
     )
 
 
+_L1_POLITE_WORDS = frozenset({"please", "pls", "plz", "kindly", "hi", "hello", "hey", "thanks", "lexi"})
+_L1_SHADOW_STATS_KEY = "v1:l1_shadow:stats"
+_L1_SHADOW_MIN_F1 = 0.3
+
+
+def _question_words(text: str) -> list[str]:
+    return [
+        word for word in re.findall(r"[^\W_]+(?:['’][^\W_]+)?", (text or "").lower())
+        if word not in _L1_POLITE_WORDS
+    ]
+
+
+def _wording_patchable(state: Mapping[str, Any]) -> bool:
+    """A learner's corrected sentence is about that sentence and is never reused for another."""
+    return (
+        not state.get("benchmark_metadata")
+        and (state.get("retrieval_meta") or {}).get("freshness_class") == "stable"
+        and state.get("diagnosis_intent") in ("explain", "ask")
+        and not state.get("diagnosis_errors")
+    )
+
+
+def _token_f1(left: str, right: str) -> float:
+    left_counts, right_counts = Counter(_question_words(left)), Counter(_question_words(right))
+    common = sum((left_counts & right_counts).values())
+    if not common:
+        return 0.0
+    precision = common / sum(left_counts.values())
+    recall = common / sum(right_counts.values())
+    return 2 * precision * recall / (precision + recall)
+
+
+async def _record_l1_shadow(shadow_response: str, response: str) -> None:
+    """Counts only, in Redis so a deploy does not reset the sample the rollout gate reads."""
+    if not shadow_response:
+        return
+    try:
+        from api.core.redis_client import RedisClient
+
+        redis_client = await RedisClient.get_instance()
+        await redis_client.hincrby(_L1_SHADOW_STATS_KEY, "compared", 1)
+        if _token_f1(shadow_response, response) < _L1_SHADOW_MIN_F1:
+            await redis_client.hincrby(_L1_SHADOW_STATS_KEY, "low_similarity", 1)
+    except Exception as exc:
+        logger.debug("[_record_l1_shadow] Redis write failed: %s", exc)
+
+
+def _cache_hit_payload(
+    entry: CacheEntry,
+    *,
+    response: str,
+    decision: str,
+    layer: str,
+    bucket: str,
+    risk: float,
+    fingerprint: CacheFingerprint,
+) -> Dict[str, Any]:
+    seeds = entry.get("kg_seed_concepts") or []
+    return {
+        "cache_hit": True,
+        "cache_decision": decision,
+        "cache_layer": layer,
+        "cache_bucket": bucket,
+        "reuse_risk": risk,
+        "cache_fingerprint": fingerprint,
+        "tutor_response": response,
+        "retrieval_trace": entry.get("retrieval_trace", []),
+        "strategy": (entry.get("execution_plan") or {}).get("strategy", "feedback"),
+        "diagnosis_errors": entry.get("diagnosis_errors", []),
+        "diagnosis_root_causes": entry.get("diagnosis_root_causes", []),
+        # An old entry has none, and an empty list would erase the seeds topic chat passed in.
+        **({"kg_seed_concepts": seeds} if seeds else {}),
+        "grammar_score": entry.get("grammar_score", 0.0),
+        "fluency_score": entry.get("fluency_score", 0.0),
+        "vocabulary_level": entry.get("vocabulary_level", "B1"),
+        "action_plan": entry.get("action_plan", []),
+        "overall_score": entry.get("overall_score", 0.8),
+        "path": "fast",
+        "ttft_ms": 1,
+        "tokens_saved": 650 + len(response) // 4,
+        "models_used": [f"rapid_{decision}_{layer.lower()}"],
+    }
+
+
 def _patch_response(entry: CacheEntry, fingerprint: CacheFingerprint) -> str:
     """
     Delta-patch a cached response for moderate drift (paper Alg. 1 line 13).
@@ -385,6 +475,12 @@ def _patch_response(entry: CacheEntry, fingerprint: CacheFingerprint) -> str:
 def _patch_allowed(entry: CacheEntry, fingerprint: CacheFingerprint) -> bool:
     """Permit patching only for explicitly declared non-factual slots."""
     declared = {str(item) for item in (_certificate_from_entry(entry).get("patchable_slots") or [])}
+    if "wording" in declared:
+        # Word for word: in a language tutor "use for here" and "use in here" are different questions.
+        cached_query = str((entry.get("fingerprint") or {}).get("query_norm") or "")
+        current_query = str(fingerprint.get("query_norm") or "")
+        words = _question_words(current_query)
+        return cached_query != current_query and bool(words) and words == _question_words(cached_query)
     cached = set((entry.get("fingerprint") or {}).get("root_concepts") or [])
     current = set(fingerprint.get("root_concepts") or [])
     changed = {"concepts"} if cached != current else set()
@@ -926,6 +1022,8 @@ async def _get_cache_entry(cache_key: str, level: str, now: float) -> CacheEntry
             "retrieval_trace": raw.get("retrieval_trace", []),
             "execution_plan": raw.get("execution_plan", {"strategy": raw.get("strategy", "feedback")}),
             "diagnosis_errors": raw.get("diagnosis_errors", []),
+            "diagnosis_root_causes": raw.get("diagnosis_root_causes", []),
+            "kg_seed_concepts": raw.get("kg_seed_concepts", []),
             "grammar_score": raw.get("grammar_score", 0.0),
             "fluency_score": raw.get("fluency_score", 0.0),
             "vocabulary_level": raw.get("vocabulary_level", "B1"),
@@ -963,6 +1061,7 @@ async def _write_cache_entry(
     model_used: str = "",
 ) -> None:
     """Write a structured CacheEntry to both in-process and Redis caches."""
+    await _record_l1_shadow(str(state.get("l1_shadow_response") or ""), response)
     user_input = state.get("user_input", "")
     learner_profile = state.get("learner_profile", {})
     level = learner_profile.get("level", "B1")
@@ -1041,6 +1140,8 @@ async def _write_cache_entry(
             "benchmark_state": dict((state.get("benchmark_metadata") or {}).get("_tracecag_state") or {}),
         },
         diagnosis_errors=[dict(e) for e in errors] if errors else [],
+        diagnosis_root_causes=list(state.get("diagnosis_root_causes") or []),
+        kg_seed_concepts=list(state.get("kg_seed_concepts") or []),
         grammar_score=state.get("grammar_score", 0.0),
         fluency_score=state.get("fluency_score", 0.0),
         vocabulary_level=state.get("vocabulary_level", "B1"),
@@ -1267,7 +1368,8 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
     benchmark_mode = str(benchmark_metadata.get("_benchmark_mode") or "").strip().lower()
     controller = benchmark_metadata.get("_tracecag_controller") or {}
     enable_l0 = bool(controller.get("enable_l0", True))
-    enable_l1 = bool(controller.get("enable_l1", True))
+    l1_mode = "on" if benchmark_metadata else settings.TRACECAG_L1_MODE
+    enable_l1 = bool(controller.get("enable_l1", True)) and l1_mode != "off"
     require_certificate = bool(controller.get("require_certificate", True))
     enable_patch = bool(controller.get("enable_patch", True))
     enable_recheck = bool(controller.get("enable_recheck", True))
@@ -1402,51 +1504,11 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
 
         if l0_safe and rho <= tau_reuse:
             _resp_text = entry.get("response", "")
-            return _with_gate_meta({
-                "cache_hit": True,
-                "cache_decision": "reuse",
-                "cache_layer": "L0",
-                "cache_bucket": bucket,
-                "reuse_risk": rho,
-                "cache_fingerprint": fingerprint,
-                "tutor_response": _resp_text,
-                "retrieval_trace": entry.get("retrieval_trace", []),
-                "strategy": (entry.get("execution_plan") or {}).get("strategy", "feedback"),
-                "diagnosis_errors": entry.get("diagnosis_errors", []),
-                "grammar_score": entry.get("grammar_score", 0.0),
-                "fluency_score": entry.get("fluency_score", 0.0),
-                "vocabulary_level": entry.get("vocabulary_level", "B1"),
-                "action_plan": entry.get("action_plan", []),
-                "overall_score": entry.get("overall_score", 0.8),
-                "path": "fast",
-                "ttft_ms": 1,
-                "tokens_saved": 650 + len(_resp_text) // 4,
-                "models_used": ["rapid_reuse_l0"],
-            }, pcc_passed=True, reasons=l0_reasons, risk=rho)
+            return _with_gate_meta(_cache_hit_payload(entry, response=_resp_text, decision="reuse", layer="L0", bucket=bucket, risk=rho, fingerprint=fingerprint), pcc_passed=True, reasons=l0_reasons, risk=rho)
         elif enable_patch and l0_safe and rho <= tau_patch and _patch_allowed(entry, fingerprint):
             patched = _patch_response(entry, fingerprint)
             if _patch_postconditions_hold(entry, patched):
-                return _with_gate_meta({
-                    "cache_hit": True,
-                    "cache_decision": "patch",
-                    "cache_layer": "L0",
-                    "cache_bucket": bucket,
-                    "reuse_risk": rho,
-                    "cache_fingerprint": fingerprint,
-                    "tutor_response": patched,
-                    "retrieval_trace": entry.get("retrieval_trace", []),
-                    "strategy": (entry.get("execution_plan") or {}).get("strategy", "feedback"),
-                    "diagnosis_errors": entry.get("diagnosis_errors", []),
-                    "grammar_score": entry.get("grammar_score", 0.0),
-                    "fluency_score": entry.get("fluency_score", 0.0),
-                    "vocabulary_level": entry.get("vocabulary_level", "B1"),
-                    "action_plan": entry.get("action_plan", []),
-                    "overall_score": entry.get("overall_score", 0.8),
-                    "path": "fast",
-                    "ttft_ms": 1,
-                    "tokens_saved": 650 + len(patched) // 4,
-                    "models_used": ["rapid_patch_l0"],
-                }, pcc_passed=True, reasons=l0_reasons, risk=rho)
+                return _with_gate_meta(_cache_hit_payload(entry, response=patched, decision="patch", layer="L0", bucket=bucket, risk=rho, fingerprint=fingerprint), pcc_passed=True, reasons=l0_reasons, risk=rho)
             best_rejection = (1.0, ("patch_postcondition_failed",))
 
     # --- Try graph-bucket near-hit lookup (L1) ---
@@ -1538,57 +1600,25 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
             best_rejection = (1.0, snapshot_reasons)
             best_candidate = None
 
+    shadow_response = ""
+    if best_candidate is not None and l1_mode == "shadow":
+        _, entry, _, _, l1_decision = best_candidate
+        would_serve = entry.get("response", "") if l1_decision == "reuse" else _patch_response(entry, fingerprint)
+        if l1_decision == "reuse" or _patch_postconditions_hold(entry, would_serve):
+            shadow_response = would_serve
+        best_candidate = None
+
     if best_candidate is not None:
         _, entry, _, rho, l1_decision = best_candidate
         logger.info(f"[cache_gate_node] L1 HIT bucket={bucket[:8]} decision={l1_decision} ρ={rho:.3f}")
         if l1_decision == "reuse":
             _resp_text = entry.get("response", "")
-            return _with_gate_meta({
-                "cache_hit": True,
-                "cache_decision": "reuse",
-                "cache_layer": "L1",
-                "cache_bucket": bucket,
-                "reuse_risk": rho,
-                "cache_fingerprint": fingerprint,
-                "tutor_response": _resp_text,
-                "retrieval_trace": entry.get("retrieval_trace", []),
-                "strategy": (entry.get("execution_plan") or {}).get("strategy", "feedback"),
-                "diagnosis_errors": entry.get("diagnosis_errors", []),
-                "grammar_score": entry.get("grammar_score", 0.0),
-                "fluency_score": entry.get("fluency_score", 0.0),
-                "vocabulary_level": entry.get("vocabulary_level", "B1"),
-                "action_plan": entry.get("action_plan", []),
-                "overall_score": entry.get("overall_score", 0.8),
-                "path": "fast",
-                "ttft_ms": 1,
-                "tokens_saved": 650 + len(_resp_text) // 4,
-                "models_used": ["rapid_reuse_l1"],
-            }, pcc_passed=True, reasons=("state_compatible_near_hit",), risk=rho)
+            return _with_gate_meta(_cache_hit_payload(entry, response=_resp_text, decision="reuse", layer="L1", bucket=bucket, risk=rho, fingerprint=fingerprint), pcc_passed=True, reasons=("state_compatible_near_hit",), risk=rho)
         patched = _patch_response(entry, fingerprint)
         if not _patch_postconditions_hold(entry, patched):
             best_rejection = (1.0, ("patch_postcondition_failed",))
         else:
-            return _with_gate_meta({
-            "cache_hit": True,
-            "cache_decision": "patch",
-            "cache_layer": "L1",
-            "cache_bucket": bucket,
-            "reuse_risk": rho,
-            "cache_fingerprint": fingerprint,
-            "tutor_response": patched,
-            "retrieval_trace": entry.get("retrieval_trace", []),
-            "strategy": (entry.get("execution_plan") or {}).get("strategy", "feedback"),
-            "diagnosis_errors": entry.get("diagnosis_errors", []),
-            "grammar_score": entry.get("grammar_score", 0.0),
-            "fluency_score": entry.get("fluency_score", 0.0),
-            "vocabulary_level": entry.get("vocabulary_level", "B1"),
-            "action_plan": entry.get("action_plan", []),
-            "overall_score": entry.get("overall_score", 0.8),
-            "path": "fast",
-            "ttft_ms": 1,
-            "tokens_saved": 650 + len(patched) // 4,
-            "models_used": ["rapid_patch_l1"],
-            }, pcc_passed=True, reasons=("state_compatible_near_hit",), risk=rho)
+            return _with_gate_meta(_cache_hit_payload(entry, response=patched, decision="patch", layer="L1", bucket=bucket, risk=rho, fingerprint=fingerprint), pcc_passed=True, reasons=("state_compatible_near_hit",), risk=rho)
 
     logger.info(f"[cache_gate_node] Cache MISS for key {cache_key[:8]}...")
     rejection_risk, rejection_reasons = best_rejection or (1.0, ("no_compatible_candidate",))
@@ -1599,5 +1629,6 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
         "cache_bucket": bucket,
         "reuse_risk": 1.0,
         "cache_fingerprint": fingerprint,
+        "l1_shadow_response": shadow_response,
         "path": "slow",
     }, pcc_passed=False, reasons=rejection_reasons, risk=rejection_risk)

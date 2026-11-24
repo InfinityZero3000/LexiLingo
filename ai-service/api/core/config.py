@@ -108,6 +108,8 @@ class Settings(BaseSettings):
     KG_EXPANSION_ENABLED: bool = True
     KG_MASTERY_TRAVERSAL: bool = False
     KG_DIAGNOSIS_BRIDGE: str = Field(default="off", pattern=r"^(off|map|closed)$")
+    # shadow computes the L1 decision and measures it against a fresh answer; only on serves it.
+    TRACECAG_L1_MODE: str = Field(default="off", pattern=r"^(off|shadow|on)$")
 
     # ============================================================
     # Internal CEFR Content Agent
