@@ -27,6 +27,7 @@ from api.services.trace_cag.llm_client import (
     _qwen_no_think_messages,
     _qwen_reasoning_overrides,
     _throttled_post_json,
+    provider_usage,
 )
 from api.services.trace_cag.cache_utils import _write_cache_entry
 from api.services.trace_cag.dependencies import dependency_record, policy_version_token
@@ -390,6 +391,9 @@ async def stream_llm_tokens(
 
     groq_admitted = False
     groq_model_used = resolve_groq_model()
+    # Groq can bill a turn it then produced nothing for, so each provider keeps its own and the turn pays both.
+    groq_usage: Dict[str, int] = {}
+    gemini_usage: Dict[str, int] = {}
 
     async def _try_groq() -> "AsyncGenerator[str, None]":
         nonlocal groq_admitted
@@ -422,6 +426,7 @@ async def stream_llm_tokens(
                     "max_tokens": max_tokens,
                     "temperature": 0.7,
                     "stream": True,
+                    "stream_options": {"include_usage": True},
                     **_qwen_reasoning_overrides(groq_model),
                 },
                 timeout=25.0,
@@ -447,6 +452,10 @@ async def stream_llm_tokens(
                                 str(obj["error"])[:300],
                             )
                             return
+                        # Groq repeats the same usage on two chunks; update, never add.
+                        groq_usage.update(provider_usage(obj) or {})
+                        if not obj.get("choices"):
+                            continue
                         delta = obj["choices"][0]["delta"].get("content") or ""
                         if delta:
                             tokens_yielded += len(delta.split())
@@ -460,7 +469,11 @@ async def stream_llm_tokens(
             if groq_key:
                 try:
                     try:
-                        await record_groq_key_usage(groq_key, max(50, tokens_yielded + 50))
+                        spent = (
+                            groq_usage["prompt_tokens"] + groq_usage["completion_tokens"]
+                            if groq_usage else max(50, tokens_yielded + 50)
+                        )
+                        await record_groq_key_usage(groq_key, spent)
                     except Exception as exc:
                         logger.warning("[stream_llm_tokens] Groq usage accounting failed: %s", exc)
                 finally:
@@ -498,6 +511,7 @@ async def stream_llm_tokens(
                     data = line[6:]
                     try:
                         obj = json.loads(data)
+                        gemini_usage.update(provider_usage(obj) or {})
                         text = (
                             obj.get("candidates", [{}])[0]
                             .get("content", {})
@@ -522,13 +536,27 @@ async def stream_llm_tokens(
     finally:
         await groq_stream.aclose()
 
+    def _report_usage() -> None:
+        # No guessed numbers: a turn whose provider reported nothing says so and is left out of token sums.
+        if provider_info is None:
+            return
+        parts = [part for part in (groq_usage, gemini_usage) if part]
+        provider_info["usage"] = (
+            {key: sum(part[key] for part in parts) for key in ("prompt_tokens", "completion_tokens", "cached_tokens")}
+            | {"source": "provider"}
+            if parts
+            else {"source": "missing"}
+        )
+
     if got_tokens:
         if provider_info is not None:
             provider_info["provider"] = "groq"
             provider_info["model"] = groq_model_used
+        _report_usage()
         return
 
     if not allow_gemini_fallback:
+        _report_usage()
         if not groq_admitted:
             raise ProviderBusyError("Groq voice capacity exhausted")
         raise RuntimeError("Groq admitted the turn but returned no token")
@@ -540,6 +568,7 @@ async def stream_llm_tokens(
     if gemini_yielded and provider_info is not None:
         provider_info["provider"] = "gemini"
         provider_info["model"] = "gemini-2.0-flash"
+        _report_usage()
 
 
 async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
