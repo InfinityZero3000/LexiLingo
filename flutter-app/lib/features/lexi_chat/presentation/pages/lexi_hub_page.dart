@@ -194,6 +194,10 @@ class _LexiHubPageState extends State<LexiHubPage>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
+      // LexiChatPage is the leaf scaffold that moves the composer above the
+      // keyboard. Resizing here as well applies viewInsets twice and leaves a
+      // keyboard-height gap below the composer.
+      resizeToAvoidBottomInset: false,
       backgroundColor: isDark
           ? AppColors.backgroundDark
           : AppColors.backgroundLight,

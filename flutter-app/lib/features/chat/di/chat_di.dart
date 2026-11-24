@@ -86,9 +86,7 @@ void registerChatModule({required bool skipDatabase}) {
   // Story/Topic-based Conversation Module
   // ============================================================
   sl.registerLazySingleton<StoryApiDataSource>(
-    () => StoryApiDataSource(
-      apiClient: sl<AiApiClient>(),
-    ),
+    () => StoryApiDataSource(apiClient: sl<AiApiClient>()),
   );
 
   sl.registerLazySingleton<StoryRepository>(

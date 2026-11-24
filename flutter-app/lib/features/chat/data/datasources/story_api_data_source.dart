@@ -80,7 +80,10 @@ class StoryApiDataSource {
         );
         final retryPathWithQuery = retryUri.toString();
 
-        logDebug(_tag, 'getStories retry with bypass_cache: $retryPathWithQuery');
+        logDebug(
+          _tag,
+          'getStories retry with bypass_cache: $retryPathWithQuery',
+        );
 
         try {
           final retryJson = await apiClient.get(retryPathWithQuery);
@@ -232,7 +235,10 @@ class StoryApiDataSource {
             final json = jsonDecode(sse.data) as Map<String, dynamic>;
             yield TopicStreamDone(TopicChatResponse.fromJson(json).toEntity());
           } catch (e) {
-            logError(_tag, 'sendTopicMessageStream: failed to parse done event: $e');
+            logError(
+              _tag,
+              'sendTopicMessageStream: failed to parse done event: $e',
+            );
           }
           break;
         case 'error':
@@ -290,7 +296,8 @@ class StoryApiDataSource {
         query.write('&cursor=${Uri.encodeComponent(cursor)}');
       }
 
-      final path = '/topics/topic-sessions/$sessionId/messages/paged?${query.toString()}';
+      final path =
+          '/topics/topic-sessions/$sessionId/messages/paged?${query.toString()}';
       logDebug(_tag, 'getTopicMessagesPaged: $path');
 
       final json = await apiClient.get(path);

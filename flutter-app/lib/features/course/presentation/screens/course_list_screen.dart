@@ -11,7 +11,7 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/course/presentation/providers/course_provider.dart';
 import 'package:lexilingo_app/features/course/presentation/screens/course_detail_screen.dart';
 import 'package:lexilingo_app/features/course/presentation/screens/category_detail_screen.dart';
-import 'package:lexilingo_app/features/course/presentation/utils/course_tag_label.dart';
+import 'package:lexilingo_app/features/course/presentation/utils/course_labels.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_category_entity.dart';
 import 'package:lexilingo_app/core/widgets/app_surface.dart';
@@ -21,13 +21,13 @@ import 'package:lexilingo_app/core/widgets/app_surface.dart';
 /// Decorative cover gradients; picked by course-id hash, fixed in both themes.
 const _courseCardGradients = <List<Color>>[
   [AppColors.primary, AppColors.purple],
-  [AppColors.purple, Color(0xFFf5576c)],
-  [Color(0xFF4facfe), Color(0xFF00f2fe)],
-  [Color(0xFF43e97b), Color(0xFF38f9d7)],
-  [Color(0xFFfa709a), Color(0xFFfee140)],
-  [Color(0xFF30cfd0), Color(0xFF330867)],
-  [Color(0xFFa8edea), Color(0xFFfed6e3)],
-  [Color(0xFFff9a9e), Color(0xFFfecfef)],
+  [AppColors.purple, AppColors.pink],
+  [AppColors.primary, AppColors.teal],
+  [AppColors.greenSuccessBright, AppColors.teal],
+  [AppColors.pink, AppColors.orange],
+  [AppColors.teal, AppColors.purple],
+  [AppColors.orange, AppColors.accentYellow],
+  [AppColors.purpleLight, AppColors.pink],
 ];
 
 class CourseListScreen extends StatefulWidget {
@@ -494,12 +494,12 @@ class _CourseBanner extends StatelessWidget {
             Image.asset(
               'assets/course/banner_course.png',
               width: double.infinity,
-              height: 130,
+              height: 88,
               fit: BoxFit.cover,
             ),
             // Subtle overlay so text is readable
             Container(
-              height: 130,
+              height: 88,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.centerRight,
@@ -707,9 +707,7 @@ class _HorizontalCourseCard extends StatelessWidget {
     final cardWidth = compact ? 150.0 : 170.0;
     const cardRadius = AppRadius.lg;
     final contentPadding = compact ? 10.0 : 12.0;
-    final titleFontSize = compact ? 13.0 : 14.0;
     final imageAspectRatio = compact ? 16 / 9 : 16 / 10;
-    final displayTags = _visibleCourseTags(course);
 
     return Container(
       width: cardWidth,
@@ -763,7 +761,7 @@ class _HorizontalCourseCard extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: _getLevelColor(
-                              course.level,
+                              courseLevelLabel(course.level),
                               isDark: isDark,
                             ).withValues(alpha: 0.9),
                             borderRadius: BorderRadius.circular(AppRadius.md),
@@ -778,58 +776,13 @@ class _HorizontalCourseCard extends StatelessWidget {
                             ],
                           ),
                           child: Text(
-                            course.level,
+                            courseLevelLabel(course.level),
                             style: Theme.of(context).textTheme.labelSmall
                                 ?.copyWith(
                                   color: AppColors.surfaceLight,
 
                                   fontWeight: FontWeight.bold,
                                 ),
-                          ),
-                        ),
-                      ),
-
-                      // XP badge (bottom right)
-                      Positioned(
-                        bottom: 8,
-                        right: 8,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.sm,
-                            vertical: AppSpacing.xs,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.warning.withValues(alpha: 0.9),
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.slate900.withValues(
-                                  alpha: 0.2,
-                                ),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.star,
-                                size: 12,
-                                color: AppColors.surfaceLight,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '${course.totalXp}',
-                                style: Theme.of(context).textTheme.labelSmall
-                                    ?.copyWith(
-                                      color: AppColors.surfaceLight,
-
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                              ),
-                            ],
                           ),
                         ),
                       ),
@@ -846,142 +799,12 @@ class _HorizontalCourseCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Tags row — horizontally scrollable, above title. The
-                    // fade says "more to the right" instead of a hard cut
-                    // through the last chip.
-                    ClipRect(
-                      child: SingleChildScrollView(
-                        physics: const NeverScrollableScrollPhysics(),
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: [
-                            // Language chip (INT + en)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 7,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Theme.of(context)
-                                        .colorScheme
-                                        .primaryContainer
-                                        .withValues(alpha: 0.7),
-                                    Theme.of(context)
-                                        .colorScheme
-                                        .primaryContainer
-                                        .withValues(alpha: 0.5),
-                                  ],
-                                ),
-                                borderRadius: BorderRadius.circular(
-                                  AppRadius.md,
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: AppSpacing.xs,
-                                      vertical: 1,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .primary
-                                          .withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      _getLanguageCode(course.language),
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelSmall
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.primary,
-                                          ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    _getLanguageLabel(course.language),
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .labelSmall
-                                        ?.copyWith(
-                                          fontWeight: FontWeight.w600,
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.onPrimaryContainer,
-                                        ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            // Learner-facing tags only. Internal seed/crawl
-                            // metadata stays in data for filtering/imports.
-                            ...displayTags.map(
-                              (tag) => Padding(
-                                padding: const EdgeInsets.only(left: 5),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 7,
-                                    vertical: 3,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isDark
-                                        ? AppColors.textInverted.withValues(
-                                            alpha: 0.08,
-                                          )
-                                        : AppColors.grey100,
-                                    borderRadius: BorderRadius.circular(
-                                      AppRadius.md,
-                                    ),
-                                    border: Border.all(
-                                      color: isDark
-                                          ? AppColors.textInverted.withValues(
-                                              alpha: 0.24,
-                                            )
-                                          : AppColors.grey300,
-                                      width: 0.8,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    tag,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .labelSmall
-                                        ?.copyWith(
-                                          fontWeight: FontWeight.w600,
-                                          color: isDark
-                                              ? AppColors.textOnDarkSecondary
-                                              : AppColors.grey700,
-                                        ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 4),
-
                     // Title
                     Text(
                       course.title,
-                      style: TextStyle(
-                        fontSize: titleFontSize,
-                        fontWeight: FontWeight.bold,
-                        color: isDark
-                            ? AppColors.textOnDarkPrimary
-                            : AppColors.textDark,
-                        height: 1.15,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        height: 1.2,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -1209,162 +1032,9 @@ class _HorizontalCourseCard extends StatelessWidget {
     return networkThumbnail(fallbackUrl, onError: () => finalFallback(context));
   }
 
-  static const Set<String> _hiddenCourseTagKeys = {
-    'seed',
-    'seeded',
-    'crawl',
-    'crawled',
-    'crawler',
-    'source',
-    'import',
-    'imported',
-    'generated',
-    'auto',
-    'automatic',
-    'internal',
-    'system',
-    'demo',
-    'sample',
-    'kg',
-    'tracecag',
-    'trace_cag',
-    'TRACECAG',
-    'graph_cag',
-  };
-
-  List<String> _visibleCourseTags(CourseEntity course) {
-    final hiddenKeys = {
-      ..._hiddenCourseTagKeys,
-      _normalizeTagKey(course.language),
-      _normalizeTagKey(_getLanguageCode(course.language)),
-      _normalizeTagKey(_getLanguageLabel(course.language)),
-      _normalizeTagKey(course.level),
-    };
-    final seen = <String>{};
-    final visible = <String>[];
-
-    for (final tag in course.tags) {
-      final key = _normalizeTagKey(tag);
-      if (key.isEmpty) continue;
-      if (hiddenKeys.contains(key)) continue;
-      if (key.contains('crawl') || key.contains('seed')) continue;
-      if (RegExp(r'^[abc][12]$').hasMatch(key)) continue;
-      if (!seen.add(key)) continue;
-
-      visible.add(_formatCourseTag(tag));
-    }
-
-    return visible;
-  }
-
-  String _normalizeTagKey(String value) {
-    return value
-        .trim()
-        .toLowerCase()
-        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
-        .replaceAll(RegExp(r'_+'), '_')
-        .replaceAll(RegExp(r'^_|_$'), '');
-  }
-
-  String _formatCourseTag(String tag) {
-    final key = _normalizeTagKey(tag);
-    const aliases = {
-      'vocab': 'vocabulary',
-      'vocabulary': 'vocabulary',
-      'grammar': 'grammar',
-      'conversation': 'conversation',
-      'speaking': 'speaking',
-      'listening': 'listening',
-      'reading': 'reading',
-      'writing': 'writing',
-      'pronunciation': 'pronunciation',
-      'business': 'business',
-      'travel': 'travel',
-      'exam': 'exam',
-    };
-    final alias = aliases[key];
-    if (alias != null) return 'course.tag.$alias'.tr();
-
-    return courseTagLabel(tag);
-  }
-
   List<Color> _getGradientFromHash(int hash) {
     final gradients = _courseCardGradients;
     return gradients[hash.abs() % gradients.length];
-  }
-
-  String _getLanguageCode(String language) {
-    switch (language.toLowerCase()) {
-      case 'en':
-      case 'en-us':
-      case 'en_us':
-      case 'english':
-        return 'EN';
-      case 'es':
-      case 'spanish':
-        return 'ES';
-      case 'fr':
-      case 'french':
-        return 'FR';
-      case 'de':
-      case 'german':
-        return 'DE';
-      case 'ja':
-      case 'jp':
-      case 'japanese':
-        return 'JP';
-      case 'zh':
-      case 'cn':
-      case 'chinese':
-        return 'CN';
-      case 'ko':
-      case 'kr':
-      case 'korean':
-        return 'KR';
-      case 'vi':
-      case 'vn':
-      case 'vietnamese':
-        return 'VN';
-      default:
-        return 'INT';
-    }
-  }
-
-  String _getLanguageLabel(String language) {
-    switch (language.toLowerCase()) {
-      case 'en':
-      case 'en-us':
-      case 'en_us':
-      case 'english':
-        return 'English';
-      case 'es':
-      case 'spanish':
-        return 'Spanish';
-      case 'fr':
-      case 'french':
-        return 'French';
-      case 'de':
-      case 'german':
-        return 'German';
-      case 'ja':
-      case 'jp':
-      case 'japanese':
-        return 'Japanese';
-      case 'zh':
-      case 'cn':
-      case 'chinese':
-        return 'Chinese';
-      case 'ko':
-      case 'kr':
-      case 'korean':
-        return 'Korean';
-      case 'vi':
-      case 'vn':
-      case 'vietnamese':
-        return 'Vietnamese';
-      default:
-        return language;
-    }
   }
 
   Color _getLevelColor(String level, {bool isDark = false}) {
@@ -1755,11 +1425,6 @@ class _FilterSheetState extends State<_FilterSheet> {
                               ? AppColors.warningDark.withValues(alpha: 0.12)
                               : AppColors.grey500.withValues(alpha: 0.07),
                           borderRadius: BorderRadius.circular(AppRadius.lg),
-                          border: Border.all(
-                            color: _enrolledOnly
-                                ? AppColors.warningDark
-                                : AppColors.grey500.withValues(alpha: 0.25),
-                          ),
                         ),
                         child: Row(
                           children: [
@@ -1941,10 +1606,6 @@ class _Chip extends StatelessWidget {
               : null,
           color: isSelected ? null : color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          border: Border.all(
-            color: isSelected ? color : color.withValues(alpha: 0.3),
-            width: isSelected ? 0 : 1,
-          ),
           boxShadow: isSelected
               ? [
                   BoxShadow(

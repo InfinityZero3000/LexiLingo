@@ -4,9 +4,9 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 // ═══════════════════════════════════════════════════════════════
 // Semantic exercise colors
 // ═══════════════════════════════════════════════════════════════
-const kCorrect = Color(0xFF2DBD73);
+const kCorrect = AppColors.greenSuccessBright;
 
-const kError = Color(0xFFE53935);
+const kError = AppColors.errorBright;
 
 class ExercisePalette {
   final Color primary;
@@ -40,14 +40,15 @@ class ExercisePalette {
       card: theme.colorScheme.surface,
       surface: isDark
           ? theme.colorScheme.surfaceContainerHighest
-          : const Color(0xFFE8EFFF),
-      border: isDark
-          ? Theme.of(context).colorScheme.outlineVariant
-          : const Color(0xFFCDD8F6),
+          : Color.alphaBlend(
+              AppColorRoles.primary(isDark).withValues(alpha: 0.1),
+              theme.colorScheme.surface,
+            ),
+      border: theme.colorScheme.outlineVariant,
       textPrimary: AppColorRoles.textPrimary(isDark),
       textSecondary: AppColorRoles.textSecondary(isDark),
       textMuted: AppColorRoles.textMuted(isDark),
-      shadow: theme.colorScheme.shadow.withValues(alpha: isDark ? 0.2 : 0.05),
+      shadow: theme.colorScheme.shadow.withValues(alpha: isDark ? 0.2 : 0.09),
     );
   }
 }

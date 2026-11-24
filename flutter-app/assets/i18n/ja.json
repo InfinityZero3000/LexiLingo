@@ -216,6 +216,72 @@
     "challengesCompleted": "{completed}/{total} 完了",
     "viewAllChallenges": "{count}件すべてのチャレンジを見る",
     "completeBonusXp": "すべて達成してボーナス {xp} XPを獲得！",
+    "challengeTexts": {
+      "complete_lessons": {
+        "title": "レッスンマスター",
+        "description": "今日 {target} 件のレッスンを完了する"
+      },
+      "review_vocab": {
+        "title": "語彙の復習",
+        "description": "{target} 個の単語を復習する"
+      },
+      "earn_xp": {
+        "title": "XPハンター",
+        "description": "今日 {target} XP を獲得する"
+      },
+      "perfect_lesson": {
+        "title": "完璧主義者",
+        "description": "{target} 件のレッスンで 100% を取る"
+      },
+      "maintain_streak": {
+        "title": "炎を絶やさない",
+        "description": "学習の連続記録を維持する"
+      },
+      "review_flashcards": {
+        "title": "フラッシュカード熱",
+        "description": "フラッシュカードを {target} 枚復習する"
+      },
+      "quiz_accuracy": {
+        "title": "名スナイパー",
+        "description": "{target} 件のクイズで 80% 以上を取る"
+      },
+      "time_spent": {
+        "title": "熱心な学習者",
+        "description": "{target} 分間勉強する"
+      },
+      "new_words": {
+        "title": "単語探検家",
+        "description": "新しい単語を {target} 個覚える"
+      },
+      "grammar_drill": {
+        "title": "文法の達人",
+        "description": "文法練習を {target} 件完了する"
+      },
+      "listening_drill": {
+        "title": "アクティブリスナー",
+        "description": "リスニング練習を {target} 件完了する"
+      },
+      "watch_youtube": {
+        "title": "有意義な画面時間",
+        "description": "英語の動画を {target} 分視聴する"
+      },
+      "listen_podcast": {
+        "title": "耳を傾ける",
+        "description": "ポッドキャストを {target} 分聴く"
+      },
+      "read_news": {
+        "title": "時事通",
+        "description": "ニュースクイズに {target} 件合格する"
+      },
+      "read_minutes": {
+        "title": "読書の時間",
+        "description": "{target} 分間読む"
+      },
+      "read_book": {
+        "title": "一章ずつ",
+        "description": "本の章クイズを {target} 件完了する"
+      }
+    },
     "allChallengesComplete": "全チャレンジ達成！",
     "bonusXpEarned": "+{xp} ボーナスXP",
     "claimReward": "受け取る",
@@ -493,6 +559,8 @@
     "tryAgain": "もう一度やり直してください",
     "noReviewSessionAvailable": "利用可能なレビューセッションはありません",
     "sessionComplete": "セッション完了！",
+    "savingResults": "結果を保存しています…",
+    "unsavedResults": "{count} 件の回答をまだ保存できていません。該当の単語は復習待ちのままです。",
     "exitReviewTitle": "レビューを終了しますか?",
     "exitReviewMessage": "進行状況は保存されますが、このセッションは後で続行できます。",
     "title": "フラッシュカード",
@@ -896,8 +964,8 @@
     "reminderTime": "リマインダー時刻",
     "pushReminder": "プッシュ通知",
     "emailReminder": "メールリマインダー",
-    "nurtureEmails": "リマインダーと週間まとめのメール",
-    "nurtureEmailsHint": "連続記録のお知らせ、学習のヒント、週間まとめ。アカウント関連のメールは対象外です。",
+    "nurtureEmails": "リマインダーメール",
+    "nurtureEmailsHint": "連続記録のお知らせと週間まとめ。",
     "nurtureEmailsError": "変更を保存できませんでした。もう一度お試しください。",
     "emailCadence": "メールの頻度",
     "emailCadenceEvery3Days": "3日ごと",

@@ -216,6 +216,72 @@
     "challengesCompleted": "{completed}/{total} completados",
     "viewAllChallenges": "Ver todos los {count} desafíos",
     "completeBonusXp": "¡Completa todo para ganar {xp} XP de bonificación!",
+    "challengeTexts": {
+      "complete_lessons": {
+        "title": "Maestro de lecciones",
+        "description": "Completa {target} lección(es) hoy"
+      },
+      "review_vocab": {
+        "title": "Repaso de vocabulario",
+        "description": "Repasa {target} palabras de vocabulario"
+      },
+      "earn_xp": {
+        "title": "Cazador de XP",
+        "description": "Gana {target} XP hoy"
+      },
+      "perfect_lesson": {
+        "title": "Perfeccionista",
+        "description": "Consigue 100 % en {target} lección(es)"
+      },
+      "maintain_streak": {
+        "title": "Mantén la llama",
+        "description": "Mantén tu racha de aprendizaje"
+      },
+      "review_flashcards": {
+        "title": "Furor de tarjetas",
+        "description": "Repasa {target} tarjetas"
+      },
+      "quiz_accuracy": {
+        "title": "Puntería afinada",
+        "description": "Obtén 80 % o más en {target} cuestionario(s)"
+      },
+      "time_spent": {
+        "title": "Estudiante dedicado",
+        "description": "Estudia durante {target} minuto(s)"
+      },
+      "new_words": {
+        "title": "Explorador de palabras",
+        "description": "Aprende {target} palabra(s) nueva(s)"
+      },
+      "grammar_drill": {
+        "title": "Gurú de la gramática",
+        "description": "Completa {target} ejercicio(s) de gramática"
+      },
+      "listening_drill": {
+        "title": "Oyente activo",
+        "description": "Completa {target} ejercicio(s) de comprensión auditiva"
+      },
+      "watch_youtube": {
+        "title": "Pantalla bien aprovechada",
+        "description": "Mira {target} minuto(s) de video en inglés"
+      },
+      "listen_podcast": {
+        "title": "Oído atento",
+        "description": "Escucha {target} minuto(s) de pódcast"
+      },
+      "read_news": {
+        "title": "Al día",
+        "description": "Aprueba {target} cuestionario(s) de noticias"
+      },
+      "read_minutes": {
+        "title": "Tiempo de lectura",
+        "description": "Lee durante {target} minuto(s)"
+      },
+      "read_book": {
+        "title": "Capítulo a capítulo",
+        "description": "Termina {target} cuestionario(s) de capítulo de libro"
+      }
+    },
     "allChallengesComplete": "¡Todos los desafíos completados!",
     "bonusXpEarned": "+{xp} XP de bonificación",
     "claimReward": "Reclamar",
@@ -493,6 +559,8 @@
     "tryAgain": "Intentar otra vez",
     "noReviewSessionAvailable": "No hay sesión de revisión disponible",
     "sessionComplete": "¡Sesión completa!",
+    "savingResults": "Guardando tus resultados…",
+    "unsavedResults": "No se pudieron guardar {count} respuestas; esas palabras siguen pendientes.",
     "exitReviewTitle": "¿Salir de revisión?",
     "exitReviewMessage": "Su progreso se guardará, pero podrá continuar esta sesión más tarde.",
     "title": "Tarjetas de memoria",
@@ -896,8 +964,8 @@
     "reminderTime": "Hora del recordatorio",
     "pushReminder": "Recordatorios push",
     "emailReminder": "Recordatorios por correo",
-    "nurtureEmails": "Correos de recordatorio y resumen",
-    "nurtureEmailsHint": "Recordatorios de racha, avisos de estudio y resumen semanal. Los correos de la cuenta no se ven afectados.",
+    "nurtureEmails": "Correos de recordatorio",
+    "nurtureEmailsHint": "Recordatorios de racha y resumen semanal.",
     "nurtureEmailsError": "No se pudo guardar el cambio. Inténtalo de nuevo.",
     "emailCadence": "Frecuencia de correos",
     "emailCadenceEvery3Days": "Cada 3 días",

@@ -447,8 +447,7 @@ class StoryListItem {
 // ---------------------------------------------------------------------------
 
 extension LocalizedTitleToEntity on LocalizedTitle {
-  entities.LocalizedTitle toEntity() =>
-      entities.LocalizedTitle(vi: vi, en: en);
+  entities.LocalizedTitle toEntity() => entities.LocalizedTitle(vi: vi, en: en);
 }
 
 extension VocabularyItemToEntity on VocabularyItem {

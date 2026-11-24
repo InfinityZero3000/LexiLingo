@@ -66,6 +66,17 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
 
       if (provider.currentSession?.isCompleted ?? false) {
         if (mounted) {
+          if (provider.unsavedCount > 0) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'flashcard.unsavedResults'.tr(
+                    namedArgs: {'count': '${provider.unsavedCount}'},
+                  ),
+                ),
+              ),
+            );
+          }
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
               builder: (_) =>
@@ -219,7 +230,19 @@ class _FlashcardReviewScreenState extends State<FlashcardReviewScreen>
                   child: CircularProgressIndicator(strokeWidth: 3),
                 );
               }
-              return Center(child: Text('flashcard.sessionComplete'.tr()));
+              return Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CircularProgressIndicator(strokeWidth: 3),
+                    const SizedBox(height: AppSpacing.md),
+                    Text(
+                      'flashcard.savingResults'.tr(),
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+              );
             }
 
             return SafeArea(

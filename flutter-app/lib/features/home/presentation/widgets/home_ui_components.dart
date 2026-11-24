@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -111,7 +112,6 @@ class PersonalizedGreetingHeader extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final dayPart = DayPart.now();
     final phrase = dayPart.phraseKey.tr();
-    final meaning = dayPart.meaningKey.tr();
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -163,34 +163,20 @@ class PersonalizedGreetingHeader extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
-                Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                        text: userName,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: AppColorRoles.textSecondary(isDark),
-                        ),
-                      ),
-                      if (meaning != phrase)
-                        TextSpan(
-                          text: '  ·  $meaning',
-                          style: TextStyle(
-                            color: AppColorRoles.textMuted(isDark),
-                          ),
-                        ),
-                    ],
-                  ),
+                Text(
+                  userName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodyMedium,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColorRoles.textSecondary(isDark),
+                  ),
                 ),
-                const SizedBox(height: 6),
-                _XpPill(xp: totalXP),
               ],
             ),
           ),
+          const SizedBox(width: 8),
+          _XpPill(xp: totalXP),
           const SizedBox(width: 8),
           _NotificationBell(count: notificationCount, onTap: onNotificationTap),
         ],
@@ -199,26 +185,56 @@ class PersonalizedGreetingHeader extends StatelessWidget {
   }
 }
 
-class _AvatarRing extends StatelessWidget {
+class _AvatarRing extends StatefulWidget {
   const _AvatarRing({required this.avatarUrl, required this.isDark});
 
   final String? avatarUrl;
   final bool isDark;
 
   @override
+  State<_AvatarRing> createState() => _AvatarRingState();
+}
+
+class _AvatarRingState extends State<_AvatarRing>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _spin = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 4),
+  );
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _spin.stop();
+    } else if (!_spin.isAnimating) {
+      _spin.repeat();
+    }
+  }
+
+  @override
+  void dispose() {
+    _spin.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final accent = AppColorRoles.primary(isDark);
-    return Container(
-      width: 48,
-      height: 48,
-      padding: const EdgeInsets.all(2.5),
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [accent, AppColors.purple],
+    final accent = AppColorRoles.primary(widget.isDark);
+    return AnimatedBuilder(
+      animation: _spin,
+      builder: (context, child) => Container(
+        width: 48,
+        height: 48,
+        padding: const EdgeInsets.all(2.5),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: SweepGradient(
+            transform: GradientRotation(_spin.value * 2 * math.pi),
+            colors: [accent, AppColors.purple, accent],
+          ),
         ),
+        child: child,
       ),
       child: Container(
         padding: const EdgeInsets.all(2),
@@ -228,7 +244,7 @@ class _AvatarRing extends StatelessWidget {
         ),
         child: ClipOval(
           child: NetworkAvatarImage(
-            imageUrl: avatarUrl,
+            imageUrl: widget.avatarUrl,
             fit: BoxFit.cover,
             fallback: ColoredBox(
               color: accent.withValues(alpha: 0.2),

@@ -182,6 +182,7 @@ flutter:
     - assets/i18n/
     - assets/sounds/
     - assets/logo/
+    - assets/loading/
     - assets/out-app/
     - assets/flags/
 

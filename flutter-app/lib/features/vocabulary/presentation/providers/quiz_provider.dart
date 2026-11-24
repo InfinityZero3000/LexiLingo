@@ -182,7 +182,8 @@ class QuizProvider extends ChangeNotifier {
         },
         (vocabItems) async {
           if (vocabItems.isEmpty) {
-            _errorMessage = UiText.key('flashcard.noVocabularyForTopic', 
+            _errorMessage = UiText.key(
+              'flashcard.noVocabularyForTopic',
               namedArgs: {'topic': tag},
             );
             _isLoading = false;
@@ -190,8 +191,9 @@ class QuizProvider extends ChangeNotifier {
             return;
           }
 
-          final collectionResult =
-              await vocabularyRepository.getUserCollection(limit: 200);
+          final collectionResult = await vocabularyRepository.getUserCollection(
+            limit: 200,
+          );
           final collectionMap = collectionResult.fold(
             (failure) => <String, UserVocabularyEntity>{},
             (collection) => {for (final uc in collection) uc.vocabularyId: uc},
@@ -209,8 +211,9 @@ class QuizProvider extends ChangeNotifier {
               vocabularyItem: item,
             );
           });
-          final cards =
-              (await Future.wait(cardFutures)).whereType<ReviewCardEntity>().toList();
+          final cards = (await Future.wait(
+            cardFutures,
+          )).whereType<ReviewCardEntity>().toList();
           await _finalizeWithCards(cards);
         },
       );
@@ -278,7 +281,8 @@ class QuizProvider extends ChangeNotifier {
       limit: _distractorPoolSize,
     );
     result.fold(
-      (failure) => debugPrint('Quiz distractor pool failed: ${failure.message}'),
+      (failure) =>
+          debugPrint('Quiz distractor pool failed: ${failure.message}'),
       (items) {
         for (final item in items) {
           pool[item.id] = item;
@@ -296,11 +300,17 @@ class QuizProvider extends ChangeNotifier {
 
     for (final card in cards) {
       final built = <QuizQuestionEntity>[];
-      final termToMeaning =
-          _buildQuestion(card, pool, QuizDirection.termToMeaning);
+      final termToMeaning = _buildQuestion(
+        card,
+        pool,
+        QuizDirection.termToMeaning,
+      );
       if (termToMeaning != null) built.add(termToMeaning);
-      final meaningToTerm =
-          _buildQuestion(card, pool, QuizDirection.meaningToTerm);
+      final meaningToTerm = _buildQuestion(
+        card,
+        pool,
+        QuizDirection.meaningToTerm,
+      );
       if (meaningToTerm != null) built.add(meaningToTerm);
 
       if (built.isNotEmpty) {
@@ -347,7 +357,10 @@ class QuizProvider extends ChangeNotifier {
           .toList();
     }
 
-    final distractors = _pickDistinct(distractorSource, _optionsPerQuestion - 1);
+    final distractors = _pickDistinct(
+      distractorSource,
+      _optionsPerQuestion - 1,
+    );
     if (distractors.isEmpty) return null; // need at least one wrong choice
 
     final options = <QuizOption>[

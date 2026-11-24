@@ -64,8 +64,7 @@ import 'package:lexilingo_app/features/social/presentation/providers/social_prov
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/vocab_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/providers/flashcard_provider.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/screens/flashcard_review_screen.dart';
-import 'package:lexilingo_app/features/vocabulary/presentation/screens/word_of_day_screen.dart'
-    deferred as word_of_day;
+import 'package:lexilingo_app/features/vocabulary/presentation/screens/word_of_day_screen.dart';
 import 'package:lexilingo_app/features/vocabulary/vocabulary_di.dart'
     as vocab_di;
 import 'package:lexilingo_app/features/user/presentation/providers/user_provider.dart';
@@ -510,10 +509,7 @@ class _LexiLingoAppState extends State<LexiLingoApp>
               ),
             ),
             '/vocabulary/word-of-day': LearnerRoute.builder(
-              (context) => DeferredPage(
-                loadLibrary: word_of_day.loadLibrary,
-                builder: (_) => word_of_day.WordOfDayScreen(),
-              ),
+              (context) => const WordOfDayScreen(),
             ),
             // Phase 4: Podcast
             '/podcast': LearnerRoute.builder(

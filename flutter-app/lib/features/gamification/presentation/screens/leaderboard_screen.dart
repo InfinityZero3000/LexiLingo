@@ -447,13 +447,20 @@ class _LeaderboardTab extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<GamificationProvider>(
       builder: (context, provider, child) {
+        if (isBootstrapping) {
+          // The provider can still contain a leaderboard from the previous
+          // visit while the current league is being resolved. Rendering that
+          // cache here makes a complete ranking flash before the correct tab
+          // is selected.
+          return const _LeaderboardSkeleton();
+        }
+
         final leaderboard = provider.leaderboardFor(league);
         final isSelected =
             provider.selectedLeague.toLowerCase() == league.toLowerCase();
 
         if (leaderboard == null) {
-          if (isSelected &&
-              (isBootstrapping || provider.isLoadingLeaderboardFor(league))) {
+          if (isSelected && provider.isLoadingLeaderboardFor(league)) {
             return const _LeaderboardSkeleton();
           }
 

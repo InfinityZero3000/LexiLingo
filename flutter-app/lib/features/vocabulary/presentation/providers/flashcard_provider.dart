@@ -22,10 +22,13 @@ class FlashcardProvider extends ChangeNotifier with ResetEpoch {
   final SubmitReviewUseCase submitReviewUseCase;
   final VocabularyRepository vocabularyRepository;
 
+  final Duration finishWait;
+
   FlashcardProvider({
     required this.getDueVocabularyUseCase,
     required this.submitReviewUseCase,
     required this.vocabularyRepository,
+    this.finishWait = const Duration(seconds: 8),
   });
 
   // Session state
@@ -46,6 +49,7 @@ class FlashcardProvider extends ChangeNotifier with ResetEpoch {
   Future<void> _delivery = Future<void>.value();
   final List<SubmitReviewParams> _unsent = [];
   bool _disposed = false;
+  bool _isSaving = false;
 
   // Getters
   ReviewSessionEntity? get currentSession => _currentSession;
@@ -55,6 +59,8 @@ class FlashcardProvider extends ChangeNotifier with ResetEpoch {
   bool get isCardFlipped => _isCardFlipped;
   bool get hasSession => _currentSession != null;
   bool get isLoadingMore => _isLoadingMore;
+  bool get isSaving => _isSaving;
+  int get unsavedCount => _unsent.length;
   int get dueCount => _currentSession?.remainingCards ?? 0;
 
   void _resetLazyState() {
@@ -412,14 +418,26 @@ class FlashcardProvider extends ChangeNotifier with ResetEpoch {
     _delivery = _delivery.then((_) => _deliver(review, epoch));
 
     if (_currentSession?.isCompleted ?? false) {
-      await _delivery;
-      final done = _currentSession;
-      if (done != null) {
-        _currentSession = done.copyWith(completedAt: DateTime.now());
-        _notify();
+      _isSaving = true;
+      _notify();
+      await _waitForDelivery(epoch);
+      if (!isStale(epoch) && _unsent.isNotEmpty) {
+        _delivery = _delivery.then((_) => _deliver(null, epoch));
+        await _waitForDelivery(epoch);
       }
+      _isSaving = false;
+      final done = _currentSession;
+      if (done != null && !isStale(epoch)) {
+        _currentSession = done.copyWith(completedAt: DateTime.now());
+      }
+      _notify();
     }
   }
+
+  // A slow server must not hold the summary hostage; what is still in
+  // flight keeps going in the background.
+  Future<void> _waitForDelivery(int epoch) =>
+      _delivery.timeout(finishWait, onTimeout: () {});
 
   /// One rating at a time, in order. A rating that fails is retried ahead of
   /// the next one; whatever is still unsent after the last card is dropped
@@ -428,9 +446,9 @@ class FlashcardProvider extends ChangeNotifier with ResetEpoch {
   /// A rating belongs to the learner who gave it. Once a sign-out or account
   /// switch has bumped [epoch], it is dropped and never re-queued, so it can
   /// not be submitted under the next account's token.
-  Future<void> _deliver(SubmitReviewParams review, int epoch) async {
+  Future<void> _deliver(SubmitReviewParams? review, int epoch) async {
     if (isStale(epoch)) return;
-    _unsent.add(review);
+    if (review != null) _unsent.add(review);
     final batch = List.of(_unsent);
     _unsent.clear();
     for (final item in batch) {

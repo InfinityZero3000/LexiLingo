@@ -12,6 +12,8 @@ import 'package:lexilingo_app/features/learning/presentation/screens/learning_se
 import 'package:lexilingo_app/features/learning/presentation/screens/learning_roadmap_screen.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/onboarding/presentation/start_learning_launcher.dart';
+import 'package:lexilingo_app/core/widgets/app_surface.dart';
+import 'package:lexilingo_app/features/course/presentation/utils/course_labels.dart';
 
 /// Course Detail Screen
 /// Shows course roadmap with units and lessons
@@ -44,249 +46,201 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: ContentWidth(
-        child: Consumer<CourseProvider>(
-          builder: (context, provider, child) {
-            if (provider.isLoadingDetail) {
-              return const Center(child: LottieLoadingWidget.medium());
-            }
+    return Consumer<CourseProvider>(
+      builder: (context, provider, child) {
+        final course = provider.courseDetail;
+        final loading = provider.isLoadingDetail && course == null;
+        final scheme = Theme.of(context).colorScheme;
 
-            if (provider.detailError != null) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+        Widget body;
+        if (loading) {
+          body = const Center(child: LottieLoadingWidget.medium());
+        } else if (provider.detailError != null && course == null) {
+          body = _DetailError(
+            onRetry: () => provider.loadCourseDetail(widget.courseId),
+          );
+        } else if (course == null) {
+          body = Center(child: Text('course.notFound'.tr()));
+        } else {
+          body = _buildContent(context, provider, course);
+        }
+
+        return Scaffold(
+          appBar: AppBar(
+            backgroundColor: scheme.surface,
+            surfaceTintColor: Colors.transparent,
+            scrolledUnderElevation: 0,
+            titleSpacing: 0,
+            title: Text(
+              course?.title ?? '',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+            ),
+          ),
+          body: ContentWidth(child: body),
+          bottomNavigationBar: course == null
+              ? null
+              : _buildActionBar(context, provider, course),
+        );
+      },
+    );
+  }
+
+  Widget _buildContent(
+    BuildContext context,
+    CourseProvider provider,
+    CourseDetailEntity course,
+  ) {
+    final theme = Theme.of(context);
+    final nextLessonId = course.nextOpenLesson?.id;
+
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildCourseHeroCard(context, course),
+                const SizedBox(height: AppSpacing.lg),
+                if (course.description != null) ...[
+                  Text(
+                    course.description!,
+                    style: theme.textTheme.bodyLarge?.copyWith(height: 1.5),
+                  ),
+                  const SizedBox(height: AppSpacing.lg),
+                ],
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.sm,
                   children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 64,
-                      color: AppColors.errorBright,
+                    _StatChip(
+                      icon: Icons.bar_chart_rounded,
+                      label: courseLevelLabel(course.level),
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      provider.detailError!,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyLarge,
+                    _StatChip(
+                      icon: Icons.menu_book_rounded,
+                      label: 'course.totalLessonsCount'.tr(
+                        namedArgs: {'count': '${course.totalLessons}'},
+                      ),
                     ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () =>
-                          provider.loadCourseDetail(widget.courseId),
-                      child: Text('common.retry'.tr()),
+                    _StatChip(
+                      icon: Icons.schedule_rounded,
+                      label: 'course.durationMin'.tr(
+                        namedArgs: {'count': '${course.estimatedDuration}'},
+                      ),
+                    ),
+                    _StatChip(
+                      icon: Icons.star_rounded,
+                      label: '${course.totalXp} XP',
                     ),
                   ],
                 ),
-              );
-            }
-
-            final course = provider.courseDetail;
-            if (course == null) {
-              return Center(child: Text('course.notFound'.tr()));
-            }
-
-            final nextLessonId = course.nextOpenLesson?.id;
-
-            return CustomScrollView(
-              slivers: [
-                // Compact App Bar with smaller title
-                SliverAppBar(
-                  pinned: true,
-                  backgroundColor: Theme.of(context).primaryColor,
-                  foregroundColor: AppColors.textInverted,
-                  elevation: 0,
-                  titleSpacing: 0,
-                  title: Text(
-                    course.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: Theme.of(context).colorScheme.surface,
-                      fontWeight: FontWeight.w600,
+                if (course.isEnrolled == true) ...[
+                  const SizedBox(height: AppSpacing.lg),
+                  _ProgressPanel(
+                    percent: course.userProgress ?? 0,
+                    onRoadmap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => LearningRoadmapScreen(
+                          courseId: course.id,
+                          courseTitle: course.title,
+                        ),
+                      ),
                     ),
                   ),
-                ),
-
-                // Course Info
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildCourseHeroCard(context, course),
-                        const SizedBox(height: 16),
-
-                        // Description
-                        if (course.description != null) ...[
-                          Text(
-                            course.description!,
-                            style: Theme.of(context).textTheme.bodyLarge,
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-
-                        // Course Stats
-                        Wrap(
-                          spacing: 12,
-                          runSpacing: 12,
-                          children: [
-                            _StatChip(
-                              icon: Icons.language,
-                              label: course.language,
-                            ),
-                            _StatChip(
-                              icon: Icons.bar_chart,
-                              label: course.level,
-                            ),
-                            _StatChip(
-                              icon: Icons.star,
-                              label: '${course.totalXp} XP',
-                            ),
-                            _StatChip(
-                              icon: Icons.access_time,
-                              label: 'course.durationMin'.tr(
-                                namedArgs: {
-                                  'count': '${course.estimatedDuration}',
-                                },
-                              ),
-                            ),
-                            _StatChip(
-                              icon: Icons.book,
-                              label: 'course.totalLessonsCount'.tr(
-                                namedArgs: {'count': '${course.totalLessons}'},
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        // Progress (if enrolled)
-                        if (course.isEnrolled == true) ...[
-                          Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'course.yourProgress'.tr(),
-                                    style: Theme.of(context).textTheme.bodyLarge
-                                        ?.copyWith(fontWeight: FontWeight.bold),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  LinearProgressIndicator(
-                                    value: (course.userProgress ?? 0) / 100,
-                                    minHeight: 8,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'course.userProgressPercent'.tr(
-                                      namedArgs: {
-                                        'percent':
-                                            course.userProgress
-                                                ?.toStringAsFixed(0) ??
-                                            '0',
-                                      },
-                                    ),
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(
-                                          color: AppColorRoles.textSecondary(
-                                            Theme.of(context).brightness ==
-                                                Brightness.dark,
-                                          ),
-                                        ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          // View Full Roadmap Button
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton(
-                              child: Text('course.viewFullRoadmap'.tr()),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => LearningRoadmapScreen(
-                                      courseId: course.id,
-                                      courseTitle: course.title,
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-
-                        // Enroll Button (if not enrolled)
-                        if (course.isEnrolled != true) ...[
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton.icon(
-                              icon: provider.isEnrolling
-                                  ? const SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: LottieLoadingWidget.tiny(),
-                                    )
-                                  : const Icon(Icons.play_arrow),
-                              label: Text(
-                                provider.isEnrolling
-                                    ? 'course.enrolling'.tr()
-                                    : 'course.startLearning'.tr(),
-                              ),
-                              onPressed: provider.isEnrolling
-                                  ? null
-                                  : () => _enrollInCourse(context, provider),
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: AppSpacing.lg,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                        ],
-
-                        // Roadmap Header
-                        const Divider(),
-                        const SizedBox(height: 8),
-                        Text(
-                          'course.learningRoadmap'.tr(),
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-                    ),
+                ],
+                const SizedBox(height: AppSpacing.xl),
+                Text(
+                  'course.learningRoadmap'.tr(),
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-
-                // Units List
-                SliverList(
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final unit = course.units[index];
-                    return _UnitCard(
-                      unit: unit,
-                      unitNumber: index + 1,
-                      courseId: course.id,
-                      nextLessonId: nextLessonId,
-                    );
-                  }, childCount: course.units.length),
-                ),
-
-                // Bottom Padding
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                const SizedBox(height: AppSpacing.sm),
               ],
+            ),
+          ),
+        ),
+        SliverList(
+          delegate: SliverChildBuilderDelegate((context, index) {
+            return _UnitCard(
+              unit: course.units[index],
+              unitNumber: index + 1,
+              courseId: course.id,
+              nextLessonId: nextLessonId,
             );
-          },
+          }, childCount: course.units.length),
+        ),
+        const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.xl)),
+      ],
+    );
+  }
+
+  Widget? _buildActionBar(
+    BuildContext context,
+    CourseProvider provider,
+    CourseDetailEntity course,
+  ) {
+    final enrolled = course.isEnrolled == true;
+    final next = course.nextOpenLesson;
+    if (enrolled && next == null) return null;
+
+    final VoidCallback? onPressed;
+    final Widget label;
+    final Widget icon;
+    if (enrolled) {
+      onPressed = () => _openLesson(context, course.id, next!.id);
+      label = Text(
+        '${'course.continue'.tr()}: ${next!.title}',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      );
+      icon = const Icon(Icons.play_arrow_rounded);
+    } else {
+      onPressed = provider.isEnrolling
+          ? null
+          : () => _enrollInCourse(context, provider);
+      label = Text(
+        provider.isEnrolling
+            ? 'course.enrolling'.tr()
+            : 'course.startLearning'.tr(),
+      );
+      icon = provider.isEnrolling
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: LottieLoadingWidget.tiny(),
+            )
+          : const Icon(Icons.play_arrow_rounded);
+    }
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.sm,
+          AppSpacing.lg,
+          AppSpacing.md,
+        ),
+        child: ContentWidth(
+          child: SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: onPressed,
+              icon: icon,
+              label: label,
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(kMinTapTarget + 8),
+                shape: RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -441,7 +395,107 @@ class _CourseHeroNetworkImage extends StatelessWidget {
   }
 }
 
-/// Stat Chip Widget
+Future<void> _openLesson(
+  BuildContext context,
+  String courseId,
+  String lessonId,
+) async {
+  await Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) =>
+          LearningSessionScreen(lessonId: lessonId, courseId: courseId),
+    ),
+  );
+  if (!context.mounted) return;
+  context.read<CourseProvider>().loadCourseDetail(courseId);
+}
+
+class _DetailError extends StatelessWidget {
+  final VoidCallback onRetry;
+  const _DetailError({required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.cloud_off_rounded, size: 56, color: scheme.error),
+            const SizedBox(height: AppSpacing.lg),
+            Text(
+              'common.error'.tr(),
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            FilledButton(onPressed: onRetry, child: Text('common.retry'.tr())),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProgressPanel extends StatelessWidget {
+  final double percent;
+  final VoidCallback onRoadmap;
+  const _ProgressPanel({required this.percent, required this.onRoadmap});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return AppSurface(
+      radius: BorderRadius.circular(AppRadius.lg),
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'course.yourProgress'.tr(),
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              Text(
+                'course.userProgressPercent'.tr(
+                  namedArgs: {'percent': percent.toStringAsFixed(0)},
+                ),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+            child: LinearProgressIndicator(
+              value: (percent / 100).clamp(0.0, 1.0),
+              minHeight: 8,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: onRoadmap,
+              child: Text('course.viewFullRoadmap'.tr()),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _StatChip extends StatelessWidget {
   final IconData icon;
   final String label;
@@ -450,11 +504,37 @@ class _StatChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Chip(avatar: Icon(icon, size: 18), label: Text(label));
+    final theme = Theme.of(context);
+    final color = AppColorRoles.primary(theme.brightness == Brightness.dark);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: AppSpacing.xs),
+            Text(
+              label,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.onSurface,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
-/// Unit Card Widget
 class _UnitCard extends StatelessWidget {
   final UnitWithLessonsEntity unit;
   final int unitNumber;
@@ -470,42 +550,57 @@ class _UnitCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Card(
-      margin: const EdgeInsets.symmetric(
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final done = unit.lessons.where((l) => l.isCompleted ?? false).length;
+    final progress = '$done/${unit.lessons.length}';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.lg,
-        vertical: 8,
+        vertical: AppSpacing.xs,
       ),
-      child: ExpansionTile(
-        initiallyExpanded: unit.lessons.any((l) => l.id == nextLessonId),
-        leading: CircleAvatar(
-          backgroundColor: _parseColor(unit.backgroundColor, isDark),
-          child: Text(
-            '$unitNumber',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.surface,
-              fontWeight: FontWeight.bold,
+      child: AppSurface(
+        radius: BorderRadius.circular(AppRadius.lg),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          child: ExpansionTile(
+            shape: const Border(),
+            collapsedShape: const Border(),
+            initiallyExpanded: unit.lessons.any((l) => l.id == nextLessonId),
+            leading: CircleAvatar(
+              backgroundColor: _parseColor(unit.backgroundColor, isDark),
+              child: Text(
+                '$unitNumber',
+                style: TextStyle(
+                  color: theme.colorScheme.surface,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
+            title: Text(
+              unit.title,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            subtitle: Text(
+              unit.description == null
+                  ? progress
+                  : '${unit.description!}  ·  $progress',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            children: [
+              for (final lesson in unit.lessons)
+                _LessonTile(
+                  lesson: lesson,
+                  courseId: courseId,
+                  isNext: lesson.id == nextLessonId,
+                ),
+            ],
           ),
         ),
-        title: Text(
-          unit.title,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: unit.description != null
-            ? Text(
-                unit.description!,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              )
-            : null,
-        children: unit.lessons.map((lesson) {
-          return _LessonTile(
-            lesson: lesson,
-            courseId: courseId,
-            isNext: lesson.id == nextLessonId,
-          );
-        }).toList(),
       ),
     );
   }
@@ -522,7 +617,6 @@ class _UnitCard extends StatelessWidget {
   }
 }
 
-/// Lesson Tile Widget
 class _LessonTile extends StatelessWidget {
   final LessonInRoadmapEntity lesson;
   final String courseId;
@@ -536,18 +630,21 @@ class _LessonTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     final isLocked = lesson.isLocked ?? false;
     final isCompleted = lesson.isCompleted ?? false;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark = theme.brightness == Brightness.dark;
+    final muted = scheme.onSurfaceVariant;
 
     return ListTile(
-      leading: _getLessonIcon(lesson.lessonType, isLocked, isCompleted, isDark),
+      minTileHeight: kMinTapTarget,
+      leading: _lessonIcon(context, isLocked, isCompleted, isDark),
       title: Text(
         lesson.title,
-        style: TextStyle(
-          color: isLocked ? AppColors.grey500 : null,
-          decoration: isCompleted ? TextDecoration.lineThrough : null,
-          fontWeight: isNext ? FontWeight.bold : null,
+        style: theme.textTheme.bodyLarge?.copyWith(
+          color: isLocked || isCompleted ? muted : scheme.onSurface,
+          fontWeight: isNext ? FontWeight.w700 : null,
         ),
       ),
       subtitle: isNext
@@ -562,22 +659,20 @@ class _LessonTile extends StatelessWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // XP Badge
-          Chip(
-            avatar: const Icon(Icons.star, size: 16),
-            label: Text('${lesson.xpReward}'),
-            padding: EdgeInsets.zero,
-            visualDensity: VisualDensity.compact,
+          Icon(Icons.star_rounded, size: 16, color: AppColors.accentYellow),
+          const SizedBox(width: AppSpacing.xs),
+          Text(
+            '${lesson.xpReward}',
+            style: theme.textTheme.labelMedium?.copyWith(color: muted),
           ),
-          const SizedBox(width: 8),
-          // Status Icon
+          const SizedBox(width: AppSpacing.sm),
           if (isCompleted)
-            const Icon(Icons.check_circle, color: AppColors.greenSuccessBright)
+            Icon(Icons.check_circle_rounded, color: context.status.success)
           else if (isLocked)
-            const Icon(Icons.lock, color: AppColors.grey500)
+            Icon(Icons.lock_rounded, color: muted)
           else
             Icon(
-              Icons.play_circle_outline,
+              Icons.play_circle_outline_rounded,
               color: AppColorRoles.primary(isDark),
             ),
         ],
@@ -588,73 +683,32 @@ class _LessonTile extends StatelessWidget {
               ..showSnackBar(
                 SnackBar(content: Text(LocaleKeys.course_lockedHint.tr())),
               )
-          : () async {
-              await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => LearningSessionScreen(
-                    lessonId: lesson.id,
-                    courseId: courseId,
-                  ),
-                ),
-              );
-              if (!context.mounted) return;
-              context.read<CourseProvider>().loadCourseDetail(courseId);
-            },
+          : () => _openLesson(context, courseId, lesson.id),
     );
   }
 
-  Widget _getLessonIcon(
-    String lessonType,
+  Widget _lessonIcon(
+    BuildContext context,
     bool isLocked,
     bool isCompleted,
     bool isDark,
   ) {
-    IconData iconData;
-    Color color;
-
-    if (isLocked) {
-      iconData = Icons.lock;
-      color = AppColors.grey500;
-    } else if (isCompleted) {
-      iconData = Icons.check_circle;
-      color = AppColors.greenSuccessBright;
-    } else {
-      switch (lessonType.toLowerCase()) {
-        case 'vocabulary':
-          iconData = Icons.school;
-          color = AppColorRoles.primary(isDark);
-          break;
-        case 'grammar':
-          iconData = Icons.menu_book;
-          color = AppColors.orange;
-          break;
-        case 'listening':
-          iconData = Icons.headphones;
-          color = AppColors.purple;
-          break;
-        case 'speaking':
-          iconData = Icons.mic;
-          color = AppColors.errorBright;
-          break;
-        case 'reading':
-          iconData = Icons.book;
-          color = AppColors.teal;
-          break;
-        case 'writing':
-          iconData = Icons.edit;
-          color = AppColors.primaryDark;
-          break;
-        case 'quiz':
-          iconData = Icons.quiz;
-          color = AppColors.warning;
-          break;
-        default:
-          iconData = Icons.article;
-          color = AppColors.grey500;
-      }
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    if (isLocked) return Icon(Icons.lock_rounded, color: muted);
+    if (isCompleted) {
+      return Icon(Icons.check_circle_rounded, color: context.status.success);
     }
-
-    return Icon(iconData, color: color);
+    final (IconData icon, Color color) = switch (lesson.lessonType
+        .toLowerCase()) {
+      'vocabulary' => (Icons.school_rounded, AppColorRoles.primary(isDark)),
+      'grammar' => (Icons.menu_book_rounded, AppColors.orange),
+      'listening' => (Icons.headphones_rounded, AppColors.purple),
+      'speaking' => (Icons.mic_rounded, AppColors.errorBright),
+      'reading' => (Icons.book_rounded, AppColors.teal),
+      'writing' => (Icons.edit_rounded, AppColors.primaryDark),
+      'quiz' => (Icons.quiz_rounded, AppColors.warning),
+      _ => (Icons.article_rounded, muted),
+    };
+    return Icon(icon, color: color);
   }
 }

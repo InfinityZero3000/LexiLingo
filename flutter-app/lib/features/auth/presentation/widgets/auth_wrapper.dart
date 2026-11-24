@@ -1,11 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/widgets/app_splash.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
-import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
 import 'package:lexilingo_app/core/utils/constants.dart';
 import 'package:lexilingo_app/core/theme/app_tactile_theme.dart';
@@ -338,7 +337,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
     // Show loading while checking auth state
     if (authProvider.isCheckingAuth) {
-      return Scaffold(body: LoadingScreen(message: 'common.loading'.tr()));
+      return const Scaffold(body: AppSplash());
     }
 
     if (authProvider.isAuthenticated && !_isResolvingFlow) {
@@ -360,9 +359,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
     Widget currentPage;
     if (authProvider.isAuthenticated) {
       if (_isResolvingFlow) {
-        currentPage = Scaffold(
-          body: LoadingScreen(message: 'common.loading'.tr()),
-        );
+        currentPage = const Scaffold(body: AppSplash());
       } else if (_showOnboarding) {
         currentPage = OnboardingPage(
           onComplete: (answers) => _completeOnboarding(authProvider, answers),
@@ -389,9 +386,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
       }
     } else {
       if (_isResolvingPreAuthFlow || !_preAuthFlowResolved) {
-        currentPage = Scaffold(
-          body: LoadingScreen(message: 'common.loading'.tr()),
-        );
+        currentPage = const Scaffold(body: AppSplash());
       } else if (_showPreAuthWelcome) {
         currentPage = WelcomePage(
           onGetStarted: _startPreAuthQuestions,

@@ -44,9 +44,7 @@ class TopicSession {
     final personaJson = json['role_persona'] as Map<String, dynamic>? ?? {};
     return TopicSession(
       sessionId: json['session_id'] as String? ?? '',
-      story: StoryListItem.fromCacheJson(
-        json['story'] as Map<String, dynamic>,
-      ),
+      story: StoryListItem.fromCacheJson(json['story'] as Map<String, dynamic>),
       rolePersona: RolePersona(
         name: personaJson['name'] as String? ?? '',
         role: personaJson['role'] as String? ?? '',

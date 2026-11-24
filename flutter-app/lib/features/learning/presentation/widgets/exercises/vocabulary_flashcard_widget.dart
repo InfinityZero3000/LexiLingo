@@ -104,6 +104,7 @@ class _VocabularyFlashcardWidgetState extends State<VocabularyFlashcardWidget> {
                     ClipRRect(
                       borderRadius: BorderRadius.circular(AppRadius.md),
                       child: Image.network(
+                        cacheWidth: 800,
                         imageUrl,
                         height: 140,
                         fit: BoxFit.cover,
@@ -185,6 +186,7 @@ class _VocabularyFlashcardWidgetState extends State<VocabularyFlashcardWidget> {
                   ClipRRect(
                     borderRadius: BorderRadius.circular(AppRadius.md),
                     child: Image.network(
+                      cacheWidth: 800,
                       imageUrl,
                       height: 120,
                       fit: BoxFit.cover,

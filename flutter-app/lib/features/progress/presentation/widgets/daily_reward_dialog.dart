@@ -158,10 +158,6 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
             offset: const Offset(0, 12),
           ),
         ],
-        border: Border.all(
-          color: isDark ? ProgressPalette.nightCard : AppColors.surfaceLight,
-          width: 2,
-        ),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppRadius.xl),
@@ -396,10 +392,6 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                           end: Alignment.bottomRight,
                           colors: AppColors.warmGradient,
                         ),
-                        border: Border.all(
-                          color: AppColors.surfaceLight.withValues(alpha: 0.7),
-                          width: 2,
-                        ),
                         boxShadow: [
                           BoxShadow(
                             color: AppColors.orange.withValues(alpha: 0.28),
@@ -461,21 +453,11 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
       scale = 1.05;
     } else if (isClaimed) {
       cardBg = isDark ? ProgressPalette.doneNight : ProgressPalette.doneLight;
-      border = Border.all(
-        color: isDark
-            ? ProgressPalette.nightCard
-            : ProgressPalette.doneBorderLight,
-        width: 1,
-      );
     } else {
       // Locked
       cardBg = isDark
           ? ProgressPalette.todayNight.withValues(alpha: 0.6)
           : ProgressPalette.todayLight;
-      border = Border.all(
-        color: isDark ? ProgressPalette.railNight : ProgressPalette.railLight,
-        width: 1,
-      );
     }
 
     final card = Semantics(
@@ -642,10 +624,6 @@ class _GemBurst extends StatelessWidget {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: AppColors.purpleGradient,
-                      ),
-                      border: Border.all(
-                        color: AppColors.surfaceLight.withValues(alpha: 0.7),
-                        width: 2,
                       ),
                       boxShadow: [
                         BoxShadow(
