@@ -4,6 +4,7 @@ Application configuration
 Using Pydantic settings for type-safe configuration
 """
 
+import re
 import os
 from datetime import UTC, datetime
 from pathlib import Path
@@ -168,6 +169,12 @@ class Settings(BaseSettings):
             unescaped_regex = self.CORS_ALLOW_ORIGIN_REGEX.replace("\\", "")
             if "devtunnels.ms" in unescaped_regex or "github.dev" in unescaped_regex:
                 raise ValueError("Broad development tunnel CORS regex is not allowed in production")
+            if re.search(r"[*+]\)?\.?(vercel|netlify)\.app", unescaped_regex):
+                raise ValueError(
+                    "CORS regex must not allow every *.vercel.app / *.netlify.app site: "
+                    "anyone can host a page there and call the API with credentials. "
+                    "List the exact origin in ALLOWED_ORIGINS instead."
+                )
 
         if self.CONTENT_AGENT_ENABLED and not self.CONTENT_AGENT_SERVICE_TOKEN.strip():
             raise ValueError(
