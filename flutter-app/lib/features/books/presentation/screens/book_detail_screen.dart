@@ -304,9 +304,7 @@ class _Actions extends StatelessWidget {
             textStyle: Theme.of(
               context,
             ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(26),
-            ),
+            shape: RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
           ),
           onPressed: () => Navigator.push(
             context,
@@ -366,7 +364,7 @@ class _Actions extends StatelessWidget {
       context,
     ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
     side: BorderSide(color: Theme.of(context).colorScheme.outline),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+    shape: RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
   );
 
   /// Offline download is a premium perk. An already-downloaded book stays
@@ -399,7 +397,10 @@ class _Actions extends StatelessWidget {
     );
     return isDownloaded
         ? button
-        : PremiumGate(borderRadius: BorderRadius.circular(26), child: button);
+        : PremiumGate(
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+            child: button,
+          );
   }
 }
 

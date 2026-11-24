@@ -625,7 +625,7 @@ class _VocabLibraryPageState extends State<VocabLibraryPage> {
       context: context,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       builder: (sheetContext) => SafeArea(
         child: Column(
@@ -1260,7 +1260,9 @@ class _AddWordSheetState extends State<_AddWordSheet> {
     return Container(
       decoration: BoxDecoration(
         color: cs.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.xl),
+        ),
       ),
       padding: EdgeInsets.fromLTRB(
         AppSpacing.xl,

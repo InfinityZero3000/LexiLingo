@@ -121,7 +121,7 @@ class _EmailVerificationPendingPageState
                       backgroundColor: AppColors.accentMint,
                       foregroundColor: const Color(0xFF0B132B),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(28),
+                        borderRadius: AppRadius.mdAll,
                       ),
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 14),

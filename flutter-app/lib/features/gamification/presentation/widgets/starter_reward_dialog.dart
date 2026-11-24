@@ -88,7 +88,7 @@ class StarterRewardDialog extends StatelessWidget {
                         width: 104,
                         height: 104,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(30),
+                          borderRadius: BorderRadius.circular(AppRadius.xl),
                           gradient: const LinearGradient(
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
@@ -150,7 +150,7 @@ class StarterRewardDialog extends StatelessWidget {
                         foregroundColor: AppColors.textDark,
                         padding: const EdgeInsets.symmetric(vertical: 15),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(22),
+                          borderRadius: AppRadius.mdAll,
                         ),
                       ),
                       child: Text(

@@ -147,7 +147,7 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
           end: Alignment.bottomCenter,
           colors: bgGradient,
         ),
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
             color: Theme.of(
@@ -164,7 +164,7 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
         ),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         child: Stack(
           alignment: Alignment.center,
           children: [
@@ -283,7 +283,7 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                         elevation: 4,
                         shadowColor: AppColors.orange.withValues(alpha: 0.4),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderRadius: AppRadius.mdAll,
                         ),
                       ),
                       child: _isClaiming

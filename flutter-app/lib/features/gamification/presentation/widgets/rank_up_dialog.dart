@@ -511,9 +511,7 @@ class _ContinueButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 20),
           elevation: 4,
           shadowColor: palette.primary.withValues(alpha: 0.4),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
         ),
         onPressed: onPressed,
         child: Text(

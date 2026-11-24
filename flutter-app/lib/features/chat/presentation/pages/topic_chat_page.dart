@@ -685,7 +685,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
               if (_taskBannerProgress != null) ...[
                 const SizedBox(height: 10),
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(99),
+                  borderRadius: BorderRadius.circular(AppRadius.pill),
                   child: LinearProgressIndicator(
                     minHeight: 6,
                     value: _taskBannerProgress,
@@ -846,7 +846,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       builder: (context) => DraggableScrollableSheet(
         initialChildSize: 0.6,
@@ -1171,8 +1171,8 @@ class _TopicMessageBubble extends StatelessWidget {
                               ? AppColors.surfaceDarkCard
                               : Theme.of(context).colorScheme.surface),
                     borderRadius: BorderRadius.only(
-                      topLeft: const Radius.circular(20),
-                      topRight: const Radius.circular(20),
+                      topLeft: const Radius.circular(AppRadius.xl),
+                      topRight: const Radius.circular(AppRadius.xl),
                       bottomLeft: Radius.circular(isUser ? 20 : 4),
                       bottomRight: Radius.circular(isUser ? 4 : 20),
                     ),
@@ -1337,7 +1337,7 @@ class VocabularyPreviewSheet extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       child: Column(
         children: [

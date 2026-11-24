@@ -119,9 +119,9 @@ class LexiDialogueBubble extends StatelessWidget {
             color: isDark ? AppColors.surfaceDark : AppColors.backgroundLight,
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(4),
-              topRight: Radius.circular(16),
-              bottomLeft: Radius.circular(16),
-              bottomRight: Radius.circular(16),
+              topRight: Radius.circular(AppRadius.lg),
+              bottomLeft: Radius.circular(AppRadius.lg),
+              bottomRight: Radius.circular(AppRadius.lg),
             ),
             border: Border.all(
               color: isDark ? AppColors.surfaceDarkChat : AppColors.chatBgLight,
@@ -264,10 +264,10 @@ class LexiDialogueBubble extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColorRoles.primary(isDark),
             borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(16),
+              topLeft: Radius.circular(AppRadius.lg),
               topRight: Radius.circular(4),
-              bottomLeft: Radius.circular(16),
-              bottomRight: Radius.circular(16),
+              bottomLeft: Radius.circular(AppRadius.lg),
+              bottomRight: Radius.circular(AppRadius.lg),
             ),
           ),
           child: QuickSaveSelectionArea(

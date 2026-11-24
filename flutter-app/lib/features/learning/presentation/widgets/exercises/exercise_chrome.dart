@@ -104,7 +104,7 @@ class ExerciseOptionCard extends StatelessWidget {
             decoration: BoxDecoration(
               border: Border.all(
                 color: isSelected ? fg.withValues(alpha: 0.5) : colors.border,
-                width: 1.5,
+                width: AppBorderWidth.regular,
               ),
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
@@ -126,13 +126,13 @@ class ExerciseOptionCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(radius),
-          border: Border.all(color: border, width: 1.5),
+          border: Border.all(color: border, width: AppBorderWidth.regular),
           boxShadow: isAnswered
               ? []
               : [
                   BoxShadow(
                     color: colors.shadow,
-                    blurRadius: 6,
+                    blurRadius: 8,
                     offset: const Offset(0, 3),
                   ),
                 ],

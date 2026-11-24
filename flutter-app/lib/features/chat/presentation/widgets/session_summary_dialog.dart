@@ -206,7 +206,7 @@ class _SessionBarChart extends StatelessWidget {
                   toY: values[i],
                   width: 36,
                   borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(8),
+                    top: Radius.circular(AppRadius.sm),
                   ),
                   color: colors[i],
                 ),

@@ -114,7 +114,7 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
           ? AppColors.readingNight
           : AppColors.onGradient,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       builder: (_) {
         if (provider.bookmarks.isEmpty) {
@@ -185,7 +185,7 @@ class _BookReaderScreenState extends State<BookReaderScreen> {
       backgroundColor: sheetBg,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       builder: (_) => _DictionarySheet(
         word: word,
@@ -755,7 +755,9 @@ class _DictionarySheetState extends State<_DictionarySheet> {
       builder: (_, controller) => Container(
         decoration: BoxDecoration(
           color: widget.sheetBg,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppRadius.xl),
+          ),
         ),
         child: Column(
           children: [

@@ -402,9 +402,7 @@ class _Actions extends StatelessWidget {
             side: const BorderSide(color: Color(0x99FFFFFF)),
             minimumSize: const Size(44, 44),
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.xl),
-            ),
+            shape: RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
           ),
         ),
       ],

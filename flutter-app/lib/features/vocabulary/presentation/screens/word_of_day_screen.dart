@@ -260,7 +260,7 @@ class _WordOfDayScreenState extends State<WordOfDayScreen>
                             color: AppColorRoles.primary(
                               isDark,
                             ).withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(99),
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
                           ),
                           child: Text(
                             '#$tag',
@@ -289,7 +289,7 @@ class _WordOfDayScreenState extends State<WordOfDayScreen>
                           vertical: AppSpacing.lg,
                         ),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderRadius: AppRadius.mdAll,
                         ),
                       ),
                       icon: Icon(

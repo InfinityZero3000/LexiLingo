@@ -632,7 +632,7 @@ class _UserZoneSheet extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: context.ac.onNavy,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

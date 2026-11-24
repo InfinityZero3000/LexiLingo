@@ -408,7 +408,9 @@ class LevelDetailsSheet extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
           decoration: BoxDecoration(
             color: Theme.of(context).scaffoldBackgroundColor,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppRadius.xl),
+            ),
           ),
           child: SingleChildScrollView(
             child: Column(

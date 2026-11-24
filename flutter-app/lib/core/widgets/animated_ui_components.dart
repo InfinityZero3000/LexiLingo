@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 /// Animated Notification Badge with bounce effect
 /// Shows a pulsing badge when there are unread notifications
@@ -134,7 +135,7 @@ class _AnimatedNotificationBadgeState extends State<AnimatedNotificationBadge>
                         ? BoxShape.rectangle
                         : BoxShape.circle,
                     borderRadius: widget.count > 9
-                        ? BorderRadius.circular(9)
+                        ? BorderRadius.circular(AppRadius.sm)
                         : null,
                     boxShadow: [
                       BoxShadow(

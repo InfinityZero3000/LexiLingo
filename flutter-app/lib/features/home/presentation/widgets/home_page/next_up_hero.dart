@@ -61,7 +61,7 @@ class _NextUpHeroState extends State<NextUpHero> {
       child: Container(
         clipBehavior: Clip.antiAlias,
         decoration: tactile.decoration(
-          variant: TactileSurfaceVariant.elevated,
+          variant: TactileSurfaceVariant.clean,
           fill: isDark
               ? theme.colorScheme.surfaceContainerHighest
               : theme.colorScheme.surface,

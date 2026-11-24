@@ -300,7 +300,7 @@ class _CelebrationScreenState extends State<CelebrationScreen>
                           backgroundColor: theme.primaryColor,
                           foregroundColor: theme.colorScheme.onPrimary,
                           shape: RoundedRectangleBorder(
-                            borderRadius: AppRadius.lgAll,
+                            borderRadius: AppRadius.mdAll,
                           ),
                         ),
                         child: Text(

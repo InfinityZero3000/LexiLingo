@@ -48,7 +48,7 @@ class _LevelHistoryTimelineState extends State<LevelHistoryTimeline> {
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: AppShadows.card(theme),
       ),
       child: Column(
@@ -183,7 +183,10 @@ class _LevelHistoryTimelineState extends State<LevelHistoryTimeline> {
         : _isUp(from, steps.last.level, last.isPromotion);
   }
 
-  static IconData _lastIcon(List<LevelHistoryEntry> history, List<_Step> steps) {
+  static IconData _lastIcon(
+    List<LevelHistoryEntry> history,
+    List<_Step> steps,
+  ) {
     if (history.isEmpty) return Icons.flag_rounded;
     final last = history.last;
     if (last.isSelfSet) return Icons.person_rounded;
@@ -265,7 +268,7 @@ class _StepChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: current ? tone : tone.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(AppRadius.pill),
         border: Border.all(color: current ? tone : tone.withValues(alpha: 0.5)),
       ),
       child: Text(
@@ -325,7 +328,7 @@ class _ReadyRow extends StatelessWidget {
       padding: const EdgeInsets.only(left: 12),
       decoration: BoxDecoration(
         color: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Row(
         children: [

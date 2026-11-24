@@ -68,7 +68,7 @@ class GrammarCorrectionWidget extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.lg),
               border: Border.all(
                 color: kError.withValues(alpha: 0.3),
-                width: 1.5,
+                width: AppBorderWidth.regular,
               ),
             ),
             child: Row(
@@ -194,7 +194,10 @@ class _GrammarTextInputState extends State<_GrammarTextInput> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.lg),
-              borderSide: BorderSide(color: colors.primary, width: 2),
+              borderSide: BorderSide(
+                color: colors.primary,
+                width: AppBorderWidth.regular,
+              ),
             ),
           ),
         ),
@@ -209,9 +212,7 @@ class _GrammarTextInputState extends State<_GrammarTextInput> {
             style: ElevatedButton.styleFrom(
               backgroundColor: colors.primary,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.pill),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
               padding: const EdgeInsets.symmetric(
                 vertical: 14,
                 horizontal: AppSpacing.xxl,

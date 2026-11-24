@@ -301,10 +301,49 @@ class AppTheme {
     );
   }
 
+  static final CardThemeData _cardTheme = CardThemeData(
+    elevation: 0,
+    surfaceTintColor: Colors.transparent,
+    shape: RoundedRectangleBorder(borderRadius: AppRadius.xlAll),
+  );
+
+  static const BottomSheetThemeData _bottomSheetTheme = BottomSheetThemeData(
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
+    ),
+    clipBehavior: Clip.antiAlias,
+  );
+
+  static final DialogThemeData _dialogTheme = DialogThemeData(
+    shape: RoundedRectangleBorder(borderRadius: AppRadius.xlAll),
+  );
+
+  static final InputDecorationTheme _inputDecorationTheme =
+      InputDecorationTheme(
+        border: OutlineInputBorder(borderRadius: AppRadius.mdAll),
+      );
+
+  static final PopupMenuThemeData _popupMenuTheme = PopupMenuThemeData(
+    shape: RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
+  );
+
   static ThemeData get lightTheme {
     final base = _lightThemeBase;
+    final tactile = AppTactileTheme.from(base);
     return base.copyWith(
-      extensions: [AppTactileTheme.from(base), AppStatusColors.light],
+      extensions: [tactile, AppStatusColors.light],
+      filledButtonTheme: FilledButtonThemeData(
+        style: tactile.cleanFilledButtonStyle(),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: tactile.cleanFilledButtonStyle(),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: tactile.cleanOutlinedButtonStyle(),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: tactile.cleanTextButtonStyle(),
+      ),
     );
   }
 
@@ -340,8 +379,13 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.lgAll),
       ),
+      cardTheme: _cardTheme,
+      bottomSheetTheme: _bottomSheetTheme,
+      dialogTheme: _dialogTheme,
+      inputDecorationTheme: _inputDecorationTheme,
+      popupMenuTheme: _popupMenuTheme,
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: Colors.white,
         selectedItemColor: AppColors.primary,
@@ -356,8 +400,21 @@ class AppTheme {
 
   static ThemeData get darkTheme {
     final base = _darkThemeBase;
+    final tactile = AppTactileTheme.from(base);
     return base.copyWith(
-      extensions: [AppTactileTheme.from(base), AppStatusColors.dark],
+      extensions: [tactile, AppStatusColors.dark],
+      filledButtonTheme: FilledButtonThemeData(
+        style: tactile.cleanFilledButtonStyle(),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: tactile.cleanFilledButtonStyle(),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: tactile.cleanOutlinedButtonStyle(),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: tactile.cleanTextButtonStyle(),
+      ),
     );
   }
 
@@ -394,8 +451,13 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.lgAll),
       ),
+      cardTheme: _cardTheme,
+      bottomSheetTheme: _bottomSheetTheme,
+      dialogTheme: _dialogTheme,
+      inputDecorationTheme: _inputDecorationTheme,
+      popupMenuTheme: _popupMenuTheme,
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppColors.surfaceDarkMuted,
         selectedItemColor: AppColors.primaryDarkMode,

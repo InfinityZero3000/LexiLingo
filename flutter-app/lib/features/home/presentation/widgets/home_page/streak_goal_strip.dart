@@ -50,7 +50,7 @@ class StreakGoalStrip extends StatelessWidget {
             color: Colors.transparent,
             child: Ink(
               decoration: tactile.decoration(
-                variant: TactileSurfaceVariant.elevated,
+                variant: TactileSurfaceVariant.clean,
                 fill: isDark
                     ? theme.colorScheme.surfaceContainerHighest
                     : theme.colorScheme.surface,

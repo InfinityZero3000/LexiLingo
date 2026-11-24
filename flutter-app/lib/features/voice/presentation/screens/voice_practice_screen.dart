@@ -602,9 +602,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
               foregroundColor: AppColors.onGradient,
               minimumSize: const Size.fromHeight(50),
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
             ),
           ),
         ),

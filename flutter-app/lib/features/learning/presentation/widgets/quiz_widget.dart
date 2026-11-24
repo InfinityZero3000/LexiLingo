@@ -207,7 +207,7 @@ class _QuizWidgetState extends State<QuizWidget>
                     borderRadius: BorderRadius.circular(AppRadius.md),
                     border: Border.all(
                       color: borderColor ?? Colors.grey[300]!,
-                      width: 2,
+                      width: AppBorderWidth.regular,
                     ),
                   ),
                   child: Row(
@@ -252,7 +252,7 @@ class _QuizWidgetState extends State<QuizWidget>
                     color: widget.isCorrect!
                         ? context.status.success
                         : AppColors.orange,
-                    width: 1,
+                    width: AppBorderWidth.hairline,
                   ),
                 ),
                 child: Padding(

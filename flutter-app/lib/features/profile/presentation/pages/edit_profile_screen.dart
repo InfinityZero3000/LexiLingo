@@ -409,7 +409,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
                         backgroundColor: primaryColor,
                         foregroundColor: AppColors.surfaceLight,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderRadius: AppRadius.mdAll,
                         ),
                         elevation: 4,
                         shadowColor: primaryColor.withValues(alpha: 0.3),
@@ -609,7 +609,7 @@ class _EditProfileScreenState extends State<EditProfileScreen>
               decoration: BoxDecoration(
                 color: Theme.of(context).scaffoldBackgroundColor,
                 borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(24),
+                  top: Radius.circular(AppRadius.xl),
                 ),
               ),
               child: Column(

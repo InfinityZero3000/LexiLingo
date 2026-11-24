@@ -617,7 +617,7 @@ class _AchievementUnlockPopupState extends State<AchievementUnlockPopup> {
                       vertical: AppSpacing.md,
                     ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.xl),
+                      borderRadius: AppRadius.mdAll,
                     ),
                   ),
                   child: Text(

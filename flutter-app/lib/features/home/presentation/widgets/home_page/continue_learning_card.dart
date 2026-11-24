@@ -490,7 +490,7 @@ class _HeroButton extends StatelessWidget {
         backgroundColor: isDark ? AppColorRoles.primary(true) : foreground,
         foregroundColor: isDark ? theme.colorScheme.surface : fill,
         minimumSize: const Size.fromHeight(48),
-        shape: const StadiumBorder(),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
         textStyle: theme.textTheme.titleSmall?.copyWith(
           fontWeight: FontWeight.w800,
         ),

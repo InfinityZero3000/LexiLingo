@@ -303,7 +303,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
   Widget _buildCourseHeroCard(BuildContext context, CourseDetailEntity course) {
     final heroImage = ClipRRect(
-      borderRadius: BorderRadius.circular(28),
+      borderRadius: BorderRadius.circular(AppRadius.xl),
       child: AspectRatio(
         aspectRatio: 16 / 9,
         child: _buildCourseBackground(
@@ -316,7 +316,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
     final card = Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
             color: AppColors.slate900.withValues(alpha: 0.18),

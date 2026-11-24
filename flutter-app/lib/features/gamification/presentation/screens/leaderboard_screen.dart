@@ -329,7 +329,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen>
           height: MediaQuery.of(context).size.height * 0.75,
           decoration: BoxDecoration(
             color: isDark ? AppColors.surfaceDark : AppColors.surfaceLight,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(AppRadius.xl),
+            ),
           ),
           child: Column(
             children: [
@@ -706,11 +708,15 @@ class _RankingPanelSkeleton extends StatelessWidget {
         : AppColors.surfaceLight.withValues(alpha: 0.82);
 
     return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      borderRadius: const BorderRadius.vertical(
+        top: Radius.circular(AppRadius.xl),
+      ),
       child: Container(
         decoration: BoxDecoration(
           color: panelColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(AppRadius.xl),
+          ),
           border: Border(
             top: BorderSide(
               color: AppColors.surfaceLight.withValues(alpha: 0.42),

@@ -108,9 +108,9 @@ class _ShortWritingAnswerWidgetState extends State<ShortWritingAnswerWidget> {
             maxLines: 4,
             // A locked field would draw the answer in the disabled grey, as
             // faint as the hint it replaced.
-            style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-              color: colors.textPrimary,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyLarge!.copyWith(color: colors.textPrimary),
             decoration: InputDecoration(
               hintText: 'lesson.exercise.shortWritingHint'.tr(),
               hintStyle: Theme.of(
@@ -124,11 +124,17 @@ class _ShortWritingAnswerWidgetState extends State<ShortWritingAnswerWidget> {
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.lg),
-                borderSide: BorderSide(color: colors.border, width: 1.5),
+                borderSide: BorderSide(
+                  color: colors.border,
+                  width: AppBorderWidth.regular,
+                ),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.lg),
-                borderSide: BorderSide(color: colors.primary, width: 2),
+                borderSide: BorderSide(
+                  color: colors.primary,
+                  width: AppBorderWidth.regular,
+                ),
               ),
             ),
           ),
@@ -143,9 +149,7 @@ class _ShortWritingAnswerWidgetState extends State<ShortWritingAnswerWidget> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: colors.primary,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.pill),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
                 padding: const EdgeInsets.symmetric(vertical: 15),
               ),
               child: Text(
