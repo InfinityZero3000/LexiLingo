@@ -59,13 +59,27 @@ async def test_stream_reports_provider_usage_and_records_the_real_total(rig, tai
 
 
 @pytest.mark.asyncio
-async def test_stream_without_a_usage_chunk_says_it_estimated(rig):  # noqa: F811
+async def test_stream_without_a_usage_chunk_reports_no_numbers(rig):  # noqa: F811
     rig.clients["groq"] = _CapturingClient(_Resp(200, groq("one", " two")))
 
     _, info = await collect()
 
-    assert info["usage"]["source"] == "estimated"
-    assert info["usage"]["prompt_tokens"] == 0
+    assert info["usage"] == {"source": "missing"}
+
+
+@pytest.mark.asyncio
+async def test_groq_spend_on_an_empty_reply_is_kept_when_gemini_answers(rig):  # noqa: F811
+    from .test_stream_failure_modes import _Client
+
+    rig.clients["groq"] = _CapturingClient(_Resp(200, [*GROQ_REAL_TAIL, "data: [DONE]"]))
+    chunk = {"candidates": [{"content": {"parts": [{"text": "hi"}]}}],
+             "usageMetadata": {"promptTokenCount": 300, "candidatesTokenCount": 9}}
+    rig.clients["gemini"] = _Client(_Resp(200, [f"data: {json.dumps(chunk)}"]))
+
+    text, info = await collect()
+
+    assert (text, info["provider"]) == ("hi", "gemini")
+    assert info["usage"] == {"prompt_tokens": 1112, "completion_tokens": 51, "cached_tokens": 64, "source": "provider"}
 
 
 @pytest.mark.asyncio
@@ -85,21 +99,22 @@ async def test_gemini_usage_metadata_is_read(rig):  # noqa: F811
 
 
 @pytest.mark.asyncio
-async def test_streaming_analysis_does_not_write_its_own_turn_metrics(monkeypatch):
+async def test_only_a_caller_that_records_the_turn_itself_defers_the_row(monkeypatch):
     recorded = []
     monkeypatch.setattr(graph_mod, "record_turn_metrics", recorded.append)
     pipeline = object.__new__(graph_mod.TraceCAGPipeline)
     pipeline.compiled = MagicMock()
     pipeline.compiled.ainvoke = AsyncMock(side_effect=lambda state: dict(state))
 
-    await pipeline.analyze_for_streaming(user_input="hi", session_id="s", user_id="u")
+    await pipeline.analyze_for_streaming(user_input="hi", session_id="s", user_id="u", defer_turn_metrics=True)
     assert recorded == []
 
+    await pipeline.analyze_for_streaming(user_input="hi", session_id="s", user_id="u")  # topic chat
     await pipeline.analyze(user_input="hi", session_id="s", user_id="u")
-    assert len(recorded) == 1
+    assert len(recorded) == 2
 
 
-async def _stream(raw_state, mock_db, monkeypatch, *, provider_info=None, card_facts=""):
+async def _stream(raw_state, mock_db, monkeypatch, *, provider_info=None, card_facts="", tokens=("Fresh", " answer")):
     """Drive stream_lexi_chat to its done event; returns (done metadata, recorded turn metrics)."""
     import api.core.audit_emitter as audit_mod
     import api.services.learner_observation_spool as spool_mod
@@ -120,8 +135,8 @@ async def _stream(raw_state, mock_db, monkeypatch, *, provider_info=None, card_f
 
     async def _tokens(**kwargs):
         kwargs["provider_info"].update(provider_info or {})
-        yield "Fresh"
-        yield " answer"
+        for token in tokens:
+            yield token
 
     monkeypatch.setattr(nodes_mod, "stream_llm_tokens", _tokens)
     monkeypatch.setattr(cache_mod, "_write_cache_entry", AsyncMock())
@@ -158,6 +173,7 @@ def _state(**overrides):
         "grammar_score": 0.8, "fluency_score": 0.8, "vocabulary_level": "B1",
         "cache_hit": False, "cache_policy": "on", "strategy": "praise",
         "diagnosis_usage": {"prompt_tokens": 200, "completion_tokens": 30, "cached_tokens": 0},
+        "models_used": ["redis_cache", "groq/qwen/qwen3.8-27b"],
         **overrides,
     }
 
@@ -203,17 +219,20 @@ async def test_miss_reports_diagnosis_plus_generation_tokens_once(mock_db, monke
     assert len(recorded) == 1
     row = recorded[0]
     assert (row["prompt_tokens"], row["completion_tokens"], row["usage_source"]) == (1100, 90, "provider")
-    assert row["latency_ms"] == meta["latency_ms"] and row["ttft_ms"] == meta["ttft_ms"]
+    assert row["latency_ms"] == meta["reply_ms"] <= meta["latency_ms"] and row["ttft_ms"] == meta["ttft_ms"]
+    assert row["error"] is False
 
 
 @pytest.mark.asyncio
-async def test_cache_hit_costs_only_the_diagnosis(mock_db, monkeypatch):
-    state = _state(cache_hit=True, cache_layer="L0", tutor_response="Cached reply")
+async def test_cache_hit_calls_no_llm(mock_db, monkeypatch):
+    # The graph ends at the gate on a hit: diagnosis never ran.
+    state = _state(cache_hit=True, cache_layer="L0", tutor_response="Cached reply",
+                   models_used=["redis_cache", "rapid_reuse_l0"], diagnosis_usage={})
 
     meta, recorded = await _stream(state, mock_db, monkeypatch)
 
     assert meta["cache_layer"] == "L0"
-    assert meta["usage"] == {"prompt_tokens": 200, "completion_tokens": 30, "cached_tokens": 0, "source": "provider"}
+    assert meta["usage"] == {"prompt_tokens": 0, "completion_tokens": 0, "cached_tokens": 0, "source": "none"}
     assert recorded[0]["cache_hit"] is True and recorded[0]["cache_layer"] == "L0"
 
 
@@ -233,3 +252,22 @@ async def test_l1_shadow_similarity_is_reported(mock_db, monkeypatch):
 
     assert meta["l1_shadow_f1"] == 1.0
     assert recorded[0]["l1_shadow_f1"] == 1.0
+
+
+@pytest.mark.asyncio
+async def test_a_failed_generation_is_an_error_turn_with_partial_usage_and_no_shadow_score(mock_db, monkeypatch):
+    meta, recorded = await _stream(_state(l1_shadow_response="Fresh answer"), mock_db, monkeypatch, tokens=())
+
+    assert meta["model_used"] == "trace-cag_safe_response"
+    assert meta["l1_shadow_f1"] is None
+    assert meta["usage"]["source"] == "partial" and meta["usage"]["prompt_tokens"] == 200
+    assert recorded[0]["error"] is True
+
+
+@pytest.mark.asyncio
+async def test_a_reply_whose_provider_reported_no_usage_is_partial(mock_db, monkeypatch):
+    info = {"provider": "groq", "model": "qwen/qwen3.8-27b", "usage": {"source": "missing"}}
+
+    meta, _ = await _stream(_state(), mock_db, monkeypatch, provider_info=info)
+
+    assert meta["usage"] == {"prompt_tokens": 200, "completion_tokens": 30, "cached_tokens": 0, "source": "partial"}

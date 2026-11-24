@@ -21,6 +21,7 @@ from typing import Any, Dict
 
 from api.core.groq_key_pool import resolve_groq_model
 from api.services.trace_cag.env_helpers import _env_float, _env_flag, _env_int
+from api.services.trace_cag.llm_client import usage_counts
 from api.services.trace_cag.benchmark.ranking import (
     _answer_support_score,
     _content_tokens,
@@ -72,28 +73,11 @@ def _safe_int(value: Any) -> int:
 
 
 def _usage_state_from_provider_usage(usage: dict[str, Any]) -> dict[str, Any]:
-    prompt_tokens = _safe_int(
-        usage.get("prompt_tokens")
-        or usage.get("promptTokenCount")
-        or usage.get("prompt_eval_count")
-    )
-    completion_tokens = _safe_int(
-        usage.get("completion_tokens")
-        or usage.get("candidatesTokenCount")
-        or usage.get("eval_count")
-    )
-    total_tokens = _safe_int(usage.get("total_tokens") or usage.get("totalTokenCount"))
-    details = (
-        usage.get("prompt_tokens_details")
-        or usage.get("prompt_token_details")
-        or usage.get("input_token_details")
-        or {}
-    )
-    cached_tokens = _safe_int(usage.get("cached_tokens") or details.get("cached_tokens"))
-    if not total_tokens and (prompt_tokens or completion_tokens):
-        total_tokens = prompt_tokens + completion_tokens
-    if not (prompt_tokens or completion_tokens or total_tokens or cached_tokens):
+    counts = usage_counts(usage)
+    if not counts:
         return {}
+    prompt_tokens, completion_tokens = counts["prompt_tokens"], counts["completion_tokens"]
+    total_tokens, cached_tokens = counts["total_tokens"], counts["cached_tokens"]
     effective_prompt_tokens = max(0.0, float(prompt_tokens) - 0.5 * float(cached_tokens))
     return {
         "prompt_tokens": prompt_tokens,

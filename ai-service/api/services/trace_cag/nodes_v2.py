@@ -819,7 +819,10 @@ async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
 
                         _ledger_add("diagnose", data, wall_started=_started, response=resp)
                         diagnosis_usage = provider_usage(data) or {}
-                        tokens = data.get("usage", {}).get("total_tokens", 150)
+                        tokens = (
+                            diagnosis_usage["prompt_tokens"] + diagnosis_usage["completion_tokens"]
+                            if diagnosis_usage else data.get("usage", {}).get("total_tokens", 150)
+                        )
                         await record_groq_key_usage(groq_key, tokens)
                         content = data["choices"][0]["message"]["content"]
                         result = {"success": True, "data": content}

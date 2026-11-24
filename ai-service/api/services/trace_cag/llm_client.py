@@ -90,16 +90,35 @@ def _qwen_reasoning_overrides(model: str) -> Dict[str, Any]:
     return {"reasoning_effort": "none"} if _is_qwen_model(model) else {}
 
 
+def _int_or_zero(value: Any) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 0
+
+
+def usage_counts(usage: Dict[str, Any]) -> Dict[str, int]:
+    """Token counts from an OpenAI, Groq, Gemini or Ollama usage object; {} when it reports none."""
+    prompt = _int_or_zero(usage.get("prompt_tokens") or usage.get("promptTokenCount") or usage.get("prompt_eval_count"))
+    completion = _int_or_zero(usage.get("completion_tokens") or usage.get("candidatesTokenCount") or usage.get("eval_count"))
+    total = _int_or_zero(usage.get("total_tokens") or usage.get("totalTokenCount"))
+    details = usage.get("prompt_tokens_details") or usage.get("prompt_token_details") or usage.get("input_token_details") or {}
+    cached = _int_or_zero(usage.get("cached_tokens") or details.get("cached_tokens"))
+    if not total and (prompt or completion):
+        total = prompt + completion
+    if not (prompt or completion or total or cached):
+        return {}
+    return {"prompt_tokens": prompt, "completion_tokens": completion, "total_tokens": total, "cached_tokens": cached}
+
+
 def provider_usage(payload: Dict[str, Any]) -> Optional[Dict[str, int]]:
-    """Token counts an OpenAI-style body or stream chunk reports; Groq streams also nest them under x_groq."""
+    """Usage a body or stream chunk reports: `usage`, Groq's `x_groq.usage` or Gemini's `usageMetadata`."""
     usage = payload.get("usage") or (payload.get("x_groq") or {}).get("usage")
-    if not isinstance(usage, dict) or "prompt_tokens" not in usage:
-        return None
-    return {
-        "prompt_tokens": int(usage.get("prompt_tokens") or 0),
-        "completion_tokens": int(usage.get("completion_tokens") or 0),
-        "cached_tokens": int((usage.get("prompt_tokens_details") or {}).get("cached_tokens") or 0),
-    }
+    if not usage and isinstance(payload.get("usageMetadata"), dict):
+        meta = payload["usageMetadata"]
+        usage = {**meta, "cached_tokens": meta.get("cachedContentTokenCount")}
+    counts = usage_counts(usage) if isinstance(usage, dict) else {}
+    return {key: counts[key] for key in ("prompt_tokens", "completion_tokens", "cached_tokens")} if counts else None
 
 
 # Values that actually enable thinking, probed against Groq 2026-10-10 on

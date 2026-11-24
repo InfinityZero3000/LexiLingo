@@ -63,14 +63,26 @@ def _turn_skill(input_type: str | None) -> str:
     return "speaking" if (input_type or "").strip().lower() == "voice" else "writing"
 
 
-def _turn_usage(diagnosis: Dict[str, int], generation: Dict[str, Any]) -> Dict[str, Any]:
-    """Provider tokens of the diagnosis and generation calls; "estimated" if either part was guessed."""
+def _turn_usage(
+    diagnosis: Dict[str, int],
+    generation: Dict[str, Any],
+    *,
+    diagnosis_billed: bool,
+    generation_attempted: bool,
+) -> Dict[str, Any]:
+    """Provider tokens of this turn's LLM calls.
+
+    "provider": every billed call reported usage. "partial": one was billed and reported nothing,
+    so the sum is a floor. "none": no LLM call (a cache hit, a clarifying question).
+    """
+    generated = generation if generation.get("source") == "provider" else {}
     keys = ("prompt_tokens", "completion_tokens", "cached_tokens")
-    total: Dict[str, Any] = {k: int(diagnosis.get(k) or 0) + int(generation.get(k) or 0) for k in keys}
-    if generation.get("source") == "estimated":
-        total["source"] = "estimated"
+    total: Dict[str, Any] = {k: int(diagnosis.get(k) or 0) + int(generated.get(k) or 0) for k in keys}
+    expected = [(diagnosis_billed, bool(diagnosis)), (generation_attempted, bool(generated))]
+    if not any(billed for billed, _ in expected):
+        total["source"] = "none"
     else:
-        total["source"] = "provider" if (diagnosis or generation) else "none"
+        total["source"] = "provider" if all(seen for billed, seen in expected if billed) else "partial"
     return total
 
 
@@ -1021,6 +1033,7 @@ async def stream_lexi_chat(
                 # See run_lexi_pipeline: a cached reply would report stale XP,
                 # streak or level as if it were current.
                 **({"cache_policy": "off"} if learner_facts or memory_block else {}),
+                defer_turn_metrics=True,
             )
         )
 
@@ -1139,7 +1152,11 @@ async def stream_lexi_chat(
             # GROQ_API_KEY's presence, which stays true even when Groq is down.
             model_used = f"{provider_info.get('provider', 'unknown')}/{provider_info.get('model', 'unknown')}"
 
-    if not cache_hit and not clarification and lexi_response and model_used != "trace-cag_safe_response":
+    reply_done_at = time.time()
+    generation_attempted = not cache_hit and not clarification
+    replied_fresh = generation_attempted and bool(lexi_response) and model_used != "trace-cag_safe_response"
+
+    if replied_fresh:
         try:
             from api.services.trace_cag.benchmark.ranking import _update_ranker_from_generation
             from api.services.trace_cag.cache_utils import _write_cache_entry
@@ -1270,20 +1287,29 @@ async def stream_lexi_chat(
     from api.services.trace_cag import turn_metrics
     from api.services.trace_cag.cache_utils import _token_f1
 
-    turn_cost = _turn_usage(raw_state.get("diagnosis_usage") or {}, provider_info.get("usage") or {})
+    turn_cost = _turn_usage(
+        raw_state.get("diagnosis_usage") or {},
+        provider_info.get("usage") or {},
+        diagnosis_billed=any(str(model).startswith("groq/") for model in raw_state.get("models_used") or []),
+        generation_attempted=generation_attempted,
+    )
     shadow = str(raw_state.get("l1_shadow_response") or "")
     stream_meta = {
+        # Until the last word reached the client; latency_ms also holds TTS and persistence.
+        "reply_ms": int((reply_done_at - start_time) * 1000),
         "ttft_ms": int((first_token_at - start_time) * 1000) if first_token_at else None,
         "first_chunk_ms": int((first_chunk_at - start_time) * 1000) if first_chunk_at else None,
         "usage": turn_cost,
         "cache_layer": str(raw_state.get("cache_layer") or "L0") if cache_hit else "none",
         "cache_bypass": cache_bypass,
-        "l1_shadow_f1": round(_token_f1(shadow, lexi_response), 3) if shadow else None,
+        # Only a real reply is something the shadow answer can be measured against.
+        "l1_shadow_f1": round(_token_f1(shadow, lexi_response), 3) if shadow and replied_fresh else None,
     }
     turn_metrics.record_turn_metrics({
         **raw_state,
         **stream_meta,
-        "latency_ms": total_ms,
+        "latency_ms": stream_meta["reply_ms"],
+        "error": bool(raw_state.get("error")) or model_used == "trace-cag_safe_response",
         "cache_hit": cache_hit,
         "prompt_tokens": turn_cost["prompt_tokens"],
         "completion_tokens": turn_cost["completion_tokens"],

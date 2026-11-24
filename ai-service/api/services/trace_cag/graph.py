@@ -165,6 +165,7 @@ class TraceCAGPipeline:
         benchmark_metadata: Optional[Dict[str, Any]] = None,
         kg_seed_concepts: Optional[List[str]] = None,
         return_raw_state: bool = False,
+        defer_turn_metrics: bool = False,
     ) -> Dict[str, Any]:
         """
         Run the TraceCAG pipeline.
@@ -220,8 +221,8 @@ class TraceCAGPipeline:
             # Add total latency
             total_latency_ms = int((time.time() - start_time) * 1000)
             final_state["latency_ms"] = total_latency_ms
-            # A streamed turn records itself once generation is done; this latency would be analysis only.
-            if generation_policy != "skip":
+            # The Lexi stream records the whole turn itself once its reply is out; topic chat still lands here.
+            if not defer_turn_metrics:
                 record_turn_metrics(final_state)
 
             logger.info(
