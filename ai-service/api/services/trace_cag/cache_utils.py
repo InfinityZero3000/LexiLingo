@@ -1308,6 +1308,19 @@ async def publish_dependency_version(dependency_key: str, version: str) -> None:
 # NODE 1.5: CACHE GATE (Response Cache Check)
 # ============================================================
 
+def _gate_bypass(state: TraceCAGState, reason: str, **meta: Any) -> Dict[str, Any]:
+    """An early exit from the gate: serve nothing, and say why in `cache_bypass`."""
+    logger.info("[cache_gate_node] cache bypass reason=%s session=%s", reason, state.get("session_id"))
+    return {
+        "cache_hit": False,
+        "cache_decision": "full",
+        "reuse_risk": 1.0,
+        "path": "slow",
+        "cache_bypass": reason,
+        "cache_gate_meta": {"pcc_passed": False, "reasons": [reason], "risk": 1.0, **meta},
+    }
+
+
 async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
     """
     RAPID Risk-Aware Cache Gate (paper Alg. 1).
@@ -1328,18 +1341,9 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
 
     cache_policy = state.get("cache_policy", "on")
     if cache_policy != "on":
-        return {
-            "cache_hit": False,
-            "cache_decision": "full",
-            "reuse_risk": 1.0,
-            "path": "slow",
-            "cache_gate_meta": {
-                "pcc_passed": False,
-                "reasons": ["cache_disabled"],
-                "risk": 1.0,
-                "routing_latency_ms": (time.perf_counter() - routing_started) * 1000.0,
-            },
-        }
+        return _gate_bypass(
+            state, "cache_disabled", routing_latency_ms=(time.perf_counter() - routing_started) * 1000.0
+        )
 
     user_input = state.get("user_input", "")
     learner_profile = state.get("learner_profile", {})
@@ -1361,30 +1365,10 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
             get_telemetry().increment_counter("tracecag_cache_bypass_learner_epoch_total")
         except Exception:
             pass
-        return {
-            "cache_hit": False,
-            "cache_decision": "full",
-            "reuse_risk": 1.0,
-            "path": "slow",
-            "cache_gate_meta": {
-                "pcc_passed": False,
-                "reasons": ["learner_epoch_unavailable"],
-                "risk": 1.0,
-            },
-        }
+        return _gate_bypass(state, "learner_epoch_unavailable")
     user_scope = _user_cache_scope(state)
     if state.get("user_id") and user_scope is None:
-        return {
-            "cache_hit": False,
-            "cache_decision": "full",
-            "reuse_risk": 1.0,
-            "path": "slow",
-            "cache_gate_meta": {
-                "pcc_passed": False,
-                "reasons": ["user_cache_scope_unavailable"],
-                "risk": 1.0,
-            },
-        }
+        return _gate_bypass(state, "user_cache_scope_unavailable")
     if not user_scope:
         # Every artifact belongs to one learner; an anonymous L0 key is global and ignores conversation history.
         try:
@@ -1393,17 +1377,7 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
             get_telemetry().increment_counter("tracecag_cache_bypass_no_user_scope_total")
         except Exception:
             pass
-        return {
-            "cache_hit": False,
-            "cache_decision": "full",
-            "reuse_risk": 1.0,
-            "path": "slow",
-            "cache_gate_meta": {
-                "pcc_passed": False,
-                "reasons": ["no_user_cache_scope"],
-                "risk": 1.0,
-            },
-        }
+        return _gate_bypass(state, "no_user_cache_scope")
     bucket = _build_graph_bucket(
         user_input, level, intent_hint, profile_epoch, conversation_history, user_scope=user_scope,
     )

@@ -1303,7 +1303,7 @@ async def stream_lexi_chat(
         "first_chunk_ms": int((first_chunk_at - start_time) * 1000) if first_chunk_at else None,
         "usage": turn_cost,
         "cache_layer": str(raw_state.get("cache_layer") or "L0") if cache_hit else "none",
-        "cache_bypass": cache_bypass,
+        "cache_bypass": cache_bypass or str(raw_state.get("cache_bypass") or ""),
         # Only a real reply is something the shadow answer can be measured against.
         "l1_shadow_f1": round(_token_f1(shadow, lexi_response), 3) if shadow and replied_fresh else None,
     }
