@@ -136,7 +136,9 @@ async def test_same_user_reuses_l0_and_patches_l1():
 
 
 @pytest.mark.asyncio
-async def test_production_entry_never_patches():
+async def test_production_entry_without_a_stable_evidence_record_never_patches(monkeypatch):
+    monkeypatch.setattr(cache_mod.settings, "TRACECAG_L1_MODE", "on")
+
     def prod_state(text):
         # stable enough to be promoted to L1, so the read side has a candidate and fails for the right reason
         state = _state("alice", text, hints=None)

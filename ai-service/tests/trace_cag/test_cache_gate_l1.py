@@ -12,6 +12,8 @@ import api.services.trace_cag.cache_utils as cache_mod
 def _learner_scope(monkeypatch):
     monkeypatch.setattr(cache_mod.settings, "SECRET_KEY", "test-secret")
     monkeypatch.setattr(cache_mod.settings, "LEARNER_STATE_MODE", "off")
+    # With L1 off every rejection test below would pass without reaching the rule it names.
+    monkeypatch.setattr(cache_mod.settings, "TRACECAG_L1_MODE", "on")
     cache_mod._MEM_RESPONSE_CACHE.clear()
     cache_mod._MEM_GRAPH_BUCKETS.clear()
 

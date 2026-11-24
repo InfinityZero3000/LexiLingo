@@ -182,8 +182,9 @@ def decide_l1_reuse(
         request.profile_epoch != candidate.profile_epoch
         or request.policy_version != candidate.policy_version
         or request.kg_version != candidate.kg_version
-        or request.source_version != candidate.source_version
-        or request.freshness_class != candidate.freshness_class
+        # The gate runs before retrieval: a version only one side has is an audit record, not drift.
+        or bool(request.source_version and candidate.source_version and request.source_version != candidate.source_version)
+        or bool(request.freshness_class and candidate.freshness_class and request.freshness_class != candidate.freshness_class)
     )
 
     risk = (

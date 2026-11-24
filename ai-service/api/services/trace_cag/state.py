@@ -108,6 +108,8 @@ class CacheEntry(TypedDict, total=False):
     retrieval_trace: List[RetrievalTraceItem]
     execution_plan: Dict[str, Any]     # σ: strategy, difficulty, slot template
     diagnosis_errors: List[Dict[str, Any]]
+    diagnosis_root_causes: List[str]
+    kg_seed_concepts: List[str]
     overall_score: float
     grammar_score: float
     fluency_score: float
@@ -228,6 +230,7 @@ class TraceCAGState(TypedDict, total=False):
     adaptive_features: Dict[str, float]
     adaptive_controller: Dict[str, Any]
     cache_gate_meta: Dict[str, Any]
+    l1_shadow_response: str
 
     # ============================================
     # Metadata

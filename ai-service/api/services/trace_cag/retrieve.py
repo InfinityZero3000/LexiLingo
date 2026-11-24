@@ -718,6 +718,13 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
                 "nodes_added": int(graph_update.get("nodes_added") or 0),
                 "edges_added": int(graph_update.get("edges_added") or 0),
             },
+            **({} if state.get("benchmark_metadata") else {
+                "evidence_hash": evidence_version if evidence_projection else "",
+                "source_version": source_version if evidence_projection else "",
+                "freshness_class": "volatile" if any(
+                    item["item_id"].startswith("ext_") for item in evidence_projection
+                ) else "stable",
+            }),
             "mode": benchmark_mode or "default",
             "ranker": benchmark_ranker,
             "learned_ranker": {
