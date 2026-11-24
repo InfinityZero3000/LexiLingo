@@ -157,3 +157,48 @@ class TestLessonHearts:
 
         assert first.status_code == second.status_code == 200
         assert first.json()["data"] == second.json()["data"]
+
+
+@pytest.mark.asyncio
+class TestAnswerReplay:
+    async def test_resending_a_correct_answer_credits_nothing_more(
+        self,
+        async_client: AsyncClient,
+        db_session: AsyncSession,
+        auth_headers: dict,
+        test_lesson_attempt: LessonAttempt,
+    ):
+        url = f"/api/v1/learning/attempts/{test_lesson_attempt.id}/answer"
+        right = (True, "right", None, None)
+        with patch("app.routes.learning._validate_answer", AsyncMock(return_value=right)):
+            first = await async_client.post(url, json=_answer_body(), headers=auth_headers)
+            second = await async_client.post(url, json=_answer_body(), headers=auth_headers)
+
+        assert first.status_code == second.status_code == 200
+        assert first.json()["data"]["xp_earned"] > 0
+        replay = second.json()["data"]
+        assert replay["is_correct"] is True
+        assert replay["xp_earned"] == 0
+        assert replay["question_attempt_id"] == first.json()["data"]["question_attempt_id"]
+
+        await db_session.refresh(test_lesson_attempt)
+        assert test_lesson_attempt.correct_answers == 1
+        assert test_lesson_attempt.xp_earned == first.json()["data"]["xp_earned"]
+
+    async def test_a_wrong_answer_can_still_be_retried(
+        self,
+        async_client: AsyncClient,
+        db_session: AsyncSession,
+        auth_headers: dict,
+        test_lesson_attempt: LessonAttempt,
+    ):
+        url = f"/api/v1/learning/attempts/{test_lesson_attempt.id}/answer"
+        with _grade_wrong():
+            await async_client.post(url, json=_answer_body(), headers=auth_headers)
+        right = (True, "right", None, None)
+        with patch("app.routes.learning._validate_answer", AsyncMock(return_value=right)):
+            retry = await async_client.post(url, json=_answer_body(), headers=auth_headers)
+
+        assert retry.json()["data"]["xp_earned"] > 0
+        await db_session.refresh(test_lesson_attempt)
+        assert test_lesson_attempt.correct_answers == 1
