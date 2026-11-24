@@ -33,7 +33,8 @@ async def test_overlay_loads_only_deduplicated_request_concepts(monkeypatch):
     )
 
     requested = client.batch_get.await_args.args[1]
-    assert requested == ["concept:a", "concept:b", "concept:c"]
+    # Root causes lead, so the 60-id cap never cuts the concepts the weakness hint reads.
+    assert requested == ["concept:b", "concept:a", "concept:c"]
     assert result["learner_state_epoch"] == 9
     assert result["learner_state_degraded"] is False
 

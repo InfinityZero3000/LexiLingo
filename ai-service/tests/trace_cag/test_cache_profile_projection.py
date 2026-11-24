@@ -208,3 +208,80 @@ async def test_a_correction_is_not_reused_when_its_concept_state_cannot_be_read(
     result = await cache_mod.cache_gate_node(_gate_state(await _turn(text="yesterday I go to school"), text="yesterday I go to school"))
 
     assert result["cache_hit"] is False
+
+
+@pytest.mark.asyncio
+async def test_a_profile_read_without_the_learner_card_publishes_no_version(learner):
+    # The card fetch waits 0.6 s; a slow one leaves goal, interest and profile_brief out of this turn.
+    first = await _turn()
+    await _write(_gate_state(first))
+    before = invalidation._MEM_DEPENDENCY_TOKENS["learner:alice:profile"]
+
+    await _turn({"level": "B1", "native_language": "Vietnamese", "_profile_complete": False})
+
+    assert invalidation._MEM_DEPENDENCY_TOKENS["learner:alice:profile"] == before
+    assert (await cache_mod.cache_gate_node(_gate_state(await _turn())))["cache_decision"] == "reuse"
+
+
+@pytest.mark.asyncio
+async def test_a_failed_redis_profile_read_publishes_no_version(learner, monkeypatch):
+    first = await _turn()
+    await _write(_gate_state(first))
+    before = invalidation._MEM_DEPENDENCY_TOKENS["learner:alice:profile"]
+
+    monkeypatch.setattr(redis_client.LearnerProfileCache, "get_profile", AsyncMock(side_effect=ConnectionError("redis")))
+    await _turn({**PROFILE, "common_errors": []})
+
+    assert invalidation._MEM_DEPENDENCY_TOKENS["learner:alice:profile"] == before
+
+
+@pytest.mark.asyncio
+async def test_a_late_read_of_an_older_epoch_does_not_publish(learner):
+    learner.result = LearnerStateResult(state_epoch=30, goal="career")
+    newer = await _turn()
+    await _write(_gate_state(newer))
+    before = invalidation._MEM_DEPENDENCY_TOKENS["learner:alice:profile"]
+
+    learner.result = LearnerStateResult(state_epoch=29)  # an in-flight turn that read before the goal changed
+    await _turn()
+
+    assert invalidation._MEM_DEPENDENCY_TOKENS["learner:alice:profile"] == before
+
+
+@pytest.mark.asyncio
+async def test_with_learner_state_off_a_reply_that_named_a_weakness_is_not_reused(learner, monkeypatch):
+    text = "yesterday I go to school"
+    first = await _turn(text=text)
+    await _write(_gate_state(first, text=text, errors=[ERROR]),
+                 concept_states={ROOT: {"error_count": 3, "mastery_probability": 0.2}})
+
+    monkeypatch.setattr(cache_mod.settings, "LEARNER_STATE_MODE", "off")
+    result = await cache_mod.cache_gate_node(_gate_state(await _turn(text=text), text=text))
+
+    assert result["cache_hit"] is False
+
+
+@pytest.mark.asyncio
+async def test_one_gate_reads_the_concept_state_at_most_once(learner):
+    text = "yesterday I go to school"
+    first = await _turn(text=text)
+    await _write(_gate_state(first, text=text, errors=[ERROR]), concept_states={})
+    gate_state = _gate_state(await _turn(text=text), text=text)
+    learner.batch_get.reset_mock()
+
+    await cache_mod.cache_gate_node(gate_state)
+
+    concept_reads = [call for call in learner.batch_get.await_args_list if call.args[1]]
+    assert len(concept_reads) <= 1
+
+
+@pytest.mark.asyncio
+async def test_the_overlay_keeps_root_causes_when_the_kg_offers_more_than_it_reads(learner):
+    merged = {
+        "kg_seed_concepts": [f"concept:seed_{i}" for i in range(70)],
+        "diagnosis_root_causes": [ROOT],
+    }
+
+    await nodes_mod._load_learner_concept_overlay({"user_id": "alice"}, merged)
+
+    assert ROOT in learner.batch_get.await_args.args[1]

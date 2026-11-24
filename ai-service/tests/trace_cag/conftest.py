@@ -48,8 +48,12 @@ def _reset_trace_cag_dependency_state():
     order-dependent failures that pass in isolation but fail in the full
     suite.
     """
+    from api.services.trace_cag.nodes_v2 import _PUBLISHED_PROFILE_EPOCH
+
     clear_reverse_index()
     _reset_groq_key_pool_state()
+    _PUBLISHED_PROFILE_EPOCH.clear()
     yield
     clear_reverse_index()
     _reset_groq_key_pool_state()
+    _PUBLISHED_PROFILE_EPOCH.clear()

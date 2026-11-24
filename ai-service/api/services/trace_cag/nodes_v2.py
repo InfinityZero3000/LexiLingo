@@ -32,6 +32,8 @@ from api.services.trace_cag.dependencies import (
 )
 from api.services.jit_graph_service import get_jit_graph_service
 
+from api.services.trace_cag.bounded import LRUDict
+
 # LLM client — httpx pooling and rate-limit throttling
 from api.services.trace_cag.llm_client import (
     _qwen_no_think_messages,
@@ -164,14 +166,13 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
         async def _get_learner_epoch():
             if not user_id or settings.LEARNER_STATE_MODE == "off":
                 return None
-            from api.clients.learner_state_client import get_learner_state_client
+            from api.clients.learner_state_client import read_learner_state
 
-            deadline = time.monotonic() + (settings.LEARNER_STATE_DEADLINE_MS / 1000.0)
-            return await get_learner_state_client().batch_get(
-                str(user_id), [], deadline=deadline
-            )
+            return await read_learner_state(str(user_id), [])
 
         epoch_task = _asyncio.create_task(_get_learner_epoch())
+
+        profile_read = {"failed": False}
 
         async def _read_redis():
             redis_client = await RedisClient.get_instance()
@@ -184,6 +185,7 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
                         return await profile_cache.get_profile(user_id)
                     except Exception as exc:
                         _note_input_redis_degraded("profile", exc)
+                        profile_read["failed"] = True
                         return None
                 return None
 
@@ -213,6 +215,7 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
             except (_asyncio.TimeoutError, TimeoutError):
                 cached_profile, fetched_history = None, None
                 _note_input_redis_degraded("budget", None)
+                profile_read["failed"] = True
             if cached_profile:
                 learner_profile = {**cached_profile, **learner_profile}
             if not history_supplied:
@@ -259,9 +262,7 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
             if not profile_version:
                 profile_version = stable_version_token(learner_profile, prefix="profile")
         profile_key = f"learner:{user_id or 'anonymous'}:profile"
-        # A read that failed lacks goal/interest; publishing it would invalidate, and the next good read again.
-        learner_state_unread = settings.LEARNER_STATE_MODE != "off" and not learner_profile.get("_learner_state_available")
-        if user_id and not benchmark and not learner_state_unread:
+        if user_id and not benchmark and _may_publish_profile(str(user_id), learner_profile, epoch_result, profile_read["failed"]):
             try:
                 # The in-memory token moves before the first await, so a slow Redis cannot leave a stale answer servable.
                 await _asyncio.wait_for(
@@ -996,6 +997,28 @@ async def kg_diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
     return merged
 
 
+# Highest learner epoch each user's profile version was published at; a turn that read an older one is late.
+_PUBLISHED_PROFILE_EPOCH: LRUDict = LRUDict(20_000)
+
+
+def _may_publish_profile(user_id: str, profile: Dict[str, Any], epoch_result: Any, profile_read_failed: bool) -> bool:
+    """Publishing only deletes eagerly; the certificate's profile_epoch already refuses a changed profile.
+
+    So a read that missed a part of the profile (learner state, the Redis profile, the learner card)
+    or that is older than one already published must not publish: it would invalidate the learner's
+    cache, and the next complete read would invalidate it again.
+    """
+    if profile_read_failed or not profile.get("_profile_complete", True):
+        return False
+    if settings.LEARNER_STATE_MODE != "off" and not profile.get("_learner_state_available"):
+        return False
+    epoch = int(getattr(epoch_result, "state_epoch", 0) or 0)
+    if epoch < _PUBLISHED_PROFILE_EPOCH.get(user_id, 0):
+        return False
+    _PUBLISHED_PROFILE_EPOCH[user_id] = epoch
+    return True
+
+
 async def _load_learner_concept_overlay(
     state: TraceCAGState,
     merged: Dict[str, Any],
@@ -1003,11 +1026,12 @@ async def _load_learner_concept_overlay(
     """Batch-load only concepts selected by this request's bounded KG work."""
     if settings.LEARNER_STATE_MODE == "off" or not state.get("user_id"):
         return {}
-    from api.clients.learner_state_client import get_learner_state_client
+    from api.clients.learner_state_client import read_learner_state
 
+    # Root causes first: the cap below must never cut the concepts the reply's weakness hint reads.
     concept_ids: list[str] = []
-    concept_ids.extend(str(item) for item in merged.get("kg_seed_concepts", []) if item)
     concept_ids.extend(str(item) for item in merged.get("diagnosis_root_causes", []) if item)
+    concept_ids.extend(str(item) for item in merged.get("kg_seed_concepts", []) if item)
     concept_ids.extend(
         str(item.get("id"))
         for item in merged.get("kg_expanded_nodes", [])
@@ -1015,11 +1039,8 @@ async def _load_learner_concept_overlay(
     )
     concept_ids = list(dict.fromkeys(concept_ids))[:60]
     started = time.monotonic()
-    deadline = started + (settings.LEARNER_STATE_DEADLINE_MS / 1000.0)
     try:
-        result = await get_learner_state_client().batch_get(
-            str(state["user_id"]), concept_ids, deadline=deadline
-        )
+        result = await read_learner_state(str(state["user_id"]), concept_ids)
     except Exception as exc:
         logger.warning("Learner-state overlay unavailable: %s", exc)
         return {

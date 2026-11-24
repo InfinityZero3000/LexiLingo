@@ -741,11 +741,9 @@ def _session_recap(state: Mapping[str, Any]) -> str:
 
 
 def _context_digest(history: Optional[Sequence[Mapping[str, Any]]], recap: str = "") -> str:
-    """The last two exchanges, in both history shapes the prompt builder accepts.
-
-    A first turn has no history but its prompt carries the previous session's recap, and the
-    reply may pick it back up ("last time you asked…"), so the recap is that turn's context.
-    """
+    """The last two exchanges (either history shape), plus the previous-session recap on a first turn."""
+    # A first turn's prompt carries the recap and the reply may pick it back up ("last time you
+    # asked..."), so it must not be served in a session with another recap.
     turns: list[tuple[str, str]] = []
     for message in history or []:
         if not isinstance(message, Mapping):
@@ -836,8 +834,9 @@ _PROMPT_PROFILE_FIELDS = ("level", "native_language", "goal", "interest", "profi
 
 
 def prompt_profile_version(profile: Mapping[str, Any]) -> str:
-    """Moves when the prompt would change. The learner epoch moves on every applied observation,
-    i.e. every chat turn, and versioning on it erased each answer before it could be reused."""
+    """Moves exactly when the reply prompt would change."""
+    # Not the learner epoch: it moves on every applied observation, i.e. every chat turn, and
+    # versioning on it erased each answer before it could be reused.
     errors = profile.get("common_errors")
     top_error = Counter(str(e) for e in errors).most_common(1)[0][0] if isinstance(errors, list) and errors else ""
     projection = {field: str(profile.get(field) or "") for field in _PROMPT_PROFILE_FIELDS}
@@ -856,23 +855,27 @@ def struggling_concept(concept_states: Mapping[str, Any], root_causes: Sequence[
     return ""
 
 
-async def _concept_hint_unchanged(state: Mapping[str, Any], entry: Mapping[str, Any]) -> bool:
+async def _concept_hint_unchanged(
+    state: Mapping[str, Any], entry: Mapping[str, Any], reads: Dict[tuple, Any]
+) -> bool:
     """A correction may name a persistent weakness; reuse it only while that is still true. Fails closed."""
-    roots = [str(item) for item in (entry.get("diagnosis_root_causes") or []) if item]
-    if not roots or settings.LEARNER_STATE_MODE == "off" or not state.get("user_id") or state.get("benchmark_metadata"):
+    roots = tuple(str(item) for item in (entry.get("diagnosis_root_causes") or []) if item)
+    recorded = str(entry.get("struggling_concept") or "")
+    if not roots or not state.get("user_id") or state.get("benchmark_metadata"):
         return True
-    try:
-        from api.clients.learner_state_client import get_learner_state_client
+    if settings.LEARNER_STATE_MODE == "off":
+        return not recorded  # the prompt no longer carries a weakness hint
+    if roots not in reads:
+        try:
+            from api.clients.learner_state_client import read_learner_state
 
-        result = await get_learner_state_client().batch_get(
-            str(state["user_id"]), roots, deadline=time.monotonic() + settings.LEARNER_STATE_DEADLINE_MS / 1000.0,
-        )
-    except Exception as exc:
-        logger.warning("[cache_gate_node] concept state unavailable, not reusing a correction: %s", type(exc).__name__)
-        return False
-    if result.degraded:
-        return False
-    return struggling_concept(result.states, roots) == str(entry.get("struggling_concept") or "")
+            result = await read_learner_state(str(state["user_id"]), list(roots))
+            reads[roots] = None if result.degraded else result.states
+        except Exception as exc:
+            logger.warning("[cache_gate_node] concept state unavailable, not reusing a correction: %s", type(exc).__name__)
+            reads[roots] = None
+    states = reads[roots]
+    return states is not None and struggling_concept(states, list(roots)) == recorded
 
 
 def _profile_epoch(profile: Mapping[str, Any]) -> int:
@@ -1523,6 +1526,7 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
         session_recap=_session_recap(state),
     )
     best_rejection: tuple[float, tuple[str, ...]] | None = None
+    concept_reads: Dict[tuple, Any] = {}
 
     # --- Try in-process cache ---
     # Wall-clock (see _write_cache_entry): must compare against created_at
@@ -1567,7 +1571,11 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
             l0_safe = False
             l0_reasons = tuple(l0_reasons) + snapshot_reasons
             best_rejection = (1.0, l0_reasons)
-        if l0_safe and not await _concept_hint_unchanged(state, entry):
+        # Checked only for an entry the gate would serve: it costs a learner-state read.
+        servable = l0_safe and (
+            rho <= tau_reuse or (enable_patch and rho <= tau_patch and _patch_allowed(entry, fingerprint))
+        )
+        if servable and not await _concept_hint_unchanged(state, entry, concept_reads):
             l0_safe = False
             l0_reasons = tuple(l0_reasons) + ("learner_concept_state_changed",)
             best_rejection = (1.0, l0_reasons)
@@ -1669,7 +1677,7 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
         if not snapshot_ok:
             best_rejection = (1.0, snapshot_reasons)
             best_candidate = None
-    if best_candidate is not None and not await _concept_hint_unchanged(state, best_candidate[1]):
+    if best_candidate is not None and not await _concept_hint_unchanged(state, best_candidate[1], concept_reads):
         best_rejection = (1.0, ("learner_concept_state_changed",))
         best_candidate = None
 
