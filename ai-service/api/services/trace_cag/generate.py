@@ -29,7 +29,7 @@ from api.services.trace_cag.llm_client import (
     _throttled_post_json,
     provider_usage,
 )
-from api.services.trace_cag.cache_utils import _write_cache_entry
+from api.services.trace_cag.cache_utils import _write_cache_entry, struggling_concept as _struggling_concept
 from api.services.trace_cag.dependencies import dependency_record, policy_version_token
 
 from api.services.trace_cag.benchmark.ranking import _update_ranker_from_generation
@@ -119,19 +119,10 @@ def _personalization_hint(state: Dict[str, Any]) -> str:
     # ALL past sessions? Populated by _load_learner_concept_overlay — empty
     # whenever LEARNER_STATE_MODE is "off", so this safely no-ops until the
     # feature is enabled.
-    concept_states = state.get("learner_concept_states") or {}
-    root_causes = state.get("diagnosis_root_causes") or []
-    struggling_concept = None
-    for concept_id in root_causes:
-        info = concept_states.get(str(concept_id))
-        if not isinstance(info, dict):
-            continue
-        error_count = int(info.get("error_count") or 0)
-        mastery = info.get("mastery_probability")
-        mastery = float(mastery) if mastery is not None else 1.0
-        if error_count >= 2 and mastery < 0.55:
-            struggling_concept = str(concept_id)
-            break
+    # One rule with the cache gate, which reuses a correction only while this answer is unchanged.
+    struggling_concept = _struggling_concept(
+        state.get("learner_concept_states") or {}, state.get("diagnosis_root_causes") or []
+    )
 
     if struggling_concept:
         readable = (

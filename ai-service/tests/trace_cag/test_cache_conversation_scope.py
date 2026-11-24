@@ -109,13 +109,12 @@ def test_l1_refuses_a_candidate_from_another_conversation():
 
 
 @pytest.mark.asyncio
-async def test_epoch_bump_invalidates_then_the_rewritten_answer_is_served():
+async def test_a_new_profile_version_invalidates_then_the_rewritten_answer_is_served():
+    # Production publishes prompt_profile_version, not the raw epoch (test_cache_profile_projection).
     await _write(_state(epoch=5))
     assert (await cache_mod.cache_gate_node(_state(epoch=5, for_gate=True)))["cache_decision"] == "reuse"
 
-    bumped = _state(epoch=6)
-    bumped["conversation_history_supplied"] = True
-    await nodes_mod.input_node(bumped)
+    await cache_mod.publish_dependency_version("learner:alice:profile", "6")
 
     assert (await cache_mod.cache_gate_node(_state(epoch=6, for_gate=True)))["cache_hit"] is False
     await _write(_state(epoch=6), "answer for epoch 6")

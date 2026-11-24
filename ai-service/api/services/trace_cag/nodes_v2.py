@@ -51,6 +51,7 @@ from api.services.trace_cag.cache_utils import (  # noqa: F401
     _extract_lightweight_graph_concepts,
     _infer_intent_pre_diagnosis,
     _profile_epoch,
+    prompt_profile_version,
 )
 
 # retrieve_node / generate_node live in their own modules (Phase 4 split) —
@@ -249,11 +250,18 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
                 }
     
         latency_ms = int((time.time() - start_time) * 1000)
-        profile_version = str(learner_profile.get("_learner_state_epoch") or "")
-        if not profile_version:
-            profile_version = stable_version_token(learner_profile, prefix="profile")
+        benchmark = bool(state.get("benchmark_metadata"))
+        if user_id and not benchmark:
+            profile_version = prompt_profile_version(learner_profile)
+            learner_profile["_profile_version"] = profile_version
+        else:
+            profile_version = str(learner_profile.get("_learner_state_epoch") or "")
+            if not profile_version:
+                profile_version = stable_version_token(learner_profile, prefix="profile")
         profile_key = f"learner:{user_id or 'anonymous'}:profile"
-        if user_id and not state.get("benchmark_metadata"):
+        # A read that failed lacks goal/interest; publishing it would invalidate, and the next good read again.
+        learner_state_unread = settings.LEARNER_STATE_MODE != "off" and not learner_profile.get("_learner_state_available")
+        if user_id and not benchmark and not learner_state_unread:
             try:
                 # The in-memory token moves before the first await, so a slow Redis cannot leave a stale answer servable.
                 await _asyncio.wait_for(

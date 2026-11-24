@@ -44,6 +44,7 @@ from api.services.trace_cag.dependencies import (
     POLICY_SCHEMA_VERSION,
     compile_dependency_trace,
     policy_version_token,
+    stable_version_token,
 )
 from api.services.trace_cag.invalidation import (
     _MEM_DEPENDENCY_TOKENS,
@@ -125,7 +126,7 @@ def _build_admissibility_certificate(
         level=str(fingerprint.get("level") or ""),
         native_language=str(fingerprint.get("native_language") or ""),
         user_scope=user_scope,
-        context_digest=_context_digest(state.get("conversation_history")),
+        context_digest=_context_digest(state.get("conversation_history"), _session_recap(state)),
         profile_epoch=_hint_profile_epoch(state_hints, profile_epoch),
         policy_version=str(state_hints.get("policy_version") or policy_version_token()),
         kg_version=str(state_hints.get("kg_version") or f"kg_schema_v{_GRAPH_SCHEMA_VERSION}"),
@@ -231,6 +232,7 @@ def _build_l1_request_signature(
     conversation_history: list[dict[str, Any]],
     state_hints: Mapping[str, Any] | None = None,
     user_scope: str = "",
+    session_recap: str = "",
 ) -> L1Request:
     hints = state_hints or {}
     # Certificates store one deterministic coarse relation path.  Compare the
@@ -264,7 +266,7 @@ def _build_l1_request_signature(
         freshness_class="",
         native_language=str(fingerprint.get("native_language") or ""),
         user_scope=user_scope,
-        context_digest=_context_digest(conversation_history),
+        context_digest=_context_digest(conversation_history, session_recap),
         schema_version=CERTIFICATE_SCHEMA_VERSION,
         required_dimensions=required_dimensions,
     )
@@ -734,8 +736,16 @@ def _benchmark_cache_scope(state: TraceCAGState) -> str:
     return str((state.get("benchmark_metadata") or {}).get("_benchmark_mode") or "").strip().lower()
 
 
-def _context_digest(history: Optional[Sequence[Mapping[str, Any]]]) -> str:
-    """The last two exchanges, in both history shapes the prompt builder accepts."""
+def _session_recap(state: Mapping[str, Any]) -> str:
+    return str((state.get("learner_profile") or {}).get("session_recap") or "")
+
+
+def _context_digest(history: Optional[Sequence[Mapping[str, Any]]], recap: str = "") -> str:
+    """The last two exchanges, in both history shapes the prompt builder accepts.
+
+    A first turn has no history but its prompt carries the previous session's recap, and the
+    reply may pick it back up ("last time you asked…"), so the recap is that turn's context.
+    """
     turns: list[tuple[str, str]] = []
     for message in history or []:
         if not isinstance(message, Mapping):
@@ -747,6 +757,8 @@ def _context_digest(history: Optional[Sequence[Mapping[str, Any]]]) -> str:
             if message.get("ai"):
                 turns.append(("assistant", str(message["ai"])))
     recent = [(role, " ".join(text.split()).lower()) for role, text in turns[-4:]]
+    if recap.strip():
+        recent.append(("recap", " ".join(recap.split()).lower()))
     if not recent:
         return ""
     return hashlib.sha256(json.dumps(recent, ensure_ascii=False).encode()).hexdigest()[:16]
@@ -818,8 +830,56 @@ def _detect_native_request(user_input: str) -> bool:
     return any(phrase in lower for phrase in _NATIVE_REQUEST_PHRASES)
 
 
+# What of a learner profile the reply prompt reads (generate._personalization_hint). Learner facts and
+# memory switch the cache off for the turn; the session recap is first-turn context (_context_digest).
+_PROMPT_PROFILE_FIELDS = ("level", "native_language", "goal", "interest", "profile_brief")
+
+
+def prompt_profile_version(profile: Mapping[str, Any]) -> str:
+    """Moves when the prompt would change. The learner epoch moves on every applied observation,
+    i.e. every chat turn, and versioning on it erased each answer before it could be reused."""
+    errors = profile.get("common_errors")
+    top_error = Counter(str(e) for e in errors).most_common(1)[0][0] if isinstance(errors, list) and errors else ""
+    projection = {field: str(profile.get(field) or "") for field in _PROMPT_PROFILE_FIELDS}
+    return stable_version_token({**projection, "top_error": top_error}, prefix="profile")
+
+
+def struggling_concept(concept_states: Mapping[str, Any], root_causes: Sequence[Any]) -> str:
+    """The root cause a reply reinforces as a persistent weakness: two errors and mastery under 0.55."""
+    for concept_id in root_causes:
+        info = concept_states.get(str(concept_id))
+        if not isinstance(info, dict):
+            continue
+        mastery = info.get("mastery_probability")
+        if int(info.get("error_count") or 0) >= 2 and (float(mastery) if mastery is not None else 1.0) < 0.55:
+            return str(concept_id)
+    return ""
+
+
+async def _concept_hint_unchanged(state: Mapping[str, Any], entry: Mapping[str, Any]) -> bool:
+    """A correction may name a persistent weakness; reuse it only while that is still true. Fails closed."""
+    roots = [str(item) for item in (entry.get("diagnosis_root_causes") or []) if item]
+    if not roots or settings.LEARNER_STATE_MODE == "off" or not state.get("user_id") or state.get("benchmark_metadata"):
+        return True
+    try:
+        from api.clients.learner_state_client import get_learner_state_client
+
+        result = await get_learner_state_client().batch_get(
+            str(state["user_id"]), roots, deadline=time.monotonic() + settings.LEARNER_STATE_DEADLINE_MS / 1000.0,
+        )
+    except Exception as exc:
+        logger.warning("[cache_gate_node] concept state unavailable, not reusing a correction: %s", type(exc).__name__)
+        return False
+    if result.degraded:
+        return False
+    return struggling_concept(result.states, roots) == str(entry.get("struggling_concept") or "")
+
+
 def _profile_epoch(profile: Mapping[str, Any]) -> int:
     level = str(profile.get("level") or "B1").upper()
+    version = str(profile.get("_profile_version") or "")
+    if version:
+        return int(hashlib.md5(f"{level}|{version}".encode()).hexdigest()[:8], 16)
     sessions_completed = int(profile.get("sessions_completed") or 0)
     vocabulary_count = int(profile.get("vocabulary_count") or 0)
     common_errors = profile.get("common_errors") or []
@@ -1024,6 +1084,7 @@ async def _get_cache_entry(cache_key: str, level: str, now: float) -> CacheEntry
             "diagnosis_errors": raw.get("diagnosis_errors", []),
             "diagnosis_root_causes": raw.get("diagnosis_root_causes", []),
             "kg_seed_concepts": raw.get("kg_seed_concepts", []),
+            "struggling_concept": raw.get("struggling_concept", ""),
             "grammar_score": raw.get("grammar_score", 0.0),
             "fluency_score": raw.get("fluency_score", 0.0),
             "vocabulary_level": raw.get("vocabulary_level", "B1"),
@@ -1084,7 +1145,7 @@ async def _write_cache_entry(
 
     cache_key = _build_cache_key(
         user_scope, user_input, level, _benchmark_cache_scope(state),
-        _context_digest(state.get("conversation_history")),
+        _context_digest(state.get("conversation_history"), _session_recap(state)),
     )
     graph_bucket = _build_graph_bucket(
         user_input,
@@ -1142,6 +1203,9 @@ async def _write_cache_entry(
         diagnosis_errors=[dict(e) for e in errors] if errors else [],
         diagnosis_root_causes=list(state.get("diagnosis_root_causes") or []),
         kg_seed_concepts=list(state.get("kg_seed_concepts") or []),
+        struggling_concept=struggling_concept(
+            state.get("learner_concept_states") or {}, state.get("diagnosis_root_causes") or []
+        ),
         grammar_score=state.get("grammar_score", 0.0),
         fluency_score=state.get("fluency_score", 0.0),
         vocabulary_level=state.get("vocabulary_level", "B1"),
@@ -1440,7 +1504,8 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
 
     normalized = user_input.strip().lower()
     cache_key = _build_cache_key(
-        user_scope, user_input, level, _benchmark_cache_scope(state), _context_digest(conversation_history),
+        user_scope, user_input, level, _benchmark_cache_scope(state),
+        _context_digest(conversation_history, _session_recap(state)),
     )
     l1_request = _build_l1_request_signature(
         # The user-scope HMAC belongs in cache keys/buckets only.  Feeding it
@@ -1455,6 +1520,7 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
         conversation_history=conversation_history,
         state_hints=state_hints,
         user_scope=user_scope,
+        session_recap=_session_recap(state),
     )
     best_rejection: tuple[float, tuple[str, ...]] | None = None
 
@@ -1500,6 +1566,10 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
         if not snapshot_ok:
             l0_safe = False
             l0_reasons = tuple(l0_reasons) + snapshot_reasons
+            best_rejection = (1.0, l0_reasons)
+        if l0_safe and not await _concept_hint_unchanged(state, entry):
+            l0_safe = False
+            l0_reasons = tuple(l0_reasons) + ("learner_concept_state_changed",)
             best_rejection = (1.0, l0_reasons)
 
         if l0_safe and rho <= tau_reuse:
@@ -1599,6 +1669,9 @@ async def cache_gate_node(state: TraceCAGState) -> Dict[str, Any]:
         if not snapshot_ok:
             best_rejection = (1.0, snapshot_reasons)
             best_candidate = None
+    if best_candidate is not None and not await _concept_hint_unchanged(state, best_candidate[1]):
+        best_rejection = (1.0, ("learner_concept_state_changed",))
+        best_candidate = None
 
     shadow_response = ""
     if best_candidate is not None and l1_mode == "shadow":
