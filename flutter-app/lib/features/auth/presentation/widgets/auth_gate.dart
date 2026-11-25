@@ -1,6 +1,5 @@
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:lexilingo_app/core/widgets/widgets.dart';
+import 'package:lexilingo_app/core/widgets/app_splash.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
@@ -61,6 +60,6 @@ class _AuthGateState extends State<AuthGate> {
       return widget.child;
     }
     if (!auth.isCheckingAuth) _redirectToLogin();
-    return Scaffold(body: LoadingScreen(message: 'common.loading'.tr()));
+    return const Scaffold(body: AppSplash());
   }
 }

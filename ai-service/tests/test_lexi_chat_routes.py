@@ -5,7 +5,7 @@ messages/metadata, lexi_health, and pipeline helper extraction.
 """
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, create_autospec, patch
 from bson import ObjectId
 
 from api.routes import lexi_chat as lexi_route
@@ -167,7 +167,11 @@ async def test_lexi_chat_returns_response(mock_store, mock_idempotency, monkeypa
 async def test_lexi_chat_returns_cached_idempotency_response(mock_store, mock_idempotency, monkeypatch):
     """When idempotency key matches, cached response is returned without running pipeline."""
     monkeypatch.setattr(lexi_route, "enforce_user_scope", lambda cu, uid: uid)
-    monkeypatch.setattr(lexi_route, "enforce_user_quota", AsyncMock(return_value=_quota()))
+    enforce_quota = create_autospec(lexi_route.enforce_user_quota, return_value=_quota())
+    monkeypatch.setattr(lexi_route, "enforce_user_quota", enforce_quota)
+    # A replay needs a session id: a request without one gets a fresh uuid, so
+    # its key can never match anything stored.
+    mock_store.get_session.return_value = {"session_id": "s1", "user_id": "u1"}
 
     cached = lexi_route.LexiChatResponse(
         session_id="s1", message_id="m1", lexi_response="Cached!"
@@ -183,7 +187,7 @@ async def test_lexi_chat_returns_cached_idempotency_response(mock_store, mock_id
 
     result = await lexi_route.lexi_chat(
         request_context=request_ctx,
-        request=lexi_route.LexiChatRequest(user_id="u1", message="Hello"),
+        request=lexi_route.LexiChatRequest(user_id="u1", session_id="s1", message="Hello"),
         x_idempotency_key="key-123",
         db=db,
         current_user=_user(),
@@ -191,6 +195,7 @@ async def test_lexi_chat_returns_cached_idempotency_response(mock_store, mock_id
 
     assert result.lexi_response == "Cached!"
     run_pipeline.assert_not_called()
+    enforce_quota.assert_not_awaited()
 
 
 # ─── native_language ──────────────────────────────────────────────────────────

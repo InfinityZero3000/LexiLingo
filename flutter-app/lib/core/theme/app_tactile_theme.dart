@@ -1,8 +1,9 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
-enum TactileSurfaceVariant { elevated, interactive, nested }
+enum TactileSurfaceVariant { elevated, interactive, nested, clean }
 
 @immutable
 final class AppTactileTheme extends ThemeExtension<AppTactileTheme> {
@@ -38,6 +39,21 @@ final class AppTactileTheme extends ThemeExtension<AppTactileTheme> {
     String? diagnosticId,
   }) {
     final effectiveFill = intermediateFill ?? fill;
+    if (variant == TactileSurfaceVariant.clean) {
+      return BoxDecoration(
+        color: effectiveFill,
+        borderRadius: borderRadius ?? AppRadius.xlAll,
+        boxShadow: brightness == Brightness.dark
+            ? const []
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.07),
+                  blurRadius: 20,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+      );
+    }
     // Without an accent the candidate list is only [onSurface, black, white],
     // so on a light fill the best-contrast pick was black — a harsh frame
     // around every card. Seeding it with primary keeps the 3:1 guarantee and
@@ -59,7 +75,7 @@ final class AppTactileTheme extends ThemeExtension<AppTactileTheme> {
 
     return BoxDecoration(
       color: effectiveFill,
-      borderRadius: borderRadius ?? BorderRadius.circular(16),
+      borderRadius: borderRadius ?? AppRadius.lgAll,
       border: Border.all(
         color: disabled ? onSurface.withValues(alpha: 0.12) : borderColor,
         width: variant == TactileSurfaceVariant.nested ? 1.5 : 2,
@@ -74,6 +90,75 @@ final class AppTactileTheme extends ThemeExtension<AppTactileTheme> {
               ),
             ]
           : const [],
+    );
+  }
+
+  static const _cleanShape = RoundedRectangleBorder(
+    borderRadius: BorderRadius.all(Radius.circular(AppRadius.md)),
+  );
+  static const _cleanPadding = EdgeInsets.symmetric(
+    horizontal: AppSpacing.xl,
+    vertical: AppSpacing.md,
+  );
+
+  ButtonStyle cleanFilledButtonStyle({Color? accent}) {
+    final base = accent ?? primary;
+    final foreground = accent == null ? onPrimary : _blackOrWhite(base);
+    return ButtonStyle(
+      backgroundColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.disabled)
+            ? onSurface.withValues(alpha: 0.12)
+            : base,
+      ),
+      foregroundColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.disabled)
+            ? onSurface.withValues(alpha: 0.38)
+            : foreground,
+      ),
+      overlayColor: _overlay(foreground),
+      elevation: const WidgetStatePropertyAll(0),
+      shape: const WidgetStatePropertyAll(_cleanShape),
+      padding: const WidgetStatePropertyAll(_cleanPadding),
+      minimumSize: const WidgetStatePropertyAll(Size(64, 48)),
+    );
+  }
+
+  ButtonStyle cleanOutlinedButtonStyle({Color? accent}) {
+    final base = accent ?? primary;
+    return ButtonStyle(
+      backgroundColor: const WidgetStatePropertyAll(Colors.transparent),
+      foregroundColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.disabled)
+            ? onSurface.withValues(alpha: 0.38)
+            : base,
+      ),
+      side: WidgetStateProperty.resolveWith(
+        (states) => BorderSide(
+          color: onSurface.withValues(
+            alpha: states.contains(WidgetState.disabled) ? 0.08 : 0.16,
+          ),
+          width: AppBorderWidth.hairline,
+        ),
+      ),
+      overlayColor: _overlay(base),
+      elevation: const WidgetStatePropertyAll(0),
+      shape: const WidgetStatePropertyAll(_cleanShape),
+      padding: const WidgetStatePropertyAll(_cleanPadding),
+      minimumSize: const WidgetStatePropertyAll(Size(64, 48)),
+    );
+  }
+
+  ButtonStyle cleanTextButtonStyle({Color? accent}) {
+    final base = accent ?? primary;
+    return ButtonStyle(
+      foregroundColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.disabled)
+            ? onSurface.withValues(alpha: 0.38)
+            : base,
+      ),
+      overlayColor: _overlay(base),
+      shape: const WidgetStatePropertyAll(_cleanShape),
+      minimumSize: const WidgetStatePropertyAll(Size(48, 44)),
     );
   }
 
@@ -268,35 +353,27 @@ class LearnerTheme extends StatelessWidget {
   Widget build(BuildContext context) {
     final base = Theme.of(context);
     final tactile = AppTactileTheme.from(base);
-    final neutral = tactile.decoration(
-      variant: TactileSurfaceVariant.elevated,
-      fill: base.colorScheme.surface,
-    );
-    final side = (neutral.border! as Border).top;
     final theme = base.copyWith(
       extensions: [...base.extensions.values, tactile],
       cardTheme: CardThemeData(
         color: base.colorScheme.surface,
-        elevation: 3,
-        shadowColor: Colors.black.withValues(
-          alpha: base.brightness == Brightness.dark ? 0.35 : 0.10,
-        ),
+        elevation: base.brightness == Brightness.dark ? 0 : 2,
+        shadowColor: Colors.black.withValues(alpha: 0.10),
         surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: side,
-        ),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.xlAll),
       ),
       filledButtonTheme: FilledButtonThemeData(
-        style: tactile.filledButtonStyle(),
+        style: tactile.cleanFilledButtonStyle(),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
-        style: tactile.filledButtonStyle(),
+        style: tactile.cleanFilledButtonStyle(),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
-        style: tactile.outlinedButtonStyle(),
+        style: tactile.cleanOutlinedButtonStyle(),
       ),
-      textButtonTheme: TextButtonThemeData(style: tactile.textButtonStyle()),
+      textButtonTheme: TextButtonThemeData(
+        style: tactile.cleanTextButtonStyle(),
+      ),
       iconButtonTheme: IconButtonThemeData(style: tactile.iconButtonStyle()),
     );
     return Theme(data: theme, child: child);

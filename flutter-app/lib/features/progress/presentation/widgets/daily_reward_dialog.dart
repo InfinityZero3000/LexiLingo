@@ -147,7 +147,7 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
           end: Alignment.bottomCenter,
           colors: bgGradient,
         ),
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
             color: Theme.of(
@@ -158,13 +158,9 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
             offset: const Offset(0, 12),
           ),
         ],
-        border: Border.all(
-          color: isDark ? ProgressPalette.nightCard : AppColors.surfaceLight,
-          width: 2,
-        ),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         child: Stack(
           alignment: Alignment.center,
           children: [
@@ -283,7 +279,7 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                         elevation: 4,
                         shadowColor: AppColors.orange.withValues(alpha: 0.4),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.lg),
+                          borderRadius: AppRadius.mdAll,
                         ),
                       ),
                       child: _isClaiming
@@ -309,21 +305,6 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                             ),
                     ),
                   ),
-                  if (!claimed) const SizedBox(height: AppSpacing.md),
-
-                  // Skip / Close text button
-                  if (!claimed)
-                    TextButton(
-                      onPressed: _isClaiming
-                          ? null
-                          : () => Navigator.of(context).pop(),
-                      style: TextButton.styleFrom(
-                        foregroundColor: isDark
-                            ? AppColors.surfaceLight.withValues(alpha: 0.6)
-                            : Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                      child: Text('common.close'.tr()),
-                    ),
                 ],
               ),
             ),
@@ -396,10 +377,6 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                           end: Alignment.bottomRight,
                           colors: AppColors.warmGradient,
                         ),
-                        border: Border.all(
-                          color: AppColors.surfaceLight.withValues(alpha: 0.7),
-                          width: 2,
-                        ),
                         boxShadow: [
                           BoxShadow(
                             color: AppColors.orange.withValues(alpha: 0.28),
@@ -461,21 +438,11 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
       scale = 1.05;
     } else if (isClaimed) {
       cardBg = isDark ? ProgressPalette.doneNight : ProgressPalette.doneLight;
-      border = Border.all(
-        color: isDark
-            ? ProgressPalette.nightCard
-            : ProgressPalette.doneBorderLight,
-        width: 1,
-      );
     } else {
       // Locked
       cardBg = isDark
           ? ProgressPalette.todayNight.withValues(alpha: 0.6)
           : ProgressPalette.todayLight;
-      border = Border.all(
-        color: isDark ? ProgressPalette.railNight : ProgressPalette.railLight,
-        width: 1,
-      );
     }
 
     final card = Semantics(
@@ -642,10 +609,6 @@ class _GemBurst extends StatelessWidget {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: AppColors.purpleGradient,
-                      ),
-                      border: Border.all(
-                        color: AppColors.surfaceLight.withValues(alpha: 0.7),
-                        width: 2,
                       ),
                       boxShadow: [
                         BoxShadow(

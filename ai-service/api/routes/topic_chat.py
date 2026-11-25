@@ -23,7 +23,7 @@ from api.utils.cursor import (
 )
 
 from api.core.database import get_database
-from api.core.auth import AuthenticatedUser, enforce_user_scope, get_current_user
+from api.core.auth import AuthenticatedUser, assert_session_owner, enforce_user_scope, get_current_user
 from api.repositories.topic_chat_repository import TopicChatRepository
 from api.core.audit_emitter import emit_ai_audit_event
 from api.core.config import settings
@@ -117,9 +117,7 @@ async def _ensure_topic_session_owner(
     session = await repo.get_session(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
-    owner_user_id = str(session.get("user_id") or "")
-    if owner_user_id and owner_user_id != current_user.user_id:
-        raise HTTPException(status_code=403, detail="Forbidden: session ownership mismatch")
+    assert_session_owner(session, current_user)
     return session
 
 
@@ -159,7 +157,7 @@ async def list_stories(
         logger.error(f"Failed to list stories: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to list stories: {str(e)}"
+            detail="Failed to list stories"
         )
 
 
@@ -179,7 +177,7 @@ async def list_categories(
         logger.error(f"Failed to list categories: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to list categories: {str(e)}"
+            detail="Failed to list categories"
         )
 
 
@@ -226,7 +224,7 @@ async def warm_topic_cache(
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         import traceback; traceback.print_exc(); logger.error(f"Failed to warm cache: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Failed to warm cache")
 
 
 @router.get(
@@ -407,7 +405,7 @@ async def start_topic_session(
         logger.error(f"Failed to start topic session: {e}\n{traceback.format_exc()}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to start topic session: {str(e)}"
+            detail="Failed to start topic session"
         )
 
 
@@ -554,7 +552,7 @@ async def send_topic_message(
         logger.error(f"Failed to send topic message: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to send message: {str(e)}"
+            detail="Failed to send message"
         )
 
 

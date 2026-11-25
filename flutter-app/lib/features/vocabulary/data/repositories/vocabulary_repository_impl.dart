@@ -193,7 +193,9 @@ class VocabularyRepositoryImpl implements VocabularyRepository {
   }
 
   @override
-  Future<Either<Failure, List<UserVocabularyEntity>>> getDeckItems(String deckId) async {
+  Future<Either<Failure, List<UserVocabularyEntity>>> getDeckItems(
+    String deckId,
+  ) async {
     try {
       final models = await remoteDataSource.getDeckItems(deckId);
       final entities = models.map((model) => model.toEntity()).toList();

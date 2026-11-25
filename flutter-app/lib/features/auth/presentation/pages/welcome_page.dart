@@ -108,146 +108,168 @@ class _WelcomePageState extends State<WelcomePage>
                     ),
                   ),
                   Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.lg,
-                        AppSpacing.xs,
-                        AppSpacing.lg,
-                        20,
-                      ),
-                      child: Column(
-                        children: [
-                          AspectRatio(
-                            aspectRatio: 1,
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(AppRadius.xl),
-                              child: Image.asset(
-                                'assets/out-app/banner-start.png',
-                                fit: BoxFit.contain,
-                              ),
-                            ),
+                    child: LayoutBuilder(
+                      builder: (context, box) {
+                        // Below this the banner would be a thumbnail: keep the
+                        // layout whole and let it scroll instead of squeezing.
+                        const minBanner = 110.0;
+                        final below =
+                            440 * MediaQuery.textScalerOf(context).scale(1);
+                        final needed = minBanner + below;
+                        final scrolls = box.maxHeight < needed;
+                        final content = Padding(
+                          padding: const EdgeInsets.fromLTRB(
+                            AppSpacing.lg,
+                            AppSpacing.xs,
+                            AppSpacing.lg,
+                            20,
                           ),
-                          const SizedBox(height: 20),
-                          Text(
-                            'onboarding.welcome'.tr(),
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.headlineMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: isDark
-                                  ? AppColors.onGradient
-                                  : AppColors.surfaceDarkInput,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            'app.tagline'.tr(),
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              color: isDark
-                                  ? Colors.white70
-                                  : Theme.of(
-                                      context,
-                                    ).colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.xl),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 56,
-                            child: FilledButton.icon(
-                              onPressed: widget.onGetStarted,
-                              icon: const Icon(Icons.arrow_forward),
-                              label: Text(
-                                'onboarding.getStarted'.tr(),
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              style: FilledButton.styleFrom(
-                                backgroundColor: AppColors.accentMint,
-                                foregroundColor: AppColors.accentMintDark,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.md,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.md),
-                          SizedBox(
-                            width: double.infinity,
-                            height: 56,
-                            child: OutlinedButton(
-                              onPressed: widget.onSkip,
-                              style: OutlinedButton.styleFrom(
-                                side: const BorderSide(
-                                  color: Color(0x4430E8E8),
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.md,
-                                  ),
-                                ),
-                              ),
-                              child: Text(
-                                'auth.alreadyHaveAccount'.tr(),
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 28),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                          child: Column(
                             children: [
-                              _buildStatItem(
-                                context,
-                                'onboarding.activeUsers'.tr(),
-                                '50k+',
+                              Expanded(
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.xl,
+                                  ),
+                                  child: Image.asset(
+                                    'assets/out-app/banner-start.png',
+                                    fit: BoxFit.contain,
+                                    width: double.infinity,
+                                  ),
+                                ),
                               ),
-                              const SizedBox(width: 20),
-                              _buildStatItem(
-                                context,
-                                'onboarding.dailyLessons'.tr(),
-                                '12k+',
+                              const SizedBox(height: 20),
+                              Text(
+                                'onboarding.welcome'.tr(),
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.headlineMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: isDark
+                                      ? AppColors.onGradient
+                                      : AppColors.surfaceDarkInput,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                'app.tagline'.tr(),
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                  color: isDark
+                                      ? Colors.white70
+                                      : Theme.of(
+                                          context,
+                                        ).colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.xl),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 56,
+                                child: FilledButton.icon(
+                                  onPressed: widget.onGetStarted,
+                                  icon: const Icon(Icons.arrow_forward),
+                                  label: Text(
+                                    'onboarding.getStarted'.tr(),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: AppColors.accentMint,
+                                    foregroundColor: AppColors.accentMintDark,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.md,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.md),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 56,
+                                child: OutlinedButton(
+                                  onPressed: widget.onSkip,
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(
+                                      color: Color(0x4430E8E8),
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.md,
+                                      ),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'auth.alreadyHaveAccount'.tr(),
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 28),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  _buildStatItem(
+                                    context,
+                                    'onboarding.activeUsers'.tr(),
+                                    '50k+',
+                                  ),
+                                  const SizedBox(width: 20),
+                                  _buildStatItem(
+                                    context,
+                                    'onboarding.dailyLessons'.tr(),
+                                    '12k+',
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  _buildAvatar(
+                                    'https://lh3.googleusercontent.com/aida-public/AB6AXuAueXEdJeOZP5A67AihhrKDRfhgW8loPOC8jRC2TVq4eYU7UGPToFFwKjwji8yJCkd9mLJ6NVYtLxlxvwjenledwX8QGN0skcWfziNqe-suZMfvNeSsviHWd72OZkgCUWZpzskPpX7ibik2bF2aHwGdMGWSWHcu11-Z3XUAfGKYQVkdrDc9teq34cTsWYFv-KSCEsOJ8McOBldBez5n-gIcve820LP33S1bgUjI89FXKibiWinvy40_o8ccXdOtt_3LxZDni5bAM_I',
+                                  ),
+                                  Transform.translate(
+                                    offset: const Offset(-10, 0),
+                                    child: _buildAvatar(
+                                      'https://lh3.googleusercontent.com/aida-public/AB6AXuCUJVqOVKOza-lu-MYOLBITNBKO9yp182dMoHgnnuOmLtMbkZ0Er6cVCea5-Q3UqnAqM6FDM-DWURgu7CckXI6dU0lhYSBfL7P19wFwrmpYhkXHmF0nVOxKoww9oQm7YAjZZTquShpE4baE5nvSmSO7HD26DC6G_V00Trxecp8a7MLdcPn_u88CynqhkLE96mviJCUIoQK3bc_WO2nDZGt5CRYI0hL0r_LPwh9so8XN_NETyH4ILKxZKYm4qOEJVdP9G3GmIP8od5M',
+                                    ),
+                                  ),
+                                  Transform.translate(
+                                    offset: const Offset(-20, 0),
+                                    child: _buildAvatar(
+                                      'https://lh3.googleusercontent.com/aida-public/AB6AXuDh8w9mHRMsKUobp8aWGqHZ6LXaOhoFOEUKCtsCii3VAtwJ1dru5bV3TQmgY2th7h3XUiqCgytuEmX0QpvJuw7SGDjbFRMYnrIhUJGoPGjveUPiBOtBsJb_EzeFHClWbFIeLtFDAyIQAiYAYTGyu4qy3j9Pm7Vc9LUpvzFWn5Evm_DrjsioVgYlxaZFwso-vTgvsdnPYB2vreATNgeOVQPxS1DFpbXSUSFQ7RuF5oO20KOeONIEz5PEDrxZ09B_mm7RNbGAy_HdUHE',
+                                    ),
+                                  ),
+                                  Flexible(
+                                    child: Text(
+                                      'onboarding.globalCommunity'.tr(),
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            color: isDark
+                                                ? AppColors.textMuted
+                                                : Theme.of(context)
+                                                      .colorScheme
+                                                      .onSurfaceVariant,
+                                          ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                          const SizedBox(height: 14),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              _buildAvatar(
-                                'https://lh3.googleusercontent.com/aida-public/AB6AXuAueXEdJeOZP5A67AihhrKDRfhgW8loPOC8jRC2TVq4eYU7UGPToFFwKjwji8yJCkd9mLJ6NVYtLxlxvwjenledwX8QGN0skcWfziNqe-suZMfvNeSsviHWd72OZkgCUWZpzskPpX7ibik2bF2aHwGdMGWSWHcu11-Z3XUAfGKYQVkdrDc9teq34cTsWYFv-KSCEsOJ8McOBldBez5n-gIcve820LP33S1bgUjI89FXKibiWinvy40_o8ccXdOtt_3LxZDni5bAM_I',
-                              ),
-                              Transform.translate(
-                                offset: const Offset(-10, 0),
-                                child: _buildAvatar(
-                                  'https://lh3.googleusercontent.com/aida-public/AB6AXuCUJVqOVKOza-lu-MYOLBITNBKO9yp182dMoHgnnuOmLtMbkZ0Er6cVCea5-Q3UqnAqM6FDM-DWURgu7CckXI6dU0lhYSBfL7P19wFwrmpYhkXHmF0nVOxKoww9oQm7YAjZZTquShpE4baE5nvSmSO7HD26DC6G_V00Trxecp8a7MLdcPn_u88CynqhkLE96mviJCUIoQK3bc_WO2nDZGt5CRYI0hL0r_LPwh9so8XN_NETyH4ILKxZKYm4qOEJVdP9G3GmIP8od5M',
-                                ),
-                              ),
-                              Transform.translate(
-                                offset: const Offset(-20, 0),
-                                child: _buildAvatar(
-                                  'https://lh3.googleusercontent.com/aida-public/AB6AXuDh8w9mHRMsKUobp8aWGqHZ6LXaOhoFOEUKCtsCii3VAtwJ1dru5bV3TQmgY2th7h3XUiqCgytuEmX0QpvJuw7SGDjbFRMYnrIhUJGoPGjveUPiBOtBsJb_EzeFHClWbFIeLtFDAyIQAiYAYTGyu4qy3j9Pm7Vc9LUpvzFWn5Evm_DrjsioVgYlxaZFwso-vTgvsdnPYB2vreATNgeOVQPxS1DFpbXSUSFQ7RuF5oO20KOeONIEz5PEDrxZ09B_mm7RNbGAy_HdUHE',
-                                ),
-                              ),
-                              Flexible(
-                                child: Text(
-                                  'onboarding.globalCommunity'.tr(),
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: isDark
-                                        ? AppColors.textMuted
-                                        : Theme.of(
-                                            context,
-                                          ).colorScheme.onSurfaceVariant,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
+                        );
+                        if (!scrolls) return content;
+                        return SingleChildScrollView(
+                          child: SizedBox(height: needed, child: content),
+                        );
+                      },
                     ),
                   ),
                 ],

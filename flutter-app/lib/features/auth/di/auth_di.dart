@@ -63,6 +63,7 @@ void registerAuthModule() {
       authRepository: sl(),
       googleSignInService: sl(),
       facebookSignInService: sl(),
+      loadCachedUser: () => sl<AuthBackendDataSource>().getCachedUser(),
     ),
   );
 }

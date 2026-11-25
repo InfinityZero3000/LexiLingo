@@ -345,7 +345,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl)),
       ),
       builder: (context) => Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),

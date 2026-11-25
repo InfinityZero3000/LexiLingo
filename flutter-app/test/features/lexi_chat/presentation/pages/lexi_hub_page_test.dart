@@ -258,6 +258,16 @@ void main() {
     expect(chatActive(tester), isTrue);
   });
 
+  hubTest('only the chat scaffold resizes for the keyboard', (tester) async {
+    await pumpHub(tester);
+
+    final scaffolds = tester.widgetList<Scaffold>(find.byType(Scaffold));
+
+    expect(scaffolds, hasLength(2));
+    expect(scaffolds.first.resizeToAvoidBottomInset, isFalse);
+    expect(scaffolds.last.resizeToAvoidBottomInset, isNull);
+  });
+
   hubTest('switching modes keeps both pages alive and silences the chat', (
     tester,
   ) async {

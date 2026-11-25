@@ -86,7 +86,7 @@ def test_l1_certificate_rejects_missing_required_dimension_and_schema_v1():
     assert legacy.decision == "full"
     assert legacy.reasons == ("unsupported_certificate_schema",)
 
-    future = decide_l1_reuse(_request(), _candidate(schema_version=5), now=101.0)
+    future = decide_l1_reuse(_request(), _candidate(schema_version=6), now=101.0)
     assert future.decision == "full"
     assert future.reasons == ("unsupported_certificate_schema",)
 

@@ -33,7 +33,8 @@ async def test_overlay_loads_only_deduplicated_request_concepts(monkeypatch):
     )
 
     requested = client.batch_get.await_args.args[1]
-    assert requested == ["concept:a", "concept:b", "concept:c"]
+    # Root causes lead, so the 60-id cap never cuts the concepts the weakness hint reads.
+    assert requested == ["concept:b", "concept:a", "concept:c"]
     assert result["learner_state_epoch"] == 9
     assert result["learner_state_degraded"] is False
 
@@ -93,9 +94,9 @@ async def test_input_merges_learner_epoch_into_profile_cache_version(monkeypatch
     profile = result["learner_profile"]
     assert profile["_learner_state_epoch"] == 17
     assert profile["_learner_state_available"] is True
-    assert _profile_epoch(profile) != _profile_epoch(
-        {key: value for key, value in profile.items() if key != "_learner_state_epoch"}
-    )
+    # The epoch moves on every applied observation; the cache follows only what the prompt reads.
+    assert profile["_profile_version"].startswith("profile:")
+    assert _profile_epoch({**profile, "_learner_state_epoch": 18}) == _profile_epoch(profile)
     client.batch_get.assert_awaited_once()
 
 

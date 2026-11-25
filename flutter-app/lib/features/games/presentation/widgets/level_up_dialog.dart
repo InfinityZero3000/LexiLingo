@@ -765,9 +765,7 @@ class _ContinueButton extends StatelessWidget {
                 fontWeight: FontWeight.w900,
                 letterSpacing: 0.1,
               ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(22),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
             ).copyWith(
               overlayColor: WidgetStatePropertyAll(
                 AppColors.textInverted.withValues(alpha: 0.12),

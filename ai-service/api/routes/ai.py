@@ -4,7 +4,10 @@ AI interaction routes
 Endpoints for logging AI interactions and analytics
 """
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+import logging
+from typing import Literal
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from bson import ObjectId
 from datetime import datetime, timezone
 from motor.motor_asyncio import AsyncIOMotorDatabase
@@ -24,7 +27,10 @@ from api.models.ai_repository import AIRepository
 from api.services.trace_cag import get_trace_cag
 from api.services.v3_pipeline import get_v3_pipeline
 from api.routes.admin import verify_admin_api_key
+from api.core.groq_key_pool import get_configured_key_count, get_groq_key_pool
+from api.services.ai_monitoring import chat_report, llm_key_report, spool_report
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -290,6 +296,66 @@ async def get_community_concepts(community_id: int):
 # ============================================================
 # MONITORING & TELEMETRY ENDPOINTS (NEW)
 # ===========================================================
+
+async def _redis_or_none() -> Any:
+    try:
+        from api.core.redis_client import RedisClient
+
+        return await RedisClient.get_instance()
+    except Exception:
+        return None
+
+
+@router.get(
+    "/monitoring/chat",
+    summary="Lexi chat turn metrics over a time window",
+)
+async def get_chat_monitoring(
+    _key: str = Depends(verify_admin_api_key),
+    window: Literal["1h", "24h", "7d"] = Query("24h"),
+    db: AsyncIOMotorDatabase = Depends(get_database),
+) -> Dict[str, Any]:
+    try:
+        return await chat_report(db, await _redis_or_none(), window)
+    except Exception as exc:
+        logger.error("chat monitoring failed: %s", type(exc).__name__)
+        raise HTTPException(status_code=503, detail="Turn metrics are unavailable")
+
+
+@router.get(
+    "/monitoring/observation-spool",
+    summary="Learner observation queue state",
+)
+async def get_observation_spool_monitoring(
+    _key: str = Depends(verify_admin_api_key),
+    db: AsyncIOMotorDatabase = Depends(get_database),
+) -> Dict[str, Any]:
+    from api.services.telemetry import get_telemetry
+
+    try:
+        return await spool_report(db, dict(get_telemetry().counters))
+    except Exception as exc:
+        logger.error("observation spool monitoring failed: %s", type(exc).__name__)
+        raise HTTPException(status_code=503, detail="Queue state is unavailable")
+
+
+@router.get(
+    "/monitoring/llm-keys",
+    summary="Groq key pool state by key index",
+)
+async def get_llm_key_monitoring(
+    _key: str = Depends(verify_admin_api_key),
+) -> Dict[str, Any]:
+    try:
+        configured = get_configured_key_count()
+    except ValueError:
+        configured = 0
+    try:
+        return await llm_key_report(get_groq_key_pool(), configured)
+    except Exception as exc:
+        logger.error("llm key monitoring failed: %s", type(exc).__name__)
+        raise HTTPException(status_code=503, detail="Key pool state is unavailable")
+
 
 @router.get(
     "/monitoring/dashboard",

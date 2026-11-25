@@ -163,8 +163,8 @@ class RoadmapHeaderWidget extends StatelessWidget {
               decoration: BoxDecoration(
                 color: Colors.transparent,
                 borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(24),
-                  topRight: Radius.circular(24),
+                  topLeft: Radius.circular(AppRadius.xl),
+                  topRight: Radius.circular(AppRadius.xl),
                 ),
               ),
             ),
@@ -202,7 +202,7 @@ class RoadmapHeaderWidget extends StatelessWidget {
       decoration: BoxDecoration(
         color: badgeColor.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: badgeColor, width: 1),
+        border: Border.all(color: badgeColor, width: AppBorderWidth.hairline),
       ),
       child: Text(
         level.toUpperCase(),

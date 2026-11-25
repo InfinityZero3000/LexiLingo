@@ -90,6 +90,29 @@ class LexiIdempotencyStore:
             "expires_at": datetime.now(timezone.utc) + self._TTL,
         }
 
+    # A /stream the client gave up on keeps generating while the client retries
+    # through /chat with the same key; without a claim both runs persist a turn.
+    _INFLIGHT_TTL = timedelta(seconds=120)
+
+    async def claim(self, *, user_id: str, session_id: str, idempotency_key: str) -> bool:
+        """True if this request may run; False if the same key is already running."""
+        key = self._key(user_id, session_id, idempotency_key) + ":inflight"
+        r = await self._redis()
+        if r:
+            return bool(await r.set(key, "1", nx=True, ex=self._INFLIGHT_TTL))
+        self._cleanup_mem()
+        if key in self._mem:
+            return False
+        self._mem[key] = {"expires_at": datetime.now(timezone.utc) + self._INFLIGHT_TTL}
+        return True
+
+    async def release(self, *, user_id: str, session_id: str, idempotency_key: str) -> None:
+        key = self._key(user_id, session_id, idempotency_key) + ":inflight"
+        r = await self._redis()
+        if r:
+            await r.delete(key)
+        self._mem.pop(key, None)
+
 
 _idempotency_store: Optional[LexiIdempotencyStore] = None
 

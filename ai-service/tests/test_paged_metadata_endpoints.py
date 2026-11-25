@@ -165,7 +165,7 @@ async def test_topic_messages_paged_returns_cursor_pagination_payload():
     ]
 
     chat_sessions = MagicMock()
-    chat_sessions.find_one = AsyncMock(return_value={"session_id": "topic_s1"})
+    chat_sessions.find_one = AsyncMock(return_value={"session_id": "topic_s1", "user_id": "u1"})
 
     chat_messages = MagicMock()
     chat_messages.find.return_value = _mock_cursor(docs_desc)
@@ -187,6 +187,7 @@ async def test_topic_messages_paged_returns_cursor_pagination_payload():
         limit=2,
         cursor=None,
         db=db,
+        current_user=AuthenticatedUser(user_id="u1", claims={}),
     )
 
     assert len(result["messages"]) == 2
@@ -217,7 +218,7 @@ async def test_topic_messages_metadata_returns_expected_fields():
     }
 
     chat_sessions = MagicMock()
-    chat_sessions.find_one = AsyncMock(return_value={"session_id": "topic_s1"})
+    chat_sessions.find_one = AsyncMock(return_value={"session_id": "topic_s1", "user_id": "u1"})
 
     chat_messages = MagicMock()
     chat_messages.count_documents = AsyncMock(return_value=9)
@@ -240,6 +241,7 @@ async def test_topic_messages_metadata_returns_expected_fields():
     result = await topic_route.get_topic_messages_metadata(
         session_id="topic_s1",
         db=db,
+        current_user=AuthenticatedUser(user_id="u1", claims={}),
     )
 
     metadata = result["metadata"]
@@ -279,7 +281,7 @@ async def test_lexi_messages_paged_returns_cursor_pagination_payload():
     ]
 
     lexi_sessions = MagicMock()
-    lexi_sessions.find_one = AsyncMock(return_value={"session_id": "lexi_s1"})
+    lexi_sessions.find_one = AsyncMock(return_value={"session_id": "lexi_s1", "user_id": "u1"})
 
     lexi_messages = MagicMock()
     lexi_messages.find.return_value = _mock_cursor(docs_desc)
@@ -301,6 +303,7 @@ async def test_lexi_messages_paged_returns_cursor_pagination_payload():
         limit=2,
         cursor=None,
         db=db,
+        current_user=AuthenticatedUser(user_id="u1", claims={}),
     )
 
     assert result["success"] is True
@@ -332,7 +335,7 @@ async def test_lexi_messages_metadata_returns_expected_fields():
     }
 
     lexi_sessions = MagicMock()
-    lexi_sessions.find_one = AsyncMock(return_value={"session_id": "lexi_s1"})
+    lexi_sessions.find_one = AsyncMock(return_value={"session_id": "lexi_s1", "user_id": "u1"})
 
     lexi_messages = MagicMock()
     lexi_messages.count_documents = AsyncMock(return_value=9)
@@ -355,6 +358,7 @@ async def test_lexi_messages_metadata_returns_expected_fields():
     result = await lexi_route.get_lexi_messages_metadata(
         session_id="lexi_s1",
         db=db,
+        current_user=AuthenticatedUser(user_id="u1", claims={}),
     )
 
     metadata = result["metadata"]

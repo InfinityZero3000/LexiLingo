@@ -45,7 +45,7 @@ class PromoBannerSection extends StatelessWidget {
                     ),
               child: Container(
                 decoration: tactile.decoration(
-                  variant: TactileSurfaceVariant.interactive,
+                  variant: TactileSurfaceVariant.clean,
                   fill: isDark
                       ? theme.colorScheme.surfaceContainerHighest
                       : Theme.of(context).colorScheme.surface,

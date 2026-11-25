@@ -78,7 +78,7 @@ async def test_cache_write_stores_projection_hashes(monkeypatch):
 
     entry = next(iter(cache_mod._MEM_RESPONSE_CACHE.values()))[1]
     certificate = entry["admissibility_certificate"]
-    assert certificate["schema_version"] == 4
+    assert certificate["schema_version"] == 5
     assert certificate["user_scope"] == cache_mod._user_cache_scope({"user_id": "u1"})
     assert certificate["factual_projection_hash"] == cache_mod._projection_hash(
         "Ada Example founded ExampleCo."

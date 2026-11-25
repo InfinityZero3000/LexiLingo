@@ -161,7 +161,7 @@ class _AchievementUnlockOverlayState extends State<AchievementUnlockOverlay>
                       ),
                       decoration: BoxDecoration(
                         color: rarityColor.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(99),
+                        borderRadius: BorderRadius.circular(AppRadius.pill),
                       ),
                       child: Text(
                         achievement.rarity.toUpperCase(),

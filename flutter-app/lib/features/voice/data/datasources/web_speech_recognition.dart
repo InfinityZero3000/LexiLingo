@@ -109,8 +109,8 @@ class WebSpeechRecognition {
           (js_util.getProperty<dynamic>(event, 'resultIndex') as num?)
               ?.toInt() ??
           0;
-      final length =
-          (js_util.getProperty<dynamic>(results, 'length') as num).toInt();
+      final length = (js_util.getProperty<dynamic>(results, 'length') as num)
+          .toInt();
 
       for (int i = resultIndex; i < length; i++) {
         final result = js_util.callMethod<dynamic>(results, 'item', [i]);

@@ -115,9 +115,8 @@ class _ProgressChip extends StatelessWidget {
         onTap: onTap,
         child: Ink(
           decoration: BoxDecoration(
-            color: tint.withValues(alpha: isDark ? 0.18 : 0.10),
+            color: tint.withValues(alpha: isDark ? 0.22 : 0.14),
             borderRadius: BorderRadius.circular(AppRadius.pill),
-            border: Border.all(color: tint.withValues(alpha: 0.45), width: 1.5),
           ),
           child: ConstrainedBox(
             constraints: const BoxConstraints(minHeight: 44),

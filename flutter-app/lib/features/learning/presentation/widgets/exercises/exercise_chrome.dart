@@ -23,7 +23,6 @@ class ExerciseBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: colors.surface,
         borderRadius: BorderRadius.circular(AppRadius.pill),
-        border: Border.all(color: colors.border),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -75,7 +74,6 @@ class ExerciseOptionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = ExercisePalette.of(context);
     Color bg = colors.card;
-    Color border = colors.border;
     Color fg = colors.textPrimary;
 
     final status = context.status;
@@ -84,15 +82,12 @@ class ExerciseOptionCard extends StatelessWidget {
     final revealWrong = isAnswered && isSelected && !isCorrect;
     if (revealCorrect) {
       bg = status.success;
-      border = status.success;
       fg = status.onSuccess;
     } else if (revealWrong) {
       bg = scheme.error;
-      border = scheme.error;
       fg = scheme.onError;
     } else if (!isAnswered && isSelected) {
       bg = colors.primary;
-      border = colors.primary;
       fg = Colors.white;
     }
 
@@ -104,7 +99,7 @@ class ExerciseOptionCard extends StatelessWidget {
             decoration: BoxDecoration(
               border: Border.all(
                 color: isSelected ? fg.withValues(alpha: 0.5) : colors.border,
-                width: 1.5,
+                width: AppBorderWidth.regular,
               ),
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
@@ -118,66 +113,74 @@ class ExerciseOptionCard extends StatelessWidget {
             ),
           );
 
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      enabled: !isAnswered,
+      selected: isSelected,
+      label: text,
+      excludeSemantics: true,
       onTap: isAnswered ? null : onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: BorderRadius.circular(radius),
-          border: Border.all(color: border, width: 1.5),
-          boxShadow: isAnswered
-              ? []
-              : [
-                  BoxShadow(
-                    color: colors.shadow,
-                    blurRadius: 6,
-                    offset: const Offset(0, 3),
+      child: GestureDetector(
+        onTap: isAnswered ? null : onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          constraints: const BoxConstraints(minHeight: 52),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
+          decoration: BoxDecoration(
+            color: bg,
+            borderRadius: BorderRadius.circular(radius),
+            boxShadow: isAnswered
+                ? []
+                : [
+                    BoxShadow(
+                      color: colors.shadow,
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+          ),
+          child: Row(
+            children: [
+              if (!labelOnRight && labelWidget != null) ...[
+                labelWidget,
+                const SizedBox(width: 14),
+              ],
+              Expanded(
+                child: Text(
+                  text,
+                  style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: fg,
                   ),
-                ],
-        ),
-        child: Row(
-          children: [
-            if (!labelOnRight && labelWidget != null) ...[
-              labelWidget,
-              const SizedBox(width: 14),
-            ],
-            Expanded(
-              child: Text(
-                text,
-                style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: fg,
                 ),
               ),
-            ),
-            if (labelOnRight && labelWidget != null) ...[
-              const SizedBox(width: 14),
-              labelWidget,
-            ],
-            if (showRadio) ...[
-              const SizedBox(width: 10),
-              Icon(
-                isSelected
-                    ? Icons.radio_button_checked
-                    : Icons.radio_button_off,
-                size: 22,
-                color: isSelected ? fg : colors.border,
-              ),
-            ],
-            if (revealCorrect || revealWrong)
-              Padding(
-                padding: const EdgeInsets.only(left: AppSpacing.sm),
-                child: Icon(
-                  isCorrect
-                      ? Icons.check_circle_outline
-                      : Icons.cancel_outlined,
-                  size: 20,
-                  color: fg,
+              if (labelOnRight && labelWidget != null) ...[
+                const SizedBox(width: 14),
+                labelWidget,
+              ],
+              if (showRadio) ...[
+                const SizedBox(width: 10),
+                Icon(
+                  isSelected
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_off,
+                  size: 22,
+                  color: isSelected ? fg : colors.border,
                 ),
-              ),
-          ],
+              ],
+              if (revealCorrect || revealWrong)
+                Padding(
+                  padding: const EdgeInsets.only(left: AppSpacing.sm),
+                  child: Icon(
+                    isCorrect
+                        ? Icons.check_circle_outline
+                        : Icons.cancel_outlined,
+                    size: 20,
+                    color: fg,
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -223,7 +226,6 @@ class ExerciseExplanationCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: bg,
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: fg.withValues(alpha: 0.25)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -418,7 +420,6 @@ class PairAnswerChips extends StatelessWidget {
               decoration: BoxDecoration(
                 color: kCorrect.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(AppRadius.pill),
-                border: Border.all(color: kCorrect.withValues(alpha: 0.35)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,

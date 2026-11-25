@@ -231,9 +231,7 @@ class _ShopScreenState extends State<ShopScreen>
                   minimumSize: const Size(kMinTapTarget, kMinTapTarget),
                   backgroundColor: AppColors.greenSuccessBright,
                   foregroundColor: AppColors.surfaceLight,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.sm),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
                 ),
                 child: Text('shop.purchase'.tr()),
               ),
@@ -373,9 +371,7 @@ class _ShopScreenState extends State<ShopScreen>
                 minimumSize: const Size(kMinTapTarget, kMinTapTarget),
                 backgroundColor: primaryColor,
                 foregroundColor: AppColors.surfaceLight,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
               ),
               child: Text('shop.gotIt'.tr()),
             ),

@@ -164,17 +164,16 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
                         color:
                             (_selectedWord != null || isHovered) &&
                                 !widget.isAnswered
-                            ? colors.primary.withValues(alpha: 0.06)
+                            ? colors.primary.withValues(alpha: 0.14)
                             : colors.card,
                         borderRadius: BorderRadius.circular(AppRadius.lg),
-                        border: Border.all(
-                          color:
-                              (_selectedWord != null || isHovered) &&
-                                  !widget.isAnswered
-                              ? colors.primary
-                              : colors.border,
-                          width: 1.5,
-                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: colors.shadow,
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -186,9 +185,7 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
                                     ? Icons.category_outlined
                                     : Icons.bolt_outlined,
                                 size: 18,
-                                color: ci == 0
-                                    ? colors.primary
-                                    : const Color(0xFF00A86B),
+                                color: ci == 0 ? colors.primary : kCorrect,
                               ),
                               const SizedBox(width: 6),
                               Flexible(
@@ -201,7 +198,7 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
                                         fontWeight: FontWeight.w700,
                                         color: ci == 0
                                             ? colors.primary
-                                            : const Color(0xFF00A86B),
+                                            : kCorrect,
                                         letterSpacing: 1.1,
                                       ),
                                 ),
@@ -217,55 +214,60 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
                                 final graded = widget.isAnswered
                                     ? (correctMap[w] == cat ? kCorrect : kError)
                                     : null;
-                                return GestureDetector(
-                                  onTap: widget.isAnswered
-                                      ? null
-                                      : () {
-                                          setState(() {
-                                            _assignments.remove(w);
-                                          });
-                                          _updateAnswer();
-                                        },
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: AppSpacing.md,
-                                      vertical: 7,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: graded != null
-                                          ? graded.withValues(alpha: 0.14)
-                                          : colors.surface,
-                                      borderRadius: BorderRadius.circular(
-                                        AppRadius.pill,
+                                void remove() {
+                                  setState(() {
+                                    _assignments.remove(w);
+                                  });
+                                  _updateAnswer();
+                                }
+
+                                return Semantics(
+                                  button: true,
+                                  enabled: !widget.isAnswered,
+                                  label: w,
+                                  excludeSemantics: true,
+                                  onTap: widget.isAnswered ? null : remove,
+                                  child: GestureDetector(
+                                    onTap: widget.isAnswered ? null : remove,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: AppSpacing.md,
+                                        vertical: 12,
                                       ),
-                                      border: graded != null
-                                          ? Border.all(color: graded)
-                                          : null,
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        if (graded != null) ...[
-                                          Icon(
-                                            graded == kCorrect
-                                                ? Icons.check_rounded
-                                                : Icons.close_rounded,
-                                            size: 14,
-                                            color: graded,
-                                          ),
-                                          const SizedBox(width: 4),
-                                        ],
-                                        Text(
-                                          w,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyMedium!
-                                              .copyWith(
-                                                fontWeight: FontWeight.w600,
-                                                color: graded ?? colors.primary,
-                                              ),
+                                      decoration: BoxDecoration(
+                                        color: graded != null
+                                            ? graded.withValues(alpha: 0.14)
+                                            : colors.surface,
+                                        borderRadius: BorderRadius.circular(
+                                          AppRadius.pill,
                                         ),
-                                      ],
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          if (graded != null) ...[
+                                            Icon(
+                                              graded == kCorrect
+                                                  ? Icons.check_rounded
+                                                  : Icons.close_rounded,
+                                              size: 14,
+                                              color: graded,
+                                            ),
+                                            const SizedBox(width: 4),
+                                          ],
+                                          Text(
+                                            w,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium!
+                                                .copyWith(
+                                                  fontWeight: FontWeight.w600,
+                                                  color:
+                                                      graded ?? colors.primary,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 );
@@ -305,12 +307,12 @@ class _CategorizationWidgetState extends State<CategorizationWidget> {
                       borderRadius: BorderRadius.circular(AppRadius.pill),
                       border: Border.all(
                         color: sel ? colors.primary : colors.border,
-                        width: 1.5,
+                        width: AppBorderWidth.regular,
                       ),
                       boxShadow: [
                         BoxShadow(
                           color: colors.shadow,
-                          blurRadius: 4,
+                          blurRadius: 8,
                           offset: const Offset(0, 2),
                         ),
                       ],

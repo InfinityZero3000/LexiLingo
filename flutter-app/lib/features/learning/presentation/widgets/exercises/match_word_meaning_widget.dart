@@ -168,15 +168,15 @@ class _MatchWordMeaningWidgetState extends State<MatchWordMeaningWidget> {
           ),
           decoration: BoxDecoration(
             color: color,
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
             border: Border.all(
               color: filled ? color : colors.border,
-              width: 1.5,
+              width: AppBorderWidth.regular,
             ),
             boxShadow: [
               BoxShadow(
                 color: colors.shadow,
-                blurRadius: 4,
+                blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
             ],

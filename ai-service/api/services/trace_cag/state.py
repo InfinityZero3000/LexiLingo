@@ -70,6 +70,7 @@ class CacheAdmissibilityCertificate(TypedDict, total=False):
     level: str
     native_language: str
     user_scope: str
+    context_digest: str
     profile_epoch: int
     policy_version: str
     kg_version: str
@@ -107,6 +108,9 @@ class CacheEntry(TypedDict, total=False):
     retrieval_trace: List[RetrievalTraceItem]
     execution_plan: Dict[str, Any]     # σ: strategy, difficulty, slot template
     diagnosis_errors: List[Dict[str, Any]]
+    diagnosis_root_causes: List[str]
+    kg_seed_concepts: List[str]
+    struggling_concept: str  # the root cause the reply reinforced, "" if none
     overall_score: float
     grammar_score: float
     fluency_score: float
@@ -178,6 +182,7 @@ class TraceCAGState(TypedDict, total=False):
     diagnosis_root_causes: List[str]  # concept IDs
     diagnosis_label_invalid: int  # closed bridge only: errors whose type is not one of the 24 labels
     diagnosis_confidence: float  # 0.0 - 1.0
+    diagnosis_usage: Dict[str, int]  # provider tokens the diagnosis call spent
     
     # ============================================
     # Retrieval (Vector + KG combined)
@@ -227,6 +232,8 @@ class TraceCAGState(TypedDict, total=False):
     adaptive_features: Dict[str, float]
     adaptive_controller: Dict[str, Any]
     cache_gate_meta: Dict[str, Any]
+    l1_shadow_response: str
+    cache_bypass: str  # why the gate served nothing before it looked: "" when it did look
 
     # ============================================
     # Metadata

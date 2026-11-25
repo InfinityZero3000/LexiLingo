@@ -482,7 +482,7 @@ class _IconBadge extends StatelessWidget {
       height: 44,
       decoration: BoxDecoration(
         color: color.withValues(alpha: isDark ? 0.18 : 0.12),
-        borderRadius: BorderRadius.circular(13),
+        borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       child: Icon(icon, color: color, size: 23),
     );

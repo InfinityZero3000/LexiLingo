@@ -124,7 +124,7 @@ class _ArrangeSentenceWidgetState extends State<ArrangeSentenceWidget> {
               border: Border.all(
                 color: gradedColor ?? colors.border,
                 style: BorderStyle.solid,
-                width: 1.5,
+                width: AppBorderWidth.regular,
               ),
             ),
             child: _placed.isEmpty
@@ -171,31 +171,37 @@ class _ArrangeSentenceWidgetState extends State<ArrangeSentenceWidget> {
                         runSpacing: 8,
                         children: _placed
                             .map(
-                              (w) => GestureDetector(
-                                onTap: () => _removeWord(w),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
-                                    vertical: AppSpacing.sm,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: gradedColor ?? colors.primary,
-                                    borderRadius: BorderRadius.circular(
-                                      AppRadius.pill,
+                              (w) => Semantics(
+                                button: true,
+                                enabled: !widget.isAnswered,
+                                label: w,
+                                excludeSemantics: true,
+                                onTap: widget.isAnswered
+                                    ? null
+                                    : () => _removeWord(w),
+                                child: GestureDetector(
+                                  onTap: () => _removeWord(w),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 12,
                                     ),
-                                    border: Border.all(
-                                      color: gradedColor ?? colors.primaryDeep,
+                                    decoration: BoxDecoration(
+                                      color: gradedColor ?? colors.primary,
+                                      borderRadius: BorderRadius.circular(
+                                        AppRadius.pill,
+                                      ),
                                     ),
-                                  ),
-                                  child: Text(
-                                    w,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyLarge!
-                                        .copyWith(
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.white,
-                                        ),
+                                    child: Text(
+                                      w,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge!
+                                          .copyWith(
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.white,
+                                          ),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -213,32 +219,38 @@ class _ArrangeSentenceWidgetState extends State<ArrangeSentenceWidget> {
               runSpacing: 10,
               children: _bank
                   .map(
-                    (w) => GestureDetector(
+                    (w) => Semantics(
+                      button: true,
+                      enabled: !widget.isAnswered,
+                      label: w,
+                      excludeSemantics: true,
                       onTap: widget.isAnswered ? null : () => _placeWord(w),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSpacing.lg,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: colors.card,
-                          borderRadius: BorderRadius.circular(AppRadius.pill),
-                          border: Border.all(color: colors.border, width: 1.5),
-                          boxShadow: [
-                            BoxShadow(
-                              color: colors.shadow,
-                              blurRadius: 5,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Text(
-                          w,
-                          style: Theme.of(context).textTheme.bodyLarge!
-                              .copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: colors.textPrimary,
+                      child: GestureDetector(
+                        onTap: widget.isAnswered ? null : () => _placeWord(w),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.lg,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: colors.card,
+                            borderRadius: BorderRadius.circular(AppRadius.pill),
+                            boxShadow: [
+                              BoxShadow(
+                                color: colors.shadow,
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
                               ),
+                            ],
+                          ),
+                          child: Text(
+                            w,
+                            style: Theme.of(context).textTheme.bodyLarge!
+                                .copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: colors.textPrimary,
+                                ),
+                          ),
                         ),
                       ),
                     ),

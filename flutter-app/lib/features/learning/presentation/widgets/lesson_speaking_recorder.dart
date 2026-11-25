@@ -298,7 +298,10 @@ class _LessonSpeakingRecorderState extends State<LessonSpeakingRecorder> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: active ? primary : Colors.transparent,
-                border: Border.all(color: primary, width: 2.5),
+                border: Border.all(
+                  color: primary,
+                  width: AppBorderWidth.regular,
+                ),
                 boxShadow: active
                     ? [
                         BoxShadow(

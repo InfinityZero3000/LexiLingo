@@ -27,7 +27,9 @@ class ReviewQualityButtons extends StatelessWidget {
         color: Theme.of(context).brightness == Brightness.dark
             ? AppColors.surfaceDarkMuted
             : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.xl),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),

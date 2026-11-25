@@ -446,7 +446,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           backgroundColor: AppColors.accentMint,
                           foregroundColor: const Color(0xFF0B132B),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(28),
+                            borderRadius: AppRadius.mdAll,
                           ),
                           elevation: 0,
                         ),
@@ -523,7 +523,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           ).colorScheme.surface,
                           side: const BorderSide(color: Color(0xFFD7DEE7)),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(28),
+                            borderRadius: AppRadius.mdAll,
                           ),
                         ),
                       ),
@@ -553,7 +553,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         style: FilledButton.styleFrom(
                           backgroundColor: const Color(0xFF0B132B),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(28),
+                            borderRadius: AppRadius.mdAll,
                           ),
                           elevation: 0,
                         ),

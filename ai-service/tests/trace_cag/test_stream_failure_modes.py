@@ -8,7 +8,7 @@ junk lines, and no capacity at all.
 from __future__ import annotations
 
 import json
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, create_autospec
 
 import pytest
 
@@ -60,9 +60,11 @@ ERROR_FRAME = f"data: {json.dumps({'error': {'message': 'daily token quota exhau
 def rig(monkeypatch):
     """Groq admitted by default; hand each provider its own canned client."""
     r = type("Rig", (), {})()
-    r.acquire = AsyncMock(return_value="key-1")
-    r.release = AsyncMock()
-    r.record = AsyncMock()
+    from api.core import groq_key_pool
+
+    r.acquire = create_autospec(groq_key_pool.try_acquire_groq_key, return_value="key-1")
+    r.release = create_autospec(groq_key_pool.release_groq_key)
+    r.record = create_autospec(groq_key_pool.record_groq_key_usage)
     r.clients = {}
     r.requested = []
     monkeypatch.setattr(generate, "_provider_is_disabled", lambda name: False)
@@ -93,7 +95,7 @@ async def test_error_frame_before_any_token_falls_back_to_gemini(rig):
     rig.clients["gemini"] = _Client(_Resp(200, gemini("from gemini")))
     text, info = await collect()
     assert text == "from gemini"
-    assert info == {"provider": "gemini", "model": "gemini-2.0-flash"}
+    assert (info["provider"], info["model"]) == ("gemini", "gemini-2.0-flash")
 
 
 @pytest.mark.asyncio
@@ -238,3 +240,17 @@ async def test_error_frame_is_logged_with_its_message(rig, caplog):
     with caplog.at_level("WARNING", logger=generate.logger.name):
         await collect()
     assert any("mid-stream error" in r.message and "quota exhausted" in r.message for r in caplog.records)
+
+
+@pytest.mark.asyncio
+async def test_stream_cut_off_after_tokens_is_flagged_truncated(rig):
+    rig.clients["groq"] = _Client(_Resp(200, groq("Hello", " there")))  # no [DONE]
+    _, info = await collect()
+    assert info["truncated"] is True
+
+
+@pytest.mark.asyncio
+async def test_stream_that_reaches_done_is_not_flagged_truncated(rig):
+    rig.clients["groq"] = _Client(_Resp(200, groq("Hello") + ["data: [DONE]"]))
+    _, info = await collect()
+    assert "truncated" not in info

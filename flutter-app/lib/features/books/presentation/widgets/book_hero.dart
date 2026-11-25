@@ -34,7 +34,7 @@ class BookHero extends StatelessWidget {
       child: Semantics(
         button: true,
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(28),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           child: SizedBox(
             height: ContentHero.heightOf(context),
             child: Stack(

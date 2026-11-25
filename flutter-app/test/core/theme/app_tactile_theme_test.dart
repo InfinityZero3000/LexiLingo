@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/core/theme/app_tactile_theme.dart';
 
 void main() {
@@ -126,7 +127,7 @@ void main() {
 
     expect(scoped!.extension<AppTactileTheme>(), isNotNull);
     expect(scoped!.outlinedButtonTheme.style, isNotNull);
-    expect(scoped!.cardTheme.elevation, 3);
+    expect(scoped!.cardTheme.elevation, 2);
   });
 
   test('button disabled and focused states resolve in both modes', () {
@@ -147,6 +148,33 @@ void main() {
       );
       expect(focused.side!.resolve(const {}), BorderSide.none);
     }
+  });
+
+  test('clean surfaces have no border and a soft shadow in light mode', () {
+    final light = theme(
+      Brightness.light,
+    ).decoration(variant: TactileSurfaceVariant.clean, fill: Colors.white);
+    final dark = theme(
+      Brightness.dark,
+    ).decoration(variant: TactileSurfaceVariant.clean, fill: Colors.black);
+
+    expect(light.border, isNull);
+    expect(light.borderRadius, AppRadius.xlAll);
+    expect(light.boxShadow!.single.blurRadius, 20);
+    expect(dark.boxShadow, isEmpty);
+  });
+
+  test('clean buttons share one 12px shape and no border on filled', () {
+    final tactile = theme(Brightness.light);
+    for (final style in [
+      tactile.cleanFilledButtonStyle(),
+      tactile.cleanOutlinedButtonStyle(),
+      tactile.cleanTextButtonStyle(),
+    ]) {
+      final shape = style.shape!.resolve(const {}) as RoundedRectangleBorder;
+      expect(shape.borderRadius, BorderRadius.circular(AppRadius.md));
+    }
+    expect(tactile.cleanFilledButtonStyle().side, isNull);
   });
 
   test('copyWith and lerp preserve extension values', () {

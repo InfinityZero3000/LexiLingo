@@ -17,6 +17,7 @@ class TokenStorage {
   static const String _accessTokenKey = 'access_token';
   static const String _refreshTokenKey = 'refresh_token';
   static const String _tokenTypeKey = 'token_type';
+  static const String _sessionUserKey = 'session_user';
 
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage(
     aOptions: AndroidOptions(encryptedSharedPreferences: true),
@@ -38,7 +39,14 @@ class TokenStorage {
     if (kIsWeb) {
       final prefs = await SharedPreferences.getInstance();
       return prefs.getString(key);
-    } else {
+    }
+    try {
+      return await _secureStorage.read(key: key);
+    } catch (_) {
+      // The Android keystore can refuse a read for a moment (right after boot,
+      // or while the device is still unlocking). One retry turns that into a
+      // delay instead of a signed-out learner.
+      await Future<void>.delayed(const Duration(milliseconds: 300));
       return await _secureStorage.read(key: key);
     }
   }
@@ -57,11 +65,11 @@ class TokenStorage {
     logDebug(_tag, 'Saving tokens...');
     logDebug(_tag, 'Access token length: ${tokens.accessToken.length}');
     try {
-      await Future.wait([
-        _write(_accessTokenKey, tokens.accessToken),
-        _write(_refreshTokenKey, tokens.refreshToken),
-        _write(_tokenTypeKey, tokens.tokenType),
-      ]);
+      // Refresh token first: it is single-use, so if the process dies between
+      // writes the learner must be left holding the newest one.
+      await _write(_refreshTokenKey, tokens.refreshToken);
+      await _write(_accessTokenKey, tokens.accessToken);
+      await _write(_tokenTypeKey, tokens.tokenType);
       logInfo(_tag, 'Tokens saved successfully');
     } catch (e) {
       logError(_tag, 'Error saving tokens', e);
@@ -102,6 +110,20 @@ class TokenStorage {
     }
   }
 
+  /// The learner as the server last described them (`/users/me`), so a cold
+  /// start can open the app at once, and offline, instead of waiting on the
+  /// network to learn who is signed in.
+  Future<void> saveSessionUser(String userJson) =>
+      _write(_sessionUserKey, userJson);
+
+  Future<String?> readSessionUser() async {
+    try {
+      return await _read(_sessionUserKey);
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Update only access token (after refresh)
   Future<void> updateAccessToken(String accessToken) async {
     await _write(_accessTokenKey, accessToken);
@@ -132,6 +154,7 @@ class TokenStorage {
       _delete(_accessTokenKey),
       _delete(_refreshTokenKey),
       _delete(_tokenTypeKey),
+      _delete(_sessionUserKey),
     ]);
 
     if (userScope != null && userScope.isNotEmpty) {

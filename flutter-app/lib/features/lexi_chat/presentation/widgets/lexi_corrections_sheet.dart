@@ -67,8 +67,10 @@ class LexiCorrectionsSheet extends StatelessWidget {
         maxHeight: MediaQuery.of(context).size.height * 0.65,
       ),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDark : AppColors.onGradient,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.xl),
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -82,9 +84,7 @@ class LexiCorrectionsSheet extends StatelessWidget {
               bottom: AppSpacing.sm,
             ),
             decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white24
-                  : Colors.grey.withValues(alpha: 0.3),
+              color: Theme.of(context).colorScheme.outlineVariant,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -113,9 +113,7 @@ class LexiCorrectionsSheet extends StatelessWidget {
                   'lexiChat.languageNotes'.tr(),
                   style: Theme.of(context).textTheme.sectionTitle?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: isDark
-                        ? AppColors.onGradient
-                        : Theme.of(context).colorScheme.onSurface,
+                    color: Theme.of(context).colorScheme.onSurface,
                     letterSpacing: -0.3,
                   ),
                 ),
@@ -142,16 +140,10 @@ class LexiCorrectionsSheet extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.lg),
                     decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.surfaceDarkCard
-                          : AppColors.surfaceWarmSoft,
-                      borderRadius: BorderRadius.circular(AppRadius.md),
-                      border: Border.all(
-                        color: isDark
-                            ? AppColors.surfaceDarkChat
-                            : context.status.warning.withValues(alpha: 0.3),
-                        width: 1,
+                      color: context.status.warning.withValues(
+                        alpha: isDark ? 0.14 : 0.12,
                       ),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                     ),
                     child: Row(
                       children: [
@@ -167,9 +159,9 @@ class LexiCorrectionsSheet extends StatelessWidget {
                             style: Theme.of(context).textTheme.bodyMedium
                                 ?.copyWith(
                                   height: 1.5,
-                                  color: isDark
-                                      ? AppColors.onGradient
-                                      : Theme.of(context).colorScheme.onSurface,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
                                 ),
                           ),
                         ),
@@ -189,9 +181,7 @@ class LexiCorrectionsSheet extends StatelessWidget {
                     'lexiChat.relatedConceptsHint'.tr(),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       height: 1.4,
-                      color: isDark
-                          ? Colors.white54
-                          : Theme.of(context).colorScheme.onSurfaceVariant,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.md),
@@ -227,46 +217,39 @@ class LexiCorrectionsSheet extends StatelessWidget {
     switch (category) {
       case 'grammar':
       case 'usage':
-        return const Color(0xFF3B82F6);
+        return AppColors.primary;
       case 'function':
-        return const Color(0xFF8B5CF6);
+        return AppColors.purple;
       case 'conversation':
-        return const Color(0xFF10B981);
+        return AppColors.greenSuccess;
       case 'error':
-        return const Color(0xFFEF4444);
+        return AppColors.errorBright;
       case 'vocab':
       case 'phrase':
       case 'collocation':
-        return const Color(0xFFF59E0B);
+        return AppColors.orange;
       case 'phonology':
-        return const Color(0xFF06B6D4);
+        return AppColors.teal;
       default:
         return AppColors.primary;
     }
   }
 
   Widget _overflowChip(BuildContext context, int count) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
         vertical: 7,
       ),
       decoration: BoxDecoration(
-        color: isDark ? Colors.white10 : Colors.grey.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(
-          color: isDark ? Colors.white24 : Colors.grey.withValues(alpha: 0.22),
-          width: 1,
-        ),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Text(
         '+$count',
         style: Theme.of(context).textTheme.bodySmall?.copyWith(
           fontWeight: FontWeight.w600,
-          color: isDark
-              ? Colors.white54
-              : Theme.of(context).colorScheme.onSurfaceVariant,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
         ),
       ),
     );
@@ -281,12 +264,8 @@ class LexiCorrectionsSheet extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: isDark ? 0.12 : 0.07),
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(
-          color: color.withValues(alpha: isDark ? 0.35 : 0.22),
-          width: 1,
-        ),
+        color: color.withValues(alpha: isDark ? 0.18 : 0.1),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -333,27 +312,21 @@ class LexiCorrectionsSheet extends StatelessWidget {
   }
 
   Widget _sectionTitle(BuildContext context, String title) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Text(
       title,
       style: Theme.of(context).textTheme.bodySmall?.copyWith(
         fontWeight: FontWeight.w600,
-        color: isDark
-            ? Colors.white70
-            : Theme.of(context).colorScheme.onSurfaceVariant,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
         letterSpacing: 0.3,
       ),
     );
   }
 
   Widget _correctionCard(BuildContext context, LexiCorrection correction) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     Widget correctionChip({
       required String text,
       required Color textColor,
       required Color backgroundColor,
-      required Color borderColor,
       bool strikeThrough = false,
       FontWeight fontWeight = FontWeight.w500,
     }) {
@@ -362,7 +335,6 @@ class LexiCorrectionsSheet extends StatelessWidget {
         decoration: BoxDecoration(
           color: backgroundColor,
           borderRadius: BorderRadius.circular(AppRadius.sm),
-          border: Border.all(color: borderColor, width: 1),
         ),
         child: Text(
           text,
@@ -381,14 +353,8 @@ class LexiCorrectionsSheet extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.surfaceDarkCard : AppColors.surfaceWarm,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(
-          color: isDark
-              ? context.status.warning.withValues(alpha: 0.2)
-              : context.status.warning.withValues(alpha: 0.3),
-          width: 1,
-        ),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -400,9 +366,8 @@ class LexiCorrectionsSheet extends StatelessWidget {
               Expanded(
                 child: correctionChip(
                   text: correction.errorSpan,
-                  textColor: Theme.of(context).colorScheme.error,
-                  backgroundColor: Colors.red.withValues(alpha: 0.08),
-                  borderColor: Colors.red.withValues(alpha: 0.15),
+                  textColor: Theme.of(context).colorScheme.onErrorContainer,
+                  backgroundColor: Theme.of(context).colorScheme.errorContainer,
                   strikeThrough: true,
                 ),
               ),
@@ -418,25 +383,29 @@ class LexiCorrectionsSheet extends StatelessWidget {
               Expanded(
                 child: correctionChip(
                   text: correction.correction,
-                  textColor: context.status.success,
-                  backgroundColor: context.status.success.withValues(
-                    alpha: 0.08,
-                  ),
-                  borderColor: context.status.success.withValues(alpha: 0.2),
+                  textColor: context.status.onSuccessContainer,
+                  backgroundColor: context.status.successContainer,
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              InkWell(
-                onTap: () => _saveMistake(context, correction),
-                borderRadius: BorderRadius.circular(6),
-                child: Padding(
-                  padding: const EdgeInsets.only(left: AppSpacing.sm, top: 2),
-                  child: Icon(
-                    Icons.bookmark_add_outlined,
-                    size: 18,
-                    color: isDark
-                        ? Colors.white54
-                        : Theme.of(context).colorScheme.onSurfaceVariant,
+              Semantics(
+                button: true,
+                label: 'chat.saveCorrection'.tr(),
+                child: InkWell(
+                  onTap: () => _saveMistake(context, correction),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minWidth: 44,
+                      minHeight: 44,
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.bookmark_add_outlined,
+                        size: 18,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -447,7 +416,7 @@ class LexiCorrectionsSheet extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: isDark ? AppColors.surfaceDarkInk : AppColors.onGradient,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(AppRadius.md),
               ),
               child: Row(
@@ -455,9 +424,7 @@ class LexiCorrectionsSheet extends StatelessWidget {
                   Icon(
                     Icons.info_outline_rounded,
                     size: 16,
-                    color: isDark
-                        ? Colors.white54
-                        : Theme.of(context).colorScheme.onSurfaceVariant,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                   const SizedBox(width: AppSpacing.sm),
                   Expanded(
@@ -465,9 +432,7 @@ class LexiCorrectionsSheet extends StatelessWidget {
                       correction.explanation,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         height: 1.4,
-                        color: isDark
-                            ? Colors.white70
-                            : Theme.of(context).colorScheme.onSurfaceVariant,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ),

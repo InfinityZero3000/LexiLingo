@@ -27,8 +27,9 @@ from api.services.trace_cag.llm_client import (
     _qwen_no_think_messages,
     _qwen_reasoning_overrides,
     _throttled_post_json,
+    provider_usage,
 )
-from api.services.trace_cag.cache_utils import _write_cache_entry
+from api.services.trace_cag.cache_utils import _write_cache_entry, struggling_concept as _struggling_concept
 from api.services.trace_cag.dependencies import dependency_record, policy_version_token
 
 from api.services.trace_cag.benchmark.ranking import _update_ranker_from_generation
@@ -58,6 +59,17 @@ def _state_with_policy_dependency(state: TraceCAGState) -> TraceCAGState:
             dependency_record("policy:tracecag:generation", "policy", policy_version_token(), "generation-policy"),
         ],
     }
+
+
+def cache_write_allowed(state: Dict[str, Any]) -> bool:
+    """A web-grounded answer goes stale fast: cache it only once its chunk has earned promotion."""
+    top_ids = [str(item.get("item_id") or "") for item in (state.get("retrieval_trace") or [])[:3]]
+    external = [item_id.removeprefix("ext_") for item_id in top_ids if item_id.startswith("ext_")]
+    if not external:
+        return True
+    doc_service = get_doc_intel_service()
+    return any(doc_service.should_promote_to_cache(chunk_id) for chunk_id in external)
+
 
 _LOCAL_LLAMA_CORE_SYSTEM_PROMPT = (
     "You are Lexi, an expert English tutor. "
@@ -107,19 +119,10 @@ def _personalization_hint(state: Dict[str, Any]) -> str:
     # ALL past sessions? Populated by _load_learner_concept_overlay — empty
     # whenever LEARNER_STATE_MODE is "off", so this safely no-ops until the
     # feature is enabled.
-    concept_states = state.get("learner_concept_states") or {}
-    root_causes = state.get("diagnosis_root_causes") or []
-    struggling_concept = None
-    for concept_id in root_causes:
-        info = concept_states.get(str(concept_id))
-        if not isinstance(info, dict):
-            continue
-        error_count = int(info.get("error_count") or 0)
-        mastery = info.get("mastery_probability")
-        mastery = float(mastery) if mastery is not None else 1.0
-        if error_count >= 2 and mastery < 0.55:
-            struggling_concept = str(concept_id)
-            break
+    # One rule with the cache gate, which reuses a correction only while this answer is unchanged.
+    struggling_concept = _struggling_concept(
+        state.get("learner_concept_states") or {}, state.get("diagnosis_root_causes") or []
+    )
 
     if struggling_concept:
         readable = (
@@ -378,10 +381,14 @@ async def stream_llm_tokens(
     """
 
     groq_admitted = False
+    groq_finished = False
     groq_model_used = resolve_groq_model()
+    # Groq can bill a turn it then produced nothing for, so each provider keeps its own and the turn pays both.
+    groq_usage: Dict[str, int] = {}
+    gemini_usage: Dict[str, int] = {}
 
     async def _try_groq() -> "AsyncGenerator[str, None]":
-        nonlocal groq_admitted
+        nonlocal groq_admitted, groq_finished
         from api.core.groq_key_pool import record_groq_key_usage, release_groq_key, try_acquire_groq_key
 
         if _provider_is_disabled("groq"):
@@ -411,6 +418,7 @@ async def stream_llm_tokens(
                     "max_tokens": max_tokens,
                     "temperature": 0.7,
                     "stream": True,
+                    "stream_options": {"include_usage": True},
                     **_qwen_reasoning_overrides(groq_model),
                 },
                 timeout=25.0,
@@ -423,6 +431,7 @@ async def stream_llm_tokens(
                         continue
                     data = line[6:]
                     if data.strip() == "[DONE]":
+                        groq_finished = True
                         break
                     try:
                         obj = json.loads(data)
@@ -436,6 +445,10 @@ async def stream_llm_tokens(
                                 str(obj["error"])[:300],
                             )
                             return
+                        # Groq repeats the same usage on two chunks; update, never add.
+                        groq_usage.update(provider_usage(obj) or {})
+                        if not obj.get("choices"):
+                            continue
                         delta = obj["choices"][0]["delta"].get("content") or ""
                         if delta:
                             tokens_yielded += len(delta.split())
@@ -449,7 +462,11 @@ async def stream_llm_tokens(
             if groq_key:
                 try:
                     try:
-                        await record_groq_key_usage(groq_key, max(50, tokens_yielded + 50))
+                        spent = (
+                            groq_usage["prompt_tokens"] + groq_usage["completion_tokens"]
+                            if groq_usage else max(50, tokens_yielded + 50)
+                        )
+                        await record_groq_key_usage(groq_key, spent)
                     except Exception as exc:
                         logger.warning("[stream_llm_tokens] Groq usage accounting failed: %s", exc)
                 finally:
@@ -487,6 +504,7 @@ async def stream_llm_tokens(
                     data = line[6:]
                     try:
                         obj = json.loads(data)
+                        gemini_usage.update(provider_usage(obj) or {})
                         text = (
                             obj.get("candidates", [{}])[0]
                             .get("content", {})
@@ -511,13 +529,30 @@ async def stream_llm_tokens(
     finally:
         await groq_stream.aclose()
 
+    def _report_usage() -> None:
+        # No guessed numbers: a turn whose provider reported nothing says so and is left out of token sums.
+        if provider_info is None:
+            return
+        parts = [part for part in (groq_usage, gemini_usage) if part]
+        provider_info["usage"] = (
+            {key: sum(part[key] for part in parts) for key in ("prompt_tokens", "completion_tokens", "cached_tokens")}
+            | {"source": "provider"}
+            if parts
+            else {"source": "missing"}
+        )
+
     if got_tokens:
         if provider_info is not None:
             provider_info["provider"] = "groq"
             provider_info["model"] = groq_model_used
+        _report_usage()
+        if provider_info is not None and not groq_finished:
+            # Tokens arrived but the stream never reached [DONE]: the caller holds a cut-off reply.
+            provider_info["truncated"] = True
         return
 
     if not allow_gemini_fallback:
+        _report_usage()
         if not groq_admitted:
             raise ProviderBusyError("Groq voice capacity exhausted")
         raise RuntimeError("Groq admitted the turn but returned no token")
@@ -529,6 +564,7 @@ async def stream_llm_tokens(
     if gemini_yielded and provider_info is not None:
         provider_info["provider"] = "gemini"
         provider_info["model"] = "gemini-2.0-flash"
+        _report_usage()
 
 
 async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
@@ -603,7 +639,8 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
 
         if state.get("cache_policy", "on") == "on":
             try:
-                await _write_cache_entry(_state_with_policy_dependency(state), response, strategy, errors, overall_score, context, model_used=model_used)
+                if cache_write_allowed(state):
+                    await _write_cache_entry(_state_with_policy_dependency(state), response, strategy, errors, overall_score, context, model_used=model_used)
             except Exception as e:
                 logger.debug(f"[generate_node] Cache write failed: {e}")
 
@@ -906,22 +943,7 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
     # Store response in Redis cache for future hits
     if state.get("cache_policy", "on") == "on" and model_used != "safe_tutor_fallback":
         try:
-            # ── Tiered Cache Management (L0/L1 Promotion) ─────────────
-            # Nếu thông tin từ L2 được sử dụng, kiểm tra thăng hạng
-            doc_service = get_doc_intel_service()
-            trace = state.get("retrieval_trace", [])
-            is_l2_used = any(t.get("item_id", "").startswith("ext_") for t in trace[:3])
-
-            if is_l2_used:
-                for t in trace[:3]:
-                    if t.get("item_id", "").startswith("ext_"):
-                        chunk_id = str(t.get("item_id") or "").replace("ext_", "")
-                        if doc_service.should_promote_to_cache(chunk_id):
-                            logger.info(f"[cache_promotion] Chunk {chunk_id[:8]} promoted to L1 cache")
-                            await _write_cache_entry(_state_with_policy_dependency(state), response, strategy, errors, overall_score, context)
-                            break
-            else:
-                # Mặc định cache cho các luồng KG/Rules để tối ưu tốc độ
+            if cache_write_allowed(state):
                 await _write_cache_entry(_state_with_policy_dependency(state), response, strategy, errors, overall_score, context)
         except Exception as e:
             logger.debug(f"[generate_node] Cache write failed: {e}")

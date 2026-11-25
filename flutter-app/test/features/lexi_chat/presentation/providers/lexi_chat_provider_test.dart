@@ -23,6 +23,7 @@ class _FakeLexiChatRepository implements LexiChatRepository {
   String? lastIdempotencyKey;
   String? lastNativeLanguage;
   String? lastStreamNativeLanguage;
+  String? lastStreamIdempotencyKey;
   Object? pagedError;
   Object? sendError;
   final List<String> pagedSessionIds = [];
@@ -127,9 +128,11 @@ class _FakeLexiChatRepository implements LexiChatRepository {
     String learnerLevel = 'B1',
     String nativeLanguage = 'vi',
     String? storyContext,
+    String? idempotencyKey,
   }) {
     streamCalls += 1;
     lastStreamNativeLanguage = nativeLanguage;
+    lastStreamIdempotencyKey = idempotencyKey;
     return streamFactory?.call() ??
         Stream<LexiStreamEvent>.fromIterable([
           const LexiStreamChunk('ok'),
@@ -304,6 +307,25 @@ void main() {
       expect(provider.messages.where((m) => m.role == 'user').length, 1);
       expect(provider.messages.last.content, 'ok');
     });
+
+    test(
+      'the /chat fallback reuses the stream idempotency key so the server can '
+      'replay an answer the stream already stored',
+      () async {
+        final repo = _FakeLexiChatRepository()
+          ..streamFactory = () => const Stream<LexiStreamEvent>.empty();
+        final provider = LexiChatProvider(
+          repository: repo,
+          aiClient: AiApiClient(),
+        );
+        addTearDown(provider.dispose);
+
+        await provider.sendMessageStreaming('hello', userId: 'user-1');
+
+        expect(repo.lastStreamIdempotencyKey, isNotEmpty);
+        expect(repo.lastIdempotencyKey, repo.lastStreamIdempotencyKey);
+      },
+    );
 
     test(
       'a 422 from the stream shows "too long" and is neither retried nor queued',

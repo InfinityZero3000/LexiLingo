@@ -136,7 +136,9 @@ async def test_same_user_reuses_l0_and_patches_l1():
 
 
 @pytest.mark.asyncio
-async def test_production_entry_never_patches():
+async def test_production_entry_without_a_stable_evidence_record_never_patches(monkeypatch):
+    monkeypatch.setattr(cache_mod.settings, "TRACECAG_L1_MODE", "on")
+
     def prod_state(text):
         # stable enough to be promoted to L1, so the read side has a candidate and fails for the right reason
         state = _state("alice", text, hints=None)
@@ -166,11 +168,11 @@ async def test_anonymous_request_bypasses_cache_and_writes_nothing():
 
 
 @pytest.mark.asyncio
-async def test_certificate_records_schema4_and_scope():
+async def test_certificate_records_schema_and_scope():
     await _write("alice", QUESTION)
     certificate = next(iter(cache_mod._MEM_RESPONSE_CACHE.values()))[1]["admissibility_certificate"]
-    assert CERTIFICATE_SCHEMA_VERSION == 4
-    assert certificate["schema_version"] == 4
+    assert CERTIFICATE_SCHEMA_VERSION == 5
+    assert certificate["schema_version"] == 5
     assert certificate["user_scope"] == cache_mod._user_cache_scope({"user_id": "alice"})
 
 

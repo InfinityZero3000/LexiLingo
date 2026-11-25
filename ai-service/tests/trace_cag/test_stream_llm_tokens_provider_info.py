@@ -81,7 +81,7 @@ async def test_provider_info_reports_groq_when_groq_serves_tokens(monkeypatch):
     ]
 
     assert "".join(tokens) == "Hello world"
-    assert provider_info == {"provider": "groq", "model": "qwen/qwen3.8-27b"}
+    assert (provider_info["provider"], provider_info["model"]) == ("groq", "qwen/qwen3.8-27b")
 
 
 @pytest.mark.asyncio
@@ -117,4 +117,4 @@ async def test_provider_info_reports_gemini_when_groq_yields_nothing(monkeypatch
     ]
 
     assert "".join(tokens) == "Xin chào"
-    assert provider_info == {"provider": "gemini", "model": "gemini-2.0-flash"}
+    assert (provider_info["provider"], provider_info["model"]) == ("gemini", "gemini-2.0-flash")

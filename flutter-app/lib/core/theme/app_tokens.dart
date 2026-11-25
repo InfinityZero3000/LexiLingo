@@ -25,7 +25,26 @@ abstract final class AppRadius {
   static BorderRadius get pillAll => BorderRadius.circular(pill);
 }
 
+abstract final class AppBorderWidth {
+  static const double hairline = 1;
+  static const double regular = 2;
+}
+
 abstract final class AppShadows {
+  /// Two depths only: [softLow] for small floating pieces, [soft] for panels.
+  static List<BoxShadow> softLow(ThemeData theme) =>
+      theme.brightness == Brightness.dark
+      ? const []
+      : [
+          BoxShadow(
+            color: theme.colorScheme.shadow.withValues(alpha: 0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ];
+
+  static List<BoxShadow> soft(ThemeData theme) => card(theme);
+
   /// Soft card lift; dark surfaces get no shadow and rely on the lifted fill.
   static List<BoxShadow> card(ThemeData theme) =>
       theme.brightness == Brightness.dark

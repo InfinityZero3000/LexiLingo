@@ -22,7 +22,7 @@ from fastapi import HTTPException
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from pydantic import BaseModel, Field
 
-from api.core.auth import AuthenticatedUser
+from api.core.auth import AuthenticatedUser, assert_session_owner
 from api.models.schemas import MAX_CHAT_MESSAGE_CHARS
 from api.utils.cursor import to_iso_timestamp
 from api.services.lexi_memory import load_memory_block, save_facts
@@ -43,6 +43,37 @@ SAFE_FIXED_RESPONSE = (
     "Squawk! I'm temporarily unavailable right now. "
     "Please try again in a moment."
 )
+SAFE_RESPONSE_MODEL = "trace-cag_safe_response"
+
+
+def audit_status(model_used: str) -> str:
+    """The canned apology is a 200 for the client but a failed turn for ops;
+    reporting it as "success" hid a dead provider from the audit trail."""
+    return "degraded" if model_used == SAFE_RESPONSE_MODEL else "success"
+
+
+def mongo_message_doc(message: Dict[str, Any], session_id: str, user_id: str) -> Dict[str, Any]:
+    """A message as stored in Mongo. `stored_at` stays out of the Redis copy (not JSON)."""
+    return {**message, "session_id": session_id, "user_id": user_id, "stored_at": datetime.now(timezone.utc)}
+
+
+def session_turn_update(user_id: str, timestamp_iso: str, added: int) -> Dict[str, Any]:
+    """The one update every writer of a Lexi turn applies to `lexi_sessions`.
+
+    `user_id` is only ever set on insert: the old `$set` let a turn rewrite the
+    owner of an existing session.
+    """
+    return {
+        "$set": {"updated_at": timestamp_iso, "last_activity_at": datetime.now(timezone.utc)},
+        "$inc": {"message_count": added},
+        "$setOnInsert": {
+            "user_id": user_id,
+            "created_at": timestamp_iso,
+            "title": "Lexi Chat",
+            "persona": "lexi",
+        },
+    }
+
 
 # SSE stream settings
 HEARTBEAT_INTERVAL_S = 2.5  # how often to send a heartbeat to keep proxies alive
@@ -61,6 +92,26 @@ def env_float(name: str, default: float, minimum: float = 0.0) -> float:
 def _turn_skill(input_type: str | None) -> str:
     """A spoken turn is speaking practice; a typed one is writing practice."""
     return "speaking" if (input_type or "").strip().lower() == "voice" else "writing"
+
+
+def _turn_usage(
+    diagnosis: Dict[str, int],
+    generation: Dict[str, Any],
+    *,
+    diagnosis_billed: bool,
+    generation_attempted: bool,
+) -> Dict[str, Any]:
+    """Provider tokens of this turn's LLM calls, and whether every billed call reported them."""
+    # provider: all billed calls reported. partial: one did not, the sum is a floor. none: no LLM call.
+    generated = generation if generation.get("source") == "provider" else {}
+    keys = ("prompt_tokens", "completion_tokens", "cached_tokens")
+    total: Dict[str, Any] = {k: int(diagnosis.get(k) or 0) + int(generated.get(k) or 0) for k in keys}
+    expected = [(diagnosis_billed, bool(diagnosis)), (generation_attempted, bool(generated))]
+    if not any(billed for billed, _ in expected):
+        total["source"] = "none"
+    else:
+        total["source"] = "provider" if all(seen for billed, seen in expected if billed) else "partial"
+    return total
 
 
 # ─── Request / Response Models ───────────────────────────────────────────────
@@ -262,6 +313,8 @@ class _CardContext(NamedTuple):
     courses: Tuple[Any, ...] = ()
     # Merged into learner_profile: level, goal, interest, profile_brief.
     profile: Dict[str, str] = {}
+    # False when the card did not arrive in time: this turn's prompt lacks part of the profile.
+    resolved: bool = False
 
 
 async def _resolve_learner_card(user_id: str, user_text: str) -> _CardContext:
@@ -323,6 +376,7 @@ async def _resolve_learner_card(user_id: str, user_text: str) -> _CardContext:
                 for item in course_suggestions(card, intents)
             ),
             profile=profile,
+            resolved=True,
         )
     except asyncio.CancelledError:
         raise
@@ -349,6 +403,52 @@ def idempotency_request_hash(request: "LexiChatRequest") -> str:
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
+async def replay_or_claim(
+    *, user_id: str, session_id: str, idempotency_key: str, request_hash: str
+) -> Optional[Dict[str, Any]]:
+    """The stored answer for this key, or a claim to produce it (409 if one is running).
+
+    /chat and /stream share one key space, so a /stream fallback to /chat with the
+    same key replays the answer instead of persisting the turn a second time.
+    The caller must `lexi_idempotency_store.release(...)` once it has claimed.
+    """
+    cached = await lexi_idempotency_store.get(
+        user_id=user_id,
+        session_id=session_id,
+        idempotency_key=idempotency_key,
+        request_hash=request_hash,
+    )
+    if cached:
+        return cached
+    if not await lexi_idempotency_store.claim(
+        user_id=user_id, session_id=session_id, idempotency_key=idempotency_key
+    ):
+        raise HTTPException(status_code=409, detail="This message is still being answered")
+    return None
+
+
+async def remember_response(
+    *,
+    user_id: str,
+    session_id: str,
+    idempotency_key: str,
+    request_hash: str,
+    response: Dict[str, Any],
+    model_used: str,
+) -> None:
+    # The canned apology is not an answer: storing it made every retry of that
+    # key replay "temporarily unavailable" for 24h instead of trying again.
+    if model_used == SAFE_RESPONSE_MODEL:
+        return
+    await lexi_idempotency_store.set(
+        user_id=user_id,
+        session_id=session_id,
+        idempotency_key=idempotency_key,
+        request_hash=request_hash,
+        response=response,
+    )
+
+
 # ─── Session bootstrapping ───────────────────────────────────────────────────
 async def ensure_session_owner(
     session_id: str,
@@ -358,10 +458,7 @@ async def ensure_session_owner(
     session_doc = await db["lexi_sessions"].find_one({"session_id": session_id})
     if not session_doc:
         raise HTTPException(status_code=404, detail="Session not found")
-
-    owner_user_id = str(session_doc.get("user_id") or "")
-    if owner_user_id and owner_user_id != current_user.user_id:
-        raise HTTPException(status_code=403, detail="Forbidden: session ownership mismatch")
+    assert_session_owner(session_doc, current_user)
     return session_doc
 
 
@@ -369,11 +466,8 @@ def assert_cached_session_owner(
     cached_session: Dict[str, Any] | None,
     current_user: AuthenticatedUser,
 ) -> None:
-    if not cached_session:
-        return
-    owner_user_id = str(cached_session.get("user_id") or "")
-    if owner_user_id and owner_user_id != current_user.user_id:
-        raise HTTPException(status_code=403, detail="Forbidden: session ownership mismatch")
+    if cached_session:
+        assert_session_owner(cached_session, current_user)
 
 
 async def get_cached_session_with_messages(
@@ -389,6 +483,24 @@ async def get_cached_session_with_messages(
     return cached_session, cached_messages
 
 
+def session_cache_payload(
+    session_doc: Dict[str, Any],
+    default_count: int = 0,
+) -> Dict[str, Any]:
+    """The one shape a Mongo session doc takes when it is put back in Redis."""
+    now_iso = datetime.now(timezone.utc).isoformat()
+    return {
+        "session_id": session_doc.get("session_id"),
+        "user_id": session_doc.get("user_id", "demo_user"),
+        "created_at": session_doc.get("created_at", now_iso),
+        "updated_at": session_doc.get("updated_at", now_iso),
+        "title": session_doc.get("title", "Lexi Chat"),
+        "message_count": session_doc.get("message_count", default_count),
+        "persona": session_doc.get("persona", "lexi"),
+        "story_context": session_doc.get("story_context"),
+    }
+
+
 async def prepare_existing_lexi_session(
     session_id: str,
     current_user: AuthenticatedUser,
@@ -396,12 +508,19 @@ async def prepare_existing_lexi_session(
 ) -> List[Dict[str, Any]]:
     cached_session, cached_messages = await get_cached_session_with_messages(session_id)
     cached_owner = str((cached_session or {}).get("user_id") or "")
-    if cached_session and cached_owner:
+    # Redis is allkeys-lru, so the message list can be evicted while the session
+    # key survives. Trusting that cache would hand the model an empty history.
+    cache_lost_history = (
+        bool(cached_session)
+        and not cached_messages
+        and int((cached_session or {}).get("message_count") or 0) > 0
+    )
+    if cached_session and cached_owner and not cache_lost_history:
         assert_cached_session_owner(cached_session, current_user)
         return cached_messages
 
     try:
-        await ensure_session_owner(session_id, current_user, db)
+        session_doc = await ensure_session_owner(session_id, current_user, db)
     except HTTPException as exc:
         if exc.status_code != 404:
             raise
@@ -411,7 +530,7 @@ async def prepare_existing_lexi_session(
         return cached_messages
 
     assert_cached_session_owner(cached_session, current_user)
-    if cached_session:
+    if cached_session and not cache_lost_history:
         return cached_messages
 
     docs = await (
@@ -422,7 +541,7 @@ async def prepare_existing_lexi_session(
         .to_list(length=10)
     )
     docs.reverse()
-    return [
+    history = [
         {
             "id": doc.get("id") or doc.get("message_id") or str(doc.get("_id", "")),
             "role": doc.get("role", "user"),
@@ -431,6 +550,17 @@ async def prepare_existing_lexi_session(
         }
         for doc in docs
     ]
+    # Without this the cache restarts from this turn alone (and message_count
+    # from 0), so the next turn's context shrinks from 10 messages to 2.
+    try:
+        payload = session_cache_payload(session_doc)
+        payload["story_context"] = payload["story_context"] or (cached_session or {}).get("story_context")
+        await lexi_store.set_session(session_id, payload)
+        await lexi_store.delete_messages(session_id)
+        await append_lexi_messages(session_id, history)
+    except Exception as exc:
+        logger.warning("[lexi_chat] session cache rehydrate failed: %s", exc)
+    return history
 
 
 async def persist_duplex_voice_turn(
@@ -452,7 +582,7 @@ async def persist_duplex_voice_turn(
         *(
             db["lexi_messages"].update_one(
                 {"id": message["id"], "session_id": session_id},
-                {"$setOnInsert": {**message, "session_id": session_id, "user_id": user_id}},
+                {"$setOnInsert": mongo_message_doc(message, session_id, user_id)},
                 upsert=True,
             )
             for message in messages
@@ -467,10 +597,7 @@ async def persist_duplex_voice_turn(
         append_lexi_messages(session_id, inserted),
         db["lexi_sessions"].update_one(
             {"session_id": session_id, "user_id": user_id},
-            {
-                "$set": {"updated_at": timestamp},
-                "$inc": {"message_count": len(inserted)},
-            },
+            session_turn_update(user_id, timestamp, len(inserted)),
         ),
     )
 
@@ -505,6 +632,8 @@ async def create_lexi_session_for_user(
                     "updated_at": now_iso,
                     "message_count": 0,
                     "persona": "lexi",
+                    "story_context": story_context,
+                    "last_activity_at": datetime.now(timezone.utc),
                 }
             },
             upsert=True,
@@ -616,6 +745,7 @@ async def run_lexi_pipeline(
                 "level": request.learner_level,
                 "native_language": iso_to_language_name(request.native_language),
                 **card_ctx.profile,
+                "_profile_complete": card_ctx.resolved,
                 **({"session_recap": session_recap} if session_recap else {}),
                 **({"learner_facts": learner_facts} if learner_facts else {}),
                 **({"memory": memory_block} if memory_block else {}),
@@ -690,7 +820,7 @@ async def run_lexi_pipeline(
                 "retry_error": str(retry_err),
             }
             lexi_response = SAFE_FIXED_RESPONSE
-            model_used = "trace-cag_safe_response"
+            model_used = SAFE_RESPONSE_MODEL
 
     # ── Guards ──
     story_ctx = request.story_context
@@ -701,7 +831,7 @@ async def run_lexi_pipeline(
 
     if not lexi_response:
         lexi_response = SAFE_FIXED_RESPONSE
-        model_used = "trace-cag_safe_response"
+        model_used = SAFE_RESPONSE_MODEL
         metadata["pipeline_steps"].append("trace-cag_empty_response_guard")
 
     lexi_response = _sanitize_lexi_response(
@@ -745,31 +875,12 @@ async def run_lexi_pipeline(
         save_facts(db, request.user_id, stated_facts, since=turn_started_at),
         append_lexi_messages(session_id, [user_message, assistant_message]),
         db["lexi_messages"].insert_many([
-            {
-                **user_message,
-                "session_id": session_id,
-                "user_id": request.user_id,
-            },
-            {
-                **assistant_message,
-                "session_id": session_id,
-                "user_id": request.user_id,
-            },
+            mongo_message_doc(user_message, session_id, request.user_id),
+            mongo_message_doc(assistant_message, session_id, request.user_id),
         ]),
         db["lexi_sessions"].update_one(
             {"session_id": session_id},
-            {
-                "$set": {
-                    "updated_at": timestamp,
-                    "user_id": request.user_id,
-                },
-                "$inc": {"message_count": 2},
-                "$setOnInsert": {
-                    "created_at": timestamp,
-                    "title": "Lexi Chat",
-                    "persona": "lexi",
-                },
-            },
+            session_turn_update(request.user_id, timestamp, 2),
             upsert=True,
         ),
     )
@@ -876,10 +987,43 @@ async def stream_lexi_chat(
     request_id: str,
     current_user: AuthenticatedUser,
     db: AsyncIOMotorDatabase,
+    idempotency_key: Optional[str] = None,
+    request_hash: str = "",
 ) -> AsyncGenerator[str, None]:
     """SSE generator for the streaming Lexi chat pipeline. See lexi_stream_chat
     route docstring for the event sequence (thinking/heartbeat/chunk/done/error).
     """
+    try:
+        async for event in _stream_lexi_chat(
+            request, session_id, prechecked_history, quota, start_time,
+            request_id, current_user, db, idempotency_key, request_hash,
+        ):
+            yield event
+    finally:
+        if idempotency_key:
+            await lexi_idempotency_store.release(
+                user_id=request.user_id, session_id=session_id, idempotency_key=idempotency_key,
+            )
+
+
+async def replay_lexi_stream(response: Dict[str, Any]) -> AsyncGenerator[str, None]:
+    """A stored answer, replayed in the same SSE shape a live /stream ends with."""
+    yield f"event: chunk\ndata: {json.dumps({'text': response.get('lexi_response', '')})}\n\n"
+    yield f"event: done\ndata: {json.dumps(response)}\n\n"
+
+
+async def _stream_lexi_chat(
+    request: "LexiChatRequest",
+    session_id: str,
+    prechecked_history: Optional[List[Dict[str, Any]]],
+    quota: Any,
+    start_time: float,
+    request_id: str,
+    current_user: AuthenticatedUser,
+    db: AsyncIOMotorDatabase,
+    idempotency_key: Optional[str],
+    request_hash: str,
+) -> AsyncGenerator[str, None]:
     from api.core.audit_emitter import emit_ai_audit_event
     from api.services.orchestrator import get_orchestrator
     from api.services.trace_cag.nodes_v2 import build_generation_prompt, stream_llm_tokens
@@ -992,6 +1136,7 @@ async def stream_lexi_chat(
         learner_facts, suggested_courses = card_ctx.facts, list(card_ctx.courses)
         effective_level = card_ctx.profile.get("level", request.learner_level)
         memory_block = await memory_task
+        cache_bypass = "facts" if learner_facts else ("memory" if memory_block else "")
         ctx_task = asyncio.create_task(
             orchestrator.pipeline.analyze_for_streaming(
                 user_input=user_text,
@@ -1001,6 +1146,7 @@ async def stream_lexi_chat(
                     "level": request.learner_level,
                     "native_language": iso_to_language_name(request.native_language),
                     **card_ctx.profile,
+                    "_profile_complete": card_ctx.resolved,
                     **({"session_recap": session_recap} if session_recap else {}),
                     **({"learner_facts": learner_facts} if learner_facts else {}),
                     **({"memory": memory_block} if memory_block else {}),
@@ -1009,6 +1155,7 @@ async def stream_lexi_chat(
                 # See run_lexi_pipeline: a cached reply would report stale XP,
                 # streak or level as if it were current.
                 **({"cache_policy": "off"} if learner_facts or memory_block else {}),
+                defer_turn_metrics=True,
             )
         )
 
@@ -1067,16 +1214,24 @@ async def stream_lexi_chat(
 
     lexi_response = ""
     model_used = "stream_llm"
+    first_token_at: Optional[float] = None
+    first_chunk_at: Optional[float] = None
+    provider_info: dict = {}
     cache_hit = bool(raw_state.get("cache_hit")) and bool(raw_state.get("tutor_response"))
+    # The graph ended at ask_clarify: its question is the answer, and no context was retrieved for an LLM.
+    clarification = (
+        not cache_hit and raw_state.get("strategy") == "ask" and bool(raw_state.get("tutor_response"))
+    )
 
     # 3. Token streaming
-    if cache_hit:
-        # Cache hit: deliver words quickly — no LLM round-trip needed.
+    if cache_hit or clarification:
+        # Already answered: deliver words quickly — no LLM round-trip needed.
         lexi_response = _sanitize_lexi_response(
             str(raw_state["tutor_response"]),
             expected_language=request.native_language,
         )
-        model_used = f"cached_{raw_state.get('cache_layer', 'L0')}"
+        model_used = "trace-cag_clarify" if clarification else f"cached_{raw_state.get('cache_layer', 'L0')}"
+        first_token_at = first_chunk_at = time.time()
         for word in lexi_response.split(" "):
             yield f"event: chunk\ndata: {json.dumps({'text': word + ' '})}\n\n"
             await asyncio.sleep(0.012)
@@ -1084,7 +1239,6 @@ async def stream_lexi_chat(
         # Cache miss: buffer provider tokens, sanitize the complete response,
         # then deliver it as SSE chunks so token-spanning internal markers
         # can never reach the client.
-        provider_info: dict = {}
         try:
             system_prompt, llm_messages = build_generation_prompt(raw_state)
             tokens: list[str] = []
@@ -1094,6 +1248,7 @@ async def stream_lexi_chat(
                 user_input=user_text,
                 provider_info=provider_info,
             ):
+                first_token_at = first_token_at or time.time()
                 tokens.append(token)
             raw_response = "".join(tokens).strip()
             lexi_response = (
@@ -1104,6 +1259,7 @@ async def stream_lexi_chat(
                 if raw_response
                 else ""
             )
+            first_chunk_at = time.time() if lexi_response else None
             for word in lexi_response.split(" ") if lexi_response else []:
                 yield f"event: chunk\ndata: {json.dumps({'text': word + ' '})}\n\n"
         except Exception as gen_err:
@@ -1111,17 +1267,27 @@ async def stream_lexi_chat(
 
         if not lexi_response:
             lexi_response = SAFE_FIXED_RESPONSE
-            model_used = "trace-cag_safe_response"
+            model_used = SAFE_RESPONSE_MODEL
         else:
             # Reflects whichever provider actually served the tokens (Groq can
             # fail mid-stream and fall back to Gemini) instead of guessing from
             # GROQ_API_KEY's presence, which stays true even when Groq is down.
             model_used = f"{provider_info.get('provider', 'unknown')}/{provider_info.get('model', 'unknown')}"
 
-    if not cache_hit and lexi_response and model_used != "trace-cag_safe_response":
+    reply_done_at = time.time()
+    generation_attempted = not cache_hit and not clarification
+    replied_fresh = generation_attempted and bool(lexi_response) and model_used != "trace-cag_safe_response"
+
+    if provider_info.get("truncated"):
+        logger.warning(
+            "Lexi /stream reply cut short by %s mid-stream; not caching it",
+            provider_info.get("provider"),
+        )
+    if replied_fresh and not provider_info.get("truncated"):
         try:
             from api.services.trace_cag.benchmark.ranking import _update_ranker_from_generation
             from api.services.trace_cag.cache_utils import _write_cache_entry
+            from api.services.trace_cag.generate import _state_with_policy_dependency, cache_write_allowed
 
             overall_for_cache = EvaluationAgent.compute_overall_score(
                 grammar_score, fluency_score, vocab_level
@@ -1131,9 +1297,9 @@ async def stream_lexi_chat(
                 response=lexi_response,
                 retrieval_trace=list(raw_state.get("retrieval_trace") or []),
             )
-            if raw_state.get("cache_policy", "on") == "on":
+            if raw_state.get("cache_policy", "on") == "on" and cache_write_allowed(raw_state):
                 await _write_cache_entry(
-                    raw_state,
+                    _state_with_policy_dependency(raw_state),
                     lexi_response,
                     str(raw_state.get("strategy") or "feedback"),
                     diag_errors,
@@ -1180,25 +1346,18 @@ async def stream_lexi_chat(
             ),
             append_lexi_messages(session_id, [user_message, assistant_message]),
             db["lexi_messages"].insert_many([
-                {**user_message, "session_id": session_id, "user_id": request.user_id},
-                {**assistant_message, "session_id": session_id, "user_id": request.user_id},
+                mongo_message_doc(user_message, session_id, request.user_id),
+                mongo_message_doc(assistant_message, session_id, request.user_id),
             ]),
             db["lexi_sessions"].update_one(
                 {"session_id": session_id},
-                {
-                    "$set": {"updated_at": timestamp, "user_id": request.user_id},
-                    "$inc": {"message_count": 2},
-                    "$setOnInsert": {
-                        "created_at": timestamp,
-                        "title": "Lexi Chat",
-                        "persona": "lexi",
-                    },
-                },
+                session_turn_update(request.user_id, timestamp, 2),
                 upsert=True,
             ),
         )
         cached_sess = await lexi_store.get_session(session_id) or {}
         cached_count = int(cached_sess.get("message_count") or 0)
+        story = request.story_context or cached_sess.get("story_context")
         await lexi_store.set_session(session_id, {
             "session_id": session_id,
             "user_id": request.user_id,
@@ -1207,13 +1366,24 @@ async def stream_lexi_chat(
             "title": cached_sess.get("title", "Lexi Chat"),
             "message_count": cached_count + 2,
             "persona": cached_sess.get("persona", "lexi"),
-            "story_context": request.story_context,
+            "story_context": story,
         })
+        return story
 
+    story_ctx = request.story_context
+    persistence_degraded = False
     try:
-        await asyncio.wait_for(_stream_persist(), timeout=5.0)
+        story_ctx = await asyncio.wait_for(_stream_persist(), timeout=5.0)
     except Exception as persist_err:
-        logger.warning("Lexi stream persist error: %s", persist_err)
+        # The reply is already on the wire, so this cannot fail the turn — but
+        # `done` carries a message_id that may not exist in Mongo or Redis.
+        logger.error(
+            "Lexi stream persist failed for session %s: %s",
+            session_id,
+            type(persist_err).__name__,
+            exc_info=persist_err,
+        )
+        persistence_degraded = True
 
     observation_meta: Dict[str, Any] = {}
     try:
@@ -1245,7 +1415,41 @@ async def stream_lexi_chat(
         "vocabulary_level": vocab_level,
     }
     total_ms = int((time.time() - start_time) * 1000)
-    done_payload = json.dumps({
+    from api.services.trace_cag import turn_metrics
+    from api.services.trace_cag.cache_utils import _token_f1
+
+    turn_cost = _turn_usage(
+        raw_state.get("diagnosis_usage") or {},
+        provider_info.get("usage") or {},
+        diagnosis_billed=any(str(model).startswith("groq/") for model in raw_state.get("models_used") or []),
+        generation_attempted=generation_attempted,
+    )
+    shadow = str(raw_state.get("l1_shadow_response") or "")
+    stream_meta = {
+        # Until the last word reached the client; latency_ms also holds TTS and persistence.
+        "reply_ms": int((reply_done_at - start_time) * 1000),
+        "ttft_ms": int((first_token_at - start_time) * 1000) if first_token_at else None,
+        "first_chunk_ms": int((first_chunk_at - start_time) * 1000) if first_chunk_at else None,
+        "usage": turn_cost,
+        "cache_layer": str(raw_state.get("cache_layer") or "L0") if cache_hit else "none",
+        "cache_bypass": cache_bypass or str(raw_state.get("cache_bypass") or ""),
+        # Only a real reply is something the shadow answer can be measured against.
+        "l1_shadow_f1": round(_token_f1(shadow, lexi_response), 3) if shadow and replied_fresh else None,
+    }
+    turn_metrics.record_turn_metrics({
+        **raw_state,
+        **stream_meta,
+        "latency_ms": stream_meta["reply_ms"],
+        "error": bool(raw_state.get("error")) or model_used == "trace-cag_safe_response",
+        "cache_hit": cache_hit,
+        "prompt_tokens": turn_cost["prompt_tokens"],
+        "completion_tokens": turn_cost["completion_tokens"],
+        "cached_tokens": turn_cost["cached_tokens"],
+        "usage_source": turn_cost["source"],
+        "generation_policy": "stream",
+        "models_used": [*(raw_state.get("models_used") or []), model_used],
+    })
+    done = {
         "message_id": message_id,
         "session_id": session_id,
         "lexi_response": lexi_response,
@@ -1266,12 +1470,15 @@ async def stream_lexi_chat(
         "suggested_courses": [course.model_dump() for course in suggested_courses],
         "native_hint": native_hint,
         "scores": scores,
-        "story_context": request.story_context,
+        "story_context": story_ctx,
         "audio_base64": audio_b64,
         "metadata": {
             "latency_ms": total_ms,
             "model_used": model_used,
             "cache_hit": cache_hit,
+            **stream_meta,
+            **({"persistence_degraded": True} if persistence_degraded else {}),
+            **({"truncated": True} if provider_info.get("truncated") else {}),
             **observation_meta,
             "quota": {
                 "rpm_used": quota.rpm_used,
@@ -1280,8 +1487,23 @@ async def stream_lexi_chat(
                 "rpd_limit": quota.rpd_limit,
             },
         },
-    })
-    yield f"event: done\ndata: {done_payload}\n\n"
+    }
+    # Stored before `done` goes out: a client that drops here retries the same key
+    # (through /chat or /stream) and must get this answer, not a second turn. A
+    # turn that did not persist is not remembered, so its retry can store one.
+    if idempotency_key and not persistence_degraded:
+        try:
+            await remember_response(
+                user_id=request.user_id,
+                session_id=session_id,
+                idempotency_key=idempotency_key,
+                request_hash=request_hash,
+                response=LexiChatResponse(**done).model_dump(),
+                model_used=model_used,
+            )
+        except Exception as exc:
+            logger.warning("Lexi /stream idempotency store failed: %s", exc)
+    yield f"event: done\ndata: {json.dumps(done)}\n\n"
 
     logger.info(
         "Lexi /stream complete — %dms, model: %s, cache_hit: %s",
@@ -1291,7 +1513,7 @@ async def stream_lexi_chat(
         "request_id": request_id,
         "user_id": current_user.user_id,
         "endpoint": "lexi.stream",
-        "status": "success",
+        "status": audit_status(model_used),
         "session_id": session_id,
         "model_used": model_used,
         "latency_ms": total_ms,

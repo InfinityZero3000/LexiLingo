@@ -314,7 +314,7 @@ class _NewsListScreenState extends State<NewsListScreen> {
             if (article.imageUrl.isNotEmpty)
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
+                  top: Radius.circular(AppRadius.lg),
                 ),
                 child: AspectRatio(
                   aspectRatio: 16 / 9,

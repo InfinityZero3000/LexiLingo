@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import '../../../../core/network/api_client.dart';
@@ -163,8 +164,31 @@ class AuthBackendDataSource {
 
     final userModel = UserModel.fromJson(envelope.data);
     await UserScopeService.setActiveUserId(userModel.id);
+    await _rememberUser(envelope.data);
 
     return userModel;
+  }
+
+  /// The learner saved by the last successful [getCurrentUser] or
+  /// [updateProfile]; null when none, or when it no longer parses.
+  Future<UserModel?> getCachedUser() async {
+    try {
+      final raw = await tokenStorage.readSessionUser();
+      if (raw == null || raw.isEmpty) return null;
+      final decoded = jsonDecode(raw);
+      return decoded is Map<String, dynamic> ? UserModel.fromJson(decoded) : null;
+    } catch (e) {
+      logWarn(_tag, 'Cached session user unreadable: $e');
+      return null;
+    }
+  }
+
+  Future<void> _rememberUser(Map<String, dynamic> json) async {
+    try {
+      await tokenStorage.saveSessionUser(jsonEncode(json));
+    } catch (e) {
+      logWarn(_tag, 'Could not cache session user: $e');
+    }
   }
 
   /// Update user profile
@@ -197,7 +221,9 @@ class AuthBackendDataSource {
       fromJson: (data) => data as Map<String, dynamic>,
     );
 
-    return UserModel.fromJson(envelope.data);
+    final updated = UserModel.fromJson(envelope.data);
+    await _rememberUser(envelope.data);
+    return updated;
   }
 
   /// Upload a JPEG/PNG/WebP picked on the device as the avatar

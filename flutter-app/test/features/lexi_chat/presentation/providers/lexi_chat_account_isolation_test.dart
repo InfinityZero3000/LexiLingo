@@ -77,6 +77,7 @@ class _Repo extends Fake implements LexiChatRepository {
     String learnerLevel = 'B1',
     String nativeLanguage = 'vi',
     String? storyContext,
+    String? idempotencyKey,
   }) => stream!.stream;
 
   @override

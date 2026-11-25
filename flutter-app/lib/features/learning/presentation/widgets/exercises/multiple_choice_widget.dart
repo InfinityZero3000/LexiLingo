@@ -62,7 +62,10 @@ class MultipleChoiceWidget extends StatelessWidget {
           height: 28,
           decoration: BoxDecoration(
             border: Border(
-              bottom: BorderSide(color: colors.primary, width: 2.5),
+              bottom: BorderSide(
+                color: colors.primary,
+                width: AppBorderWidth.regular,
+              ),
             ),
           ),
         ),

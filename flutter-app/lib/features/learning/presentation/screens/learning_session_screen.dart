@@ -690,7 +690,12 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
-        border: Border(top: BorderSide(color: theme.dividerColor, width: 1)),
+        border: Border(
+          top: BorderSide(
+            color: theme.dividerColor,
+            width: AppBorderWidth.hairline,
+          ),
+        ),
       ),
       child: SafeArea(
         top: false,
@@ -706,9 +711,12 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                   },
                   style: OutlinedButton.styleFrom(
                     foregroundColor: primaryColor,
-                    side: BorderSide(color: primaryColor, width: 1.5),
+                    side: BorderSide(
+                      color: primaryColor,
+                      width: AppBorderWidth.regular,
+                    ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      borderRadius: AppRadius.mdAll,
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 15),
                   ),
@@ -754,7 +762,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                     foregroundColor: checkForeground,
                     elevation: answered ? 2 : 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.pill),
+                      borderRadius: AppRadius.mdAll,
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 15),
                   ),
@@ -850,7 +858,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                                             ? context.status.warning
                                             : context.status.success)
                                         .withValues(alpha: 0.3),
-                                blurRadius: 30,
+                                blurRadius: 20,
                                 spreadRadius: 10,
                               ),
                             ],
@@ -990,13 +998,13 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                           gradient: LinearGradient(
                             colors: [context.status.warning, AppColors.orange],
                           ),
-                          borderRadius: BorderRadius.circular(30),
+                          borderRadius: BorderRadius.circular(AppRadius.xl),
                           boxShadow: [
                             BoxShadow(
                               color: context.status.warning.withValues(
                                 alpha: 0.4,
                               ),
-                              blurRadius: 15,
+                              blurRadius: 20,
                               spreadRadius: 2,
                             ),
                           ],
@@ -1053,7 +1061,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                           backgroundColor: context.status.success,
                           foregroundColor: context.status.onSuccess,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            borderRadius: AppRadius.mdAll,
                           ),
                         ),
                         label: Text(
@@ -1077,7 +1085,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                             vertical: AppSpacing.lg,
                           ),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            borderRadius: AppRadius.mdAll,
                           ),
                         ),
                         child: Text(
@@ -1100,7 +1108,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                           backgroundColor: context.status.success,
                           foregroundColor: context.status.onSuccess,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            borderRadius: AppRadius.mdAll,
                           ),
                         ),
                         child: Text(
@@ -1125,7 +1133,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                             vertical: AppSpacing.lg,
                           ),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            borderRadius: AppRadius.mdAll,
                           ),
                         ),
                         child: Text(

@@ -358,13 +358,15 @@ class _LeaderboardPodiumState extends State<LeaderboardPodium> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
       child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.xl),
+        ),
         child: RepaintBoundary(
           child: Container(
             decoration: BoxDecoration(
               color: panelColor,
               borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(24),
+                top: Radius.circular(AppRadius.xl),
               ),
               border: Border(
                 top: BorderSide(color: borderColor, width: 1.2),

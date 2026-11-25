@@ -61,10 +61,8 @@ class _NextUpHeroState extends State<NextUpHero> {
       child: Container(
         clipBehavior: Clip.antiAlias,
         decoration: tactile.decoration(
-          variant: TactileSurfaceVariant.elevated,
-          fill: isDark
-              ? theme.colorScheme.surfaceContainerHighest
-              : theme.colorScheme.surface,
+          variant: TactileSurfaceVariant.clean,
+          fill: Colors.transparent,
           accent: AppColorRoles.primary(isDark),
           borderRadius: BorderRadius.circular(AppRadius.xl),
           diagnosticId: 'home-next-up',
@@ -99,58 +97,69 @@ class _NextUpHeroState extends State<NextUpHero> {
                 );
                 final dueCount = _dueVocabularyCount ?? 0;
 
-                return Padding(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.sm,
-                    AppSpacing.xs,
-                    AppSpacing.sm,
-                    8,
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(left: 8),
-                            child: Text(
-                              'home.nextUp'.tr(),
-                              style: theme.textTheme.labelLarge?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                color: AppColorRoles.textMuted(isDark),
+                return ColoredBox(
+                  color: isDark
+                      ? theme.colorScheme.surfaceContainerHighest
+                      : theme.colorScheme.surface,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.sm,
+                      AppSpacing.xs,
+                      AppSpacing.sm,
+                      8,
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(left: 8),
+                              child: Text(
+                                'home.nextUp'.tr(),
+                                style: theme.textTheme.labelLarge?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColorRoles.textMuted(isDark),
+                                ),
                               ),
                             ),
-                          ),
-                          const Spacer(),
-                          TextButton(
-                            onPressed: () {
-                              trackProductEvent(
-                                'view_plan_tapped',
-                                source: 'today_plan',
-                              );
-                              Navigator.of(context).pushNamed('/today-plan');
-                            },
-                            style: TextButton.styleFrom(
-                              minimumSize: const Size(44, 44),
+                            const Spacer(),
+                            TextButton(
+                              onPressed: () {
+                                trackProductEvent(
+                                  'view_plan_tapped',
+                                  source: 'today_plan',
+                                );
+                                Navigator.of(context).pushNamed('/today-plan');
+                              },
+                              style: TextButton.styleFrom(
+                                minimumSize: const Size(44, 44),
+                              ),
+                              child: Text('home.todayPlan.viewAll'.tr()),
                             ),
-                            child: Text('home.todayPlan.viewAll'.tr()),
+                          ],
+                        ),
+                        if (vocabulary != null)
+                          _HeroTaskRow(
+                            task: vocabulary,
+                            loading: _isLoadingVocabulary,
+                            badge: dueCount > 0
+                                ? (dueCount > 99 ? '99+' : '$dueCount')
+                                : null,
+                            onTap: () async {
+                              await openTodayPlanTask(context, vocabulary);
+                              if (mounted) _loadVocabularyStats();
+                            },
                           ),
-                        ],
-                      ),
-                      if (vocabulary != null)
-                        _HeroTaskRow(
-                          task: vocabulary,
-                          loading: _isLoadingVocabulary,
-                          badge: dueCount > 0
-                              ? (dueCount > 99 ? '99+' : '$dueCount')
-                              : null,
-                          onTap: () => openTodayPlanTask(context, vocabulary),
-                        ),
-                      if (next != null)
-                        _HeroTaskRow(
-                          task: next,
-                          onTap: () => openTodayPlanTask(context, next),
-                        ),
-                    ],
+                        if (next != null)
+                          _HeroTaskRow(
+                            task: next,
+                            onTap: () async {
+                              await openTodayPlanTask(context, next);
+                              if (mounted) _loadVocabularyStats();
+                            },
+                          ),
+                      ],
+                    ),
                   ),
                 );
               },

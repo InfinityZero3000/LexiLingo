@@ -135,11 +135,11 @@ class _PodcastExploreScreenState extends State<PodcastExploreScreen> {
           fillColor: scheme.surface,
           contentPadding: const EdgeInsets.symmetric(horizontal: 20),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
             borderSide: BorderSide(color: scheme.outlineVariant),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
             borderSide: BorderSide(color: scheme.primary, width: 2),
           ),
         ),

@@ -16,6 +16,7 @@ import 'package:lexilingo_app/features/vocabulary/presentation/screens/session_c
 import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/tts_speed_selector.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class VocabularySpeakingPracticeScreen extends StatefulWidget {
@@ -315,10 +316,15 @@ class _VocabularySpeakingPracticeScreenState
     return '$minutes:$seconds';
   }
 
+  ColorScheme get _scheme => Theme.of(context).colorScheme;
+  bool get _dark => Theme.of(context).brightness == Brightness.dark;
+  Color get _accent => AppColorRoles.primary(_dark);
+  Color get _accentDeep => AppColorRoles.primaryDeep(_dark);
+  Color get _muted => AppColorRoles.textMuted(_dark);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7FAF7),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -330,19 +336,6 @@ class _VocabularySpeakingPracticeScreenState
           'lesson.exercise.speakingTitle'.tr(),
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
         ),
-        actions: [
-          IconButton(
-            tooltip: 'common.minimize'.tr(),
-            icon: const Icon(Icons.remove),
-            onPressed: () {},
-          ),
-          IconButton(
-            tooltip: 'common.maximize'.tr(),
-            icon: const Icon(Icons.crop_square),
-            onPressed: () {},
-          ),
-          const SizedBox(width: 6),
-        ],
       ),
       body: ContentWidth(
         maxWidth: ContentWidth.reading,
@@ -402,7 +395,7 @@ class _VocabularySpeakingPracticeScreenState
             text: card.vocabularyItem.word,
             mini: true,
             size: 42,
-            color: const Color(0xFF228B52),
+            color: _accent,
           ),
           const SizedBox(width: 8),
           const TtsSpeedButton(),
@@ -418,8 +411,8 @@ class _VocabularySpeakingPracticeScreenState
               child: LinearProgressIndicator(
                 minHeight: 10,
                 value: total == 0 ? 0 : current / total,
-                backgroundColor: const Color(0xFFDDE8DE),
-                valueColor: const AlwaysStoppedAnimation(Color(0xFF2EAE5B)),
+                backgroundColor: _scheme.outlineVariant,
+                valueColor: AlwaysStoppedAnimation(_accent),
               ),
             ),
           ),
@@ -440,8 +433,8 @@ class _VocabularySpeakingPracticeScreenState
           Text(
             vocabulary.word,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Color(0xFF168348),
+            style: TextStyle(
+              color: _accentDeep,
               fontSize: 48,
               fontWeight: FontWeight.w900,
               height: 1.05,
@@ -452,7 +445,7 @@ class _VocabularySpeakingPracticeScreenState
             Text(
               '/${vocabulary.pronunciation}/',
               style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                color: Color(0xFF6A7A70),
+                color: _muted,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -480,27 +473,21 @@ class _VocabularySpeakingPracticeScreenState
             width: 112,
             height: 112,
             decoration: BoxDecoration(
-              color: _isRecording ? const Color(0xFFFFE8E8) : Colors.white,
+              color: _isRecording ? _scheme.errorContainer : _scheme.surface,
               shape: BoxShape.circle,
-              border: Border.all(
-                color: _isRecording
-                    ? Theme.of(context).colorScheme.error
-                    : const Color(0xFF2EAE5B),
-                width: 4,
-              ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF2EAE5B).withValues(alpha: 0.16),
+                  color: (_isRecording ? _scheme.error : _accent).withValues(
+                    alpha: 0.22,
+                  ),
                   blurRadius: 24,
-                  offset: const Offset(0, 12),
+                  offset: const Offset(0, 10),
                 ),
               ],
             ),
             child: Icon(
               _isRecording ? Icons.stop_rounded : Icons.mic_rounded,
-              color: _isRecording
-                  ? Theme.of(context).colorScheme.error
-                  : const Color(0xFF168348),
+              color: _isRecording ? _scheme.error : _accentDeep,
               size: 48,
             ),
           ),
@@ -526,9 +513,7 @@ class _VocabularySpeakingPracticeScreenState
                 width: 5,
                 height: height,
                 decoration: BoxDecoration(
-                  color: active
-                      ? const Color(0xFF2EAE5B)
-                      : const Color(0xFFC9D8CE),
+                  color: active ? _accent : _scheme.outlineVariant,
                   borderRadius: BorderRadius.circular(AppRadius.pill),
                 ),
               );
@@ -545,9 +530,20 @@ class _VocabularySpeakingPracticeScreenState
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(22, 18, 22, 22),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFE1E9E3))),
+      decoration: BoxDecoration(
+        color: _scheme.surface,
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.xl),
+        ),
+        boxShadow: _dark
+            ? null
+            : [
+                BoxShadow(
+                  color: _scheme.shadow.withValues(alpha: 0.08),
+                  blurRadius: 16,
+                  offset: const Offset(0, -4),
+                ),
+              ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -574,8 +570,8 @@ class _VocabularySpeakingPracticeScreenState
       children: [
         Text(
           evaluation.feedbackLabel,
-          style: const TextStyle(
-            color: Color(0xFF168348),
+          style: TextStyle(
+            color: context.status.success,
             fontSize: 26,
             fontWeight: FontWeight.w900,
           ),
@@ -592,7 +588,7 @@ class _VocabularySpeakingPracticeScreenState
           children: List.generate(3, (index) {
             return Icon(
               index < evaluation.stars ? Icons.star : Icons.star_border,
-              color: const Color(0xFFFFC43D),
+              color: AppColors.accentYellow,
               size: 34,
             );
           }),
@@ -604,7 +600,7 @@ class _VocabularySpeakingPracticeScreenState
             evaluation.transcription!,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: Color(0xFF617067)),
+            style: TextStyle(color: _muted),
           ),
         ],
         const SizedBox(height: 18),
@@ -620,10 +616,6 @@ class _VocabularySpeakingPracticeScreenState
             Expanded(
               child: ElevatedButton(
                 onPressed: provider.isLoading ? null : _submitResult,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF168348),
-                  foregroundColor: Colors.white,
-                ),
                 child: provider.isLoading
                     ? const SizedBox(
                         width: 18,
@@ -651,7 +643,7 @@ class _VocabularySpeakingPracticeScreenState
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 64, color: const Color(0xFF168348)),
+            Icon(icon, size: 64, color: _accentDeep),
             const SizedBox(height: 16),
             Text(
               message,

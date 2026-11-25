@@ -45,8 +45,9 @@ async def _forward(
     params: dict | None = None,
     json: Any = None,
     timeout: httpx.Timeout = _TIMEOUT,
+    prefix: str = "/admin",
 ) -> Any:
-    url = f"{settings.AI_SERVICE_URL.rstrip('/')}/admin{path}"
+    url = f"{settings.AI_SERVICE_URL.rstrip('/')}{prefix}{path}"
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
             resp = await client.request(method, url, params=params, json=json, headers=_admin_headers())
@@ -57,6 +58,35 @@ async def _forward(
     if resp.status_code >= 400:
         raise HTTPException(status_code=resp.status_code, detail=resp.text)
     return resp.json()
+
+
+@router.get("/monitoring/chat")
+async def chat_monitoring(
+    window: str = Query(default="24h", pattern="^(1h|24h|7d)$"),
+    _admin: User = Depends(require_resource("ops")),
+) -> Any:
+    return await _forward("GET", "/monitoring/chat", params={"window": window}, prefix="/ai")
+
+
+@router.get("/monitoring/observation-spool")
+async def observation_spool_monitoring(
+    _admin: User = Depends(require_resource("ops")),
+) -> Any:
+    return await _forward("GET", "/monitoring/observation-spool", prefix="/ai")
+
+
+@router.get("/monitoring/llm-keys")
+async def llm_key_monitoring(
+    _admin: User = Depends(require_resource("ops")),
+) -> Any:
+    return await _forward("GET", "/monitoring/llm-keys", prefix="/ai")
+
+
+@router.get("/monitoring/dashboard")
+async def dashboard_monitoring(
+    _admin: User = Depends(require_resource("ops")),
+) -> Any:
+    return await _forward("GET", "/monitoring/dashboard", prefix="/ai")
 
 
 @router.get("/topics")

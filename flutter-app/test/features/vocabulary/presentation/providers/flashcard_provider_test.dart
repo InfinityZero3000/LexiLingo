@@ -183,12 +183,15 @@ void main() {
       addedAt: DateTime.utc(2026, 6, 8),
     );
 
-    FlashcardProvider build(_RecordingVocabularyRepository repository) =>
-        FlashcardProvider(
-          getDueVocabularyUseCase: GetDueVocabularyUseCase(repository),
-          submitReviewUseCase: SubmitReviewUseCase(repository),
-          vocabularyRepository: repository,
-        );
+    FlashcardProvider build(
+      _RecordingVocabularyRepository repository, {
+      Duration finishWait = const Duration(seconds: 8),
+    }) => FlashcardProvider(
+      getDueVocabularyUseCase: GetDueVocabularyUseCase(repository),
+      submitReviewUseCase: SubmitReviewUseCase(repository),
+      vocabularyRepository: repository,
+      finishWait: finishWait,
+    );
 
     test('shows the next card before the server has answered', () async {
       final repository = _RecordingVocabularyRepository()
@@ -228,6 +231,40 @@ void main() {
         provider.dispose();
       },
     );
+
+    test('the last card does not wait forever on a stuck server', () async {
+      final repository = _RecordingVocabularyRepository()
+        ..due = [due('a')]
+        ..submitGate = Completer<void>();
+      final provider = build(
+        repository,
+        finishWait: const Duration(milliseconds: 20),
+      );
+      await provider.startReviewSession();
+
+      await provider.submitReview(ReviewQuality.good);
+
+      expect(provider.currentSession!.isCompleted, isTrue);
+      expect(provider.currentSession!.completedAt, isNotNull);
+      expect(provider.isSaving, isFalse);
+      repository.submitGate!.complete();
+      await pumpEventQueue();
+      provider.dispose();
+    });
+
+    test('a rating that failed on the last card is retried', () async {
+      final repository = _RecordingVocabularyRepository()
+        ..due = [due('a')]
+        ..failSubmits = 1;
+      final provider = build(repository);
+      await provider.startReviewSession();
+
+      await provider.submitReview(ReviewQuality.good);
+
+      expect(repository.sent, ['a']);
+      expect(provider.unsavedCount, 0);
+      provider.dispose();
+    });
 
     test('a rating that failed is sent again with the next one', () async {
       final repository = _RecordingVocabularyRepository()

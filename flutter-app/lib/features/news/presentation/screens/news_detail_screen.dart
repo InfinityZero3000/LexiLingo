@@ -652,9 +652,7 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
           foregroundColor: AppColors.onGradient,
 
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
           textStyle: Theme.of(
             context,
           ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
@@ -680,7 +678,9 @@ class _NewsDetailScreenState extends State<NewsDetailScreen> {
       padding: const EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.xl),
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

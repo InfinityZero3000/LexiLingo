@@ -27,7 +27,9 @@ class ReaderControls extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, AppSpacing.sm, 20, 20),
       decoration: BoxDecoration(
         color: _bgColor(settings.theme),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.xl),
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

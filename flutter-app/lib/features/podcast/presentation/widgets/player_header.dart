@@ -31,7 +31,9 @@ class PlayerHeader extends StatelessWidget {
     final artwork = (width - 96).clamp(160.0, _maxArtwork);
 
     return ClipRRect(
-      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
+      borderRadius: const BorderRadius.vertical(
+        bottom: Radius.circular(AppRadius.xl),
+      ),
       child: Stack(
         children: [
           Positioned.fill(
@@ -50,7 +52,7 @@ class PlayerHeader extends StatelessWidget {
                 children: [
                   DecoratedBox(
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(28),
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
                       boxShadow: const [
                         BoxShadow(
                           color: Color(0x66000000),
@@ -60,7 +62,7 @@ class PlayerHeader extends StatelessWidget {
                       ],
                     ),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(28),
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
                       child: SizedBox.square(
                         dimension: artwork,
                         child: ContentImage(url: artworkUrl),

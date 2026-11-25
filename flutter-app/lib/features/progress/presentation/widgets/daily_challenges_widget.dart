@@ -382,237 +382,246 @@ class _DailyChallengesSheetState extends State<DailyChallengesSheet> {
     final accent = AppColors.purple;
 
     return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.92,
+      ),
       decoration: BoxDecoration(
         color: isDark ? AppColors.surfaceDark : theme.scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(AppRadius.xl),
+        ),
       ),
       padding: const EdgeInsets.all(AppSpacing.xl),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Handle bar
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: isDark
-                    ? AppColors.onGradient.withValues(alpha: 0.2)
-                    : Theme.of(context).colorScheme.outlineVariant,
+      child: SafeArea(
+        top: false,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Handle bar
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? AppColors.onGradient.withValues(alpha: 0.2)
+                      : Theme.of(context).colorScheme.outlineVariant,
 
-                borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-          // Header
-          Row(
-            children: [
-              AppGameIcon(
-                GameIcon.star,
-                size: 28,
-                fallbackColor: isDark ? AppColors.purpleLight : accent,
+            // Header
+            Row(
+              children: [
+                AppGameIcon(
+                  GameIcon.star,
+                  size: 28,
+                  fallbackColor: isDark ? AppColors.purpleLight : accent,
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'home.dailyChallenges'.tr(),
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: AppColorRoles.textPrimary(isDark),
+                        ),
+                      ),
+                      Text(
+                        'home.completeBonusXp'.tr(
+                          namedArgs: {'xp': '${provider.bonusXp}'},
+                        ),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: isDark ? AppColors.purpleLight : accent,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (_feedback != null) ...[
+              const SizedBox(height: AppSpacing.md),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color:
+                      (_feedbackIsError
+                              ? Theme.of(context).colorScheme.error
+                              : context.status.success)
+                          .withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                ),
+                child: Text(
+                  _feedback!,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColorRoles.textPrimary(isDark),
+                  ),
+                ),
               ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            ],
+            const SizedBox(height: 20),
+
+            // Progress
+            Row(
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    child: LinearProgressIndicator(
+                      value: provider.progress,
+                      backgroundColor: isDark
+                          ? AppColors.onGradient.withValues(alpha: 0.1)
+                          : Theme.of(context).colorScheme.outlineVariant,
+
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        provider.allCompleted ? context.status.success : accent,
+                      ),
+                      minHeight: 12,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Text(
+                  '${provider.completedCount}/${provider.totalChallenges}',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: AppColorRoles.textPrimary(isDark),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.xl),
+
+            // Challenges list
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: provider.challenges.length,
+                separatorBuilder: (_, _) =>
+                    const SizedBox(height: AppSpacing.md),
+                itemBuilder: (context, index) {
+                  final challenge = provider.challenges[index];
+                  return _ChallengeCard(
+                    challenge: challenge,
+                    onClaim: () => _claimReward(context, challenge.id),
+                    isClaimed: provider.isRewardClaimed(challenge.id),
+                  );
+                },
+              ),
+            ),
+
+            // Bonus section (if all completed)
+            if (provider.allCompleted) ...[
+              const SizedBox(height: AppSpacing.lg),
+              Container(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isDark
+                        ? [
+                            context.status.warning.withValues(alpha: 0.3),
+
+                            AppColors.orange.withValues(alpha: 0.3),
+                          ]
+                        : AppColors.warmGradient
+                              .map((c) => c.withValues(alpha: 0.22))
+                              .toList(),
+                  ),
+                  borderRadius: BorderRadius.circular(AppRadius.lg),
+                  border: Border.all(
+                    color: AppColors.orange.withValues(alpha: 0.35),
+                    width: 2,
+                  ),
+                ),
+                child: Row(
                   children: [
-                    Text(
-                      'home.dailyChallenges'.tr(),
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: AppColorRoles.textPrimary(isDark),
+                    AppGameIcon(
+                      GameIcon.trophy,
+                      size: 36,
+                      fallbackColor: isDark
+                          ? context.status.warning
+                          : AppColors.warningDark,
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'home.allChallengesComplete'.tr(),
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: AppColorRoles.textPrimary(isDark),
+                            ),
+                          ),
+                          Text(
+                            'home.bonusXpEarned'.tr(
+                              namedArgs: {'xp': '${provider.bonusXp}'},
+                            ),
+                            style: TextStyle(
+                              color: isDark
+                                  ? context.status.warning
+                                  : AppColors.deepOrange,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    Text(
-                      'home.completeBonusXp'.tr(
-                        namedArgs: {'xp': '${provider.bonusXp}'},
+                    if (provider.bonusClaimed)
+                      const AppGameIcon(
+                        GameIcon.checkmark,
+                        size: 32,
+                        fallbackColor: AppColors.greenSuccessBright,
+                      )
+                    else
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          minHeight: 44,
+                          minWidth: 44,
+                        ),
+                        child: FilledButton(
+                          onPressed: provider.isLoading
+                              ? null
+                              : () => _claimBonus(context),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: context.status.success,
+
+                            foregroundColor: AppColors.surfaceLight,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.md,
+                            ),
+                            textStyle: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                            ),
+                          ),
+                          child: Text('home.claimReward'.tr()),
+                        ),
                       ),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: isDark ? AppColors.purpleLight : accent,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
                   ],
                 ),
               ),
             ],
-          ),
-          if (_feedback != null) ...[
-            const SizedBox(height: AppSpacing.md),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.md,
-                vertical: 10,
-              ),
-              decoration: BoxDecoration(
-                color:
-                    (_feedbackIsError
-                            ? Theme.of(context).colorScheme.error
-                            : context.status.success)
-                        .withValues(alpha: 0.14),
-                borderRadius: BorderRadius.circular(AppRadius.md),
-              ),
-              child: Text(
-                _feedback!,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: AppColorRoles.textPrimary(isDark),
-                ),
-              ),
-            ),
-          ],
-          const SizedBox(height: 20),
 
-          // Progress
-          Row(
-            children: [
-              Expanded(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  child: LinearProgressIndicator(
-                    value: provider.progress,
-                    backgroundColor: isDark
-                        ? AppColors.onGradient.withValues(alpha: 0.1)
-                        : Theme.of(context).colorScheme.outlineVariant,
-
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      provider.allCompleted ? context.status.success : accent,
-                    ),
-                    minHeight: 12,
-                  ),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Text(
-                '${provider.completedCount}/${provider.totalChallenges}',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppColorRoles.textPrimary(isDark),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.xl),
-
-          // Challenges list
-          Flexible(
-            child: ListView.separated(
-              shrinkWrap: true,
-              itemCount: provider.challenges.length,
-              separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
-              itemBuilder: (context, index) {
-                final challenge = provider.challenges[index];
-                return _ChallengeCard(
-                  challenge: challenge,
-                  onClaim: () => _claimReward(context, challenge.id),
-                  isClaimed: provider.isRewardClaimed(challenge.id),
-                );
-              },
-            ),
-          ),
-
-          // Bonus section (if all completed)
-          if (provider.allCompleted) ...[
             const SizedBox(height: AppSpacing.lg),
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: isDark
-                      ? [
-                          context.status.warning.withValues(alpha: 0.3),
-
-                          AppColors.orange.withValues(alpha: 0.3),
-                        ]
-                      : AppColors.warmGradient
-                            .map((c) => c.withValues(alpha: 0.22))
-                            .toList(),
-                ),
-                borderRadius: BorderRadius.circular(AppRadius.lg),
-                border: Border.all(
-                  color: AppColors.orange.withValues(alpha: 0.35),
-                  width: 2,
-                ),
-              ),
-              child: Row(
-                children: [
-                  AppGameIcon(
-                    GameIcon.trophy,
-                    size: 36,
-                    fallbackColor: isDark
-                        ? context.status.warning
-                        : AppColors.warningDark,
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'home.allChallengesComplete'.tr(),
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: AppColorRoles.textPrimary(isDark),
-                          ),
-                        ),
-                        Text(
-                          'home.bonusXpEarned'.tr(
-                            namedArgs: {'xp': '${provider.bonusXp}'},
-                          ),
-                          style: TextStyle(
-                            color: isDark
-                                ? context.status.warning
-                                : AppColors.deepOrange,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (provider.bonusClaimed)
-                    const AppGameIcon(
-                      GameIcon.checkmark,
-                      size: 32,
-                      fallbackColor: AppColors.greenSuccessBright,
-                    )
-                  else
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(
-                        minHeight: 44,
-                        minWidth: 44,
-                      ),
-                      child: FilledButton(
-                        onPressed: provider.isLoading
-                            ? null
-                            : () => _claimBonus(context),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: context.status.success,
-
-                          foregroundColor: AppColors.surfaceLight,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.md,
-                          ),
-                          textStyle: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(fontWeight: FontWeight.w700),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                          ),
-                        ),
-                        child: Text('home.claimReward'.tr()),
-                      ),
-                    ),
-                ],
-              ),
-            ),
           ],
-
-          const SizedBox(height: AppSpacing.lg),
-        ],
+        ),
       ),
     );
   }
@@ -681,32 +690,22 @@ class _ChallengeCard extends StatelessWidget {
     final completedBg = isDark
         ? context.status.success.withValues(alpha: 0.12)
         : AppColors.greenSuccessBg;
-    final completedBorder = isDark
-        ? context.status.success.withValues(alpha: 0.4)
-        : AppColors.greenSuccessSoft.withValues(alpha: 0.6);
     final defaultBg = Theme.of(context).colorScheme.surface;
-    final defaultBorder = isDark
-        ? AppColors.onGradient.withValues(alpha: 0.1)
-        : Theme.of(context).colorScheme.outlineVariant;
 
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: challenge.isCompleted ? completedBg : defaultBg,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(
-          color: challenge.isCompleted ? completedBorder : defaultBorder,
-          width: 2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: isDark
-                ? AppColors.slate900.withValues(alpha: 0.25)
-                : AppColors.slate900.withValues(alpha: 0.04),
-            blurRadius: 0,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        boxShadow: isDark
+            ? const []
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.06),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                ),
+              ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -717,7 +716,7 @@ class _ChallengeCard extends StatelessWidget {
             height: 48,
             decoration: BoxDecoration(
               color: categoryColor.withValues(alpha: isDark ? 0.25 : 0.16),
-              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderRadius: BorderRadius.circular(AppRadius.lg),
             ),
             child: Center(
               child: AppGameIcon(
@@ -735,7 +734,7 @@ class _ChallengeCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  challenge.title,
+                  _title(),
                   style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: AppColorRoles.textPrimary(isDark),
@@ -746,7 +745,7 @@ class _ChallengeCard extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  challenge.description,
+                  _description(),
                   style: theme.textTheme.bodySmall?.copyWith(color: textMuted),
                 ),
                 const SizedBox(height: AppSpacing.sm),
@@ -760,7 +759,8 @@ class _ChallengeCard extends StatelessWidget {
                           value: challenge.progress,
                           backgroundColor: isDark
                               ? AppColors.onGradient.withValues(alpha: 0.1)
-                              : Theme.of(context).colorScheme.outlineVariant,
+                              : Theme.of(context).colorScheme.outlineVariant
+                                    .withValues(alpha: 0.6),
 
                           valueColor: AlwaysStoppedAnimation<Color>(
                             challenge.isCompleted
@@ -798,11 +798,6 @@ class _ChallengeCard extends StatelessWidget {
                     alpha: isDark ? 0.22 : 0.16,
                   ),
                   borderRadius: BorderRadius.circular(AppRadius.sm),
-                  border: Border.all(
-                    color: context.status.warning.withValues(alpha: 0.4),
-
-                    width: 1.5,
-                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -866,8 +861,24 @@ class _ChallengeCard extends StatelessWidget {
     );
   }
 
+  String _title() {
+    final key = 'home.challengeTexts.${challenge.id}.title';
+    final text = key.tr();
+    return text == key ? challenge.title : text;
+  }
+
+  String _description() {
+    final key = 'home.challengeTexts.${challenge.id}.description';
+    final text = key.tr(namedArgs: {'target': '${challenge.target}'});
+    return text == key ? challenge.description : text;
+  }
+
   Color _getCategoryColor(String category, {bool isDark = false}) {
     switch (category) {
+      case 'time':
+        return AppColors.teal;
+      case 'content':
+        return AppColors.purpleLight;
       case 'lesson':
         return AppColorRoles.primary(isDark);
       case 'vocabulary':
@@ -887,6 +898,15 @@ class _ChallengeCard extends StatelessWidget {
 
   GameIcon _getCategoryIcon(String category) {
     switch (category) {
+      case 'time':
+        return GameIcon.clock;
+      case 'content':
+        return switch (challenge.id) {
+          'watch_youtube' => GameIcon.video,
+          'listen_podcast' => GameIcon.headphones,
+          'read_news' => GameIcon.newspaper,
+          _ => GameIcon.book,
+        };
       case 'lesson':
         return GameIcon.lessonBoard;
       case 'vocabulary':

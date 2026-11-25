@@ -16,6 +16,7 @@ import logging
 import os
 import re
 import json
+import math
 import time
 import unicodedata
 from typing import Dict, Any, List, Optional, Sequence
@@ -31,15 +32,18 @@ from api.services.trace_cag.dependencies import (
 )
 from api.services.jit_graph_service import get_jit_graph_service
 
+from api.services.trace_cag.bounded import LRUDict
+
 # LLM client — httpx pooling and rate-limit throttling
 from api.services.trace_cag.llm_client import (
     _qwen_no_think_messages,
     _qwen_reasoning_overrides,
     _throttled_post_json,
+    provider_usage,
 )
 
 # PCC cache R/W helpers used by the generation path
-from api.services.trace_cag.cache_utils import _detect_native_request
+from api.services.trace_cag.cache_utils import _detect_native_request, publish_dependency_version
 
 # Façade re-exports: graph.py imports cache_gate_node from this module, and the
 # cache-gate tests reach these helpers through the nodes_v2 namespace.
@@ -49,6 +53,7 @@ from api.services.trace_cag.cache_utils import (  # noqa: F401
     _extract_lightweight_graph_concepts,
     _infer_intent_pre_diagnosis,
     _profile_epoch,
+    prompt_profile_version,
 )
 
 # retrieve_node / generate_node live in their own modules (Phase 4 split) —
@@ -118,6 +123,17 @@ def _note_input_redis_degraded(part: str, exc: Optional[BaseException]) -> None:
 
 
 
+def _unit_score(value: Any, default: float) -> float:
+    """A model's JSON can hold null, text or NaN here, and the router compares this number."""
+    if isinstance(value, bool):
+        return default
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return default
+    return min(max(number, 0.0), 1.0) if math.isfinite(number) else default
+
+
 async def input_node(state: TraceCAGState) -> Dict[str, Any]:
     """
     Parse and validate user input, load learner context.
@@ -150,14 +166,13 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
         async def _get_learner_epoch():
             if not user_id or settings.LEARNER_STATE_MODE == "off":
                 return None
-            from api.clients.learner_state_client import get_learner_state_client
+            from api.clients.learner_state_client import read_learner_state
 
-            deadline = time.monotonic() + (settings.LEARNER_STATE_DEADLINE_MS / 1000.0)
-            return await get_learner_state_client().batch_get(
-                str(user_id), [], deadline=deadline
-            )
+            return await read_learner_state(str(user_id), [])
 
         epoch_task = _asyncio.create_task(_get_learner_epoch())
+
+        profile_read = {"failed": False}
 
         async def _read_redis():
             redis_client = await RedisClient.get_instance()
@@ -170,6 +185,7 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
                         return await profile_cache.get_profile(user_id)
                     except Exception as exc:
                         _note_input_redis_degraded("profile", exc)
+                        profile_read["failed"] = True
                         return None
                 return None
 
@@ -199,6 +215,7 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
             except (_asyncio.TimeoutError, TimeoutError):
                 cached_profile, fetched_history = None, None
                 _note_input_redis_degraded("budget", None)
+                profile_read["failed"] = True
             if cached_profile:
                 learner_profile = {**cached_profile, **learner_profile}
             if not history_supplied:
@@ -236,10 +253,25 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
                 }
     
         latency_ms = int((time.time() - start_time) * 1000)
-        profile_version = str(learner_profile.get("_learner_state_epoch") or "")
-        if not profile_version:
-            profile_version = stable_version_token(learner_profile, prefix="profile")
-        
+        benchmark = bool(state.get("benchmark_metadata"))
+        if user_id and not benchmark:
+            profile_version = prompt_profile_version(learner_profile)
+            learner_profile["_profile_version"] = profile_version
+        else:
+            profile_version = str(learner_profile.get("_learner_state_epoch") or "")
+            if not profile_version:
+                profile_version = stable_version_token(learner_profile, prefix="profile")
+        profile_key = f"learner:{user_id or 'anonymous'}:profile"
+        if user_id and not benchmark and _may_publish_profile(str(user_id), learner_profile, epoch_result, profile_read["failed"]):
+            try:
+                # The in-memory token moves before the first await, so a slow Redis cannot leave a stale answer servable.
+                await _asyncio.wait_for(
+                    publish_dependency_version(profile_key, profile_version),
+                    timeout=_input_redis_budget_seconds(),
+                )
+            except (_asyncio.TimeoutError, TimeoutError):
+                _note_input_redis_degraded("invalidate", None)
+
         return {
             "learner_profile": learner_profile,
             "conversation_history": conversation_history,
@@ -247,7 +279,7 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
             "models_used": ["redis_cache"],
             "latency_ms": latency_ms,
             "dependency_events": [dependency_record(
-                f"learner:{user_id or 'anonymous'}:profile",
+                profile_key,
                 "learner",
                 profile_version,
                 "learner-state" if epoch_result is not None else "request-profile",
@@ -764,6 +796,7 @@ async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
         
         used_model = "qwen_grammar"
         parsed = False
+        diagnosis_usage: Dict[str, int] = {}
 
         if not (result.get("success") and result.get("data")):
             from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
@@ -794,7 +827,11 @@ async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
                         from api.services.trace_cag.benchmark.qa_generation import _ledger_add
 
                         _ledger_add("diagnose", data, wall_started=_started, response=resp)
-                        tokens = data.get("usage", {}).get("total_tokens", 150)
+                        diagnosis_usage = provider_usage(data) or {}
+                        tokens = (
+                            diagnosis_usage["prompt_tokens"] + diagnosis_usage["completion_tokens"]
+                            if diagnosis_usage else data.get("usage", {}).get("total_tokens", 150)
+                        )
                         await record_groq_key_usage(groq_key, tokens)
                         content = data["choices"][0]["message"]["content"]
                         result = {"success": True, "data": content}
@@ -843,9 +880,9 @@ async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
 
                 root_causes = root_causes_for(errors, bridge)
                 intent = ai_data.get("intent", "correct")
-                confidence = ai_data.get("confidence", 0.9)
-                grammar_score = ai_data.get("grammar_score", 0.8)
-                fluency_score = ai_data.get("fluency_score", 0.8)
+                confidence = _unit_score(ai_data.get("confidence"), 0.9)
+                grammar_score = _unit_score(ai_data.get("grammar_score"), 0.8)
+                fluency_score = _unit_score(ai_data.get("fluency_score"), 0.8)
                 parsed = True
                 
             except (json.JSONDecodeError, TypeError) as e:
@@ -875,6 +912,7 @@ async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
             "fluency_score": fluency_score,
             "vocabulary_level": EvaluationAgent.estimate_vocab_level(user_text),
             "models_used": [used_model],
+            "diagnosis_usage": diagnosis_usage,
         }
         if bridge == "closed" and parsed:
             diagnosis["diagnosis_label_invalid"] = count_invalid_labels(errors)
@@ -959,6 +997,28 @@ async def kg_diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
     return merged
 
 
+# Highest learner epoch each user's profile version was published at; a turn that read an older one is late.
+_PUBLISHED_PROFILE_EPOCH: LRUDict = LRUDict(20_000)
+
+
+def _may_publish_profile(user_id: str, profile: Dict[str, Any], epoch_result: Any, profile_read_failed: bool) -> bool:
+    """Publishing only deletes eagerly; the certificate's profile_epoch already refuses a changed profile.
+
+    So a read that missed a part of the profile (learner state, the Redis profile, the learner card)
+    or that is older than one already published must not publish: it would invalidate the learner's
+    cache, and the next complete read would invalidate it again.
+    """
+    if profile_read_failed or not profile.get("_profile_complete", True):
+        return False
+    if settings.LEARNER_STATE_MODE != "off" and not profile.get("_learner_state_available"):
+        return False
+    epoch = int(getattr(epoch_result, "state_epoch", 0) or 0)
+    if epoch < _PUBLISHED_PROFILE_EPOCH.get(user_id, 0):
+        return False
+    _PUBLISHED_PROFILE_EPOCH[user_id] = epoch
+    return True
+
+
 async def _load_learner_concept_overlay(
     state: TraceCAGState,
     merged: Dict[str, Any],
@@ -966,11 +1026,12 @@ async def _load_learner_concept_overlay(
     """Batch-load only concepts selected by this request's bounded KG work."""
     if settings.LEARNER_STATE_MODE == "off" or not state.get("user_id"):
         return {}
-    from api.clients.learner_state_client import get_learner_state_client
+    from api.clients.learner_state_client import read_learner_state
 
+    # Root causes first: the cap below must never cut the concepts the reply's weakness hint reads.
     concept_ids: list[str] = []
-    concept_ids.extend(str(item) for item in merged.get("kg_seed_concepts", []) if item)
     concept_ids.extend(str(item) for item in merged.get("diagnosis_root_causes", []) if item)
+    concept_ids.extend(str(item) for item in merged.get("kg_seed_concepts", []) if item)
     concept_ids.extend(
         str(item.get("id"))
         for item in merged.get("kg_expanded_nodes", [])
@@ -978,11 +1039,8 @@ async def _load_learner_concept_overlay(
     )
     concept_ids = list(dict.fromkeys(concept_ids))[:60]
     started = time.monotonic()
-    deadline = started + (settings.LEARNER_STATE_DEADLINE_MS / 1000.0)
     try:
-        result = await get_learner_state_client().batch_get(
-            str(state["user_id"]), concept_ids, deadline=deadline
-        )
+        result = await read_learner_state(str(state["user_id"]), concept_ids)
     except Exception as exc:
         logger.warning("Learner-state overlay unavailable: %s", exc)
         return {

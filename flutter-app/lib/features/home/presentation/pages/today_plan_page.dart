@@ -135,7 +135,10 @@ class _TodayPlanPageState extends State<TodayPlanPage> {
                           padding: const EdgeInsets.only(bottom: 12),
                           child: TodayPlanTaskTile(
                             task: task,
-                            onTap: () => openTodayPlanTask(context, task),
+                            onTap: () async {
+                              await openTodayPlanTask(context, task);
+                              if (mounted) _loadVocabularyStats();
+                            },
                           ),
                         ),
                       ),

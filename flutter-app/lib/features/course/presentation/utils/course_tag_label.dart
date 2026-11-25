@@ -1,5 +1,16 @@
 /// Words that are acronyms, not words: shown as the exam or framework writes them.
-const _acronyms = {'ielts', 'toefl', 'toeic', 'cefr', 'esl', 'efl', 'ai', 'uk', 'us', 'bbc'};
+const _acronyms = {
+  'ielts',
+  'toefl',
+  'toeic',
+  'cefr',
+  'esl',
+  'efl',
+  'ai',
+  'uk',
+  'us',
+  'bbc',
+};
 
 /// Words a tag joins with a hyphen ("pre_intermediate" is "Pre-Intermediate").
 const _hyphenPrefixes = {'pre', 'post', 'non', 'self', 'co'};
@@ -23,14 +34,19 @@ String courseTagLabel(String tag) {
     final next = i + 1 < parts.length ? parts[i + 1] : null;
     final isDigit = RegExp(r'^\d$').hasMatch(part);
     final afterBand = i > 0 && parts[i - 1] == 'band';
-    if (afterBand && isDigit && next != null && RegExp(r'^\d$').hasMatch(next)) {
+    if (afterBand &&
+        isDigit &&
+        next != null &&
+        RegExp(r'^\d$').hasMatch(next)) {
       // IELTS bands are written 6.5, not "6 5"; only after "band" so a tag
       // like "grade_1_2" is left alone.
       out.add('$part.$next');
       i++;
       continue;
     }
-    if (_hyphenPrefixes.contains(part) && next != null && !RegExp(r'^\d+$').hasMatch(next)) {
+    if (_hyphenPrefixes.contains(part) &&
+        next != null &&
+        !RegExp(r'^\d+$').hasMatch(next)) {
       out.add('${_cap(part)}-${_cap(next)}');
       i++;
       continue;

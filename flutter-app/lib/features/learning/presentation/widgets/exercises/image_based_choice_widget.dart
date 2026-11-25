@@ -51,6 +51,7 @@ class ImageBasedChoiceWidget extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(AppRadius.lg),
               child: Image.network(
+                cacheWidth: 800,
                 imageUrl,
                 height: 200,
                 fit: BoxFit.cover,

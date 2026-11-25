@@ -114,9 +114,9 @@ class _DialogueCompletionWidgetState extends State<DialogueCompletionWidget> {
                   decoration: BoxDecoration(
                     color: colors.card,
                     borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      topRight: Radius.circular(20),
-                      bottomRight: Radius.circular(20),
+                      topLeft: Radius.circular(AppRadius.xl),
+                      topRight: Radius.circular(AppRadius.xl),
+                      bottomRight: Radius.circular(AppRadius.xl),
                     ),
                     border: Border.all(color: colors.border),
                   ),
@@ -148,9 +148,9 @@ class _DialogueCompletionWidgetState extends State<DialogueCompletionWidget> {
                   decoration: BoxDecoration(
                     color: colors.surface,
                     borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      topRight: Radius.circular(20),
-                      bottomLeft: Radius.circular(20),
+                      topLeft: Radius.circular(AppRadius.xl),
+                      topRight: Radius.circular(AppRadius.xl),
+                      bottomLeft: Radius.circular(AppRadius.xl),
                     ),
                   ),
                   child: lineB.contains('{blank}')
@@ -222,7 +222,10 @@ class _DialogueCompletionWidgetState extends State<DialogueCompletionWidget> {
           decoration: BoxDecoration(
             color: widget.isAnswered ? colors.primary : Colors.white,
             borderRadius: BorderRadius.circular(AppRadius.sm),
-            border: Border.all(color: colors.primary, width: 1.5),
+            border: Border.all(
+              color: colors.primary,
+              width: AppBorderWidth.regular,
+            ),
           ),
           child: TextField(
             key: const Key('dialogue-blank-input'),

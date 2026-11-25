@@ -35,6 +35,16 @@ Completer<bool>? _tokenRefreshCompleter;
 DateTime? _lastRefreshAt;
 const _refreshCooldown = Duration(seconds: 10);
 
+/// Answers that mean the server looked at this refresh token and refused it.
+/// Anything else (a restart's 502/503, a 500, 429, a timeout) says nothing
+/// about the token, so the session must survive it: signing out here wiped the
+/// tokens, the encrypted cache and the offline sync queue of a learner whose
+/// session was perfectly good.
+const _refreshTokenRejectedStatuses = {400, 401, 403};
+
+bool _refreshTokenWasRejected(int statusCode) =>
+    _refreshTokenRejectedStatuses.contains(statusCode);
+
 @visibleForTesting
 void resetTokenRefreshStateForTest() {
   _tokenRefreshCompleter = null;
@@ -78,9 +88,11 @@ Future<bool> refreshBackendToken(
     ).timeout(const Duration(seconds: 15));
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      // Refresh token is expired or revoked — wipe local tokens and force re-login.
-      await tokenStorage.clearTokens();
-      SessionExpiredService.instance.notifyExpired();
+      if (_refreshTokenWasRejected(response.statusCode)) {
+        // Expired, revoked or reused: the only case that ends the session.
+        await tokenStorage.clearTokens();
+        SessionExpiredService.instance.notifyExpired();
+      }
       completer.complete(false);
       return false;
     }
@@ -93,8 +105,7 @@ Future<bool> refreshBackendToken(
     final accessToken = data['access_token'] as String?;
     final refreshToken = data['refresh_token'] as String?;
     if (accessToken == null || refreshToken == null) {
-      await tokenStorage.clearTokens();
-      SessionExpiredService.instance.notifyExpired();
+      // A 2xx without tokens is a server fault, not a verdict on the session.
       completer.complete(false);
       return false;
     }
