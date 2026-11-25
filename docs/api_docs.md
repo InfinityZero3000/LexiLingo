@@ -81,7 +81,7 @@ codebase đọc. Các biến nội bộ đang dùng là:
 ## Xác thực
 
 - API người dùng dùng `Authorization: Bearer <access_token>`.
-- Access token mặc định hết hạn sau 30 phút; refresh token sau 7 ngày.
+- Access token mặc định hết hạn sau 30 phút; refresh token sau 90 ngày không hoạt động (mỗi lần refresh cấp token mới và tính lại 90 ngày, nên người dùng mở app ít nhất một lần trong khoảng đó thì không phải đăng nhập lại).
 - API quản trị AI dùng `X-Admin-Key`.
 - API gọi nội bộ dùng secret riêng, ví dụ `X-AI-Service-Secret`.
 - Yêu cầu xác thực cụ thể của từng route được thể hiện đầy đủ tại `/docs`.

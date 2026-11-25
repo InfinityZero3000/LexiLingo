@@ -103,7 +103,10 @@ class Settings(BaseSettings):
     JWT_ISSUER: str = "lexilingo-backend"
     JWT_AUDIENCE: str = "lexilingo-services"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    # Idle lifetime: every refresh rotates the token and restarts the clock, so a learner who
+    # opens the app at least once in this window never signs in again. 7 days signed out
+    # everyone who took a week off; mobile apps keep people signed in for months.
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 90
     REFRESH_REUSE_GRACE_SECONDS: int = 30
 
     # CORS

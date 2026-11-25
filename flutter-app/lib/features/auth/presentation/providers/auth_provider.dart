@@ -40,6 +40,12 @@ class AuthProvider extends ChangeNotifier {
   final GoogleSignInService googleSignInService;
   final FacebookSignInService facebookSignInService;
 
+  /// The learner this device last confirmed with the server. With it a cold
+  /// start opens the app at once, offline included, and the network only
+  /// confirms; without it every start waits on the network and any hiccup lands
+  /// a signed-in learner on the login page.
+  final Future<UserEntity?> Function()? loadCachedUser;
+
   UserEntity? _user;
   Future<void>? _userRefresh;
   final Freshness _userFreshness = Freshness();
@@ -60,6 +66,7 @@ class AuthProvider extends ChangeNotifier {
     required this.authRepository,
     required this.googleSignInService,
     required this.facebookSignInService,
+    this.loadCachedUser,
   }) {
     _checkCurrentUser();
     _sessionExpiredSub = SessionExpiredService.instance.onSessionExpired.listen(
@@ -75,10 +82,21 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool _disposed = false;
+
   @override
   void dispose() {
+    _disposed = true;
     _sessionExpiredSub.cancel();
     super.dispose();
+  }
+
+  /// The session check and the sign-in flows finish after awaits; the learner
+  /// may have left by then, and notifying a disposed notifier throws.
+  @override
+  void notifyListeners() {
+    if (_disposed) return;
+    super.notifyListeners();
   }
 
   // Getters
@@ -158,8 +176,20 @@ class AuthProvider extends ChangeNotifier {
         return;
       }
 
+      final cached = await _readCachedUser();
+      if (cached != null) {
+        await UserScopeService.setActiveUserId(cached.id);
+        _user = cached;
+        _errorMessage = null;
+        unawaited(_confirmCachedSession(cached.id));
+        return;
+      }
+
+      // Nothing cached yet (first start after an update): the refresh inside
+      // this call can take up to 15 s on a slow link, so wait longer than that
+      // rather than send a learner with a valid session to the login page.
       final result = await getCurrentUserUseCase(NoParams()).timeout(
-        const Duration(seconds: 8),
+        const Duration(seconds: 20),
         onTimeout: () => Left(AuthFailure('Auth check timed out')),
       );
       result.fold(
@@ -195,6 +225,48 @@ class AuthProvider extends ChangeNotifier {
     } finally {
       _isCheckingAuth = false;
       notifyListeners();
+    }
+  }
+
+  Future<UserEntity?> _readCachedUser() async {
+    try {
+      return await loadCachedUser?.call();
+    } catch (e) {
+      debugPrint('Cached session user unreadable: $e');
+      return null;
+    }
+  }
+
+  /// Confirms, behind an already open app, that the cached learner still has a
+  /// session. The session ends only when the server refuses the refresh token:
+  /// that clears the tokens and reaches [_onSessionExpired] through
+  /// [SessionExpiredService]. Being offline, a restarting server or a timeout
+  /// prove nothing about the session, so they change nothing.
+  Future<void> _confirmCachedSession(String userId) async {
+    final result = await getCurrentUserUseCase(NoParams()).timeout(
+      const Duration(seconds: 30),
+      onTimeout: () => const Left(NetworkFailure('Session check timed out')),
+    );
+    // Signed out, expired or switched account while the request was in flight.
+    if (_user?.id != userId) return;
+
+    final confirmed = result.fold((_) => null, (user) => user);
+    if (confirmed != null) {
+      _user = confirmed;
+      _errorMessage = null;
+      _markUserFresh(confirmed);
+      notifyListeners();
+      if (sl.isRegistered<ApiClient>()) {
+        unawaited(
+          FirebaseMessagingService.instance.registerTokenWithBackend(
+            sl<ApiClient>(),
+          ),
+        );
+      }
+      return;
+    }
+    if (!await authRepository.isAuthenticated() && _user?.id == userId) {
+      _onSessionExpired();
     }
   }
 
