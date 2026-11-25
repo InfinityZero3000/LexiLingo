@@ -660,7 +660,11 @@ class _LexiChatPageState extends State<LexiChatPage>
                 : [AppColors.backgroundLight, AppColors.grey50],
           ),
         ),
+        // MainScreen extends its body behind the bottom nav, so the nav and home
+        // indicator height arrive here as bottom padding. With the keyboard up the
+        // nav is hidden behind it and that padding is just a gap above it.
         child: SafeArea(
+          bottom: MediaQuery.viewInsetsOf(context).bottom == 0,
           child: Column(
             children: [
               _buildHeader(isDark),
