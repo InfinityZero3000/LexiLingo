@@ -136,8 +136,10 @@ async def test_monitoring_forwards_to_the_ai_router_not_the_admin_router(monkeyp
     await admin_ai_proxy.chat_monitoring(window="7d", _admin=MagicMock())
     await admin_ai_proxy.llm_key_monitoring(_admin=MagicMock())
     await admin_ai_proxy.observation_spool_monitoring(_admin=MagicMock())
+    await admin_ai_proxy.dashboard_monitoring(_admin=MagicMock())
 
-    chat, keys, spool = seen
+    chat, keys, spool, dashboard = seen
+    assert dashboard.url.path.endswith("/ai/monitoring/dashboard")
     assert chat.url.path.endswith("/ai/monitoring/chat") and chat.url.params["window"] == "7d"
     assert keys.url.path.endswith("/ai/monitoring/llm-keys")
     assert spool.url.path.endswith("/ai/monitoring/observation-spool")
@@ -147,6 +149,6 @@ async def test_monitoring_forwards_to_the_ai_router_not_the_admin_router(monkeyp
 
 def test_monitoring_routes_need_the_ops_permission():
     routes = [r for r in router.routes if isinstance(r, APIRoute) and "/monitoring/" in r.path]
-    assert len(routes) == 3
+    assert len(routes) == 4
     for route in routes:
         assert get_current_admin in _dependency_calls(route)
