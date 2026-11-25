@@ -10,7 +10,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from dotenv import load_dotenv
-from pydantic import field_validator, model_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Get project root directory and load environment files explicitly.
@@ -107,6 +107,10 @@ class Settings(BaseSettings):
     # opens the app at least once in this window never signs in again. 7 days signed out
     # everyone who took a week off; mobile apps keep people signed in for months.
     REFRESH_TOKEN_EXPIRE_DAYS: int = 90
+    # Accounts that can change other people's data (admin, super_admin) get a shorter idle
+    # window. The admin web keeps its token in localStorage, and a dormant admin session is
+    # worth far more to an attacker than a dormant learner's. Never longer than the setting above.
+    REFRESH_TOKEN_EXPIRE_DAYS_PRIVILEGED: int = Field(default=7, ge=1)
     REFRESH_REUSE_GRACE_SECONDS: int = 30
 
     # CORS

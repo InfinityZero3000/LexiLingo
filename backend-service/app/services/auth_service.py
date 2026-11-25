@@ -72,6 +72,40 @@ async def authenticate_user(
     return user
 
 
+PRIVILEGED_ROLE_SLUGS = frozenset({"admin", "super_admin"})
+
+
+async def refresh_lifetime_days(db: AsyncSession, user_id: uuid.UUID) -> int:
+    """How long a refresh token issued to this user stays valid: shorter for admin roles."""
+    slug = (
+        await db.execute(
+            select(Role.slug).join(User, User.role_id == Role.id).where(User.id == user_id)
+        )
+    ).scalar_one_or_none()
+    days = settings.REFRESH_TOKEN_EXPIRE_DAYS
+    if slug in PRIVILEGED_ROLE_SLUGS:
+        days = min(days, settings.REFRESH_TOKEN_EXPIRE_DAYS_PRIVILEGED)
+    return days
+
+
+async def issue_refresh_token(
+    db: AsyncSession,
+    user_id: uuid.UUID,
+    family_id: uuid.UUID | None = None,
+    *,
+    commit: bool = True,
+) -> str:
+    """Create a refresh token and store it, with the lifetime this user's role calls for.
+
+    The JWT and the stored row must agree, so both are built here from one number: any
+    route that issues a session goes through this instead of pairing the two calls itself.
+    """
+    days = await refresh_lifetime_days(db, user_id)
+    token = create_refresh_token({"sub": str(user_id)}, expires_days=days)
+    await save_refresh_token(db, user_id, token, family_id, commit=commit, lifetime_days=days)
+    return token
+
+
 async def save_refresh_token(
     db: AsyncSession,
     user_id: uuid.UUID,
@@ -79,8 +113,10 @@ async def save_refresh_token(
     family_id: uuid.UUID | None = None,
     *,
     commit: bool = True,
+    lifetime_days: int | None = None,
 ) -> None:
-    expires_at = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    days = settings.REFRESH_TOKEN_EXPIRE_DAYS if lifetime_days is None else lifetime_days
+    expires_at = datetime.now(timezone.utc) + timedelta(days=days)
     db.add(
         RefreshToken(
             user_id=user_id,
@@ -124,9 +160,9 @@ async def revoke_refresh_family(db: AsyncSession, db_token: RefreshToken) -> Non
     await db.execute(query)
 
 
-def issue_token_pair(user_id: str) -> tuple[str, str]:
-    """Return (access_token, refresh_token) for a given user_id string."""
+async def issue_token_pair(db: AsyncSession, user_id: uuid.UUID) -> tuple[str, str]:
+    """Return (access_token, refresh_token); the refresh token is stored and role-aware."""
     return (
-        create_access_token({"sub": user_id}),
-        create_refresh_token({"sub": user_id}),
+        create_access_token({"sub": str(user_id)}),
+        await issue_refresh_token(db, user_id),
     )

@@ -7,7 +7,7 @@ import hashlib
 import secrets
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import anyio
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request, status
@@ -26,7 +26,6 @@ from app.core.security import (
     get_password_hash,
     get_password_hash_async,
     create_access_token,
-    create_refresh_token,
     decode_token,
     verify_password_async,
 )
@@ -40,7 +39,8 @@ from app.services.email_service import EmailService
 from app.services.auth_service import (
     register_user,
     authenticate_user,
-    save_refresh_token,
+    issue_refresh_token,
+    refresh_lifetime_days,
     find_refresh_token,
     revoke_refresh_family,
     get_role_id as _get_role_id,
@@ -286,8 +286,7 @@ async def login(
     except Exception:
         await db.rollback()
 
-    access_token, refresh_token = issue_token_pair(user_id)
-    await save_refresh_token(db, uuid.UUID(user_id), refresh_token)
+    access_token, refresh_token = await issue_token_pair(db, uuid.UUID(user_id))
 
     return LoginResponse(
         access_token=access_token,
@@ -392,15 +391,26 @@ async def refresh_token(
 
     # Unverified accounts may keep their session, as at /login; see the note there.
 
+    # A promoted account still holds the long window it was issued as a learner, and a shortened
+    # setting does not shorten tokens already issued. For admin roles the issue date decides.
+    window_days = await refresh_lifetime_days(db, user.id)
+    if window_days < settings.REFRESH_TOKEN_EXPIRE_DAYS:
+        issued_at = db_token.created_at
+        if issued_at is not None and issued_at.tzinfo is None:
+            issued_at = issued_at.replace(tzinfo=timezone.utc)
+        if issued_at is not None and now - issued_at > timedelta(days=window_days):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired refresh token"
+            )
+
     if not within_grace:
         db_token.is_used = True
         db_token.rotated_at = now
     
     # Create new tokens
     access_token = create_access_token({"sub": str(user.id)})
-    new_refresh_token = create_refresh_token({"sub": str(user.id)})
-    
-    await save_refresh_token(db, user.id, new_refresh_token, db_token.family_id, commit=False)
+    new_refresh_token = await issue_refresh_token(db, user.id, db_token.family_id, commit=False)
     await db.commit()
     
     return TokenResponse(
@@ -638,10 +648,7 @@ async def google_login(
     
     # Create tokens
     access_token = create_access_token({"sub": str(user.id)})
-    refresh_token = create_refresh_token({"sub": str(user.id)})
-    
-    # FIX: Save refresh token for revocation support
-    await save_refresh_token(db,user.id, refresh_token)
+    refresh_token = await issue_refresh_token(db, user.id)
     
     return LoginResponse(
         access_token=access_token,
@@ -724,10 +731,7 @@ async def facebook_login(
     
     # Create tokens
     access_token = create_access_token({"sub": str(user.id)})
-    refresh_token = create_refresh_token({"sub": str(user.id)})
-    
-    # Save refresh token for revocation support
-    await save_refresh_token(db,user.id, refresh_token)
+    refresh_token = await issue_refresh_token(db, user.id)
     
     return LoginResponse(
         access_token=access_token,
@@ -952,8 +956,7 @@ async def verify_email(
     # transition: the "already verified" branch above returns no session, so a link is a
     # one-time login.
     user_id = str(user.id)
-    access_token, refresh_token = issue_token_pair(user_id)
-    await save_refresh_token(db, user.id, refresh_token)
+    access_token, refresh_token = await issue_token_pair(db, user.id)
 
     return VerifyEmailResponse(
         verified=True,
@@ -1031,8 +1034,7 @@ async def admin_login(
         await db.rollback()
 
     access_token = create_access_token({"sub": user_id})
-    refresh_token_val = create_refresh_token({"sub": user_id})
-    await save_refresh_token(db,user.id, refresh_token_val)
+    refresh_token_val = await issue_refresh_token(db, user.id)
 
     user_data = _build_user_response(user)
 
@@ -1240,8 +1242,7 @@ async def admin_verify_otp(
         await db.rollback()
 
     access_token = create_access_token({"sub": user_id})
-    refresh_token_val = create_refresh_token({"sub": user_id})
-    await save_refresh_token(db,user.id, refresh_token_val)
+    refresh_token_val = await issue_refresh_token(db, user.id)
 
     user_data = _build_user_response(user)
 
