@@ -517,12 +517,13 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
                 evidence_items.append({
                     "item_id": f"ext_{hit['id']}",
                     "title": "External Knowledge",
-                    "text": f"Context: {hit['content']}",
+                    "text": str(hit["content"]),
                     "kg_depth": 3, # Tầng sâu hơn KG
                     "vec_sim": hit["score"],
                     "turns_ago": session_turn,
                     "is_external": True,
-                    "chunk_id": hit["id"]
+                    "chunk_id": hit["id"],
+                    "source": str(hit.get("source") or ""),
                 })
             if external_hits:
                 logger.info(f"[retrieve_node] L2 Context injected: {len(external_hits)} chunks")
@@ -620,6 +621,10 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
         }
         if "is_relevant" in item:
             trace_item["is_relevant"] = bool(item["is_relevant"])
+        if item.get("is_external"):
+            trace_item["is_external"] = True
+            trace_item["chunk_id"] = str(item.get("chunk_id") or "")
+            trace_item["source"] = str(item.get("source") or "")
         retrieval_trace.append(trace_item)
 
     if benchmark_candidates:
@@ -632,8 +637,14 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
     elif benchmark_context and benchmark_task in {"multihop_qa", "retrieval_qa"}:
         retrieved_context = benchmark_context
     else:
-        context_parts = [item["text"] for item in top_evidence]
+        context_parts = [item["text"] for item in top_evidence if not item.get("is_external")]
         retrieved_context = "\n".join(context_parts) if context_parts else ""
+
+    external_context = list(state.get("external_context") or []) + [
+        {"text": item["text"], "source": item.get("source", "")}
+        for item in top_evidence
+        if item.get("is_external")
+    ]
 
     jit_soft_graph = str(state.get("jit_soft_graph") or "").strip()
     jit_graph_meta = dict(state.get("jit_graph_meta") or {})
@@ -682,6 +693,7 @@ async def retrieve_node(state: TraceCAGState) -> Dict[str, Any]:
     return {
         "vector_hits": vector_hits,
         "retrieved_context": retrieved_context,
+        "external_context": external_context,
         "jit_soft_graph": jit_soft_graph or None,
         "jit_graph_meta": jit_graph_meta,
         "retrieval_trace": retrieval_trace,

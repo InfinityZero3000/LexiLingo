@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 import uuid
 import time
 import logging
+from typing import Any, Dict, List
 
 from fastapi.responses import StreamingResponse
 
@@ -282,11 +283,13 @@ async def start_topic_session(
         
         story = None
         system_prompt = None
+        external_context: List[Dict[str, Any]] = []
         
         if cached_bundle:
             logger.info(f"GraphCache HIT for topic: {request.story_id}")
             bundle = json.loads(cached_bundle)
             system_prompt = bundle.get("prime_prompt")
+            external_context = bundle.get("external_context") or []
             # We still need the story object for metadata in the response
             # but we can try to skip full construction if we have enough info
         
@@ -311,6 +314,7 @@ async def start_topic_session(
             "story_id": request.story_id,
             "title": request.session_title or story.title.en,
             "system_prompt": system_prompt,
+            "external_context": external_context,
             "session_type": "topic_based",
             "preferred_llm": _normalize_preferred_llm(request.preferred_llm),
             "difficulty_level": story.difficulty_level.value,
@@ -468,6 +472,7 @@ async def send_topic_message(
             kg_seeds=kg_seeds,
             preferred_llm=preferred_llm,
             topic_system_prompt=session.get("system_prompt"),
+            external_context=session.get("external_context"),
         )
 
         if not tracecag_result.ai_response:
@@ -630,6 +635,7 @@ async def send_topic_message_stream(
             conversation_history=conversation_history,
             kg_seeds=kg_seeds,
             topic_system_prompt=session.get("system_prompt"),
+            external_context=session.get("external_context"),
             repo=repo,
             quota=quota,
             start_time=start_time,

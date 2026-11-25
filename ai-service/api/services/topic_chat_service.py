@@ -146,6 +146,7 @@ async def call_tracecag_with_retry(
     kg_seeds: list[str],
     preferred_llm: str,
     topic_system_prompt: str | None = None,
+    external_context: list[dict[str, Any]] | None = None,
     primary_timeout: float = _PRIMARY_TIMEOUT,
     retry_timeout: float = _RETRY_TIMEOUT,
 ) -> TracecagResult:
@@ -168,6 +169,7 @@ async def call_tracecag_with_retry(
                 diagnosis_policy=_TOPIC_DIAGNOSIS_POLICY,
                 generation_policy="auto",
                 topic_system_prompt=topic_system_prompt,
+                external_context=external_context,
                 kg_seed_concepts=kg_seeds or None,
                 # ponytail: topic persona changes output; include prompt in cache key before enabling.
                 cache_policy="off",
@@ -210,6 +212,7 @@ async def call_tracecag_with_retry(
                 diagnosis_policy=_TOPIC_DIAGNOSIS_POLICY,
                 generation_policy="auto",
                 topic_system_prompt=topic_system_prompt,
+                external_context=external_context,
             ),
             timeout=retry_timeout,
         )
@@ -352,6 +355,7 @@ async def stream_tracecag_topic_message(
     start_time: float,
     request_id: str,
     scripted: bool = False,
+    external_context: list[dict[str, Any]] | None = None,
     primary_timeout: float = _PRIMARY_TIMEOUT,
     retry_timeout: float = _RETRY_TIMEOUT,
 ) -> AsyncGenerator[str, None]:
@@ -402,6 +406,7 @@ async def stream_tracecag_topic_message(
             retrieval_policy="rapid",
             diagnosis_policy=_TOPIC_DIAGNOSIS_POLICY,
             topic_system_prompt=topic_system_prompt,
+            external_context=external_context,
             cache_policy="off",
         )
 

@@ -62,6 +62,24 @@ def resolve_groq_model(*env_vars: str) -> str:
     return DEFAULT_GROQ_MODEL
 
 
+# key -> monotonic time until which Groq has refused it. The Redis limiter counts requests and tokens per
+# minute but not Groq's tokens-per-day budget, so without this a spent key is handed out again every round.
+_PARKED_UNTIL: dict[str, float] = {}
+_PARK_MAX_SECONDS = 3600.0
+
+
+def park_groq_key(api_key: str, seconds: float) -> None:
+    """Keep `api_key` out of rotation after Groq refused it."""
+    if seconds <= 0:
+        return
+    until = time.monotonic() + min(seconds, _PARK_MAX_SECONDS)
+    _PARKED_UNTIL[str(api_key)] = max(_PARKED_UNTIL.get(str(api_key), 0.0), until)
+
+
+def groq_key_is_parked(api_key: str) -> bool:
+    return _PARKED_UNTIL.get(str(api_key), 0.0) > time.monotonic()
+
+
 def parse_groq_keys(raw: str) -> List[str]:
     """Parse configured keys without ever logging their values."""
     if not raw.strip():
@@ -123,9 +141,9 @@ class GroqKeyPool:
         for offset in range(len(self._keys)):
             idx = (self._cursor + offset) % len(self._keys)
             limiter = self._limiters[idx]
-            if not await limiter.can_request(estimated_tokens):
-                continue
             api_key = self._keys[idx]
+            if groq_key_is_parked(api_key) or not await limiter.can_request(estimated_tokens):
+                continue
             token = uuid.uuid4().hex
             script = """
             redis.call('ZREMRANGEBYSCORE', KEYS[2], 0, ARGV[1] - 60)
@@ -186,6 +204,8 @@ class GroqKeyPool:
             for i in range(n):
                 idx = (start + i) % n
                 limiter = self._limiters[idx]
+                if groq_key_is_parked(self._keys[idx]):
+                    continue
                 if await limiter.can_request(estimated_tokens):
                     self._cursor = (idx + 1) % n
                     self._log_slot(idx)
@@ -208,6 +228,8 @@ class GroqKeyPool:
             rpm, tpm, rpd = counts[idx]
             voice_rpm, lease = voice[idx]
             blocked = limiter.blocked_by(rpm, tpm, rpd, estimated_tokens)
+            if blocked is None and groq_key_is_parked(self._keys[idx]):
+                blocked = "parked"
             if blocked == "rpd":
                 state = "exhausted"
             elif blocked or voice_rpm >= voice_rpm_cap(limiter.rpm_limit, limiter.safety):
@@ -283,9 +305,12 @@ async def get_available_groq_key(estimated_tokens: int = 600) -> Optional[str]:
     keys = _get_fallback_keys()
     if not keys:
         return None
-    key = keys[_fallback_cursor % len(keys)]
-    _fallback_cursor += 1
-    return key
+    for _ in range(len(keys)):
+        key = keys[_fallback_cursor % len(keys)]
+        _fallback_cursor += 1
+        if not groq_key_is_parked(key):
+            return key
+    return None
 
 
 async def try_acquire_groq_key(estimated_tokens: int = 600) -> Optional[str]:
@@ -309,7 +334,11 @@ async def try_acquire_groq_key(estimated_tokens: int = 600) -> Optional[str]:
         now = time.monotonic()
         for offset in range(len(keys)):
             index = (_fallback_cursor + offset) % len(keys)
-            if index not in _fallback_in_flight and _fallback_next_at[index] <= now:
+            if (
+                index not in _fallback_in_flight
+                and _fallback_next_at[index] <= now
+                and not groq_key_is_parked(keys[index])
+            ):
                 _fallback_in_flight.add(index)
                 _fallback_next_at[index] = now + 60.0 / rpm
                 _fallback_cursor = (index + 1) % len(keys)

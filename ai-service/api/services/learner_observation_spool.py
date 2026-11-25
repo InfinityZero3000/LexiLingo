@@ -221,6 +221,11 @@ MAX_DELIVERY_ATTEMPTS = 10
 # left disabled for a week costs a handful of polls rather than 20,000.
 RECEIVER_OFF_BACKOFF_SECONDS = 300.0
 
+# A bug on our side of the wire (2026-11: an unencodable datetime) fails every row alike and is fixed by a deploy,
+# so it must not spend the rows' attempts; 1,099 observations were abandoned that way. Past this age they still are.
+_SENDER_BUGS = (TypeError, ValueError, KeyError, AttributeError)
+SENDER_BUG_MAX_AGE = timedelta(days=30)
+
 
 def _response_status(exc: BaseException) -> int | None:
     """HTTP status behind a failed send, if it was an HTTP error at all."""
@@ -347,6 +352,27 @@ class SpoolForwarder:
                 },
             )
             _telemetry_event("learner_state_degraded_total.receiver_off")
+            return
+
+        created = document.get("created_at")
+        if isinstance(created, datetime) and created.tzinfo is None:
+            created = created.replace(tzinfo=UTC)
+        fresh = not isinstance(created, datetime) or now - created < SENDER_BUG_MAX_AGE
+        if status_code is None and isinstance(exc, _SENDER_BUGS) and fresh:
+            await self._collection.update_one(
+                {"event_id": event_id, "status": "processing"},
+                {
+                    "$set": {
+                        "status": "retry",
+                        "available_at": now + timedelta(seconds=RECEIVER_OFF_BACKOFF_SECONDS),
+                        "last_error_code": f"sender_bug_{error_code}",
+                    },
+                    "$inc": {"attempt_count": -1},
+                    "$unset": {"claimed_at": ""},
+                },
+            )
+            logger.error("learner observation %s cannot be sent: %s", event_id, error_code)
+            _telemetry_event("learner_state_degraded_total.sender_bug")
             return
 
         permanent = status_code in _PERMANENT_REJECTION_STATUSES
@@ -638,6 +664,9 @@ async def persist_trace_observations(
     if settings.LEARNER_STATE_MODE == "off":
         return {"observation_count": 0, "observation_durability_degraded": False}
     if not user_id or not turn_id:
+        return {"observation_count": 0, "observation_durability_degraded": False}
+    if trace_result.get("diagnosis_graded") is False:
+        # Nothing checked the message: recording it would score an outage as error-free writing.
         return {"observation_count": 0, "observation_durability_degraded": False}
     if settings.LEARNER_OBSERVATION_DIAGNOSED_ONLY:
         observations = _diagnosed_only_observations(

@@ -11,6 +11,7 @@ Enhanced with TraceCAG principles for optimal LLM context.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 from dataclasses import dataclass
@@ -78,6 +79,12 @@ class RetrievalServiceV3:
     - Smart pruning: Output only necessary information
     """
     
+    # Concept embeddings stacked for one matmul; rebuilt when _concept_embeddings is replaced.
+    _concept_order: List[str] = []
+    _concept_row: Dict[str, int] = {}
+    _concept_matrix: Optional[np.ndarray] = None
+    _matrix_source: Optional[Dict[str, np.ndarray]] = None
+
     def __init__(
         self,
         kg: KnowledgeGraphServiceV3,
@@ -150,7 +157,8 @@ class RetrievalServiceV3:
         # Embed once. Routing and retrieval both need the query vector, and a
         # second encode is ~30ms against an 80ms vector budget — enough on its
         # own to push the stage past its deadline and drop it entirely.
-        query_vec = self.embedder.embed_text((query or "").strip())
+        # Off the event loop: the encode is the rest of this stage's cost, and wait_for cannot interrupt it here.
+        query_vec = await asyncio.to_thread(self.embedder.embed_text, (query or "").strip())
         routed_topics, topic_similarity = self.route_to_topics(query, query_vec=query_vec)
         if routed_topics:
             members = self.kg.get_topic_members()
@@ -243,43 +251,61 @@ class RetrievalServiceV3:
         if query_vec is None:
             query_vec = self.embedder.embed_text(normalized)
 
-        candidates = (
-            {cid: self._concept_cache[cid] for cid in restrict_to if cid in self._concept_cache}
-            if restrict_to is not None
-            else self._concept_cache
-        )
-        scored: List[Tuple[str, float, str]] = []
-        for concept_id, meta in candidates.items():
-            concept_vec = self._concept_embeddings.get(concept_id)
-            if concept_vec is None:
-                continue
-                
-            # Cosine similarity
-            try:
-                similarity = float(np.dot(query_vec, concept_vec))
-            except ValueError:
-                # Handle shape mismatch safely if mixed dimension modes occur
-                similarity = 0.0
-            
-            # Filter by minimum similarity
-            if similarity < self.config.min_similarity:
-                continue
-                
+        ranked = self._similar_concepts(query_vec, restrict_to, limit)
+        hits: List[VectorHit] = []
+        for concept_id, similarity in ranked:
+            meta = self._concept_cache.get(concept_id) or {}
             # The embedding was made from "title. keywords"; the prompt must get that content back, not the bare title
             title = meta.get("title", concept_id)
             if kg_context_v2():
                 snippet = kg_concept_text(title, meta.get("keywords", ""), meta.get("level", ""), concept_id)
             else:
                 snippet, title = title, ""   # before 2026-11-11 the prompt got the bare title
-            scored.append((concept_id, similarity, snippet, title))
+            hits.append(VectorHit(id=concept_id, score=max(0.0, min(1.0, similarity)), snippet=snippet, title=title))
+        return hits
 
-        scored.sort(key=lambda x: x[1], reverse=True)
-        
+    def _similar_concepts(
+        self, query_vec: np.ndarray, restrict_to: Optional[List[str]], limit: int
+    ) -> List[Tuple[str, float]]:
+        """Top concepts by cosine, in one matmul.
+
+        A Python loop of np.dot over 18,694 concepts held the event loop on every turn and alone
+        spent the 80 ms vector budget: 11% of production turns lost the whole dense stage to it.
+        """
+        self._ensure_concept_matrix()
+        matrix = self._concept_matrix
+        if matrix is None or matrix.shape[1] != np.shape(query_vec)[0]:
+            return []
+        if restrict_to is None:
+            rows = None
+            sims = matrix @ query_vec
+        else:
+            rows = np.asarray(
+                [self._concept_row[cid] for cid in dict.fromkeys(restrict_to)
+                 if cid in self._concept_row and cid in self._concept_cache],
+                dtype=np.intp,
+            )
+            if rows.size == 0:
+                return []
+            sims = matrix[rows] @ query_vec
+        keep = np.flatnonzero(sims >= self.config.min_similarity)
+        # Stable on ties, as the sort it replaces was.
+        order = keep[np.argsort(-sims[keep], kind="stable")][:limit]
         return [
-            VectorHit(id=c_id, score=max(0.0, min(1.0, score)), snippet=snippet, title=title)
-            for c_id, score, snippet, title in scored[:limit]
+            (self._concept_order[int(i if rows is None else rows[i])], float(sims[i])) for i in order
         ]
-    
+
+    def _ensure_concept_matrix(self) -> None:
+        if self._matrix_source is self._concept_embeddings:
+            return
+        ids = [cid for cid in self._concept_embeddings if cid in self._concept_cache]
+        self._concept_order = ids
+        self._concept_row = {cid: i for i, cid in enumerate(ids)}
+        self._concept_matrix = (
+            np.stack([self._concept_embeddings[cid] for cid in ids]).astype(np.float32) if ids else None
+        )
+        self._matrix_source = self._concept_embeddings
+
     def _rank_by_centrality(
         self,
         hits: List[VectorHit],
@@ -428,7 +454,7 @@ class RetrievalServiceV3:
     
     def _refresh_concept_cache(self, concepts: Dict[str, Dict[str, str]]) -> None:
         """Refresh cached concept embeddings."""
-        if concepts == self._concept_cache:
+        if concepts is self._concept_cache or concepts == self._concept_cache:
             return
 
         self._concept_cache = concepts
@@ -441,6 +467,7 @@ class RetrievalServiceV3:
 
         embeddings = self.embedder.embed_texts(texts)
         self._concept_embeddings = {cid: emb for cid, emb in zip(ids, embeddings)}
+        self._ensure_concept_matrix()
         self._refresh_topic_index()
 
     def _refresh_topic_index(self) -> None:

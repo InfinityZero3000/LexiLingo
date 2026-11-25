@@ -22,10 +22,8 @@ from api.models.schemas import (
     LogInteractionResponse
 )
 from api.models.schemas import MAX_CHAT_MESSAGE_CHARS
-from api.models.v3_schemas import TutorResponseV3
 from api.models.ai_repository import AIRepository
 from api.services.trace_cag import get_trace_cag
-from api.services.v3_pipeline import get_v3_pipeline
 from api.routes.admin import verify_admin_api_key
 from api.core.groq_key_pool import get_configured_key_count, get_groq_key_pool
 from api.services.ai_monitoring import chat_report, llm_key_report, spool_report
@@ -105,45 +103,6 @@ async def analyze_with_trace_cag(
         )
 
 
-@router.post(
-    "/analyze",
-    response_model=TutorResponseV3,
-    summary="Analyze input with V3 Knowledge-Centric Pipeline",
-    description="Legacy V3 pipeline - use /trace-cag/analyze for new integrations."
-)
-async def analyze_with_v3(
-    request: AnalyzeRequest,
-    current_user: AuthenticatedUser = Depends(get_current_user),
-):
-    """
-    Legacy V3 pipeline endpoint.
-    """
-    user_id = enforce_user_scope(current_user, request.user_id)
-    request = request.model_copy(update={"user_id": user_id})
-    await enforce_user_quota(
-        current_user.user_id,
-        "ai.analyze",
-        token_cost=default_token_cost_for_endpoint("ai.analyze", text=request.text),
-        fail_closed=True,
-    )
-    try:
-        pipeline = await get_v3_pipeline()
-        return await pipeline.analyze(
-            text=request.text,
-            session_id=request.session_id,
-            user_id=request.user_id,
-            learner_profile=request.learner_profile,
-        )
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Analysis failed: {str(e)}"
-        )
-
-
 @router.get(
     "/trace-cag/health",
     summary="Health check for TraceCAG",
@@ -196,101 +155,6 @@ async def warmup_models(background_tasks: BackgroundTasks):
 
     background_tasks.add_task(_do_warmup)
     return {"status": "warming_up", "message": "Model preload started in background"}
-
-
-@router.get(
-    "/graph-analytics",
-    summary="Get Graph Analytics data",
-    description="""
-    Returns centrality analysis and community detection data.
-    
-    **Centrality Types:**
-    - Degree: Concepts with many connections (foundational)
-    - Betweenness: Bridge concepts between different areas
-    - PageRank: Concepts that important concepts point to
-    
-    **Community Detection:**
-    - Groups related concepts together
-    - Helps with curriculum planning and lesson grouping
-    
-    **Memory Optimization:**
-    - Shows how pruning reduces output size
-    - Identifies which concepts can be filtered out
-    """
-)
-async def get_graph_analytics():
-    """
-    Get comprehensive graph analytics data.
-    
-    Includes:
-    - Top concepts ranked by centrality
-    - Community groupings
-    - Memory optimization stats
-    """
-    try:
-        pipeline = await get_v3_pipeline()
-        analytics = pipeline.get_graph_analytics_summary()
-        
-        return {
-            "status": "success",
-            "analytics": analytics,
-            "optimization": {
-                "centrality_enabled": True,
-                "community_detection_enabled": True,
-                "pruning_enabled": True,
-                "max_output_concepts": 5,
-            }
-        }
-        
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to get graph analytics: {str(e)}"
-        )
-
-
-@router.get(
-    "/graph-analytics/communities/{community_id}",
-    summary="Get concepts in a specific community"
-)
-async def get_community_concepts(community_id: int):
-    """Get all concepts belonging to a specific community."""
-    try:
-        from api.services.graph_analytics import get_graph_analytics
-        from api.services.kg_service_v3 import KnowledgeGraphServiceV3
-        
-        kg = KnowledgeGraphServiceV3()
-        analytics = get_graph_analytics(kg)
-        
-        concepts = analytics.get_community_concepts(community_id)
-        communities = analytics.get_communities()
-        
-        community_info = next(
-            (c for c in communities if c.community_id == community_id),
-            None
-        )
-        
-        if not community_info:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Community {community_id} not found"
-            )
-        
-        return {
-            "community_id": community_id,
-            "name": community_info.name,
-            "central_concept": community_info.central_concept,
-            "concepts": concepts,
-            "keywords": community_info.keywords,
-        }
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to get community concepts: {str(e)}"
-        )
 
 
 # ============================================================

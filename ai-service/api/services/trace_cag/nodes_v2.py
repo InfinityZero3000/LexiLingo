@@ -39,6 +39,9 @@ from api.services.trace_cag.llm_client import (
     _qwen_no_think_messages,
     _qwen_reasoning_overrides,
     _throttled_post_json,
+    estimate_chat_tokens,
+    groq_chat,
+    groq_key_used,
     provider_usage,
 )
 
@@ -145,7 +148,7 @@ async def input_node(state: TraceCAGState) -> Dict[str, Any]:
     - Set initial metadata
     """
     user_input = state.get("user_input", "")
-    logger.info(f"[input_node] Processing: {user_input[:50]}...")
+    logger.info("[input_node] Processing %d chars", len(user_input))
     start_time = time.time()
     
     try:
@@ -484,16 +487,19 @@ async def kg_expand_node(state: TraceCAGState) -> Dict[str, Any]:
         seed_concepts = collect_seed_concepts(
             kg, state.get("user_input", ""), learner_level
         )
+        # Caller-supplied seeds (topic, exercise) only steer expansion when the turn names nothing itself.
+        # They are never returned as kg_seed_concepts: the observation spool grades those as this turn's evidence.
+        expansion_seeds = seed_concepts or list(state.get("kg_seed_concepts") or [])
 
         # ── Phase 2: Level-aware best-first expansion ────────────────
         expanded_nodes = []
         paths = []
         mastery: Dict[str, float] = {}
 
-        if seed_concepts and settings.KG_EXPANSION_ENABLED:
-            mastery = await _traversal_mastery(state, kg, seed_concepts, learner_level)
+        if expansion_seeds and settings.KG_EXPANSION_ENABLED:
+            mastery = await _traversal_mastery(state, kg, expansion_seeds, learner_level)
             kg_result = await kg.expand_best_first(
-                seed_nodes=seed_concepts,
+                seed_nodes=expansion_seeds,
                 learner_level=learner_level,
                 max_hops=2,
                 max_nodes=10,
@@ -696,6 +702,12 @@ Sentence: "{user_text}"
     return head + body
 
 
+def _has_local_chat(gateway: Any) -> bool:
+    """False only when the registry says the local chat model is absent (production: Ollama is off)."""
+    models = getattr(gateway, "_models", None)
+    return not isinstance(models, dict) or "qwen" in models
+
+
 async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
     """
     Analyze user input for grammar, fluency, intent using AI.
@@ -766,21 +778,24 @@ async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
         # of returning {"success": False} for a genuinely unregistered/unavailable
         # model — normalize that into the same shape so the Groq-fallback branch
         # below actually runs instead of being skipped straight to rules.
+        result = {"success": False}
         try:
-            result = await gateway.execute_task(
-                "chat",
-                {
-                    "message": diagnosis_prompt,
-                    "system": "You are an English grammar analyzer. Return only valid JSON.",
-                    # 150 was too tight for the requested schema (errors array
-                    # with span/type/correction/explanation per item plus
-                    # scores) — a live run against real Groq truncated mid-
-                    # object ("Expecting ',' delimiter") for a single-error
-                    # sentence, silently degrading to the weaker rule-based
-                    # fallback.
-                    "max_tokens": 400,
-                },
-            )
+            # Ollama is off in production, so the chat model is not registered there: not a failure to warn about.
+            if _has_local_chat(gateway):
+                result = await gateway.execute_task(
+                    "chat",
+                    {
+                        "message": diagnosis_prompt,
+                        "system": "You are an English grammar analyzer. Return only valid JSON.",
+                        # 150 was too tight for the requested schema (errors array
+                        # with span/type/correction/explanation per item plus
+                        # scores) — a live run against real Groq truncated mid-
+                        # object ("Expecting ',' delimiter") for a single-error
+                        # sentence, silently degrading to the weaker rule-based
+                        # fallback.
+                        "max_tokens": 400,
+                    },
+                )
         except Exception as gateway_exc:
             logger.warning(f"[diagnose_node] Local gateway unavailable, trying Groq: {gateway_exc}")
             result = {"success": False, "error": str(gateway_exc)}
@@ -796,18 +811,19 @@ async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
         
         used_model = "qwen_grammar"
         parsed = False
+        graded = True
         diagnosis_usage: Dict[str, int] = {}
 
         if not (result.get("success") and result.get("data")):
             from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage
-            groq_key = await get_available_groq_key(estimated_tokens=400)
             groq_model = resolve_groq_model("GROQ_MODEL_DIAGNOSE", "GROQ_MODEL")
+            messages = _qwen_no_think_messages(groq_model, [
+                {"role": "system", "content": "You are an English grammar analyzer. Return only valid JSON."},
+                {"role": "user", "content": diagnosis_prompt},
+            ])
+            groq_key = await get_available_groq_key(estimated_tokens=estimate_chat_tokens(messages, 400))
             if groq_key:
                 try:
-                    messages = _qwen_no_think_messages(groq_model, [
-                        {"role": "system", "content": "You are an English grammar analyzer. Return only valid JSON."},
-                        {"role": "user", "content": diagnosis_prompt},
-                    ])
                     _started = time.monotonic()
                     resp = await _throttled_post_json(
                         provider="groq",
@@ -832,7 +848,7 @@ async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
                             diagnosis_usage["prompt_tokens"] + diagnosis_usage["completion_tokens"]
                             if diagnosis_usage else data.get("usage", {}).get("total_tokens", 150)
                         )
-                        await record_groq_key_usage(groq_key, tokens)
+                        await record_groq_key_usage(groq_key_used(resp, groq_key), tokens)
                         content = data["choices"][0]["message"]["content"]
                         result = {"success": True, "data": content}
                         used_model = f"groq/{groq_model}"
@@ -856,7 +872,9 @@ async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
                         ai_data = {}
                 else:
                     ai_data = ai_response
-                
+                if not isinstance(ai_data, dict) or not ai_data:
+                    raise ValueError("no JSON object in the diagnosis")  # silence is not "no mistakes"
+
                 # Extract errors — small fallback models sometimes hallucinate a
                 # generic span (e.g. "the sentence") instead of quoting the
                 # actual offending text, so drop anything that isn't really
@@ -885,19 +903,21 @@ async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
                 fluency_score = _unit_score(ai_data.get("fluency_score"), 0.8)
                 parsed = True
                 
-            except (json.JSONDecodeError, TypeError) as e:
+            except (ValueError, TypeError, AttributeError) as e:
                 logger.warning(f"[diagnose_node] Failed to parse AI response: {e}")
                 # Fallback to rule-based
+                facts = {}
                 errors, root_causes = ([], []) if llm_only else _rule_based_diagnosis(user_text, bridge)
         else:
             # Fallback to rule-based if AI fails
             logger.warning("[diagnose_node] AI diagnosis failed, using rules")
             errors, root_causes = ([], []) if llm_only else _rule_based_diagnosis(user_text, bridge)
         
-        if llm_only and not parsed:
+        if not parsed:
             # Ungraded, not error-free: callers must not record this turn as evidence.
-            confidence = 0.0
-            used_model = "llm_unavailable"
+            graded = False
+            confidence = 0.0 if llm_only else 0.5
+            used_model = "llm_unavailable" if llm_only else "rule_fallback"
 
         latency_ms = int((time.time() - start_time) * 1000)
         logger.info(f"[diagnose_node] Found {len(errors)} errors, intent={intent}, latency={latency_ms}ms")
@@ -908,6 +928,7 @@ async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
             "diagnosis_facts": facts,
             "diagnosis_root_causes": root_causes,
             "diagnosis_confidence": confidence,
+            "diagnosis_graded": graded,
             "grammar_score": grammar_score,
             "fluency_score": fluency_score,
             "vocabulary_level": EvaluationAgent.estimate_vocab_level(user_text),
@@ -927,6 +948,7 @@ async def diagnose_node(state: TraceCAGState) -> Dict[str, Any]:
             "diagnosis_errors": errors,
             "diagnosis_root_causes": root_causes,
             "diagnosis_confidence": 0.0 if llm_only else 0.5,
+            "diagnosis_graded": False,
             "grammar_score": 0.7,
             "fluency_score": 0.7,
             "vocabulary_level": EvaluationAgent.estimate_vocab_level(user_text),
@@ -1095,6 +1117,9 @@ async def _jit_graph_extract_node(state: TraceCAGState) -> Dict[str, Any]:
 # NODE 6: NATIVE LANGUAGE HINT (AI-POWERED, Lazy Load)
 # ============================================================
 
+_NATIVE_HINT_TIMEOUT_SECONDS = 4.0
+
+
 async def vietnamese_node(state: TraceCAGState) -> Dict[str, Any]:
     """
     Generate a short native-language hint for the learner.
@@ -1104,7 +1129,7 @@ async def vietnamese_node(state: TraceCAGState) -> Dict[str, Any]:
     - Learner explicitly requests a native-language explanation
 
     Strategy (in order):
-    1. Qwen via ModelGateway  (local, fast)
+    1. Qwen via ModelGateway when registered, otherwise Groq
     2. Gemini via ModelGateway (cloud fallback)
     3. Hardcoded Vietnamese strings (last resort)
 
@@ -1143,22 +1168,34 @@ async def vietnamese_node(state: TraceCAGState) -> Dict[str, Any]:
             f"Respond ONLY in {native_language}. Keep it short and encouraging."
         )
 
-        # --- Attempt 1: Qwen ---
+        # --- Attempt 1: local Qwen when it is registered, otherwise Groq ---
         native_hint: Optional[str] = None
         models_used: list[str] = []
 
-        qwen_result = await gateway.execute_task(
-            "chat",
-            {
-                "message": hint_prompt,
-                "system": system_prompt,
-                "max_tokens": 200,
-            },
-        )
-        if qwen_result.get("success") and qwen_result.get("data"):
-            raw = qwen_result["data"]
-            native_hint = raw if isinstance(raw, str) else raw.get("text") or raw.get("response", "")
-            models_used.append("qwen_native")
+        if _has_local_chat(gateway):
+            qwen_result = await gateway.execute_task(
+                "chat",
+                {
+                    "message": hint_prompt,
+                    "system": system_prompt,
+                    "max_tokens": 200,
+                },
+            )
+            if qwen_result.get("success") and qwen_result.get("data"):
+                raw = qwen_result["data"]
+                native_hint = raw if isinstance(raw, str) else raw.get("text") or raw.get("response", "")
+                models_used.append("qwen_native")
+        if not native_hint:
+            native_hint = await groq_chat(
+                [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": hint_prompt},
+                ],
+                max_tokens=200,
+                timeout=_NATIVE_HINT_TIMEOUT_SECONDS,
+            )
+            if native_hint:
+                models_used.append("groq_native")
 
         # --- Attempt 2: Gemini fallback ---
         if not native_hint and "gemini" in gateway._models:
@@ -1365,19 +1402,29 @@ I'm not sure what they need. Generate a friendly clarification question asking i
 
 Keep it short and friendly (1-2 sentences)."""
 
-        result = await gateway.execute_task(
-            "chat",
-            {
-                "message": clarify_prompt,
-                "max_tokens": 100,
-            }
-        )
-        
-        if result.get("success") and result.get("data"):
-            response = result["data"]
-            if isinstance(response, dict):
-                response = response.get("text", response.get("response", ""))
-        else:
+        response: Optional[str] = None
+        model_used = "qwen_clarify"
+        if _has_local_chat(gateway):
+            result = await gateway.execute_task(
+                "chat",
+                {
+                    "message": clarify_prompt,
+                    "max_tokens": 100,
+                }
+            )
+            if result.get("success") and result.get("data"):
+                response = result["data"]
+                if isinstance(response, dict):
+                    response = response.get("text", response.get("response", ""))
+        if not response:
+            response = await groq_chat(
+                [{"role": "user", "content": clarify_prompt}],
+                max_tokens=100,
+                timeout=_NATIVE_HINT_TIMEOUT_SECONDS,
+            )
+            model_used = "groq_clarify"
+        if not response:
+            model_used = "rule_fallback"
             response = (
                 "I'm not quite sure what you need. Would you like me to:\n"
                 "1. Correct your sentence\n"
@@ -1394,7 +1441,7 @@ Keep it short and friendly (1-2 sentences)."""
             "strategy": "ask",
             "next_action": "ask",
             "path": "fast",
-            "models_used": ["qwen_clarify"],
+            "models_used": [model_used],
         }
         
     except Exception as e:

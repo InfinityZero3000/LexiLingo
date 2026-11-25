@@ -2,14 +2,19 @@
 
 from __future__ import annotations
 
+import logging
 import math
 import os
 import time
 from dataclasses import dataclass
 
 from fastapi import HTTPException, status
+from redis.exceptions import RedisError
 
 from api.core.redis_client import get_redis
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -43,27 +48,32 @@ class UserQuotaGuard:
         fail_closed: bool = False,
         rpd_limit: int | None = None,
     ) -> QuotaDecision:
-        redis_client = await get_redis()
         normalized_token_cost = max(int(token_cost), 0)
         # Lets a caller apply a tighter daily cap on its own endpoint_key
         # (e.g. a free-tier chat cap) without affecting the shared abuse
         # ceiling every other call to this guard still uses.
         effective_rpd_limit = self.rpd_limit if rpd_limit is None else rpd_limit
 
-        if redis_client is None:
+        unavailable = QuotaDecision(
             # Default is fail-open for resilience; sensitive endpoints can opt into fail-closed.
-            return QuotaDecision(
-                allowed=not fail_closed,
-                rpm_used=0,
-                rpd_used=0,
-                rpm_limit=self.rpm_limit,
-                rpd_limit=effective_rpd_limit,
-                tpm_used=0,
-                tpd_used=0,
-                tpm_limit=self.tpm_limit,
-                tpd_limit=self.tpd_limit,
-                backend_available=False,
-            )
+            allowed=not fail_closed,
+            rpm_used=0,
+            rpd_used=0,
+            rpm_limit=self.rpm_limit,
+            rpd_limit=effective_rpd_limit,
+            tpm_used=0,
+            tpd_used=0,
+            tpm_limit=self.tpm_limit,
+            tpd_limit=self.tpd_limit,
+            backend_available=False,
+        )
+        try:
+            redis_client = await get_redis()
+        except Exception as exc:
+            logger.warning("Quota backend unavailable: %s", type(exc).__name__)
+            return unavailable
+        if redis_client is None:
+            return unavailable
 
         now = int(time.time())
         minute_bucket = now // 60
@@ -83,7 +93,11 @@ class UserQuotaGuard:
         pipeline.expire(tpm_key, 70)
         pipeline.incrby(tpd_key, normalized_token_cost)
         pipeline.expire(tpd_key, 86400 + 300)
-        result = await pipeline.execute()
+        try:
+            result = await pipeline.execute()
+        except (RedisError, RuntimeError, OSError) as exc:
+            logger.warning("Quota backend failed: %s", type(exc).__name__)
+            return unavailable
 
         rpm_used = int(result[0])
         rpd_used = int(result[2])

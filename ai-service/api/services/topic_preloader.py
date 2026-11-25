@@ -2,7 +2,7 @@ import asyncio
 import hashlib
 import json
 import logging
-from typing import Callable, Dict, Any, Optional
+from typing import Any, Callable, Dict, List, Optional
 import redis.asyncio as redis
 from fastapi import Depends
 
@@ -58,16 +58,16 @@ class TopicContextPreloader:
             logger.warning("Dynamic context service unavailable: %s", exc)
             return None
         
-    async def _collect_dynamic_context(self, story: Any) -> str:
+    async def _collect_dynamic_context(self, story: Any) -> List[Dict[str, str]]:
         """Collect real-time information for dynamic topics using web search/scraping."""
         tags = getattr(story, 'tags', [])
         if "real_time" not in tags and "weather" not in tags and "news" not in tags:
-            return ""
+            return []
 
         doc_service = self._get_doc_service()
         if doc_service is None:
             logger.info("Dynamic context skipped: document intelligence service unavailable")
-            return ""
+            return []
             
         logger.info(f"Triggering dynamic collection for topic: {story.story_id}")
         
@@ -80,18 +80,13 @@ class TopicContextPreloader:
             # Use L2 retrieval (Web Search fallback)
             external_data = await doc_service.query_l2(query, top_k=2)
             
-            if not external_data:
-                return ""
-                
-            context_str = "\n--- REAL-TIME CONTEXT (FRESHLY COLLECTED) ---\n"
-            for i, entry in enumerate(external_data):
-                context_str += f"Source {i+1}: {entry['content']}\n"
-            context_str += "--------------------------------------------\n"
-            
-            return context_str
+            return [
+                {"text": str(entry["content"]), "source": str(entry.get("source") or "")}
+                for entry in external_data or []
+            ]
         except Exception as e:
             logger.error(f"Dynamic collection failed: {e}")
-            return ""
+            return []
 
     async def warm_cache(self, topic_id: str, user_id: str) -> Dict[str, Any]:
         """
@@ -108,16 +103,12 @@ class TopicContextPreloader:
         # 2. Collect Dynamic Data if applicable
         dynamic_context = await self._collect_dynamic_context(story)
         dynamic_context_hash = (
-            hashlib.sha256(dynamic_context.encode("utf-8")).hexdigest()[:16]
+            hashlib.sha256(json.dumps(dynamic_context).encode("utf-8")).hexdigest()[:16]
             if dynamic_context else ""
         )
         
-        # 3. Build master prompt with dynamic injection
+        # 3. Build master prompt. Web text stays out of it and travels as external_context.
         master_prompt = TopicPromptBuilder.build_master_prompt(story)
-        if dynamic_context:
-            master_prompt = f"{dynamic_context}\n\n{master_prompt}"
-            logger.info(f"Injected {len(dynamic_context)} chars of real-time data into prime prompt.")
-            
         # 4. Build context bundle
         # vocabulary_list and grammar_points are List[Dict] — already plain dicts
         _context_desc = story.context_description
@@ -135,6 +126,7 @@ class TopicContextPreloader:
             "suggested_focus": list(_objectives),
             "suggested_prompts": story.suggested_prompts or [],
             "prime_prompt": master_prompt,
+            "external_context": dynamic_context,
             "has_dynamic_data": bool(dynamic_context),
             "kg_seed_concepts": [],
             "kg_topic_fingerprint": "",

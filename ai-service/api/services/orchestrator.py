@@ -228,6 +228,9 @@ class AIOrchestrator:
                 conversation_history=conversation_history,
                 **kwargs,
             )
+            if (result.get("metadata") or {}).get("path") == "error":
+                # analyze() reports a crash as an apology; returned as-is it looks like a reply and no caller retries.
+                raise RuntimeError(f"TraceCAG pipeline error: {result.get('error')}")
             self._total_requests += 1
             latency = result.get("metadata", {}).get("latency_ms", 0)
             self._total_latency_ms += latency

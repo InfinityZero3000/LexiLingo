@@ -10,6 +10,7 @@ Following architecture.md:
 import asyncio
 import logging
 import os
+import time
 import redis.asyncio as redis
 from redis.exceptions import ConnectionError as RedisConnectionError, TimeoutError as RedisTimeoutError
 from typing import Optional, Dict, Any, List, Callable, Awaitable, TypeVar
@@ -29,6 +30,10 @@ class RedisClient:
     _instance: Optional[redis.Redis] = None
     _pool: Optional[redis.ConnectionPool] = None
     _max_retries: int = 10
+    _reconnect_lock: Optional[asyncio.Lock] = None
+    _reconnect_loop: Any = None
+    _down_until: float = 0.0
+    _DOWN_COOLDOWN_SECONDS = 5.0
 
     @classmethod
     def _benchmark_fail_fast(cls) -> bool:
@@ -122,6 +127,27 @@ class RedisClient:
             await cls._reset()
             raise RuntimeError("Redis disabled for benchmark")
 
+        # Shared: without it every waiting request tore down the client the previous one had just built, and each
+        # walked the whole retry ladder (about 9 s) by itself, so a Redis restart stalled all of chat.
+        loop = asyncio.get_running_loop()
+        if cls._reconnect_lock is None or cls._reconnect_loop is not loop:
+            cls._reconnect_lock, cls._reconnect_loop = asyncio.Lock(), loop
+        failed = cls._instance
+        async with cls._reconnect_lock:
+            if cls._instance is not None and cls._instance is not failed:
+                return cls._instance
+            if time.monotonic() < cls._down_until:
+                raise RuntimeError("Redis is down; retrying shortly")
+            try:
+                instance = await cls._reconnect_once()
+            except RuntimeError:
+                cls._down_until = time.monotonic() + cls._DOWN_COOLDOWN_SECONDS
+                raise
+            cls._down_until = 0.0
+            return instance
+
+    @classmethod
+    async def _reconnect_once(cls) -> redis.Redis:
         last_exc: Optional[Exception] = None
         max_retries = cls._effective_max_retries()
         for attempt in range(1, max_retries + 1):

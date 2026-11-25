@@ -77,6 +77,7 @@ def session_turn_update(user_id: str, timestamp_iso: str, added: int) -> Dict[st
 
 # SSE stream settings
 HEARTBEAT_INTERVAL_S = 2.5  # how often to send a heartbeat to keep proxies alive
+CONTEXT_DEADLINE_S = 15.0  # orch(45) + ctx(15) + LLM must fit in 90s
 
 
 def env_float(name: str, default: float, minimum: float = 0.0) -> float:
@@ -770,7 +771,7 @@ async def run_lexi_pipeline(
             graph_result.get("weak_concepts", []), bool(corrections)
         )
         native_hint = graph_result.get("native_hint")
-        scores = graph_result.get("scores")
+        scores = graph_result.get("scores") if graph_result.get("diagnosis_graded", True) else None
         metadata["pipeline_steps"].append("trace-cag_complete")
         metadata["trace-cag_metadata"] = graph_result.get("metadata", {})
         model_used = ", ".join(graph_result.get("metadata", {}).get("models_used", ["trace-cag"]))
@@ -978,6 +979,41 @@ async def run_lexi_pipeline(
     )
 
 
+def _graphless_state(
+    *,
+    user_text: str,
+    session_id: str,
+    request: "LexiChatRequest",
+    learner_profile: Dict[str, Any],
+    history: List[Dict[str, Any]],
+    reason: str,
+) -> Dict[str, Any]:
+    """State for a turn whose graph failed: persona, learner and history are known, nothing was graded.
+
+    `degraded_reason` marks it so the caller records no score, evidence or cache entry for it.
+    """
+    from api.services.trace_cag.state import create_initial_state
+
+    state: Dict[str, Any] = dict(create_initial_state(
+        user_input=user_text,
+        session_id=session_id,
+        user_id=request.user_id,
+        input_type=request.input_type,
+        learner_profile=learner_profile,
+        cache_policy="off",
+        generation_policy="skip",
+    ))
+    state.update(
+        conversation_history=history,
+        diagnosis_confidence=0.0,
+        path="degraded",
+        error=reason,
+        degraded_reason=reason,
+        diagnosis_graded=False,
+    )
+    return state
+
+
 async def stream_lexi_chat(
     request: "LexiChatRequest",
     session_id: str,
@@ -1099,6 +1135,12 @@ async def _stream_lexi_chat(
     #    get_orchestrator() may block on cold start (model loading); run it as
     #    a task so we can keep pinging while it initialises.
     effective_level = request.learner_level
+    learner_profile: Dict[str, Any] = {
+        "level": request.learner_level,
+        "native_language": iso_to_language_name(request.native_language),
+    }
+    suggested_courses: List[LexiCourseSuggestion] = []
+    cache_bypass = ""
     try:
         orch_task = asyncio.create_task(get_orchestrator())
         # Started alongside orchestrator warmup (not after) — this Mongo
@@ -1130,27 +1172,27 @@ async def _stream_lexi_chat(
                 yield "event: heartbeat\ndata: {}\n\n"
             except Exception:
                 break
-        orchestrator = await orch_task
+        # The learner's context first: it is also what a turn without the graph replies from.
         session_recap = await recap_task if recap_task else None
         card_ctx = await card_task
         learner_facts, suggested_courses = card_ctx.facts, list(card_ctx.courses)
         effective_level = card_ctx.profile.get("level", request.learner_level)
         memory_block = await memory_task
         cache_bypass = "facts" if learner_facts else ("memory" if memory_block else "")
+        learner_profile.update({
+            **card_ctx.profile,
+            "_profile_complete": card_ctx.resolved,
+            **({"session_recap": session_recap} if session_recap else {}),
+            **({"learner_facts": learner_facts} if learner_facts else {}),
+            **({"memory": memory_block} if memory_block else {}),
+        })
+        orchestrator = await orch_task
         ctx_task = asyncio.create_task(
             orchestrator.pipeline.analyze_for_streaming(
                 user_input=user_text,
                 session_id=session_id,
                 user_id=request.user_id,
-                learner_profile={
-                    "level": request.learner_level,
-                    "native_language": iso_to_language_name(request.native_language),
-                    **card_ctx.profile,
-                    "_profile_complete": card_ctx.resolved,
-                    **({"session_recap": session_recap} if session_recap else {}),
-                    **({"learner_facts": learner_facts} if learner_facts else {}),
-                    **({"memory": memory_block} if memory_block else {}),
-                },
+                learner_profile=dict(learner_profile),
                 conversation_history=history,
                 # See run_lexi_pipeline: a cached reply would report stale XP,
                 # streak or level as if it were current.
@@ -1160,16 +1202,11 @@ async def _stream_lexi_chat(
         )
 
         loop = asyncio.get_running_loop()
-        ctx_deadline = loop.time() + 15.0  # Reduced from 25s: orch(45) + ctx(15) + LLM < 90s
+        ctx_deadline = loop.time() + CONTEXT_DEADLINE_S
         while not ctx_task.done():
             if loop.time() >= ctx_deadline:
                 ctx_task.cancel()
-                logger.error("Lexi /stream context prep timed out")
-                yield (
-                    f"event: error\ndata: "
-                    f"{json.dumps({'error': 'Response timed out. Please try again.'})}\n\n"
-                )
-                return
+                raise asyncio.TimeoutError("context prep deadline exceeded")
             try:
                 await asyncio.wait_for(
                     asyncio.shield(ctx_task), timeout=HEARTBEAT_INTERVAL_S
@@ -1183,12 +1220,25 @@ async def _stream_lexi_chat(
         raw_state = await ctx_task
 
     except Exception as exc:
-        logger.error("Lexi /stream context prep error: %s", exc)
-        yield (
-            f"event: error\ndata: "
-            f"{json.dumps({'error': 'Pipeline failed. Please try again.'})}\n\n"
+        # An error event would only make the app resend the turn to /chat, which runs the same failing graph.
+        logger.exception("Lexi /stream context prep failed; replying without the graph")
+        raw_state = _graphless_state(
+            user_text=user_text,
+            session_id=session_id,
+            request=request,
+            learner_profile=learner_profile,
+            history=history,
+            reason=type(exc).__name__,
         )
-        return
+
+    degraded_reason = str(raw_state.get("degraded_reason") or "")
+    if degraded_reason:
+        try:
+            from api.services.telemetry import get_telemetry
+
+            get_telemetry().increment_counter("lexi_stream_degraded_total")
+        except Exception as telemetry_err:
+            logger.debug("Lexi degraded counter skipped: %s", telemetry_err)
 
     # Extract corrections / concepts / scores from pipeline state
     diag_errors = list(raw_state.get("diagnosis_errors") or [])
@@ -1283,7 +1333,7 @@ async def _stream_lexi_chat(
             "Lexi /stream reply cut short by %s mid-stream; not caching it",
             provider_info.get("provider"),
         )
-    if replied_fresh and not provider_info.get("truncated"):
+    if replied_fresh and not degraded_reason and not provider_info.get("truncated"):
         try:
             from api.services.trace_cag.benchmark.ranking import _update_ranker_from_generation
             from api.services.trace_cag.cache_utils import _write_cache_entry
@@ -1408,7 +1458,7 @@ async def _stream_lexi_chat(
     overall_score = EvaluationAgent.compute_overall_score(
         grammar_score, fluency_score, vocab_level
     )
-    scores = {
+    scores = None if raw_state.get("diagnosis_graded") is False else {
         "fluency": fluency_score,
         "grammar": grammar_score,
         "overall": overall_score,
@@ -1476,6 +1526,7 @@ async def _stream_lexi_chat(
             "latency_ms": total_ms,
             "model_used": model_used,
             "cache_hit": cache_hit,
+            **({"degraded": degraded_reason} if degraded_reason else {}),
             **stream_meta,
             **({"persistence_degraded": True} if persistence_degraded else {}),
             **({"truncated": True} if provider_info.get("truncated") else {}),

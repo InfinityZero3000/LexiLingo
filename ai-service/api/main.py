@@ -8,9 +8,11 @@ Initializes resources and includes modular routers.
 import sentry_sdk
 import asyncio
 from sentry_sdk.integrations.fastapi import FastApiIntegration
-from fastapi import FastAPI, BackgroundTasks
+from fastapi import FastAPI, BackgroundTasks, Request
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.responses import JSONResponse, RedirectResponse
 from contextlib import asynccontextmanager
 import logging
@@ -463,6 +465,15 @@ app.add_middleware(
     ],
     allow_private_network=settings.CORS_ALLOW_PRIVATE_NETWORK,
 )
+
+
+@app.exception_handler(StarletteHTTPException)
+async def _hide_internal_error_details(request: Request, exc: StarletteHTTPException):
+    """Internal error text belongs in our logs, not in a production response."""
+    if exc.status_code == 500 and settings.ENVIRONMENT == "production":
+        logger.error("500 on %s %s: %s", request.method, request.url.path, str(exc.detail)[:500])
+        return JSONResponse({"detail": "Internal server error"}, status_code=500, headers=exc.headers)
+    return await http_exception_handler(request, exc)
 
 
 # Include Routers

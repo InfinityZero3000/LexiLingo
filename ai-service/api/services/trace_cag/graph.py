@@ -164,6 +164,7 @@ class TraceCAGPipeline:
         benchmark_context: Optional[str] = None,
         benchmark_metadata: Optional[Dict[str, Any]] = None,
         kg_seed_concepts: Optional[List[str]] = None,
+        external_context: Optional[List[Dict[str, Any]]] = None,
         return_raw_state: bool = False,
         defer_turn_metrics: bool = False,
     ) -> Dict[str, Any]:
@@ -201,9 +202,11 @@ class TraceCAGPipeline:
             benchmark_metadata=benchmark_metadata,
         )
 
-        # Inject preloaded KG seed concepts (from SubgraphHotCache) to skip KG lookup
+        # Fallback seeds for kg_expand_node; the turn's own seeds win
         if kg_seed_concepts:
             initial_state["kg_seed_concepts"] = list(kg_seed_concepts)
+        if external_context:
+            initial_state["external_context"] = list(external_context)
 
         # Override conversation_history if caller supplies it directly
         # (avoids a redundant Redis round-trip when lexi_chat already holds the store)
@@ -212,7 +215,7 @@ class TraceCAGPipeline:
             # input_node must not read Redis for it again (it used to, then overwrite this).
             initial_state["conversation_history_supplied"] = True
         
-        logger.info(f"[TraceCAG] Starting analysis: {user_input[:50]}...")
+        logger.info("[TraceCAG] Starting analysis: %d chars", len(user_input))
         
         # Run the graph
         try:
@@ -237,6 +240,9 @@ class TraceCAGPipeline:
             
         except Exception as e:
             logger.error(f"[TraceCAG] Error: {e}")
+            if return_raw_state:
+                # A raw-state caller generates from this state; an apology dict would pass for a prepared one.
+                raise
             return {
                 "tutor_response": "I'm sorry, something went wrong. Please try again.",
                 "error": str(e),
@@ -293,6 +299,7 @@ class TraceCAGPipeline:
             # Topic chat builds its correction cards and its learner evidence from this;
             # without it the JSON route saw no errors at all and scored every turn as clean.
             "diagnosis_errors": [dict(err) for err in errors],
+            "diagnosis_graded": state.get("diagnosis_graded", True),
             "corrections": [
                 {
                     "error": err.get("span", ""),
