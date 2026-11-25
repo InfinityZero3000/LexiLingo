@@ -85,6 +85,25 @@ _UNSAFE = re.compile(
 )
 
 
+# Words the learner quotes ("Why do we say 'I am interested in music'?") are
+# examples, not statements about themselves.
+_QUOTED = re.compile(r"(?<!\w)'[^'\n]*'(?!\w)|\"[^\"\n]*\"|[\u201c\u2018][^\u201d\u2019\n]*[\u201d\u2019]")
+# A question about the language itself, quoted or not.
+_LANGUAGE_QUESTION = re.compile(
+    r"\bwhy (?:do|does|is|are|can)\b.*\b(?:say|use)\b|difference between|"
+    r"\bhow (?:do|can|should) (?:i|we|you) (?:say|write)\b|"
+    r"\bwhen (?:do|should|can) (?:we|i|you) use\b|\bis it (?:correct|right)\b|"
+    r"\bwhich (?:one )?is (?:correct|right|better)\b",
+    re.IGNORECASE,
+)
+
+
+def _own_words(text: str) -> str:
+    """The part of a message the learner says about themselves."""
+    sentences = re.split(r"(?<=[.!?])\s+|\n+", _QUOTED.sub(" ", text))
+    return " ".join(s for s in sentences if not _LANGUAGE_QUESTION.search(s))
+
+
 def _norm(text: str) -> str:
     return re.sub(r"\s+", " ", text).strip().casefold()
 
@@ -97,7 +116,7 @@ def clean_facts(raw: Any, user_text: str) -> Dict[str, str]:
     """Keep only allowlisted, short, safe values the learner said about themselves."""
     if not isinstance(raw, Mapping):
         return {}
-    haystack = _norm(user_text)
+    haystack = _norm(_own_words(user_text))
     facts: Dict[str, str] = {}
     for key, limit in ALLOWED_FACTS.items():
         value = raw.get(key)
