@@ -634,7 +634,10 @@ class LexiChatProvider extends ChangeNotifier with ResetEpoch {
         return;
       }
       if (!recoveredSession && _isMissingSessionError(e)) {
-        logWarn(_tag, 'Session $sessionId missing on server; starting a new one');
+        logWarn(
+          _tag,
+          'Session $sessionId missing on server; starting a new one',
+        );
         _messages.removeWhere((m) => m.id == requestId);
         _sessions.removeWhere((s) => s.sessionId == sessionId);
         _session = null;

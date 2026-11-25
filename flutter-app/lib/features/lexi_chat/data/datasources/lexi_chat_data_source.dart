@@ -38,8 +38,6 @@ class LexiChatDataSource {
 
   bool _isSessionNotFoundError(Object error) => httpStatusOf(error) == 404;
 
-  bool _isUnauthorizedError(Object error) => httpStatusOf(error) == 401;
-
   bool _isForbiddenError(Object error) => httpStatusOf(error) == 403;
 
   bool _isSessionAccessError(Object error) {
