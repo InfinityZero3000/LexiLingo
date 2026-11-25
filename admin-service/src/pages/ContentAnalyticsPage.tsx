@@ -11,6 +11,53 @@ import {
   type VocabEffectiveness,
 } from "../lib/adminApi";
 
+const RateBarCell = ({
+  percent,
+  tone,
+  label,
+}: {
+  percent: number;
+  tone: "success" | "warning" | "danger" | "info";
+  label: string;
+}) => {
+  const clamped = Math.max(0, Math.min(100, percent));
+  const fillColor =
+    tone === "success"
+      ? "#FF4D00"
+      : tone === "info"
+        ? "#FF7A00"
+        : tone === "warning"
+          ? "#F59E0B"
+          : "#F43F5E";
+
+  return (
+    <div style={{ display: "inline-flex", alignItems: "center", gap: 10, justifyContent: "center" }}>
+      <div
+        aria-hidden="true"
+        style={{
+          width: 64,
+          height: 6,
+          borderRadius: 999,
+          background: "var(--panel-soft)",
+          overflow: "hidden",
+          flexShrink: 0,
+        }}
+      >
+        <div
+          style={{
+            width: `${clamped}%`,
+            height: "100%",
+            borderRadius: 999,
+            background: fillColor,
+            transition: "width 0.35s ease",
+          }}
+        />
+      </div>
+      <StatusPill tone={tone} label={label} />
+    </div>
+  );
+};
+
 export const ContentAnalyticsPage = () => {
   const [perf, setPerf] = useState<ContentPerformance | null>(null);
   const [vocab, setVocab] = useState<VocabEffectiveness | null>(null);
@@ -44,10 +91,32 @@ export const ContentAnalyticsPage = () => {
 
       {/* Summary Cards */}
       <div className="card-grid">
-        <StatCard label="Lượt đăng ký" value={String(totalEnrollments)} accent="orange" />
-        <StatCard label="Tỷ lệ hoàn thành" value={`${avgCompletion}%`} accent="teal" />
-        <StatCard label="Lượt làm bài" value={String(totalLessonAttempts)} accent="berry" />
-        <StatCard label="Từ vựng" value={String(vocab?.total_words || 0)} note={`Mastery: ${Math.round(vocab?.avg_mastery_rate || 0)}%`} accent="ink" />
+        <StatCard
+          label="Lượt đăng ký"
+          value={totalEnrollments.toLocaleString()}
+          trend={`${perf?.courses?.length || 0} khóa học`}
+          variant="blue"
+          accent="orange"
+        />
+        <StatCard
+          label="Tỷ lệ hoàn thành"
+          value={`${avgCompletion}%`}
+          trend={avgCompletion >= 50 ? "Mức hoàn thành tốt" : "Cần tối ưu lộ trình"}
+          accent="teal"
+        />
+        <StatCard
+          label="Lượt làm bài"
+          value={totalLessonAttempts.toLocaleString()}
+          trend={`${perf?.lessons?.length || 0} bài học`}
+          accent="berry"
+        />
+        <StatCard
+          label="Từ vựng"
+          value={String(vocab?.total_words || 0)}
+          trend={`Mastery: ${Math.round(vocab?.avg_mastery_rate || 0)}%`}
+          variant="dark"
+          accent="ink"
+        />
       </div>
 
       {/* Course Performance */}
@@ -64,18 +133,27 @@ export const ContentAnalyticsPage = () => {
               },
               {
                 header: "Đăng ký",
-                render: (row) => <span className="table-meta">{row.enrollments}</span>,
+                render: (row) => (
+                  <span className="table-meta" style={{ fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
+                    {row.enrollments.toLocaleString()}
+                  </span>
+                ),
                 align: "center",
               },
               {
                 header: "Hoàn thành",
-                render: (row) => <span className="table-meta">{row.completions}</span>,
+                render: (row) => (
+                  <span className="table-meta" style={{ fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
+                    {row.completions.toLocaleString()}
+                  </span>
+                ),
                 align: "center",
               },
               {
                 header: "Tỷ lệ",
                 render: (row) => (
-                  <StatusPill
+                  <RateBarCell
+                    percent={row.completion_rate}
                     tone={row.completion_rate >= 50 ? "success" : row.completion_rate >= 20 ? "warning" : "danger"}
                     label={`${Math.round(row.completion_rate)}%`}
                   />
@@ -84,12 +162,21 @@ export const ContentAnalyticsPage = () => {
               },
               {
                 header: "Điểm TB",
-                render: (row) => <span className="table-meta">{Math.round(row.avg_score)}</span>,
+                render: (row) => (
+                  <StatusPill
+                    tone={row.avg_score >= 80 ? "success" : row.avg_score >= 50 ? "info" : "warning"}
+                    label={`${Math.round(row.avg_score)}`}
+                  />
+                ),
                 align: "center",
               },
               {
                 header: "Thời gian TB",
-                render: (row) => <span className="table-meta">{Math.round(row.avg_time_minutes)} phút</span>,
+                render: (row) => (
+                  <span className="status-pill neutral" style={{ fontVariantNumeric: "tabular-nums" }}>
+                    {Math.round(row.avg_time_minutes)} phút
+                  </span>
+                ),
                 align: "center",
               },
             ]}
@@ -112,18 +199,32 @@ export const ContentAnalyticsPage = () => {
               },
               {
                 header: "Lượt làm",
-                render: (row) => <span className="table-meta">{row.attempts}</span>,
+                render: (row) => (
+                  <span className="table-meta" style={{ fontWeight: 600, fontVariantNumeric: "tabular-nums" }}>
+                    {row.attempts.toLocaleString()}
+                  </span>
+                ),
                 align: "center",
               },
               {
                 header: "Hoàn thành",
-                render: (row) => <span className="table-meta">{row.completions}</span>,
+                render: (row) => {
+                  const pct = row.attempts > 0 ? (row.completions / row.attempts) * 100 : 0;
+                  return (
+                    <RateBarCell
+                      percent={pct}
+                      tone={pct >= 60 ? "success" : pct >= 30 ? "info" : "warning"}
+                      label={row.completions.toLocaleString()}
+                    />
+                  );
+                },
                 align: "center",
               },
               {
                 header: "Điểm TB",
                 render: (row) => (
-                  <StatusPill
+                  <RateBarCell
+                    percent={row.avg_score}
                     tone={row.avg_score >= 80 ? "success" : row.avg_score >= 50 ? "warning" : "danger"}
                     label={`${Math.round(row.avg_score)}`}
                   />
@@ -151,7 +252,8 @@ export const ContentAnalyticsPage = () => {
               {
                 header: "Tỷ lệ nhớ",
                 render: (row) => (
-                  <StatusPill
+                  <RateBarCell
+                    percent={row.mastery_rate}
                     tone={row.mastery_rate >= 50 ? "success" : row.mastery_rate >= 25 ? "warning" : "danger"}
                     label={`${Math.round(row.mastery_rate)}%`}
                   />
@@ -160,7 +262,11 @@ export const ContentAnalyticsPage = () => {
               },
               {
                 header: "Lượt ôn TB",
-                render: (row) => <span className="table-meta">{Math.round(row.avg_reviews)}</span>,
+                render: (row) => (
+                  <span className="status-pill neutral" style={{ fontVariantNumeric: "tabular-nums" }}>
+                    {Math.round(row.avg_reviews)}
+                  </span>
+                ),
                 align: "center",
               },
             ]}

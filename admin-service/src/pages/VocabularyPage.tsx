@@ -37,6 +37,7 @@ export const VocabularyPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [levelFilter, setLevelFilter] = useState<string>("");
 
   // Form
   const [showForm, setShowForm] = useState(false);
@@ -157,14 +158,15 @@ export const VocabularyPage = () => {
     );
   };
 
-  // Client-side search filter
-  const filtered = search
-    ? items.filter(
-        (v) =>
-          v.word.toLowerCase().includes(search.toLowerCase()) ||
-          (v.definition || "").toLowerCase().includes(search.toLowerCase())
-      )
-    : items;
+  // Client-side search + level filter
+  const filtered = items.filter((v) => {
+    if (levelFilter && (v.difficulty_level || "A1") !== levelFilter) return false;
+    if (!search) return true;
+    return (
+      v.word.toLowerCase().includes(search.toLowerCase()) ||
+      (v.definition || "").toLowerCase().includes(search.toLowerCase())
+    );
+  });
 
   return (
     <div className="stack">
@@ -173,10 +175,18 @@ export const VocabularyPage = () => {
       {error && <div className="form-error">{error}</div>}
 
       {importResult && (
-        <div className="panel" style={{ padding: "12px 16px", background: "rgba(34, 197, 94, 0.12)" }}>
+        <div
+          className="panel"
+          style={{
+            padding: "12px 16px",
+            background: "rgba(255, 77, 0, 0.08)",
+            border: "1px solid rgba(255, 77, 0, 0.25)",
+            borderRadius: 14,
+          }}
+        >
           <strong>Import hoàn tất:</strong> {importResult.created} tạo mới, {importResult.skipped} bỏ qua
           {importResult.errors.length > 0 && (
-            <ul style={{ margin: "4px 0 0", paddingLeft: 20, color: "var(--ink-red)" }}>
+            <ul style={{ margin: "4px 0 0", paddingLeft: 20, color: "var(--danger, #DC2626)" }}>
               {importResult.errors.slice(0, 5).map((e, i) => <li key={i}>{e}</li>)}
             </ul>
           )}
@@ -191,14 +201,40 @@ export const VocabularyPage = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
+          <div
+            className="tab-row"
+            role="group"
+            aria-label="Filter by CEFR level"
+            style={{
+              display: "inline-flex",
+              gap: 4,
+              padding: 4,
+              borderRadius: 999,
+              background: "var(--panel-soft-2, #F8FAFC)",
+              border: "1px solid var(--line)",
+            }}
+          >
+            {["", ...LEVEL_OPTIONS].map((lvl) => (
+              <button
+                key={lvl || "all"}
+                type="button"
+                className={`tab${levelFilter === lvl ? " active" : ""}`}
+                style={{ borderRadius: 999 }}
+                aria-pressed={levelFilter === lvl}
+                onClick={() => setLevelFilter(lvl)}
+              >
+                {lvl || "All"}
+              </button>
+            ))}
+          </div>
           <input type="file" accept=".csv,.pdf" ref={fileRef} onChange={handleBulkImport} hidden />
-          <button className="ghost-button" onClick={() => fileRef.current?.click()} disabled={importing}>
+          <button className="ghost-button" style={{ borderRadius: 999 }} onClick={() => fileRef.current?.click()} disabled={importing}>
             {importing ? "Đang import..." : "Import CSV/PDF"}
           </button>
-          <button className="ghost-button" onClick={handleExport} disabled={items.length === 0}>
+          <button className="ghost-button" style={{ borderRadius: 999 }} onClick={handleExport} disabled={items.length === 0}>
             Export CSV
           </button>
-          <button className="primary-button" onClick={() => { resetForm(); setShowForm(true); }}>
+          <button className="primary-button" style={{ borderRadius: 999 }} onClick={() => { resetForm(); setShowForm(true); }}>
             {t.vocabulary.createWord}
           </button>
         </div>

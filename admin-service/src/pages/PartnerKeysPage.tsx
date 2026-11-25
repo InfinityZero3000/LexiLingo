@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { KeyRound, ShieldCheck, ShieldOff } from "lucide-react";
 import { SectionHeader } from "../components/SectionHeader";
+import { StatCard } from "../components/StatCard";
 import { DataTable, Column } from "../components/DataTable";
 import { Dialog } from "../components/Dialog";
 import { EmptyState } from "../components/EmptyState";
@@ -73,9 +75,40 @@ export const PartnerKeysPage = () => {
     iso ? new Date(iso).toLocaleDateString(locale === "vi" ? "vi-VN" : "en-GB") : "—";
 
   const columns: Column<PartnerKey>[] = [
-    { header: t.partnerKeys.keyId, render: (k) => <span className="mono">{k.key_id}</span> },
-    { header: t.partnerKeys.owner, sortValue: (k) => k.owner, render: (k) => k.owner },
-    { header: t.partnerKeys.scope, render: (k) => k.scope },
+    {
+      header: t.partnerKeys.keyId,
+      render: (k) => (
+        <span
+          className="mono text-small"
+          style={{
+            display: "inline-block",
+            padding: "3px 10px",
+            borderRadius: 999,
+            background: "var(--panel-soft-2)",
+            border: "1px solid var(--line)",
+            fontWeight: 600,
+          }}
+        >
+          {k.key_id}
+        </span>
+      ),
+    },
+    { header: t.partnerKeys.owner, sortValue: (k) => k.owner, render: (k) => <span className="table-title">{k.owner}</span> },
+    {
+      header: t.partnerKeys.scope,
+      render: (k) => (
+        <span
+          className="tag"
+          style={{
+            background: "var(--accent-soft)",
+            color: "var(--accent)",
+            borderColor: "rgba(255, 77, 0, 0.22)",
+          }}
+        >
+          {k.scope}
+        </span>
+      ),
+    },
     { header: t.common.status, align: "center", render: (k) => <StatusPill tone={TONES[k.status]} label={t.partnerKeys.statuses[k.status]} /> },
     { header: t.partnerKeys.created, sortValue: (k) => k.created_at ?? "", render: (k) => date(k.created_at) },
     { header: t.partnerKeys.expires, render: (k) => (k.expires_at ? date(k.expires_at) : t.partnerKeys.never) },
@@ -91,6 +124,10 @@ export const PartnerKeysPage = () => {
     },
   ];
 
+  const allKeys = keys.data ?? [];
+  const activeKeys = allKeys.filter((k) => k.status === "active").length;
+  const inactiveKeys = allKeys.length - activeKeys;
+
   return (
     <div className="stack">
       <SectionHeader
@@ -98,6 +135,30 @@ export const PartnerKeysPage = () => {
         description={t.partnerKeys.description}
         action={<button className="primary-button" onClick={() => { setFormError(null); setCreating(true); }}>{t.partnerKeys.create}</button>}
       />
+
+      <div className="card-grid">
+        <StatCard
+          label={t.partnerKeys.title}
+          value={String(allKeys.length)}
+          variant="blue"
+          icon={<KeyRound size={18} />}
+          loading={keys.isLoading}
+        />
+        <StatCard
+          label={t.partnerKeys.statuses.active}
+          value={String(activeKeys)}
+          accent="teal"
+          icon={<ShieldCheck size={18} />}
+          loading={keys.isLoading}
+        />
+        <StatCard
+          label={`${t.partnerKeys.statuses.revoked} / ${t.partnerKeys.statuses.expired}`}
+          value={String(inactiveKeys)}
+          variant="dark"
+          icon={<ShieldOff size={18} />}
+          loading={keys.isLoading}
+        />
+      </div>
 
       {(error || keys.error) && <div className="form-error" role="alert">{error ?? messageOf(keys.error, t.partnerKeys.loadFailed)}</div>}
 

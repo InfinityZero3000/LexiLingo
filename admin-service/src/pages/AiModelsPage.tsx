@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
+import { Activity, AlertTriangle, Bot, Cpu, HardDrive, Workflow } from "lucide-react";
 import { SectionHeader } from "../components/SectionHeader";
 import { StatCard } from "../components/StatCard";
 import { StatusPill } from "../components/StatusPill";
-import { DataTable } from "../components/DataTable";
 import { getMonitoringDashboard, type MonitoringDashboard } from "../lib/aiApi";
 import { checkAiHealth } from "../lib/healthApi";
 import { useI18n } from "../lib/i18n";
@@ -69,32 +69,47 @@ export const AiModelsPage = () => {
         <StatCard
           label={t.aiModelsPage.aiService}
           value={aiOk ? t.common.online : t.common.offline}
-          accent={aiOk ? "teal" : "orange"}
+          variant="blue"
           note={health?.status || t.common.unknown}
+          icon={<Bot size={18} />}
         />
         <StatCard
           label={t.aiModelsPage.cpuUsage}
           value={cpuPercent !== undefined ? `${cpuPercent.toFixed(1)}%` : "--"}
-          accent={cpuPercent && cpuPercent > 80 ? "orange" : "teal"}
+          accent={cpuPercent && cpuPercent > 80 ? "berry" : "teal"}
+          icon={<Cpu size={18} />}
         />
         <StatCard
           label={t.aiModelsPage.memory}
           value={memoryPercent !== undefined ? `${memoryPercent.toFixed(1)}%` : "--"}
-          accent={memoryPercent && memoryPercent > 80 ? "orange" : "berry"}
+          accent={memoryPercent && memoryPercent > 80 ? "berry" : "teal"}
+          icon={<Activity size={18} />}
         />
         <StatCard
           label={t.aiModelsPage.disk}
           value={diskPercent !== undefined ? `${diskPercent.toFixed(1)}%` : "--"}
-          accent={diskPercent && diskPercent > 90 ? "orange" : "ink"}
+          variant="dark"
+          icon={<HardDrive size={18} />}
         />
       </div>
 
       {/* Warnings */}
       {warnings.length > 0 && (
-        <div className="panel" style={{ padding: 16, background: "var(--tint-orange)", border: "1px solid rgba(251, 146, 60, 0.5)" }}>
-          <h4 style={{ margin: "0 0 8px", color: "var(--ink-orange)" }}>{t.aiModelsPage.warningsTitle} ({warnings.length})</h4>
+        <div
+          className="panel"
+          style={{
+            padding: 18,
+            background: "rgba(245, 158, 11, 0.1)",
+            border: "1px solid rgba(245, 158, 11, 0.32)",
+            gap: 8,
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--warn)" }}>
+            <AlertTriangle size={18} />
+            <h4 style={{ margin: 0 }}>{t.aiModelsPage.warningsTitle} ({warnings.length})</h4>
+          </div>
           {warnings.map((w, i) => (
-            <p key={i} style={{ margin: "4px 0", fontSize: 14, color: "var(--ink-orange)" }}>{w.message}</p>
+            <p key={i} style={{ margin: 0, fontSize: 13, color: "var(--text)" }}>{w.message}</p>
           ))}
         </div>
       )}
@@ -103,91 +118,176 @@ export const AiModelsPage = () => {
       {health?.services && (
         <div className="panel panel--pad">
           <h3 className="panel-title">{t.aiModelsPage.serviceConns}</h3>
-          <table className="kv-table">
-            <tbody>
-              {Object.entries(health.services).map(([svc, status]) => (
-                <tr key={svc}>
-                  <td className="kv-value kv-value--cap">{svc}</td>
-                  <td className="kv-cell">
-                    <StatusPill
-                      tone={status === "connected" ? "success" : status === "not_configured" ? "info" : "danger"}
-                      label={status}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="form-grid">
+            {Object.entries(health.services).map(([svc, status]) => (
+              <div
+                key={svc}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 12,
+                  padding: "12px 16px",
+                  borderRadius: "var(--radius-inner)",
+                  background: "var(--panel-soft-2)",
+                  border: "1px solid var(--line)",
+                }}
+              >
+                <span className="kv-value kv-value--cap" style={{ padding: 0 }}>{svc}</span>
+                <StatusPill
+                  tone={status === "connected" ? "success" : status === "not_configured" ? "info" : "danger"}
+                  label={status}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
       {/* AI Models */}
-      <div className="panel">
-        <h3 className="panel-heading">{t.aiModelsPage.aiModelsTitle}</h3>
-        <DataTable
-          columns={[
-            { header: t.aiModelsPage.model, render: (r) => <span className="table-title">{r.name}</span> },
-            { header: t.aiModelsPage.typeCol, render: (r) => <StatusPill tone="info" label={r.type} /> },
-            { header: t.aiModelsPage.provider, render: (r) => <span className="table-meta">{r.provider}</span> },
-            {
-              header: t.aiModelsPage.mode, render: (r) => (
-                <StatusPill
-                  tone={r.mode.includes("Cloud") ? "warning" : "success"}
-                  label={r.mode}
-                />
-              ), align: "center"
-            },
-            { header: t.aiModelsPage.usedFor, render: (r) => <span className="table-meta" style={{ fontSize: 13 }}>{r.usage}</span> },
-          ]}
-          rows={AI_MODELS}
-        />
+      <div className="panel panel--pad">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <h3 className="panel-title" style={{ margin: 0 }}>{t.aiModelsPage.aiModelsTitle}</h3>
+          <StatusPill tone="info" label={String(AI_MODELS.length)} />
+        </div>
+        <div className="grid-2">
+          {AI_MODELS.map((m) => (
+            <div
+              key={m.name}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
+                padding: 18,
+                borderRadius: "var(--radius-inner)",
+                background: "var(--panel-soft-2)",
+                border: "1px solid var(--line)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+                <div>
+                  <div className="table-title" style={{ fontSize: 16 }}>{m.name}</div>
+                  <div className="text-small text-muted" style={{ marginTop: 2 }}>{m.provider}</div>
+                </div>
+                <StatusPill tone={m.mode.includes("Cloud") ? "info" : "success"} label={m.mode} />
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <StatusPill tone="neutral" label={m.type} />
+              </div>
+              <p className="text-small text-muted" style={{ margin: 0, lineHeight: 1.5 }}>{m.usage}</p>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Pipelines */}
-      <div className="panel">
-        <h3 className="panel-heading">{t.aiModelsPage.processingPipelines}</h3>
-        <DataTable
-          columns={[
-            { header: t.aiModelsPage.pipeline, render: (r) => <span className="table-title">{r.name}</span> },
-            {
-              header: t.aiModelsPage.components, render: (r) => (
-                <span className="table-meta" style={{ fontFamily: "monospace", fontSize: 13 }}>{r.components}</span>
-              )
-            },
-            { header: t.aiModelsPage.pipelineStatus, render: () => <StatusPill tone={aiOk ? "success" : "danger"} label={aiOk ? t.common.active : t.common.offline} />, align: "center" },
-          ]}
-          rows={PIPELINES}
-        />
+      <div className="panel panel--pad">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span
+              style={{
+                width: 34,
+                height: 34,
+                borderRadius: 10,
+                display: "grid",
+                placeItems: "center",
+                background: "var(--accent-soft)",
+                color: "var(--accent)",
+              }}
+            >
+              <Workflow size={17} />
+            </span>
+            <h3 className="panel-title" style={{ margin: 0 }}>{t.aiModelsPage.processingPipelines}</h3>
+          </div>
+          <StatusPill tone={aiOk ? "success" : "danger"} label={aiOk ? t.common.active : t.common.offline} />
+        </div>
+        <div className="grid-2">
+          {PIPELINES.map((p) => (
+            <div
+              key={p.name}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 10,
+                padding: 16,
+                borderRadius: "var(--radius-inner)",
+                background: "var(--panel-soft-2)",
+                border: "1px solid var(--line)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                <span className="table-title">{p.name}</span>
+                <StatusPill tone={aiOk ? "success" : "danger"} label={aiOk ? t.common.active : t.common.offline} />
+              </div>
+              <div
+                className="mono text-small"
+                style={{
+                  padding: "8px 12px",
+                  borderRadius: 10,
+                  background: "var(--panel)",
+                  border: "1px solid var(--line)",
+                  color: "var(--muted)",
+                }}
+              >
+                {p.components}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Process Info */}
       {proc && (
         <div className="panel panel--pad">
           <h3 className="panel-title">{t.aiModelsPage.processInfo}</h3>
-          <table className="kv-table">
-            <tbody>
-              <tr>
-                <td className="kv-label">{t.aiModelsPage.processMemory}</td>
-                <td className="kv-value">
-                  {proc.memory_percent != null ? `${proc.memory_percent.toFixed(2)}%` : "N/A"}
-                </td>
-              </tr>
-              <tr>
-                <td className="kv-label">{t.aiModelsPage.threads}</td>
-                <td className="kv-value">
-                  {proc.num_threads ?? "N/A"}
-                </td>
-              </tr>
-              {sys?.load_avg && (
-                <tr>
-                  <td className="kv-label">{t.aiModelsPage.loadAvg}</td>
-                  <td style={{ padding: "10px 12px", fontWeight: 500, fontSize: 14, fontFamily: "monospace" }}>
-                    {sys.load_avg.map((l) => l.toFixed(2)).join(" / ")}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+          <div className="stack" style={{ gap: 10 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "12px 16px",
+                borderRadius: "var(--radius-inner)",
+                background: "var(--panel-soft-2)",
+                border: "1px solid var(--line)",
+              }}
+            >
+              <span className="text-small text-muted">{t.aiModelsPage.processMemory}</span>
+              <StatusPill tone="info" label={proc.memory_percent != null ? `${proc.memory_percent.toFixed(2)}%` : "N/A"} />
+            </div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "12px 16px",
+                borderRadius: "var(--radius-inner)",
+                background: "var(--panel-soft-2)",
+                border: "1px solid var(--line)",
+              }}
+            >
+              <span className="text-small text-muted">{t.aiModelsPage.threads}</span>
+              <span style={{ fontWeight: 600 }}>{proc.num_threads ?? "N/A"}</span>
+            </div>
+            {sys?.load_avg && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "12px 16px",
+                  borderRadius: "var(--radius-inner)",
+                  background: "var(--panel-soft-2)",
+                  border: "1px solid var(--line)",
+                }}
+              >
+                <span className="text-small text-muted">{t.aiModelsPage.loadAvg}</span>
+                <span className="mono text-small" style={{ fontWeight: 600 }}>
+                  {sys.load_avg.map((l) => l.toFixed(2)).join(" / ")}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

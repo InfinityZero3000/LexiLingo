@@ -1,11 +1,13 @@
 import { Dialog } from "../components/Dialog";
 import React, { useEffect, useState } from "react";
 import { SectionHeader } from "../components/SectionHeader";
+import { StatCard } from "../components/StatCard";
 import { StatusPill } from "../components/StatusPill";
+import { TableSkeleton } from "../components/Skeleton";
 import { useI18n } from "../lib/i18n";
 import { apiFetch } from "../lib/api";
 import { ENV } from "../lib/env";
-import { Shield, UserPlus, Mail, Calendar } from "lucide-react";
+import { Shield, UserPlus, Mail, Calendar, Users, CheckCircle2 } from "lucide-react";
 
 interface AdminUser {
   id: string;
@@ -105,108 +107,140 @@ export const AdminManagementPage = () => {
     }
   };
 
-  if (loading) return <div className="loading">{t.common.loading}</div>;
+  const superAdminCount = admins.filter((a) => a.role === "super_admin").length;
+  const activeCount = admins.filter((a) => a.is_active).length;
 
   return (
     <div className="stack">
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <SectionHeader
-          title={t.adminManagement.title}
-          description={t.adminManagement.description}
+      <SectionHeader
+        title={t.adminManagement.title}
+        description={t.adminManagement.description}
+        action={
+          <button className="primary-button" onClick={() => { setShowAddModal(true); setModalError(null); }}>
+            <UserPlus size={16} />
+            {t.adminManagement.addAdmin}
+          </button>
+        }
+      />
+
+      <div className="card-grid">
+        <StatCard
+          label={t.adminManagement.title}
+          value={String(admins.length)}
+          variant="blue"
+          icon={<Users size={18} />}
+          loading={loading}
         />
-        <button className="primary-button" onClick={() => { setShowAddModal(true); setModalError(null); }}>
-          <UserPlus size={16} />
-          {t.adminManagement.addAdmin}
-        </button>
+        <StatCard
+          label={t.adminManagement.superAdmin}
+          value={String(superAdminCount)}
+          accent="berry"
+          icon={<Shield size={18} />}
+          loading={loading}
+        />
+        <StatCard
+          label={t.common.active}
+          value={String(activeCount)}
+          variant="dark"
+          icon={<CheckCircle2 size={18} />}
+          loading={loading}
+        />
       </div>
 
-      {error && <div className="form-error">{error}</div>}
+      {error && <div className="form-error" role="alert">{error}</div>}
 
       {/* Admin List */}
       <div className="panel">
-        <div className="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th>{t.adminManagement.email}</th>
-                <th>{t.adminManagement.displayName}</th>
-                <th>{t.adminManagement.role}</th>
-                <th>{t.adminManagement.provider}</th>
-                <th>{t.adminManagement.status}</th>
-                <th>{t.adminManagement.lastLogin}</th>
-                <th>{t.common.actions}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {admins.length === 0 ? (
+        {loading ? (
+          <TableSkeleton rows={5} cols={7} />
+        ) : (
+          <div className="table-wrap">
+            <table>
+              <thead>
                 <tr>
-                  <td colSpan={7} style={{ textAlign: "center", padding: 24, color: "var(--muted)" }}>
-                    {t.adminPages.adminsEmpty}
-                  </td>
+                  <th>{t.adminManagement.email}</th>
+                  <th>{t.adminManagement.displayName}</th>
+                  <th>{t.adminManagement.role}</th>
+                  <th>{t.adminManagement.provider}</th>
+                  <th>{t.adminManagement.status}</th>
+                  <th>{t.adminManagement.lastLogin}</th>
+                  <th>{t.common.actions}</th>
                 </tr>
-              ) : admins.map((admin) => (
-                <tr key={admin.id}>
-                  <td>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <Mail size={16} style={{ color: "var(--muted)" }} />
-                      {admin.email}
-                    </div>
-                  </td>
-                  <td>{admin.display_name}</td>
-                  <td>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                      <Shield
-                        size={14}
-                        style={{ color: admin.role === "super_admin" ? "var(--accent)" : "var(--muted)" }}
-                      />
-                      <span style={{
-                        fontWeight: admin.role === "super_admin" ? 600 : 400,
-                        color: admin.role === "super_admin" ? "var(--accent)" : "inherit"
-                      }}>
+              </thead>
+              <tbody>
+                {admins.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} style={{ textAlign: "center", padding: 24, color: "var(--muted)" }}>
+                      {t.adminPages.adminsEmpty}
+                    </td>
+                  </tr>
+                ) : admins.map((admin) => (
+                  <tr key={admin.id}>
+                    <td>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <Mail size={16} style={{ color: "var(--muted)" }} />
+                        <span>{admin.email}</span>
+                      </div>
+                    </td>
+                    <td className="table-title">{admin.display_name}</td>
+                    <td>
+                      <span
+                        className="tag"
+                        style={{
+                          gap: 6,
+                          background: admin.role === "super_admin" ? "var(--accent-soft)" : "var(--panel-soft-2)",
+                          color: admin.role === "super_admin" ? "var(--accent)" : "var(--text)",
+                          borderColor: admin.role === "super_admin" ? "rgba(255, 77, 0, 0.22)" : "var(--line)",
+                        }}
+                      >
+                        <Shield size={13} />
                         {admin.role === "super_admin" ? t.adminManagement.superAdmin : t.adminManagement.admin}
                       </span>
-                    </div>
-                  </td>
-                  <td>
-                    <span className="tag" style={{
-                      background: admin.provider.includes("google") ? "#EBF5FF" : "var(--panel-soft)",
-                      color: admin.provider.includes("google") ? "#1E40AF" : "var(--text)",
-                      borderColor: admin.provider.includes("google") ? "#BFDBFE" : "var(--line)",
-                    }}>
-                      {admin.provider.join(", ")}
-                    </span>
-                  </td>
-                  <td>
-                    <StatusPill
-                      tone={admin.is_active ? "success" : "neutral"}
-                      label={admin.is_active ? t.common.active : t.common.inactive}
-                    />
-                  </td>
-                  <td>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--muted)" }}>
-                      {admin.last_login_at ? (
-                        <>
-                          <Calendar size={14} />
-                          {new Date(admin.last_login_at).toLocaleDateString("vi-VN")}
-                        </>
-                      ) : (
-                        <span>—</span>
-                      )}
-                    </div>
-                  </td>
-                  <td>
-                    <button
-                      className="ghost-button small"
-                      onClick={() => handleToggleStatus(admin.id, admin.is_active)}
-                    >
-                      {admin.is_active ? t.adminManagement.deactivate : t.adminManagement.activate}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    </td>
+                    <td>
+                      <span
+                        className="tag"
+                        style={{
+                          background: admin.provider.includes("google") ? "var(--accent-soft)" : "var(--panel-soft-2)",
+                          color: admin.provider.includes("google") ? "var(--accent)" : "var(--text)",
+                          borderColor: admin.provider.includes("google") ? "rgba(255, 77, 0, 0.22)" : "var(--line)",
+                        }}
+                      >
+                        {admin.provider.join(", ")}
+                      </span>
+                    </td>
+                    <td>
+                      <StatusPill
+                        tone={admin.is_active ? "success" : "neutral"}
+                        label={admin.is_active ? t.common.active : t.common.inactive}
+                      />
+                    </td>
+                    <td>
+                      <div className="text-small text-muted" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        {admin.last_login_at ? (
+                          <>
+                            <Calendar size={14} />
+                            {new Date(admin.last_login_at).toLocaleDateString("vi-VN")}
+                          </>
+                        ) : (
+                          <span>—</span>
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <button
+                        className="ghost-button small"
+                        onClick={() => handleToggleStatus(admin.id, admin.is_active)}
+                      >
+                        {admin.is_active ? t.adminManagement.deactivate : t.adminManagement.activate}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Add Admin Modal */}

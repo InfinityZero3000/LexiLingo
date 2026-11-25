@@ -91,7 +91,8 @@ export function RankingAgentPage() {
         description="Tự động hóa league reset, XP events và phát thành tích hàng loạt."
         action={
           <button
-            className="primary-button"
+            className="primary-button rounded-full"
+            style={{ borderRadius: 9999 }}
             onClick={() => setShowModal(true)}
           >
             <Plus className="w-4 h-4 mr-1" />
@@ -101,22 +102,22 @@ export function RankingAgentPage() {
       />
 
       {error && (
-        <div className="alert alert-error mb-4">{error}</div>
+        <div className="form-error mb-4">{error}</div>
       )}
 
       {loading && jobs.length === 0 ? (
-        <div className="empty-state">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
+        <div className="empty-state rounded-3xl">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600 mx-auto" />
           <p className="mt-2 text-sm text-muted">Đang tải...</p>
         </div>
       ) : jobs.length === 0 ? (
-        <div className="empty-state">
-          <Trophy className="w-10 h-10 text-muted mb-2 mx-auto" />
+        <div className="empty-state rounded-3xl">
+          <Trophy className="w-10 h-10 text-orange-600 mb-2 mx-auto" />
           <p className="font-medium">Chưa có jobs nào</p>
           <p className="text-sm text-muted">Tạo job đầu tiên để bắt đầu.</p>
         </div>
       ) : (
-        <div className="table-wrap">
+        <div className="panel table-wrap rounded-3xl overflow-hidden" style={{ borderRadius: 20 }}>
           <table>
             <thead>
               <tr>
@@ -133,12 +134,17 @@ export function RankingAgentPage() {
               {jobs.map((job) => (
                 <tr
                   key={job.id}
-                  className="cursor-pointer hover:bg-muted/10"
+                  className="cursor-pointer hover:bg-orange-50/40 transition-colors"
                   onClick={() => setActiveJob(job)}
                 >
                   <td>
-                    <span className="flex items-center gap-1.5">
-                      {JOB_TYPE_ICONS[job.job_type]}
+                    <span className="flex items-center gap-2">
+                      <span
+                        className="w-7 h-7 rounded-full inline-flex items-center justify-center shrink-0"
+                        style={{ background: "rgba(255, 77, 0, 0.1)", color: "var(--accent, #FF4D00)" }}
+                      >
+                        {JOB_TYPE_ICONS[job.job_type]}
+                      </span>
                       <span className="font-medium">{JOB_TYPE_LABELS[job.job_type]}</span>
                     </span>
                   </td>
@@ -146,15 +152,20 @@ export function RankingAgentPage() {
                     <StatusPill tone={STATUS_TONE[job.status]} label={STATUS_LABELS[job.status]} />
                   </td>
                   <td>
-                    <span className="text-sm text-muted">{job.progress.percent}%</span>
+                    <span
+                      className="text-xs font-semibold px-2.5 py-0.5 rounded-full inline-block"
+                      style={{ background: "var(--panel-soft-2, #f1f5f9)", color: "var(--accent, #FF4D00)" }}
+                    >
+                      {job.progress.percent}%
+                    </span>
                   </td>
                   <td>
                     {job.warnings.length > 0 ? (
-                      <span className="text-sm text-warning font-medium">
+                      <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 inline-block">
                         {job.warnings.length} cảnh báo
                       </span>
                     ) : job.blocking_errors.length > 0 ? (
-                      <span className="text-sm text-error font-medium">
+                      <span className="text-xs font-medium px-2.5 py-0.5 rounded-full bg-red-50 text-red-600 inline-block">
                         {job.blocking_errors.length} lỗi
                       </span>
                     ) : (
@@ -167,7 +178,8 @@ export function RankingAgentPage() {
                   </td>
                   <td>
                     <button
-                      className="ghost-button text-sm"
+                      className="ghost-button small rounded-full"
+                      style={{ borderRadius: 9999 }}
                       onClick={(e) => {
                         e.stopPropagation();
                         setActiveJob(job);

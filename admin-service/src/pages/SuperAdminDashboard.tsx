@@ -3,12 +3,40 @@ import { StatCard } from "../components/StatCard";
 import { SectionHeader } from "../components/SectionHeader";
 import { StatusPill } from "../components/StatusPill";
 import { Skeleton } from "../components/Skeleton";
+import { BentoRingGauge } from "../components/dashboard/BentoChartPrimitives";
 import { getMonitoringDashboard, MonitoringDashboard } from "../lib/aiApi";
 import { getSystemInfo, type SystemInfo } from "../lib/adminApi";
 import { checkBackendHealth, checkAiHealth } from "../lib/healthApi";
 import { useI18n } from "../lib/i18n";
 
 type HealthStatus = { status?: string; message?: string; version?: string; services?: Record<string, string> };
+
+const AI_MODELS = [
+  {
+    name: "Gemini 2.0 Flash",
+    desc: "Chat, Grammar, Topic • Cloud API",
+    runtime: "Cloud API",
+    tone: "info" as const,
+  },
+  {
+    name: "Whisper Base",
+    desc: "Speech-to-Text • Local CPU",
+    runtime: "Local CPU",
+    tone: "success" as const,
+  },
+  {
+    name: "Piper TTS",
+    desc: "Text-to-Speech • en_US-lessac",
+    runtime: "en_US-lessac",
+    tone: "neutral" as const,
+  },
+  {
+    name: "TRACECAG",
+    desc: "Knowledge Graph • Custom Pipeline",
+    runtime: "Knowledge Graph",
+    tone: "info" as const,
+  },
+];
 
 export const SuperAdminDashboard = () => {
   const [monitor, setMonitor] = useState<MonitoringDashboard | null>(null);
@@ -52,10 +80,10 @@ export const SuperAdminDashboard = () => {
       <div className="stack dashboard-view">
         <SectionHeader title={t.superDashboard.title} description={t.superDashboard.loadingDashboard} />
         <div className="card-grid dashboard-card-grid">
-          <StatCard label={t.superDashboard.users} value="--" loading />
+          <StatCard label={t.superDashboard.users} value="--" variant="blue" loading />
           <StatCard label={t.superDashboard.cpuMemory} value="--" accent="teal" loading />
           <StatCard label={t.superDashboard.diskUsage} value="--" accent="berry" loading />
-          <StatCard label={t.superDashboard.systemHealth} value="--" accent="ink" loading />
+          <StatCard label={t.superDashboard.systemHealth} value="--" variant="dark" accent="ink" loading />
         </div>
         <div className="grid-2 dashboard-grid-2">
           <div className="panel"><Skeleton height={260} /></div>
@@ -64,6 +92,30 @@ export const SuperAdminDashboard = () => {
       </div>
     );
   }
+
+  const ringItems = [
+    {
+      label: "CPU",
+      value: cpuPercent ?? 0,
+      display: cpuPercent !== undefined ? `${cpuPercent.toFixed(0)}%` : "--",
+      tone: (cpuPercent && cpuPercent > 80 ? "amber" : "blue") as "amber" | "blue",
+      detail: cpuPercent !== undefined ? (cpuPercent > 80 ? "High load" : "Nominal") : "Awaiting telemetry",
+    },
+    {
+      label: "Memory",
+      value: memoryPercent ?? 0,
+      display: memoryPercent !== undefined ? `${memoryPercent.toFixed(0)}%` : "--",
+      tone: (memoryPercent && memoryPercent > 85 ? "amber" : "lime") as "amber" | "lime",
+      detail: memoryPercent !== undefined ? (memoryPercent > 85 ? "Elevated" : "Healthy") : "Awaiting telemetry",
+    },
+    {
+      label: "Disk",
+      value: diskPercent ?? 0,
+      display: diskPercent !== undefined ? `${diskPercent.toFixed(1)}%` : "--",
+      tone: (diskPercent && diskPercent > 90 ? "amber" : "indigo") as "amber" | "indigo",
+      detail: diskPercent !== undefined ? (diskPercent > 90 ? "Near capacity" : "Available") : "Awaiting telemetry",
+    },
+  ];
 
   return (
     <div className="stack dashboard-view">
@@ -75,6 +127,7 @@ export const SuperAdminDashboard = () => {
           label={t.superDashboard.users}
           value={String(sysInfo?.totals.users || 0)}
           note={`${sysInfo?.totals.courses || 0} ${t.superDashboard.coursesCount}`}
+          variant="blue"
           accent="orange"
         />
         <StatCard
@@ -90,9 +143,60 @@ export const SuperAdminDashboard = () => {
         <StatCard
           label={t.superDashboard.systemHealth}
           value={healthy === undefined ? "--" : healthy ? t.common.healthy : `${critCount} ${t.superDashboard.errors}`}
+          variant={healthy ? "dark" : "dark"}
           accent={healthy ? "teal" : "orange"}
           note={warnCount > 0 ? `${warnCount} ${t.superDashboard.warnings}` : undefined}
         />
+      </div>
+
+      {/* Bento Resource Ring Row */}
+      <div className="panel bento-card--dark">
+        <SectionHeader
+          title={`${t.superDashboard.cpuMemory} & ${t.superDashboard.diskUsage}`}
+          description={t.superDashboard.systemHealth}
+          action={
+            <StatusPill
+              tone={healthy === false ? "danger" : warnCount > 0 ? "warning" : "success"}
+              label={healthy === undefined ? t.common.unknown : healthy ? t.common.healthy : `${critCount} ${t.superDashboard.errors}`}
+            />
+          }
+        />
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+            gap: 16,
+          }}
+        >
+          {ringItems.map((item) => (
+            <div
+              key={item.label}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 16,
+                padding: "14px 16px",
+                borderRadius: 18,
+                background: "rgba(255, 255, 255, 0.04)",
+                border: "1px solid rgba(255, 255, 255, 0.08)",
+              }}
+            >
+              <BentoRingGauge
+                value={item.value}
+                centerPrimary={item.display}
+                centerSecondary={item.label}
+                tone={item.tone}
+                dark
+                size={88}
+                strokeWidth={9}
+              />
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontWeight: 700, fontSize: 14, color: "#F8FAFC" }}>{item.label}</div>
+                <div style={{ fontSize: 12, color: "#94A3B8", marginTop: 2 }}>{item.detail}</div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="grid-2 dashboard-grid-2">
@@ -150,22 +254,15 @@ export const SuperAdminDashboard = () => {
         <div className="panel">
           <SectionHeader title={t.superDashboard.aiModels} description={t.superDashboard.aiModelsDesc} />
           <div className="mini-list">
-            <div>
-              <div className="mini-title">Gemini 2.0 Flash</div>
-              <div className="mini-desc">Chat, Grammar, Topic • Cloud API</div>
-            </div>
-            <div>
-              <div className="mini-title">Whisper Base</div>
-              <div className="mini-desc">Speech-to-Text • Local CPU</div>
-            </div>
-            <div>
-              <div className="mini-title">Piper TTS</div>
-              <div className="mini-desc">Text-to-Speech • en_US-lessac</div>
-            </div>
-            <div>
-              <div className="mini-title">TRACECAG</div>
-              <div className="mini-desc">Knowledge Graph • Custom Pipeline</div>
-            </div>
+            {AI_MODELS.map((model) => (
+              <div className="pill-item" key={model.name} style={{ gap: 12 }}>
+                <div style={{ minWidth: 0 }}>
+                  <div className="mini-title">{model.name}</div>
+                  <div className="mini-desc">{model.desc}</div>
+                </div>
+                <StatusPill tone={model.tone} label={model.runtime} />
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -176,11 +273,11 @@ export const SuperAdminDashboard = () => {
           <h3>{t.superDashboard.quickConfig}</h3>
           <div className="dashboard-config-grid">
             <ConfigChip label="Env" value={sysInfo.app_env} />
-            <ConfigChip label="Debug" value={sysInfo.debug ? "ON" : "OFF"} />
+            <ConfigChip label="Debug" value={sysInfo.debug ? "ON" : "OFF"} active={sysInfo.debug} />
             <ConfigChip label="Log" value={sysInfo.log_level} />
             <ConfigChip label="Token" value={`${sysInfo.token_expire_minutes}m`} />
-            <ConfigChip label="OAuth" value={sysInfo.google_oauth ? "YES" : "NO"} />
-            <ConfigChip label="Firebase" value={sysInfo.firebase ? "YES" : "NO"} />
+            <ConfigChip label="OAuth" value={sysInfo.google_oauth ? "YES" : "NO"} active={sysInfo.google_oauth} />
+            <ConfigChip label="Firebase" value={sysInfo.firebase ? "YES" : "NO"} active={sysInfo.firebase} />
           </div>
         </div>
       )}
@@ -198,9 +295,16 @@ export const SuperAdminDashboard = () => {
   );
 };
 
-const ConfigChip = ({ label, value }: { label: string; value: string }) => (
-  <span className="dashboard-config-chip">
-    <span>{label}:</span>
-    <strong>{value}</strong>
+const ConfigChip = ({ label, value, active }: { label: string; value: string; active?: boolean }) => (
+  <span
+    className="dashboard-config-chip"
+    style={{
+      border: "1px solid var(--line)",
+      borderRadius: 12,
+      padding: "10px 14px",
+    }}
+  >
+    <span>{label}</span>
+    <strong style={active ? { color: "var(--ink-teal)" } : undefined}>{value}</strong>
   </span>
 );

@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { DataTable } from "../components/DataTable";
 import { SectionHeader } from "../components/SectionHeader";
 import { EmptyState } from "../components/EmptyState";
+import { StatCard } from "../components/StatCard";
 import { StatusPill } from "../components/StatusPill";
 import {
   listShopItems,
@@ -215,21 +216,38 @@ export const ShopPage = () => {
     }
   };
 
+  const activeCount = items.filter((item) => item.is_available).length;
+  const hiddenCount = items.length - activeCount;
+  const avgPrice = items.length
+    ? Math.round(items.reduce((sum, item) => sum + (item.price_gems || 0), 0) / items.length)
+    : 0;
+
   return (
     <div className="stack">
       <SectionHeader title={t.shop.title} description={`${items.length} ${t.shop.description}`} />
 
       {error && <div className="form-error">{error}</div>}
 
-      <div className="panel" style={{ padding: "12px 16px" }}>
+      <div className="card-grid">
+        <StatCard label={t.shop.title} value={items.length.toLocaleString()} variant="blue" />
+        <StatCard label={t.shop.onSale} value={activeCount.toLocaleString()} accent="teal" />
+        <StatCard label={t.shop.hidden} value={hiddenCount.toLocaleString()} accent="ink" />
+        <StatCard label={t.shop.price} value={`${avgPrice} Gems`} accent="ink" />
+      </div>
+
+      <div className="panel" style={{ padding: "12px 16px", borderRadius: 20 }}>
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          <button className="primary-button" onClick={() => { resetForm(); setShowForm(true); }}>
+          <button
+            className="primary-button"
+            style={{ borderRadius: 9999 }}
+            onClick={() => { resetForm(); setShowForm(true); }}
+          >
             {t.shop.createItem}
           </button>
         </div>
       </div>
 
-      <div className="panel">
+      <div className="panel" style={{ borderRadius: 20 }}>
         {loading ? (
           <div className="loading">{t.common.loading}</div>
         ) : items.length === 0 ? (
@@ -250,20 +268,54 @@ export const ShopPage = () => {
               {
                 header: t.shop.type,
                 sortValue: (row) => row.item_type,
-                render: (row) => <span className="table-meta">{row.item_type}</span>,
+                render: (row) => (
+                  <span
+                    className="table-meta"
+                    style={{
+                      background: "var(--panel-soft-2, #f1f5f9)",
+                      borderRadius: 9999,
+                      padding: "3px 10px",
+                      display: "inline-block",
+                    }}
+                  >
+                    {row.item_type}
+                  </span>
+                ),
                 align: "center",
               },
               {
                 header: t.shop.price,
                 sortValue: (row) => row.price_gems,
-                render: (row) => <span className="table-meta">{row.price_gems} Gems</span>,
+                render: (row) => (
+                  <span
+                    className="table-meta"
+                    style={{
+                      background: "rgba(255, 77, 0, 0.1)",
+                      color: "var(--accent, #FF4D00)",
+                      borderRadius: 9999,
+                      padding: "3px 10px",
+                      fontWeight: 600,
+                      display: "inline-block",
+                    }}
+                  >
+                    {row.price_gems} Gems
+                  </span>
+                ),
                 align: "center",
               },
               {
                 header: t.shop.stock,
                 sortValue: (row) => row.stock_quantity ?? Number.MAX_SAFE_INTEGER,
                 render: (row) => (
-                  <span className="table-meta">
+                  <span
+                    className="table-meta"
+                    style={{
+                      background: "var(--panel-soft-2, #f1f5f9)",
+                      borderRadius: 9999,
+                      padding: "3px 10px",
+                      display: "inline-block",
+                    }}
+                  >
                     {row.stock_quantity === null || row.stock_quantity === undefined ? "∞" : row.stock_quantity}
                   </span>
                 ),
@@ -285,13 +337,18 @@ export const ShopPage = () => {
                   <div className="table-actions">
                     <button
                       className="ghost-button small"
+                      style={{ borderRadius: 9999 }}
                       onClick={() => handleToggle(row)}
                       title={row.is_available ? t.shop.hide : t.shop.show}
                     >
                       {row.is_available ? t.shop.hide : t.shop.show}
                     </button>
-                    <button className="ghost-button small" onClick={() => handleEdit(row)}>{t.common.edit}</button>
-                    <button className="ghost-button small danger" onClick={() => handleDelete(row.id)}>{t.common.delete}</button>
+                    <button className="ghost-button small" style={{ borderRadius: 9999 }} onClick={() => handleEdit(row)}>
+                      {t.common.edit}
+                    </button>
+                    <button className="ghost-button small danger" style={{ borderRadius: 9999 }} onClick={() => handleDelete(row.id)}>
+                      {t.common.delete}
+                    </button>
                   </div>
                 ),
                 align: "right",
@@ -384,8 +441,10 @@ export const ShopPage = () => {
               {t.shop.onSale}
             </label>
             <div className="table-actions">
-              <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
-              <button className="primary-button" type="submit" disabled={saving}>
+              <button className="ghost-button" type="button" style={{ borderRadius: 9999 }} onClick={() => setShowForm(false)}>
+                {t.common.cancel}
+              </button>
+              <button className="primary-button" type="submit" style={{ borderRadius: 9999 }} disabled={saving}>
                 {saving ? t.common.saving : editingId ? t.common.update : t.common.create}
               </button>
             </div>

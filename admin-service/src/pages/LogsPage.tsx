@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { Activity, Layers, ScrollText } from "lucide-react";
 import { SectionHeader } from "../components/SectionHeader";
+import { StatCard } from "../components/StatCard";
 import { StatusPill } from "../components/StatusPill";
 import { DataTable, Column } from "../components/DataTable";
 import { EmptyState } from "../components/EmptyState";
@@ -109,7 +111,23 @@ export const LogsPage = () => {
     {
       header: t.logs.resourceId,
       render: (l) =>
-        l.resource_id ? <span className="mono text-small" title={l.resource_id}>{l.resource_id.slice(0, 8)}…</span> : "—",
+        l.resource_id ? (
+          <span
+            className="mono text-small"
+            title={l.resource_id}
+            style={{
+              display: "inline-block",
+              padding: "3px 9px",
+              borderRadius: 999,
+              background: "var(--panel-soft-2)",
+              border: "1px solid var(--line)",
+            }}
+          >
+            {l.resource_id.slice(0, 8)}…
+          </span>
+        ) : (
+          "—"
+        ),
     },
     { header: t.logs.detail, render: (l) => l.details || "—" },
     { header: t.logs.ipCol, render: (l) => (l.ip_address ? <span className="mono text-small">{l.ip_address}</span> : "—") },
@@ -128,6 +146,33 @@ export const LogsPage = () => {
           </button>
         }
       />
+
+      <div className="card-grid">
+        <StatCard
+          label={t.logs.title}
+          value={total.toLocaleString()}
+          note={t.logs.description}
+          variant="blue"
+          icon={<ScrollText size={18} />}
+          loading={logsQuery.isLoading}
+        />
+        <StatCard
+          label={t.logs.action}
+          value={String(facets.data?.actions.length ?? 0)}
+          note={t.logs.allActions}
+          accent="teal"
+          icon={<Activity size={18} />}
+          loading={facets.isLoading}
+        />
+        <StatCard
+          label={t.logs.target}
+          value={String(facets.data?.resource_types.length ?? 0)}
+          note={t.logs.allTargets}
+          variant="dark"
+          icon={<Layers size={18} />}
+          loading={facets.isLoading}
+        />
+      </div>
 
       <div className="panel filter-panel">
         <div className="filter-bar">

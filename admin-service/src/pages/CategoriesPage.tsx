@@ -22,7 +22,7 @@ const slugify = (text: string) =>
     .replace(/^-+|-+$/g, "");
 
 const EMPTY: CategoryInput = {
-  name: "", slug: "", description: "", icon: "", color: "#6366f1", order_index: 0, is_active: true,
+  name: "", slug: "", description: "", icon: "", color: "#FF4D00", order_index: 0, is_active: true,
 };
 
 const messageOf = (err: unknown, fallback: string) => (err instanceof Error && err.message ? err.message : fallback);
@@ -71,7 +71,7 @@ export const CategoriesPage = () => {
         ? { ...EMPTY, order_index: (categories.data?.length ?? 0) + 1 }
         : {
             name: category.name, slug: category.slug, description: category.description ?? "",
-            icon: category.icon ?? "", color: category.color ?? "#6366f1",
+            icon: category.icon ?? "", color: category.color ?? "#FF4D00",
             order_index: category.order_index, is_active: category.is_active,
           },
     );
@@ -202,7 +202,7 @@ export const CategoriesPage = () => {
               </label>
               <label>
                 {t.categoriesPage.color}
-                <input type="color" value={form.color ?? "#6366f1"} onChange={(e) => setForm({ ...form, color: e.target.value })} />
+                <input type="color" value={form.color ?? "#FF4D00"} onChange={(e) => setForm({ ...form, color: e.target.value })} />
               </label>
               <label>
                 {t.categoriesPage.order}

@@ -1,6 +1,16 @@
 import React from "react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
 import { Skeleton } from "../Skeleton";
+import { BentoTooltip } from "./BentoChartPrimitives";
 
 export type FunnelData = {
   stage: string;
@@ -14,7 +24,7 @@ type Props = {
   error?: boolean;
 };
 
-const COLORS = ["var(--accent)", "var(--accent-2)", "var(--accent-3)", "var(--accent-4)"];
+const PALETTE = ["#FF4D00", "#FF7A00", "#FB923C", "#FDBA74", "#EA580C"];
 
 export const CompletionFunnelChart: React.FC<Props> = ({ data, loading, error }) => {
   if (loading) {
@@ -26,50 +36,115 @@ export const CompletionFunnelChart: React.FC<Props> = ({ data, loading, error })
   }
 
   if (error) {
-    return (
-      <div className="chart-state error">
-        Không tải được dữ liệu.
-      </div>
-    );
+    return <div className="chart-state error">Không tải được dữ liệu.</div>;
   }
 
   if (!data || data.length === 0) {
-    return (
-      <div className="chart-state">
-        Chưa có dữ liệu funnel
-      </div>
-    );
+    return <div className="chart-state">Chưa có dữ liệu funnel</div>;
   }
+
+  const barChartHeight = Math.max(210, data.length * 46);
 
   return (
     <div className="chart-container">
-      <ResponsiveContainer width="100%" height={300}>
+      <ResponsiveContainer width="100%" height={barChartHeight}>
         <BarChart
           data={data}
           layout="vertical"
-          margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
+          margin={{ top: 4, right: 16, left: 8, bottom: 4 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
-          <XAxis type="number" tick={{ fontSize: 12 }} />
+          <CartesianGrid vertical={false} horizontal={false} />
+          <XAxis type="number" hide />
           <YAxis
             type="category"
             dataKey="stage"
-            tick={{ fontSize: 12 }}
-            width={90}
+            axisLine={false}
+            tickLine={false}
+            width={115}
+            tick={{ fontSize: 12, fill: "var(--muted)" }}
           />
           <Tooltip
-            formatter={(value, _name, item) => [
-              `${Number(value ?? 0).toLocaleString()} (${Number(item.payload?.percentage ?? 0).toFixed(1)}%)`,
-              ""
-            ]}
+            content={
+              <BentoTooltip
+                valueFormatter={(value, _name, entryPayload) =>
+                  `${Number(value ?? 0).toLocaleString()} (${Number(
+                    entryPayload?.percentage ?? 0
+                  ).toFixed(1)}%)`
+                }
+              />
+            }
+            cursor={{ fill: "rgba(255, 77, 0, 0.06)", radius: 10 }}
           />
-          <Bar dataKey="count" radius={[0, 8, 8, 0]}>
+          <Bar
+            dataKey="count"
+            name="Số lượng"
+            radius={[10, 10, 10, 10]}
+            barSize={22}
+            background={{ fill: "var(--panel-soft)", radius: 10 }}
+          >
             {data.map((_, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              <Cell
+                key={`cell-${index}`}
+                fill={PALETTE[index % PALETTE.length]}
+              />
             ))}
           </Bar>
         </BarChart>
       </ResponsiveContainer>
+
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          gap: 8,
+          marginTop: 12,
+        }}
+      >
+        {data.map((item, index) => {
+          const color = PALETTE[index % PALETTE.length];
+          return (
+            <div
+              key={`${item.stage}-${index}`}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 7,
+                padding: "6px 10px",
+                borderRadius: 999,
+                background: "var(--panel-soft-2, var(--panel-soft))",
+                border: "1px solid var(--line)",
+                fontSize: 12,
+              }}
+            >
+              <span
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "999px",
+                  backgroundColor: color,
+                  flexShrink: 0,
+                }}
+              />
+              <span style={{ fontWeight: 600, color: "var(--text)" }}>
+                {item.stage}
+              </span>
+              <span
+                style={{
+                  fontWeight: 700,
+                  color: "var(--panel-ink)",
+                  background: "var(--panel)",
+                  borderRadius: 999,
+                  padding: "1px 7px",
+                  fontSize: 11,
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                {Number(item.percentage ?? 0).toFixed(1)}%
+              </span>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 };

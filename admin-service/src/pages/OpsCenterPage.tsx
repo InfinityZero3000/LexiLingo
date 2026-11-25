@@ -9,6 +9,7 @@ import { EmptyState } from "../components/EmptyState";
 import { TableSkeleton } from "../components/Skeleton";
 import { useAuth } from "../components/AuthProvider";
 import { useConfirm } from "../components/ConfirmDialog";
+import { BentoTooltip } from "../components/dashboard/BentoChartPrimitives";
 import {
   getBackupOverview,
   getCeleryOverview,
@@ -29,10 +30,10 @@ type Tone = "success" | "warning" | "info" | "danger" | "neutral";
 const INTEGRATION_TONE: Record<string, Tone> = { ok: "success", dead: "danger", unreachable: "danger", not_configured: "neutral" };
 const QUOTA_TONE: Record<string, Tone> = { normal: "success", warning: "warning", critical: "danger", blocked: "danger" };
 const STATUS_COLORS: Record<string, string> = {
-  sent: "var(--accent-2)",
-  dry_run: "var(--accent-3)",
-  skipped: "var(--muted)",
-  failed: "var(--accent)",
+  sent: "#FF4D00",
+  dry_run: "#FF8A3D",
+  skipped: "#FDBA74",
+  failed: "#F43F5E",
 };
 
 const TASK_TONE: Record<string, Tone> = { ok: "success", stale: "warning", failed: "danger", never: "neutral" };
@@ -210,13 +211,20 @@ export const OpsCenterPage = () => {
           <div className="chart-container">
             <ResponsiveContainer width="100%" height={260}>
               <BarChart data={r.by_day} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
-                <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
-                <Tooltip />
+                <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="var(--line)" />
+                <XAxis dataKey="date" tick={{ fontSize: 12, fill: "var(--muted)" }} axisLine={false} tickLine={false} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 12, fill: "var(--muted)" }} axisLine={false} tickLine={false} />
+                <Tooltip content={<BentoTooltip dark={false} />} cursor={{ fill: "rgba(148, 163, 184, 0.1)" }} />
                 <Legend />
                 {Object.keys(STATUS_COLORS).map((status) => (
-                  <Bar key={status} dataKey={status} stackId="a" fill={STATUS_COLORS[status]} name={t.ops.reminderStatus[status] ?? status} />
+                  <Bar
+                    key={status}
+                    dataKey={status}
+                    stackId="a"
+                    fill={STATUS_COLORS[status]}
+                    radius={[6, 6, 6, 6]}
+                    name={t.ops.reminderStatus[status] ?? status}
+                  />
                 ))}
               </BarChart>
             </ResponsiveContainer>

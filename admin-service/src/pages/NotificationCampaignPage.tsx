@@ -92,7 +92,11 @@ export function NotificationCampaignPage() {
         title="Notification Campaigns"
         description="Gửi push notification và in-app broadcast đến user segments."
         action={
-          <button className="primary-button" onClick={() => setShowModal(true)}>
+          <button
+            className="primary-button"
+            style={{ borderRadius: 9999 }}
+            onClick={() => setShowModal(true)}
+          >
             <Plus size={16} aria-hidden="true" />
             Tạo Campaign
           </button>
@@ -110,7 +114,7 @@ export function NotificationCampaignPage() {
           description="Tạo campaign đầu tiên để bắt đầu."
         />
       ) : (
-        <div className="table-wrap">
+        <div className="panel table-wrap" style={{ borderRadius: 20, overflow: "hidden" }}>
           <table>
             <thead>
               <tr>
@@ -135,7 +139,21 @@ export function NotificationCampaignPage() {
                   >
                     <td>
                       <span className="inline-actions">
-                        {JOB_TYPE_ICONS[job.job_type]}
+                        <span
+                          style={{
+                            width: 28,
+                            height: 28,
+                            borderRadius: 9999,
+                            background: "rgba(255, 77, 0, 0.1)",
+                            color: "var(--accent, #FF4D00)",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            flexShrink: 0,
+                          }}
+                        >
+                          {JOB_TYPE_ICONS[job.job_type]}
+                        </span>
                         <span className="table-title">{JOB_TYPE_LABELS[job.job_type]}</span>
                       </span>
                     </td>
@@ -143,7 +161,19 @@ export function NotificationCampaignPage() {
                       <StatusPill tone={STATUS_TONE[job.status]} label={STATUS_LABELS[job.status]} />
                     </td>
                     <td>
-                      <span className="table-meta">{job.progress.percent}%</span>
+                      <span
+                        className="table-meta"
+                        style={{
+                          background: "var(--panel-soft-2, #f1f5f9)",
+                          color: "var(--accent, #FF4D00)",
+                          borderRadius: 9999,
+                          padding: "3px 10px",
+                          fontWeight: 600,
+                          display: "inline-block",
+                        }}
+                      >
+                        {job.progress.percent}%
+                      </span>
                     </td>
                     <td>
                       <span className="table-meta">
@@ -152,7 +182,17 @@ export function NotificationCampaignPage() {
                     </td>
                     <td>
                       {Object.keys(stats).length > 0 ? (
-                        <span className="table-title" style={{ color: "var(--accent-2)" }}>
+                        <span
+                          className="table-title"
+                          style={{
+                            color: "var(--accent-2, #FF7A00)",
+                            background: "rgba(255, 122, 0, 0.12)",
+                            borderRadius: 9999,
+                            padding: "3px 10px",
+                            display: "inline-block",
+                            fontSize: 12,
+                          }}
+                        >
                           {String(stats.sent ?? 0)} sent
                         </span>
                       ) : (
@@ -163,6 +203,7 @@ export function NotificationCampaignPage() {
                     <td>
                       <button
                         className="ghost-button small"
+                        style={{ borderRadius: 9999 }}
                         onClick={(e) => {
                           e.stopPropagation();
                           setActiveJob(job);

@@ -33,11 +33,17 @@ export default function UserFiltersPanel({ filters, onFilterChange }: UserFilter
   const hasActiveFilters = filters.search || filters.role !== undefined || filters.is_active !== undefined;
   
   return (
-    <div className="panel user-filter-panel">
+    <div className="panel user-filter-panel" style={{ borderRadius: 20 }}>
       <div className="filter-panel-header">
         <h3>Bộ lọc</h3>
         {hasActiveFilters && (
-          <button onClick={handleClearFilters} className="ghost-button small">Xóa bộ lọc</button>
+          <button
+            onClick={handleClearFilters}
+            className="ghost-button small"
+            style={{ borderRadius: '9999px' }}
+          >
+            Xóa bộ lọc
+          </button>
         )}
       </div>
       
@@ -51,8 +57,15 @@ export default function UserFiltersPanel({ filters, onFilterChange }: UserFilter
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Tìm theo tên hoặc email..."
+            style={{ borderRadius: '9999px' }}
           />
-          <button type="submit" className="icon-button filter-search-button" aria-label="Tìm kiếm" title="Tìm kiếm">
+          <button
+            type="submit"
+            className="icon-button filter-search-button"
+            aria-label="Tìm kiếm"
+            title="Tìm kiếm"
+            style={{ borderRadius: '9999px' }}
+          >
             <Search size={18} aria-hidden="true" />
           </button>
         </form>

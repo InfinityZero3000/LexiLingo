@@ -19,6 +19,13 @@ import { DIFFICULTIES, emptyForm, formFromStory, type TopicFormState } from "../
 type SourceFilter = "all" | "custom" | "builtin";
 type Editor = { mode: TopicFormMode; initial: TopicFormState; key: number };
 
+const levelTone = (level: string): "info" | "success" | "warning" | "danger" => {
+  if (level === "B1" || level === "B2") return "success";
+  if (level === "C1") return "warning";
+  if (level === "C2") return "danger";
+  return "info";
+};
+
 export const TopicsPage = () => {
   const { t } = useI18n();
   const [topics, setTopics] = useState<TopicItem[]>([]);
@@ -101,6 +108,7 @@ export const TopicsPage = () => {
           </div>
           <button
             className="primary-button"
+            style={{ borderRadius: 999 }}
             onClick={() => (editor?.mode === "create" ? setEditor(null) : openEditor("create", emptyForm()))}
           >
             {editor?.mode === "create" ? t.adminPages.topicsHideForm : t.adminPages.topicsCreate}
@@ -134,12 +142,24 @@ export const TopicsPage = () => {
           </label>
           <label className="form" style={{ gap: 6 }}>
             <span className="table-meta">Level</span>
-            <select value={level} onChange={(e) => setLevel(e.target.value as "" | TopicDifficulty)}>
+            <select style={{ borderRadius: 999 }} value={level} onChange={(e) => setLevel(e.target.value as "" | TopicDifficulty)}>
               <option value="">All levels</option>
               {DIFFICULTIES.map((item) => <option key={item} value={item}>{item}</option>)}
             </select>
           </label>
-          <div className="tab-row" role="group" aria-label="Source">
+          <div
+            className="tab-row"
+            role="group"
+            aria-label="Source"
+            style={{
+              display: "inline-flex",
+              gap: 4,
+              padding: 4,
+              borderRadius: 999,
+              background: "var(--panel-soft-2, #F8FAFC)",
+              border: "1px solid var(--line)",
+            }}
+          >
             {(
               [
                 ["all", "All"],
@@ -151,6 +171,7 @@ export const TopicsPage = () => {
                 key={key}
                 type="button"
                 className={`tab${source === key ? " active" : ""}`}
+                style={{ borderRadius: 999 }}
                 aria-pressed={source === key}
                 onClick={() => setSource(key)}
               >
@@ -207,7 +228,7 @@ export const TopicsPage = () => {
                     : <StatusPill tone="success" label="Created here" />,
               },
               { header: "Category", sortValue: (row) => row.category, render: (row) => <StatusPill tone="info" label={row.category} /> },
-              { header: "Level", sortValue: (row) => row.difficulty_level, render: (row) => <StatusPill tone="warning" label={row.difficulty_level} />, align: "center" },
+              { header: "Level", sortValue: (row) => row.difficulty_level, render: (row) => <StatusPill tone={levelTone(row.difficulty_level)} label={row.difficulty_level} />, align: "center" },
               { header: "Minutes", sortValue: (row) => row.estimated_minutes, render: (row) => <span className="table-meta">{row.estimated_minutes}</span>, align: "center" },
               {
                 header: "",

@@ -390,7 +390,19 @@ export const CourseImportModal = ({
       </div>
 
       {/* Tab bar */}
-      <div style={{ display: "flex", gap: 4, marginBottom: 16 }}>
+      <div
+        className="tab-row"
+        style={{
+          display: "inline-flex",
+          gap: 4,
+          marginBottom: 16,
+          padding: 4,
+          borderRadius: 999,
+          background: "var(--panel-soft-2, #F8FAFC)",
+          border: "1px solid var(--line)",
+          alignSelf: "flex-start",
+        }}
+      >
         {([
           { key: "text" as ImportTab, label: "Văn bản" },
           { key: "json" as ImportTab, label: "JSON" },
@@ -399,6 +411,7 @@ export const CourseImportModal = ({
           <button
             key={t.key}
             className={tab === t.key ? "tab active" : "tab"}
+            style={{ borderRadius: 999 }}
             onClick={() => { setTab(t.key); setPreview(null); setResult(null); setParseError(null); }}
           >
             {t.label}
@@ -408,11 +421,11 @@ export const CourseImportModal = ({
 
       {/* File upload */}
       <div style={{ display: "flex", gap: 8, marginBottom: 12, alignItems: "center" }}>
-        <label className="ghost-button small" style={{ cursor: "pointer" }}>
+        <label className="ghost-button small" style={{ cursor: "pointer", borderRadius: 999 }}>
           Tải file lên
           <input type="file" accept=".txt,.md,.json,.csv,.pdf" onChange={handleFileUpload} hidden />
         </label>
-        <button className="ghost-button small" onClick={loadSample}>Xem mẫu</button>
+        <button className="ghost-button small" style={{ borderRadius: 999 }} onClick={loadSample}>Xem mẫu</button>
         <span style={{ fontSize: 12, color: "var(--muted)" }}>
           Hỗ trợ: .txt, .md, .json, .csv, .pdf
         </span>
@@ -434,10 +447,10 @@ export const CourseImportModal = ({
             fontFamily: "monospace",
             fontSize: 13,
             resize: "vertical",
-            borderRadius: 8,
+            borderRadius: 12,
             border: "1px solid var(--line)",
             padding: 12,
-            background: "var(--panel-soft)",
+            background: "var(--panel-soft-2, #F8FAFC)",
           }}
         />
       </div>
@@ -446,7 +459,7 @@ export const CourseImportModal = ({
 
       {/* Preview */}
       {preview && (
-        <div style={{ marginTop: 12, padding: 12, background: "var(--panel-soft)", borderRadius: 8, maxHeight: 200, overflow: "auto" }}>
+        <div style={{ marginTop: 12, padding: 12, background: "var(--panel-soft-2, #F8FAFC)", border: "1px solid var(--line)", borderRadius: 12, maxHeight: 200, overflow: "auto" }}>
           <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8, color: "var(--text)" }}>
             Xem trước ({preview.length} khóa học)
           </div>
@@ -470,9 +483,9 @@ export const CourseImportModal = ({
         <div style={{
           marginTop: 12,
           padding: 12,
-          background: result.errors.length === 0 ? "rgba(42, 167, 161, 0.08)" : "rgba(255, 77, 0, 0.06)",
-          borderRadius: 8,
-          border: `1px solid ${result.errors.length === 0 ? "rgba(42, 167, 161, 0.2)" : "rgba(255, 77, 0, 0.15)"}`,
+          background: result.errors.length === 0 ? "rgba(255, 77, 0, 0.08)" : "rgba(239, 68, 68, 0.06)",
+          borderRadius: 12,
+          border: `1px solid ${result.errors.length === 0 ? "rgba(255, 77, 0, 0.25)" : "rgba(239, 68, 68, 0.2)"}`,
         }}>
           <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 4 }}>
             {result.errors.length === 0 ? "Nhập thành công!" : "Kết quả nhập dữ liệu"}
@@ -481,7 +494,7 @@ export const CourseImportModal = ({
             {result.courses} khóa học · {result.units} chương · {result.lessons} bài học
           </div>
           {result.errors.length > 0 && (
-            <div style={{ marginTop: 8, fontSize: 12, color: "var(--accent)" }}>
+            <div style={{ marginTop: 8, fontSize: 12, color: "var(--danger, #DC2626)" }}>
               {result.errors.map((err, i) => <div key={i}>- {err}</div>)}
             </div>
           )}
@@ -490,13 +503,13 @@ export const CourseImportModal = ({
 
       {/* Actions */}
       <div style={{ display: "flex", gap: 8, justifyContent: "flex-end", marginTop: 16 }}>
-        <button className="ghost-button" onClick={onClose}>Đóng</button>
+        <button className="ghost-button" style={{ borderRadius: 999 }} onClick={onClose}>Đóng</button>
         {!preview ? (
-          <button className="primary-button" onClick={handleParse} disabled={!textInput.trim()}>
+          <button className="primary-button" style={{ borderRadius: 999 }} onClick={handleParse} disabled={!textInput.trim()}>
             Phân tích dữ liệu
           </button>
         ) : (
-          <button className="primary-button" onClick={handleImport} disabled={importing}>
+          <button className="primary-button" style={{ borderRadius: 999 }} onClick={handleImport} disabled={importing}>
             {importing ? "Đang nhập..." : `Nhập ${preview.length} khóa học`}
           </button>
         )}

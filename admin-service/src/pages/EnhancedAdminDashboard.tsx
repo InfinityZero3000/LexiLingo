@@ -10,6 +10,27 @@ import { getDashboardKPIs, getUserGrowth, getEngagement, getCoursePopularity, ge
 import { getDashboardStats } from "../lib/rbacApi";
 import { useI18n } from "../lib/i18n";
 
+const ACTIVITY_BADGE_COLORS = [
+  { bg: "rgba(255, 77, 0, 0.14)", color: "#FF4D00" },
+  { bg: "rgba(255, 122, 0, 0.14)", color: "#EA580C" },
+  { bg: "rgba(251, 146, 60, 0.16)", color: "#C2410C" },
+  { bg: "rgba(245, 158, 11, 0.14)", color: "#D97706" },
+];
+
+const getActivityBadgeStyle = (action: string, index: number) => {
+  const lower = action.toLowerCase();
+  if (lower.includes("delete") || lower.includes("remove") || lower.includes("ban")) {
+    return { bg: "rgba(244, 63, 94, 0.14)", color: "#E11D48" };
+  }
+  if (lower.includes("create") || lower.includes("add") || lower.includes("approve")) {
+    return { bg: "rgba(255, 122, 0, 0.14)", color: "#EA580C" };
+  }
+  if (lower.includes("update") || lower.includes("edit") || lower.includes("publish")) {
+    return { bg: "rgba(255, 77, 0, 0.14)", color: "#FF4D00" };
+  }
+  return ACTIVITY_BADGE_COLORS[index % ACTIVITY_BADGE_COLORS.length];
+};
+
 export const EnhancedAdminDashboard = () => {
   const { t } = useI18n();
   // Parallel data fetching - applying async-parallel pattern from React best practices
@@ -63,6 +84,7 @@ export const EnhancedAdminDashboard = () => {
           loading={kpisLoading}
           trend={kpisLoading ? undefined : `${kpis?.active_users_7d ?? 0} ${t.dashboard.activeUsers}`}
           note={kpisError ? t.common.loadFailed : undefined}
+          variant="blue"
         />
         <StatCard
           label={t.dashboard.courses}
@@ -84,13 +106,14 @@ export const EnhancedAdminDashboard = () => {
           loading={statsLoading}
           trend={statsLoading ? undefined : `${stats?.total_unlocks ?? 0} ${t.dashboard.unlocked}`}
           note={statsError ? t.common.loadFailed : undefined}
+          variant="dark"
           accent="orange"
         />
       </div>
 
       {/* User Growth & Engagement Charts */}
       <div className="grid-2 dashboard-grid-2">
-        <div className="panel dashboard-chart-panel">
+        <div className="panel dashboard-chart-panel bento-card--dark">
           <SectionHeader
             title={t.dashboard.userGrowth}
             description={t.dashboard.userGrowthDesc}
@@ -142,7 +165,7 @@ export const EnhancedAdminDashboard = () => {
         </div>
       </div>
 
-      {/* Recent Activity (reuse existing from old dashboard) */}
+      {/* Recent Activity */}
       {stats && stats.recent_actions.length > 0 && (
         <div className="panel">
           <SectionHeader
@@ -152,14 +175,44 @@ export const EnhancedAdminDashboard = () => {
           <div className="pill-grid">
             {stats.recent_actions.slice(0, 10).map((a, i) => {
               const date = new Date(a.created_at);
+              const badge = getActivityBadgeStyle(a.action, i);
+              const initial = (a.resource_type || a.action || "A").trim().slice(0, 1).toUpperCase();
+              const timestamp = `${date.toLocaleDateString("vi-VN")} ${date.toLocaleTimeString("vi-VN", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}`;
+
               return (
-                <div className="pill-item" key={i}>
-                  <div>
-                    <div className="pill-title">{a.action}</div>
-                    <div className="pill-desc">
-                      {a.resource_type} • {date.toLocaleDateString("vi-VN")} {date.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}
+                <div className="pill-item" key={i} style={{ gap: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        width: 34,
+                        height: 34,
+                        borderRadius: "50%",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                        fontWeight: 700,
+                        fontSize: 13,
+                        background: badge.bg,
+                        color: badge.color,
+                      }}
+                    >
+                      {initial}
+                    </span>
+                    <div style={{ minWidth: 0 }}>
+                      <div className="pill-title" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {a.action}
+                      </div>
+                      <div className="pill-desc">{a.resource_type}</div>
                     </div>
                   </div>
+                  <span className="status-pill neutral" style={{ flexShrink: 0, fontVariantNumeric: "tabular-nums" }}>
+                    {timestamp}
+                  </span>
                 </div>
               );
             })}

@@ -32,6 +32,13 @@ import {
 
 const LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
+const levelTone = (level: string): "info" | "success" | "warning" | "danger" => {
+  if (level === "B1" || level === "B2") return "success";
+  if (level === "C1") return "warning";
+  if (level === "C2") return "danger";
+  return "info";
+};
+
 // Which CEFR skill this course credits on completion. Leaving it unset falls
 // back to guessing from tags, which is how listening and speaking content
 // ended up scored as vocabulary.
@@ -229,28 +236,30 @@ export const CoursesPage = () => {
               <Search size={18} aria-hidden="true" />
             </button>
           </form>
-          <select className="filter-select" value={filterLevel} onChange={(e) => { setFilterLevel(e.target.value); setPage(1); }}>
+          <select className="filter-select" style={{ borderRadius: 999 }} value={filterLevel} onChange={(e) => { setFilterLevel(e.target.value); setPage(1); }}>
             <option value="">{t.courses.allLevels}</option>
             {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
           </select>
-          <select className="filter-select" value={filterPublished} onChange={(e) => { setFilterPublished(e.target.value); setPage(1); }}>
+          <select className="filter-select" style={{ borderRadius: 999 }} value={filterPublished} onChange={(e) => { setFilterPublished(e.target.value); setPage(1); }}>
             <option value="">{t.courses.allStatus}</option>
             <option value="true">{t.common.published}</option>
             <option value="false">{t.common.draft}</option>
           </select>
-          <select className="filter-select" aria-label={t.courses.category} value={filterCategory}
+          <select className="filter-select" style={{ borderRadius: 999 }} aria-label={t.courses.category} value={filterCategory}
             onChange={(e) => { setFilterCategory(e.target.value); setPage(1); }}>
             <option value="">{t.courses.allCategories}</option>
             {(categories.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
           <button
             className="ghost-button"
+            style={{ borderRadius: 999 }}
             onClick={() => setShowImport(true)}
           >
             {t.courses.importData}
           </button>
           <button
             className="ghost-button"
+            style={{ borderRadius: 999 }}
             onClick={handleExport}
             disabled={courses.length === 0}
           >
@@ -258,6 +267,7 @@ export const CoursesPage = () => {
           </button>
           <button
             className="ghost-button content-agent-launch-button"
+            style={{ borderRadius: 999 }}
             onClick={() => {
               if (
                 contentAgentJob &&
@@ -277,6 +287,7 @@ export const CoursesPage = () => {
           </button>
           <button
             className="primary-button"
+            style={{ borderRadius: 999 }}
             onClick={() => { resetForm(); setShowForm(true); }}
           >
             {t.courses.createCourse}
@@ -319,7 +330,7 @@ export const CoursesPage = () => {
                 {
                   header: t.courses.level,
                   sortValue: (row) => row.level,
-                  render: (row) => <StatusPill tone="info" label={row.level} />,
+                  render: (row) => <StatusPill tone={levelTone(row.level)} label={row.level} />,
                   align: "center",
                 },
                 {
@@ -368,13 +379,13 @@ export const CoursesPage = () => {
             />
             {/* Pagination */}
             <div className="pagination">
-              <button disabled={page <= 1} onClick={() => setPage(page - 1)}>
+              <button className="ghost-button small" style={{ borderRadius: 999 }} disabled={page <= 1} onClick={() => setPage(page - 1)}>
                 {t.courses.prev}
               </button>
               <span className="page-info">
                 {t.common.page} {page} {t.common.of} {Math.ceil(total / 20) || 1}
               </span>
-              <button disabled={page >= Math.ceil(total / 20)} onClick={() => setPage(page + 1)}>
+              <button className="ghost-button small" style={{ borderRadius: 999 }} disabled={page >= Math.ceil(total / 20)} onClick={() => setPage(page + 1)}>
                 {t.courses.next}
               </button>
             </div>

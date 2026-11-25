@@ -55,8 +55,15 @@ export const ReasonDialog = ({
         <span id={hintId} className="form-hint">{t.support.reasonHint}</span>
         {error && <div className="form-error" role="alert">{error}</div>}
         <div className="table-actions">
-          <button type="button" className="ghost-button" onClick={onClose}>{t.common.cancel}</button>
-          <button type="submit" className={danger ? "ghost-button danger" : "primary-button"} disabled={!valid || busy}>
+          <button type="button" className="ghost-button" style={{ borderRadius: "9999px" }} onClick={onClose}>
+            {t.common.cancel}
+          </button>
+          <button
+            type="submit"
+            className={danger ? "ghost-button danger" : "primary-button"}
+            style={{ borderRadius: "9999px" }}
+            disabled={!valid || busy}
+          >
             {busy ? t.common.saving : confirmLabel}
           </button>
         </div>

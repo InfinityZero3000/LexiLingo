@@ -255,7 +255,11 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
     <Dialog onClose={onClose} maxWidth={720}>
       <div className="ud-header">
         <div className="ud-identity">
-          <div className="ud-avatar" aria-hidden="true">
+          <div
+            className="ud-avatar"
+            aria-hidden="true"
+            style={{ background: 'var(--accent, #FF4D00)', color: '#ffffff', borderRadius: '9999px' }}
+          >
             {(user.display_name || user.email)[0].toUpperCase()}
           </div>
           <div>
@@ -263,54 +267,99 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
             <span className="table-sub">{user.email}</span>
           </div>
         </div>
-        <button onClick={onClose} className="icon-button ud-close" aria-label={t.common.close}>
+        <button
+          onClick={onClose}
+          className="icon-button ud-close"
+          aria-label={t.common.close}
+          style={{ borderRadius: '9999px' }}
+        >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
 
-      <div className="tab-row ud-tabs" role="tablist">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            role="tab"
-            aria-selected={activeTab === tab.id}
-            onClick={() => switchTab(tab.id)}
-            className={`tab ${activeTab === tab.id ? 'active' : ''}`}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div
+        className="tab-row ud-tabs"
+        role="tablist"
+        style={{
+          background: 'var(--panel-soft-2, #f1f5f9)',
+          padding: 4,
+          borderRadius: '9999px',
+          gap: 4,
+        }}
+      >
+        {tabs.map((tab) => {
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              role="tab"
+              aria-selected={isActive}
+              onClick={() => switchTab(tab.id)}
+              className={`tab ${isActive ? 'active' : ''}`}
+              style={{
+                borderRadius: '9999px',
+                ...(isActive
+                  ? { background: 'var(--accent, #FF4D00)', color: '#ffffff' }
+                  : {}),
+              }}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
       <div className="ud-body">
         {activeTab === 'info' && (
           <div className="stack">
             <div className="card-grid ud-stats">
-              <div className="panel-inner ud-stat">
+              <div
+                className="panel-inner ud-stat"
+                style={{ borderRadius: 16, background: 'var(--panel-soft-2, #f8fafc)' }}
+              >
                 <div className="stat-label">Total XP</div>
-                <div className="ud-stat-value ud-stat-value--xp">{user.total_xp.toLocaleString()}</div>
+                <div className="ud-stat-value ud-stat-value--xp" style={{ color: 'var(--accent, #FF4D00)' }}>
+                  {user.total_xp.toLocaleString()}
+                </div>
               </div>
-              <div className="panel-inner ud-stat">
+              <div
+                className="panel-inner ud-stat"
+                style={{ borderRadius: 16, background: 'var(--panel-soft-2, #f8fafc)' }}
+              >
                 <div className="stat-label">Streak</div>
-                <div className="ud-stat-value ud-stat-value--streak">—</div>
+                <div className="ud-stat-value ud-stat-value--streak" style={{ color: 'var(--accent-2, #FF7A00)' }}>
+                  —
+                </div>
               </div>
-              <div className="panel-inner ud-stat">
+              <div
+                className="panel-inner ud-stat"
+                style={{ borderRadius: 16, background: 'var(--panel-soft-2, #f8fafc)' }}
+              >
                 <div className="stat-label">{t.userDetail.statCourses}</div>
-                <div className="ud-stat-value ud-stat-value--courses">
+                <div className="ud-stat-value ud-stat-value--courses" style={{ color: 'var(--accent, #FF4D00)' }}>
                   {user.courses_completed}/{user.courses_enrolled}
                 </div>
               </div>
-              <div className="panel-inner ud-stat">
+              <div
+                className="panel-inner ud-stat"
+                style={{ borderRadius: 16, background: 'var(--panel-soft-2, #f8fafc)' }}
+              >
                 <div className="stat-label">{t.userDetail.statLessons}</div>
                 <div className="ud-stat-value ud-stat-value--lessons">{user.lessons_completed}</div>
               </div>
             </div>
 
-            <div className="panel-inner">
+            <div className="panel-inner" style={{ borderRadius: 18 }}>
               <div className="ud-section-head">
                 <h4 className="ud-section-title">{t.userDetail.personalInfo}</h4>
                 {!isEditing && (
-                  <button onClick={handleEdit} className="ghost-button small">{t.userDetail.edit}</button>
+                  <button
+                    onClick={handleEdit}
+                    className="ghost-button small"
+                    style={{ borderRadius: '9999px' }}
+                  >
+                    {t.userDetail.edit}
+                  </button>
                 )}
               </div>
 
@@ -333,8 +382,19 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
                     />
                   </label>
                   <div className="inline-actions inline-actions--end">
-                    <button onClick={() => setIsEditing(false)} className="ghost-button small">{t.common.cancel}</button>
-                    <button onClick={handleSave} disabled={updateMutation.isPending} className="primary-button small">
+                    <button
+                      onClick={() => setIsEditing(false)}
+                      className="ghost-button small"
+                      style={{ borderRadius: '9999px' }}
+                    >
+                      {t.common.cancel}
+                    </button>
+                    <button
+                      onClick={handleSave}
+                      disabled={updateMutation.isPending}
+                      className="primary-button small"
+                      style={{ borderRadius: '9999px' }}
+                    >
                       {updateMutation.isPending ? t.userDetail.saving : t.userDetail.saveChanges}
                     </button>
                   </div>
@@ -363,7 +423,7 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
               )}
             </div>
 
-            <div className="panel-inner">
+            <div className="panel-inner" style={{ borderRadius: 18 }}>
               <h4 className="ud-section-title">{t.userDetail.roleAndStatus}</h4>
               <div className="mini-list">
                 <div className="pill-item">
@@ -397,6 +457,7 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
                       onClick={() => handleRoleChange(level)}
                       disabled={user.role_level === level || roleChangeMutation.isPending}
                       className="mini-btn"
+                      style={{ borderRadius: '9999px' }}
                     >
                       {label}
                     </button>
@@ -414,8 +475,16 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
           <div className="stack stack--flush">
             {activities && activities.length > 0 ? (
               activities.map((activity, index) => (
-                <div key={index} className="ud-activity">
-                  <div className="ud-activity-icon" aria-hidden="true">
+                <div key={index} className="ud-activity" style={{ borderRadius: 16 }}>
+                  <div
+                    className="ud-activity-icon"
+                    aria-hidden="true"
+                    style={{
+                      background: 'rgba(255, 77, 0, 0.1)',
+                      color: 'var(--accent, #FF4D00)',
+                      borderRadius: '9999px',
+                    }}
+                  >
                     {activity.activity_type === 'lesson_completed' ? 'L' : 'A'}
                   </div>
                   <div className="ud-activity-main">
@@ -423,7 +492,17 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
                     <div className="ud-activity-meta">
                       <span>{new Date(activity.activity_date).toLocaleDateString('vi-VN')}</span>
                       {activity.xp_earned > 0 && (
-                        <span className="ud-activity-xp">+{activity.xp_earned} XP</span>
+                        <span
+                          className="ud-activity-xp"
+                          style={{
+                            background: 'rgba(255, 122, 0, 0.12)',
+                            color: 'var(--accent-2, #FF7A00)',
+                            borderRadius: '9999px',
+                            padding: '2px 8px',
+                          }}
+                        >
+                          +{activity.xp_earned} XP
+                        </span>
                       )}
                     </div>
                   </div>
@@ -440,7 +519,7 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
 
         {activeTab === 'gift' && (
           <div className="stack">
-            <div className="panel-inner">
+            <div className="panel-inner" style={{ borderRadius: 18 }}>
               <h4 className="ud-section-title ud-section-title--spaced">{t.userDetail.giftTitle}</h4>
 
               {successMessage && <div className="form-success" role="status">{successMessage}</div>}
@@ -558,7 +637,12 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
                 )}
 
                 <div className="ud-submit-row">
-                  <button type="submit" className="primary-button" disabled={giftMutation.isPending}>
+                  <button
+                    type="submit"
+                    className="primary-button"
+                    disabled={giftMutation.isPending}
+                    style={{ borderRadius: '9999px' }}
+                  >
                     {giftMutation.isPending ? t.userDetail.sending : t.userDetail.sendGift}
                   </button>
                 </div>
@@ -569,7 +653,9 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
       </div>
 
       <div className="ud-footer">
-        <button onClick={onClose} className="ghost-button small">{t.common.close}</button>
+        <button onClick={onClose} className="ghost-button small" style={{ borderRadius: '9999px' }}>
+          {t.common.close}
+        </button>
       </div>
     </Dialog>
   );

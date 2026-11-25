@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { DataTable } from "../components/DataTable";
 import { SectionHeader } from "../components/SectionHeader";
 import { EmptyState } from "../components/EmptyState";
+import { StatCard } from "../components/StatCard";
 import { StatusPill } from "../components/StatusPill";
 import {
   listBanners,
@@ -267,6 +268,12 @@ export const AdsPage = () => {
 
   const now = new Date();
   const positionOptions: BannerPosition[] = legacyPosition ? ["hero", legacyPosition] : ["hero"];
+  const runningCount = banners.filter((b) => bannerStatus(b, now) === "running").length;
+  const scheduledCount = banners.filter((b) => bannerStatus(b, now) === "scheduled").length;
+  const offCount = banners.filter((b) => {
+    const s = bannerStatus(b, now);
+    return s === "off" || s === "expired";
+  }).length;
 
   return (
     <div className="stack">
@@ -274,15 +281,26 @@ export const AdsPage = () => {
 
       {error && <div className="form-error">{error}</div>}
 
-      <div className="panel" style={{ padding: "12px 16px" }}>
+      <div className="card-grid">
+        <StatCard label={t.ads.title} value={banners.length.toLocaleString()} variant="blue" />
+        <StatCard label={t.ads.status.running} value={runningCount.toLocaleString()} accent="teal" />
+        <StatCard label={t.ads.status.scheduled} value={scheduledCount.toLocaleString()} accent="ink" />
+        <StatCard label={t.ads.status.off} value={offCount.toLocaleString()} accent="ink" />
+      </div>
+
+      <div className="panel" style={{ padding: "12px 16px", borderRadius: 20 }}>
         <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          <button className="primary-button" onClick={() => { resetForm(); setShowForm(true); }}>
+          <button
+            className="primary-button"
+            style={{ borderRadius: 9999 }}
+            onClick={() => { resetForm(); setShowForm(true); }}
+          >
             {t.ads.createBanner}
           </button>
         </div>
       </div>
 
-      <div className="panel">
+      <div className="panel" style={{ borderRadius: 20 }}>
         {loading ? (
           <div className="loading">{t.common.loading}</div>
         ) : banners.length === 0 ? (
@@ -319,7 +337,19 @@ export const AdsPage = () => {
               {
                 header: t.ads.priorityLabel,
                 sortValue: (row) => row.priority,
-                render: (row) => <span className="table-meta">{row.priority}</span>,
+                render: (row) => (
+                  <span
+                    className="table-meta"
+                    style={{
+                      background: "var(--panel-soft-2, #f1f5f9)",
+                      borderRadius: 9999,
+                      padding: "3px 10px",
+                      display: "inline-block",
+                    }}
+                  >
+                    {row.priority}
+                  </span>
+                ),
                 align: "center",
               },
               {
@@ -357,14 +387,21 @@ export const AdsPage = () => {
                   <div className="table-actions">
                     <button
                       className="ghost-button small"
+                      style={{ borderRadius: 9999 }}
                       onClick={() => handleToggle(row)}
                       title={row.is_active ? t.ads.hide : t.ads.show}
                     >
                       {row.is_active ? t.ads.hide : t.ads.show}
                     </button>
-                    <button className="ghost-button small" onClick={() => handleEdit(row)}>{t.common.edit}</button>
-                    <button className="ghost-button small" onClick={() => handleDuplicate(row)}>{t.ads.duplicate}</button>
-                    <button className="ghost-button small danger" onClick={() => handleDelete(row.id)}>{t.common.delete}</button>
+                    <button className="ghost-button small" style={{ borderRadius: 9999 }} onClick={() => handleEdit(row)}>
+                      {t.common.edit}
+                    </button>
+                    <button className="ghost-button small" style={{ borderRadius: 9999 }} onClick={() => handleDuplicate(row)}>
+                      {t.ads.duplicate}
+                    </button>
+                    <button className="ghost-button small danger" style={{ borderRadius: 9999 }} onClick={() => handleDelete(row.id)}>
+                      {t.common.delete}
+                    </button>
                   </div>
                 ),
                 align: "right",
@@ -476,8 +513,10 @@ export const AdsPage = () => {
               {t.common.active}
             </label>
             <div className="table-actions">
-              <button className="ghost-button" type="button" onClick={closeForm}>{t.common.cancel}</button>
-              <button className="primary-button" type="submit" disabled={saving || uploading}>
+              <button className="ghost-button" type="button" style={{ borderRadius: 9999 }} onClick={closeForm}>
+                {t.common.cancel}
+              </button>
+              <button className="primary-button" type="submit" style={{ borderRadius: 9999 }} disabled={saving || uploading}>
                 {saving ? t.common.saving : editingId ? t.common.update : t.common.create}
               </button>
             </div>

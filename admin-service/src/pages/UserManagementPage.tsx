@@ -212,7 +212,13 @@ export default function UserManagementPage() {
       sortKey: 'email',
       render: (user) => (
         <div className="user-cell">
-          <div className="user-cell__avatar" aria-hidden="true">{(user.display_name || user.email)[0].toUpperCase()}</div>
+          <div
+            className="user-cell__avatar"
+            aria-hidden="true"
+            style={{ background: 'var(--accent, #FF4D00)', color: '#ffffff', borderRadius: '9999px' }}
+          >
+            {(user.display_name || user.email)[0].toUpperCase()}
+          </div>
           <div>
             <button type="button" className="link-button table-title" onClick={() => handleViewDetail(user.id)}>
               {user.display_name || user.email.split('@')[0]}
@@ -225,7 +231,11 @@ export default function UserManagementPage() {
     {
       header: t.userList.colRole,
       sortKey: 'role',
-      render: (user) => <span className={`badge ${roleTone(user.role_level)}`}>{getRoleLabel(user.role_level)}</span>,
+      render: (user) => (
+        <span className={`badge ${roleTone(user.role_level)}`} style={{ borderRadius: '9999px' }}>
+          {getRoleLabel(user.role_level)}
+        </span>
+      ),
     },
     {
       header: t.userList.colProgress,
@@ -233,7 +243,15 @@ export default function UserManagementPage() {
       render: (user) => (
         <div className="stack stack--tight">
           <div className="xp-row">
-            <div className="xp-meter"><span style={{ width: `${Math.min(100, (user.total_xp || 0) / 100)}%` }} /></div>
+            <div className="xp-meter" style={{ borderRadius: '9999px', overflow: 'hidden' }}>
+              <span
+                style={{
+                  width: `${Math.min(100, (user.total_xp || 0) / 100)}%`,
+                  background: 'linear-gradient(90deg, var(--accent, #FF4D00) 0%, #FF8A3D 100%)',
+                  borderRadius: '9999px',
+                }}
+              />
+            </div>
             <span className="table-meta xp-row__value">{(user.total_xp || 0).toLocaleString()} XP</span>
           </div>
           <span className="table-meta">{fill(t.userList.streak, { n: user.streak_days || 0 })}</span>
@@ -243,7 +261,7 @@ export default function UserManagementPage() {
     {
       header: t.userList.colStatus,
       render: (user) => (
-        <span className={`badge ${user.is_active ? 'badge--ok' : 'badge--muted'}`}>
+        <span className={`badge ${user.is_active ? 'badge--ok' : 'badge--muted'}`} style={{ borderRadius: '9999px' }}>
           {user.is_active ? t.userList.statusActive : t.userList.statusPaused}
         </span>
       ),
@@ -328,12 +346,22 @@ export default function UserManagementPage() {
         <SectionHeader title={t.userList.title} description={t.userList.description} />
 
         {selectedUsers.size > 0 && (
-          <div className="bulk-bar" role="region" aria-live="polite">
+          <div className="bulk-bar" role="region" aria-live="polite" style={{ borderRadius: '9999px' }}>
             <span className="bulk-bar__count">{fill(t.userList.selected, { n: selectedUsers.size })}</span>
-            <button onClick={() => handleBulkAction('activate')} disabled={bulkActionMutation.isPending} className="ghost-button">
+            <button
+              onClick={() => handleBulkAction('activate')}
+              disabled={bulkActionMutation.isPending}
+              className="ghost-button"
+              style={{ borderRadius: '9999px' }}
+            >
               {t.userList.activate}
             </button>
-            <button onClick={() => handleBulkAction('deactivate')} disabled={bulkActionMutation.isPending} className="ghost-button">
+            <button
+              onClick={() => handleBulkAction('deactivate')}
+              disabled={bulkActionMutation.isPending}
+              className="ghost-button"
+              style={{ borderRadius: '9999px' }}
+            >
               {t.userList.deactivate}
             </button>
           </div>
@@ -342,8 +370,8 @@ export default function UserManagementPage() {
 
       {data && (
         <div className="card-grid">
-          <div className="stat-card">
-            <div className="stat-icon">
+          <div className="stat-card bento-card--blue">
+            <div className="stat-icon" style={{ borderRadius: '9999px' }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                 <circle cx="9" cy="7" r="4"/>
@@ -358,7 +386,10 @@ export default function UserManagementPage() {
           </div>
 
           <div className="stat-card">
-            <div className="stat-icon">
+            <div
+              className="stat-icon"
+              style={{ borderRadius: '9999px', background: 'rgba(255, 122, 0, 0.12)', color: 'var(--accent-2, #FF7A00)' }}
+            >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
                 <polyline points="22 4 12 14.01 9 11.01"/>
@@ -372,7 +403,10 @@ export default function UserManagementPage() {
           </div>
 
           <div className="stat-card">
-            <div className="stat-icon">
+            <div
+              className="stat-icon"
+              style={{ borderRadius: '9999px', background: 'rgba(100, 116, 139, 0.12)', color: 'var(--muted, #64748b)' }}
+            >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <circle cx="12" cy="12" r="10"/>
                 <line x1="12" y1="8" x2="12" y2="12"/>
@@ -387,7 +421,10 @@ export default function UserManagementPage() {
           </div>
 
           <div className="stat-card">
-            <div className="stat-icon">
+            <div
+              className="stat-icon"
+              style={{ borderRadius: '9999px', background: 'rgba(255, 77, 0, 0.1)', color: 'var(--accent, #FF4D00)' }}
+            >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
               </svg>

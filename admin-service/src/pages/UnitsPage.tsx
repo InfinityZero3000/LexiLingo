@@ -165,7 +165,7 @@ export const UnitsPage = () => {
               </select>
             )}
           </div>
-          <button className="primary-button" onClick={() => { resetForm(); setShowForm(true); }}>
+          <button className="primary-button" style={{ borderRadius: 999 }} onClick={() => { resetForm(); setShowForm(true); }}>
             {t.units.createUnit}
           </button>
         </div>
@@ -224,7 +224,7 @@ export const UnitsPage = () => {
                       style={{
                         width: 24,
                         height: 24,
-                        borderRadius: 4,
+                        borderRadius: 8,
                         background: row.background_color,
                         border: "1px solid var(--line)",
                         margin: "0 auto",
@@ -290,7 +290,7 @@ export const UnitsPage = () => {
               </label>
               <label>
                 Màu nền
-                <input value={form.background_color} onChange={(e) => setForm({ ...form, background_color: e.target.value })} placeholder="#4CAF50" />
+                <input value={form.background_color} onChange={(e) => setForm({ ...form, background_color: e.target.value })} placeholder="#FF4D00" />
               </label>
             </div>
             <label>

@@ -110,7 +110,9 @@ export const AppShell = ({
 
         <div className="sidebar-footer">
           <div className="user-card">
-            <div className="user-avatar">{user?.username?.slice(0, 2).toUpperCase()}</div>
+            <div className="user-avatar" aria-hidden="true">
+              {user?.username?.slice(0, 2).toUpperCase() || "AD"}
+            </div>
             <div className="user-info">
               <div className="user-name">{user?.display_name || user?.username}</div>
               <div className="user-email">{user?.email}</div>
@@ -123,8 +125,8 @@ export const AppShell = ({
       </aside>
 
       <main className="main">
-        <div className="topbar">
-          <button 
+        <header className="topbar">
+          <button
             className={`mobile-menu-btn ${mobileMenuOpen ? 'active' : ''}`}
             onClick={toggleMobileMenu}
             aria-label={t.appShell.toggleMenu}
@@ -153,8 +155,7 @@ export const AppShell = ({
             </nav>
           )}
           <ThemeToggle className="topbar-theme-toggle" />
-        </div>
-        <div className="topbar-line" />
+        </header>
 
         <div className="page">
           <Outlet />

@@ -150,6 +150,18 @@ export const IeltsTestsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [filterScope, setFilterScope] = useState<"all" | IeltsSkillScope>("all");
+  const [filterType, setFilterType] = useState<"all" | IeltsTestType>("all");
+
+  const visibleTests = useMemo(
+    () =>
+      tests.filter((test) => {
+        if (filterScope !== "all" && test.skill_scope !== filterScope) return false;
+        if (filterType !== "all" && test.test_type !== filterType) return false;
+        return true;
+      }),
+    [tests, filterScope, filterType]
+  );
 
   const selected = useMemo(
     () => tests.find((t) => t.id === selectedId) ?? null,
@@ -328,7 +340,7 @@ export const IeltsTestsPage = () => {
         title="IELTS mock tests"
         description="Author four-skill papers. Listening and Reading are graded from the answer key; Writing and Speaking are graded by AI against the band descriptors."
         action={
-          <button className="primary-button" onClick={startNew} type="button">
+          <button className="primary-button" style={{ borderRadius: 999 }} onClick={startNew} type="button">
             <Plus size={16} /> New test
           </button>
         }
@@ -339,15 +351,70 @@ export const IeltsTestsPage = () => {
           <AlertTriangle size={16} /> {error}
         </div>
       )}
-      {notice && <div className="panel">{notice}</div>}
+      {notice && (
+        <div
+          className="panel"
+          style={{
+            padding: "12px 16px",
+            background: "var(--accent-soft, #FFF3EC)",
+            border: "1px solid var(--accent, #FF4D00)",
+            color: "var(--accent, #FF4D00)",
+            fontWeight: 500,
+          }}
+        >
+          {notice}
+        </div>
+      )}
+
+      <div className="panel filter-panel">
+        <div className="filter-bar" style={{ justifyContent: "space-between" }}>
+          <div
+            className="tab-row"
+            role="group"
+            aria-label="Filter by skill"
+            style={{
+              display: "inline-flex",
+              gap: 4,
+              padding: 4,
+              borderRadius: 999,
+              background: "var(--panel-soft-2, #F8FAFC)",
+              border: "1px solid var(--line)",
+            }}
+          >
+            {(["all", ...SKILL_SCOPES] as const).map((scope) => (
+              <button
+                key={scope}
+                type="button"
+                className={filterScope === scope ? "tab active" : "tab"}
+                style={{ borderRadius: 999 }}
+                aria-pressed={filterScope === scope}
+                onClick={() => setFilterScope(scope)}
+              >
+                {scope === "all" ? "All skills" : scope.charAt(0).toUpperCase() + scope.slice(1)}
+              </button>
+            ))}
+          </div>
+          <select
+            className="filter-select"
+            style={{ borderRadius: 999 }}
+            aria-label="Filter by test type"
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value as "all" | IeltsTestType)}
+          >
+            <option value="all">All types</option>
+            <option value="academic">Academic</option>
+            <option value="general_training">General Training</option>
+          </select>
+        </div>
+      </div>
 
       <div className="panel">
         {loading ? (
           <TableSkeleton />
-        ) : tests.length === 0 ? (
+        ) : visibleTests.length === 0 ? (
           <EmptyState
-            title="No IELTS tests yet"
-            description="Create one to get a starter paper with all four sections."
+            title={tests.length === 0 ? "No IELTS tests yet" : "No matching IELTS tests"}
+            description={tests.length === 0 ? "Create one to get a starter paper with all four sections." : "Try clearing the skill or type filter."}
           />
         ) : (
           <table>
@@ -363,11 +430,14 @@ export const IeltsTestsPage = () => {
               </tr>
             </thead>
             <tbody>
-              {tests.map((test) => (
+              {visibleTests.map((test) => (
                 <tr
                   key={test.id}
                   onClick={() => void openTest(test.id)}
-                  style={{ cursor: "pointer" }}
+                  style={{
+                    cursor: "pointer",
+                    background: test.id === selectedId ? "var(--accent-soft, #FFF3EC)" : undefined,
+                  }}
                   aria-selected={test.id === selectedId}
                 >
                   <td>
@@ -377,7 +447,7 @@ export const IeltsTestsPage = () => {
                     )}
                   </td>
                   <td>{test.test_type === "academic" ? "Academic" : "General Training"}</td>
-                  <td>{test.skill_scope}</td>
+                  <td><StatusPill tone="info" label={test.skill_scope} /></td>
                   <td>{test.question_count}</td>
                   <td>{test.attempt_count}</td>
                   <td>
@@ -389,6 +459,7 @@ export const IeltsTestsPage = () => {
                   <td>
                     <button
                       className="ghost-button small"
+                      style={{ borderRadius: 999 }}
                       type="button"
                       onClick={(event) => {
                         event.stopPropagation();
@@ -479,7 +550,13 @@ export const IeltsTestsPage = () => {
           <textarea
             rows={20}
             spellCheck={false}
-            style={{ fontFamily: "ui-monospace, monospace", fontSize: 13 }}
+            style={{
+              fontFamily: "ui-monospace, monospace",
+              fontSize: 13,
+              background: "var(--panel-soft-2, #F8FAFC)",
+              borderRadius: 12,
+              padding: 12,
+            }}
             value={draft.contentText}
             onChange={(e) => setDraft({ ...draft, contentText: e.target.value })}
           />
@@ -493,6 +570,7 @@ export const IeltsTestsPage = () => {
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
           <button
             className="primary-button"
+            style={{ borderRadius: 999 }}
             type="button"
             onClick={() => void save()}
             disabled={busy || !draft.title.trim() || Boolean(contentError)}
@@ -501,6 +579,7 @@ export const IeltsTestsPage = () => {
           </button>
           <button
             className="ghost-button"
+            style={{ borderRadius: 999 }}
             type="button"
             onClick={() => void runValidation()}
             disabled={busy || !selectedId}
@@ -509,13 +588,14 @@ export const IeltsTestsPage = () => {
           </button>
           <button
             className="ghost-button"
+            style={{ borderRadius: 999 }}
             type="button"
             onClick={() => void togglePublish()}
             disabled={busy || !selectedId}
           >
             {selected?.is_published ? "Unpublish" : "Publish"}
           </button>
-          <label className="ghost-button" style={{ cursor: "pointer" }}>
+          <label className="ghost-button" style={{ cursor: "pointer", borderRadius: 999 }}>
             <FileAudio size={14} /> Upload listening audio
             <input
               type="file"
@@ -535,9 +615,15 @@ export const IeltsTestsPage = () => {
         )}
 
         {validation && (
-          <div className="panel">
+          <div
+            className="panel"
+            style={{
+              background: validation.publishable ? "rgba(255, 77, 0, 0.08)" : "var(--panel-soft-2, #F8FAFC)",
+              borderColor: validation.publishable ? "rgba(255, 77, 0, 0.25)" : "var(--line)",
+            }}
+          >
             {validation.publishable ? (
-              <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--accent-2, #FF7A00)", fontWeight: 500 }}>
                 <CheckCircle2 size={16} /> Ready to publish — Listening{" "}
                 {validation.counts.listening ?? 0} questions, Reading{" "}
                 {validation.counts.reading ?? 0}, {validation.counts.productive_parts ?? 0}{" "}

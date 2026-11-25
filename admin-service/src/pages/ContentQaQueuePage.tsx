@@ -65,27 +65,33 @@ const JobList = ({
       <EmptyState title="No jobs" description="Nothing is waiting in this bucket." />
     ) : (
       <div className="stack" style={{ gap: 10 }}>
-        {jobs.map((job) => (
-          <button
-            key={job.id}
-            className={selectedId === job.id ? "ghost-button active" : "ghost-button"}
-            onClick={() => onSelect(job)}
-            style={{
-              justifyContent: "space-between",
-              textAlign: "left",
-              width: "100%",
-              borderColor: selectedId === job.id ? "var(--accent-2)" : undefined,
-            }}
-          >
-            <span>
-              <strong>{job.config.title_focus || job.config.levels?.join(", ") || "Content job"}</strong>
-              <span className="table-sub" style={{ display: "block" }}>
-                {job.id.slice(0, 8)} · {new Date(job.updated_at).toLocaleString()}
+        {jobs.map((job) => {
+          const isSelected = selectedId === job.id;
+          return (
+            <button
+              key={job.id}
+              className={isSelected ? "ghost-button active" : "ghost-button"}
+              onClick={() => onSelect(job)}
+              style={{
+                justifyContent: "space-between",
+                textAlign: "left",
+                width: "100%",
+                borderRadius: 14,
+                padding: "10px 14px",
+                background: isSelected ? "var(--accent-soft, #FFF3EC)" : "var(--panel-soft-2, #F8FAFC)",
+                borderColor: isSelected ? "var(--accent, #FF4D00)" : "var(--line)",
+              }}
+            >
+              <span>
+                <strong>{job.config.title_focus || job.config.levels?.join(", ") || "Content job"}</strong>
+                <span className="table-sub" style={{ display: "block" }}>
+                  {job.id.slice(0, 8)} · {new Date(job.updated_at).toLocaleString()}
+                </span>
               </span>
-            </span>
-            <StatusPill tone={statusTone(job.status)} label={job.status} />
-          </button>
-        ))}
+              <StatusPill tone={statusTone(job.status)} label={job.status} />
+            </button>
+          );
+        })}
       </div>
     )}
   </div>
@@ -232,7 +238,7 @@ export const ContentQaQueuePage = () => {
         title="Content QA Queue"
         description="Review, validate, publish, or reject AI-generated learning content."
         action={
-          <button className="ghost-button small" onClick={loadQueue} disabled={loading}>
+          <button className="ghost-button small" style={{ borderRadius: 999 }} onClick={loadQueue} disabled={loading}>
             <RefreshCw size={14} /> Refresh
           </button>
         }
@@ -241,10 +247,10 @@ export const ContentQaQueuePage = () => {
       {error && <div className="form-error">{error}</div>}
 
       <div className="card-grid">
-        <StatCard label="Ready for review" value={String(queue?.reviewable.length || 0)} accent="orange" />
+        <StatCard label="Ready for review" value={String(queue?.reviewable.length || 0)} variant="blue" />
         <StatCard label="Failed validation" value={String(queue?.failed.length || 0)} accent="berry" />
         <StatCard label="Published jobs" value={String(queue?.applied.length || 0)} accent="teal" />
-        <StatCard label="Tracked jobs" value={String(queue?.total || 0)} accent="ink" />
+        <StatCard label="Tracked jobs" value={String(queue?.total || 0)} variant="dark" />
       </div>
 
       <div className="grid-2">
@@ -268,10 +274,10 @@ export const ContentQaQueuePage = () => {
               </div>
 
               <div className="card-grid">
-                <StatCard label="Courses" value={String(summary.courses)} accent="orange" />
+                <StatCard label="Courses" value={String(summary.courses)} variant="blue" />
                 <StatCard label="Lessons" value={String(summary.lessons)} accent="teal" />
                 <StatCard label="Vocabulary" value={String(summary.vocabulary)} accent="ink" />
-                <StatCard label="Exercises" value={String(summary.exercises)} accent="berry" />
+                <StatCard label="Exercises" value={String(summary.exercises)} variant="dark" />
               </div>
 
               <div className="panel-inner">
@@ -364,14 +370,39 @@ export const ContentQaQueuePage = () => {
                 <div className="table-sub">Completed: {selected.completed_at ? new Date(selected.completed_at).toLocaleString() : "not completed"}</div>
               </div>
 
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                <button className="primary-button" disabled={selected.status !== "preview_ready"} onClick={() => runAction("apply")}>
+              <div
+                style={{
+                  display: "flex",
+                  gap: 10,
+                  flexWrap: "wrap",
+                  padding: 12,
+                  borderRadius: 16,
+                  background: "var(--panel-soft-2, #F8FAFC)",
+                  border: "1px solid var(--line)",
+                }}
+              >
+                <button
+                  className="primary-button"
+                  style={{ borderRadius: 999, background: "var(--accent-2)", borderColor: "var(--accent-2)" }}
+                  disabled={selected.status !== "preview_ready"}
+                  onClick={() => runAction("apply")}
+                >
                   <CheckCircle size={16} /> Approve & publish
                 </button>
-                <button className="ghost-button danger" disabled={!["preview_ready", "failed"].includes(selected.status)} onClick={() => runAction("cancel")}>
+                <button
+                  className="ghost-button danger"
+                  style={{ borderRadius: 999 }}
+                  disabled={!["preview_ready", "failed"].includes(selected.status)}
+                  onClick={() => runAction("cancel")}
+                >
                   <XCircle size={16} /> Reject
                 </button>
-                <button className="ghost-button" disabled={selected.status !== "failed"} onClick={() => runAction("retry")}>
+                <button
+                  className="ghost-button"
+                  style={{ borderRadius: 999 }}
+                  disabled={selected.status !== "failed"}
+                  onClick={() => runAction("retry")}
+                >
                   <RotateCcw size={16} /> Retry
                 </button>
               </div>

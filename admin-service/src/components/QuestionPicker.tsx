@@ -118,7 +118,7 @@ export const QuestionPicker = ({ examLevel, selected, onChange, known = [], rand
           />
         </label>
         <div className="picker-random">
-          <button type="button" className="ghost-button" onClick={handleRandom} disabled={loading}>
+          <button type="button" className="ghost-button" style={{ borderRadius: 999 }} onClick={handleRandom} disabled={loading}>
             {c.randomPick.replace("{count}", String(count))}
           </button>
         </div>

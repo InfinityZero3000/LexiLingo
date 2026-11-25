@@ -223,7 +223,14 @@ export const LoginPage = () => {
             <span>Personalized learning paths</span>
           </div>
           <div className="login-hero-feature">
-            <span className="login-hero-feature-icon">
+            <span
+              className="login-hero-feature-icon"
+              style={{
+                background: "var(--accent-2-soft)",
+                borderColor: "rgba(255, 77, 0, 0.28)",
+                color: "var(--accent-2)",
+              }}
+            >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 2a10 10 0 1 0 10 10" /><path d="M12 6v6l4 2" />
               </svg>
@@ -252,7 +259,7 @@ export const LoginPage = () => {
           </div>
           <div className="login-hero-stat-divider" />
           <div className="login-hero-stat">
-            <span className="login-hero-stat-num">98%</span>
+            <span className="login-hero-stat-num" style={{ color: "var(--accent-2)" }}>98%</span>
             <span className="login-hero-stat-label">Satisfaction</span>
           </div>
         </div>
@@ -314,7 +321,17 @@ export const LoginPage = () => {
               <span>{t.login.googleOAuth}</span>
             </div>
             <div className="security-badge">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ color: "var(--accent-2)" }}
+              >
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>

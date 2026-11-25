@@ -53,7 +53,7 @@ export const IeltsProvenancePanel = ({
               <AlertTriangle size={14} /> {fill(p.blockedSummary, { count: blocked })}
             </div>
           ) : (
-            <div>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, color: "var(--accent-2, #FF7A00)", fontWeight: 500 }}>
               <CheckCircle2 size={14} /> {p.okSummary}
             </div>
           )}

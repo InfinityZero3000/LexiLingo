@@ -5,7 +5,7 @@ import { StatusPill } from "../components/StatusPill";
 import { useI18n } from "../lib/i18n";
 import { authStore } from "../lib/auth";
 import { getAiConfig, updateAiConfig } from "../lib/healthApi";
-import { Bot, CheckCircle, Key, Lightbulb, Zap } from "lucide-react";
+import { Bot, CheckCircle, Cpu, Key, Lightbulb, Sparkles, Zap } from "lucide-react";
 
 interface AiChatConfig {
   gemini_api_key?: string;
@@ -127,42 +127,71 @@ export const AiChatSettingsPage = () => {
           label={t.aiChat.model}
           value={config.gemini_model.split("-")[1] || "Flash"}
           note={`Gemini ${config.gemini_model.includes("2.0") ? "2.0" : "1.5"}`}
-          accent="teal"
+          variant="blue"
+          icon={<Bot size={18} />}
         />
         <StatCard
           label={t.aiChat.temperature}
           value={config.temperature.toFixed(2)}
           note={t.aiChat.creativity}
-          accent="orange"
+          accent="teal"
+          icon={<Sparkles size={18} />}
         />
         <StatCard
           label={t.aiChat.maxTokens}
           value={String(config.max_tokens)}
           note={t.aiChat.responseLength}
           accent="berry"
+          icon={<Cpu size={18} />}
         />
         <StatCard
           label={t.aiChat.features}
           value={`${[config.enable_voice, config.enable_grammar, config.enable_topic].filter(Boolean).length}/3`}
           note={t.aiChat.modulesEnabled}
-          accent="ink"
+          variant="dark"
+          icon={<Zap size={18} />}
         />
       </div>
 
       <div className="grid-2">
         {/* Gemini Model Settings */}
         <div className="panel">
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-            <Bot size={20} style={{ color: "var(--accent)" }} />
-            <h3 style={{ margin: 0 }}>{t.aiChat.modelSettings}</h3>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 12,
+                  display: "grid",
+                  placeItems: "center",
+                  background: "var(--accent-soft)",
+                  color: "var(--accent)",
+                  flexShrink: 0,
+                }}
+              >
+                <Bot size={18} />
+              </span>
+              <h3 style={{ margin: 0 }}>{t.aiChat.modelSettings}</h3>
+            </div>
+            <StatusPill tone="info" label={config.gemini_model} />
           </div>
-          
-          <div className="form-field">
-            <label>{t.aiChat.model}</label>
-            <select 
+
+          <div
+            className="form-field"
+            style={{
+              padding: "14px 16px",
+              borderRadius: "var(--radius-inner)",
+              background: "var(--panel-soft-2)",
+              border: "1px solid var(--line)",
+            }}
+          >
+            <label style={{ fontWeight: 600 }}>{t.aiChat.model}</label>
+            <select
               value={config.gemini_model}
               onChange={(e) => updateConfig("gemini_model", e.target.value)}
               className="input"
+              style={{ background: "var(--panel)" }}
             >
               <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash (Experimental)</option>
               <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
@@ -170,8 +199,19 @@ export const AiChatSettingsPage = () => {
             </select>
           </div>
 
-          <div className="form-field">
-            <label>{t.aiChat.temperature} ({config.temperature})</label>
+          <div
+            className="form-field"
+            style={{
+              padding: "14px 16px",
+              borderRadius: "var(--radius-inner)",
+              background: "var(--panel-soft-2)",
+              border: "1px solid var(--line)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
+              <label style={{ margin: 0, fontWeight: 600 }}>{t.aiChat.temperature}</label>
+              <StatusPill tone="info" label={config.temperature.toFixed(1)} />
+            </div>
             <input
               type="range"
               min="0"
@@ -180,12 +220,24 @@ export const AiChatSettingsPage = () => {
               value={config.temperature}
               onChange={(e) => updateConfig("temperature", parseFloat(e.target.value))}
               className="slider"
+              style={{ accentColor: "var(--accent)" }}
             />
-            <small>{t.aiChat.temperatureHint}</small>
+            <small className="text-muted" style={{ display: "block", marginTop: 8 }}>{t.aiChat.temperatureHint}</small>
           </div>
 
-          <div className="form-field">
-            <label>{t.aiChat.maxTokens}</label>
+          <div
+            className="form-field"
+            style={{
+              padding: "14px 16px",
+              borderRadius: "var(--radius-inner)",
+              background: "var(--panel-soft-2)",
+              border: "1px solid var(--line)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
+              <label style={{ margin: 0, fontWeight: 600 }}>{t.aiChat.maxTokens}</label>
+              <StatusPill tone="neutral" label={String(config.max_tokens)} />
+            </div>
             <input
               type="number"
               min="512"
@@ -193,12 +245,24 @@ export const AiChatSettingsPage = () => {
               value={config.max_tokens}
               onChange={(e) => updateConfig("max_tokens", parseInt(e.target.value))}
               className="input"
+              style={{ background: "var(--panel)" }}
             />
           </div>
 
           <div className="grid-2">
-            <div className="form-field">
-              <label>Top P ({config.top_p})</label>
+            <div
+              className="form-field"
+              style={{
+                padding: "14px 16px",
+                borderRadius: "var(--radius-inner)",
+                background: "var(--panel-soft-2)",
+                border: "1px solid var(--line)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
+                <label style={{ margin: 0, fontWeight: 600 }}>Top P</label>
+                <StatusPill tone="info" label={config.top_p.toFixed(2)} />
+              </div>
               <input
                 type="range"
                 min="0"
@@ -207,10 +271,22 @@ export const AiChatSettingsPage = () => {
                 value={config.top_p}
                 onChange={(e) => updateConfig("top_p", parseFloat(e.target.value))}
                 className="slider"
+                style={{ accentColor: "var(--accent)" }}
               />
             </div>
-            <div className="form-field">
-              <label>Top K ({config.top_k})</label>
+            <div
+              className="form-field"
+              style={{
+                padding: "14px 16px",
+                borderRadius: "var(--radius-inner)",
+                background: "var(--panel-soft-2)",
+                border: "1px solid var(--line)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
+                <label style={{ margin: 0, fontWeight: 600 }}>Top K</label>
+                <StatusPill tone="neutral" label={String(config.top_k)} />
+              </div>
               <input
                 type="number"
                 min="1"
@@ -218,6 +294,7 @@ export const AiChatSettingsPage = () => {
                 value={config.top_k}
                 onChange={(e) => updateConfig("top_k", parseInt(e.target.value))}
                 className="input"
+                style={{ background: "var(--panel)" }}
               />
             </div>
           </div>
@@ -225,9 +302,28 @@ export const AiChatSettingsPage = () => {
 
         {/* Features & Integrations */}
         <div className="panel">
-          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-            <Zap size={20} style={{ color: "var(--accent)" }} />
-            <h3 style={{ margin: 0 }}>{t.aiChat.features}</h3>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 12,
+                  display: "grid",
+                  placeItems: "center",
+                  background: "var(--accent-2-soft)",
+                  color: "var(--accent-2)",
+                  flexShrink: 0,
+                }}
+              >
+                <Zap size={18} />
+              </span>
+              <h3 style={{ margin: 0 }}>{t.aiChat.features}</h3>
+            </div>
+            <StatusPill
+              tone="success"
+              label={`${[config.enable_voice, config.enable_grammar, config.enable_topic].filter(Boolean).length}/3`}
+            />
           </div>
 
           <div className="pill-grid">
@@ -236,14 +332,18 @@ export const AiChatSettingsPage = () => {
                 <div className="pill-title">{t.aiChat.voiceSupport}</div>
                 <div className="pill-desc">{t.aiChat.voiceDesc}</div>
               </div>
-              <label className="toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={config.enable_voice}
-                  onChange={(e) => updateConfig("enable_voice", e.target.checked)}
-                />
-                <span className="toggle-slider"></span>
-              </label>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <StatusPill tone={config.enable_voice ? "success" : "neutral"} label={config.enable_voice ? t.common.enabled : t.common.disabled} />
+                <label className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    checked={config.enable_voice}
+                    onChange={(e) => updateConfig("enable_voice", e.target.checked)}
+                    style={{ accentColor: "var(--accent)" }}
+                  />
+                  <span className="toggle-slider"></span>
+                </label>
+              </div>
             </div>
 
             <div className="pill-item">
@@ -251,14 +351,18 @@ export const AiChatSettingsPage = () => {
                 <div className="pill-title">{t.aiChat.grammarCheck}</div>
                 <div className="pill-desc">{t.aiChat.grammarDesc}</div>
               </div>
-              <label className="toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={config.enable_grammar}
-                  onChange={(e) => updateConfig("enable_grammar", e.target.checked)}
-                />
-                <span className="toggle-slider"></span>
-              </label>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <StatusPill tone={config.enable_grammar ? "success" : "neutral"} label={config.enable_grammar ? t.common.enabled : t.common.disabled} />
+                <label className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    checked={config.enable_grammar}
+                    onChange={(e) => updateConfig("enable_grammar", e.target.checked)}
+                    style={{ accentColor: "var(--accent)" }}
+                  />
+                  <span className="toggle-slider"></span>
+                </label>
+              </div>
             </div>
 
             <div className="pill-item">
@@ -266,14 +370,18 @@ export const AiChatSettingsPage = () => {
                 <div className="pill-title">{t.aiChat.topicAnalysis}</div>
                 <div className="pill-desc">{t.aiChat.topicDesc}</div>
               </div>
-              <label className="toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={config.enable_topic}
-                  onChange={(e) => updateConfig("enable_topic", e.target.checked)}
-                />
-                <span className="toggle-slider"></span>
-              </label>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <StatusPill tone={config.enable_topic ? "success" : "neutral"} label={config.enable_topic ? t.common.enabled : t.common.disabled} />
+                <label className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    checked={config.enable_topic}
+                    onChange={(e) => updateConfig("enable_topic", e.target.checked)}
+                    style={{ accentColor: "var(--accent)" }}
+                  />
+                  <span className="toggle-slider"></span>
+                </label>
+              </div>
             </div>
 
             <div className="pill-item">
@@ -281,19 +389,34 @@ export const AiChatSettingsPage = () => {
                 <div className="pill-title">{t.aiChat.mongodb}</div>
                 <div className="pill-desc">{t.aiChat.mongodbDesc}</div>
               </div>
-              <label className="toggle-switch">
-                <input
-                  type="checkbox"
-                  checked={config.use_mongodb}
-                  onChange={(e) => updateConfig("use_mongodb", e.target.checked)}
-                />
-                <span className="toggle-slider"></span>
-              </label>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <StatusPill tone={config.use_mongodb ? "success" : "neutral"} label={config.use_mongodb ? t.common.enabled : t.common.disabled} />
+                <label className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    checked={config.use_mongodb}
+                    onChange={(e) => updateConfig("use_mongodb", e.target.checked)}
+                    style={{ accentColor: "var(--accent)" }}
+                  />
+                  <span className="toggle-slider"></span>
+                </label>
+              </div>
             </div>
           </div>
 
-          <div className="form-field" style={{ marginTop: 16 }}>
-            <label>{t.aiChat.chatMemory}</label>
+          <div
+            className="form-field"
+            style={{
+              padding: "14px 16px",
+              borderRadius: "var(--radius-inner)",
+              background: "var(--panel-soft-2)",
+              border: "1px solid var(--line)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 8 }}>
+              <label style={{ margin: 0, fontWeight: 600 }}>{t.aiChat.chatMemory}</label>
+              <StatusPill tone="info" label={String(config.chat_memory_turns)} />
+            </div>
             <input
               type="number"
               min="0"
@@ -301,31 +424,59 @@ export const AiChatSettingsPage = () => {
               value={config.chat_memory_turns}
               onChange={(e) => updateConfig("chat_memory_turns", parseInt(e.target.value))}
               className="input"
+              style={{ background: "var(--panel)" }}
             />
-            <small>{t.aiChat.chatMemoryHint}</small>
+            <small className="text-muted" style={{ display: "block", marginTop: 6 }}>{t.aiChat.chatMemoryHint}</small>
           </div>
         </div>
       </div>
 
       {/* API Key Configuration */}
       <div className="panel">
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-          <Key size={20} style={{ color: "var(--accent)" }} />
-          <h3 style={{ margin: 0 }}>{t.aiChat.apiKeyConfig}</h3>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 12,
+                display: "grid",
+                placeItems: "center",
+                background: "var(--accent-soft)",
+                color: "var(--accent)",
+                flexShrink: 0,
+              }}
+            >
+              <Key size={18} />
+            </span>
+            <h3 style={{ margin: 0 }}>{t.aiChat.apiKeyConfig}</h3>
+          </div>
+          <StatusPill
+            tone={config.gemini_api_key ? "success" : "neutral"}
+            label={config.gemini_api_key ? t.common.configured : t.common.notConfigured}
+          />
         </div>
-        
-        <div className="form-field">
-          <label>{t.aiChat.geminiApiKey}</label>
+
+        <div
+          className="form-field"
+          style={{
+            padding: "14px 16px",
+            borderRadius: "var(--radius-inner)",
+            background: "var(--panel-soft-2)",
+            border: "1px solid var(--line)",
+          }}
+        >
+          <label style={{ fontWeight: 600 }}>{t.aiChat.geminiApiKey}</label>
           <div style={{ display: "flex", gap: 8 }}>
             <input
               type={showApiKey ? "text" : "password"}
               value={config.gemini_api_key || ""}
               onChange={(e) => updateConfig("gemini_api_key", e.target.value)}
-              placeholder="AIza..." 
+              placeholder="AIza..."
               className="input"
-              style={{ flex: 1 }}
+              style={{ flex: 1, background: "var(--panel)" }}
             />
-            <button 
+            <button
               type="button"
               onClick={() => setShowApiKey(!showApiKey)}
               className="ghost-button"
@@ -334,7 +485,7 @@ export const AiChatSettingsPage = () => {
               {showApiKey ? t.aiChat.hide : t.aiChat.show}
             </button>
           </div>
-          <small style={{ color: "var(--muted)" }}>{t.aiChat.apiKeyHint}</small>
+          <small className="text-muted" style={{ display: "block", marginTop: 6 }}>{t.aiChat.apiKeyHint}</small>
         </div>
 
         <div className="info-callout">

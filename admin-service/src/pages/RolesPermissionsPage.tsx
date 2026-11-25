@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Minus } from "lucide-react";
+import { Check, Info, KeyRound, Layers, Minus, Shield, ShieldCheck } from "lucide-react";
 import { useAuth } from "../components/AuthProvider";
 import { useConfirm } from "../components/ConfirmDialog";
 import { SectionHeader } from "../components/SectionHeader";
+import { StatCard } from "../components/StatCard";
 import { EmptyState } from "../components/EmptyState";
 import { TableSkeleton } from "../components/Skeleton";
 import { StatusPill } from "../components/StatusPill";
@@ -104,7 +105,64 @@ export const RolesPermissionsPage = () => {
         }
       />
 
-      <div className="panel" role="note">{canEdit ? t.rolesPage.editHint : t.rolesPage.readOnlyHint}</div>
+      {!error && (
+        <div className="card-grid">
+          <StatCard
+            label={t.rolesPage.permission}
+            value={String(permissions.data?.length ?? 0)}
+            variant="blue"
+            icon={<KeyRound size={18} />}
+            loading={loading}
+          />
+          <StatCard
+            label={t.rolesPage.systemRole}
+            value={String(sortedRoles.length)}
+            accent="teal"
+            icon={<Shield size={18} />}
+            loading={loading}
+          />
+          <StatCard
+            label={t.rolesPage.level}
+            value={String(groups.length)}
+            variant="dark"
+            icon={<Layers size={18} />}
+            loading={loading}
+          />
+        </div>
+      )}
+
+      <div
+        className="panel"
+        role="note"
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 12,
+          padding: "14px 18px",
+          borderRadius: "var(--radius-inner)",
+          background: canEdit ? "var(--accent-soft)" : "var(--panel-soft-2)",
+          borderColor: canEdit ? "rgba(255, 77, 0, 0.22)" : "var(--line)",
+        }}
+      >
+        <span
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: 10,
+            display: "grid",
+            placeItems: "center",
+            flexShrink: 0,
+            background: canEdit ? "var(--accent)" : "var(--panel)",
+            color: canEdit ? "#ffffff" : "var(--muted)",
+            border: canEdit ? "none" : "1px solid var(--line)",
+          }}
+        >
+          {canEdit ? <ShieldCheck size={16} /> : <Info size={16} />}
+        </span>
+        <span style={{ fontSize: 13, fontWeight: 500, color: canEdit ? "var(--accent)" : "var(--text)" }}>
+          {canEdit ? t.rolesPage.editHint : t.rolesPage.readOnlyHint}
+        </span>
+      </div>
       {saved && <div className="form-success" role="status">{t.rolesPage.saved}</div>}
       {saveError && <div className="form-error" role="alert">{saveError}</div>}
 
@@ -127,12 +185,27 @@ export const RolesPermissionsPage = () => {
                   <th scope="col">{t.rolesPage.permission}</th>
                   {sortedRoles.map((role) => (
                     <th scope="col" key={role.slug} style={{ textAlign: "center" }}>
-                      <div>{role.name}</div>
-                      <div className="text-small text-muted">
-                        {t.rolesPage.level} {role.level}
-                        {role.is_system ? ` · ${t.rolesPage.systemRole}` : ""}
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "var(--text)", textTransform: "none", letterSpacing: 0 }}>
+                        {role.name}
                       </div>
-                      {!role.is_active && <StatusPill tone="neutral" label={t.rolesPage.inactive} />}
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 6, flexWrap: "wrap", justifyContent: "center" }}>
+                        <span
+                          className="text-small text-muted"
+                          style={{
+                            padding: "2px 8px",
+                            borderRadius: 999,
+                            background: "var(--panel)",
+                            border: "1px solid var(--line)",
+                            textTransform: "none",
+                            letterSpacing: 0,
+                            fontWeight: 600,
+                          }}
+                        >
+                          {t.rolesPage.level} {role.level}
+                          {role.is_system ? ` · ${t.rolesPage.systemRole}` : ""}
+                        </span>
+                        {!role.is_active && <StatusPill tone="neutral" label={t.rolesPage.inactive} />}
+                      </div>
                     </th>
                   ))}
                 </tr>
@@ -140,15 +213,66 @@ export const RolesPermissionsPage = () => {
               {groups.map(([resource, items]) => (
                 <tbody key={resource}>
                   <tr>
-                    <th scope="rowgroup" colSpan={sortedRoles.length + 1} className="text-small text-muted">
-                      {resource}
+                    <th
+                      scope="rowgroup"
+                      colSpan={sortedRoles.length + 1}
+                      className="text-small text-muted"
+                      style={{
+                        background: "var(--panel-soft-2)",
+                        padding: "10px 14px",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            padding: "3px 10px",
+                            borderRadius: 999,
+                            background: "var(--accent-soft)",
+                            color: "var(--accent)",
+                            fontWeight: 700,
+                            fontSize: 11,
+                          }}
+                        >
+                          {resource}
+                        </span>
+                        <span
+                          style={{
+                            padding: "2px 8px",
+                            borderRadius: 999,
+                            background: "var(--panel)",
+                            border: "1px solid var(--line)",
+                            fontSize: 11,
+                            fontWeight: 600,
+                          }}
+                        >
+                          {items.length}
+                        </span>
+                      </div>
                     </th>
                   </tr>
                   {items.map((permission) => (
                     <tr key={permission.slug}>
                       <td>
-                        <div className="mono text-small">{permission.slug}</div>
-                        {permission.description && <div className="text-small text-muted">{permission.description}</div>}
+                        <div
+                          className="mono text-small"
+                          style={{
+                            display: "inline-block",
+                            padding: "3px 10px",
+                            borderRadius: 8,
+                            background: "var(--panel-soft-2)",
+                            border: "1px solid var(--line)",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {permission.slug}
+                        </div>
+                        {permission.description && (
+                          <div className="text-small text-muted" style={{ marginTop: 4 }}>
+                            {permission.description}
+                          </div>
+                        )}
                       </td>
                       {sortedRoles.map((role) => {
                         const has = holds(role.slug, permission.slug);
@@ -156,16 +280,60 @@ export const RolesPermissionsPage = () => {
                         return (
                           <td key={role.slug} style={{ textAlign: "center" }}>
                             {editable ? (
-                              <input
-                                type="checkbox"
-                                checked={has}
-                                onChange={() => toggle(role.slug, permission.slug)}
-                                aria-label={`${role.name}: ${permission.slug}`}
-                              />
+                              <label
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  width: 34,
+                                  height: 34,
+                                  borderRadius: 10,
+                                  background: has ? "var(--accent-soft)" : "var(--panel-soft-2)",
+                                  border: has ? "1px solid rgba(255, 77, 0, 0.25)" : "1px solid var(--line)",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={has}
+                                  onChange={() => toggle(role.slug, permission.slug)}
+                                  aria-label={`${role.name}: ${permission.slug}`}
+                                  style={{
+                                    width: 17,
+                                    height: 17,
+                                    accentColor: "var(--accent)",
+                                    cursor: "pointer",
+                                    margin: 0,
+                                  }}
+                                />
+                              </label>
                             ) : has ? (
-                              <Check size={16} aria-label={t.rolesPage.granted} />
+                              <span
+                                style={{
+                                  display: "inline-grid",
+                                  placeItems: "center",
+                                  width: 28,
+                                  height: 28,
+                                  borderRadius: 999,
+                                  background: "var(--accent-2-soft)",
+                                  color: "var(--accent-2)",
+                                }}
+                              >
+                                <Check size={15} aria-label={t.rolesPage.granted} />
+                              </span>
                             ) : (
-                              <Minus size={16} className="text-muted" aria-label={t.rolesPage.notGranted} />
+                              <span
+                                style={{
+                                  display: "inline-grid",
+                                  placeItems: "center",
+                                  width: 28,
+                                  height: 28,
+                                  borderRadius: 999,
+                                  background: "var(--panel-soft)",
+                                }}
+                              >
+                                <Minus size={15} className="text-muted" aria-label={t.rolesPage.notGranted} />
+                              </span>
                             )}
                           </td>
                         );

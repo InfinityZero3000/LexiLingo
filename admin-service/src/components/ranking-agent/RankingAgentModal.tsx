@@ -128,31 +128,33 @@ export function RankingAgentModal({ onClose, onJobCreated }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-xl flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-3xl shadow-2xl border border-slate-200/80 w-full max-w-xl flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b">
-          <div className="flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-amber-500" />
-            <h2 className="text-lg font-semibold text-gray-900">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center">
+              <Trophy className="w-5 h-5" />
+            </div>
+            <h2 className="text-lg font-semibold text-slate-900">
               New Ranking Agent Job
             </h2>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 rounded-full p-1 hover:bg-slate-100">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b px-6">
+        <div className="flex gap-1 bg-slate-100 p-1 rounded-full mx-6 mt-4">
           {(Object.keys(TAB_INFO) as Tab[]).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium rounded-full transition-colors ${
                 activeTab === tab
-                  ? "border-blue-600 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
+                  ? "bg-orange-600 text-white shadow-sm"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
               {TAB_INFO[tab].icon}
@@ -163,21 +165,21 @@ export function RankingAgentModal({ onClose, onJobCreated }: Props) {
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-          <p className="text-sm text-gray-500">{TAB_INFO[activeTab].description}</p>
+          <p className="text-sm text-slate-500">{TAB_INFO[activeTab].description}</p>
 
           {activeTab === "league_reset" && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-slate-700 mb-1">
                 Target week (optional)
               </label>
               <input
                 type="date"
                 value={weekStart}
                 onChange={(e) => setWeekStart(e.target.value)}
-                className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-600"
                 placeholder="Leave blank for last completed week"
               />
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-slate-400 mt-1">
                 Leave blank to use the most recently completed week (last Monday).
               </p>
             </div>
@@ -186,19 +188,19 @@ export function RankingAgentModal({ onClose, onJobCreated }: Props) {
           {activeTab === "xp_event" && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-700 mb-1">
                   Event name
                 </label>
                 <input
                   type="text"
                   value={eventName}
                   onChange={(e) => setEventName(e.target.value)}
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-600"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Multiplier (×)
                   </label>
                   <input
@@ -208,11 +210,11 @@ export function RankingAgentModal({ onClose, onJobCreated }: Props) {
                     step={0.1}
                     value={multiplier}
                     onChange={(e) => setMultiplier(parseFloat(e.target.value))}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-600"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Duration (hours)
                   </label>
                   <input
@@ -221,12 +223,12 @@ export function RankingAgentModal({ onClose, onJobCreated }: Props) {
                     max={168}
                     value={durationHours}
                     onChange={(e) => setDurationHours(parseInt(e.target.value, 10))}
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-600"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-700 mb-1">
                   Target
                 </label>
                 <div className="flex gap-2 flex-wrap">
@@ -234,10 +236,10 @@ export function RankingAgentModal({ onClose, onJobCreated }: Props) {
                     <button
                       key={t}
                       onClick={() => setTarget(t)}
-                      className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                      className={`px-3.5 py-1.5 rounded-full text-sm border transition-colors ${
                         target === t
-                          ? "bg-blue-600 text-white border-blue-600"
-                          : "bg-white text-gray-600 border-gray-300 hover:border-blue-400"
+                          ? "bg-orange-600 text-white border-orange-600"
+                          : "bg-white text-slate-600 border-slate-200 hover:border-orange-400"
                       }`}
                     >
                       {t === "all" ? "All users" : t === "league" ? "By league" : "By CEFR"}
@@ -248,7 +250,7 @@ export function RankingAgentModal({ onClose, onJobCreated }: Props) {
                   <select
                     value={targetLeague}
                     onChange={(e) => setTargetLeague(e.target.value)}
-                    className="mt-2 w-full border rounded-lg px-3 py-2 text-sm capitalize"
+                    className="mt-2 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm capitalize"
                   >
                     {LEAGUES.map((l) => (
                       <option key={l} value={l} className="capitalize">
@@ -261,7 +263,7 @@ export function RankingAgentModal({ onClose, onJobCreated }: Props) {
                   <select
                     value={targetCefr}
                     onChange={(e) => setTargetCefr(e.target.value)}
-                    className="mt-2 w-full border rounded-lg px-3 py-2 text-sm"
+                    className="mt-2 w-full border border-slate-200 rounded-xl px-3 py-2 text-sm"
                   >
                     {CEFR_LEVELS.map((l) => (
                       <option key={l} value={l}>
@@ -277,7 +279,7 @@ export function RankingAgentModal({ onClose, onJobCreated }: Props) {
           {activeTab === "achievement_batch" && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-700 mb-1">
                   Achievement slugs
                 </label>
                 <textarea
@@ -285,18 +287,18 @@ export function RankingAgentModal({ onClose, onJobCreated }: Props) {
                   value={slugInput}
                   onChange={(e) => setSlugInput(e.target.value)}
                   placeholder="streak_30, vocab_master_100"
-                  className="w-full border rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-600"
                 />
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-slate-400 mt-1">
                   Comma or space separated slug names.
                 </p>
               </div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
                 Eligibility criteria (optional — leave blank for all users)
               </p>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Min streak (days)
                   </label>
                   <input
@@ -305,11 +307,11 @@ export function RankingAgentModal({ onClose, onJobCreated }: Props) {
                     value={minStreak}
                     onChange={(e) => setMinStreak(e.target.value)}
                     placeholder="e.g. 30"
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-600"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
                     Min vocab mastered
                   </label>
                   <input
@@ -318,12 +320,12 @@ export function RankingAgentModal({ onClose, onJobCreated }: Props) {
                     value={minVocab}
                     onChange={(e) => setMinVocab(e.target.value)}
                     placeholder="e.g. 100"
-                    className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-600"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-700 mb-1">
                   Leagues (optional)
                 </label>
                 <div className="flex flex-wrap gap-1.5">
@@ -335,10 +337,10 @@ export function RankingAgentModal({ onClose, onJobCreated }: Props) {
                           prev.includes(l) ? prev.filter((x) => x !== l) : [...prev, l]
                         )
                       }
-                      className={`px-2.5 py-1 rounded-full text-xs border capitalize transition-colors ${
+                      className={`px-3 py-1 rounded-full text-xs border capitalize transition-colors ${
                         selectedLeagues.includes(l)
-                          ? "bg-blue-600 text-white border-blue-600"
-                          : "bg-white text-gray-600 border-gray-300 hover:border-blue-400"
+                          ? "bg-orange-600 text-white border-orange-600"
+                          : "bg-white text-slate-600 border-slate-200 hover:border-orange-400"
                       }`}
                     >
                       {l}
@@ -347,7 +349,7 @@ export function RankingAgentModal({ onClose, onJobCreated }: Props) {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-slate-700 mb-1">
                   CEFR levels (optional)
                 </label>
                 <div className="flex flex-wrap gap-1.5">
@@ -359,10 +361,10 @@ export function RankingAgentModal({ onClose, onJobCreated }: Props) {
                           prev.includes(l) ? prev.filter((x) => x !== l) : [...prev, l]
                         )
                       }
-                      className={`px-2.5 py-1 rounded-full text-xs border transition-colors ${
+                      className={`px-3 py-1 rounded-full text-xs border transition-colors ${
                         selectedCefr.includes(l)
-                          ? "bg-blue-600 text-white border-blue-600"
-                          : "bg-white text-gray-600 border-gray-300 hover:border-blue-400"
+                          ? "bg-orange-600 text-white border-orange-600"
+                          : "bg-white text-slate-600 border-slate-200 hover:border-orange-400"
                       }`}
                     >
                       {l}
@@ -374,12 +376,12 @@ export function RankingAgentModal({ onClose, onJobCreated }: Props) {
           )}
 
           {/* AI Insights toggle */}
-          <div className="flex items-center justify-between rounded-lg border border-purple-100 bg-purple-50 px-4 py-3">
-            <div className="flex items-center gap-2">
-              <Brain className="w-4 h-4 text-purple-500" />
+          <div className="flex items-center justify-between rounded-2xl border border-orange-100 bg-orange-50/70 px-4 py-3">
+            <div className="flex items-center gap-2.5">
+              <Brain className="w-4 h-4 text-orange-600 shrink-0" />
               <div>
-                <p className="text-sm font-medium text-purple-900">AI Insights (Groq)</p>
-                <p className="text-xs text-purple-600">
+                <p className="text-sm font-medium text-orange-950">AI Insights (Groq)</p>
+                <p className="text-xs text-orange-700">
                   Generate a short Groq-powered commentary during the validating phase.
                   Skipped gracefully if keys are rate-limited.
                 </p>
@@ -390,8 +392,8 @@ export function RankingAgentModal({ onClose, onJobCreated }: Props) {
               role="switch"
               aria-checked={useAiInsights}
               onClick={() => setUseAiInsights((v) => !v)}
-              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 ${
-                useAiInsights ? "bg-purple-600" : "bg-gray-200"
+              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 ${
+                useAiInsights ? "bg-orange-600" : "bg-slate-200"
               }`}
             >
               <span
@@ -403,24 +405,24 @@ export function RankingAgentModal({ onClose, onJobCreated }: Props) {
           </div>
 
           {error && (
-            <div className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">
+            <div className="text-sm text-red-600 bg-red-50 rounded-2xl px-3.5 py-2.5">
               {error}
             </div>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 px-6 py-4 border-t">
+        <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-100">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 rounded-lg border border-gray-300 hover:border-gray-400 transition-colors"
+            className="px-4 py-2 text-sm text-slate-600 hover:text-slate-800 rounded-full border border-slate-200 hover:border-slate-300 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={submitting}
-            className="px-5 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors font-medium"
+            className="px-5 py-2 text-sm bg-orange-600 text-white rounded-full hover:bg-orange-700 disabled:opacity-50 transition-colors font-medium"
           >
             {submitting ? "Creating…" : "Create & Preview"}
           </button>

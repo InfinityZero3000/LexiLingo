@@ -7,6 +7,7 @@ import { EmptyState } from "../components/EmptyState";
 import { SectionHeader } from "../components/SectionHeader";
 import { StatCard } from "../components/StatCard";
 import { StatusPill } from "../components/StatusPill";
+import { BentoTooltip } from "../components/dashboard/BentoChartPrimitives";
 import {
   getChatMonitoring,
   getLlmKeyMonitoring,
@@ -33,14 +34,14 @@ const fill = (text: string, vars: Record<string, string | number>) =>
 const pct = (v: number | null | undefined) => (v == null ? "--" : `${(v * 100).toFixed(1)}%`);
 const num = (v: number | null | undefined) => (v == null ? "--" : Math.round(v).toLocaleString());
 
-const ShareBar = ({ label, value, text }: { label: string; value: number | null; text: string }) => (
+const ShareBar = ({ label, value, text, color = "#FF4D00" }: { label: string; value: number | null; text: string; color?: string }) => (
   <div className="mon-gauge">
     <div className="mon-gauge-head">
       <span>{label}</span>
       <span className="mon-gauge-value">{text}</span>
     </div>
-    <div className="mon-gauge-track" role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((value ?? 0) * 100)}>
-      <div className="mon-gauge-fill" style={{ width: `${Math.min(100, (value ?? 0) * 100)}%` }} />
+    <div className="mon-gauge-track" style={{ height: 10, borderRadius: 999 }} role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((value ?? 0) * 100)}>
+      <div className="mon-gauge-fill" style={{ width: `${Math.min(100, (value ?? 0) * 100)}%`, borderRadius: 999, backgroundColor: color }} />
     </div>
   </div>
 );
@@ -177,7 +178,7 @@ const ChatSections = ({ data, window }: { data: ChatMonitoring; window: AiWindow
   return (
     <>
       <div className="card-grid">
-        <StatCard label={m.kpiTurns} value={data.turns.toLocaleString()} accent="ink" />
+        <StatCard label={m.kpiTurns} value={data.turns.toLocaleString()} accent="ink" variant="blue" />
         <StatCard label={m.kpiErrorRate} value={pct(data.error_rate)} note={fill(m.kpiErrors, { n: data.errors })} accent="berry" />
         <StatCard label={m.kpiLatencyP50} value={ms(all.latency_ms.p50)} note={topicNote} accent="teal" />
         <StatCard label={m.kpiLatencyP95} value={ms(all.latency_ms.p95)} note={topicNote} accent="orange" />
@@ -189,29 +190,29 @@ const ChatSections = ({ data, window }: { data: ChatMonitoring; window: AiWindow
       <div className="mon-row mon-row--thirds">
         <ChartCard title={m.chartTurns}>
           <BarChart data={series} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
-            <XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
-            <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-            <Tooltip />
-            <Bar dataKey="turns" name={m.chartTurns} fill="var(--accent-2)" />
+            <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="var(--line)" />
+            <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+            <YAxis tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} allowDecimals={false} />
+            <Tooltip content={<BentoTooltip dark={false} />} cursor={{ fill: "rgba(148, 163, 184, 0.1)" }} />
+            <Bar dataKey="turns" name={m.chartTurns} fill="#FF4D00" radius={[8, 8, 8, 8]} />
           </BarChart>
         </ChartCard>
-        <ChartCard title={m.chartLatency}>
+        <ChartCard title={m.chartLatency} dark>
           <AreaChart data={series} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
-            <XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
-            <YAxis tick={{ fontSize: 11 }} />
-            <Tooltip />
-            <Area type="monotone" dataKey={P95_LATENCY_FIELD} name={m.chartLatency} stroke="var(--accent)" fill="var(--accent)" fillOpacity={0.15} strokeWidth={2} dot={false} />
+            <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="rgba(148, 163, 184, 0.16)" />
+            <XAxis dataKey="label" tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+            <YAxis tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
+            <Tooltip content={<BentoTooltip dark valueFormatter={(v) => `${Math.round(Number(v)).toLocaleString()} ms`} />} />
+            <Area type="monotone" dataKey={P95_LATENCY_FIELD} name={m.chartLatency} stroke="#FF4D00" fill="#FF4D00" fillOpacity={0.22} strokeWidth={2.5} dot={false} />
           </AreaChart>
         </ChartCard>
         <ChartCard title={m.chartTokens}>
           <BarChart data={series} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
-            <XAxis dataKey="label" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
-            <YAxis tick={{ fontSize: 11 }} />
-            <Tooltip />
-            <Bar dataKey="tokens" name={m.chartTokens} fill="var(--accent-3)" />
+            <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="var(--line)" />
+            <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+            <YAxis tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} />
+            <Tooltip content={<BentoTooltip dark={false} />} cursor={{ fill: "rgba(148, 163, 184, 0.1)" }} />
+            <Bar dataKey="tokens" name={m.chartTokens} fill="#FF8A3D" radius={[8, 8, 8, 8]} />
           </BarChart>
         </ChartCard>
       </div>
@@ -262,10 +263,11 @@ const ChatSections = ({ data, window }: { data: ChatMonitoring; window: AiWindow
           <div className="mon-card-title mon-card-title--sm">{m.shadowF1}</div>
           <ResponsiveContainer width="100%" height={140}>
             <BarChart data={shadow.f1_distribution.map((b) => ({ ...b, label: b.from.toFixed(1) }))} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
-              <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-              <Tooltip />
-              <Bar dataKey="count" fill="var(--accent-2)" />
+              <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="var(--line)" />
+              <XAxis dataKey="label" tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} allowDecimals={false} />
+              <Tooltip content={<BentoTooltip dark={false} />} cursor={{ fill: "rgba(148, 163, 184, 0.1)" }} />
+              <Bar dataKey="count" fill="#FF7A00" radius={[8, 8, 8, 8]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -302,9 +304,9 @@ const ChatSections = ({ data, window }: { data: ChatMonitoring; window: AiWindow
   );
 };
 
-const ChartCard = ({ title, children }: { title: string; children: React.ReactElement }) => (
-  <div className="card">
-    <div className="mon-card-title mon-card-title--plain">{title}</div>
+const ChartCard = ({ title, dark = false, children }: { title: string; dark?: boolean; children: React.ReactElement }) => (
+  <div className={dark ? "card bento-card--dark" : "card"}>
+    <div className="mon-card-title mon-card-title--plain" style={dark ? { color: "#F8FAFC" } : undefined}>{title}</div>
     <ResponsiveContainer width="100%" height={200}>
       {children}
     </ResponsiveContainer>

@@ -4,6 +4,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { DataTable } from "../components/DataTable";
 import { SectionHeader } from "../components/SectionHeader";
 import { EmptyState } from "../components/EmptyState";
+import { StatCard } from "../components/StatCard";
 import { StatusPill } from "../components/StatusPill";
 import {
   listAchievements,
@@ -142,8 +143,8 @@ const badgeImgUrl = (badge: BadgeSource) => {
 
 const BadgeFallback = ({ badge, size }: { badge: BadgeSource; size: number }) => (
   <div style={{
-    width: size, height: size, background: badge.badge_color || "var(--panel-soft)",
-    borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center",
+    width: size, height: size, background: badge.badge_color || "var(--accent, #FF4D00)",
+    borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center",
     fontSize: size <= 44 ? 11 : 12, color: "#fff", fontWeight: 700,
   }}>
     {(badge.name || "BD").substring(0, 2).toUpperCase()}
@@ -198,14 +199,14 @@ const BadgeImage = ({ badge, size = 44 }: { badge: BadgeSource; size?: number })
           loading="lazy"
           onError={handleError}
           style={{
-            width: size, height: size, objectFit: "contain", borderRadius: 8,
-            background: "var(--panel-soft)", padding: 2, display: "block",
+            width: size, height: size, objectFit: "contain", borderRadius: 12,
+            background: "var(--panel-soft-2, #f8fafc)", padding: 4, display: "block",
           }}
         />
       ) : (
         <div style={{
-          width: size, height: size, background: "var(--panel-soft)",
-          borderRadius: 8, opacity: 0.4,
+          width: size, height: size, background: "var(--panel-soft-2, #f8fafc)",
+          borderRadius: 12, opacity: 0.4,
         }} />
       )}
     </div>
@@ -230,7 +231,7 @@ export const AchievementsPage = () => {
     name: "",
     description: "",
     badge_icon: "",
-    badge_color: "#4CAF50",
+    badge_color: "#FF4D00",
     condition_type: "lesson_complete",
     condition_value: 1,
     category: "lessons",
@@ -242,7 +243,7 @@ export const AchievementsPage = () => {
 
   const resetForm = () => {
     setForm({
-      name: "", description: "", badge_icon: "", badge_color: "#4CAF50",
+      name: "", description: "", badge_icon: "", badge_color: "#FF4D00",
       condition_type: "lesson_complete", condition_value: 1,
       category: "lessons", rarity: "common", xp_reward: 0, gems_reward: 0, is_hidden: false,
     });
@@ -270,7 +271,7 @@ export const AchievementsPage = () => {
       name: item.name,
       description: item.description,
       badge_icon: item.badge_icon || "",
-      badge_color: item.badge_color || "#4CAF50",
+      badge_color: item.badge_color || "#FF4D00",
       condition_type: item.condition_type,
       condition_value: item.condition_value || 1,
       category: item.category,
@@ -341,6 +342,8 @@ export const AchievementsPage = () => {
   // Group counts
   const categoryCounts: Record<string, number> = {};
   items.forEach((a) => { categoryCounts[a.category] = (categoryCounts[a.category] || 0) + 1; });
+  const totalXpReward = items.reduce((sum, a) => sum + (a.xp_reward || 0), 0);
+  const totalGemsReward = items.reduce((sum, a) => sum + (a.gems_reward || 0), 0);
 
   return (
     <div className="stack">
@@ -348,7 +351,14 @@ export const AchievementsPage = () => {
 
       {error && <div className="form-error">{error}</div>}
 
-      <div className="panel filter-panel">
+      <div className="card-grid">
+        <StatCard label={t.achievements.title} value={items.length.toLocaleString()} variant="blue" />
+        <StatCard label={t.achievements.category} value={String(Object.keys(categoryCounts).length)} accent="teal" />
+        <StatCard label="XP" value={totalXpReward.toLocaleString()} accent="ink" />
+        <StatCard label="Gems" value={totalGemsReward.toLocaleString()} accent="teal" />
+      </div>
+
+      <div className="panel filter-panel" style={{ borderRadius: 20 }}>
         <div className="filter-bar">
           <select
             className="filter-select"
@@ -360,13 +370,17 @@ export const AchievementsPage = () => {
               <option key={c} value={c}>{c} ({categoryCounts[c] || 0})</option>
             ))}
           </select>
-          <button className="primary-button" onClick={() => { resetForm(); setShowForm(true); }}>
+          <button
+            className="primary-button"
+            style={{ borderRadius: 9999 }}
+            onClick={() => { resetForm(); setShowForm(true); }}
+          >
             {t.achievements.createAchievement}
           </button>
         </div>
       </div>
 
-      <div className="panel">
+      <div className="panel" style={{ borderRadius: 20 }}>
         {loading ? (
           <div className="loading">{t.common.loading}</div>
         ) : filtered.length === 0 ? (
@@ -386,14 +400,26 @@ export const AchievementsPage = () => {
                   <div>
                     <div className="table-title">{row.name}</div>
                     <div className="table-sub">{row.description}</div>
-                    {row.slug && <div className="table-sub" style={{ opacity: 0.5, fontSize: 11 }}>{row.slug}</div>}
+                    {row.slug && <div className="table-sub" style={{ opacity: 0.6, fontSize: 11 }}>{row.slug}</div>}
                   </div>
                 ),
               },
               {
                 header: t.achievements.category,
                 sortValue: (row) => row.category,
-                render: (row) => <span className="table-meta">{row.category}</span>,
+                render: (row) => (
+                  <span
+                    className="table-meta"
+                    style={{
+                      background: "var(--panel-soft-2, #f1f5f9)",
+                      borderRadius: 9999,
+                      padding: "3px 10px",
+                      display: "inline-block",
+                    }}
+                  >
+                    {row.category}
+                  </span>
+                ),
                 align: "center",
               },
               {
@@ -407,18 +433,55 @@ export const AchievementsPage = () => {
               {
                 header: t.achievements.condition,
                 render: (row) => (
-                  <span className="table-meta">{row.condition_type} &ge; {row.condition_value}</span>
+                  <span
+                    className="table-meta"
+                    style={{
+                      background: "var(--panel-soft-2, #f1f5f9)",
+                      borderRadius: 9999,
+                      padding: "3px 10px",
+                      display: "inline-block",
+                    }}
+                  >
+                    {row.condition_type} &ge; {row.condition_value}
+                  </span>
                 ),
               },
               {
                 header: t.achievements.reward,
                 render: (row) => (
-                  <span className="table-meta">
-                    {row.xp_reward > 0 ? `${row.xp_reward} XP` : ""}
-                    {row.xp_reward > 0 && row.gems_reward > 0 ? " + " : ""}
-                    {row.gems_reward > 0 ? `${row.gems_reward} Gems` : ""}
-                    {row.xp_reward === 0 && row.gems_reward === 0 ? "\u2014" : ""}
-                  </span>
+                  <div style={{ display: "inline-flex", gap: 6, justifyContent: "flex-end", flexWrap: "wrap" }}>
+                    {row.xp_reward > 0 && (
+                      <span
+                        className="table-meta"
+                        style={{
+                          background: "rgba(255, 77, 0, 0.1)",
+                          color: "var(--accent, #FF4D00)",
+                          borderRadius: 9999,
+                          padding: "3px 10px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {row.xp_reward} XP
+                      </span>
+                    )}
+                    {row.gems_reward > 0 && (
+                      <span
+                        className="table-meta"
+                        style={{
+                          background: "rgba(255, 122, 0, 0.12)",
+                          color: "var(--accent-2, #FF7A00)",
+                          borderRadius: 9999,
+                          padding: "3px 10px",
+                          fontWeight: 600,
+                        }}
+                      >
+                        {row.gems_reward} Gems
+                      </span>
+                    )}
+                    {row.xp_reward === 0 && row.gems_reward === 0 && (
+                      <span className="table-meta">{"\u2014"}</span>
+                    )}
+                  </div>
                 ),
                 align: "right",
               },
@@ -426,8 +489,12 @@ export const AchievementsPage = () => {
                 header: "",
                 render: (row) => (
                   <div className="table-actions">
-                    <button className="ghost-button small" onClick={() => handleEdit(row)}>{t.common.edit}</button>
-                    <button className="ghost-button small danger" onClick={() => handleDelete(row.id)}>{t.common.delete}</button>
+                    <button className="ghost-button small" style={{ borderRadius: 9999 }} onClick={() => handleEdit(row)}>
+                      {t.common.edit}
+                    </button>
+                    <button className="ghost-button small danger" style={{ borderRadius: 9999 }} onClick={() => handleDelete(row.id)}>
+                      {t.common.delete}
+                    </button>
                   </div>
                 ),
                 align: "right",
@@ -484,8 +551,8 @@ export const AchievementsPage = () => {
                 </div>
                 {/* Preview */}
                 <div style={{
-                  width: 64, height: 64, borderRadius: 8,
-                  border: "1px solid var(--line)", background: "var(--panel-soft)",
+                  width: 64, height: 64, borderRadius: 12,
+                  border: "1px solid var(--line)", background: "var(--panel-soft-2, #f8fafc)",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   overflow: "hidden", flexShrink: 0,
                 }}>
@@ -565,8 +632,10 @@ export const AchievementsPage = () => {
               {t.achievements.hiddenUntilUnlocked}
             </label>
             <div className="table-actions">
-              <button className="ghost-button" type="button" onClick={() => setShowForm(false)}>{t.common.cancel}</button>
-              <button className="primary-button" type="submit" disabled={saving}>
+              <button className="ghost-button" type="button" style={{ borderRadius: 9999 }} onClick={() => setShowForm(false)}>
+                {t.common.cancel}
+              </button>
+              <button className="primary-button" type="submit" style={{ borderRadius: 9999 }} disabled={saving}>
                 {saving ? t.common.saving : editingId ? t.common.update : t.common.create}
               </button>
             </div>

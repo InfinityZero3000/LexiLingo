@@ -117,28 +117,30 @@ export function NotificationCampaignModal({ onClose, onJobCreated }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b">
-          <div className="flex items-center gap-2">
-            <Radio className="w-5 h-5 text-blue-500" />
-            <h2 className="font-semibold text-gray-900">Tạo Notification Campaign</h2>
+    <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl shadow-2xl border border-slate-200/80 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center">
+              <Radio className="w-5 h-5" />
+            </div>
+            <h2 className="font-semibold text-slate-900">Tạo Notification Campaign</h2>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 rounded-full p-1 hover:bg-slate-100">
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="flex border-b px-6 gap-1 pt-2">
+        <div className="flex bg-slate-100 p-1 rounded-full mx-6 mt-4 gap-1">
           {(Object.keys(TAB_INFO) as Tab[]).map((tab) => (
             <button
               key={tab}
               type="button"
               onClick={() => setActiveTab(tab)}
-              className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-t-lg border-b-2 transition-colors ${
+              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium rounded-full transition-colors ${
                 activeTab === tab
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
+                  ? "bg-orange-600 text-white shadow-sm"
+                  : "text-slate-600 hover:text-slate-900"
               }`}
             >
               {TAB_INFO[tab].icon}
@@ -148,13 +150,13 @@ export function NotificationCampaignModal({ onClose, onJobCreated }: Props) {
         </div>
 
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-5">
-          <p className="text-sm text-gray-500">{TAB_INFO[activeTab].description}</p>
+          <p className="text-sm text-slate-500">{TAB_INFO[activeTab].description}</p>
 
-          <div className="space-y-4 border rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-gray-700">Nội dung thông báo</h3>
+          <div className="space-y-4 border border-slate-200 bg-slate-50/40 rounded-2xl p-4">
+            <h3 className="text-sm font-semibold text-slate-700">Nội dung thông báo</h3>
 
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">
+              <label className="block text-xs font-medium text-slate-600 mb-1">
                 Tiêu đề <span className="text-red-500">*</span>
               </label>
               <input
@@ -164,11 +166,11 @@ export function NotificationCampaignModal({ onClose, onJobCreated }: Props) {
                 maxLength={100}
                 placeholder="Ví dụ: Weekend Boost đã bắt đầu!"
               />
-              <p className="text-xs text-gray-400 mt-0.5">{title.length}/100</p>
+              <p className="text-xs text-slate-400 mt-0.5">{title.length}/100</p>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">
+              <label className="block text-xs font-medium text-slate-600 mb-1">
                 Nội dung <span className="text-red-500">*</span>
               </label>
               <textarea
@@ -178,12 +180,12 @@ export function NotificationCampaignModal({ onClose, onJobCreated }: Props) {
                 maxLength={300}
                 placeholder="Ví dụ: Học ngay hôm nay để nhận 2× XP trong 48 giờ!"
               />
-              <p className="text-xs text-gray-400 mt-0.5">{body.length}/300</p>
+              <p className="text-xs text-slate-400 mt-0.5">{body.length}/300</p>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Loại thông báo</label>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Loại thông báo</label>
                 <input
                   className="input-field"
                   value={notifType}
@@ -192,7 +194,7 @@ export function NotificationCampaignModal({ onClose, onJobCreated }: Props) {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1">Deep link (tùy chọn)</label>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Deep link (tùy chọn)</label>
                 <input
                   className="input-field"
                   value={deepLink}
@@ -207,17 +209,17 @@ export function NotificationCampaignModal({ onClose, onJobCreated }: Props) {
                 type="checkbox"
                 checked={useAiCopy}
                 onChange={(e) => setUseAiCopy(e.target.checked)}
-                className="w-4 h-4 rounded text-blue-500"
+                className="w-4 h-4 rounded text-orange-600"
               />
-              <span className="text-sm text-gray-700 flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-purple-500" />
+              <span className="text-sm text-slate-700 flex items-center gap-1">
+                <Sparkles className="w-3.5 h-3.5 text-orange-600" />
                 Dùng AI (Groq) để cải thiện nội dung
               </span>
             </label>
           </div>
 
-          <div className="space-y-3 border rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-gray-700">Đối tượng</h3>
+          <div className="space-y-3 border border-slate-200 bg-slate-50/40 rounded-2xl p-4">
+            <h3 className="text-sm font-semibold text-slate-700">Đối tượng</h3>
 
             <div className="flex gap-3">
               {(["all", "segment"] as const).map((t) => (
@@ -226,9 +228,9 @@ export function NotificationCampaignModal({ onClose, onJobCreated }: Props) {
                     type="radio"
                     checked={audienceType === t}
                     onChange={() => setAudienceType(t)}
-                    className="w-4 h-4 text-blue-500"
+                    className="w-4 h-4 text-orange-600"
                   />
-                  <span className="text-sm text-gray-700">
+                  <span className="text-sm text-slate-700">
                     {t === "all" ? "Tất cả users" : "Lọc theo tiêu chí"}
                   </span>
                 </label>
@@ -238,17 +240,17 @@ export function NotificationCampaignModal({ onClose, onJobCreated }: Props) {
             {audienceType === "segment" && (
               <div className="space-y-3 pt-2">
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1.5">League</label>
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">League</label>
                   <div className="flex flex-wrap gap-1.5">
                     {LEAGUES.map((l) => (
                       <button
                         key={l}
                         type="button"
                         onClick={() => toggleLeague(l)}
-                        className={`px-2.5 py-1 text-xs rounded-full border font-medium transition-colors ${
+                        className={`px-3 py-1 text-xs rounded-full border font-medium transition-colors ${
                           selectedLeagues.includes(l)
-                            ? "bg-blue-500 text-white border-blue-500"
-                            : "border-gray-300 text-gray-600 hover:border-blue-400"
+                            ? "bg-orange-600 text-white border-orange-600"
+                            : "bg-white border-slate-200 text-slate-600 hover:border-orange-400"
                         }`}
                       >
                         {l}
@@ -258,17 +260,17 @@ export function NotificationCampaignModal({ onClose, onJobCreated }: Props) {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1.5">CEFR Level</label>
-                  <div className="flex gap-1.5">
+                  <label className="block text-xs font-medium text-slate-600 mb-1.5">CEFR Level</label>
+                  <div className="flex gap-1.5 flex-wrap">
                     {CEFR_LEVELS.map((l) => (
                       <button
                         key={l}
                         type="button"
                         onClick={() => toggleCefr(l)}
-                        className={`px-2.5 py-1 text-xs rounded-full border font-medium transition-colors ${
+                        className={`px-3 py-1 text-xs rounded-full border font-medium transition-colors ${
                           selectedCefr.includes(l)
-                            ? "bg-indigo-500 text-white border-indigo-500"
-                            : "border-gray-300 text-gray-600 hover:border-indigo-400"
+                            ? "bg-orange-600 text-white border-orange-600"
+                            : "bg-white border-slate-200 text-slate-600 hover:border-orange-400"
                         }`}
                       >
                         {l}
@@ -279,7 +281,7 @@ export function NotificationCampaignModal({ onClose, onJobCreated }: Props) {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Min streak (ngày)</label>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">Min streak (ngày)</label>
                     <input
                       type="number"
                       className="input-field"
@@ -290,7 +292,7 @@ export function NotificationCampaignModal({ onClose, onJobCreated }: Props) {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Không hoạt động (ngày)</label>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">Không hoạt động (ngày)</label>
                     <input
                       type="number"
                       className="input-field"
@@ -306,9 +308,9 @@ export function NotificationCampaignModal({ onClose, onJobCreated }: Props) {
           </div>
 
           {activeTab === "scheduled_push" && (
-            <div className="space-y-1 border rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-gray-700">Lên lịch gửi</h3>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Thời gian gửi (UTC)</label>
+            <div className="space-y-1 border border-slate-200 bg-slate-50/40 rounded-2xl p-4">
+              <h3 className="text-sm font-semibold text-slate-700">Lên lịch gửi</h3>
+              <label className="block text-xs font-medium text-slate-600 mb-1">Thời gian gửi (UTC)</label>
               <input
                 type="datetime-local"
                 className="input-field"
@@ -319,14 +321,14 @@ export function NotificationCampaignModal({ onClose, onJobCreated }: Props) {
           )}
 
           {error && (
-            <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>
+            <p className="text-sm text-red-600 bg-red-50 rounded-2xl px-3.5 py-2.5">{error}</p>
           )}
 
           <div className="flex justify-end gap-3 pt-2">
-            <button type="button" onClick={onClose} className="ghost-button">
+            <button type="button" onClick={onClose} className="ghost-button rounded-full" style={{ borderRadius: 9999 }}>
               Hủy
             </button>
-            <button type="submit" disabled={submitting} className="primary-button">
+            <button type="submit" disabled={submitting} className="primary-button rounded-full" style={{ borderRadius: 9999 }}>
               {submitting ? "Đang tạo..." : "Tạo Job"}
             </button>
           </div>

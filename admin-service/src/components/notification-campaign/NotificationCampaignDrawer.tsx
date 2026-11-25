@@ -112,10 +112,24 @@ export function NotificationCampaignDrawer({ job: initialJob, onClose, onJobUpda
   const content = (job.config as Record<string, Record<string, unknown>>)?.content ?? {};
 
   return (
-    <aside className="notification-drawer" aria-label="Notification campaign details">
+    <aside className="notification-drawer" aria-label="Notification campaign details" style={{ borderTopLeftRadius: 24, borderBottomLeftRadius: 24 }}>
       <div className="notification-drawer-header">
         <div className="notification-drawer-heading">
-          <Radio size={20} aria-hidden="true" />
+          <div
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 12,
+              background: "rgba(255, 77, 0, 0.1)",
+              color: "var(--accent, #FF4D00)",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <Radio size={20} aria-hidden="true" />
+          </div>
           <div>
             <div className="notification-drawer-title">
               <span>
@@ -132,7 +146,13 @@ export function NotificationCampaignDrawer({ job: initialJob, onClose, onJobUpda
           >
             {STATUS_LABELS[job.status] ?? job.status}
           </span>
-          <button type="button" onClick={onClose} className="icon-button" aria-label="Close campaign details">
+          <button
+            type="button"
+            onClick={onClose}
+            className="icon-button"
+            aria-label="Close campaign details"
+            style={{ borderRadius: 9999 }}
+          >
             <X size={18} aria-hidden="true" />
           </button>
         </div>
@@ -144,10 +164,21 @@ export function NotificationCampaignDrawer({ job: initialJob, onClose, onJobUpda
             <span>{job.progress.stage}</span>
             <span>{job.progress.percent ?? 0}%</span>
           </div>
-          <div className="notification-progress-track" role="progressbar" aria-valuenow={job.progress.percent ?? 0} aria-valuemin={0} aria-valuemax={100}>
+          <div
+            className="notification-progress-track"
+            role="progressbar"
+            aria-valuenow={job.progress.percent ?? 0}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            style={{ borderRadius: 9999, overflow: "hidden" }}
+          >
             <div
               className="notification-progress-fill"
-              style={{ width: `${job.progress.percent ?? 0}%` }}
+              style={{
+                width: `${job.progress.percent ?? 0}%`,
+                background: "linear-gradient(90deg, var(--accent, #FF4D00), var(--accent-2, #FF7A00))",
+                borderRadius: 9999,
+              }}
             />
           </div>
         </div>
@@ -235,6 +266,7 @@ export function NotificationCampaignDrawer({ job: initialJob, onClose, onJobUpda
               type="button"
               onClick={handleCancel}
               className="ghost-button small danger"
+              style={{ borderRadius: 9999 }}
             >
               Cancel
             </button>
@@ -244,6 +276,7 @@ export function NotificationCampaignDrawer({ job: initialJob, onClose, onJobUpda
               type="button"
               onClick={handleRetry}
               className="ghost-button small notification-action-button"
+              style={{ borderRadius: 9999 }}
             >
               <RotateCcw size={15} aria-hidden="true" /> Retry
             </button>
@@ -255,6 +288,7 @@ export function NotificationCampaignDrawer({ job: initialJob, onClose, onJobUpda
             onClick={handleApply}
             disabled={applying}
             className="primary-button"
+            style={{ borderRadius: 9999 }}
           >
             {applying ? "Sending…" : "Send Campaign"}
           </button>

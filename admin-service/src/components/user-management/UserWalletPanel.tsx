@@ -59,7 +59,18 @@ export const UserWalletPanel = ({ userId }: { userId: string }) => {
   const walletColumns: Column<WalletTx>[] = [
     { header: t.support.time, render: (r) => <span className="mono text-small">{when(r.created_at, locale)}</span> },
     { header: t.support.source, render: (r) => r.source || r.type },
-    { header: t.support.amount, align: "right", render: (r) => <strong className={r.amount < 0 ? "text-danger" : undefined}>{signed(r.amount)}</strong> },
+    {
+      header: t.support.amount,
+      align: "right",
+      render: (r) => (
+        <strong
+          className={r.amount < 0 ? "text-danger" : undefined}
+          style={r.amount > 0 ? { color: "var(--accent-2, #FF7A00)" } : undefined}
+        >
+          {signed(r.amount)}
+        </strong>
+      ),
+    },
     { header: t.support.balanceAfter, align: "right", render: (r) => r.balance_after },
     { header: t.support.note, render: (r) => r.description || "—" },
   ];
@@ -85,23 +96,45 @@ export const UserWalletPanel = ({ userId }: { userId: string }) => {
         <StatCard label={t.support.balance} value={String(wallet.data?.balance ?? "—")} accent="teal" loading={wallet.isLoading} />
         <StatCard label={t.support.earned} value={String(wallet.data?.total_earned ?? "—")} accent="ink" loading={wallet.isLoading} />
         <StatCard label={t.support.spent} value={String(wallet.data?.total_spent ?? "—")} accent="ink" loading={wallet.isLoading} />
-        <StatCard label={t.support.totalXp} value={String(xp.data?.total_xp ?? "—")} accent="orange" loading={xp.isLoading && view === "xp"} />
+        <StatCard label={t.support.totalXp} value={String(xp.data?.total_xp ?? "—")} accent="teal" loading={xp.isLoading && view === "xp"} />
       </div>
 
       <div className="cluster cluster--between">
-        <div className="tab-row" role="tablist">
-          {(["gems", "xp", "items"] as const).map((v) => (
-            <button
-              key={v} role="tab" aria-selected={view === v}
-              className={`tab ${view === v ? "active" : ""}`}
-              onClick={() => { setView(v); setPage(1); }}
-            >
-              {t.support[`view_${v}` as const]}
-            </button>
-          ))}
+        <div
+          className="tab-row"
+          role="tablist"
+          style={{
+            background: "var(--panel-soft-2, #f1f5f9)",
+            padding: 4,
+            borderRadius: "9999px",
+            gap: 4,
+          }}
+        >
+          {(["gems", "xp", "items"] as const).map((v) => {
+            const isActive = view === v;
+            return (
+              <button
+                key={v} role="tab" aria-selected={isActive}
+                className={`tab ${isActive ? "active" : ""}`}
+                onClick={() => { setView(v); setPage(1); }}
+                style={{
+                  borderRadius: "9999px",
+                  ...(isActive ? { background: "var(--accent, #FF4D00)", color: "#ffffff" } : {}),
+                }}
+              >
+                {t.support[`view_${v}` as const]}
+              </button>
+            );
+          })}
         </div>
         {role === "super_admin" && view === "gems" && (
-          <button className="ghost-button" onClick={() => { setError(null); setAdjusting(true); }}>{t.support.adjust}</button>
+          <button
+            className="ghost-button"
+            style={{ borderRadius: "9999px" }}
+            onClick={() => { setError(null); setAdjusting(true); }}
+          >
+            {t.support.adjust}
+          </button>
         )}
       </div>
 

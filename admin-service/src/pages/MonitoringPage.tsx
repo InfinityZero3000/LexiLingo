@@ -17,6 +17,7 @@ import {
 import { Activity, CheckCircle, AlertTriangle, XCircle, RefreshCw, Pause, Play, Database, Cpu, HardDrive, Server, Wifi } from "lucide-react";
 import { SectionHeader } from "../components/SectionHeader";
 import { StatCard } from "../components/StatCard";
+import { BentoTooltip } from "../components/dashboard/BentoChartPrimitives";
 import {
   getSystemMetrics,
   getServicesHealth,
@@ -79,6 +80,8 @@ const GaugeBar = ({
 }) => {
   const pct = Math.min(100, (value / max) * 100);
   const level = pct > 85 ? "crit" : pct > 60 ? "warn" : "ok";
+  const fillColor =
+    level === "crit" ? "#F43F5E" : level === "warn" ? "#F59E0B" : (color ?? "#FF4D00");
 
   return (
     <div className="mon-gauge">
@@ -91,6 +94,7 @@ const GaugeBar = ({
       </div>
       <div
         className="mon-gauge-track"
+        style={{ height: 10, borderRadius: 999 }}
         role="meter"
         aria-label={label}
         aria-valuemin={0}
@@ -99,7 +103,12 @@ const GaugeBar = ({
       >
         <div
           className={`mon-gauge-fill mon-gauge-fill--${level}`}
-          style={{ width: `${pct}%`, ...(level === "ok" && color ? { "--gauge-color": color } as React.CSSProperties : {}) }}
+          style={{
+            width: `${pct}%`,
+            borderRadius: 999,
+            backgroundColor: fillColor,
+            "--gauge-color": fillColor,
+          } as React.CSSProperties}
         />
       </div>
     </div>
@@ -202,9 +211,9 @@ export const MonitoringPage = () => {
   const load15 = system?.load_avg?.["15m"] ?? (aiDash?.system?.load_avg?.[2]);
 
   const radialData = [
-    { name: "CPU", value: cpu ?? 0, fill: "var(--accent)" },
-    { name: t.monitoring.memory, value: mem ?? 0, fill: "var(--accent-2)" },
-    { name: t.monitoring.disk, value: disk ?? 0, fill: "var(--accent-3)" },
+    { name: "CPU", value: cpu ?? 0, fill: "#FF4D00" },
+    { name: t.monitoring.memory, value: mem ?? 0, fill: "#FF8A3D" },
+    { name: t.monitoring.disk, value: disk ?? 0, fill: "#FDBA74" },
   ];
 
   const dbCounts = db?.counts;
@@ -256,6 +265,8 @@ export const MonitoringPage = () => {
           label="CPU"
           value={cpu !== undefined ? `${fmt(cpu)}%` : "--"}
           note={load1 !== undefined ? `Load: ${fmt(load1)} / ${fmt(load5)} / ${fmt(load15)}` : undefined}
+          variant="blue"
+          icon={<Cpu size={16} aria-hidden="true" />}
         />
         <StatCard
           label={m.memory}
@@ -266,6 +277,7 @@ export const MonitoringPage = () => {
               : undefined
           }
           accent="teal"
+          icon={<Activity size={16} aria-hidden="true" />}
         />
         <StatCard
           label={m.disk}
@@ -276,37 +288,39 @@ export const MonitoringPage = () => {
               : undefined
           }
           accent="berry"
+          icon={<HardDrive size={16} aria-hidden="true" />}
         />
         <StatCard
           label={m.connections}
           value={reqStats?.active_connections !== undefined ? String(reqStats.active_connections) : "--"}
           note={reqStats?.requests_last_minute !== undefined ? fill(m.reqPerMin, { n: reqStats.requests_last_minute }) : undefined}
           accent="ink"
+          icon={<Wifi size={16} aria-hidden="true" />}
         />
       </div>
 
       <div className="mon-row mon-row--chart">
-        <div className="card">
-          <div className="mon-card-title mon-card-title--plain">{fill(m.cpuMemChart, { n: HISTORY_MAX })}</div>
+        <div className="card bento-card--dark">
+          <div className="mon-card-title mon-card-title--plain" style={{ color: "#F8FAFC" }}>{fill(m.cpuMemChart, { n: HISTORY_MAX })}</div>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={history} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
               <defs>
                 <linearGradient id="gradCpu" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="var(--accent)" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#FF4D00" stopOpacity={0.45} />
+                  <stop offset="95%" stopColor="#FF4D00" stopOpacity={0} />
                 </linearGradient>
                 <linearGradient id="gradMem" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--accent-2)" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="var(--accent-2)" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#FF9F43" stopOpacity={0.38} />
+                  <stop offset="95%" stopColor="#FF9F43" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
-              <XAxis dataKey="time" tick={{ fontSize: 11 }} interval="preserveStartEnd" />
-              <YAxis domain={[0, 100]} unit="%" tick={{ fontSize: 11 }} />
-              <Tooltip formatter={(v: any) => `${Number(v).toFixed(1)}%`} />
-              <Legend />
-              <Area type="monotone" dataKey="cpu" name="CPU %" stroke="var(--accent)" fill="url(#gradCpu)" strokeWidth={2} dot={false} />
-              <Area type="monotone" dataKey="memory" name={m.memoryPct} stroke="var(--accent-2)" fill="url(#gradMem)" strokeWidth={2} dot={false} />
+              <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="rgba(148, 163, 184, 0.16)" />
+              <XAxis dataKey="time" tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+              <YAxis domain={[0, 100]} unit="%" tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
+              <Tooltip content={<BentoTooltip dark valueFormatter={(v) => `${Number(v).toFixed(1)}%`} />} />
+              <Legend wrapperStyle={{ fontSize: 12, color: "#CBD5E1" }} />
+              <Area type="monotone" dataKey="cpu" name="CPU %" stroke="#FF4D00" fill="url(#gradCpu)" strokeWidth={2.5} dot={false} />
+              <Area type="monotone" dataKey="memory" name={m.memoryPct} stroke="#FF9F43" fill="url(#gradMem)" strokeWidth={2.5} dot={false} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -314,17 +328,17 @@ export const MonitoringPage = () => {
         <div className="card">
           <div className="mon-card-title mon-card-title--plain">{m.resourceUsage}</div>
           <ResponsiveContainer width="100%" height={160}>
-            <RadialBarChart cx="50%" cy="50%" innerRadius="30%" outerRadius="90%" data={radialData} startAngle={90} endAngle={-270}>
+            <RadialBarChart cx="50%" cy="50%" innerRadius="32%" outerRadius="92%" data={radialData} startAngle={90} endAngle={-270}>
               <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
-              <RadialBar dataKey="value" background angleAxisId={0} label={{ position: "insideStart", fill: "#fff", fontSize: 10 }} />
-              <Tooltip formatter={(v: any) => `${Number(v).toFixed(1)}%`} />
+              <RadialBar dataKey="value" background={{ fill: "rgba(148, 163, 184, 0.16)" }} cornerRadius={8} angleAxisId={0} label={{ position: "insideStart", fill: "#fff", fontSize: 10 }} />
+              <Tooltip content={<BentoTooltip dark={false} valueFormatter={(v) => `${Number(v).toFixed(1)}%`} />} />
               <Legend iconSize={10} />
             </RadialBarChart>
           </ResponsiveContainer>
           <div className="mon-gauges">
-            <GaugeBar label="CPU" value={cpu ?? 0} />
-            <GaugeBar label={m.memory} value={mem ?? 0} />
-            <GaugeBar label={m.disk} value={disk ?? 0} color="var(--accent-3)" />
+            <GaugeBar label="CPU" value={cpu ?? 0} color="#FF4D00" />
+            <GaugeBar label={m.memory} value={mem ?? 0} color="#FF8A3D" />
+            <GaugeBar label={m.disk} value={disk ?? 0} color="#FDBA74" />
           </div>
         </div>
       </div>
@@ -344,7 +358,7 @@ export const MonitoringPage = () => {
               value={system.network.packets_recv}
               max={Math.max(system.network.packets_sent, system.network.packets_recv, 1)}
               unit={m.packets}
-              color="var(--accent-3)"
+              color="#FF8A3D"
             />
           </div>
 
@@ -379,7 +393,7 @@ export const MonitoringPage = () => {
               value={system.disk_io.write_mb}
               max={Math.max(system.disk_io.read_mb, system.disk_io.write_mb, 1)}
               unit=" MB"
-              color="var(--accent-3)"
+              color="#FF8A3D"
             />
             <div className="mon-foot">
               {fill(m.diskUsed, { used: fmt(system.disk.used_gb, 1), total: fmt(system.disk.total_gb, 1), pct: fmt(system.disk.percent) })}
@@ -421,11 +435,11 @@ export const MonitoringPage = () => {
                 ]}
                 margin={{ top: 0, right: 0, left: -20, bottom: 0 }}
               >
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
-                <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Bar dataKey="count" name={m.rows} fill="var(--accent-2)" radius={[4, 4, 0, 0]} />
+                <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="var(--line)" />
+                <XAxis dataKey="name" tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: "var(--muted)" }} axisLine={false} tickLine={false} />
+                <Tooltip content={<BentoTooltip dark={false} />} cursor={{ fill: "rgba(148, 163, 184, 0.1)" }} />
+                <Bar dataKey="count" name={m.rows} fill="var(--accent)" radius={[10, 10, 10, 10]} />
               </BarChart>
             </ResponsiveContainer>
           ) : (

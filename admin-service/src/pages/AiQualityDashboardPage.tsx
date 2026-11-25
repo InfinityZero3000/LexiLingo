@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { Activity, AlertTriangle, CheckCircle2, Clock, Gauge, RefreshCw } from "lucide-react";
 import { DataTable } from "../components/DataTable";
 import { EmptyState } from "../components/EmptyState";
 import { SectionHeader } from "../components/SectionHeader";
@@ -45,8 +45,9 @@ export const AiQualityDashboardPage = () => {
         title="AI Quality"
         description="Lexi latency, correction quality, STT/TTS failures, and recent AI audit incidents."
         action={
-          <button className="ghost-button small" onClick={load} disabled={loading}>
-            <RefreshCw size={14} /> Refresh
+          <button className="ghost-button small with-icon" onClick={load} disabled={loading}>
+            <RefreshCw size={14} className={loading ? "is-spinning" : undefined} aria-hidden="true" />
+            Refresh
           </button>
         }
       />
@@ -63,10 +64,33 @@ export const AiQualityDashboardPage = () => {
       ) : summary ? (
         <>
           <div className="card-grid">
-            <StatCard label="Audit events" value={String(summary.total_events)} accent="ink" note={data?.source} />
-            <StatCard label="Success rate" value={`${summary.success_rate.toFixed(1)}%`} accent="teal" />
-            <StatCard label="Avg latency" value={`${Math.round(summary.average_latency_ms)} ms`} accent="orange" />
-            <StatCard label="P95 latency" value={`${Math.round(summary.p95_latency_ms)} ms`} accent="berry" />
+            <StatCard
+              label="Audit events"
+              value={String(summary.total_events)}
+              accent="ink"
+              note={data?.source}
+              icon={<Activity size={16} aria-hidden="true" />}
+            />
+            <StatCard
+              label="Success rate"
+              value={`${summary.success_rate.toFixed(1)}%`}
+              accent="teal"
+              variant="blue"
+              icon={<CheckCircle2 size={16} aria-hidden="true" />}
+            />
+            <StatCard
+              label="Avg latency"
+              value={`${Math.round(summary.average_latency_ms)} ms`}
+              accent="orange"
+              icon={<Clock size={16} aria-hidden="true" />}
+            />
+            <StatCard
+              label="P95 latency"
+              value={`${Math.round(summary.p95_latency_ms)} ms`}
+              accent="berry"
+              variant="dark"
+              icon={<Gauge size={16} aria-hidden="true" />}
+            />
           </div>
 
           <div className="card-grid">
@@ -77,7 +101,10 @@ export const AiQualityDashboardPage = () => {
           </div>
 
           <div className="panel">
-            <h3 className="panel-heading">Endpoint breakdown</h3>
+            <div className="cluster cluster--between" style={{ padding: "4px 4px 0" }}>
+              <h3 className="panel-heading" style={{ padding: 0, margin: 0 }}>Endpoint breakdown</h3>
+              <StatusPill tone="neutral" label={`${summary.endpoint_breakdown.length} endpoints`} />
+            </div>
             {!summary.endpoint_breakdown.length ? (
               <EmptyState title="No endpoint data" description="No AI endpoint events were found in the selected window." />
             ) : (
@@ -98,7 +125,7 @@ export const AiQualityDashboardPage = () => {
                     render: (row) => (
                       <StatusPill
                         tone={row.failures ? "danger" : "success"}
-                        label={String(row.failures)}
+                        label={`${row.failures} failed`}
                       />
                     ),
                     align: "center",
@@ -114,7 +141,13 @@ export const AiQualityDashboardPage = () => {
           </div>
 
           <div className="panel">
-            <h3 className="panel-heading">Latest failures</h3>
+            <div className="cluster cluster--between" style={{ padding: "4px 4px 0" }}>
+              <h3 className="panel-heading" style={{ padding: 0, margin: 0 }}>Latest failures</h3>
+              <StatusPill
+                tone={summary.latest_failures.length ? "danger" : "success"}
+                label={summary.latest_failures.length ? `${summary.latest_failures.length} incidents` : "0 incidents"}
+              />
+            </div>
             {!summary.latest_failures.length ? (
               <EmptyState title="No recent failures" description="The latest AI audit window has no failed events." />
             ) : (
@@ -153,9 +186,12 @@ export const AiQualityDashboardPage = () => {
             )}
           </div>
 
-          <div className="panel-inner">
-            <StatusPill tone={pctTone(summary.success_rate)} label={`${summary.success_rate.toFixed(1)}% success`} />
-            <span className="table-sub" style={{ marginLeft: 10 }}>
+          <div className="card cluster cluster--between" style={{ padding: "16px 22px" }}>
+            <div className="cluster" style={{ gap: 10 }}>
+              <StatusPill tone={pctTone(summary.success_rate)} label={`${summary.success_rate.toFixed(1)}% success`} />
+              <StatusPill tone={summary.failure_count ? "danger" : "neutral"} label={`${summary.failure_count} failed`} />
+            </div>
+            <span className="table-sub">
               {summary.failure_count} failed of {summary.total_events} audited events.
             </span>
           </div>

@@ -100,6 +100,7 @@ export const TopicForm = ({
     }
     setDrafting(true);
     setError(null);
+    metaSeq.current += 1;
     try {
       const res = await draftTopicStoryAdmin({
         title_en: form.title_en.trim(),
@@ -195,7 +196,7 @@ export const TopicForm = ({
           Category
           <select
             value={form.category}
-            onChange={(e) => { setCategoryTouched(true); patch({ category: e.target.value }); }}
+            onChange={(e) => { metaSeq.current += 1; setCategoryTouched(true); patch({ category: e.target.value }); }}
           >
             {CATEGORIES.map((category) => <option key={category} value={category}>{category}</option>)}
           </select>
@@ -212,7 +213,15 @@ export const TopicForm = ({
       </div>
       {mode !== "edit" && <p className="form-hint" style={{ overflowWrap: "anywhere" }}>Leave the ID empty to use <code>{idHint}</code>.</p>}
 
-      <div className="panel-inner">
+      <div
+        className="panel-inner"
+        style={{
+          background: "var(--panel-soft-2, #F8FAFC)",
+          borderRadius: 14,
+          padding: 16,
+          border: "1px solid var(--line)",
+        }}
+      >
         <div className="table-title">Draft with AI</div>
         <p className="form-hint" style={{ margin: 0 }}>
           Fills the character, scenario, opening line, prompts, vocabulary and grammar from the title and level.
@@ -227,7 +236,7 @@ export const TopicForm = ({
           />
         </label>
         <div className="inline-actions">
-          <button className="primary-button" type="button" onClick={onDraft} disabled={drafting}>
+          <button className="primary-button" style={{ borderRadius: 999 }} type="button" onClick={onDraft} disabled={drafting}>
             {drafting ? <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} aria-hidden="true" /> : <Sparkles size={16} aria-hidden="true" />}
             {" "}{drafting ? "Drafting…" : "Draft with AI"}
           </button>
@@ -261,8 +270,8 @@ export const TopicForm = ({
                 type="button"
                 className={selected ? "primary-button" : "ghost-button"}
                 aria-pressed={selected}
-                onClick={() => { setIconTouched(true); patch({ icon_key: item.key }); }}
-                style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+                onClick={() => { metaSeq.current += 1; setIconTouched(true); patch({ icon_key: item.key }); }}
+                style={{ display: "inline-flex", alignItems: "center", gap: 6, borderRadius: 999 }}
               >
                 <ItemIcon size={16} aria-hidden="true" />
                 {item.label}
@@ -272,7 +281,17 @@ export const TopicForm = ({
         </div>
       </div>
 
-      <div className="panel-inner" style={{ flexDirection: "row", alignItems: "center" }} aria-label="Preview in the app">
+      <div
+        className="panel-inner"
+        style={{
+          flexDirection: "row",
+          alignItems: "center",
+          background: "var(--accent-soft, #FFF3EC)",
+          borderRadius: 14,
+          padding: "12px 16px",
+        }}
+        aria-label="Preview in the app"
+      >
         <span className="stat-icon" style={{ width: 40, height: 40 }}><Icon size={20} aria-hidden="true" /></span>
         <div>
           <div className="table-title">{form.title_en.trim() || "Topic title"}</div>

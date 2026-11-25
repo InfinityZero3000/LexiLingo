@@ -46,7 +46,7 @@ export const UserPremiumPanel = ({ userId }: { userId: string }) => {
       {entitlement.isLoading && <p className="text-muted">{t.common.loading}</p>}
 
       {e && (
-        <div className="panel stack">
+        <div className="panel stack" style={{ borderRadius: 20 }}>
           <div className="cluster">
             <StatusPill tone={e.is_active ? "success" : "neutral"} label={e.is_active ? t.support.premiumActive : t.support.premiumInactive} />
             {e.force_enabled && <StatusPill tone="warning" label={t.support.forceEnabled} />}
@@ -65,9 +65,21 @@ export const UserPremiumPanel = ({ userId }: { userId: string }) => {
 
       {isSuper && e && !paid && (
         <div className="cluster">
-          <button className="primary-button" onClick={() => { setError(null); setDialog("grant"); }}>{t.support.grant}</button>
+          <button
+            className="primary-button"
+            style={{ borderRadius: "9999px" }}
+            onClick={() => { setError(null); setDialog("grant"); }}
+          >
+            {t.support.grant}
+          </button>
           {adminGrant && e.is_active && (
-            <button className="ghost-button danger" onClick={() => { setError(null); setDialog("revoke"); }}>{t.support.revoke}</button>
+            <button
+              className="ghost-button danger"
+              style={{ borderRadius: "9999px" }}
+              onClick={() => { setError(null); setDialog("revoke"); }}
+            >
+              {t.support.revoke}
+            </button>
           )}
         </div>
       )}

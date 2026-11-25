@@ -43,7 +43,26 @@ export const GemLedgerPage = () => {
     { header: t.gemLedger.actor, render: (g) => g.actor.username ?? "—" },
     { header: t.gemLedger.learner, render: (g) => g.user.email ?? g.user.username ?? "—" },
     { header: t.gemLedger.kind, align: "center", render: (g) => <StatusPill tone={g.kind === "gift" ? "success" : "info"} label={t.gemLedger.kinds[g.kind]} /> },
-    { header: t.gemLedger.amount, align: "right", sortValue: (g) => g.amount, render: (g) => <span className={g.amount < 0 ? "text-danger" : undefined}>{g.amount > 0 ? `+${g.amount}` : g.amount}</span> },
+    {
+      header: t.gemLedger.amount,
+      align: "right",
+      sortValue: (g) => g.amount,
+      render: (g) => (
+        <span
+          className={g.amount < 0 ? "text-danger" : undefined}
+          style={{
+            display: "inline-block",
+            borderRadius: 9999,
+            padding: "3px 10px",
+            fontWeight: 600,
+            background: g.amount < 0 ? "rgba(239, 68, 68, 0.1)" : "rgba(255, 122, 0, 0.12)",
+            color: g.amount < 0 ? undefined : "var(--accent-2, #FF7A00)",
+          }}
+        >
+          {g.amount > 0 ? `+${g.amount}` : g.amount}
+        </span>
+      ),
+    },
     { header: t.gemLedger.reason, render: (g) => <span className="text-muted">{g.reason}</span> },
   ];
 
@@ -53,17 +72,18 @@ export const GemLedgerPage = () => {
 
       {usage && (
         <div className="card-grid">
-          <StatCard label={t.gemLedger.maxPerAction} value={usage.max_per_action.toLocaleString()} />
-          <StatCard label={t.gemLedger.spentToday} value={usage.spent_today.toLocaleString()} />
+          <StatCard label={t.gemLedger.maxPerAction} value={usage.max_per_action.toLocaleString()} variant="blue" />
+          <StatCard label={t.gemLedger.spentToday} value={usage.spent_today.toLocaleString()} accent="ink" />
           <StatCard
             label={t.gemLedger.remainingToday}
             value={usage.remaining_today.toLocaleString()}
             note={t.gemLedger.ofBudget.replace("{budget}", usage.daily_budget.toLocaleString())}
+            accent="teal"
           />
         </div>
       )}
 
-      <div className="panel filter-panel">
+      <div className="panel filter-panel" style={{ borderRadius: 20 }}>
         <div className="filter-bar">
           <select className="filter-select" value={kind} onChange={reset(setKind)} aria-label={t.gemLedger.kind}>
             <option value="">{t.gemLedger.allKinds}</option>
@@ -83,7 +103,7 @@ export const GemLedgerPage = () => {
 
       {grants.error && <div className="form-error" role="alert">{messageOf(grants.error, t.gemLedger.loadFailed)}</div>}
 
-      <div className="panel">
+      <div className="panel" style={{ borderRadius: 20 }}>
         {grants.isLoading ? (
           <TableSkeleton rows={6} cols={6} />
         ) : rows.length === 0 ? (

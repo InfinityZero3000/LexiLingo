@@ -312,11 +312,11 @@ export const LessonsPage = () => {
             </div>
           )}
           {emptyLessons.length > 0 && (
-            <button className="ghost-button" onClick={handleBulkGenerate} disabled={bulk !== null}>
+            <button className="ghost-button" style={{ borderRadius: 999 }} onClick={handleBulkGenerate} disabled={bulk !== null}>
               {t.aiGenerate.bulkButton.replace("{count}", String(emptyLessons.length))}
             </button>
           )}
-          <button className="primary-button" onClick={() => { resetForm(); setShowForm(true); }}>
+          <button className="primary-button" style={{ borderRadius: 999 }} onClick={() => { resetForm(); setShowForm(true); }}>
             {t.lessons.createLesson}
           </button>
         </div>
@@ -446,7 +446,12 @@ export const LessonsPage = () => {
                   <div className="table-actions">
                     <button
                       className="ghost-button small"
-                      style={{ color: "var(--accent-2)", borderColor: "var(--accent-2)" }}
+                      style={{
+                        color: "var(--accent-2)",
+                        borderColor: "var(--accent-2)",
+                        background: "rgba(255, 77, 0, 0.08)",
+                        borderRadius: 999,
+                      }}
                       onClick={() => handleEditExercises(row)}
                       title="Quản lý bài tập"
                     >
