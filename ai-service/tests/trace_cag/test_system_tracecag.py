@@ -455,6 +455,12 @@ async def _patched_pipeline(
         # zero cache entries and the L1 tests saw empty buckets.
         "api.services.trace_cag.cache_utils.settings.LEARNER_STATE_MODE",
         new="off",
+    ), patch(
+        # The cache scope is an HMAC of the user id under SECRET_KEY. These tests only passed on a
+        # machine whose .env set one; in a clean checkout or CI the gate answered
+        # user_cache_scope_unavailable and never cached anything.
+        "api.services.trace_cag.cache_utils.settings.SECRET_KEY",
+        new="test-secret-for-the-cache-scope",
     ), patch.dict("os.environ", {
         "GROQ_API_KEY": "test-groq-key",
         "GEMINI_API_KEY": "test-gemini-key",

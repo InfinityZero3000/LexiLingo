@@ -279,6 +279,11 @@ jobs:
             tests/trace_cag/test_pipeline_integration.py \
             tests/trace_cag/test_review_contracts.py \
             tests/trace_cag/test_prod_debt_contracts.py \
+            tests/trace_cag/test_stream_failure_modes.py \
+            tests/trace_cag/test_stream_llm_tokens_provider_info.py \
+            tests/trace_cag/test_cache_hit_output.py \
+            tests/trace_cag/test_system_tracecag.py \
+            tests/test_groq_key_pool.py \
             tests/test_llm_client_pacing.py \
             --tb=short -q
 
