@@ -233,6 +233,7 @@ class TraceCAGState(TypedDict, total=False):
     adaptive_controller: Dict[str, Any]
     cache_gate_meta: Dict[str, Any]
     l1_shadow_response: str
+    cache_bypass: str  # why the gate served nothing before it looked: "" when it did look
 
     # ============================================
     # Metadata

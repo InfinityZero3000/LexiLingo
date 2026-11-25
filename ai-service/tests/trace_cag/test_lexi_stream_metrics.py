@@ -245,6 +245,21 @@ async def test_personal_facts_name_the_cache_bypass(mock_db, monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_a_gate_bypass_reaches_done_metadata_and_the_metrics_row(mock_db, monkeypatch):
+    meta, recorded = await _stream(_state(cache_bypass="learner_epoch_unavailable"), mock_db, monkeypatch)
+
+    assert meta["cache_bypass"] == recorded[0]["cache_bypass"] == "learner_epoch_unavailable"
+
+
+@pytest.mark.asyncio
+async def test_personalization_wins_over_the_gate_reason(mock_db, monkeypatch):
+    # With facts the service switches the cache off itself, so the gate only sees "cache_disabled".
+    meta, _ = await _stream(_state(cache_bypass="cache_disabled"), mock_db, monkeypatch, card_facts="XP: 120")
+
+    assert meta["cache_bypass"] == "facts"
+
+
+@pytest.mark.asyncio
 async def test_l1_shadow_similarity_is_reported(mock_db, monkeypatch):
     state = _state(l1_shadow_response="Fresh answer")
 
