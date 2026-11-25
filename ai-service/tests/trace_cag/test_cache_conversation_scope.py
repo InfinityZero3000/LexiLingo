@@ -155,7 +155,7 @@ def test_evidence_scope_is_per_learner_in_production_only():
 
 
 class _Gateway:
-    _models = {}
+    _models = {"qwen": None}
 
     def __init__(self, payload):
         self.payload = payload

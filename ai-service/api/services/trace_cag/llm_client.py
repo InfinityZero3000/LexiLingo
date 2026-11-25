@@ -191,13 +191,96 @@ def _token_window_wait(state_key: str, provider: str, tokens: int) -> float:
     return 60.0
 
 
-def _token_window_record(state_key: str, tokens: int) -> None:
+def _token_window_record(state_key: str, provider: str, tokens: int) -> None:
+    if _provider_tpm(provider) <= 0:
+        return  # nothing prunes the window while pacing is off, so it would grow for the life of the process
     _PROVIDER_TOKEN_WINDOW.setdefault(state_key, []).append((time.monotonic(), tokens))
 
 
 # Upper bound on a per-minute 429 backoff. Daily/quota 429s take the
 # _disable_provider path instead, so capping here cannot mask an exhausted key.
 _TPM_BACKOFF_CAP_SECONDS = float(os.getenv("TRACECAG_TPM_BACKOFF_CAP", "30"))
+
+
+def groq_refusal_seconds(status_code: int, retry_after: Optional[str], body: str) -> float:
+    """How long to leave a Groq key alone after this answer; 0 when the key is not the problem."""
+    if status_code == 401:
+        return 3600.0
+    if status_code == 403:
+        return 60.0  # may be the network or the account, not this key: never sideline the pool for long
+    if status_code != 429:
+        return 0.0
+    asked = _parse_retry_after_seconds(retry_after)
+    if _is_daily_limit(body):
+        return max(asked, 300.0)
+    return min(asked or 15.0, _TPM_BACKOFF_CAP_SECONDS)
+
+
+def estimate_chat_tokens(messages: list, max_tokens: int) -> int:
+    """Prompt plus reply: the pool debits it against a per-minute budget that counts both."""
+    return max_tokens + sum(len(str(m.get("content") or "")) for m in messages) // 4
+
+
+async def groq_chat(
+    messages: list,
+    *,
+    max_tokens: int,
+    temperature: float = 0.3,
+    timeout: float = 6.0,
+    model: Optional[str] = None,
+) -> Optional[str]:
+    """One short Groq completion, or None. Never raises: callers own a fallback."""
+    from api.core.groq_key_pool import get_available_groq_key, record_groq_key_usage, resolve_groq_model
+
+    model = model or resolve_groq_model()
+    estimate = estimate_chat_tokens(messages, max_tokens)
+    try:
+        async with asyncio.timeout(timeout):
+            key = await get_available_groq_key(estimated_tokens=estimate)
+            if not key:
+                return None
+            response = await _throttled_post_json(
+                provider="groq",
+                url="https://api.groq.com/openai/v1/chat/completions",
+                headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+                payload={
+                    "model": model,
+                    "messages": messages,
+                    "max_tokens": max_tokens,
+                    "temperature": temperature,
+                    **_qwen_reasoning_overrides(model),
+                },
+                timeout=timeout,
+            )
+            if response is None or response.status_code != 200:
+                return None
+            data = response.json()
+            await record_groq_key_usage(
+                groq_key_used(response, key), int((data.get("usage") or {}).get("total_tokens") or estimate)
+            )
+            return str(data["choices"][0]["message"]["content"] or "").strip() or None
+    except Exception as exc:
+        logger.warning("[groq_chat] %s: %s", type(exc).__name__, exc)
+        return None
+
+
+def groq_key_used(response: Any, default: str) -> str:
+    """The key that answered, which is not the caller's when a 429 rotated it."""
+    extensions = getattr(response, "extensions", None)
+    return extensions.get("groq_key", default) if isinstance(extensions, dict) else default
+
+
+async def _another_groq_key(provider: str, tokens: int) -> Optional[str]:
+    """A free key to retry on. Only with the Redis pool: benchmarks run without it and pace one key on purpose."""
+    from api.core.groq_key_pool import get_available_groq_key, get_groq_key_pool
+
+    if provider != "groq" or get_groq_key_pool() is None:
+        return None
+    return await get_available_groq_key(estimated_tokens=tokens)
+
+
+def _bearer_key(headers: Optional[Dict[str, str]]) -> str:
+    return str((headers or {}).get("Authorization") or "").removeprefix("Bearer ").strip()
 
 
 async def _throttled_post_json(
@@ -232,10 +315,12 @@ async def _throttled_post_json(
         # questions, which is the one task where thinking should earn its cost.
         payload = {**payload, **_qwen_reasoning_overrides(str(payload.get("model") or ""))}
 
-    state_key = provider
-    if provider == "groq" and headers and headers.get("Authorization"):
-        fingerprint = hashlib.sha256(headers["Authorization"].encode()).hexdigest()[:16]
-        state_key = f"groq:{fingerprint}"
+    def _state_key() -> str:
+        if provider == "groq" and headers and headers.get("Authorization"):
+            return f"groq:{hashlib.sha256(headers['Authorization'].encode()).hexdigest()[:16]}"
+        return provider
+
+    state_key = _state_key()
     lock = _PROVIDER_QUEUE_LOCKS.setdefault(state_key, asyncio.Lock())
     response = None
     retry_after: float = 0.0
@@ -275,10 +360,26 @@ async def _throttled_post_json(
 
                 client = _get_httpx_client(provider)
                 response = await client.post(url, headers=headers, json=payload, timeout=timeout)
-                _token_window_record(state_key, est_tokens)
+                _token_window_record(state_key, provider, est_tokens)
                 _PROVIDER_NEXT_REQUEST_AT[state_key] = time.monotonic() + min_interval
 
+                refused = (
+                    groq_refusal_seconds(
+                        response.status_code, response.headers.get("Retry-After"),
+                        str(getattr(response, "text", "") or ""),
+                    )
+                    if provider == "groq" and response.status_code in (401, 403, 429) else 0.0
+                )
+                if refused:
+                    from api.core.groq_key_pool import park_groq_key
+
+                    park_groq_key(_bearer_key(headers), refused)
+
                 if response.status_code != 429:
+                    if response.status_code == 200 and provider == "groq" and isinstance(
+                        getattr(response, "extensions", None), dict
+                    ):
+                        response.extensions["groq_key"] = _bearer_key(headers)
                     return response
 
                 retry_after = _parse_retry_after_seconds(response.headers.get("Retry-After"))
@@ -311,6 +412,13 @@ async def _throttled_post_json(
             f"backing off for {retry_after:.1f}s"
         )
         if attempt < max_retries:
+            rotated = await _another_groq_key(provider, est_tokens)
+            if rotated:
+                # Waiting out one key's window while others are free cost the turn its whole deadline.
+                headers = {**(headers or {}), "Authorization": f"Bearer {rotated}"}
+                state_key = _state_key()
+                lock = _PROVIDER_QUEUE_LOCKS.setdefault(state_key, asyncio.Lock())
+                continue
             await asyncio.sleep(retry_after)
 
     return response

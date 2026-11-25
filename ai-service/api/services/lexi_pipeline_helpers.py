@@ -171,7 +171,7 @@ async def transcribe_audio(audio_base64: str) -> Optional[str]:
         audio_bytes = base64.b64decode(audio_base64, validate=True)
         result = await get_whisper_handler().transcribe(audio=audio_bytes, language="en")
         text = result.get("text", "")
-        logger.info(f" Lexi STT: '{text[:50]}...'")
+        logger.info(" Lexi STT: %d chars", len(text))
         return text if text else None
     except Exception as e:
         logger.warning(f"STT failed: {e}")

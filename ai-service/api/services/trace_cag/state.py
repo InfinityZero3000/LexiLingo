@@ -49,6 +49,9 @@ class RetrievalTraceItem(TypedDict, total=False):
     rank: int
     score: float
     is_relevant: bool
+    is_external: bool
+    chunk_id: str
+    source: str
 
 
 class CacheFingerprint(TypedDict, total=False):
@@ -182,6 +185,7 @@ class TraceCAGState(TypedDict, total=False):
     diagnosis_root_causes: List[str]  # concept IDs
     diagnosis_label_invalid: int  # closed bridge only: errors whose type is not one of the 24 labels
     diagnosis_confidence: float  # 0.0 - 1.0
+    diagnosis_graded: bool  # False when no model checked the message: never learner evidence, never cached
     diagnosis_usage: Dict[str, int]  # provider tokens the diagnosis call spent
     
     # ============================================
@@ -190,7 +194,8 @@ class TraceCAGState(TypedDict, total=False):
     vector_hits: List[VectorHit]
     jit_soft_graph: Optional[str]  # Compact JIT graph prompt payload
     jit_graph_meta: Dict[str, Any]  # Extraction timing/quality metadata
-    retrieved_context: str  # Combined context for generation
+    retrieved_context: str  # Combined context for generation (our own data only)
+    external_context: List[Dict[str, Any]]  # untrusted {text, source}; never enters the system prompt
     retrieval_trace: List[RetrievalTraceItem]
     retrieval_meta: Dict[str, Any]
     
@@ -329,6 +334,7 @@ def create_initial_state(
         jit_soft_graph=None,
         jit_graph_meta={},
         retrieved_context="",
+        external_context=[],
         retrieval_trace=[],
         retrieval_meta={},
         

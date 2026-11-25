@@ -140,7 +140,7 @@ class DocumentIntelligenceService:
         allowed_depths = {"ultra-fast", "fast", "basic", "advanced"}
         depth = self.search_depth if self.search_depth in allowed_depths else "fast"
 
-        logger.info(f"[L2_Search] Searching the web for: {query}")
+        logger.info("[L2_Search] Searching the web (%d chars)", len(query))
         try:
             async with httpx.AsyncClient(timeout=15.0) as client:
                 response = await client.post(

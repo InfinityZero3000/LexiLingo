@@ -516,7 +516,7 @@ def test_label_invalid_is_absent_when_the_ai_branch_fell_back_to_rules(monkeypat
     _bridge(monkeypatch, "closed")
     for raw in ('{ "errors": [ oops }', _reply_with(None)):
         out = _run_diagnose(monkeypatch, None, text="yesterday I go to school", raw=raw)
-        assert out["models_used"] == ["qwen_grammar"]
+        assert out["models_used"] == ["rule_fallback"] and out["diagnosis_graded"] is False
         assert [e["type"] for e in out["diagnosis_errors"]] == ["past_tense"]
         assert out["diagnosis_root_causes"] == ["concept:grammar.past_simple"]
         assert "diagnosis_label_invalid" not in out

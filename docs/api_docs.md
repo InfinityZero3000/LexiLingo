@@ -578,11 +578,8 @@ well-known không có tiền tố này.
 | Method | Endpoint |
 | --- | --- |
 | `POST` | `/api/v1/ai/trace-cag/analyze` |
-| `POST` | `/api/v1/ai/analyze` |
 | `GET` | `/api/v1/ai/trace-cag/health` |
 | `GET`, `POST` | `/api/v1/ai/warmup` |
-| `GET` | `/api/v1/ai/graph-analytics` |
-| `GET` | `/api/v1/ai/graph-analytics/communities/{community_id}` |
 | `GET` | `/api/v1/ai/monitoring/dashboard` |
 | `GET` | `/api/v1/ai/monitoring/metrics/{metric_name}` |
 | `GET` | `/api/v1/ai/monitoring/system` |

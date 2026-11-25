@@ -21,12 +21,16 @@ from api.services.document_intelligence import get_doc_intel_service
 from api.services.llama_kv_service import get_local_llama_kv_service
 
 from api.services.trace_cag.env_helpers import _env_flag
+from api.services.trace_cag.untrusted import EXTERNAL_RULE, external_message
 from api.services.trace_cag.provider_state import _provider_is_disabled
 from api.services.trace_cag.llm_client import (
     _get_httpx_client,
     _qwen_no_think_messages,
     _qwen_reasoning_overrides,
     _throttled_post_json,
+    estimate_chat_tokens,
+    groq_key_used,
+    groq_refusal_seconds,
     provider_usage,
 )
 from api.services.trace_cag.cache_utils import _write_cache_entry, struggling_concept as _struggling_concept
@@ -47,6 +51,10 @@ SAFE_TUTOR_FALLBACK = (
 )
 
 
+_GROQ_STREAM_ATTEMPTS = 3
+_GROQ_LEASE_WAIT_SECONDS = 3.0
+
+
 class ProviderBusyError(RuntimeError):
     pass
 
@@ -63,6 +71,8 @@ def _state_with_policy_dependency(state: TraceCAGState) -> TraceCAGState:
 
 def cache_write_allowed(state: Dict[str, Any]) -> bool:
     """A web-grounded answer goes stale fast: cache it only once its chunk has earned promotion."""
+    if state.get("diagnosis_graded") is False:
+        return False  # replaying it would serve "no mistakes" for a message nothing checked
     top_ids = [str(item.get("item_id") or "") for item in (state.get("retrieval_trace") or [])[:3]]
     external = [item_id.removeprefix("ext_") for item_id in top_ids if item_id.startswith("ext_")]
     if not external:
@@ -152,6 +162,50 @@ def _personalization_hint(state: Dict[str, Any]) -> str:
                     "a repeated failure or force it into an unrelated message.\n"
                 )
     return hint
+
+
+def _assemble_messages(
+    system_prompt: str, state: Dict[str, Any], user_input: str
+) -> tuple[str, List[Dict[str, Any]]]:
+    """(system_prompt, messages): system, last 12 history messages, external evidence, learner turn."""
+    external = external_message(state.get("external_context"))
+    if external:
+        system_prompt += EXTERNAL_RULE
+    messages: List[Dict[str, Any]] = [{"role": "system", "content": system_prompt}]
+    for msg in (state.get("conversation_history") or [])[-12:]:
+        role = msg.get("role")
+        content = msg.get("content", "")
+        if role and content:
+            messages.append({"role": role, "content": content})
+        elif msg.get("user"):
+            # ConversationCache {"user": "...", "ai": "..."} format
+            messages.append({"role": "user", "content": msg["user"]})
+            if msg.get("ai"):
+                messages.append({"role": "assistant", "content": msg["ai"]})
+    if external:
+        messages.append(external)
+    messages.append({"role": "user", "content": user_input})
+    return system_prompt, messages
+
+
+def _gemini_contents(
+    messages: List[Dict[str, Any]], user_input: str
+) -> List[Dict[str, Any]]:
+    """Map chat messages to Gemini turns so history survives a Groq fallback."""
+    contents: List[Dict[str, Any]] = []
+    for msg in messages:
+        role = msg.get("role")
+        text = str(msg.get("content") or "")
+        if role not in {"user", "assistant"} or not text:
+            continue
+        gemini_role = "model" if role == "assistant" else "user"
+        if not contents and gemini_role == "model":
+            continue  # Gemini rejects a conversation that opens with the model
+        if contents and contents[-1]["role"] == gemini_role:
+            contents[-1]["parts"][0]["text"] += "\n\n" + text
+        else:
+            contents.append({"role": gemini_role, "parts": [{"text": text}]})
+    return contents or [{"role": "user", "parts": [{"text": user_input}]}]
 
 
 def _build_base_system_prompt(state: Dict[str, Any], level: str, difficulty: str) -> str:
@@ -344,19 +398,7 @@ def build_generation_prompt(
     if native_hint:
         system_prompt += f"\n--- Native-Language Hint ---\n{native_hint}\n"
 
-    messages: List[Dict[str, Any]] = [{"role": "system", "content": system_prompt}]
-    for msg in (state.get("conversation_history") or [])[-12:]:
-        role = msg.get("role")
-        content = msg.get("content", "")
-        if role and content:
-            messages.append({"role": role, "content": content})
-        elif msg.get("user"):
-            messages.append({"role": "user", "content": msg["user"]})
-            if msg.get("ai"):
-                messages.append({"role": "assistant", "content": msg["ai"]})
-    messages.append({"role": "user", "content": user_input})
-
-    return system_prompt, messages
+    return _assemble_messages(system_prompt, state, user_input)
 
 
 async def stream_llm_tokens(
@@ -387,90 +429,123 @@ async def stream_llm_tokens(
     groq_usage: Dict[str, int] = {}
     gemini_usage: Dict[str, int] = {}
 
+    async def _acquire_groq_key() -> "str | None":
+        from api.core.groq_key_pool import get_configured_key_count, try_acquire_groq_key
+
+        estimate = estimate_chat_tokens(messages, max_tokens)
+        key = await try_acquire_groq_key(estimated_tokens=estimate)
+        # Voice fails fast by design; a text turn waits a moment for a lease instead of reporting an outage.
+        if key or not allow_gemini_fallback or get_configured_key_count() == 0:
+            return key
+        deadline = time.monotonic() + _GROQ_LEASE_WAIT_SECONDS
+        while key is None and time.monotonic() < deadline:
+            await asyncio.sleep(0.2)
+            key = await try_acquire_groq_key(estimated_tokens=estimate)
+        return key
+
     async def _try_groq() -> "AsyncGenerator[str, None]":
         nonlocal groq_admitted, groq_finished
-        from api.core.groq_key_pool import record_groq_key_usage, release_groq_key, try_acquire_groq_key
+        from api.core.groq_key_pool import park_groq_key, record_groq_key_usage, release_groq_key
 
-        if _provider_is_disabled("groq"):
-            return
-        groq_key = await try_acquire_groq_key(estimated_tokens=max_tokens)
         groq_model = groq_model_used
-        if not groq_key:
-            return
-        groq_admitted = True
-
         # Disable Qwen3 thinking mode to prevent thinking tokens consuming max_tokens budget.
         groq_messages = _qwen_no_think_messages(groq_model, messages)
 
-        client = _get_httpx_client("groq")
-        tokens_yielded = 0
-        try:
-            async with asyncio.timeout(30.0), client.stream(
-                "POST",
-                "https://api.groq.com/openai/v1/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {groq_key}",
-                    "Content-Type": "application/json",
-                },
-                json={
-                    "model": groq_model,
-                    "messages": groq_messages,
-                    "max_tokens": max_tokens,
-                    "temperature": 0.7,
-                    "stream": True,
-                    "stream_options": {"include_usage": True},
-                    **_qwen_reasoning_overrides(groq_model),
-                },
-                timeout=25.0,
-            ) as resp:
-                if resp.status_code != 200:
-                    logger.warning("[stream_llm_tokens] Groq status %d", resp.status_code)
-                    return
-                async for line in resp.aiter_lines():
-                    if not line.startswith("data: "):
-                        continue
-                    data = line[6:]
-                    if data.strip() == "[DONE]":
-                        groq_finished = True
-                        break
-                    try:
-                        obj = json.loads(data)
-                        # Groq reports mid-stream failures (e.g. daily token quota)
-                        # as an SSE error frame after a 200 header. Without this the
-                        # stream just ends token-less and the caller reports a
-                        # generic outage with nothing in the logs.
-                        if "error" in obj:
-                            logger.warning(
-                                "[stream_llm_tokens] Groq mid-stream error: %s",
-                                str(obj["error"])[:300],
-                            )
-                            return
-                        # Groq repeats the same usage on two chunks; update, never add.
-                        groq_usage.update(provider_usage(obj) or {})
-                        if not obj.get("choices"):
-                            continue
-                        delta = obj["choices"][0]["delta"].get("content") or ""
-                        if delta:
-                            tokens_yielded += len(delta.split())
-                            yield delta
-                    except Exception as _exc:
-                        logger.debug("[generate] ignored: %s", _exc)
-                        pass
-        except Exception as exc:
-            logger.warning("[stream_llm_tokens] Groq stream error: %s", exc)
-        finally:
-            if groq_key:
+        for attempt in range(_GROQ_STREAM_ATTEMPTS):
+            if _provider_is_disabled("groq"):
+                return
+            groq_key = await _acquire_groq_key()
+            if not groq_key:
+                return
+            groq_admitted = True
+            attempt_usage: Dict[str, int] = {}
+            tokens_yielded = 0
+            retryable = False
+            yielded = False
+            try:
+                async with asyncio.timeout(30.0), _get_httpx_client("groq").stream(
+                    "POST",
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {groq_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": groq_model,
+                        "messages": groq_messages,
+                        "max_tokens": max_tokens,
+                        "temperature": 0.7,
+                        "stream": True,
+                        "stream_options": {"include_usage": True},
+                        **_qwen_reasoning_overrides(groq_model),
+                    },
+                    timeout=25.0,
+                ) as resp:
+                    if resp.status_code != 200:
+                        body = ""
+                        if resp.status_code == 429:
+                            body = (await resp.aread()).decode("utf-8", "replace")[:500]
+                        seconds = groq_refusal_seconds(
+                            resp.status_code, resp.headers.get("Retry-After"), body
+                        )
+                        park_groq_key(groq_key, seconds)
+                        retryable = seconds > 0 or resp.status_code >= 500
+                        logger.warning(
+                            "[stream_llm_tokens] Groq status %d (attempt %d)", resp.status_code, attempt + 1
+                        )
+                    else:
+                        async for line in resp.aiter_lines():
+                            if not line.startswith("data: "):
+                                continue
+                            data = line[6:]
+                            if data.strip() == "[DONE]":
+                                groq_finished = True
+                                break
+                            try:
+                                obj = json.loads(data)
+                                # Groq reports mid-stream failures (e.g. daily token quota)
+                                # as an SSE error frame after a 200 header. Without this the
+                                # stream just ends token-less and the caller reports a
+                                # generic outage with nothing in the logs.
+                                if "error" in obj:
+                                    error_text = str(obj["error"])[:300]
+                                    logger.warning(
+                                        "[stream_llm_tokens] Groq mid-stream error: %s", error_text
+                                    )
+                                    park_groq_key(groq_key, groq_refusal_seconds(429, None, error_text))
+                                    retryable = True
+                                    break
+                                # Groq repeats the same usage on two chunks; update, never add.
+                                attempt_usage.update(provider_usage(obj) or {})
+                                if not obj.get("choices"):
+                                    continue
+                                delta = obj["choices"][0]["delta"].get("content") or ""
+                            except Exception as _exc:
+                                logger.debug("[generate] ignored: %s", _exc)
+                                continue
+                            if delta:
+                                tokens_yielded += len(delta.split())
+                                yielded = True
+                                yield delta
+            except Exception as exc:
+                logger.warning("[stream_llm_tokens] Groq stream error: %s", exc)
+            finally:
+                for key_name, count in attempt_usage.items():
+                    groq_usage[key_name] = groq_usage.get(key_name, 0) + count
                 try:
                     try:
                         spent = (
-                            groq_usage["prompt_tokens"] + groq_usage["completion_tokens"]
-                            if groq_usage else max(50, tokens_yielded + 50)
+                            attempt_usage["prompt_tokens"] + attempt_usage["completion_tokens"]
+                            if attempt_usage else max(50, tokens_yielded + 50)
                         )
                         await record_groq_key_usage(groq_key, spent)
                     except Exception as exc:
                         logger.warning("[stream_llm_tokens] Groq usage accounting failed: %s", exc)
                 finally:
                     await release_groq_key(groq_key)
+            # Once the learner has text, a second key would restart the reply.
+            if yielded or not retryable:
+                return
 
     async def _try_gemini() -> "AsyncGenerator[str, None]":
         gemini_key = os.getenv("GEMINI_API_KEY", "")
@@ -482,7 +557,7 @@ async def stream_llm_tokens(
             "gemini-2.0-flash:streamGenerateContent?alt=sse"
         )
         request_body = {
-            "contents": [{"role": "user", "parts": [{"text": user_input}]}],
+            "contents": _gemini_contents(messages, user_input),
             "systemInstruction": {"parts": [{"text": system_prompt}]},
             "generationConfig": {"maxOutputTokens": max_tokens},
         }
@@ -713,23 +788,7 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
         model_used = "llm_unavailable"
 
     try:
-        messages = [{"role": "system", "content": system_prompt}]
-
-        # Inject conversation history (last 6 turns = up to 12 messages)
-        history = state.get("conversation_history", [])
-        for msg in history[-12:]:
-            role = msg.get("role")
-            content = msg.get("content", "")
-            if role and content:
-                # Standard {"role": "user"/"assistant", "content": "..."} format
-                messages.append({"role": role, "content": content})
-            elif msg.get("user"):
-                # ConversationCache {"user": "...", "ai": "..."} format
-                messages.append({"role": "user", "content": msg["user"]})
-                if msg.get("ai"):
-                    messages.append({"role": "assistant", "content": msg["ai"]})
-
-        messages.append({"role": "user", "content": user_input})
+        system_prompt, messages = _assemble_messages(system_prompt, state, str(user_input))
 
         if not response:
             # Race Groq and Gemini concurrently; first successful response wins.
@@ -780,7 +839,7 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
                         data = resp.json()
                         _ledger_add("tutor", data, wall_started=_started, response=resp)
                         tokens = data.get("usage", {}).get("total_tokens", 500)
-                        await record_groq_key_usage(groq_key, tokens)
+                        await record_groq_key_usage(groq_key_used(resp, groq_key), tokens)
                         return data["choices"][0]["message"]["content"], f"groq/{groq_model}"
                 except Exception as e:
                     logger.warning(f"[generate_node] Groq failed: {e}")
@@ -790,7 +849,7 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
                 if not gemini_key:
                     return None, None
                 try:
-                    gemini_contents = [{"role": "user", "parts": [{"text": user_input}]}]
+                    gemini_contents = _gemini_contents(messages, user_input)
                     url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
                     request_body = {
                         "contents": gemini_contents,
@@ -813,35 +872,37 @@ async def generate_node(state: TraceCAGState) -> Dict[str, Any]:
 
             # Launch both concurrently; pick first non-None result.
             tasks = [_asyncio.ensure_future(_try_groq()), _asyncio.ensure_future(_try_gemini())]
-            done, pending = await _asyncio.wait(tasks, return_when=_asyncio.FIRST_COMPLETED)
-            for task in done:
-                try:
-                    _text, _model = task.result()
-                    if _text:
-                        response = _text
-                        model_used = _model
-                        break
-                except Exception as _exc:
-                    logger.debug("[generate] ignored: %s", _exc)
-                    pass
-            # If winner found, cancel the loser immediately.
-            if response:
-                for p in pending:
-                    p.cancel()
-            else:
-                # Wait for the second one too before falling back to Ollama.
-                if pending:
-                    done2, _ = await _asyncio.wait(pending, timeout=15.0)
-                    for task in done2:
-                        try:
-                            _text, _model = task.result()
-                            if _text:
-                                response = _text
-                                model_used = _model
-                                break
-                        except Exception as _exc:
-                            logger.debug("[generate] ignored: %s", _exc)
-                            pass
+            try:
+                done, pending = await _asyncio.wait(tasks, return_when=_asyncio.FIRST_COMPLETED)
+                for task in done:
+                    try:
+                        _text, _model = task.result()
+                        if _text:
+                            response = _text
+                            model_used = _model
+                            break
+                    except Exception as _exc:
+                        logger.debug("[generate] ignored: %s", _exc)
+                        pass
+                if not response:
+                    # Wait for the second one too before falling back to Ollama.
+                    if pending:
+                        done2, _ = await _asyncio.wait(pending, timeout=15.0)
+                        for task in done2:
+                            try:
+                                _text, _model = task.result()
+                                if _text:
+                                    response = _text
+                                    model_used = _model
+                                    break
+                            except Exception as _exc:
+                                logger.debug("[generate] ignored: %s", _exc)
+                                pass
+            finally:
+                # Loser, straggler or cancelled turn: none may keep spending quota behind the reply.
+                for _task in tasks:
+                    _task.cancel()
+                await _asyncio.gather(*tasks, return_exceptions=True)
 
             # Ollama — last resort, tight 15s timeout.
             if not response:

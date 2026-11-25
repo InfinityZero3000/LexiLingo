@@ -1,4 +1,5 @@
 import asyncio
+import json
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 from fastapi import HTTPException
@@ -669,3 +670,85 @@ def test_sanitize_lexi_response_fixes_escaped_misaligned_bold_markers():
     assert "(15 mins), **" not in sanitized
     assert "**good**" in sanitized
     assert sanitized.count("**") == 2
+
+
+async def _run_stream_with_failing_graph(failure, mock_db, monkeypatch, *, tokens=("Hi", " Lan")):
+    import api.core.audit_emitter as audit_mod
+    import api.services.learner_observation_spool as spool_mod
+    import api.services.orchestrator as orch_mod
+    import api.services.trace_cag.cache_utils as cache_mod
+    import api.services.trace_cag.nodes_v2 as nodes_mod
+
+    pipeline = MagicMock()
+    pipeline.analyze_for_streaming = AsyncMock(side_effect=failure)
+    monkeypatch.setattr(orch_mod, "get_orchestrator", AsyncMock(return_value=MagicMock(pipeline=pipeline)))
+    calls = []
+
+    async def _tokens(**kwargs):
+        calls.append(kwargs)
+        for token in tokens:
+            yield token
+
+    monkeypatch.setattr(nodes_mod, "stream_llm_tokens", _tokens)
+    # The real persist_trace_observations runs; only the spool behind it is watched.
+    write_cache, persist = AsyncMock(), AsyncMock()
+    monkeypatch.setattr(cache_mod, "_write_cache_entry", write_cache)
+    monkeypatch.setattr(spool_mod, "get_learner_observation_spool", lambda: MagicMock(persist_many=persist))
+    from api.core.config import settings
+
+    monkeypatch.setattr(settings, "LEARNER_STATE_MODE", "read")
+    monkeypatch.setattr(audit_mod, "emit_ai_audit_event", AsyncMock())
+    events = [
+        event
+        async for event in svc.stream_lexi_chat(
+            request=lexi_route.LexiChatRequest(user_id="u1", session_id="s1", message="what next?", enable_tts=False),
+            session_id="s1",
+            prechecked_history=[{"role": "user", "content": "earlier turn"}],
+            quota=MagicMock(rpm_used=1, rpm_limit=30, rpd_used=1, rpd_limit=500),
+            start_time=0.0,
+            request_id="req-1",
+            current_user=AuthenticatedUser(user_id="u1", claims={}),
+            db=mock_db,
+        )
+    ]
+    done = [e for e in events if e.startswith("event: done")]
+    payload = json.loads(done[0].split("data: ", 1)[1]) if done else None
+    return events, payload, calls, write_cache, persist
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("failure", [RuntimeError("graph"), asyncio.TimeoutError()])
+async def test_lexi_stream_replies_without_the_graph_when_it_fails(mock_db, mock_store, monkeypatch, failure):
+    events, done, calls, write_cache, persist = await _run_stream_with_failing_graph(failure, mock_db, monkeypatch)
+
+    assert not any(e.startswith("event: error") for e in events)
+    assert done["lexi_response"] == "Hi Lan"
+    assert [m["content"] for m in calls[0]["messages"][1:]] == ["earlier turn", "what next?"]
+    # Nothing graded the turn, so nothing may look graded.
+    assert done["scores"] is None and done["corrections"] == []
+    assert done["metadata"]["degraded"] == type(failure).__name__
+    persist.assert_not_awaited()
+    write_cache.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_lexi_stream_context_deadline_also_replies_without_the_graph(mock_db, mock_store, monkeypatch):
+    async def _hang(*_args, **_kwargs):
+        await asyncio.sleep(60)
+
+    monkeypatch.setattr(svc, "HEARTBEAT_INTERVAL_S", 0.01)
+    monkeypatch.setattr(svc, "CONTEXT_DEADLINE_S", 0.05)
+    events, done, _, _, persist = await _run_stream_with_failing_graph(_hang, mock_db, monkeypatch)
+
+    assert not any(e.startswith("event: error") for e in events)
+    assert done["metadata"]["degraded"] == "TimeoutError"
+    persist.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_lexi_stream_safe_reply_when_the_graph_and_the_provider_both_fail(mock_db, mock_store, monkeypatch):
+    _, done, _, _, persist = await _run_stream_with_failing_graph(
+        RuntimeError("graph"), mock_db, monkeypatch, tokens=()
+    )
+    assert done["lexi_response"] == svc.SAFE_FIXED_RESPONSE
+    persist.assert_not_awaited()

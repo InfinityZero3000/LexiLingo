@@ -16,7 +16,7 @@ from api.services.trace_cag.graph import TraceCAGPipeline
 from api.services.trace_cag.state import create_initial_state
 
 TOP_KEYS = {
-    "tutor_response", "diagnosis_errors", "corrections", "linked_concepts", "learner_facts_stated",
+    "tutor_response", "diagnosis_errors", "diagnosis_graded", "corrections", "linked_concepts", "learner_facts_stated",
     "weak_concepts", "action_plan", "native_hint", "pronunciation_tip",
     "scores", "action", "metadata", "audio",
 }
