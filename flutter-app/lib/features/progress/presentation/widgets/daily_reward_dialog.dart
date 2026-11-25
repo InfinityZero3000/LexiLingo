@@ -305,21 +305,6 @@ class _DailyRewardDialogContentState extends State<_DailyRewardDialogContent>
                             ),
                     ),
                   ),
-                  if (!claimed) const SizedBox(height: AppSpacing.md),
-
-                  // Skip / Close text button
-                  if (!claimed)
-                    TextButton(
-                      onPressed: _isClaiming
-                          ? null
-                          : () => Navigator.of(context).pop(),
-                      style: TextButton.styleFrom(
-                        foregroundColor: isDark
-                            ? AppColors.surfaceLight.withValues(alpha: 0.6)
-                            : Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                      child: Text('common.close'.tr()),
-                    ),
                 ],
               ),
             ),

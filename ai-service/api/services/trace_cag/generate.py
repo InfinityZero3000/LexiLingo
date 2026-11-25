@@ -381,13 +381,14 @@ async def stream_llm_tokens(
     """
 
     groq_admitted = False
+    groq_finished = False
     groq_model_used = resolve_groq_model()
     # Groq can bill a turn it then produced nothing for, so each provider keeps its own and the turn pays both.
     groq_usage: Dict[str, int] = {}
     gemini_usage: Dict[str, int] = {}
 
     async def _try_groq() -> "AsyncGenerator[str, None]":
-        nonlocal groq_admitted
+        nonlocal groq_admitted, groq_finished
         from api.core.groq_key_pool import record_groq_key_usage, release_groq_key, try_acquire_groq_key
 
         if _provider_is_disabled("groq"):
@@ -430,6 +431,7 @@ async def stream_llm_tokens(
                         continue
                     data = line[6:]
                     if data.strip() == "[DONE]":
+                        groq_finished = True
                         break
                     try:
                         obj = json.loads(data)
@@ -544,6 +546,9 @@ async def stream_llm_tokens(
             provider_info["provider"] = "groq"
             provider_info["model"] = groq_model_used
         _report_usage()
+        if provider_info is not None and not groq_finished:
+            # Tokens arrived but the stream never reached [DONE]: the caller holds a cut-off reply.
+            provider_info["truncated"] = True
         return
 
     if not allow_gemini_fallback:

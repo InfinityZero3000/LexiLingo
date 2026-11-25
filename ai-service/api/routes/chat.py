@@ -4,7 +4,7 @@ Chat routes
 Endpoints for chat functionality with TraceCAG-first orchestration.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from pymongo.errors import OperationFailure
 import uuid
@@ -23,7 +23,7 @@ from api.utils.cursor import (
 )
 
 from api.core.database import get_database
-from api.core.auth import AuthenticatedUser, enforce_user_scope, get_current_user
+from api.core.auth import AuthenticatedUser, assert_session_owner, enforce_user_scope, get_current_user
 from api.core.quota_guard import default_token_cost_for_endpoint, enforce_user_quota
 from api.models.schemas import (
     CreateSessionRequest,
@@ -89,9 +89,7 @@ async def _ensure_chat_session_owner(
     session = await db["chat_sessions"].find_one({"session_id": session_id})
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
-    owner_user_id = str(session.get("user_id") or "")
-    if not owner_user_id or owner_user_id != current_user.user_id:
-        raise HTTPException(status_code=403, detail="Forbidden: session ownership mismatch")
+    assert_session_owner(session, current_user)
     return session
 
 
@@ -451,7 +449,8 @@ async def get_session_messages(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Chat history request failed error=%s", type(e).__name__)
+        raise HTTPException(status_code=500, detail="Unable to load chat history") from e
 
 
 @router.get(
@@ -601,7 +600,7 @@ async def get_session_messages_metadata(
 )
 async def get_user_sessions(
     user_id: str,
-    limit: int = 20,
+    limit: int = Query(20, ge=1, le=100),
     current_user: AuthenticatedUser = Depends(get_current_user),
     db: AsyncIOMotorDatabase = Depends(get_database),
 ):
@@ -619,4 +618,5 @@ async def get_user_sessions(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Chat sessions request failed error=%s", type(e).__name__)
+        raise HTTPException(status_code=500, detail="Unable to load chat sessions") from e

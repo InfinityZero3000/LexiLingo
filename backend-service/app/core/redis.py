@@ -7,6 +7,7 @@ Used for token blacklist, caching, and session management.
 
 import logging
 import re
+import time
 from typing import Optional
 import redis.asyncio as redis
 
@@ -40,6 +41,10 @@ class RedisClient:
     
     _instance: Optional[redis.Redis] = None
     _connected: bool = False
+    # Redis may come up after the API (compose start order, a reload, a restart): a failed
+    # connect is retried from get_instance instead of staying down until the next boot.
+    _retry_at: Optional[float] = None
+    _RETRY_SECONDS = 10.0
     
     _VALID_SCHEMES = ("redis://", "rediss://", "unix://")
 
@@ -69,15 +74,18 @@ class RedisClient:
             # Test connection
             await cls._instance.ping()
             cls._connected = True
+            cls._retry_at = None
             logger.info(f"Redis connected: {_redact_url(url)}")
         except redis.ConnectionError as e:
             logger.warning(f"Redis connection failed: {e}. Token blacklist will be disabled.")
             cls._instance = None
             cls._connected = False
+            cls._retry_at = time.monotonic() + cls._RETRY_SECONDS
         except Exception as e:
             logger.warning(f"Redis unavailable: {e}. Token blacklist will be disabled.")
             cls._instance = None
             cls._connected = False
+            cls._retry_at = time.monotonic() + cls._RETRY_SECONDS
     
     @classmethod
     async def get_instance(cls) -> Optional[redis.Redis]:
@@ -87,6 +95,9 @@ class RedisClient:
         Returns:
             Redis client or None if not connected
         """
+        if not cls._connected and cls._retry_at is not None and time.monotonic() >= cls._retry_at:
+            cls._retry_at = None
+            await cls.connect()
         return cls._instance if cls._connected else None
     
     @classmethod

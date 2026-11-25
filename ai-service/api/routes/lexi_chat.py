@@ -30,7 +30,7 @@ from pydantic import BaseModel, Field
 from motor.motor_asyncio import AsyncIOMotorDatabase
 from pymongo.errors import OperationFailure
 from api.clients.entitlement_client import is_premium
-from api.core.auth import AuthenticatedUser, enforce_user_scope, get_current_user
+from api.core.auth import AuthenticatedUser, assert_session_owner, enforce_user_scope, get_current_user
 from api.core.audit_emitter import emit_ai_audit_event
 from api.core.quota_guard import QuotaDecision, default_token_cost_for_endpoint, enforce_user_quota
 from api.core.database import get_database
@@ -114,32 +114,11 @@ async def create_lexi_session(
     session_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
 
-    await svc.lexi_store.set_session(session_id, {
-        "session_id": session_id,
-        "user_id": request.user_id,
-        "created_at": now,
-        "updated_at": now,
-        "title": "Lexi Chat",
-        "message_count": 0,
-        "persona": "lexi",
-        "story_context": None,
-    })
-    await svc.lexi_store.init_messages(session_id)
-
-    await db["lexi_sessions"].update_one(
-        {"session_id": session_id},
-        {
-            "$set": {
-                "session_id": session_id,
-                "user_id": request.user_id,
-                "title": "Lexi Chat",
-                "created_at": now,
-                "updated_at": now,
-                "message_count": 0,
-                "persona": "lexi",
-            }
-        },
-        upsert=True,
+    await svc.create_lexi_session_for_user(
+        session_id=session_id,
+        user_id=request.user_id,
+        story_context=None,
+        db=db,
     )
 
     logger.info(f" Lexi session created: {session_id[:8]}... for user: {request.user_id}")
@@ -173,13 +152,53 @@ async def lexi_chat(
     auth_user_id = enforce_user_scope(current_user, request.user_id)
     request = request.model_copy(update={"user_id": auth_user_id})
 
-    quota = await _enforce_chat_quota(current_user.user_id, request.message)
-
     # ── 1. Session management ──
+    # A replay is looked up before the quota is charged: a retried send (the
+    # client's sync queue does this) must not burn a second slot of the free
+    # tier's daily cap for an answer that was already produced.
+    request_hash = svc.idempotency_request_hash(request)
+    # A key only means something inside an existing session: without one a fresh
+    # session id is minted, so a replay could never match.
+    idem_key = x_idempotency_key if request.session_id else None
+    history: list[Dict[str, Any]] = []
     if request.session_id:
         session_id = request.session_id
         history = await svc.prepare_existing_lexi_session(session_id, current_user, db)
-    else:
+        if idem_key:
+            cached_response = await svc.replay_or_claim(
+                user_id=request.user_id,
+                session_id=session_id,
+                idempotency_key=idem_key,
+                request_hash=request_hash,
+            )
+            if cached_response:
+                return LexiChatResponse(**cached_response)
+
+    try:
+        return await _run_lexi_chat(
+            request, request_id, start_time, history, idem_key, request_hash, db, current_user,
+        )
+    finally:
+        if idem_key:
+            await svc.lexi_idempotency_store.release(
+                user_id=request.user_id, session_id=request.session_id, idempotency_key=idem_key,
+            )
+
+
+async def _run_lexi_chat(
+    request: LexiChatRequest,
+    request_id: str,
+    start_time: float,
+    history: list[Dict[str, Any]],
+    idem_key: str | None,
+    request_hash: str,
+    db: AsyncIOMotorDatabase,
+    current_user: AuthenticatedUser,
+) -> LexiChatResponse:
+    session_id = request.session_id or ""
+    quota = await _enforce_chat_quota(current_user.user_id, request.message)
+
+    if not request.session_id:
         session_id = str(uuid.uuid4())
         history = []
         await svc.create_lexi_session_for_user(
@@ -188,17 +207,6 @@ async def lexi_chat(
             story_context=request.story_context,
             db=db,
         )
-
-    request_hash = svc.idempotency_request_hash(request)
-    if x_idempotency_key:
-        cached_response = await svc.lexi_idempotency_store.get(
-            user_id=request.user_id,
-            session_id=session_id,
-            idempotency_key=x_idempotency_key,
-            request_hash=request_hash,
-        )
-        if cached_response:
-            return LexiChatResponse(**cached_response)
 
     # ── 2–6. Execute shared pipeline (STT → TraceCAG → TTS → persist) ──
     result = await svc.run_lexi_pipeline(
@@ -221,7 +229,7 @@ async def lexi_chat(
             "request_id": request_id,
             "user_id": current_user.user_id,
             "endpoint": "lexi.chat",
-            "status": "success",
+            "status": svc.audit_status(result.model_used),
             "session_id": result.session_id,
             "model_used": result.model_used,
             "latency_ms": result.metadata["latency_ms"],
@@ -245,13 +253,14 @@ async def lexi_chat(
         metadata=result.metadata,
     )
 
-    if x_idempotency_key:
-        await svc.lexi_idempotency_store.set(
+    if idem_key:
+        await svc.remember_response(
             user_id=request.user_id,
             session_id=session_id,
-            idempotency_key=x_idempotency_key,
+            idempotency_key=idem_key,
             request_hash=request_hash,
             response=response.model_dump(),
+            model_used=result.model_used,
         )
 
     return response
@@ -261,6 +270,10 @@ async def lexi_chat(
 async def lexi_stream_chat(
     request_context: Request,
     request: LexiChatRequest,
+    x_idempotency_key: str | None = Header(
+        default=None,
+        alias="X-Idempotency-Key",
+    ),
     db: AsyncIOMotorDatabase = Depends(get_database),
     current_user: AuthenticatedUser = Depends(get_current_user),
 ) -> StreamingResponse:
@@ -282,22 +295,6 @@ async def lexi_stream_chat(
     request_id = request_context.headers.get("X-Request-Id") or str(uuid.uuid4())
     auth_user_id = enforce_user_scope(current_user, request.user_id)
     request = request.model_copy(update={"user_id": auth_user_id})
-
-    quota_timeout_s = svc.env_float("LEXI_STREAM_QUOTA_TIMEOUT_SECONDS", 5.0, minimum=0.5)
-    try:
-        quota = await asyncio.wait_for(
-            _enforce_chat_quota(current_user.user_id, request.message),
-            timeout=quota_timeout_s,
-        )
-    except asyncio.TimeoutError as exc:
-        logger.error(
-            "Lexi /stream quota check timed out after %.1fs",
-            quota_timeout_s,
-        )
-        raise HTTPException(
-            status_code=503,
-            detail="AI quota service is temporarily unavailable",
-        ) from exc
 
     session_id = request.session_id or str(uuid.uuid4())
     prechecked_history: list[Dict[str, Any]] | None = None
@@ -322,6 +319,50 @@ async def lexi_stream_chat(
                 detail="Chat session service is temporarily unavailable",
             ) from exc
 
+    sse_headers = {
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+        "X-Accel-Buffering": "no",
+    }
+    # Same order as /chat: ownership, then replay, then quota.
+    idem_key = x_idempotency_key if request.session_id else None
+    request_hash = svc.idempotency_request_hash(request)
+    if idem_key:
+        cached_response = await svc.replay_or_claim(
+            user_id=request.user_id,
+            session_id=session_id,
+            idempotency_key=idem_key,
+            request_hash=request_hash,
+        )
+        if cached_response:
+            return StreamingResponse(
+                svc.replay_lexi_stream(cached_response),
+                media_type="text/event-stream",
+                headers=sse_headers,
+            )
+
+    quota_timeout_s = svc.env_float("LEXI_STREAM_QUOTA_TIMEOUT_SECONDS", 5.0, minimum=0.5)
+    try:
+        quota = await asyncio.wait_for(
+            _enforce_chat_quota(current_user.user_id, request.message),
+            timeout=quota_timeout_s,
+        )
+    except BaseException as exc:
+        if idem_key:
+            await svc.lexi_idempotency_store.release(
+                user_id=request.user_id, session_id=session_id, idempotency_key=idem_key,
+            )
+        if not isinstance(exc, asyncio.TimeoutError):
+            raise
+        logger.error(
+            "Lexi /stream quota check timed out after %.1fs",
+            quota_timeout_s,
+        )
+        raise HTTPException(
+            status_code=503,
+            detail="AI quota service is temporarily unavailable",
+        ) from exc
+
     return StreamingResponse(
         svc.stream_lexi_chat(
             request=request,
@@ -332,13 +373,11 @@ async def lexi_stream_chat(
             request_id=request_id,
             current_user=current_user,
             db=db,
+            idempotency_key=idem_key,
+            request_hash=request_hash,
         ),
         media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",
-        },
+        headers=sse_headers,
     )
 
 
@@ -373,9 +412,7 @@ async def get_lexi_messages(
     except HTTPException as e:
         cached_session = await svc.lexi_store.get_session(session_id)
         if e.status_code == 404 and cached_session:
-            owner_user_id = str(cached_session.get("user_id") or "")
-            if owner_user_id and hasattr(current_user, "user_id") and owner_user_id != current_user.user_id:
-                raise HTTPException(status_code=403, detail="Forbidden: session ownership mismatch")
+            assert_session_owner(cached_session, current_user)
         else:
             raise
     cached_messages = await svc.lexi_store.get_messages(session_id) if cached_session else []
@@ -414,16 +451,9 @@ async def get_lexi_messages(
     ]
 
     # Rehydrate cache for faster next reads.
-    await svc.lexi_store.set_session(session_id, {
-        "session_id": session_doc.get("session_id"),
-        "user_id": session_doc.get("user_id", "demo_user"),
-        "created_at": session_doc.get("created_at", datetime.now(timezone.utc).isoformat()),
-        "updated_at": session_doc.get("updated_at", datetime.now(timezone.utc).isoformat()),
-        "title": session_doc.get("title", "Lexi Chat"),
-        "message_count": session_doc.get("message_count", len(payload)),
-        "persona": session_doc.get("persona", "lexi"),
-        "story_context": session_doc.get("story_context"),
-    })
+    await svc.lexi_store.set_session(
+        session_id, svc.session_cache_payload(session_doc, default_count=len(payload))
+    )
     await svc.lexi_store.delete_messages(session_id)
     for item in payload:
         await svc.lexi_store.append_message(session_id, item)
@@ -574,7 +604,8 @@ async def list_lexi_sessions(
     db: AsyncIOMotorDatabase = Depends(get_database),
     current_user: AuthenticatedUser = Depends(get_current_user),
 ) -> LexiSessionListResponse:
-    enforce_user_scope(current_user, user_id)
+    # The path value can be a placeholder ("demo_user"); only the scoped id may be queried.
+    user_id = enforce_user_scope(current_user, user_id)
     try:
         cursor = db["lexi_sessions"].find({"user_id": user_id}).sort("updated_at", -1)
         rows = await cursor.to_list(length=100)
