@@ -216,6 +216,72 @@
     "challengesCompleted": "{completed}/{total} 已完成",
     "viewAllChallenges": "查看全部 {count} 个挑战",
     "completeBonusXp": "完成所有挑战以获得额外 {xp} XP！",
+    "challengeTexts": {
+      "complete_lessons": {
+        "title": "课程达人",
+        "description": "今天完成 {target} 节课程"
+      },
+      "review_vocab": {
+        "title": "词汇复习",
+        "description": "复习 {target} 个词汇"
+      },
+      "earn_xp": {
+        "title": "经验猎人",
+        "description": "今天获得 {target} XP"
+      },
+      "perfect_lesson": {
+        "title": "完美主义者",
+        "description": "在 {target} 节课程中获得 100%"
+      },
+      "maintain_streak": {
+        "title": "守住火焰",
+        "description": "保持你的连续学习天数"
+      },
+      "review_flashcards": {
+        "title": "闪卡狂热",
+        "description": "复习 {target} 张闪卡"
+      },
+      "quiz_accuracy": {
+        "title": "神枪手",
+        "description": "在 {target} 次测验中得分 80% 以上"
+      },
+      "time_spent": {
+        "title": "专注学生",
+        "description": "学习 {target} 分钟"
+      },
+      "new_words": {
+        "title": "单词探索者",
+        "description": "学习 {target} 个新单词"
+      },
+      "grammar_drill": {
+        "title": "语法大师",
+        "description": "完成 {target} 个语法练习"
+      },
+      "listening_drill": {
+        "title": "专注聆听",
+        "description": "完成 {target} 个听力练习"
+      },
+      "watch_youtube": {
+        "title": "屏幕时间不浪费",
+        "description": "观看 {target} 分钟英语视频"
+      },
+      "listen_podcast": {
+        "title": "耳听八方",
+        "description": "收听 {target} 分钟播客"
+      },
+      "read_news": {
+        "title": "时事通",
+        "description": "通过 {target} 个新闻测验"
+      },
+      "read_minutes": {
+        "title": "阅读时光",
+        "description": "阅读 {target} 分钟"
+      },
+      "read_book": {
+        "title": "逐章精读",
+        "description": "完成 {target} 个图书章节测验"
+      }
+    },
     "allChallengesComplete": "所有挑战已完成！",
     "bonusXpEarned": "+{xp} 奖励XP",
     "claimReward": "领取",
@@ -493,6 +559,8 @@
     "tryAgain": "再试一次",
     "noReviewSessionAvailable": "没有可用的审查会议",
     "sessionComplete": "会议结束！",
+    "savingResults": "正在保存结果…",
+    "unsavedResults": "有 {count} 个答案尚未保存，这些单词仍待复习。",
     "exitReviewTitle": "退出审核？",
     "exitReviewMessage": "您的进度将被保存，但您可以稍后继续此会话。",
     "title": "闪卡",
@@ -896,8 +964,8 @@
     "reminderTime": "提醒时间",
     "pushReminder": "推送提醒",
     "emailReminder": "邮件提醒",
-    "nurtureEmails": "提醒与每周总结邮件",
-    "nurtureEmailsHint": "连续学习提醒、学习提示和每周总结。账户相关邮件不受影响。",
+    "nurtureEmails": "提醒邮件",
+    "nurtureEmailsHint": "连续学习提醒和每周总结。",
     "nurtureEmailsError": "无法保存此更改，请重试。",
     "emailCadence": "邮件频率",
     "emailCadenceEvery3Days": "每 3 天",

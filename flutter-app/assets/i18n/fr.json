@@ -216,6 +216,72 @@
     "challengesCompleted": "{completed}/{total} complétés",
     "viewAllChallenges": "Voir tous les {count} défis",
     "completeBonusXp": "Complétez tout pour obtenir {xp} XP bonus !",
+    "challengeTexts": {
+      "complete_lessons": {
+        "title": "Maître des leçons",
+        "description": "Terminez {target} leçon(s) aujourd’hui"
+      },
+      "review_vocab": {
+        "title": "Révision du vocabulaire",
+        "description": "Révisez {target} mots de vocabulaire"
+      },
+      "earn_xp": {
+        "title": "Chasseur d’XP",
+        "description": "Gagnez {target} XP aujourd’hui"
+      },
+      "perfect_lesson": {
+        "title": "Perfectionniste",
+        "description": "Obtenez 100 % à {target} leçon(s)"
+      },
+      "maintain_streak": {
+        "title": "Gardez la flamme",
+        "description": "Maintenez votre série d’apprentissage"
+      },
+      "review_flashcards": {
+        "title": "Frénésie de cartes",
+        "description": "Révisez {target} cartes mémoire"
+      },
+      "quiz_accuracy": {
+        "title": "Tir de précision",
+        "description": "Obtenez 80 % ou plus à {target} quiz"
+      },
+      "time_spent": {
+        "title": "Élève assidu",
+        "description": "Étudiez pendant {target} minute(s)"
+      },
+      "new_words": {
+        "title": "Explorateur de mots",
+        "description": "Apprenez {target} nouveau(x) mot(s)"
+      },
+      "grammar_drill": {
+        "title": "Gourou de la grammaire",
+        "description": "Terminez {target} exercice(s) de grammaire"
+      },
+      "listening_drill": {
+        "title": "Écoute active",
+        "description": "Terminez {target} exercice(s) d’écoute"
+      },
+      "watch_youtube": {
+        "title": "Écran bien employé",
+        "description": "Regardez {target} minute(s) de vidéo en anglais"
+      },
+      "listen_podcast": {
+        "title": "Une oreille attentive",
+        "description": "Écoutez {target} minute(s) de podcast"
+      },
+      "read_news": {
+        "title": "À la une",
+        "description": "Réussissez {target} quiz d’actualités"
+      },
+      "read_minutes": {
+        "title": "Temps de lecture",
+        "description": "Lisez pendant {target} minute(s)"
+      },
+      "read_book": {
+        "title": "Chapitre par chapitre",
+        "description": "Terminez {target} quiz de chapitre de livre"
+      }
+    },
     "allChallengesComplete": "Tous les défis complétés !",
     "bonusXpEarned": "+{xp} XP bonus",
     "claimReward": "Réclamer",
@@ -493,6 +559,8 @@
     "tryAgain": "Essayer à nouveau",
     "noReviewSessionAvailable": "Aucune séance de révision disponible",
     "sessionComplete": "Séance terminée !",
+    "savingResults": "Enregistrement des résultats…",
+    "unsavedResults": "{count} réponses n'ont pas pu être enregistrées ; ces mots restent à revoir.",
     "exitReviewTitle": "Quitter l'examen ?",
     "exitReviewMessage": "Votre progression sera enregistrée, mais vous pourrez continuer cette session plus tard.",
     "title": "Cartes mémoire",
@@ -896,8 +964,8 @@
     "reminderTime": "Heure du rappel",
     "pushReminder": "Rappels push",
     "emailReminder": "Rappels par e-mail",
-    "nurtureEmails": "E-mails de rappel et de bilan",
-    "nurtureEmailsHint": "Rappels de série, conseils d'apprentissage et bilan hebdomadaire. Les e-mails de compte ne sont pas concernés.",
+    "nurtureEmails": "E-mails de rappel",
+    "nurtureEmailsHint": "Rappels de série et bilan hebdomadaire.",
     "nurtureEmailsError": "Impossible d'enregistrer ce changement. Réessayez.",
     "emailCadence": "Fréquence des e-mails",
     "emailCadenceEvery3Days": "Tous les 3 jours",

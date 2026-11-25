@@ -5,7 +5,7 @@ import 'package:lexilingo_app/features/course/presentation/screens/course_list_s
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/today_plan_models.dart';
 import 'package:lexilingo_app/features/voice/presentation/screens/voice_practice_screen.dart';
 
-void openTodayPlanTask(BuildContext context, TodayPlanTask task) {
+Future<void> openTodayPlanTask(BuildContext context, TodayPlanTask task) async {
   trackProductEvent(
     'task_tapped',
     source: 'today_plan',
@@ -17,7 +17,7 @@ void openTodayPlanTask(BuildContext context, TodayPlanTask task) {
   );
   switch (task.destination) {
     case TodayPlanDestination.vocabularyReview:
-      Navigator.of(context).pushNamed('/vocabulary/review');
+      await Navigator.of(context).pushNamed('/vocabulary/review');
       return;
     case TodayPlanDestination.courseList:
       LearnerRoute.push(context, (_) => const CourseListScreen());

@@ -4,9 +4,17 @@ String decodeHtmlEntities(String text) {
     RegExp(r'&(#x[0-9a-fA-F]+|#\d+|amp|lt|gt|quot|apos);'),
     (m) {
       final e = m.group(1)!;
-      if (e.startsWith('#x')) return String.fromCharCode(int.parse(e.substring(2), radix: 16));
-      if (e.startsWith('#')) return String.fromCharCode(int.parse(e.substring(1)));
-      return const {'amp': '&', 'lt': '<', 'gt': '>', 'quot': '"', 'apos': "'"}[e]!;
+      if (e.startsWith('#x'))
+        return String.fromCharCode(int.parse(e.substring(2), radix: 16));
+      if (e.startsWith('#'))
+        return String.fromCharCode(int.parse(e.substring(1)));
+      return const {
+        'amp': '&',
+        'lt': '<',
+        'gt': '>',
+        'quot': '"',
+        'apos': "'",
+      }[e]!;
     },
   );
 }
@@ -139,10 +147,10 @@ class CaptionSegment {
 /// Word translation — result of a lookup triggered during video playback.
 class WordTranslation {
   final String word;
-  final String translation;    // Vietnamese (or target-lang) translation
-  final String phonetic;       // IPA: /spæk/
-  final String partOfSpeech;   // noun, verb, adjective…
-  final String definition;     // English definition
+  final String translation; // Vietnamese (or target-lang) translation
+  final String phonetic; // IPA: /spæk/
+  final String partOfSpeech; // noun, verb, adjective…
+  final String definition; // English definition
   final List<String> examples; // example sentences from dictionary
   final String? contextSentence; // the caption line the word was tapped in
 
@@ -205,32 +213,32 @@ class SavedVideo {
   });
 
   factory SavedVideo.fromVideo(YouTubeVideo video) => SavedVideo(
-        videoId: video.videoId,
-        title: video.title,
-        channelTitle: video.channelTitle,
-        thumbnailUrl: video.thumbnailUrl,
-        cefrLevel: video.cefrLevel,
-        savedAt: DateTime.now(),
-      );
+    videoId: video.videoId,
+    title: video.title,
+    channelTitle: video.channelTitle,
+    thumbnailUrl: video.thumbnailUrl,
+    cefrLevel: video.cefrLevel,
+    savedAt: DateTime.now(),
+  );
 
   factory SavedVideo.fromJson(Map<String, dynamic> json) => SavedVideo(
-        videoId: json['videoId'] as String? ?? '',
-        title: decodeHtmlEntities(json['title'] as String? ?? ''),
-        channelTitle: json['channelTitle'] as String? ?? '',
-        thumbnailUrl: json['thumbnailUrl'] as String? ?? '',
-        cefrLevel: json['cefrLevel'] as String? ?? '',
-        savedAt: DateTime.tryParse(json['savedAt'] as String? ?? '') ??
-            DateTime.now(),
-      );
+    videoId: json['videoId'] as String? ?? '',
+    title: decodeHtmlEntities(json['title'] as String? ?? ''),
+    channelTitle: json['channelTitle'] as String? ?? '',
+    thumbnailUrl: json['thumbnailUrl'] as String? ?? '',
+    cefrLevel: json['cefrLevel'] as String? ?? '',
+    savedAt:
+        DateTime.tryParse(json['savedAt'] as String? ?? '') ?? DateTime.now(),
+  );
 
   Map<String, dynamic> toJson() => {
-        'videoId': videoId,
-        'title': title,
-        'channelTitle': channelTitle,
-        'thumbnailUrl': thumbnailUrl,
-        'cefrLevel': cefrLevel,
-        'savedAt': savedAt.toIso8601String(),
-      };
+    'videoId': videoId,
+    'title': title,
+    'channelTitle': channelTitle,
+    'thumbnailUrl': thumbnailUrl,
+    'cefrLevel': cefrLevel,
+    'savedAt': savedAt.toIso8601String(),
+  };
 }
 
 /// Search result response from YouTube API.

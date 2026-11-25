@@ -83,8 +83,18 @@ bool progressRefreshDue({
     authenticated &&
     (last == null || now.difference(last) >= const Duration(seconds: 2));
 
-class _MainScreenState extends State<MainScreen> with RouteAware {
+class _MainScreenState extends State<MainScreen>
+    with RouteAware, SingleTickerProviderStateMixin {
   late int _currentIndex;
+  late final AnimationController _tabSwitch = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 380),
+    value: 1,
+  );
+  late final Animation<double> _tabCurve = CurvedAnimation(
+    parent: _tabSwitch,
+    curve: Curves.easeOutCubic,
+  );
   bool _lexiWarmedUp = false;
   bool _starterRewardChecked = false;
 
@@ -106,6 +116,7 @@ class _MainScreenState extends State<MainScreen> with RouteAware {
   @override
   void dispose() {
     AppNavigationService.routeObserver.unsubscribe(this);
+    _tabSwitch.dispose();
     super.dispose();
   }
 
@@ -263,6 +274,19 @@ class _MainScreenState extends State<MainScreen> with RouteAware {
   }
 
   Widget _buildPageStack() {
+    return FadeTransition(
+      opacity: Tween<double>(begin: 0.65, end: 1).animate(_tabCurve),
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 0.015),
+          end: Offset.zero,
+        ).animate(_tabCurve),
+        child: _buildIndexedPages(),
+      ),
+    );
+  }
+
+  Widget _buildIndexedPages() {
     return IndexedStack(
       index: _currentIndex,
       children: List.generate(_pageCount, (i) {
@@ -286,6 +310,9 @@ class _MainScreenState extends State<MainScreen> with RouteAware {
       _warmupAiModels();
     }
     final changed = index != _currentIndex;
+    if (changed && !MediaQuery.disableAnimationsOf(context)) {
+      _tabSwitch.forward(from: 0);
+    }
     setState(() {
       _getPage(index); // build page lazily on first visit
       _currentIndex = index;
@@ -330,7 +357,9 @@ class _MainScreenState extends State<MainScreen> with RouteAware {
   }
 
   Widget _buildBottomNavigationBar(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final selectedColor = AppColorRoles.primary(isDark);
     return SafeArea(
       minimum: const EdgeInsets.fromLTRB(
         AppSpacing.md,
@@ -339,9 +368,13 @@ class _MainScreenState extends State<MainScreen> with RouteAware {
         AppSpacing.md,
       ),
       child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.sm,
+        ),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
-          borderRadius: AppRadius.xlAll,
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(AppRadius.xl + AppSpacing.sm),
           boxShadow: [
             BoxShadow(
               color: isDark
@@ -352,30 +385,79 @@ class _MainScreenState extends State<MainScreen> with RouteAware {
             ),
           ],
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(AppRadius.xl),
-          child: BottomNavigationBar(
-            currentIndex: _currentIndex,
-            type: BottomNavigationBarType.fixed,
-            elevation: 0,
-            selectedFontSize: 11,
-            unselectedFontSize: 11,
-            selectedItemColor: AppColorRoles.primary(isDark),
-            onTap: _selectTab,
-            items: [
-              for (final tab in _tabs)
-                BottomNavigationBarItem(
-                  icon: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Icon(tab.icon, size: 24),
+        child: SizedBox(
+          height: 44,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              const pillWidth = 52.0;
+              final cell = constraints.maxWidth / _tabs.length;
+              return Stack(
+                children: [
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 460),
+                    curve: Curves.easeInOutCubic,
+                    left: cell * _currentIndex + (cell - pillWidth) / 2,
+                    top: 0,
+                    width: pillWidth,
+                    height: 44,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: selectedColor.withValues(alpha: 0.14),
+                        borderRadius: AppRadius.pillAll,
+                      ),
+                    ),
                   ),
-                  activeIcon: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Icon(tab.activeIcon, size: 24),
+                  Row(
+                    children: [
+                      for (var i = 0; i < _tabs.length; i++)
+                        Expanded(
+                          child: Semantics(
+                            button: true,
+                            selected: i == _currentIndex,
+                            label: _tabs[i].label.tr(),
+                            child: Tooltip(
+                              message: _tabs[i].label.tr(),
+                              child: InkResponse(
+                                onTap: () => _selectTab(i),
+                                radius: 32,
+                                child: SizedBox(
+                                  height: 44,
+                                  child: Center(
+                                    child: AnimatedScale(
+                                      scale: i == _currentIndex ? 1.12 : 1,
+                                      duration: const Duration(
+                                        milliseconds: 380,
+                                      ),
+                                      curve: Curves.easeOutCubic,
+                                      child: AnimatedSwitcher(
+                                        duration: const Duration(
+                                          milliseconds: 280,
+                                        ),
+                                        child: Icon(
+                                          i == _currentIndex
+                                              ? _tabs[i].activeIcon
+                                              : _tabs[i].icon,
+                                          key: ValueKey(i == _currentIndex),
+                                          size: 26,
+                                          color: i == _currentIndex
+                                              ? selectedColor
+                                              : theme
+                                                    .colorScheme
+                                                    .onSurfaceVariant,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-                  label: tab.label.tr(),
-                ),
-            ],
+                ],
+              );
+            },
           ),
         ),
       ),

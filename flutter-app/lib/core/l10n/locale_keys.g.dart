@@ -295,6 +295,8 @@ abstract class LocaleKeys {
   static const flashcard_noReviewSessionAvailable =
       'flashcard.noReviewSessionAvailable';
   static const flashcard_sessionComplete = 'flashcard.sessionComplete';
+  static const flashcard_savingResults = 'flashcard.savingResults';
+  static const flashcard_unsavedResults = 'flashcard.unsavedResults';
   static const flashcard_exitReviewTitle = 'flashcard.exitReviewTitle';
   static const flashcard_exitReviewMessage = 'flashcard.exitReviewMessage';
   static const flashcard_title = 'flashcard.title';

@@ -3,7 +3,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/navigation/learner_route.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
-import 'package:lexilingo_app/core/widgets/circle_icon.dart';
 import 'package:lexilingo_app/features/home/presentation/pages/main_screen.dart';
 import 'package:lexilingo_app/features/vocabulary/presentation/pages/vocab_library_page.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -23,7 +22,7 @@ class QuickActionsGrid extends StatelessWidget {
 
     final allActions = [
       (
-        icon: PhosphorIconsBold.graduationCap,
+        icon: PhosphorIconsFill.graduationCap,
         label: 'home.navLearning',
         color: AppColors.primary,
         route: '/courses',
@@ -31,7 +30,7 @@ class QuickActionsGrid extends StatelessWidget {
         alwaysOn: true,
       ),
       (
-        icon: PhosphorIconsBold.chatCircleDots,
+        icon: PhosphorIconsFill.chatCircleDots,
         label: 'home.navLexi',
         color: AppColors.teal,
         route: '/lexi',
@@ -39,7 +38,7 @@ class QuickActionsGrid extends StatelessWidget {
         alwaysOn: true,
       ),
       (
-        icon: PhosphorIconsBold.translate,
+        icon: PhosphorIconsFill.translate,
         label: 'home.vocabulary',
         color: AppColors.orange,
         route: '/vocab',
@@ -47,7 +46,7 @@ class QuickActionsGrid extends StatelessWidget {
         alwaysOn: true,
       ),
       (
-        icon: PhosphorIconsBold.gameController,
+        icon: PhosphorIconsFill.gameController,
         label: 'home.games',
         color: AppColors.purple,
         route: '/games',
@@ -55,7 +54,7 @@ class QuickActionsGrid extends StatelessWidget {
         alwaysOn: true,
       ),
       (
-        icon: PhosphorIconsBold.playCircle,
+        icon: PhosphorIconsFill.playCircle,
         label: 'home.youtube',
         color: AppColors.errorBright,
         route: '/youtube',
@@ -63,7 +62,7 @@ class QuickActionsGrid extends StatelessWidget {
         alwaysOn: false,
       ),
       (
-        icon: PhosphorIconsBold.newspaper,
+        icon: PhosphorIconsFill.newspaper,
         label: 'home.news',
         color: AppColors.greenSuccessBright,
         route: '/news',
@@ -71,7 +70,7 @@ class QuickActionsGrid extends StatelessWidget {
         alwaysOn: false,
       ),
       (
-        icon: PhosphorIconsBold.headphones,
+        icon: PhosphorIconsFill.headphones,
         label: 'home.podcast',
         color: AppColors.skyBlue,
         route: '/podcast',
@@ -79,7 +78,7 @@ class QuickActionsGrid extends StatelessWidget {
         alwaysOn: false,
       ),
       (
-        icon: PhosphorIconsBold.bookOpenText,
+        icon: PhosphorIconsFill.bookOpenText,
         label: 'home.books',
         color: AppColors.pink,
         route: '/books',
@@ -210,7 +209,7 @@ class _QuickActionTile extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CircleIcon(icon: icon, color: color, size: 52),
+                _ActionGlyph(icon: icon, color: color),
                 const SizedBox(height: 8),
                 Text(
                   label,
@@ -228,6 +227,30 @@ class _QuickActionTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ActionGlyph extends StatelessWidget {
+  const _ActionGlyph({required this.icon, required this.color});
+
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final glyph = isDark
+        ? color
+        : Color.alphaBlend(Colors.black.withValues(alpha: 0.12), color);
+    return Container(
+      width: 52,
+      height: 52,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: isDark ? 0.22 : 0.14),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+      ),
+      child: Icon(icon, color: glyph, size: 26),
     );
   }
 }

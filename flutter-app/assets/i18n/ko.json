@@ -216,6 +216,72 @@
     "challengesCompleted": "{completed}/{total} 완료",
     "viewAllChallenges": "모든 {count}개 도전 보기",
     "completeBonusXp": "모두 완료하고 보너스 {xp} XP 획득!",
+    "challengeTexts": {
+      "complete_lessons": {
+        "title": "레슨 마스터",
+        "description": "오늘 레슨 {target}개 완료하기"
+      },
+      "review_vocab": {
+        "title": "어휘 복습",
+        "description": "어휘 {target}개 복습하기"
+      },
+      "earn_xp": {
+        "title": "XP 헌터",
+        "description": "오늘 XP {target} 획득하기"
+      },
+      "perfect_lesson": {
+        "title": "완벽주의자",
+        "description": "레슨 {target}개에서 100% 달성하기"
+      },
+      "maintain_streak": {
+        "title": "불꽃 지키기",
+        "description": "학습 연속 기록 유지하기"
+      },
+      "review_flashcards": {
+        "title": "플래시카드 열풍",
+        "description": "플래시카드 {target}장 복습하기"
+      },
+      "quiz_accuracy": {
+        "title": "명사수",
+        "description": "퀴즈 {target}개에서 80% 이상 득점하기"
+      },
+      "time_spent": {
+        "title": "열정적인 학생",
+        "description": "{target}분 동안 공부하기"
+      },
+      "new_words": {
+        "title": "단어 탐험가",
+        "description": "새 단어 {target}개 배우기"
+      },
+      "grammar_drill": {
+        "title": "문법 달인",
+        "description": "문법 연습 {target}개 완료하기"
+      },
+      "listening_drill": {
+        "title": "적극적인 청취자",
+        "description": "듣기 연습 {target}개 완료하기"
+      },
+      "watch_youtube": {
+        "title": "알찬 화면 시간",
+        "description": "영어 영상 {target}분 시청하기"
+      },
+      "listen_podcast": {
+        "title": "귀 기울이기",
+        "description": "팟캐스트 {target}분 듣기"
+      },
+      "read_news": {
+        "title": "시사 상식",
+        "description": "뉴스 퀴즈 {target}개 통과하기"
+      },
+      "read_minutes": {
+        "title": "독서 시간",
+        "description": "{target}분 동안 읽기"
+      },
+      "read_book": {
+        "title": "한 장 한 장",
+        "description": "도서 챕터 퀴즈 {target}개 완료하기"
+      }
+    },
     "allChallengesComplete": "모든 도전 과제 완료!",
     "bonusXpEarned": "+{xp} 보너스 XP",
     "claimReward": "받기",
@@ -493,6 +559,8 @@
     "tryAgain": "다시 시도",
     "noReviewSessionAvailable": "사용 가능한 검토 세션이 없습니다.",
     "sessionComplete": "세션이 완료되었습니다!",
+    "savingResults": "결과를 저장하는 중…",
+    "unsavedResults": "{count}개의 답변을 아직 저장하지 못했어요. 해당 단어는 계속 복습 대상이에요.",
     "exitReviewTitle": "검토를 종료하시겠습니까?",
     "exitReviewMessage": "진행 상황은 저장되지만 나중에 이 세션을 계속할 수 있습니다.",
     "title": "플래시카드",
@@ -896,8 +964,8 @@
     "reminderTime": "알림 시간",
     "pushReminder": "푸시 알림",
     "emailReminder": "이메일 알림",
-    "nurtureEmails": "알림 및 요약 이메일",
-    "nurtureEmailsHint": "연속 학습 알림, 학습 안내, 주간 요약. 계정 관련 이메일은 영향을 받지 않습니다.",
+    "nurtureEmails": "알림 이메일",
+    "nurtureEmailsHint": "연속 학습 알림과 주간 요약.",
     "nurtureEmailsError": "변경 사항을 저장하지 못했습니다. 다시 시도해 주세요.",
     "emailCadence": "이메일 빈도",
     "emailCadenceEvery3Days": "3일마다",

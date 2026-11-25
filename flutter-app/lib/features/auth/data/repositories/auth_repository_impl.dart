@@ -229,7 +229,9 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Either<Failure, UserEntity?>> verifyEmailAndSignIn(String token) async {
+  Future<Either<Failure, UserEntity?>> verifyEmailAndSignIn(
+    String token,
+  ) async {
     try {
       final session = await backendDataSource.verifyEmail(token);
       if (session == null) return const Right(null);

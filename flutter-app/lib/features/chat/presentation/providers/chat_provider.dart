@@ -306,9 +306,7 @@ class ChatProvider extends ChangeNotifier {
       final result = await sendMessageUseCase(params);
       result.fold(
         (failure) {
-          final index = _messages.indexWhere(
-            (m) => m.id == tempUserMessage.id,
-          );
+          final index = _messages.indexWhere((m) => m.id == tempUserMessage.id);
           if (index != -1) {
             _messages[index] = tempUserMessage.copyWith(
               status: MessageStatus.error,

@@ -131,6 +131,12 @@ class _RotatingLearningCardState extends State<_RotatingLearningCard> {
     });
   }
 
+  // The faces are as tall as the taller one; stretching the visible face to
+  // that height lets it pin its header to the top and its button to the
+  // bottom, so neither moves when the card flips.
+  Widget _pinToCard({required bool fill, required Widget child}) =>
+      fill ? Positioned.fill(child: child) : child;
+
   // Both faces stay laid out so the card keeps the taller one's height.
   Widget _sizingGhost(Widget face) => ExcludeSemantics(
     child: IgnorePointer(
@@ -219,31 +225,35 @@ class _RotatingLearningCardState extends State<_RotatingLearningCard> {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Stack(
-            alignment: Alignment.centerLeft,
+            alignment: Alignment.topLeft,
             children: [
               if (activeCourse != null) ...[
                 _sizingGhost(courseContent(activeCourse)),
                 _sizingGhost(reminderContent),
               ],
-              AnimatedSwitcher(
-                duration: homeMotion(context, 350),
-                transitionBuilder: (child, animation) => FadeTransition(
-                  opacity: animation,
-                  child: SlideTransition(
-                    position: Tween<Offset>(
-                      begin: const Offset(0.04, 0),
-                      end: Offset.zero,
-                    ).animate(animation),
-                    child: child,
+              _pinToCard(
+                fill: activeCourse != null,
+                child: AnimatedSwitcher(
+                  duration: homeMotion(context, 350),
+                  transitionBuilder: (child, animation) => FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(0.04, 0),
+                        end: Offset.zero,
+                      ).animate(animation),
+                      child: child,
+                    ),
                   ),
+                  layoutBuilder: (current, previous) => Stack(
+                    alignment: Alignment.topLeft,
+                    fit: StackFit.expand,
+                    children: [...previous, ?current],
+                  ),
+                  child: !_showReminder && activeCourse != null
+                      ? courseContent(activeCourse)
+                      : reminderContent,
                 ),
-                layoutBuilder: (current, previous) => Stack(
-                  alignment: Alignment.centerLeft,
-                  children: [...previous, ?current],
-                ),
-                child: !_showReminder && activeCourse != null
-                    ? courseContent(activeCourse)
-                    : reminderContent,
               ),
             ],
           ),
@@ -279,6 +289,7 @@ class _ContinueCourseContent extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Row(
           children: [
@@ -392,6 +403,7 @@ class _LearningReminderContent extends StatelessWidget {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Row(
           children: [

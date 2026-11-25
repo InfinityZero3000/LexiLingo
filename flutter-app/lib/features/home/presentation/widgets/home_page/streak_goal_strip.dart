@@ -46,20 +46,20 @@ class StreakGoalStrip extends StatelessWidget {
             AppSpacing.lg,
             0,
           ),
-          child: Material(
-            color: Colors.transparent,
-            child: Ink(
-              decoration: tactile.decoration(
-                variant: TactileSurfaceVariant.clean,
-                fill: isDark
-                    ? theme.colorScheme.surfaceContainerHighest
-                    : theme.colorScheme.surface,
-                accent: streakDays > 0
-                    ? AppColors.deepOrange
-                    : AppColorRoles.primary(isDark),
-                borderRadius: BorderRadius.circular(AppRadius.xl),
-                diagnosticId: 'home-streak-goal',
-              ),
+          child: DecoratedBox(
+            decoration: tactile.decoration(
+              variant: TactileSurfaceVariant.clean,
+              fill: isDark
+                  ? theme.colorScheme.surfaceContainerHighest
+                  : theme.colorScheme.surface,
+              accent: streakDays > 0
+                  ? AppColors.deepOrange
+                  : AppColorRoles.primary(isDark),
+              borderRadius: BorderRadius.circular(AppRadius.xl),
+              diagnosticId: 'home-streak-goal',
+            ),
+            child: Material(
+              color: Colors.transparent,
               child: IntrinsicHeight(
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
