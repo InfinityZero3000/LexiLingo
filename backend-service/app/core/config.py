@@ -27,7 +27,7 @@ class Settings(BaseSettings):
 
     # Application
     APP_NAME: str = "LexiLingo Backend Service"
-    APP_VERSION: str = "1.15.0"
+    APP_VERSION: str = "1.16.0"
     APP_ENV: str = "development"
     API_V1_PREFIX: str = "/api/v1"
     DEBUG: bool = False
