@@ -4,4 +4,4 @@ LexiLingo AI Service
 FastAPI backend following Clean Architecture principles
 """
 
-__version__ = "1.15.0"
+__version__ = "1.16.0"
