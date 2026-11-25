@@ -12,6 +12,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:lexilingo_app/core/widgets/keyboard_dismisser.dart';
 import 'package:lexilingo_app/core/widgets/locale_refresher.dart';
 import 'package:lexilingo_app/core/widgets/error_widget.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -587,9 +588,11 @@ class _LexiLingoAppState extends State<LexiLingoApp>
                 value: AppTheme.systemUiOverlayStyle(
                   Theme.of(context).brightness,
                 ),
-                child: _TouchTargets(
-                  child: LocaleRefresher(
-                    child: child ?? const SizedBox.shrink(),
+                child: KeyboardDismisser(
+                  child: _TouchTargets(
+                    child: LocaleRefresher(
+                      child: child ?? const SizedBox.shrink(),
+                    ),
                   ),
                 ),
               );
