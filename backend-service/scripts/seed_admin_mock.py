@@ -356,8 +356,9 @@ async def _admin_rows(db: AsyncSession, rng: random.Random, now: datetime, learn
                         resource_id=str(_id("audited", n)), details=json.dumps({"sample": True}),
                         ip_address="203.0.113.10", user_agent="mock-seed", created_at=ago(rng.uniform(0, 28))))
 
+    # Only "hero" is rendered by the app today.
     banners = [("Back-to-school: 7-day streak challenge", "hero", True), ("IELTS Reading practice is here", "hero", True),
-               ("Invite a friend, earn gems", "sidebar", True), ("Premium: half price this week", "interstitial", False)]
+               ("Invite a friend, earn gems", "hero", True), ("Premium: half price this week", "hero", False)]
     for n, (title, position, active) in enumerate(banners):
         db.add(Banner(id=_id("banner", n), title=title, description="Sample campaign", position=position,
                       image_url=f"https://picsum.photos/seed/lexi-{n}/1200/400", priority=10 - n, is_active=active,
@@ -373,8 +374,11 @@ async def _admin_rows(db: AsyncSession, rng: random.Random, now: datetime, learn
             outcome = outcomes[n]
             created = ago(3 + n * 6)
             job_type = types[n % len(types)]
-            extra = {"delivery_stats": {"sent": 120 - n * 7, "failed": n, "skipped": 4, "total": 124 - n * 6}} \
-                if kind == "campaign" else {"created_entity_ids": {}}
+            # Only a finished campaign has delivered anything.
+            sent = 120 - n * 7 if outcome == "completed" else 0
+            stats = {"sent": sent, "failed": n if sent else 0, "skipped": 4 if sent else 0,
+                     "total": sent + n + 4 if sent else 0}
+            extra = {"delivery_stats": stats} if kind == "campaign" else {"created_entity_ids": {}}
             db.add(model(
                 id=_id(kind, n), requested_by_id=staff, job_type=job_type, status=outcome,
                 config={"job_type": job_type}, warnings=[], blocking_errors=[],
@@ -384,12 +388,13 @@ async def _admin_rows(db: AsyncSession, rng: random.Random, now: datetime, learn
                 completed_at=created + timedelta(minutes=4), **extra,
             ))
 
-    for n, outcome in enumerate(["completed", "completed", "failed", "cancelled", "completed", "completed"]):
+    # No "completed" here: a real one carries a preview artifact the QA page opens.
+    for n, outcome in enumerate(["failed", "cancelled", "failed", "cancelled", "failed", "cancelled"]):
         created = ago(2 + n * 4)
         db.add(ContentAgentJob(
             id=_id("content", n), requested_by_id=staff, status=outcome, request_hash=f"mock-{n:02d}", revision=1,
             config={"title": f"Sample course draft {n + 1}", "level": ["A2", "B1", "B2"][n % 3]},
-            progress={"stage": outcome, "percent": 100 if outcome == "completed" else 55}, source_manifest=[],
+            progress={"stage": outcome, "percent": 55}, source_manifest=[],
             warnings=[], blocking_errors=[], created_entity_ids={},
             error_message="Sample failure: provider rate limit" if outcome == "failed" else None,
             created_at=created, updated_at=created + timedelta(minutes=9), started_at=created,
@@ -454,6 +459,8 @@ def ai_audit_events(now: datetime, count: int = 600) -> list[str]:
             "latency_ms": round(rng.lognormvariate(0, 0.35) * latency), "user_id": str(_id("user", n % LEARNERS)),
             "received_at": (now - timedelta(minutes=n * 31)).isoformat(),
         }
+        if failed:
+            event["error"] = rng.choice(["upstream timeout", "rate limited by provider", "invalid model response"])
         if endpoint == "grammar.correction" and not failed:
             event["correction_score"] = round(rng.uniform(0.72, 0.98), 2)
         events.append(json.dumps(event))
