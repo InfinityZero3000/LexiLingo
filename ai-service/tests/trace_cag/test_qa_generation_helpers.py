@@ -107,12 +107,10 @@ class TestJitBlockStripping:
     def test_marker_is_case_insensitive(self):
         assert qa._strip_jit_soft_graph_block('[jit_soft_graph]\n{"v":1}\nText.') == "Text."
 
-    @pytest.mark.xfail(strict=True, reason="non-greedy \\{[\\s\\S]*?\\} stops at the first '}', so nested payloads leak")
     def test_real_nested_payload_is_removed_completely(self):
         ctx = f"[JIT_SOFT_GRAPH]\n{real_jit_payload()}\n\nParis is the capital of France."
         assert qa._strip_jit_soft_graph_block(ctx) == "Paris is the capital of France."
 
-    @pytest.mark.xfail(strict=True, reason="same leak, reaches the learner through the extractive fallback")
     def test_extractive_answer_never_contains_payload_fragments(self):
         ctx = f"[JIT_SOFT_GRAPH]\n{real_jit_payload()}\n\nParis is the capital of France."
         out = qa._generate_extractive_fallback_response([], "scaffold", "What is Paris?", ctx)
@@ -123,12 +121,10 @@ class TestSanitizeLexiResponse:
     def test_standalone_payload_line_is_removed(self):
         assert sanitize_lexi_response(f"Paris is the capital.\n{real_jit_payload()}") == "Paris is the capital."
 
-    @pytest.mark.xfail(strict=True, reason="marker-prefixed nested payload leaks into the user-facing reply")
     def test_marker_prefixed_real_payload_is_removed(self):
         out = sanitize_lexi_response(f"[JIT_SOFT_GRAPH]\n{real_jit_payload()}\n\nParis is the capital.")
         assert out == "Paris is the capital."
 
-    @pytest.mark.xfail(strict=True, reason="inline marker + nested payload leaks")
     def test_inline_marker_real_payload_is_removed(self):
         out = sanitize_lexi_response(f"Paris is the capital. [JIT_SOFT_GRAPH] {real_jit_payload()}")
         assert '"id"' not in out

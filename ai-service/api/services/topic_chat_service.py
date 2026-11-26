@@ -15,6 +15,7 @@ from typing import Any, AsyncGenerator, Callable, Coroutine, Iterable
 from api.repositories.topic_chat_repository import TopicChatRepository
 from api.services.lexi_chat_service import HEARTBEAT_INTERVAL_S
 from api.services.subgraph_hot_cache import get_subgraph
+from api.services.internal_payloads import strip_jit_graph_blocks
 import os
 
 
@@ -67,7 +68,7 @@ def sanitize_topic_response(text: str) -> str:
     (was route-local `_sanitize_topic_response`) so both call sites use the
     exact same cleanup instead of drifting apart.
     """
-    candidate = (text or "").strip()
+    candidate = strip_jit_graph_blocks(text)
     if not candidate:
         return candidate
 
@@ -177,7 +178,7 @@ async def call_tracecag_with_retry(
             timeout=primary_timeout,
         )
         ai_response = str(graph_result.get("tutor_response") or "").strip()
-        if not ai_response:
+        if not ai_response or graph_result.get("error") or "safe_tutor_fallback" in (graph_result.get("metadata") or {}).get("models_used", []):
             raise RuntimeError("TraceCAG returned empty tutor_response")
         graph_metadata = graph_result.get("metadata", {}) or {}
         llm_metadata = {
@@ -217,7 +218,7 @@ async def call_tracecag_with_retry(
             timeout=retry_timeout,
         )
         ai_response = str(retry_result.get("tutor_response") or "").strip()
-        if not ai_response:
+        if not ai_response or retry_result.get("error") or "safe_tutor_fallback" in (retry_result.get("metadata") or {}).get("models_used", []):
             raise RuntimeError("TraceCAG degraded retry returned empty tutor_response")
         retry_meta = retry_result.get("metadata", {}) or {}
         llm_metadata = {
@@ -300,7 +301,9 @@ def build_turn_hints(
     """
     from api.services.educational_hints_parser import EducationalHintsParser
 
-    clean, hints = EducationalHintsParser.parse(response)
+    # Strip internal markers before the educational parser can interpret them
+    # as hint brackets and leave an unmarked JSON fragment behind.
+    clean, hints = EducationalHintsParser.parse(strip_jit_graph_blocks(response))
     if scripted:
         return clean, hints, []
     hints, accepted = EducationalHintsParser.corrections_from_diagnosis(
@@ -498,10 +501,13 @@ async def stream_tracecag_topic_message(
         message,
         scripted,
     )
+    display_response = sanitize_topic_response(clean_response or ai_response)
+    if not display_response:
+        yield 'event: error\ndata: {"error":"No safe response available"}\n\n'
+        return
     if accepted_errors:
         from api.core.redis_client import record_learner_errors
         await record_learner_errors(user_id, accepted_errors)
-    display_response = sanitize_topic_response(clean_response or ai_response)
 
     educational_hints_dict = None
     if parsed_hints and parsed_hints.has_hints():

@@ -484,10 +484,12 @@ async def send_topic_message(
             request.message,
             scripted,
         )
+        display_response = sanitize_topic_response(clean_response or tracecag_result.ai_response)
+        if not display_response:
+            raise HTTPException(status_code=503, detail="No safe response available")
         if accepted_errors:
             from api.core.redis_client import record_learner_errors
             await record_learner_errors(request.user_id, accepted_errors)
-        display_response = sanitize_topic_response(clean_response or tracecag_result.ai_response)
 
         ai_message_id = await persist_topic_turn(
             session_id=session_id,
