@@ -254,6 +254,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
     if (text == null) _controller.clear();
     _focusNode.requestFocus();
     final userId = _currentUserId(context);
+    final countBefore = provider.messages.length;
 
     final success = await provider.sendMessageStreaming(
       userId: userId,
@@ -263,7 +264,15 @@ class _TopicChatPageState extends State<TopicChatPage> {
     if (!mounted) return;
     if (success) {
       _scrollToBottom();
-    } else if (provider.sessionError != null) {
+      return;
+    }
+    // Nothing was kept, so nothing was saved: give the draft back to re-send.
+    if (text == null &&
+        _controller.text.isEmpty &&
+        provider.messages.length == countBefore) {
+      _controller.text = message;
+    }
+    if (provider.sessionError != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(provider.sessionError!),

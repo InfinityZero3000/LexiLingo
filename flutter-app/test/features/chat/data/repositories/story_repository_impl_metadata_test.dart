@@ -6,7 +6,7 @@ import 'package:lexilingo_app/features/chat/data/models/topic_session_model.dart
 import 'package:lexilingo_app/features/chat/data/repositories/story_repository_impl.dart';
 
 class _StubStoryApiDataSource extends StoryApiDataSource {
-  _StubStoryApiDataSource() : super(baseUrl: 'http://localhost:8001');
+  _StubStoryApiDataSource();
 
   int metadataCalls = 0;
   int pagedCalls = 0;

@@ -1,4 +1,3 @@
-import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/core/services/user_scope_service.dart';
 import 'package:lexilingo_app/core/state/reset_epoch.dart';
 import 'package:lexilingo_app/core/utils/chat_input_limit.dart';
@@ -368,84 +367,13 @@ class StoryProvider extends ChangeNotifier with ResetEpoch {
     notifyListeners();
   }
 
-  /// Send a message in the topic session
-  Future<bool> sendMessage({
-    required String userId,
-    required String message,
-  }) async {
-    if (_currentSession == null) {
-      _sessionError = UiText.key('errors.noActiveSession');
-      notifyListeners();
-      return false;
-    }
-
-    final epoch = resetEpoch;
-    _isSendingMessage = true;
-    _sessionError = null;
-    notifyListeners();
-
-    // Add user message immediately
-    final userMessage = TopicChatMessage(
-      id: 'user_${DateTime.now().millisecondsSinceEpoch}',
-      sessionId: _currentSession!.sessionId,
-      content: message,
-      isUser: true,
-      timestamp: DateTime.now(),
-    );
-    _messages.add(userMessage);
-    notifyListeners();
-
-    final result = await repository.sendTopicMessage(
-      sessionId: _currentSession!.sessionId,
-      userId: userId,
-      message: message,
-    );
-    if (isStale(epoch)) return false;
-
-    return result.fold(
-      (failure) {
-        if (failure is ValidationFailure ||
-            isMessageTooLongError(failure.message)) {
-          _messages.removeWhere((m) => m.id == userMessage.id);
-          _sessionError = messageTooLongText();
-        } else {
-          _sessionError = UiText.failure(failure);
-        }
-        _isSendingMessage = false;
-        notifyListeners();
-        return false;
-      },
-      (response) {
-        // Add AI response
-        final aiMessage = TopicChatMessage(
-          id: response.messageId,
-          sessionId: _currentSession!.sessionId,
-          content: response.response,
-          isUser: false,
-          timestamp: DateTime.now(),
-          hints: response.educationalHints,
-          llmMetadata: response.llmMetadata,
-        );
-        _messages.add(aiMessage);
-        _isSendingMessage = false;
-        notifyListeners();
-        return true;
-      },
-    );
-  }
-
-  /// Streaming variant of [sendMessage] — same TraceCAG pipeline and 2-tier
-  /// fallback server-side, delivered as SSE so the AI bubble fills in
-  /// word-by-word instead of popping in all at once. [sendMessage] itself
-  /// is left untouched as a manual fallback path.
+  /// Sends a message and fills the AI bubble from the SSE stream.
   ///
-  /// Mirrors LexiChatProvider.sendMessageStreaming's recovery behavior: a
-  /// [TopicStreamError] event or a stream that closes before any content
-  /// arrived is safe to silently retry via the non-streaming [sendMessage],
-  /// because the backend only emits those before it persists anything for
-  /// the turn. A stream that closes mid-typing (partial content already
-  /// shown) is instead kept as-is and marked done — retrying then risks a
-  /// duplicated turn if the server actually did finish and persist.
+  /// Never re-sends on its own. The server emits `error` before any chunk and
+  /// saves the turn only after the last chunk, so a turn that ends without
+  /// `done` and without content was not saved: both bubbles are removed and
+  /// the learner may send again. Once content arrived it may have been saved,
+  /// so it is kept and only the error is shown; a re-send could duplicate it.
   Future<bool> sendMessageStreaming({
     required String userId,
     required String message,
@@ -524,50 +452,21 @@ class StoryProvider extends ChangeNotifier with ResetEpoch {
             }
 
           case TopicStreamError(:final error):
-            debugPrint('[StoryProvider] stream error event: $error');
-            await _retryMessageWithoutStreaming(
-              message: message,
-              userId: userId,
-              requestId: requestId,
-              placeholderId: placeholderId,
-              reason: error,
-            );
-            return _sessionError == null;
+            return _failSend(error, requestId, placeholderId);
         }
       }
 
       if (isStale(epoch)) return false;
       if (!receivedDone) {
-        final idx = _messages.indexWhere((m) => m.id == placeholderId);
-        final partial = idx == -1 ? '' : _messages[idx].content.trim();
-        if (partial.isEmpty) {
-          await _retryMessageWithoutStreaming(
-            message: message,
-            userId: userId,
-            requestId: requestId,
-            placeholderId: placeholderId,
-            reason: 'stream closed before sending a response',
-          );
-          return _sessionError == null;
-        }
-        // Partial content already visible — the server may have finished
-        // and persisted on its side, so don't retry (would risk a
-        // duplicated turn). Keep what streamed in and stop the spinner.
-        debugPrint(
-          '[StoryProvider] stream closed without done; kept partial content',
+        return _failSend(
+          'stream closed without done',
+          requestId,
+          placeholderId,
         );
       }
     } catch (e) {
       if (isStale(epoch)) return false;
-      debugPrint('[StoryProvider] sendMessageStreaming exception: $e');
-      await _retryMessageWithoutStreaming(
-        message: message,
-        userId: userId,
-        requestId: requestId,
-        placeholderId: placeholderId,
-        reason: e.toString(),
-      );
-      return _sessionError == null;
+      return _failSend(e, requestId, placeholderId);
     }
 
     _isSendingMessage = false;
@@ -580,31 +479,25 @@ class StoryProvider extends ChangeNotifier with ResetEpoch {
     return normalized.contains('unauthorized') || normalized.contains('401');
   }
 
-  Future<void> _retryMessageWithoutStreaming({
-    required String message,
-    required String userId,
-    required String requestId,
-    required String placeholderId,
-    required String reason,
-  }) async {
-    debugPrint('[StoryProvider] retrying without streaming: $reason');
-    _messages.removeWhere((m) => m.id == requestId || m.id == placeholderId);
+  bool _failSend(Object error, String requestId, String placeholderId) {
+    debugPrint('[StoryProvider] send failed: $error');
+    final idx = _messages.indexWhere((m) => m.id == placeholderId);
+    if (idx == -1 || _messages[idx].content.trim().isEmpty) {
+      _messages.removeWhere((m) => m.id == requestId || m.id == placeholderId);
+    }
+    _sessionError = _sendErrorText(error);
     _isSendingMessage = false;
-
-    if (_isUnauthorizedError(reason)) {
-      _sessionError = UiText.key('errors.sessionExpired');
-      notifyListeners();
-      return;
-    }
-
-    if (isMessageTooLongError(reason)) {
-      _sessionError = messageTooLongText();
-      notifyListeners();
-      return;
-    }
-
     notifyListeners();
-    await sendMessage(userId: userId, message: message);
+    return false;
+  }
+
+  UiText _sendErrorText(Object error) {
+    if (_isUnauthorizedError(error)) return UiText.key('errors.sessionExpired');
+    if (isMessageTooLongError(error)) return messageTooLongText();
+    if (error.toString().contains('429')) {
+      return UiText.key('errors.rateLimited');
+    }
+    return UiText.key('errors.genericRetry');
   }
 
   /// Load existing session messages
