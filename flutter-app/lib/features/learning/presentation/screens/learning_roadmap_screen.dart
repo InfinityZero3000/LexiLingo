@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/navigation/reload_on_return.dart';
 import 'dart:math';
 import 'dart:ui';
 import 'package:easy_localization/easy_localization.dart';
@@ -110,7 +111,17 @@ class LearningRoadmapScreen extends StatefulWidget {
   State<LearningRoadmapScreen> createState() => _LearningRoadmapScreenState();
 }
 
-class _LearningRoadmapScreenState extends State<LearningRoadmapScreen> {
+class _LearningRoadmapScreenState extends State<LearningRoadmapScreen>
+    with ReloadOnReturn {
+  @override
+  void reload() {
+    context.read<LearningProvider>().loadRoadmap(
+      widget.courseId,
+      refresh: true,
+    );
+    context.read<CourseProvider>().loadCourseDetail(widget.courseId);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -326,24 +337,15 @@ class _ZigzagRoadmap extends StatelessWidget {
                                         ),
                                       ),
                                     )
-                                : () async {
-                                    await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => LearningSessionScreen(
-                                          lessonId: n.lesson.lessonId,
-                                          courseId: courseId,
-                                        ),
+                                : () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => LearningSessionScreen(
+                                        lessonId: n.lesson.lessonId,
+                                        courseId: courseId,
                                       ),
-                                    );
-                                    if (!context.mounted) return;
-                                    context
-                                        .read<LearningProvider>()
-                                        .loadRoadmap(courseId, refresh: true);
-                                    context
-                                        .read<CourseProvider>()
-                                        .loadCourseDetail(courseId);
-                                  },
+                                    ),
+                                  ),
                           ),
                         ),
                       ),
