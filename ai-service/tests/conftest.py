@@ -15,6 +15,20 @@ from typing import Dict, Any
 # ============================================================
 
 
+@pytest.fixture(autouse=True)
+def _unpark_groq_keys():
+    """Parking is process-global state; a test that parks a key must not park it for the next one.
+
+    The pool tests reuse the names "key-1"/"key-2", so one leaked entry made four of them fail
+    only when run after the stream tests.
+    """
+    from api.core import groq_key_pool
+
+    groq_key_pool._PARKED_UNTIL.clear()
+    yield
+    groq_key_pool._PARKED_UNTIL.clear()
+
+
 @pytest.fixture
 def mock_model_gateway():
     """Mock ModelGateway for isolated node testing."""
