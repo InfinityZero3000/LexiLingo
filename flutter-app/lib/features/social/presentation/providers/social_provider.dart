@@ -213,6 +213,21 @@ class SocialProvider extends ChangeNotifier with ResetEpoch {
       return user;
     }).toList();
 
+    // Someone just followed belongs in the Following tab, which is only loaded
+    // when the screen opens.
+    if (isFollowing && !_following.any((user) => user.userId == userId)) {
+      final known = [
+        ..._suggestedUsers,
+        ..._searchResults,
+        ..._followers,
+        ..._nearbyUsers,
+      ].where((user) => user.userId == userId).firstOrNull;
+      if (known != null) {
+        _following = [known, ..._following];
+        _followingCount++;
+      }
+    }
+
     // Update in following list
     _following = _following.map((user) {
       if (user.userId == userId) {
