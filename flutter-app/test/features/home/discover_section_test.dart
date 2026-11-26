@@ -14,6 +14,8 @@ import 'package:lexilingo_app/features/course/domain/repositories/course_reposit
 import 'package:lexilingo_app/features/course/domain/usecases/get_courses_usecase.dart';
 import 'package:lexilingo_app/features/course/domain/usecases/get_enrolled_courses_usecase.dart';
 import 'package:lexilingo_app/features/home/presentation/providers/home_provider.dart';
+import 'package:lexilingo_app/features/level/data/datasources/proficiency_data_source.dart';
+import 'package:lexilingo_app/features/level/domain/entities/proficiency_entity.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/discover_data.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_page/discover_section.dart';
 import 'package:lexilingo_app/features/home/presentation/widgets/home_ui_components.dart';
@@ -116,10 +118,23 @@ class _FakeBookProvider extends BookProvider {
   Future<void> openBook(Book book) async => opened.add(book);
 }
 
+class _ProficiencyAt implements ProficiencyDataSource {
+  _ProficiencyAt(this.level);
+  final String level;
+
+  @override
+  Future<ProficiencyProfile> getProfile() async =>
+      ProficiencyProfile.fromJson({'assessed_level': level});
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 Future<_FakeBookProvider> _pump(
   WidgetTester tester, {
   required Future<DiscoverFeed> Function(String level) loader,
   List<CourseEntity> courses = const [],
+  ProficiencyDataSource? proficiency,
   double width = 390,
   double textScale = 1,
   Brightness brightness = Brightness.light,
@@ -139,7 +154,7 @@ Future<_FakeBookProvider> _pump(
       providers: [
         ChangeNotifierProvider<HomeProvider>.value(value: home),
         ChangeNotifierProvider<ProficiencyProvider>(
-          create: (_) => ProficiencyProvider(),
+          create: (_) => ProficiencyProvider(dataSource: proficiency),
         ),
         ChangeNotifierProvider<BookProvider>.value(value: books),
       ],
@@ -259,6 +274,22 @@ void main() {
       expect(other.book?.id, 'b1');
       expect(other.podcast, isNull);
     });
+  });
+
+  testWidgets('picks for the learner level without a visit to Profile', (
+    tester,
+  ) async {
+    final asked = <String>[];
+    await _pump(
+      tester,
+      proficiency: _ProficiencyAt('B2'),
+      loader: (level) async {
+        asked.add(level);
+        return const DiscoverFeed();
+      },
+    );
+
+    expect(asked.last, 'B2');
   });
 
   testWidgets('book, podcast and course share one card', (tester) async {
