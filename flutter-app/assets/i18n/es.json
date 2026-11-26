@@ -141,6 +141,7 @@
     "fbLinkMessage": "{email} ya tiene un inicio de sesión en LexiLingo. Confírmalo con la cuenta de Google de este correo y podrás usar Facebook a partir de ahora.",
     "fbLinkConfirm": "Confirmar con Google",
     "errFacebookLinkMismatch": "Esa era otra cuenta de Google. Elige la que tenga el mismo correo que tu cuenta de Facebook.",
+    "errUseExistingSignIn": "Este correo ya tiene una cuenta de LexiLingo. Inicia sesión como lo hacías antes, con tu contraseña o con Google.",
     "errCors": "El inicio de sesión está bloqueado temporalmente. Inténtalo de nuevo en un momento.",
     "errCancelled": "Se canceló el inicio de sesión.",
     "errInvalidPassword": "Contraseña no válida.",

@@ -66,6 +66,11 @@ class FacebookSignInService {
     }
   }
 
+  /// The backend's wording when the email already belongs to an account that
+  /// Facebook may not open; it arrives in English whatever the app language is.
+  static bool isExistingAccountRefusal(String message) =>
+      message.contains('login with your existing method');
+
   /// Web only: mobile has no linking flow yet.
   @visibleForTesting
   static FacebookLinkRequired? linkRequest(

@@ -141,6 +141,7 @@
     "fbLinkMessage": "{email} には LexiLingo のログイン方法がすでにあります。このメールの Google アカウントで確認すると、次回から Facebook を使えます。",
     "fbLinkConfirm": "Google で確認",
     "errFacebookLinkMismatch": "別の Google アカウントです。Facebook と同じメールアドレスのアカウントを選んでください。",
+    "errUseExistingSignIn": "このメールには LexiLingo のアカウントがすでにあります。以前と同じ方法（パスワードまたは Google）でログインしてください。",
     "errCors": "サインインは一時的にブロックされています。しばらくしてからもう一度お試しください。",
     "errCancelled": "サインインがキャンセルされました。",
     "errInvalidPassword": "パスワードが無効です。",

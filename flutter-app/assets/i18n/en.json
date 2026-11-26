@@ -141,6 +141,7 @@
     "fbLinkMessage": "{email} already has a LexiLingo sign-in. Confirm with the Google account for this email, and you can use Facebook from now on.",
     "fbLinkConfirm": "Confirm with Google",
     "errFacebookLinkMismatch": "That was a different Google account. Choose the one with the same email as your Facebook account.",
+    "errUseExistingSignIn": "This email already has a LexiLingo account. Sign in the way you did before, with your password or Google.",
     "errCors": "Sign-in is temporarily blocked. Please try again in a moment.",
     "errCancelled": "Sign-in was cancelled.",
     "errInvalidPassword": "Invalid password.",

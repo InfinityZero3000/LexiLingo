@@ -141,6 +141,7 @@
     "fbLinkMessage": "{email}에는 이미 LexiLingo 로그인 방법이 있습니다. 이 이메일의 Google 계정으로 확인하면 다음부터 Facebook을 사용할 수 있습니다.",
     "fbLinkConfirm": "Google로 확인",
     "errFacebookLinkMismatch": "다른 Google 계정입니다. Facebook 계정과 이메일이 같은 계정을 선택하세요.",
+    "errUseExistingSignIn": "이 이메일에는 이미 LexiLingo 계정이 있습니다. 이전과 같은 방법(비밀번호 또는 Google)으로 로그인하세요.",
     "errCors": "로그인이 일시적으로 차단되었습니다. 잠시 후 다시 시도해 주세요.",
     "errCancelled": "로그인이 취소되었습니다.",
     "errInvalidPassword": "비밀번호가 올바르지 않습니다.",

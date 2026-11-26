@@ -381,7 +381,10 @@ class AuthProvider extends ChangeNotifier {
 
       result.fold(
         (failure) {
-          _errorMessage = _getFailureMessage(failure);
+          _errorMessage =
+              FacebookSignInService.isExistingAccountRefusal(failure.message)
+              ? const UiText.key('auth.errUseExistingSignIn')
+              : _getFailureMessage(failure);
           _user = null;
           _isJustLoggedIn = false;
         },

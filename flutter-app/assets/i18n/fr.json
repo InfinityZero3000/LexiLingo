@@ -141,6 +141,7 @@
     "fbLinkMessage": "{email} dispose déjà d'une connexion LexiLingo. Confirmez avec le compte Google de cette adresse, puis vous pourrez utiliser Facebook.",
     "fbLinkConfirm": "Confirmer avec Google",
     "errFacebookLinkMismatch": "Il s'agissait d'un autre compte Google. Choisissez celui qui a la même adresse que votre compte Facebook.",
+    "errUseExistingSignIn": "Cette adresse a déjà un compte LexiLingo. Connectez-vous comme auparavant, avec votre mot de passe ou Google.",
     "errCors": "La connexion est temporairement bloquée. Veuillez réessayer dans un instant.",
     "errCancelled": "La connexion a été annulée.",
     "errInvalidPassword": "Mot de passe invalide.",

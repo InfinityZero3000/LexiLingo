@@ -63,6 +63,21 @@ class _Auth extends Fake implements FirebaseAuth {
 const _request = FacebookLinkRequired('owner@example.com', _facebook);
 
 void main() {
+  test('recognises the backend refusal for an existing account', () {
+    expect(
+      FacebookSignInService.isExistingAccountRefusal(
+        'Email already registered. Please login with your existing method.',
+      ),
+      isTrue,
+    );
+    expect(
+      FacebookSignInService.isExistingAccountRefusal(
+        'User account is inactive',
+      ),
+      isFalse,
+    );
+  });
+
   group('linkRequest', () {
     FirebaseAuthException error({
       String code = 'account-exists-with-different-credential',
