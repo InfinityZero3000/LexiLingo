@@ -62,6 +62,12 @@ async def test_upgrade_aligns_a_migrated_schema_and_is_repeatable(db_engine):
             await conn.execute(
                 text("INSERT INTO exercise_attempts (skill) VALUES ('grammar')")
             )
+            await conn.execute(
+                text(
+                    "CREATE TABLE vocabulary_items "
+                    "(word text, part_of_speech part_of_speech_enum)"
+                )
+            )
 
             for _ in range(2):
                 await conn.run_sync(_upgrade)
@@ -74,5 +80,13 @@ async def test_upgrade_aligns_a_migrated_schema_and_is_repeatable(db_engine):
                 text("SELECT skill::text, attempt_metadata FROM exercise_attempts")
             )
             assert kept.all() == [("GRAMMAR", None)]
+            save = text(
+                "INSERT INTO vocabulary_items VALUES ('run', 'VERB') "
+                "ON CONFLICT (word, part_of_speech) DO NOTHING"
+            )
+            await conn.execute(save)
+            await conn.execute(save)
+            words = await conn.execute(text("SELECT count(*) FROM vocabulary_items"))
+            assert words.scalar() == 1
         finally:
             await transaction.rollback()

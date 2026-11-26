@@ -6,6 +6,8 @@ Two earlier migrations disagree with the models, so a database built by
 - ``skilltype`` and ``part_of_speech_enum`` were created with lowercase labels,
   while SQLAlchemy stores the Python enum *names* (uppercase).
 - ``exercise_attempts.metadata`` is ``attempt_metadata`` in the model.
+- ``uq_vocab_word_pos`` was never created, so saving a word (``ON CONFLICT
+  (word, part_of_speech)``) answered 500.
 
 Databases built with ``create_all`` already match, so every step is guarded and
 does nothing there.
@@ -77,6 +79,34 @@ BEGIN
 END $$
 """
 
+# Skipped with a warning when duplicates exist: merging words moves learners'
+# review history and must not happen unattended inside a deploy.
+ADD_VOCAB_UNIQUE = """
+DO $$
+BEGIN
+    IF to_regclass('vocabulary_items') IS NULL OR EXISTS (
+        SELECT 1 FROM pg_index i
+        WHERE i.indrelid = to_regclass('vocabulary_items') AND i.indisunique
+          AND (
+            SELECT array_agg(a.attname::text ORDER BY a.attname)
+            FROM pg_attribute a
+            WHERE a.attrelid = i.indrelid AND a.attnum = ANY (i.indkey)
+          ) = ARRAY['part_of_speech', 'word']
+    ) THEN
+        RETURN;
+    END IF;
+    IF EXISTS (
+        SELECT 1 FROM vocabulary_items
+        GROUP BY word, part_of_speech HAVING count(*) > 1
+    ) THEN
+        RAISE WARNING 'vocabulary_items has duplicate (word, part_of_speech) rows; uq_vocab_word_pos not created';
+        RETURN;
+    END IF;
+    ALTER TABLE vocabulary_items
+        ADD CONSTRAINT uq_vocab_word_pos UNIQUE (word, part_of_speech);
+END $$
+"""
+
 
 def upgrade() -> None:
     if op.get_bind().dialect.name != "postgresql":
@@ -87,6 +117,7 @@ def upgrade() -> None:
                 RENAME_LABEL.format(type=type_name, old=label, new=label.upper())
             )
     op.execute(RENAME_METADATA)
+    op.execute(ADD_VOCAB_UNIQUE)
 
 
 def downgrade() -> None:
