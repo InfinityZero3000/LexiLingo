@@ -5,7 +5,8 @@ import { StatCard } from "../components/StatCard";
 import { StatusPill } from "../components/StatusPill";
 import { DataTable } from "../components/DataTable";
 import { getSystemInfo, type SystemInfo } from "../lib/adminApi";
-import { checkBackendHealth, checkAiHealth } from "../lib/healthApi";
+import { getSpoolMonitoring } from "../lib/aiApi";
+import { checkBackendHealth } from "../lib/healthApi";
 import { useI18n } from "../lib/i18n";
 
 type HealthStatus = { status: string; message?: string; version?: string };
@@ -13,7 +14,8 @@ type HealthStatus = { status: string; message?: string; version?: string };
 export const DatabasePage = () => {
   const [info, setInfo] = useState<SystemInfo | null>(null);
   const [backendHealth, setBackendHealth] = useState<HealthStatus | null>(null);
-  const [aiHealth, setAiHealth] = useState<any>(null);
+  // The observation queue is read from MongoDB, so an answer means Mongo is reachable.
+  const [mongoOk, setMongoOk] = useState(false);
   const [loading, setLoading] = useState(true);
   const { t } = useI18n();
 
@@ -23,12 +25,12 @@ export const DatabasePage = () => {
     Promise.allSettled([
       getSystemInfo(),
       checkBackendHealth().then((r) => r.json()),
-      checkAiHealth().then((r) => r.json()),
+      getSpoolMonitoring(),
     ])
-      .then(([sysRes, beRes, aiRes]) => {
+      .then(([sysRes, beRes, spoolRes]) => {
         if (sysRes.status === "fulfilled") setInfo(sysRes.value.data || null);
         if (beRes.status === "fulfilled") setBackendHealth(beRes.value);
-        if (aiRes.status === "fulfilled") setAiHealth(aiRes.value);
+        setMongoOk(spoolRes.status === "fulfilled");
       })
       .finally(() => setLoading(false));
   }, []);
@@ -45,8 +47,10 @@ export const DatabasePage = () => {
   const totalRecords = tables.reduce((s, t) => s + t.count, 0);
   const migration = info?.migration;
   const revisions = (list?: string[] | null) => (list && list.length ? list.join(", ") : "—");
-  const beOk = backendHealth?.status === "healthy";
-  const aiOk = aiHealth?.status === "healthy" || aiHealth?.status === "ok";
+  // system-info counts rows, so it only answers when PostgreSQL does.
+  const postgresOk = info !== null;
+  const mongoLabel = mongoOk ? t.common.connected : t.common.unknown;
+  const mongoTone = mongoOk ? "success" : "warning";
 
   return (
     <div className="stack">
@@ -59,15 +63,15 @@ export const DatabasePage = () => {
       <div className="card-grid">
         <StatCard
           label="PostgreSQL"
-          value={beOk ? t.common.connected : t.common.error}
+          value={postgresOk ? t.common.connected : t.common.error}
           variant="blue"
           note="Backend Service"
           icon={<Database size={18} />}
         />
         <StatCard
           label="MongoDB"
-          value={aiOk ? t.common.connected : t.common.error}
-          accent={aiOk ? "teal" : "berry"}
+          value={mongoLabel}
+          accent={mongoOk ? "teal" : "berry"}
           note="AI Service"
           icon={<Server size={18} />}
         />
@@ -90,10 +94,10 @@ export const DatabasePage = () => {
         <div className="panel panel--pad">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
             <h3 className="panel-title" style={{ margin: 0 }}>{t.database.backendDb}</h3>
-            <StatusPill tone={beOk ? "success" : "danger"} label={beOk ? t.common.healthy : t.common.offline} />
+            <StatusPill tone={postgresOk ? "success" : "danger"} label={postgresOk ? t.common.connected : t.common.offline} />
           </div>
           <div className="stack" style={{ gap: 10 }}>
-            <ConfigRow label={t.database.statusLabel} value={<StatusPill tone={beOk ? "success" : "danger"} label={beOk ? t.common.healthy : t.common.offline} />} />
+            <ConfigRow label={t.database.statusLabel} value={<StatusPill tone={postgresOk ? "success" : "danger"} label={postgresOk ? t.common.connected : t.common.offline} />} />
             <ConfigRow label={t.database.version} value={backendHealth?.version || "N/A"} />
             <ConfigRow label={t.database.environment} value={<StatusPill tone="info" label={info?.app_env || "N/A"} />} />
             <ConfigRow label={t.database.engine} value="SQLAlchemy 2.0 Async" />
@@ -104,19 +108,10 @@ export const DatabasePage = () => {
         <div className="panel panel--pad">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
             <h3 className="panel-title" style={{ margin: 0 }}>{t.database.aiDb}</h3>
-            <StatusPill tone={aiOk ? "success" : "danger"} label={aiOk ? t.common.connected : t.common.offline} />
+            <StatusPill tone={mongoTone} label={mongoLabel} />
           </div>
           <div className="stack" style={{ gap: 10 }}>
-            <ConfigRow label={t.database.statusLabel} value={<StatusPill tone={aiOk ? "success" : "danger"} label={aiOk ? t.common.connected : t.common.offline} />} />
-            <ConfigRow
-              label="Redis Cache"
-              value={
-                <StatusPill
-                  tone={aiHealth?.services?.redis === "connected" ? "success" : "warning"}
-                  label={aiHealth?.services?.redis || "Unknown"}
-                />
-              }
-            />
+            <ConfigRow label={t.database.statusLabel} value={<StatusPill tone={mongoTone} label={mongoLabel} />} />
             <ConfigRow label={t.database.driver} value="Motor (async)" />
             <ConfigRow label={t.database.usageLabel} value="TRACECAG, Chat History, Analytics" />
           </div>

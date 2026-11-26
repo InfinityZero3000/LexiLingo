@@ -1,35 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { Activity, AlertTriangle, Bot, Cpu, HardDrive, Workflow } from "lucide-react";
+import { Activity, AlertTriangle, Bot, Cpu, HardDrive } from "lucide-react";
 import { SectionHeader } from "../components/SectionHeader";
 import { StatCard } from "../components/StatCard";
 import { StatusPill } from "../components/StatusPill";
-import { getMonitoringDashboard, type MonitoringDashboard } from "../lib/aiApi";
-import { checkAiHealth } from "../lib/healthApi";
+import { LiveAiModels } from "../components/LiveAiModels";
+import { getLlmKeyMonitoring, getMonitoringDashboard, type LlmKeyMonitoring, type MonitoringDashboard } from "../lib/aiApi";
 import { useI18n } from "../lib/i18n";
-
-type AiHealth = {
-  status?: string;
-  services?: Record<string, string>;
-  warnings?: string[];
-};
-
-const AI_MODELS = [
-  { name: "Qwen 3.8 27B", type: "LLM / Chat", provider: "Groq", mode: "API Cloud", usage: "Chat, Grammar Check, Topic Conversation" },
-  { name: "Whisper Base", type: "STT (Speech-to-Text)", provider: "OpenAI", mode: "Local CPU", usage: "Phát âm, Listening exercises" },
-  { name: "Piper TTS", type: "TTS (Text-to-Speech)", provider: "Piper", mode: "Local CPU", usage: "Phát âm từ vựng, đọc câu" },
-  { name: "TRACECAG", type: "Knowledge Graph", provider: "Custom", mode: "Local", usage: "Trả lời câu hỏi ngữ pháp, context-aware" },
-];
-
-const PIPELINES = [
-  { name: "Chat Pipeline", components: "LLM → Response Filter → Cache" },
-  { name: "Voice Pipeline", components: "Whisper STT → LLM → Piper TTS" },
-  { name: "Grammar Check", components: "Input → LLM → Correction → Score" },
-  { name: "TRACECAG Query", components: "Query → Graph Lookup → LLM Synthesis" },
-];
 
 export const AiModelsPage = () => {
   const [monitor, setMonitor] = useState<MonitoringDashboard | null>(null);
-  const [health, setHealth] = useState<AiHealth | null>(null);
+  const [llm, setLlm] = useState<LlmKeyMonitoring | null>(null);
   const [loading, setLoading] = useState(true);
   const { t } = useI18n();
 
@@ -38,11 +18,11 @@ export const AiModelsPage = () => {
 
     Promise.allSettled([
       getMonitoringDashboard(),
-      checkAiHealth().then((r) => r.json()),
+      getLlmKeyMonitoring(),
     ])
-      .then(([monRes, healthRes]) => {
+      .then(([monRes, llmRes]) => {
         if (monRes.status === "fulfilled") setMonitor(monRes.value);
-        if (healthRes.status === "fulfilled") setHealth(healthRes.value);
+        if (llmRes.status === "fulfilled") setLlm(llmRes.value);
       })
       .finally(() => setLoading(false));
   }, []);
@@ -54,7 +34,7 @@ export const AiModelsPage = () => {
   const memoryPercent = sys ? (sys.memory_percent ?? sys.memory?.percent) : undefined;
   const diskPercent = sys ? (sys.disk_percent ?? sys.disk?.percent) : undefined;
   const proc = monitor?.process;
-  const aiOk = health?.status === "healthy" || health?.status === "ok";
+  const aiOk = monitor !== null;
   const warnings = monitor?.health?.warnings || [];
 
   return (
@@ -70,7 +50,6 @@ export const AiModelsPage = () => {
           label={t.aiModelsPage.aiService}
           value={aiOk ? t.common.online : t.common.offline}
           variant="blue"
-          note={health?.status || t.common.unknown}
           icon={<Bot size={18} />}
         />
         <StatCard
@@ -114,126 +93,10 @@ export const AiModelsPage = () => {
         </div>
       )}
 
-      {/* Service Connections */}
-      {health?.services && (
-        <div className="panel panel--pad">
-          <h3 className="panel-title">{t.aiModelsPage.serviceConns}</h3>
-          <div className="form-grid">
-            {Object.entries(health.services).map(([svc, status]) => (
-              <div
-                key={svc}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 12,
-                  padding: "12px 16px",
-                  borderRadius: "var(--radius-inner)",
-                  background: "var(--panel-soft-2)",
-                  border: "1px solid var(--line)",
-                }}
-              >
-                <span className="kv-value kv-value--cap" style={{ padding: 0 }}>{svc}</span>
-                <StatusPill
-                  tone={status === "connected" ? "success" : status === "not_configured" ? "info" : "danger"}
-                  label={status}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* AI Models */}
       <div className="panel panel--pad">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-          <h3 className="panel-title" style={{ margin: 0 }}>{t.aiModelsPage.aiModelsTitle}</h3>
-          <StatusPill tone="info" label={String(AI_MODELS.length)} />
-        </div>
-        <div className="grid-2">
-          {AI_MODELS.map((m) => (
-            <div
-              key={m.name}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 10,
-                padding: 18,
-                borderRadius: "var(--radius-inner)",
-                background: "var(--panel-soft-2)",
-                border: "1px solid var(--line)",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
-                <div>
-                  <div className="table-title" style={{ fontSize: 16 }}>{m.name}</div>
-                  <div className="text-small text-muted" style={{ marginTop: 2 }}>{m.provider}</div>
-                </div>
-                <StatusPill tone={m.mode.includes("Cloud") ? "info" : "success"} label={m.mode} />
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                <StatusPill tone="neutral" label={m.type} />
-              </div>
-              <p className="text-small text-muted" style={{ margin: 0, lineHeight: 1.5 }}>{m.usage}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Pipelines */}
-      <div className="panel panel--pad">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span
-              style={{
-                width: 34,
-                height: 34,
-                borderRadius: 10,
-                display: "grid",
-                placeItems: "center",
-                background: "var(--accent-soft)",
-                color: "var(--accent)",
-              }}
-            >
-              <Workflow size={17} />
-            </span>
-            <h3 className="panel-title" style={{ margin: 0 }}>{t.aiModelsPage.processingPipelines}</h3>
-          </div>
-          <StatusPill tone={aiOk ? "success" : "danger"} label={aiOk ? t.common.active : t.common.offline} />
-        </div>
-        <div className="grid-2">
-          {PIPELINES.map((p) => (
-            <div
-              key={p.name}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 10,
-                padding: 16,
-                borderRadius: "var(--radius-inner)",
-                background: "var(--panel-soft-2)",
-                border: "1px solid var(--line)",
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                <span className="table-title">{p.name}</span>
-                <StatusPill tone={aiOk ? "success" : "danger"} label={aiOk ? t.common.active : t.common.offline} />
-              </div>
-              <div
-                className="mono text-small"
-                style={{
-                  padding: "8px 12px",
-                  borderRadius: 10,
-                  background: "var(--panel)",
-                  border: "1px solid var(--line)",
-                  color: "var(--muted)",
-                }}
-              >
-                {p.components}
-              </div>
-            </div>
-          ))}
-        </div>
+        <h3 className="panel-title">{t.aiModelsPage.aiModelsTitle}</h3>
+        <LiveAiModels llm={llm} monitor={monitor} />
       </div>
 
       {/* Process Info */}
