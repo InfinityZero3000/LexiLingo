@@ -1,3 +1,5 @@
+import { useConfirm } from "../components/ConfirmDialog";
+import { useI18n } from "../lib/i18n";
 import { Dialog } from "../components/Dialog";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { CheckCircle, Pencil, RefreshCw, RotateCcw, XCircle } from "lucide-react";
@@ -108,6 +110,8 @@ type EditForm = {
 };
 
 export const ContentQaQueuePage = () => {
+  const confirm = useConfirm();
+  const { t } = useI18n();
   const [queue, setQueue] = useState<ContentQaQueue | null>(null);
   const [selected, setSelected] = useState<ContentAgentJob | null>(null);
   const [preview, setPreview] = useState<ContentAgentPreview | null>(null);
@@ -178,6 +182,10 @@ export const ContentQaQueuePage = () => {
 
   const runAction = async (action: "apply" | "cancel" | "retry") => {
     if (!selected) return;
+    if (action === "cancel") {
+      const ok = await confirm({ message: t.deletion.cancelJob, confirmLabel: t.deletion.cancelJobAction, danger: true });
+      if (!ok) return;
+    }
     setError(null);
     try {
       if (action === "apply") await applyContentAgentJob(selected.id);

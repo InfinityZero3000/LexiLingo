@@ -1,3 +1,5 @@
+import { BulkBar, useRowSelection } from "../components/BulkActions";
+import { describeDeletionError, fillText } from "../lib/deletion";
 import { useConfirm } from "../components/ConfirmDialog";
 import { Dialog } from "../components/Dialog";
 import React, { useEffect, useState, useRef } from "react";
@@ -303,13 +305,14 @@ export const AchievementsPage = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!(await confirm({ message: t.achievements.deleteConfirm, confirmLabel: t.common.delete, danger: true }))) return;
+  const handleDelete = async (row: AchievementItem) => {
+    const message = fillText(t.deletion.one, { name: row.name });
+    if (!(await confirm({ message, confirmLabel: t.common.delete, danger: true }))) return;
     try {
-      await deleteAchievement(id);
+      await deleteAchievement(row.id);
       await loadItems();
-    } catch (err: any) {
-      setError(err?.message || t.common.deleteFailed);
+    } catch (err) {
+      setError(describeDeletionError(err, t));
     }
   };
 
@@ -338,6 +341,7 @@ export const AchievementsPage = () => {
   const filtered = filter
     ? items.filter((a) => a.category === filter)
     : items;
+  const selection = useRowSelection(filtered, (row) => row.id, (row) => row.name);
 
   // Group counts
   const categoryCounts: Record<string, number> = {};
@@ -350,6 +354,13 @@ export const AchievementsPage = () => {
       <SectionHeader title={t.achievements.title} description={`${items.length} ${t.achievements.description}`} />
 
       {error && <div className="form-error">{error}</div>}
+      <BulkBar
+        selection={selection}
+        onDone={loadItems}
+        actions={[
+          { label: t.common.delete, consequence: t.deletion.permanent, danger: true, run: (row) => deleteAchievement(row.id) },
+        ]}
+      />
 
       <div className="card-grid">
         <StatCard label={t.achievements.title} value={items.length.toLocaleString()} variant="blue" />
@@ -388,6 +399,7 @@ export const AchievementsPage = () => {
         ) : (
           <DataTable
             columns={[
+              selection.column,
               {
                 header: "Badge",
                 render: (row) => <BadgeImage badge={row} />,
@@ -492,7 +504,7 @@ export const AchievementsPage = () => {
                     <button className="ghost-button small" style={{ borderRadius: 9999 }} onClick={() => handleEdit(row)}>
                       {t.common.edit}
                     </button>
-                    <button className="ghost-button small danger" style={{ borderRadius: 9999 }} onClick={() => handleDelete(row.id)}>
+                    <button className="ghost-button small danger" style={{ borderRadius: 9999 }} onClick={() => handleDelete(row)}>
                       {t.common.delete}
                     </button>
                   </div>

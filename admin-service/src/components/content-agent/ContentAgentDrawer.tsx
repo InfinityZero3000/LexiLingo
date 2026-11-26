@@ -1,3 +1,4 @@
+import { useConfirm } from "../ConfirmDialog";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
@@ -117,6 +118,7 @@ export function ContentAgentDrawer({
   onApplied,
 }: ContentAgentDrawerProps) {
   const { t } = useI18n();
+  const confirm = useConfirm();
   const [job, setJob] = useState<ContentAgentJob | null>(
     initialJob?.id === jobId ? initialJob : null,
   );
@@ -265,6 +267,8 @@ export function ContentAgentDrawer({
 
   const handleCancel = async () => {
     if (!job) return;
+    const ok = await confirm({ message: t.deletion.cancelJob, confirmLabel: t.deletion.cancelJobAction, danger: true });
+    if (!ok) return;
     setBusyAction("cancel");
     setError(null);
     try {

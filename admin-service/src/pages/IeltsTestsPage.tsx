@@ -1,3 +1,5 @@
+import { describeDeletionError, fillText } from "../lib/deletion";
+import { useI18n } from "../lib/i18n";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, FileAudio, Plus, RefreshCw, Trash2 } from "lucide-react";
 
@@ -142,6 +144,7 @@ const emptyDraft = (): Draft => ({
 
 export const IeltsTestsPage = () => {
   const confirm = useConfirm();
+  const { t } = useI18n();
   const [tests, setTests] = useState<IeltsTest[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -306,10 +309,10 @@ export const IeltsTestsPage = () => {
     }
   };
 
-  const removeTest = async ({ id, title, attempt_count }: IeltsTest) => {
+  const removeTest = async ({ id, title }: IeltsTest) => {
     const ok = await confirm({
-      message: `Delete "${title}"? Its ${attempt_count} learner attempt(s) are deleted with it.`,
-      confirmLabel: "Delete",
+      message: fillText(t.deletion.one, { name: title }),
+      confirmLabel: t.common.delete,
       danger: true,
     });
     if (!ok) return;
@@ -319,7 +322,7 @@ export const IeltsTestsPage = () => {
       if (selectedId === id) startNew();
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Delete failed");
+      setError(describeDeletionError(err, t));
     } finally {
       setBusy(false);
     }
@@ -474,6 +477,12 @@ export const IeltsTestsPage = () => {
                         void removeTest(test);
                       }}
                       aria-label={`Delete ${test.title}`}
+                      disabled={test.attempt_count > 0}
+                      title={
+                        test.attempt_count > 0
+                          ? fillText(t.deletion.inUse, { used: `${test.attempt_count} attempt(s)` })
+                          : undefined
+                      }
                     >
                       <Trash2 size={14} />
                     </button>

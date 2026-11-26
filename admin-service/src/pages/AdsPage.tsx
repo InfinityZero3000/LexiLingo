@@ -1,3 +1,5 @@
+import { BulkBar, useRowSelection } from "../components/BulkActions";
+import { describeDeletionError, fillText } from "../lib/deletion";
 import { useConfirm } from "../components/ConfirmDialog";
 import { Dialog } from "../components/Dialog";
 import React, { useEffect, useRef, useState } from "react";
@@ -248,13 +250,16 @@ export const AdsPage = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!(await confirm({ message: t.ads.deleteConfirm, confirmLabel: t.common.delete, danger: true }))) return;
+  const selection = useRowSelection(banners, (row) => row.id, (row) => row.title);
+
+  const handleDelete = async (row: BannerType) => {
+    const message = fillText(t.deletion.one, { name: row.title });
+    if (!(await confirm({ message, confirmLabel: t.common.delete, danger: true }))) return;
     try {
-      await deleteBanner(id);
+      await deleteBanner(row.id);
       await loadBanners();
-    } catch (err: any) {
-      setError(err?.message || t.common.deleteFailed);
+    } catch (err) {
+      setError(describeDeletionError(err, t));
     }
   };
 
@@ -281,6 +286,13 @@ export const AdsPage = () => {
       <SectionHeader title={t.ads.title} description={`${banners.length} ${t.ads.description}`} />
 
       {error && <div className="form-error">{error}</div>}
+      <BulkBar
+        selection={selection}
+        onDone={loadBanners}
+        actions={[
+          { label: t.common.delete, consequence: t.deletion.permanent, danger: true, run: (row) => deleteBanner(row.id) },
+        ]}
+      />
 
       <div className="card-grid">
         <StatCard label={t.ads.title} value={banners.length.toLocaleString()} variant="blue" />
@@ -309,6 +321,7 @@ export const AdsPage = () => {
         ) : (
           <DataTable
             columns={[
+              selection.column,
               {
                 header: t.ads.banner,
                 sortValue: (row) => row.title,
@@ -400,7 +413,7 @@ export const AdsPage = () => {
                     <button className="ghost-button small" style={{ borderRadius: 9999 }} onClick={() => handleDuplicate(row)}>
                       {t.ads.duplicate}
                     </button>
-                    <button className="ghost-button small danger" style={{ borderRadius: 9999 }} onClick={() => handleDelete(row.id)}>
+                    <button className="ghost-button small danger" style={{ borderRadius: 9999 }} onClick={() => handleDelete(row)}>
                       {t.common.delete}
                     </button>
                   </div>

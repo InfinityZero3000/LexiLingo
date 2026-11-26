@@ -5210,3 +5210,15 @@ textarea:focus {
 .ielts-editor textarea {
   width: 100%;
 }
+
+.bulk-bar { flex-wrap: wrap; margin-bottom: 12px; }
+
+.bulk-report {
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-inner, 16px);
+  background: var(--panel);
+  font-size: 14px;
+}
+.bulk-report ul { margin: 8px 0; padding-left: 18px; }

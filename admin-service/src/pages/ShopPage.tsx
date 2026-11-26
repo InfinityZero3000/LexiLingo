@@ -1,3 +1,5 @@
+import { BulkBar, useRowSelection } from "../components/BulkActions";
+import { describeDeletionError, fillText } from "../lib/deletion";
 import { useConfirm } from "../components/ConfirmDialog";
 import { Dialog } from "../components/Dialog";
 import React, { useEffect, useState } from "react";
@@ -198,13 +200,16 @@ export const ShopPage = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!(await confirm({ message: t.shop.deleteConfirm, confirmLabel: t.common.delete, danger: true }))) return;
+  const selection = useRowSelection(items, (row) => row.id, (row) => row.name);
+
+  const handleDelete = async (row: ShopItemType) => {
+    const message = fillText(t.deletion.one, { name: row.name });
+    if (!(await confirm({ message, confirmLabel: t.common.delete, danger: true }))) return;
     try {
-      await deleteShopItem(id);
+      await deleteShopItem(row.id);
       await loadItems();
-    } catch (err: any) {
-      setError(err?.message || t.common.deleteFailed);
+    } catch (err) {
+      setError(describeDeletionError(err, t));
     }
   };
 
@@ -228,6 +233,14 @@ export const ShopPage = () => {
       <SectionHeader title={t.shop.title} description={`${items.length} ${t.shop.description}`} />
 
       {error && <div className="form-error">{error}</div>}
+      <BulkBar
+        selection={selection}
+        onDone={loadItems}
+        actions={[
+          { label: t.shop.hide, consequence: t.deletion.hideNote, run: (row) => updateShopItem(row.id, { is_available: false }) },
+          { label: t.common.delete, consequence: t.deletion.permanent, danger: true, run: (row) => deleteShopItem(row.id) },
+        ]}
+      />
 
       <div className="card-grid">
         <StatCard label={t.shop.title} value={items.length.toLocaleString()} variant="blue" />
@@ -256,6 +269,7 @@ export const ShopPage = () => {
         ) : (
           <DataTable
             columns={[
+              selection.column,
               {
                 header: t.shop.item,
                 sortValue: (row) => row.name,
@@ -347,7 +361,7 @@ export const ShopPage = () => {
                     <button className="ghost-button small" style={{ borderRadius: 9999 }} onClick={() => handleEdit(row)}>
                       {t.common.edit}
                     </button>
-                    <button className="ghost-button small danger" style={{ borderRadius: 9999 }} onClick={() => handleDelete(row.id)}>
+                    <button className="ghost-button small danger" style={{ borderRadius: 9999 }} onClick={() => handleDelete(row)}>
                       {t.common.delete}
                     </button>
                   </div>

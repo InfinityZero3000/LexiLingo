@@ -1,3 +1,4 @@
+import { useRemoveFromForm } from "../lib/useRemoveFromForm";
 import React, { useState } from "react";
 import { ArrowRight, Check, Plus, Trash2 } from "lucide-react";
 import {
@@ -93,6 +94,7 @@ const OptionsEditor = ({
     }
   };
 
+  const removeFromForm = useRemoveFromForm();
   const addOption = () => onChange([...options, newOption(options.length)]);
   const removeOption = (idx: number) =>
     onChange(options.filter((_, i) => i !== idx).map((o, i) => ({ ...o, id: String(i) })));
@@ -122,7 +124,7 @@ const OptionsEditor = ({
               type="button"
               className="icon-button exercise-remove-button"
               aria-label={`Xóa option ${idx + 1}`}
-              onClick={() => removeOption(idx)}
+              onClick={() => void removeFromForm(opt.text, () => removeOption(idx))}
             >
               <Trash2 size={15} aria-hidden="true" />
             </button>
@@ -159,6 +161,7 @@ const PairsEditor = ({
     onChange(next);
   };
   const add = () => onChange([...pairs, ["", ""]]);
+  const removeFromForm = useRemoveFromForm();
   const remove = (idx: number) => onChange(pairs.filter((_, i) => i !== idx));
 
   // Derive options array: first half = left, second half = right
@@ -192,7 +195,7 @@ const PairsEditor = ({
               type="button"
               className="icon-button exercise-remove-button"
               aria-label={`Xóa cặp ${idx + 1}`}
-              onClick={() => remove(idx)}
+              onClick={() => void removeFromForm([l, r].filter(Boolean).join(" → "), () => remove(idx))}
             >
               <Trash2 size={15} aria-hidden="true" />
             </button>

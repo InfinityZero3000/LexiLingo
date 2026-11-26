@@ -1,3 +1,5 @@
+import { BulkBar, useRowSelection } from "../components/BulkActions";
+import { describeDeletionError, fillText } from "../lib/deletion";
 import { useConfirm } from "../components/ConfirmDialog";
 import React, { useEffect, useRef, useState } from "react";
 import { SectionHeader } from "../components/SectionHeader";
@@ -94,6 +96,10 @@ export const ContentLabPage = () => {
   const [answerUnmatched, setAnswerUnmatched] = useState(false);
   const [triedSave, setTriedSave] = useState(false);
   const [testForm, setTestForm] = useState(emptyTestForm);
+
+  const grammarSelection = useRowSelection(grammar, (row) => row.id, (row) => row.title);
+  const questionSelection = useRowSelection(questions, (row) => row.id, (row) => row.prompt);
+  const testSelection = useRowSelection(tests, (row) => row.id, (row) => row.title);
 
   const loadAll = async () => {
     setLoading(true);
@@ -349,8 +355,16 @@ export const ContentLabPage = () => {
                 {importing ? "Đang import..." : "Import CSV/PDF"}
               </button>
             </div>
+            <BulkBar
+              selection={grammarSelection}
+              onDone={loadAll}
+              actions={[
+                { label: t.common.delete, consequence: t.deletion.permanent, danger: true, run: (row) => deleteGrammar(row.id) },
+              ]}
+            />
             <DataTable
               columns={[
+                grammarSelection.column,
                 {
                   header: "Tiêu đề",
                   sortValue: (row) => row.title,
@@ -375,8 +389,9 @@ export const ContentLabPage = () => {
                         Sửa
                       </button>
                       <button className="ghost-button small danger" onClick={async () => {
-                        if (!(await confirm({ message: "Xóa grammar rule này?", confirmLabel: "Xóa", danger: true }))) return;
-                        deleteGrammar(row.id).then(loadAll).catch((e: any) => setError(e?.message || "Xóa thất bại"));
+                        const message = fillText(t.deletion.one, { name: row.title });
+                        if (!(await confirm({ message, confirmLabel: t.common.delete, danger: true }))) return;
+                        deleteGrammar(row.id).then(loadAll).catch((e) => setError(describeDeletionError(e, t)));
                       }}>
                         Xóa
                       </button>
@@ -450,8 +465,16 @@ export const ContentLabPage = () => {
                 {importing ? "Đang import..." : "Import CSV/PDF"}
               </button>
             </div>
+            <BulkBar
+              selection={questionSelection}
+              onDone={loadAll}
+              actions={[
+                { label: t.common.delete, consequence: t.deletion.permanent, danger: true, run: (row) => deleteQuestion(row.id) },
+              ]}
+            />
             <DataTable
               columns={[
+                questionSelection.column,
                 {
                   header: "Prompt",
                   sortValue: (row) => row.prompt,
@@ -476,8 +499,9 @@ export const ContentLabPage = () => {
                         Sửa
                       </button>
                       <button className="ghost-button small danger" onClick={async () => {
-                        if (!(await confirm({ message: "Xóa câu hỏi này?", confirmLabel: "Xóa", danger: true }))) return;
-                        deleteQuestion(row.id).then(loadAll).catch((e: any) => setError(e?.message || "Xóa thất bại"));
+                        const message = fillText(t.deletion.one, { name: row.prompt });
+                        if (!(await confirm({ message, confirmLabel: t.common.delete, danger: true }))) return;
+                        deleteQuestion(row.id).then(loadAll).catch((e) => setError(describeDeletionError(e, t)));
                       }}>
                         Xóa
                       </button>
@@ -581,8 +605,16 @@ export const ContentLabPage = () => {
                 {importing ? "Đang import..." : "Import CSV/PDF"}
               </button>
             </div>
+            <BulkBar
+              selection={testSelection}
+              onDone={loadAll}
+              actions={[
+                { label: t.common.delete, consequence: t.deletion.permanent, danger: true, run: (row) => deleteTestExam(row.id) },
+              ]}
+            />
             <DataTable
               columns={[
+                testSelection.column,
                 {
                   header: "Bài test",
                   sortValue: (row) => row.title,
@@ -607,8 +639,9 @@ export const ContentLabPage = () => {
                         Sửa
                       </button>
                       <button className="ghost-button small danger" onClick={async () => {
-                        if (!(await confirm({ message: "Xóa bài test này?", confirmLabel: "Xóa", danger: true }))) return;
-                        deleteTestExam(row.id).then(loadAll).catch((e: any) => setError(e?.message || "Xóa thất bại"));
+                        const message = fillText(t.deletion.one, { name: row.title });
+                        if (!(await confirm({ message, confirmLabel: t.common.delete, danger: true }))) return;
+                        deleteTestExam(row.id).then(loadAll).catch((e) => setError(describeDeletionError(e, t)));
                       }}>
                         Xóa
                       </button>

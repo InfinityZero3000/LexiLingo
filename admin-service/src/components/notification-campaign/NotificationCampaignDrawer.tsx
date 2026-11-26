@@ -1,3 +1,5 @@
+import { useConfirm } from "../ConfirmDialog";
+import { useI18n } from "../../lib/i18n";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertTriangle,
@@ -37,6 +39,8 @@ type Props = {
 
 export function NotificationCampaignDrawer({ job: initialJob, onClose, onJobUpdated }: Props) {
   const [job, setJob] = useState<NotificationCampaignJob>(initialJob);
+  const confirm = useConfirm();
+  const { t } = useI18n();
   const [applying, setApplying] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [previewExpanded, setPreviewExpanded] = useState(true);
@@ -80,6 +84,8 @@ export function NotificationCampaignDrawer({ job: initialJob, onClose, onJobUpda
   }
 
   async function handleCancel() {
+    const ok = await confirm({ message: t.deletion.cancelJob, confirmLabel: t.deletion.cancelJobAction, danger: true });
+    if (!ok) return;
     setActionError(null);
     try {
       updateJob(await cancelNotificationCampaignJob(job.id));
