@@ -176,24 +176,23 @@ class CourseCRUD:
         return result.scalar_one_or_none() is not None
 
     @staticmethod
-    async def get_enrolled_course_ids(
+    async def get_progress_by_course(
         db: AsyncSession,
         user_id: uuid.UUID,
-        course_ids: List[uuid.UUID]
-    ) -> set[uuid.UUID]:
-        """Batch check enrollment — returns set of enrolled course IDs."""
+        course_ids: List[uuid.UUID],
+    ) -> dict[uuid.UUID, float]:
+        """Progress per enrolled course; a course that is absent is not enrolled."""
         if not course_ids:
-            return set()
-        result = await db.execute(
-            select(UserCourseProgress.course_id)
-            .where(
-                and_(
-                    UserCourseProgress.user_id == user_id,
-                    UserCourseProgress.course_id.in_(course_ids)
-                )
+            return {}
+        rows = await db.execute(
+            select(
+                UserCourseProgress.course_id, UserCourseProgress.progress_percentage
+            ).where(
+                UserCourseProgress.user_id == user_id,
+                UserCourseProgress.course_id.in_(course_ids),
             )
         )
-        return set(result.scalars().all())
+        return {course_id: progress or 0.0 for course_id, progress in rows.all()}
 
 
 # =====================

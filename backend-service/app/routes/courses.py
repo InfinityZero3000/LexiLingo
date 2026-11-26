@@ -94,10 +94,10 @@ async def get_courses(
         await set_cached(cache_key, {"items": course_dicts, "total": total}, ttl=60)
     
     # Overlay enrollment status (per-user, not cached)
-    enrolled_ids = set()
+    progress = {}
     if current_user:
         course_ids = [uuid.UUID(c["id"]) for c in course_dicts]
-        enrolled_ids = await CourseCRUD.get_enrolled_course_ids(
+        progress = await CourseCRUD.get_progress_by_course(
             db, current_user.id, course_ids
         )
     
@@ -106,7 +106,9 @@ async def get_courses(
         c_id = uuid.UUID(c["id"])
         item = CourseListItem(
             **{**c, "id": c_id,
-               "is_enrolled": c_id in enrolled_ids if current_user else None}
+               "is_enrolled": c_id in progress if current_user else None,
+               # Without it every enrolled card read 0%.
+               "user_progress": progress.get(c_id)}
         )
         course_items.append(item)
     

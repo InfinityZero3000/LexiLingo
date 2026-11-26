@@ -152,6 +152,12 @@ async def get_courses_by_category(
     
     # Convert to response models
     from app.crud.course import CourseCRUD
+    progress = {}
+    if current_user:
+        progress = await CourseCRUD.get_progress_by_course(
+            db, current_user.id, [course.id for course in courses]
+        )
+
     course_items = []
     for course in courses:
         item_dict = {
@@ -165,18 +171,11 @@ async def get_courses_by_category(
             "total_lessons": course.total_lessons,
             "total_xp": course.total_xp,
             "estimated_duration": course.estimated_duration,
-            "is_enrolled": None
+            "is_enrolled": course.id in progress if current_user else None,
+            "user_progress": progress.get(course.id),
         }
         
-        item = CourseListItem(**item_dict)
-        
-        # Add enrollment status if user is authenticated
-        if current_user:
-            item.is_enrolled = await CourseCRUD.is_user_enrolled(
-                db, current_user.id, course.id
-            )
-        
-        course_items.append(item)
+        course_items.append(CourseListItem(**item_dict))
     
     # Calculate pagination
     total_pages = (total + page_size - 1) // page_size
