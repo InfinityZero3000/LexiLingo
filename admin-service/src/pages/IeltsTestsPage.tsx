@@ -477,7 +477,7 @@ export const IeltsTestsPage = () => {
         )}
       </div>
 
-      <div className="panel stack">
+      <div className="panel stack ielts-editor">
         <SectionHeader
           title={selectedId ? "Edit test" : "New test"}
           description={
