@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { ArrowRight, Check, Plus, Trash2 } from "lucide-react";
 import {
   type Exercise,
@@ -395,10 +395,12 @@ const DialogueForm = ({ value, onChange }: { value: Exercise; onChange: (u: Exer
 
 /** Arrange the sentence: instruction + word array + correct sentence */
 const ArrangeForm = ({ value, onChange }: { value: Exercise; onChange: (u: Exercise) => void }) => {
-  const options = value.options ?? [];
-  const wordsText = options.map((o) => o.text).join(" / ");
+  // The typed text is its own state: rebuilding it from the parsed words dropped every
+  // "/" and space as soon as it was typed.
+  const [wordsText, setWordsText] = useState(() => (value.options ?? []).map((o) => o.text).join(" / "));
 
   const handleWordsChange = (raw: string) => {
+    setWordsText(raw);
     const words = raw.split("/").map((w) => w.trim()).filter(Boolean);
     const opts: ExerciseOption[] = words.map((w, i) => ({ id: String(i), text: w, is_correct: false }));
     onChange({ ...value, options: opts });
