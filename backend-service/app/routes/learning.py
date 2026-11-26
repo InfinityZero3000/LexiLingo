@@ -1123,7 +1123,10 @@ async def complete_lesson(
     xp_to_award = 0
     if attempt.passed and xp_earned_first_time > 0:
         xp_to_award = attempt.xp_earned or lesson.xp_reward or 0
-        
+    # Until now this was the running per-answer tally. A failed or repeated
+    # lesson pays nothing, so the result screen must not show that tally.
+    attempt.xp_earned = xp_to_award
+
     # Recalculate and update course progress percentage
     new_progress = await ProgressCRUD.calculate_course_progress(
         db, str(current_user.id), str(lesson.course_id)
