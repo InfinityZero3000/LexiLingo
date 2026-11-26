@@ -1227,6 +1227,11 @@ async def complete_lesson(
             )
     except Exception as e:
         logger.warning("Proficiency update error: %s", e)
+        # A failed statement aborts the transaction: without this every query
+        # below fails too and the finished lesson is answered with a 500.
+        await db.rollback()
+        for instance in (current_user, attempt, lesson):
+            await db.refresh(instance)
 
     await delete_cached(build_cache_key("progress_me", user_id=str(current_user.id)))
     await delete_cached(build_cache_key("progress_xp", user_id=str(current_user.id)))

@@ -1722,6 +1722,11 @@ async def complete_game_session(
             )
     except Exception as e:
         logger.warning("Proficiency update error: %s", e)
+        # A failed statement aborts the transaction; the response and the
+        # achievement check below still need the session.
+        await db.rollback()
+        for instance in (current_user, session):
+            await db.refresh(instance)
 
     try:
         unlocked_achievements = await check_achievements_for_user(
@@ -1737,6 +1742,7 @@ async def complete_game_session(
             session.id,
         )
         await db.rollback()
+        await db.refresh(session)
 
     return GameSessionCompleteResponse(
         session_id=str(session.id),
