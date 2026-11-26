@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, FileAudio, Plus, RefreshCw, Trash2 } from "lucide-react";
 
 import { IeltsProvenancePanel } from "../components/IeltsProvenancePanel";
+import { useConfirm } from "../components/ConfirmDialog";
 import { EmptyState } from "../components/EmptyState";
 import { SectionHeader } from "../components/SectionHeader";
 import { StatusPill } from "../components/StatusPill";
@@ -140,6 +141,7 @@ const emptyDraft = (): Draft => ({
 });
 
 export const IeltsTestsPage = () => {
+  const confirm = useConfirm();
   const [tests, setTests] = useState<IeltsTest[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -304,7 +306,13 @@ export const IeltsTestsPage = () => {
     }
   };
 
-  const removeTest = async (id: string) => {
+  const removeTest = async ({ id, title, attempt_count }: IeltsTest) => {
+    const ok = await confirm({
+      message: `Delete "${title}"? Its ${attempt_count} learner attempt(s) are deleted with it.`,
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       await deleteIeltsTest(id);
@@ -463,7 +471,7 @@ export const IeltsTestsPage = () => {
                       type="button"
                       onClick={(event) => {
                         event.stopPropagation();
-                        void removeTest(test.id);
+                        void removeTest(test);
                       }}
                       aria-label={`Delete ${test.title}`}
                     >
