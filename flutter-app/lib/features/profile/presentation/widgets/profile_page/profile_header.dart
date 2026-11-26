@@ -1,6 +1,4 @@
 import 'package:lexilingo_app/core/widgets/tap_target.dart';
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/features/gamification/gamification.dart';
@@ -95,77 +93,222 @@ class ProfileHeader extends StatelessWidget {
               // Glassmorphic Background Card
               ClipRRect(
                 borderRadius: BorderRadius.circular(AppRadius.xl),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          (isDark
-                                  ? accent
-                                  : Theme.of(context).colorScheme.primary)
-                              .withValues(alpha: 0.15),
-                          (isDark
-                                  ? accent
-                                  : Theme.of(context).colorScheme.primary)
-                              .withValues(alpha: 0.1),
-                          AppColors.surfaceLight.withValues(alpha: 0.05),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(AppRadius.xl),
-                      border: Border.all(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.surface.withValues(alpha: 0.2),
-                        width: 1.5,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color:
-                              (isDark
-                                      ? accent
-                                      : Theme.of(context).colorScheme.primary)
-                                  .withValues(alpha: 0.12),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        (isDark
+                                ? accent
+                                : Theme.of(context).colorScheme.primary)
+                            .withValues(alpha: 0.15),
+                        (isDark
+                                ? accent
+                                : Theme.of(context).colorScheme.primary)
+                            .withValues(alpha: 0.1),
+                        AppColors.surfaceLight.withValues(alpha: 0.05),
                       ],
                     ),
-                    child: Column(
-                      children: [
-                        // Avatar with animated progress ring
-                        Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            // Progress Ring
-                            glass.AnimatedProgressRing(
-                              progress: progress,
-                              size: 104,
-                              strokeWidth: 5,
-                              gradientColors: [
-                                isDark
+                    borderRadius: BorderRadius.circular(AppRadius.xl),
+                    border: Border.all(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surface.withValues(alpha: 0.2),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color:
+                            (isDark
                                     ? accent
-                                    : Theme.of(context).colorScheme.primary,
+                                    : Theme.of(context).colorScheme.primary)
+                                .withValues(alpha: 0.12),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      // Avatar with animated progress ring
+                      Stack(
+                        alignment: Alignment.center,
+                        children: [
+                          // Progress Ring
+                          glass.AnimatedProgressRing(
+                            progress: progress,
+                            size: 104,
+                            strokeWidth: 5,
+                            gradientColors: [
+                              isDark
+                                  ? accent
+                                  : Theme.of(context).colorScheme.primary,
 
-                                isDark
-                                    ? accent
-                                    : Theme.of(context).colorScheme.primary,
+                              isDark
+                                  ? accent
+                                  : Theme.of(context).colorScheme.primary,
 
-                                AppColors.purple,
-                              ],
-                              child: Container(
-                                width: 88,
-                                height: 88,
+                              AppColors.purple,
+                            ],
+                            child: Container(
+                              width: 88,
+                              height: 88,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.surface.withValues(alpha: 0.5),
+                                  width: 2,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color:
+                                        (isDark
+                                                ? accent
+                                                : Theme.of(
+                                                    context,
+                                                  ).colorScheme.primary)
+                                            .withValues(alpha: 0.3),
+                                    blurRadius: 16,
+                                    spreadRadius: 3,
+                                  ),
+                                ],
+                              ),
+                              child: ClipOval(
+                                child: NetworkAvatarImage(
+                                  imageUrl: user?.avatarUrl,
+                                  fit: BoxFit.cover,
+                                  width: 88,
+                                  height: 88,
+                                  fallback: Container(
+                                    color:
+                                        (isDark
+                                                ? accent
+                                                : Theme.of(
+                                                    context,
+                                                  ).colorScheme.primary)
+                                            .withValues(alpha: 0.2),
+                                    child: Icon(
+                                      Icons.person,
+                                      size: 40,
+                                      color: isDark
+                                          ? accent
+                                          : Theme.of(
+                                              context,
+                                            ).colorScheme.primary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Verified Badge
+                          if (user?.isVerified == true)
+                            Positioned(
+                              bottom: 4,
+                              right: 4,
+                              child: Semantics(
+                                label: 'profile.emailVerified'.tr(),
+                                child: Tooltip(
+                                  message: 'profile.emailVerified'.tr(),
+                                  excludeFromSemantics: true,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          isDark
+                                              ? accent
+                                              : Theme.of(
+                                                  context,
+                                                ).colorScheme.primary,
+
+                                          isDark
+                                              ? accent
+                                              : Theme.of(
+                                                  context,
+                                                ).colorScheme.primary,
+                                        ],
+                                      ),
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: AppColors.surfaceLight,
+                                        width: 2,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color:
+                                              (isDark
+                                                      ? accent
+                                                      : Theme.of(
+                                                          context,
+                                                        ).colorScheme.primary)
+                                                  .withValues(alpha: 0.5),
+                                          blurRadius: 8,
+                                        ),
+                                      ],
+                                    ),
+                                    child: Icon(
+                                      Icons.verified,
+                                      color: AppColors.surfaceLight,
+                                      size: 16,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      // User Name
+                      Text(
+                        user?.displayName ?? 'profile.guestUser'.tr(),
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: -0.5,
+                            ),
+                      ),
+                      const SizedBox(height: 6),
+                      // Email
+                      if (user != null)
+                        Text(
+                          user!.email,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(
+                                color: AppColorRoles.textSecondary(isDark),
+                              ),
+                        ),
+                      const SizedBox(height: AppSpacing.md),
+                      // Level Badge + CEFR Proficiency Badge + Rank Badge
+                      Consumer<LevelProvider>(
+                        builder: (_, lp, __) {
+                          final rankData = rankVisualDataFor(lp.rank);
+                          final isMasterRank = lp.rank == 'master';
+                          return Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            alignment: WrapAlignment.center,
+                            children: [
+                              // Numeric Level badge
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.md,
+                                  vertical: AppSpacing.sm,
+                                ),
                                 decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Theme.of(context).colorScheme.surface
-                                        .withValues(alpha: 0.5),
-                                    width: 2,
+                                  gradient: LinearGradient(
+                                    colors: AppColorRoles.primaryGradient(
+                                      isDark,
+                                    ),
+                                  ),
+                                  borderRadius: BorderRadius.circular(
+                                    AppRadius.lg,
                                   ),
                                   boxShadow: [
                                     BoxShadow(
@@ -175,337 +318,144 @@ class ProfileHeader extends StatelessWidget {
                                                   : Theme.of(
                                                       context,
                                                     ).colorScheme.primary)
-                                              .withValues(alpha: 0.3),
-                                      blurRadius: 16,
-                                      spreadRadius: 3,
+                                              .withValues(alpha: 0.4),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 4),
                                     ),
                                   ],
                                 ),
-                                child: ClipOval(
-                                  child: NetworkAvatarImage(
-                                    imageUrl: user?.avatarUrl,
-                                    fit: BoxFit.cover,
-                                    width: 88,
-                                    height: 88,
-                                    fallback: Container(
-                                      color:
-                                          (isDark
-                                                  ? accent
-                                                  : Theme.of(
-                                                      context,
-                                                    ).colorScheme.primary)
-                                              .withValues(alpha: 0.2),
-                                      child: Icon(
-                                        Icons.person,
-                                        size: 40,
-                                        color: isDark
-                                            ? accent
-                                            : Theme.of(
-                                                context,
-                                              ).colorScheme.primary,
-                                      ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.workspace_premium_rounded,
+                                      color: AppColors.surfaceLight,
+                                      size: 16,
                                     ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            // Verified Badge
-                            if (user?.isVerified == true)
-                              Positioned(
-                                bottom: 4,
-                                right: 4,
-                                child: Semantics(
-                                  label: 'profile.emailVerified'.tr(),
-                                  child: Tooltip(
-                                    message: 'profile.emailVerified'.tr(),
-                                    excludeFromSemantics: true,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(6),
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          colors: [
-                                            isDark
-                                                ? accent
-                                                : Theme.of(
-                                                    context,
-                                                  ).colorScheme.primary,
-
-                                            isDark
-                                                ? accent
-                                                : Theme.of(
-                                                    context,
-                                                  ).colorScheme.primary,
-                                          ],
-                                        ),
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: AppColors.surfaceLight,
-                                          width: 2,
-                                        ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color:
-                                                (isDark
-                                                        ? accent
-                                                        : Theme.of(
-                                                            context,
-                                                          ).colorScheme.primary)
-                                                    .withValues(alpha: 0.5),
-                                            blurRadius: 8,
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'profile.level'.tr(
+                                        namedArgs: {
+                                          'level': '${lp.displayLevel}',
+                                        },
+                                      ),
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: AppColors.surfaceLight,
+                                            fontWeight: FontWeight.bold,
                                           ),
-                                        ],
-                                      ),
-                                      child: Icon(
-                                        Icons.verified,
-                                        color: AppColors.surfaceLight,
-                                        size: 16,
-                                      ),
                                     ),
-                                  ),
+                                  ],
                                 ),
                               ),
-                          ],
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        // User Name
-                        Text(
-                          user?.displayName ?? 'profile.guestUser'.tr(),
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: -0.5,
-                              ),
-                        ),
-                        const SizedBox(height: 6),
-                        // Email
-                        if (user != null)
-                          Text(
-                            user!.email,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: AppColorRoles.textSecondary(isDark),
-                                ),
-                          ),
-                        const SizedBox(height: AppSpacing.md),
-                        // Level Badge + CEFR Proficiency Badge + Rank Badge
-                        Consumer<LevelProvider>(
-                          builder: (_, lp, __) {
-                            final rankData = rankVisualDataFor(lp.rank);
-                            final isMasterRank = lp.rank == 'master';
-                            return Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              alignment: WrapAlignment.center,
-                              children: [
-                                // Numeric Level badge
-                                Container(
+                              // CEFR Proficiency Badge. The level name
+                              // moved to a tooltip so the three badges fit
+                              // one row at 375px.
+                              Tooltip(
+                                message: lp.proficiencyName,
+                                child: Container(
                                   padding: const EdgeInsets.symmetric(
                                     horizontal: AppSpacing.md,
                                     vertical: AppSpacing.sm,
                                   ),
                                   decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: AppColorRoles.primaryGradient(
-                                        isDark,
-                                      ),
-                                    ),
+                                    color: tierColor(
+                                      context,
+                                      lp.proficiencyLevel,
+                                    ).withValues(alpha: 0.12),
                                     borderRadius: BorderRadius.circular(
                                       AppRadius.lg,
                                     ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color:
-                                            (isDark
-                                                    ? accent
-                                                    : Theme.of(
-                                                        context,
-                                                      ).colorScheme.primary)
-                                                .withValues(alpha: 0.4),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
+                                    border: Border.all(
+                                      color: tierColor(
+                                        context,
+                                        lp.proficiencyLevel,
+                                      ).withValues(alpha: 0.5),
+                                    ),
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(
-                                        Icons.workspace_premium_rounded,
-                                        color: AppColors.surfaceLight,
-                                        size: 16,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        'profile.level'.tr(
-                                          namedArgs: {
-                                            'level': '${lp.displayLevel}',
-                                          },
+                                        tierIcon(lp.proficiencyLevel),
+                                        size: 14,
+                                        color: tierColor(
+                                          context,
+                                          lp.proficiencyLevel,
                                         ),
+                                      ),
+                                      const SizedBox(width: AppSpacing.xs),
+                                      Text(
+                                        lp.proficiencyLevel,
                                         style: Theme.of(context)
                                             .textTheme
                                             .bodySmall
                                             ?.copyWith(
-                                              color: AppColors.surfaceLight,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                // CEFR Proficiency Badge. The level name
-                                // moved to a tooltip so the three badges fit
-                                // one row at 375px.
-                                Tooltip(
-                                  message: lp.proficiencyName,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: AppSpacing.md,
-                                      vertical: AppSpacing.sm,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: tierColor(
-                                        context,
-                                        lp.proficiencyLevel,
-                                      ).withValues(alpha: 0.12),
-                                      borderRadius: BorderRadius.circular(
-                                        AppRadius.lg,
-                                      ),
-                                      border: Border.all(
-                                        color: tierColor(
-                                          context,
-                                          lp.proficiencyLevel,
-                                        ).withValues(alpha: 0.5),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          tierIcon(lp.proficiencyLevel),
-                                          size: 14,
-                                          color: tierColor(
-                                            context,
-                                            lp.proficiencyLevel,
-                                          ),
-                                        ),
-                                        const SizedBox(width: AppSpacing.xs),
-                                        Text(
-                                          lp.proficiencyLevel,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodySmall
-                                              ?.copyWith(
-                                                color: tierColor(
-                                                  context,
-                                                  lp.proficiencyLevel,
-                                                ),
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                        ),
-                                        // Chosen, not yet confirmed by a test.
-                                        if (!lp.levelVerified) ...[
-                                          const SizedBox(width: AppSpacing.xs),
-                                          Tooltip(
-                                            message:
-                                                'profile.levelUnverifiedValue'
-                                                    .tr(
-                                                      namedArgs: {
-                                                        'level':
-                                                            lp.proficiencyLevel,
-                                                        'certified':
-                                                            lp.certifiedLevel,
-                                                      },
-                                                    ),
-                                            child: Icon(
-                                              Icons.help_outline_rounded,
-                                              size: 14,
                                               color: tierColor(
                                                 context,
                                                 lp.proficiencyLevel,
                                               ),
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                      ),
+                                      // Chosen, not yet confirmed by a test.
+                                      if (!lp.levelVerified) ...[
+                                        const SizedBox(width: AppSpacing.xs),
+                                        Tooltip(
+                                          message:
+                                              'profile.levelUnverifiedValue'.tr(
+                                                namedArgs: {
+                                                  'level': lp.proficiencyLevel,
+                                                  'certified':
+                                                      lp.certifiedLevel,
+                                                },
+                                              ),
+                                          child: Icon(
+                                            Icons.help_outline_rounded,
+                                            size: 14,
+                                            color: tierColor(
+                                              context,
+                                              lp.proficiencyLevel,
                                             ),
                                           ),
-                                        ],
+                                        ),
                                       ],
-                                    ),
+                                    ],
                                   ),
                                 ),
-                                // League Rank Badge
-                                TapTarget(
-                                  onTap: () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => const LeaderboardScreen(),
-                                    ),
+                              ),
+                              // League Rank Badge
+                              TapTarget(
+                                onTap: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const LeaderboardScreen(),
                                   ),
-                                  child: isMasterRank
-                                      ? ShaderMask(
-                                          shaderCallback: (bounds) =>
-                                              const LinearGradient(
-                                                colors:
-                                                    AppColors.masterGradient,
-                                                begin: Alignment.topLeft,
-                                                end: Alignment.bottomRight,
-                                              ).createShader(bounds),
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 10,
-                                              vertical: 6,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: AppColors.onGradient
-                                                  .withValues(alpha: 0.12),
-                                              borderRadius:
-                                                  BorderRadius.circular(
-                                                    AppRadius.lg,
-                                                  ),
-                                              border: Border.all(
-                                                color: AppColors.onGradient
-                                                    .withValues(alpha: 0.4),
-                                              ),
-                                            ),
-                                            child: Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                RankAssetIcon(
-                                                  rank: lp.rank,
-                                                  size: 16,
-                                                  decorated: false,
-                                                ),
-                                                const SizedBox(width: 5),
-                                                Text(
-                                                  lp.rankName,
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .bodySmall
-                                                      ?.copyWith(
-                                                        color: AppColors
-                                                            .onGradient,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                      ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        )
-                                      : Container(
+                                ),
+                                child: isMasterRank
+                                    ? ShaderMask(
+                                        shaderCallback: (bounds) =>
+                                            const LinearGradient(
+                                              colors: AppColors.masterGradient,
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                            ).createShader(bounds),
+                                        child: Container(
                                           padding: const EdgeInsets.symmetric(
                                             horizontal: 10,
                                             vertical: 6,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: rankData.color.withValues(
-                                              alpha: 0.1,
-                                            ),
+                                            color: AppColors.onGradient
+                                                .withValues(alpha: 0.12),
                                             borderRadius: BorderRadius.circular(
-                                              20,
+                                              AppRadius.lg,
                                             ),
                                             border: Border.all(
-                                              color: rankData.color.withValues(
-                                                alpha: 0.4,
-                                              ),
+                                              color: AppColors.onGradient
+                                                  .withValues(alpha: 0.4),
                                             ),
                                           ),
                                           child: Row(
@@ -523,7 +473,8 @@ class ProfileHeader extends StatelessWidget {
                                                     .textTheme
                                                     .bodySmall
                                                     ?.copyWith(
-                                                      color: rankData.color,
+                                                      color:
+                                                          AppColors.onGradient,
                                                       fontWeight:
                                                           FontWeight.bold,
                                                     ),
@@ -531,89 +482,128 @@ class ProfileHeader extends StatelessWidget {
                                             ],
                                           ),
                                         ),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        Text(
-                          formatMemberSince(context, user?.createdAt),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodySmall
-                              ?.copyWith(
-                                color: AppColorRoles.textSecondary(isDark),
-                              ),
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        // Edit Profile Button
-                        TapTarget(
-                          onTap: () async {
-                            final result = await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const EditProfileScreen(),
-                              ),
-                            );
-                            if (result == true) {
-                              onProfileEdited(); // Refresh after edit
-                            }
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: AppSpacing.sm,
-                            ),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: AppColorRoles.primaryGradient(isDark),
-                              ),
-                              borderRadius: BorderRadius.circular(AppRadius.lg),
-                              boxShadow: [
-                                BoxShadow(
-                                  color:
-                                      (isDark
-                                              ? accent
-                                              : Theme.of(
-                                                  context,
-                                                ).colorScheme.primary)
-                                          .withValues(alpha: 0.3),
-                                  blurRadius: 8,
-                                  offset: Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.edit,
-                                  color: AppColors.surfaceLight,
-                                  size: 14,
-                                ),
-                                SizedBox(width: 6),
-                                Flexible(
-                                  child: Text(
-                                    'profile.editProfile'.tr(),
-                                    style: Theme.of(context).textTheme.bodySmall
-                                        ?.copyWith(
-                                          color: AppColors.surfaceLight,
-                                          fontWeight: FontWeight.bold,
+                                      )
+                                    : Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 6,
                                         ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
+                                        decoration: BoxDecoration(
+                                          color: rankData.color.withValues(
+                                            alpha: 0.1,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            20,
+                                          ),
+                                          border: Border.all(
+                                            color: rankData.color.withValues(
+                                              alpha: 0.4,
+                                            ),
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            RankAssetIcon(
+                                              rank: lp.rank,
+                                              size: 16,
+                                              decorated: false,
+                                            ),
+                                            const SizedBox(width: 5),
+                                            Text(
+                                              lp.rankName,
+                                              style: Theme.of(context)
+                                                  .textTheme
+                                                  .bodySmall
+                                                  ?.copyWith(
+                                                    color: rankData.color,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        formatMemberSince(context, user?.createdAt),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColorRoles.textSecondary(isDark),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      // Edit Profile Button
+                      TapTarget(
+                        onTap: () async {
+                          final result = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const EditProfileScreen(),
                             ),
+                          );
+                          if (result == true) {
+                            onProfileEdited(); // Refresh after edit
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: AppSpacing.sm,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: AppColorRoles.primaryGradient(isDark),
+                            ),
+                            borderRadius: BorderRadius.circular(AppRadius.lg),
+                            boxShadow: [
+                              BoxShadow(
+                                color:
+                                    (isDark
+                                            ? accent
+                                            : Theme.of(
+                                                context,
+                                              ).colorScheme.primary)
+                                        .withValues(alpha: 0.3),
+                                blurRadius: 8,
+                                offset: Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.edit,
+                                color: AppColors.surfaceLight,
+                                size: 14,
+                              ),
+                              SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  'profile.editProfile'.tr(),
+                                  style: Theme.of(context).textTheme.bodySmall
+                                      ?.copyWith(
+                                        color: AppColors.surfaceLight,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: AppSpacing.lg),
-                        // Social Stats Row
-                        const SocialStatsRow(),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: AppSpacing.lg),
+                      // Social Stats Row
+                      const SocialStatsRow(),
+                    ],
                   ),
                 ),
               ),

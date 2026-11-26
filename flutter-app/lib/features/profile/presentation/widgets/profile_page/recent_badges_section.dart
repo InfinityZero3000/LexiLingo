@@ -22,6 +22,7 @@ class RecentBadgesSection extends StatefulWidget {
 class _RecentBadgesSectionState extends State<RecentBadgesSection>
     with SingleTickerProviderStateMixin {
   late final AnimationController _badgeShineController;
+  bool _shinePlayed = false;
 
   @override
   void initState() {
@@ -29,13 +30,23 @@ class _RecentBadgesSectionState extends State<RecentBadgesSection>
     _badgeShineController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 3000),
-    )..repeat();
+    );
   }
 
   @override
   void dispose() {
     _badgeShineController.dispose();
     super.dispose();
+  }
+
+  /// One sweep only: a looping shine repaints every badge on every frame for as
+  /// long as the tab is alive, which on the web makes the whole page stutter.
+  void _playShineOnce() {
+    if (_shinePlayed) return;
+    _shinePlayed = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _badgeShineController.forward();
+    });
   }
 
   bool _isVisible(UserAchievementEntity badge) =>
@@ -93,15 +104,14 @@ class _RecentBadgesSectionState extends State<RecentBadgesSection>
                         // Smaller sweep portion => longer idle pause per cycle.
                         const sweepPortion = 0.62;
                         final progress = _badgeShineController.value;
-                        final isSweeping = progress < sweepPortion;
-                        final sweepT = isSweeping
-                            ? Curves.easeInOut.transform(
-                                progress / sweepPortion,
-                              )
-                            : 1.0;
-                        final position = isSweeping
-                            ? lerpDouble(-1.6, 1.6, sweepT)!
-                            : 2.4;
+                        if (progress == 0 || progress >= sweepPortion) {
+                          return const SizedBox.shrink();
+                        }
+                        final position = lerpDouble(
+                          -1.6,
+                          1.6,
+                          Curves.easeInOut.transform(progress / sweepPortion),
+                        )!;
 
                         return ShaderMask(
                           // Apply shine only where the badge image has alpha.
@@ -184,6 +194,7 @@ class _RecentBadgesSectionState extends State<RecentBadgesSection>
         final badges = provider.recentBadges;
         final isLoading = provider.isLoadingBadges;
         final visibleBadges = badges.where(_isVisible).toList();
+        if (visibleBadges.isNotEmpty) _playShineOnce();
 
         return Column(
           children: [
@@ -218,7 +229,8 @@ class _RecentBadgesSectionState extends State<RecentBadgesSection>
             ),
             SizedBox(
               height: 116,
-              child: isLoading
+              // A reload keeps what is on screen instead of flashing a skeleton.
+              child: isLoading && visibleBadges.isEmpty
                   ? ShimmerContainer(
                       child: ListView.separated(
                         scrollDirection: Axis.horizontal,

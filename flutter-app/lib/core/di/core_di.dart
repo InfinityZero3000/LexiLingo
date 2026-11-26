@@ -45,6 +45,20 @@ const _refreshTokenRejectedStatuses = {400, 401, 403};
 bool _refreshTokenWasRejected(int statusCode) =>
     _refreshTokenRejectedStatuses.contains(statusCode);
 
+/// The account an access token belongs to, or null if it cannot be read.
+String? _tokenSubject(String accessToken) {
+  try {
+    final payload = jsonDecode(
+      utf8.decode(
+        base64Url.decode(base64Url.normalize(accessToken.split('.')[1])),
+      ),
+    );
+    return (payload as Map)['sub']?.toString();
+  } catch (_) {
+    return null;
+  }
+}
+
 @visibleForTesting
 void resetTokenRefreshStateForTest() {
   _tokenRefreshCompleter = null;
@@ -69,12 +83,31 @@ Future<bool> refreshBackendToken(
   final completer = _tokenRefreshCompleter!;
 
   try {
+    final held = await tokenStorage.getTokens();
+    // Refresh tokens are single-use: sending one another tab already spent makes
+    // the server revoke the whole session, so read what is stored right now.
+    await tokenStorage.reload();
     final tokens = await tokenStorage.getTokens();
     if (tokens == null || tokens.refreshToken.isEmpty) {
       await tokenStorage.clearTokens();
       SessionExpiredService.instance.notifyExpired();
       completer.complete(false);
       return false;
+    }
+
+    if (held != null && held.refreshToken != tokens.refreshToken) {
+      if (_tokenSubject(held.accessToken) !=
+          _tokenSubject(tokens.accessToken)) {
+        // Another tab signed into a different account: leave its tokens alone,
+        // and never retry this account's requests with them.
+        SessionExpiredService.instance.notifyExpired();
+        completer.complete(false);
+        return false;
+      }
+      if (!isAccessTokenExpiring(tokens.accessToken)) {
+        completer.complete(true);
+        return true;
+      }
     }
 
     final post = httpClient?.post ?? http.post;
@@ -89,6 +122,17 @@ Future<bool> refreshBackendToken(
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       if (_refreshTokenWasRejected(response.statusCode)) {
+        await tokenStorage.reload();
+        final latest = await tokenStorage.getTokens();
+        if (latest != null && latest.refreshToken != tokens.refreshToken) {
+          // Another tab replaced the tokens while this request was in flight.
+          final sameAccount =
+              _tokenSubject(latest.accessToken) ==
+              _tokenSubject(tokens.accessToken);
+          if (!sameAccount) SessionExpiredService.instance.notifyExpired();
+          completer.complete(sameAccount);
+          return sameAccount;
+        }
         // Expired, revoked or reused: the only case that ends the session.
         await tokenStorage.clearTokens();
         SessionExpiredService.instance.notifyExpired();

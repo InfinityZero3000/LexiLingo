@@ -60,6 +60,12 @@ class TokenStorage {
     }
   }
 
+  /// On the web every tab keeps its own SharedPreferences cache over one shared
+  /// localStorage, so a rotation made by another tab is invisible until this.
+  Future<void> reload() async {
+    if (kIsWeb) await (await SharedPreferences.getInstance()).reload();
+  }
+
   /// Save authentication tokens securely
   Future<void> saveTokens(AuthTokens tokens) async {
     logDebug(_tag, 'Saving tokens...');
