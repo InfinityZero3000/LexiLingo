@@ -14,9 +14,9 @@ const api = vi.hoisted(() => ({
   giftToUser: vi.fn(),
 }));
 
-vi.mock("../../lib/userManagementApi", () => ({
+vi.mock("../../lib/userManagementApi", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../lib/userManagementApi")>()),
   ...api,
-  getRoleLabel: (level: number) => (level === 2 ? "Super Admin" : level === 1 ? "Admin" : "User"),
 }));
 vi.mock("../../lib/gemLimitsApi", () => ({
   getGemLimits: vi.fn().mockResolvedValue({
@@ -33,6 +33,7 @@ const detail = {
   email: "ann@x.co",
   display_name: "Ann",
   is_active: true,
+  role_slug: "user",
   role_level: 0,
   total_xp: 1500,
   courses_completed: 1,
@@ -97,7 +98,7 @@ describe("UserDetailModal", () => {
     const dialog = await screen.findByText("Change this user's role to Admin?");
     expect(api.updateUserRole).not.toHaveBeenCalled();
     fireEvent.click(within(dialog.closest('[role="dialog"]') as HTMLElement).getByRole("button", { name: "Change role" }));
-    await waitFor(() => expect(api.updateUserRole.mock.calls[0].slice(0, 2)).toEqual(["u1", { level: 1 }]));
+    await waitFor(() => expect(api.updateUserRole.mock.calls[0].slice(0, 2)).toEqual(["u1", { slug: "admin" }]));
   });
 
   it("leaves the role alone when the confirm dialog is cancelled", async () => {
@@ -115,6 +116,16 @@ describe("UserDetailModal", () => {
     await screen.findByText("Personal info");
     expect((screen.getByRole("button", { name: "User" }) as HTMLButtonElement).disabled).toBe(true);
     expect((screen.getByRole("button", { name: "Admin" }) as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it("marks a test account by slug, since it shares level 0 with User", async () => {
+    api.updateUserRole.mockResolvedValue({});
+    mount();
+    await screen.findByText("Personal info");
+    fireEvent.click(screen.getByRole("button", { name: "Test" }));
+    const dialog = await screen.findByText("Change this user's role to Test?");
+    fireEvent.click(within(dialog.closest('[role="dialog"]') as HTMLElement).getByRole("button", { name: "Change role" }));
+    await waitFor(() => expect(api.updateUserRole.mock.calls[0].slice(0, 2)).toEqual(["u1", { slug: "test" }]));
   });
 
   it("rejects an empty course gift without calling the API", async () => {

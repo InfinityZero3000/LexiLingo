@@ -13,6 +13,8 @@ import {
   updateUserRole,
   getUserActivity,
   getRoleLabel,
+  ROLE_LABELS,
+  type RoleSlug,
   type UserUpdateData as ApiUserUpdateData,
   giftToUser,
   type GiftRequest,
@@ -101,7 +103,7 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
   });
   
   const roleChangeMutation = useMutation({
-    mutationFn: (level: number) => updateUserRole(userId, { level }),
+    mutationFn: (slug: RoleSlug) => updateUserRole(userId, { slug }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-detail', userId] });
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -123,12 +125,12 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
     updateMutation.mutate(formData);
   };
   
-  const handleRoleChange = async (level: number) => {
+  const handleRoleChange = async (slug: RoleSlug) => {
     const ok = await confirm({
-      message: t.userDetail.changeRoleConfirm.replace("{role}", getRoleLabel(level)),
+      message: t.userDetail.changeRoleConfirm.replace("{role}", getRoleLabel(slug)),
       confirmLabel: t.userDetail.changeRoleAction,
     });
-    if (ok) roleChangeMutation.mutate(level);
+    if (ok) roleChangeMutation.mutate(slug);
   };
 
   const { data: gemLimits } = useQuery({
@@ -428,7 +430,7 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
               <div className="mini-list">
                 <div className="pill-item">
                   <span className="table-sub">{t.userDetail.role}</span>
-                  <span className={`status-pill ${roleStatusTone}`}>{getRoleLabel(user.role_level)}</span>
+                  <span className={`status-pill ${roleStatusTone}`}>{getRoleLabel(user.role_slug)}</span>
                 </div>
                 <div className="pill-item">
                   <span className="table-sub">{t.userDetail.status}</span>
@@ -451,11 +453,11 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
               <div className="ud-role-change">
                 <p className="ud-role-label">{t.userDetail.changeRole}</p>
                 <div className="action-group">
-                  {([[0, 'User'], [1, 'Admin'], [2, 'Super Admin']] as const).map(([level, label]) => (
+                  {(Object.entries(ROLE_LABELS) as [RoleSlug, string][]).map(([slug, label]) => (
                     <button
-                      key={level}
-                      onClick={() => handleRoleChange(level)}
-                      disabled={user.role_level === level || roleChangeMutation.isPending}
+                      key={slug}
+                      onClick={() => handleRoleChange(slug)}
+                      disabled={user.role_slug === slug || roleChangeMutation.isPending}
                       className="mini-btn"
                       style={{ borderRadius: '9999px' }}
                     >

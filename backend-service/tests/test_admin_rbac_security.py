@@ -849,3 +849,57 @@ class TestAnalyticsAccess:
             "/api/v1/admin/analytics/dashboard/kpis", headers=regular_headers
         )
         assert response.status_code == 403
+
+
+class TestTestRole:
+    """'test' shares level 0 with 'user'; the slug is what tells them apart."""
+
+    @pytest.fixture
+    async def test_role(self, db_session: AsyncSession, roles):
+        role = Role(name="Test", slug="test", level=0, is_system=True, is_active=True)
+        db_session.add(role)
+        await db_session.commit()
+        return role
+
+    @pytest.mark.asyncio
+    async def test_slug_marks_a_test_account_and_the_list_finds_it(
+        self, async_client: AsyncClient, super_admin_headers, regular_user, test_role
+    ):
+        response = await async_client.put(
+            f"/api/v1/admin/users/{regular_user.id}/role",
+            headers=super_admin_headers,
+            json={"slug": "test"},
+        )
+        assert response.status_code == 200
+        assert response.json()["data"] == {
+            "user_id": str(regular_user.id), "new_level": 0, "new_role": "test",
+        }
+
+        listed = await async_client.get(
+            "/api/v1/admin/users?role_slug=test", headers=super_admin_headers
+        )
+        assert [u["email"] for u in listed.json()["data"]["users"]] == [regular_user.email]
+
+    @pytest.mark.asyncio
+    async def test_level_zero_still_means_user_with_two_level_zero_roles(
+        self, async_client: AsyncClient, super_admin_headers, admin_user, test_role
+    ):
+        response = await async_client.put(
+            f"/api/v1/admin/users/{admin_user.id}/role",
+            headers=super_admin_headers,
+            json={"level": 0},
+        )
+        assert response.status_code == 200
+        assert response.json()["data"]["new_role"] == "user"
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("body", [{}, {"level": 0, "slug": "test"}, {"slug": "root"}])
+    async def test_role_body_must_name_exactly_one_known_role(
+        self, async_client: AsyncClient, super_admin_headers, regular_user, test_role, body
+    ):
+        response = await async_client.put(
+            f"/api/v1/admin/users/{regular_user.id}/role",
+            headers=super_admin_headers,
+            json=body,
+        )
+        assert response.status_code == 422
