@@ -6,7 +6,7 @@ Supports filtering, pagination, and user-specific data (enrollment, progress).
 """
 
 from typing import List, Optional
-from sqlalchemy import String, case, cast, select, func, and_
+from sqlalchemy import String, case, cast, select, func, and_, delete
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 import uuid
@@ -151,14 +151,11 @@ class CourseCRUD:
 
     @staticmethod
     async def delete_course(db: AsyncSession, course_id: uuid.UUID) -> bool:
-        """Delete a course (soft delete by unpublishing)."""
-        db_course = await CourseCRUD.get_course(db, course_id)
-        if not db_course:
-            return False
-        
-        db_course.is_published = False
+        """Remove the course and, by cascade, its units and lessons."""
+        # A core delete: the ORM cascade would lazy-load children, which async sessions refuse.
+        result = await db.execute(delete(Course).where(Course.id == course_id))
         await db.commit()
-        return True
+        return result.rowcount > 0
     
     @staticmethod
     async def is_user_enrolled(

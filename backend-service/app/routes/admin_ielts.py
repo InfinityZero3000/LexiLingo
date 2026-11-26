@@ -21,6 +21,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.services import content_deletion
 from app.core.database import get_db
 from app.core.dependencies import require_resource
 from app.core.content_licenses import find_passage_entry, passage_license_problem
@@ -309,6 +310,7 @@ async def admin_delete_test(
     test = await db.get(IeltsTest, test_id)
     if not test:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Test not found")
+    await content_deletion.ensure_ielts_test_deletable(db, test_id)
     await db.delete(test)
     await db.commit()
     return ApiResponse(message="Deleted", data={"id": str(test_id)})

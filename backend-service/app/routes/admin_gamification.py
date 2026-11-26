@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile
 from sqlalchemy import select, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.services import content_deletion
 from app.core.database import get_db
 from app.core.dependencies import require_resource
 from app.models.user import User
@@ -200,6 +201,7 @@ async def delete_achievement(
             detail="Achievement not found"
         )
     
+    await content_deletion.ensure_achievement_deletable(db, achievement_id)
     await db.delete(achievement)
     await db.commit()
     
@@ -362,6 +364,7 @@ async def delete_shop_item(
             detail="Shop item not found"
         )
     
+    await content_deletion.ensure_shop_item_deletable(db, item_id)
     await db.delete(item)
     await db.commit()
     

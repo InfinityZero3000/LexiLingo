@@ -51,7 +51,7 @@ from app.schemas.course import (
     UnitUpdate,
 )
 from app.schemas.response import ApiResponse
-from app.services import exercise_generation
+from app.services import content_deletion, exercise_generation
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -385,10 +385,11 @@ async def delete_course(
     admin_user: User = Depends(require_courses)
 ):
     """
-    Delete a course (soft delete - unpublish).
-    
-    Admin only endpoint.
+    Permanently delete an unpublished course nobody has studied.
+
+    To take a course away from learners, unpublish it (PUT is_published=false).
     """
+    await content_deletion.ensure_course_deletable(db, course_id)
     success = await CourseCRUD.delete_course(db, course_id)
     
     if not success:
@@ -603,6 +604,7 @@ async def delete_unit(
     
     Admin only endpoint.
     """
+    await content_deletion.ensure_unit_deletable(db, unit_id)
     success = await UnitCRUD.delete_unit(db, unit_id)
     
     if not success:
@@ -682,6 +684,7 @@ async def delete_lesson(
     
     Admin only endpoint.
     """
+    await content_deletion.ensure_lesson_deletable(db, lesson_id)
     success = await LessonCRUD.delete_lesson(db, lesson_id)
     
     if not success:
@@ -915,6 +918,7 @@ async def delete_vocabulary(
             detail="Vocabulary not found"
         )
     
+    await content_deletion.ensure_vocabulary_deletable(db, vocab_id)
     await db.delete(vocab)
     await db.commit()
     
@@ -1212,6 +1216,7 @@ async def delete_grammar_admin(
     item = result.scalar_one_or_none()
     if not item:
         raise HTTPException(status_code=404, detail="Grammar item not found")
+    await content_deletion.ensure_grammar_deletable(db, grammar_id)
     await db.delete(item)
     await db.commit()
     return ApiResponse(success=True, message="Grammar deleted", data={"deleted": True, "grammar_id": str(grammar_id)})
@@ -1373,6 +1378,7 @@ async def delete_question_admin(
     item = result.scalar_one_or_none()
     if not item:
         raise HTTPException(status_code=404, detail="Question not found")
+    await content_deletion.ensure_question_deletable(db, question_id)
     await db.delete(item)
     await db.commit()
     return ApiResponse(success=True, message="Question deleted", data={"deleted": True, "question_id": str(question_id)})
