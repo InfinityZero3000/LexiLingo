@@ -254,13 +254,12 @@ class _LessonSpeakingRecorderState extends State<LessonSpeakingRecorder> {
 
   void _showError(String message) {
     if (!mounted) return;
+    // Shown under the mic only: a snackbar repeated it on top of Skip and Check.
     setState(() {
       _state = _SpeakingRecorderState.rejected;
       _errorMessage = message;
+      _similarity = null;
     });
-    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
-    );
   }
 
   String _friendlyRecordingError(Object error) {
@@ -332,7 +331,8 @@ class _LessonSpeakingRecorderState extends State<LessonSpeakingRecorder> {
         Text(
           _statusLabel,
           style: Theme.of(context).textTheme.bodyMedium!.copyWith(
-            color: _state == _SpeakingRecorderState.rejected
+            color:
+                _state == _SpeakingRecorderState.rejected && _similarity != null
                 ? Colors.red
                 : secondary,
             fontWeight: _isApproved || _state == _SpeakingRecorderState.rejected
@@ -394,7 +394,11 @@ class _LessonSpeakingRecorderState extends State<LessonSpeakingRecorder> {
       case _SpeakingRecorderState.processing:
         return 'voice.recognizing'.tr();
       case _SpeakingRecorderState.rejected:
-        return 'voice.notMatchedTryAgain'.tr();
+        // A take that was never compared (no mic, nothing heard) did not
+        // "not match"; the error below says what went wrong.
+        return _similarity == null
+            ? 'voice.tapToStartSpeaking'.tr()
+            : 'voice.notMatchedTryAgain'.tr();
       case _SpeakingRecorderState.approved:
         return 'voice.saidCorrectly'.tr();
     }

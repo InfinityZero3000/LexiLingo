@@ -70,13 +70,13 @@ class _SpeakingRepeatWidgetState extends State<SpeakingRepeatWidget> {
           child: Column(
             children: [
               CircleAudioButton(
-                text: widget.exercise.question,
+                text: speakingTarget(widget.exercise),
                 audioUrl: widget.exercise.audioUrl,
                 size: 40,
               ),
               const SizedBox(height: 14),
               Text(
-                '"${widget.exercise.question}"',
+                '"${speakingTarget(widget.exercise)}"',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
@@ -103,9 +103,7 @@ class _SpeakingRepeatWidgetState extends State<SpeakingRepeatWidget> {
         const SizedBox(height: 24),
         Center(
           child: LessonSpeakingRecorder(
-            targetText: widget.exercise.correctAnswer.isNotEmpty
-                ? widget.exercise.correctAnswer
-                : widget.exercise.question,
+            targetText: speakingTarget(widget.exercise),
             isAnswered: widget.isAnswered,
             onApproved: widget.onAnswer,
             onAttempt: widget.onInputChanged,
