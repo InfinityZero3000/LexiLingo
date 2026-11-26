@@ -21,6 +21,7 @@ Usage:
 import asyncio
 import sys
 import random
+import secrets
 import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -139,7 +140,7 @@ async def seed(database_url: str | None = None):
             user = User(
                 email=TARGET_EMAIL,
                 username="nhthang312",
-                hashed_password=get_password_hash("SeedUser_testpass123!"),
+                hashed_password=get_password_hash(secrets.token_urlsafe(32)),
                 display_name="Nguyen Huu Thang (seed)",
             )
             session.add(user)

@@ -26,10 +26,10 @@ class NotASandbox(SystemExit):
     pass
 
 
-def check_environment() -> None:
+def check_environment(database_url: object) -> None:
     if settings.is_production:
         raise NotASandbox("Refusing to write mock data: APP_ENV=production.")
-    host = make_url(settings.DATABASE_URL).host
+    host = make_url(database_url).host
     allowed = os.getenv("ALLOW_MOCK_SEED_HOST")
     if host is not None and host not in _LOOPBACK and host != allowed:
         raise NotASandbox(
@@ -46,7 +46,7 @@ def check_redis() -> None:
 
 
 async def require_sandbox(db: AsyncSession) -> None:
-    check_environment()
+    check_environment(db.get_bind().url)
     sandbox = [User.email.ilike(f"%{suffix}") for suffix in _SANDBOX_SUFFIXES]
     real = await db.scalar(select(func.count()).select_from(User).where(*[~clause for clause in sandbox]))
     if (real or 0) > MAX_REAL_ACCOUNTS:

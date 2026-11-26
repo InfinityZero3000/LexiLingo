@@ -1,5 +1,6 @@
 """Mock data stays out of real databases, and what it writes agrees with itself."""
 from datetime import datetime, timezone
+from types import SimpleNamespace
 
 import pytest
 from sqlalchemy import func, select
@@ -11,7 +12,7 @@ from app.models.games import XPTransaction
 from app.models.progress import DailyActivity
 from app.models.user import User
 from scripts import seed_admin_mock
-from scripts.seed_guard import MAX_REAL_ACCOUNTS, NotASandbox, require_sandbox
+from scripts.seed_guard import MAX_REAL_ACCOUNTS, NotASandbox, check_environment, require_sandbox
 
 
 async def _add_users(db: AsyncSession, domain: str, count: int) -> None:
@@ -36,12 +37,14 @@ async def test_refused_in_production(db_session: AsyncSession, monkeypatch: pyte
 
 @pytest.mark.asyncio
 async def test_refused_for_a_remote_host_unless_named(db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(settings, "DATABASE_URL", "postgresql+asyncpg://u:p@postgres:5432/lexilingo")
+    # The connection in use decides, whatever settings say: a script may override the URL.
+    remote = SimpleNamespace(url="postgresql+asyncpg://u:p@postgres:5432/lexilingo")
     monkeypatch.delenv("ALLOW_MOCK_SEED_HOST", raising=False)
+    monkeypatch.setattr(db_session, "get_bind", lambda *a, **k: remote)
     with pytest.raises(NotASandbox, match="host 'postgres'"):
         await require_sandbox(db_session)
     monkeypatch.setenv("ALLOW_MOCK_SEED_HOST", "postgres")
-    await require_sandbox(db_session)
+    check_environment(remote.url)
 
 
 @pytest.mark.asyncio
