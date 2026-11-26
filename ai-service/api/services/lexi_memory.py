@@ -98,10 +98,27 @@ _LANGUAGE_QUESTION = re.compile(
 )
 
 
+# "What's my goal…?" asks Lexi; it states nothing. Only the asking clause goes:
+# "I want to pass IELTS, can you help?" still says what the learner wants.
+_ASKING_CLAUSE = re.compile(
+    r"^(?:what|who|whose|where|when|which|why|how|do|does|did|is|are|am|was|were|"
+    r"can|could|will|would|should|shall|have|has|tell me)\b|"
+    r"\b(?:gì|nào|không|chưa|bao nhiêu|ở đâu|sao)\W*$",
+    re.IGNORECASE,
+)
+
+
+def _statements(sentence: str) -> str:
+    if not sentence.rstrip().endswith("?"):
+        return sentence
+    # ponytail: clause = comma split; "Hi Lexi what's my goal?" without a comma still counts as stated
+    return ", ".join(c for c in sentence.split(",") if not _ASKING_CLAUSE.search(c.strip()))
+
+
 def _own_words(text: str) -> str:
     """The part of a message the learner says about themselves."""
     sentences = re.split(r"(?<=[.!?])\s+|\n+", _QUOTED.sub(" ", text))
-    return " ".join(s for s in sentences if not _LANGUAGE_QUESTION.search(s))
+    return " ".join(_statements(s) for s in sentences if not _LANGUAGE_QUESTION.search(s))
 
 
 def _norm(text: str) -> str:

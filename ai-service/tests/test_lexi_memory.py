@@ -72,6 +72,31 @@ def test_clean_facts_keeps_self_statements_next_to_quotes_and_apostrophes(key, v
     assert clean_facts({key: value}, text) == {key: value}
 
 
+@pytest.mark.parametrize(
+    "key,value,text",
+    [
+        ("goal", "learning English", "What's my goal for learning English?"),
+        ("goal", "learning English", "Hi Lexi, what's my goal for learning English?"),
+        ("occupation", "a nurse", "Am I a nurse or a doctor?"),
+        ("goal", "học tiếng Anh", "Mục tiêu học tiếng Anh của tôi là gì?"),
+    ],
+)
+def test_clean_facts_ignores_questions_about_the_learner(key, value, text):
+    assert clean_facts({key: value}, text) == {}
+
+
+@pytest.mark.parametrize(
+    "key,value,text",
+    [
+        ("goal", "pass IELTS", "I want to pass IELTS, can you help?"),
+        ("goal", "pass IELTS", "My goal is to pass IELTS, is that realistic?"),
+        ("goal", "thi IELTS", "Tôi muốn thi IELTS, được không?"),
+    ],
+)
+def test_clean_facts_keeps_a_statement_before_its_question(key, value, text):
+    assert clean_facts({key: value}, text) == {key: value}
+
+
 def test_clean_facts_ignores_non_mapping():
     assert clean_facts(["Thang"], "Thang") == {}
     assert clean_facts(None, "Thang") == {}
