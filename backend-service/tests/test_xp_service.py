@@ -195,6 +195,25 @@ async def test_game_xp_award_applies_item_multiplier_on_top_of_streak():
 
 
 @pytest.mark.asyncio
+async def test_a_game_that_earns_nothing_does_not_claim_the_cap_was_reached():
+    user = _make_user()
+    db = _make_db(_result(scalar_one_or_none=user), _result(scalar_one_or_none=None))
+
+    result = await award_xp_transaction(
+        db=db,
+        user=user,
+        source="game",
+        base_xp=0,
+        source_id="game-session-nothing",
+        daily_xp_loader=AsyncMock(return_value=11),
+        streak_loader=AsyncMock(return_value=1),
+    )
+
+    assert (result.xp_awarded, result.daily_cap_remaining) == (0, 489)
+    assert "cap" not in result.message.lower()
+
+
+@pytest.mark.asyncio
 async def test_item_multiplier_below_one_does_not_reduce_xp():
     """A missing/invalid boost (item_multiplier < 1.0) must never penalize XP."""
     user_id = uuid.uuid4()
