@@ -10,6 +10,9 @@ from app.core.security import create_access_token, get_password_hash
 from app.models.rbac import Role
 from app.models.user import User
 
+from datetime import timezone
+from app.models.course import Course, Lesson, Unit
+from app.models.progress import LessonAttempt
 
 @pytest.fixture
 async def admin_token(db_session):
@@ -108,6 +111,35 @@ class TestContentAnalytics:
             data = response.json()
             assert "courses" in data
             assert "lessons" in data
+
+    async def test_content_performance_reports_measured_scores_and_times(
+        self, async_client, admin_headers, db_session
+    ):
+        course = Course(title="Measured", language="en", level="A1", is_published=True)
+        db_session.add(course)
+        await db_session.flush()
+        unit = Unit(course_id=course.id, title="U", order_index=0)
+        db_session.add(unit)
+        await db_session.flush()
+        lesson = Lesson(course_id=course.id, unit_id=unit.id, title="L", order_index=0, lesson_type="lesson")
+        learner = User(email="measured@example.com", username="measured", hashed_password="x")
+        db_session.add_all([lesson, learner])
+        await db_session.flush()
+        now = datetime.now(timezone.utc)
+        for score, passed, minutes, done in ((90, True, 4, now), (50, False, 2, now), (0, False, 0, None)):
+            db_session.add(LessonAttempt(user_id=learner.id, lesson_id=lesson.id, score=score, passed=passed,
+                                         time_spent_ms=minutes * 60_000, finished_at=done))
+        await db_session.commit()
+
+        data = (await async_client.get(
+            "/api/v1/admin/analytics/content-performance", headers=admin_headers
+        )).json()
+
+        measured = next(c for c in data["courses"] if c["course_title"] == "Measured")
+        assert (measured["avg_score"], measured["avg_time_minutes"]) == (70.0, 3.0)
+        # The unfinished sitting counts for nothing.
+        assert data["lessons"] == [{"lesson_id": str(lesson.id), "lesson_title": "L",
+                                    "attempts": 2, "completions": 1, "avg_score": 70.0}]
 
     async def test_get_vocabulary_effectiveness(self, admin_token):
         async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
