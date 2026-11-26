@@ -203,7 +203,10 @@ def _state_dir(tmp_path, backup=None, verify=None, marker=None):
 def test_backup_status_is_unavailable_when_the_state_directory_is_not_mounted(tmp_path):
     from app.services.backup_status import read_backup_status
 
-    assert read_backup_status(tmp_path / "nope")["state"] == "unavailable"
+    status = read_backup_status(tmp_path / "nope")
+    assert status["state"] == "unavailable"
+    # Ops Center reads verify.state unconditionally; a null there blanked the whole page.
+    assert status["verify"] == {"state": "unavailable"}
 
 
 def test_backup_status_grades_age_and_the_verify_result(tmp_path):

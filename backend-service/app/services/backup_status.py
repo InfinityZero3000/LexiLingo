@@ -43,7 +43,7 @@ def read_backup_status(state_dir: str | Path, now: datetime | None = None) -> di
     now = now or datetime.now(timezone.utc)
     state_dir = Path(state_dir)
     if not state_dir.is_dir():
-        return {"state": "unavailable", "backup": None, "verify": None, "failure_marker_at": None}
+        return {"state": "unavailable", "backup": None, "verify": {"state": "unavailable"}, "failure_marker_at": None}
 
     backup = _json(state_dir / "backup-last.json")
     verify = _json(state_dir / "verify-last.json")
