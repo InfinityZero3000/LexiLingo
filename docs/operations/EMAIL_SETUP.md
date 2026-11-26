@@ -20,9 +20,11 @@ works the same way (`smtp-relay.brevo.com`, port 587, STARTTLS).
    - **Return path / SPF**: CNAME `send` -> `send.forge.rmta.net` and CNAME `rsend` -> `rsend-apne1.forge.rmta.net`,
      both DNS only. A name that is a CNAME cannot hold another record, so do not add MX or TXT on `send`.
    - **DMARC**: TXT `_dmarc` = `v=DMARC1; p=none; rua=mailto:<your inbox>`; tighten to `quarantine` after a week.
-3. Leave the existing root MX records alone. They point at Namecheap email forwarding and receive mail for
-   `support@` and similar aliases. A domain may have only one root SPF record; if you ever add a sender at the root,
-   merge it into the existing `v=spf1 include:spf.efwd.registrar-servers.com ~all` instead of adding a second one.
+3. Inbound mail is **Cloudflare Email Routing** (switched on 2026-11-26): the three root MX records
+   `route1/2/3.mx.cloudflare.net`, the root SPF `v=spf1 include:_spf.mx.cloudflare.net ~all` and the DKIM
+   `cf2024-1._domainkey` are Cloudflare's and locked. Namecheap email forwarding does not work while the nameservers
+   are Cloudflare's, so its old `eforward*` MX records were removed. A domain may have only one root SPF record; if
+   you ever add a sender at the root, merge it into that one instead of adding a second.
 4. Create an API key limited to sending, then set on the backend (and in `.env.production.secrets` for the VPS):
 
 ```
@@ -37,7 +39,11 @@ EMAIL_FROM_NAME=LexiLingo
 EMAIL_REPLY_TO=support@lexilingo.me
 ```
 
-5. Create the `support@lexilingo.me` forward in Namecheap so replies reach a real inbox.
+5. `support@lexilingo.me` is a Cloudflare routing rule (Email → Email Routing → Routing rules) that forwards to the
+   maintainer's inbox. It is the contact address in the privacy policy, the data-deletion page and `security.txt`, so
+   keep it working. Add a Gmail filter "to:support@lexilingo.me → never send to Spam": forwarded mail otherwise lands
+   in Spam. To answer from that address, add it in Gmail under "Send mail as" with `smtp.resend.com` and a
+   send-only API key.
 6. Verify: `python scripts/test_notifications.py --email-only` sends to `nhthang.dev@gmail.com`. In Gmail, "Show original" must
    show SPF, DKIM and DMARC as PASS for `lexilingo.me`.
 

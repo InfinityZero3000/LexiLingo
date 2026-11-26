@@ -167,7 +167,7 @@ export const LoginPage = () => {
 
         <a
           className="login-topbar-link"
-          href="mailto:nhthang312@gmail.com"
+          href="mailto:support@lexilingo.me"
           aria-label="Email"
           title="Contact"
         >
