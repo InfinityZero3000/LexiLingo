@@ -18,6 +18,9 @@ _GROQ_FREE_RPM = 30
 _GROQ_FREE_TPM = 6_000
 _GROQ_FREE_RPD = 14_400
 _VOICE_LEASE_MS = 45_000
+# The Redis pool raises instead of queueing once it is full (50 by default, shared
+# with live chat), so a snapshot may not hold a connection per key.
+_SNAPSHOT_CONCURRENCY = 5
 
 # The model every Groq caller uses. It lived as a repeated
 # `os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b")` default in ten call sites, so a
@@ -219,14 +222,16 @@ class GroqKeyPool:
 
     async def usage_snapshot(self, estimated_tokens: int = 600) -> List[dict]:
         """Per-index limiter state for the admin page; never touches key strings."""
-        counts, voice = await asyncio.gather(
-            asyncio.gather(*(limiter.window_counts() for limiter in self._limiters)),
-            asyncio.gather(*(limiter.voice_state() for limiter in self._limiters)),
-        )
+        slots = asyncio.Semaphore(_SNAPSHOT_CONCURRENCY)
+
+        async def _read(limiter: RedisRateLimiter):
+            async with slots:
+                return await limiter.window_counts(), await limiter.voice_state()
+
+        readings = await asyncio.gather(*(_read(limiter) for limiter in self._limiters))
         rows = []
         for idx, limiter in enumerate(self._limiters):
-            rpm, tpm, rpd = counts[idx]
-            voice_rpm, lease = voice[idx]
+            (rpm, tpm, rpd), (voice_rpm, lease) = readings[idx]
             blocked = limiter.blocked_by(rpm, tpm, rpd, estimated_tokens)
             if blocked is None and groq_key_is_parked(self._keys[idx]):
                 blocked = "parked"
