@@ -233,7 +233,7 @@ export default function UserManagementPage() {
       sortKey: 'role',
       render: (user) => (
         <span className={`badge ${roleTone(user.role_level)}`} style={{ borderRadius: '9999px' }}>
-          {getRoleLabel(user.role_level)}
+          {getRoleLabel(user.role_slug)}
         </span>
       ),
     },

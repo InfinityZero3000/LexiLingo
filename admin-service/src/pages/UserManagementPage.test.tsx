@@ -13,10 +13,10 @@ const api = vi.hoisted(() => ({
   permanentlyDeleteUser: vi.fn(),
 }));
 
-vi.mock("../lib/userManagementApi", () => ({
+vi.mock("../lib/userManagementApi", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../lib/userManagementApi")>()),
   ...api,
   getUserDetail: vi.fn(),
-  getRoleLabel: (level: number) => (level === 2 ? "Super Admin" : level === 1 ? "Admin" : "User"),
 }));
 vi.mock("../lib/rbacApi", () => ({
   getDashboardStats: vi.fn().mockResolvedValue({ dashboard: { total_users: 3, active_users: 2 } }),

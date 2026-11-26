@@ -16,7 +16,7 @@ export interface UserListItem {
   display_name: string | null;
   is_active: boolean;
   is_verified: boolean;
-  role_slug: string; // "user", "admin", "super_admin"
+  role_slug: string; // "user", "test", "admin", "super_admin"
   role_level: number; // 0, 1, 2
   created_at: string;
   last_login: string | null;
@@ -70,7 +70,7 @@ export interface UserUpdateData {
 }
 
 export interface RoleUpdateData {
-  level: number;
+  slug: RoleSlug;
 }
 
 export interface StatusUpdateData {
@@ -201,36 +201,17 @@ export async function permanentlyDeleteUser(userId: string): Promise<{ message: 
   return response.data;
 }
 
-/**
- * Get role label from level number
- */
-export function getRoleLabel(role_level: number): string {
-  switch (role_level) {
-    case 0:
-      return 'User';
-    case 1:
-      return 'Admin';
-    case 2:
-      return 'Super Admin';
-    default:
-      return 'Unknown';
-  }
-}
+export type RoleSlug = 'user' | 'test' | 'admin' | 'super_admin';
 
-/**
- * Get role color for badges
- */
-export function getRoleColor(role_level: number): string {
-  switch (role_level) {
-    case 0:
-      return 'default';
-    case 1:
-      return 'blue';
-    case 2:
-      return 'red';
-    default:
-      return 'default';
-  }
+export const ROLE_LABELS: Record<RoleSlug, string> = {
+  user: 'User',
+  test: 'Test',
+  admin: 'Admin',
+  super_admin: 'Super Admin',
+};
+
+export function getRoleLabel(roleSlug: string): string {
+  return ROLE_LABELS[roleSlug as RoleSlug] ?? roleSlug;
 }
 
 // ============================================================================

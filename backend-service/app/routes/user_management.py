@@ -3,11 +3,11 @@ User Management Routes (Admin Panel - Phase 2)
 Provides user CRUD operations, role management, and activity tracking.
 """
 from datetime import datetime, timedelta, timezone
-from typing import Optional, List
+from typing import Literal, Optional, List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, HTTPException, Request, status
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from sqlalchemy import select, func, or_, and_, desc
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -88,9 +88,25 @@ class UserUpdateRequest(BaseModel):
     is_active: Optional[bool] = None
 
 
+# Several roles can share a level ('test' has a user's privileges), so a
+# level alone names a role only through this map.
+_ROLE_SLUG_FOR_LEVEL = {0: "user", 1: "admin", 2: "super_admin"}
+
+
 class RoleUpdateRequest(BaseModel):
-    """Update user role (admin level)"""
-    level: int = Field(..., ge=0, le=2, description="0=user, 1=admin, 2=super_admin")
+    """Update user role: by `slug`, or by `level` for the three main roles."""
+    level: Optional[int] = Field(None, ge=0, le=2, description="0=user, 1=admin, 2=super_admin")
+    slug: Optional[Literal["user", "test", "admin", "super_admin"]] = None
+
+    @model_validator(mode="after")
+    def _one_target(self) -> "RoleUpdateRequest":
+        if (self.level is None) == (self.slug is None):
+            raise ValueError("Give exactly one of level or slug")
+        return self
+
+    @property
+    def role_slug(self) -> str:
+        return self.slug or _ROLE_SLUG_FOR_LEVEL[self.level]
 
 
 class StatusUpdateRequest(BaseModel):
@@ -133,6 +149,7 @@ async def list_users(
     page_size: int = Query(20, ge=1, le=100),
     search: Optional[str] = Query(None, description="Search by name or email"),
     role: Optional[int] = Query(None, ge=0, le=2, description="Filter by role level"),
+    role_slug: Optional[str] = Query(None, max_length=50, description="Filter by role slug, e.g. test"),
     is_active: Optional[bool] = Query(None, description="Filter by active status"),
     sort_by: str = Query("created_at", pattern="^(created_at|last_login|email|role|total_xp)$"),
     order: str = Query("desc", pattern="^(asc|desc)$"),
@@ -167,6 +184,8 @@ async def list_users(
     
     if role is not None:
         filters.append(Role.level == role)
+    if role_slug:
+        filters.append(Role.slug == role_slug)
     
     if is_active is not None:
         filters.append(User.is_active == is_active)
@@ -433,11 +452,8 @@ async def update_user_role(
 ):
     """
     Update user role (super_admin only).
-    
-    **Levels:**
-    - 0: Regular user
-    - 1: Admin
-    - 2: Super Admin
+
+    Body: `{"slug": "user|test|admin|super_admin"}` or `{"level": 0|1|2}`.
     """
     # Get user
     result = await db.execute(
@@ -451,8 +467,17 @@ async def update_user_role(
             detail="User not found"
         )
     
+    new_role = (
+        await db.execute(select(Role).where(Role.slug == data.role_slug))
+    ).scalar_one_or_none()
+    if not new_role:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Role {data.role_slug} not found"
+        )
+
     # Prevent self-demotion
-    if user.id == admin.id and data.level < admin.role_level:
+    if user.id == admin.id and new_role.level < admin.role_level:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cannot demote yourself"
@@ -465,18 +490,6 @@ async def update_user_role(
             detail="Cannot modify a user with equal or higher role level"
         )
 
-    # Find role by level
-    role_result = await db.execute(
-        select(Role).where(Role.level == data.level)
-    )
-    new_role = role_result.scalar_one_or_none()
-    
-    if not new_role:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Role with level {data.level} not found"
-        )
-    
     old_role = user.role_slug
     user.role_id = new_role.id
     _audit(db, admin, "assign_role", user, {"from": old_role, "to": new_role.slug}, request)
@@ -488,7 +501,7 @@ async def update_user_role(
         message="User role updated successfully",
         data={
             "user_id": str(user.id),
-            "new_level": data.level,
+            "new_level": new_role.level,
             "new_role": user.role_slug
         }
     )
