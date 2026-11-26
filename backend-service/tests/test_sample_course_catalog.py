@@ -89,3 +89,29 @@ async def test_admin_seed_is_idempotent_for_travel_course(
     assert len(categories) == 1
     assert categories[0].course_count == 1
     assert (course_count, unit_count, lesson_count) == (1, 1, 3)
+
+
+@pytest.mark.asyncio
+async def test_reseeding_keeps_an_existing_course_and_the_progress_on_it(
+    db_session: AsyncSession, test_user
+):
+    from app.models.progress import UserCourseProgress
+    from app.services import admin_seed_service
+
+    async def seed() -> tuple[int, int, int]:
+        _, category_ids = await admin_seed_service.seed_course_categories(db_session)
+        created = await admin_seed_service.seed_courses(db_session, category_ids)
+        await db_session.commit()
+        return created
+
+    await seed()
+    course_id = await db_session.scalar(
+        select(Course.id).where(Course.title == "English for Travel")
+    )
+    db_session.add(UserCourseProgress(user_id=test_user.id, course_id=course_id))
+    await db_session.commit()
+
+    assert await seed() == (0, 0, 0)
+    assert await db_session.scalar(
+        select(UserCourseProgress.course_id).where(UserCourseProgress.user_id == test_user.id)
+    ) == course_id

@@ -78,8 +78,8 @@ async def seed_courses(
         )
         existing_course = result.scalar_one_or_none()
         if existing_course:
-            await db.delete(existing_course)
-            await db.flush()
+            # Replacing it would cascade-delete every enrolment and completion on it.
+            continue
 
         unit_seed = course_data.pop("units")
         category_slug = course_data.pop("category_slug")
