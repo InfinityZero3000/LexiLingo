@@ -192,6 +192,17 @@ async def get_courses_by_category(
     )
 
 
+async def _assert_name_free(
+    db: AsyncSession, name: str, own_id: Optional[uuid.UUID] = None
+) -> None:
+    existing = await CourseCategoryCRUD.get_category_by_name(db, name)
+    if existing and existing.id != own_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Category with this name already exists",
+        )
+
+
 # =====================
 # Admin Endpoints (Protected)
 # =====================
@@ -215,7 +226,8 @@ async def create_category(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Category with this slug already exists"
         )
-    
+    await _assert_name_free(db, category_data.name)
+
     category = await CourseCategoryCRUD.create_category(
         db,
         name=category_data.name,
@@ -257,6 +269,9 @@ async def update_category(
                 detail="Category with this slug already exists"
             )
     
+    if update_data.name:
+        await _assert_name_free(db, update_data.name, own_id=category_id)
+
     update_dict = update_data.model_dump(exclude_unset=True)
     category = await CourseCategoryCRUD.update_category(db, category_id, **update_dict)
     

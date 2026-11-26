@@ -158,8 +158,8 @@ export const ContentLabPage = () => {
       const payload = {
         title: grammarForm.title,
         level: grammarForm.level,
-        topic: grammarForm.topic || undefined,
-        summary: grammarForm.summary || undefined,
+        topic: grammarForm.topic || null,
+        summary: grammarForm.summary || null,
         content: grammarForm.content,
         tags: grammarForm.tags
       };
@@ -224,9 +224,9 @@ export const ContentLabPage = () => {
         prompt: questionForm.prompt,
         question_type: questionForm.question_type,
         difficulty_level: questionForm.difficulty_level,
-        options: choiceType ? options : options.length > 0 ? options : undefined,
-        answer: choiceType ? choices[correct as number].trim() : answerText.trim() || undefined,
-        explanation: questionForm.explanation || undefined,
+        options: choiceType ? options : options.length > 0 ? options : null,
+        answer: choiceType ? choices[correct as number].trim() : answerText.trim() || null,
+        explanation: questionForm.explanation || null,
         tags: questionForm.tags
       };
       if (editingQuestionId) {
@@ -264,7 +264,7 @@ export const ContentLabPage = () => {
     try {
       const payload = {
         title: testForm.title,
-        description: testForm.description || undefined,
+        description: testForm.description || null,
         level: testForm.level,
         duration_minutes: Number(testForm.duration_minutes),
         passing_score: Number(testForm.passing_score),

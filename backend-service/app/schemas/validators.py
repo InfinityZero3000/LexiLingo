@@ -7,7 +7,7 @@ from pydantic import field_validator
 CEFR_LEVELS = ("A1", "A2", "B1", "B2", "C1", "C2")
 
 
-def cefr_field(name: str) -> Any:
+def cefr_field(*names: str) -> Any:
     def check(cls: type, value: str | None) -> str | None:
         if value is None:
             return None
@@ -15,7 +15,7 @@ def cefr_field(name: str) -> Any:
             raise ValueError(f"Level must be one of {list(CEFR_LEVELS)}")
         return value.upper()
 
-    return field_validator(name)(check)
+    return field_validator(*names)(check)
 
 
 def not_null(*names: str) -> Any:

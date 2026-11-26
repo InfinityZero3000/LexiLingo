@@ -65,7 +65,8 @@ const toLocalInputValue = (iso?: string | null) => {
     `T${pad(date.getHours())}:${pad(date.getMinutes())}`
   );
 };
-const toIsoOrUndefined = (local: string) => (local ? new Date(local).toISOString() : undefined);
+// null, not undefined: JSON drops undefined, and an update then keeps the old value.
+const toIsoOrNull = (local: string) => (local ? new Date(local).toISOString() : null);
 
 export type BannerStatus = "running" | "scheduled" | "expired" | "off";
 
@@ -220,17 +221,17 @@ export const AdsPage = () => {
     try {
       const payload: Omit<BannerType, "id" | "created_at" | "updated_at"> = {
         title: form.title,
-        description: form.description || undefined,
+        description: form.description || null,
         image_url: form.image_url,
-        link_url: form.link_url || undefined,
+        link_url: form.link_url || null,
         position: form.position,
         priority: form.priority,
         is_active: form.is_active,
-        start_at: toIsoOrUndefined(form.start_at),
-        end_at: toIsoOrUndefined(form.end_at),
-        target_min_level: form.target_min_level || undefined,
-        target_max_level: form.target_max_level || undefined,
-        target_language: form.target_language || undefined,
+        start_at: toIsoOrNull(form.start_at),
+        end_at: toIsoOrNull(form.end_at),
+        target_min_level: form.target_min_level || null,
+        target_max_level: form.target_max_level || null,
+        target_language: form.target_language || null,
       };
       if (editingId) {
         await updateBanner(editingId, payload);

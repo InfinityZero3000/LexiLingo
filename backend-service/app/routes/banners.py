@@ -1,5 +1,6 @@
 """Banner API — public active-banner lookup plus admin CRUD."""
 
+from datetime import datetime, timezone
 from typing import Optional
 import uuid
 
@@ -20,6 +21,18 @@ from app.schemas.common import ApiResponse
 from app.services.entitlement_service import EntitlementService
 
 router = APIRouter(prefix="/banners", tags=["Banners"])
+
+
+def _assert_window(start_at: Optional[datetime], end_at: Optional[datetime]) -> None:
+    """A window that ends before it starts is a banner nobody ever sees."""
+    if start_at is None or end_at is None:
+        return
+    start, end = (v if v.tzinfo else v.replace(tzinfo=timezone.utc) for v in (start_at, end_at))
+    if end <= start:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="The end date must be after the start date",
+        )
 
 
 # =====================
@@ -73,6 +86,7 @@ async def create_banner(
     db: AsyncSession = Depends(get_db),
     admin: User = Depends(require_resource("banners")),
 ):
+    _assert_window(payload.start_at, payload.end_at)
     banner = await BannerCRUD.create(db, created_by_id=admin.id, **payload.model_dump())
     return ApiResponse(success=True, data=BannerResponse.model_validate(banner))
 
@@ -84,7 +98,14 @@ async def update_banner(
     db: AsyncSession = Depends(get_db),
     admin: User = Depends(require_resource("banners")),
 ):
-    banner = await BannerCRUD.update(db, banner_id, **payload.model_dump(exclude_unset=True))
+    fields = payload.model_dump(exclude_unset=True)
+    if "start_at" in fields or "end_at" in fields:
+        current = await BannerCRUD.get_by_id(db, banner_id)
+        if current:
+            _assert_window(
+                fields.get("start_at", current.start_at), fields.get("end_at", current.end_at)
+            )
+    banner = await BannerCRUD.update(db, banner_id, **fields)
     if not banner:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Banner not found")
     return ApiResponse(success=True, data=BannerResponse.model_validate(banner))

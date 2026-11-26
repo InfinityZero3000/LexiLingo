@@ -331,6 +331,21 @@ async def get_user_detail(
     )
 
 
+def _assert_may_change_status(admin: User, user: User, is_active: bool) -> None:
+    """The one rule for both status routes; it matches what the bulk action skips."""
+    if user.id == admin.id:
+        if not is_active:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot deactivate your own account",
+            )
+    elif user.role_level >= admin.role_level:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Cannot modify status of users with equal or higher role level",
+        )
+
+
 # ============================================================================
 # User Update
 # ============================================================================
@@ -362,14 +377,9 @@ async def update_user(
             detail="User not found"
         )
     
-    # Prevent modifying users with equal or higher role level (unless you are super_admin)
-    if data.is_active is not None and not data.is_active:
-        if user.role_level >= admin.role_level and user.id != admin.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Cannot deactivate users with equal or higher role level"
-            )
-    
+    if data.is_active is not None and data.is_active != user.is_active:
+        _assert_may_change_status(admin, user, data.is_active)
+
     # Update fields
     changes = {}
     if data.display_name is not None:
@@ -534,20 +544,8 @@ async def update_user_status(
             detail="User not found"
         )
     
-    # Prevent self-deactivation
-    if user.id == admin.id and not data.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot deactivate your own account"
-        )
-    
-    # Prevent deactivating users with equal or higher role level
-    if not data.is_active and user.role_level >= admin.role_level and user.id != admin.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Cannot modify status of users with equal or higher role level"
-        )
-    
+    _assert_may_change_status(admin, user, data.is_active)
+
     user.is_active = data.is_active
     _audit(
         db,
