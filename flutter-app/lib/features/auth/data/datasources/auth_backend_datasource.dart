@@ -120,25 +120,6 @@ class AuthBackendDataSource {
     return loginResponse;
   }
 
-  /// Refresh access token using refresh token
-  /// POST /auth/refresh-token
-  Future<AuthTokens> refreshToken(String refreshToken) async {
-    final request = RefreshTokenRequest(refreshToken: refreshToken);
-
-    final envelope = await apiClient.postEnvelope<Map<String, dynamic>>(
-      '/auth/refresh',
-      body: request.toJson(),
-      fromJson: (data) => data as Map<String, dynamic>,
-    );
-
-    final tokens = AuthTokens.fromJson(envelope.data);
-
-    // Update stored tokens (token rotation)
-    await tokenStorage.saveTokens(tokens);
-
-    return tokens;
-  }
-
   /// Logout user
   /// POST /auth/logout
   Future<void> logout() async {
@@ -176,7 +157,9 @@ class AuthBackendDataSource {
       final raw = await tokenStorage.readSessionUser();
       if (raw == null || raw.isEmpty) return null;
       final decoded = jsonDecode(raw);
-      return decoded is Map<String, dynamic> ? UserModel.fromJson(decoded) : null;
+      return decoded is Map<String, dynamic>
+          ? UserModel.fromJson(decoded)
+          : null;
     } catch (e) {
       logWarn(_tag, 'Cached session user unreadable: $e');
       return null;

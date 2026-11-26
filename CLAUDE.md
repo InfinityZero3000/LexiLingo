@@ -677,6 +677,23 @@ only tokens plus seven providers. The rules that now hold it:
   must never point at a git branch that may not exist (`@feature` did, 44 of 48 rows); the
   backfill script and the admin page pin `@main`.
 
+## Web tabs share storage; bundled assets are downloads
+
+On 2026-11-26 a web learner was signed out by their own second tab, and the profile
+page fetched ~18MB of badges.
+
+- **Every read that decides a write uses `freshPreferences()`** (`core/storage/`).
+  SharedPreferences caches per tab, so `getInstance()` there is stale. Queues of unsent
+  data also re-read after each request and remove only what was sent — never write back
+  a copy taken before an `await`. `test/guards/multi_tab_storage_guard_test.dart` lists
+  the files that may skip this, each with its reason.
+- **`refreshBackendToken` is the only caller of `/auth/refresh`** (guarded). Refresh
+  tokens are single-use and reuse revokes the session. In admin web the one caller is
+  `tryRefreshToken`; a session ends only on a 401/403 verdict (`endsSession`).
+- **Size an image for where it is shown.** Badges are 384px quantized PNG; photos and
+  banners are WebP. `test/guards/bundled_asset_size_test.dart` caps every bundled asset.
+- **No endless decorative `repeat()` on a long-lived page**: each frame repaints it.
+
 ## Code Style
 
 - No comments unless the WHY is non-obvious

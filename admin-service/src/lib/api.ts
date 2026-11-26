@@ -19,6 +19,13 @@ export class ApiError extends Error {
   }
 }
 
+export class NoAdminRoleError extends Error {}
+
+/** Whether a failed session check is the server's verdict on this session. */
+export const endsSession = (error: unknown): boolean =>
+  error instanceof NoAdminRoleError ||
+  (error instanceof ApiError && (error.status === 401 || error.status === 403));
+
 type ApiFetchOptions = RequestInit & {
   skipAuth?: boolean;
 };
@@ -138,6 +145,10 @@ async function tryRefreshToken(): Promise<boolean> {
         // invalid — clearing on those logged the admin out over a blip and
         // lost whatever they had open.
         if (response.status === 401 || response.status === 403) {
+          // Tabs share localStorage. If another one rotated the token while
+          // this request was in flight, the rejection is about the old one.
+          const stored = authStore.refreshToken;
+          if (stored && stored !== refreshToken) return true;
           authStore.clear();
         }
         return false;

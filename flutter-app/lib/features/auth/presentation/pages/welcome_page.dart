@@ -132,7 +132,7 @@ class _WelcomePageState extends State<WelcomePage>
                                     AppRadius.xl,
                                   ),
                                   child: Image.asset(
-                                    'assets/out-app/banner-start.png',
+                                    'assets/out-app/banner-start.webp',
                                     fit: BoxFit.contain,
                                     width: double.infinity,
                                   ),

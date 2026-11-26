@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/storage/fresh_preferences.dart';
 import 'package:lexilingo_app/core/services/user_scope_service.dart';
 import 'dart:convert';
 import 'dart:io';
@@ -198,7 +199,7 @@ class PodcastRepository {
 
   /// Newest-first. Entries that fail to parse are dropped, not fatal.
   Future<List<ListeningHistory>> getRecentListening() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await freshPreferences();
     final entries = <ListeningHistory>[];
     for (final raw
         in prefs.getStringList(await _k(_historyKey)) ?? const <String>[]) {
@@ -275,7 +276,7 @@ class PodcastRepository {
   ///
   /// Silently ignores duplicates (matched by [feedUrl]).
   Future<void> followPodcast(Podcast podcast) async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await freshPreferences();
     final existing = prefs.getStringList(await _k(_followsKey)) ?? [];
 
     final alreadyFollowed = existing.any((s) {
@@ -297,7 +298,7 @@ class PodcastRepository {
 
   /// Remove a followed podcast from local SharedPreferences.
   Future<void> unfollowPodcast(String feedUrl) async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await freshPreferences();
     final existing = prefs.getStringList(await _k(_followsKey)) ?? [];
 
     final updated = existing.where((s) {

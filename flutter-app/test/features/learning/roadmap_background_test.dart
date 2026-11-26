@@ -87,11 +87,11 @@ void main() {
   setUp(() => EasyLocalization.logger.enableLevels = []);
 
   final cases = <String, (Size, String)>{
-    'phone portrait': (const Size(390, 844), 'background-roadmap.png'),
-    'tablet portrait': (const Size(768, 1024), 'background-roadmap.png'),
-    'laptop': (const Size(1280, 800), 'background-roadmap-2.png'),
-    'wide desktop': (const Size(1920, 1080), 'background-roadmap-2.png'),
-    'phone landscape': (const Size(844, 390), 'background-roadmap-2.png'),
+    'phone portrait': (const Size(390, 844), 'background-roadmap.webp'),
+    'tablet portrait': (const Size(768, 1024), 'background-roadmap.webp'),
+    'laptop': (const Size(1280, 800), 'background-roadmap-2.webp'),
+    'wide desktop': (const Size(1920, 1080), 'background-roadmap-2.webp'),
+    'phone landscape': (const Size(844, 390), 'background-roadmap-2.webp'),
   };
 
   for (final e in cases.entries) {

@@ -5,6 +5,7 @@ import '../../../../core/services/account_data_cleaner.dart';
 import '../../../../core/services/background_sync_queue_service.dart';
 import '../../../../core/services/encrypted_local_cache_service.dart';
 import '../../../../core/services/user_scope_service.dart';
+import '../../../../core/storage/fresh_preferences.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../models/auth_models.dart';
 
@@ -60,10 +61,9 @@ class TokenStorage {
     }
   }
 
-  /// On the web every tab keeps its own SharedPreferences cache over one shared
-  /// localStorage, so a rotation made by another tab is invisible until this.
+  /// Picks up a rotation another browser tab made; see [freshPreferences].
   Future<void> reload() async {
-    if (kIsWeb) await (await SharedPreferences.getInstance()).reload();
+    await freshPreferences();
   }
 
   /// Save authentication tokens securely

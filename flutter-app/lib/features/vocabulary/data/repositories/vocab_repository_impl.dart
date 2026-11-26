@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/storage/fresh_preferences.dart';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -144,7 +145,7 @@ class VocabRepositoryImpl implements VocabRepository {
   /// this is a signed-in learner and nobody has claimed it yet. Only call it
   /// inside [_locked].
   Future<List<Map<String, dynamic>>> _loadPending(String userScope) async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await freshPreferences();
     final raw = prefs.getString(_pendingStorageKey(userScope));
     final pending = raw == null || raw.isEmpty
         ? <Map<String, dynamic>>[]
