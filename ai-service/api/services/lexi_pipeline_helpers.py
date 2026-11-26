@@ -7,6 +7,8 @@ import logging
 import re
 from typing import List, Optional
 
+from api.services.internal_payloads import strip_jit_graph_blocks
+
 logger = logging.getLogger(__name__)
 
 _INTERNAL_CONTEXT_FALLBACK = (
@@ -107,12 +109,7 @@ def sanitize_lexi_response(
     if re.search(r"\bconcept:[a-z0-9_.:-]+", cleaned, flags=re.IGNORECASE):
         return _INTERNAL_CONTEXT_FALLBACK
 
-    cleaned = re.sub(
-        r"\[JIT_SOFT_GRAPH\]\s*(?:\n|\r\n?)?\s*\{[\s\S]*?\}\s*",
-        "",
-        cleaned,
-        flags=re.IGNORECASE,
-    )
+    cleaned = strip_jit_graph_blocks(cleaned)
 
     cleaned = re.sub(
         r"^\s*\{(?:\\?\"v\\?\"|\"v\")[\s\S]*?(?:\\?\"e\\?\"|\"e\")[\s\S]*?\}\s*$",

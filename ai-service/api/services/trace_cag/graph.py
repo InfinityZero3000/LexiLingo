@@ -14,6 +14,7 @@ from langgraph.graph import StateGraph, END
 from api.services.trace_cag.state import TraceCAGState, create_initial_state
 from api.services.trace_cag.evaluation_agent import EvaluationAgent
 from api.services.trace_cag.turn_metrics import record_turn_metrics
+from api.services.internal_payloads import strip_jit_graph_blocks
 # Using nodes_v2 with ModelGateway for lazy loading
 from api.services.trace_cag.nodes_v2 import (
     input_node,
@@ -294,7 +295,7 @@ class TraceCAGPipeline:
         recall_k = EvaluationAgent.compute_recall_k(trace, total_relevant)
 
         return {
-            "tutor_response": state.get("tutor_response", ""),
+            "tutor_response": strip_jit_graph_blocks(state.get("tutor_response", "")),
             # The diagnosis as diagnose_node produced it (span/type/correction/explanation).
             # Topic chat builds its correction cards and its learner evidence from this;
             # without it the JSON route saw no errors at all and scored every turn as clean.

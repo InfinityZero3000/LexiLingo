@@ -169,6 +169,44 @@ async def test_stream_topic_message_primary_success(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_nested_jit_payload_never_reaches_sse_or_persisted_text(monkeypatch):
+    orchestrator = MagicMock()
+    orchestrator.pipeline.analyze_for_streaming = AsyncMock(return_value=_raw_state())
+    monkeypatch.setattr("api.services.orchestrator.get_orchestrator", AsyncMock(return_value=orchestrator))
+    _mock_streaming_tokens(monkeypatch, ["Safe prose. ", "[JIT_SOFT_GRAPH]", '{"v":[{"id":"private"}],"e":[]}'])
+    events, repo = await _run_stream(monkeypatch)
+    text = "".join(data["text"] for name, data in events if name == "chunk")
+    assert text.strip() == "Safe prose."
+    assert events[-1][1]["ai_response"] == "Safe prose."
+    documents = repo.insert_messages_bulk.await_args.args[0]
+    assert documents[1]["content"] == "Safe prose."
+
+
+@pytest.mark.asyncio
+async def test_payload_only_reply_emits_error_without_persistence(monkeypatch):
+    orchestrator = MagicMock()
+    orchestrator.pipeline.analyze_for_streaming = AsyncMock(return_value=_raw_state())
+    monkeypatch.setattr("api.services.orchestrator.get_orchestrator", AsyncMock(return_value=orchestrator))
+    _mock_streaming_tokens(monkeypatch, ['[JIT_SOFT_GRAPH]{"v":[{"id":"private"}],"e":[]}'])
+    events, repo = await _run_stream(monkeypatch)
+    assert events[-1][0] == "error"
+    assert not any(name in {"chunk", "done"} for name, _ in events)
+    repo.insert_messages_bulk.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_safe_pipeline_fallback_is_not_reported_as_success(monkeypatch):
+    orchestrator = AsyncMock()
+    orchestrator.process.return_value = {
+        "tutor_response": "Try again.", "metadata": {"models_used": ["safe_tutor_fallback"]},
+    }
+    monkeypatch.setattr("api.services.orchestrator.get_orchestrator", AsyncMock(return_value=orchestrator))
+    result = await call_tracecag_with_retry("hello", "s", "u", "B1", [], [], "trace-cag")
+    assert result.llm_metadata["fallback_used"] is True
+    assert result.llm_metadata["provider"] == "trace-cag_safe_response"
+
+
+@pytest.mark.asyncio
 async def test_stream_topic_message_primary_fails_then_degraded_retry_succeeds(monkeypatch):
     orchestrator = MagicMock()
     orchestrator.pipeline.analyze_for_streaming = AsyncMock(

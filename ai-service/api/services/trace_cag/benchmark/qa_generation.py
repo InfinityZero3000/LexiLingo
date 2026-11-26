@@ -108,16 +108,9 @@ def _extract_first_sentence(text: str) -> str:
 
 
 def _strip_jit_soft_graph_block(context: str) -> str:
-    text = str(context or "")
-    if not text:
-        return ""
-    text = re.sub(
-        r"\[JIT_SOFT_GRAPH\]\s*(?:\n|\r\n?)?\s*\{[\s\S]*?\}\s*",
-        "",
-        text,
-        flags=re.IGNORECASE,
-    )
-    return text.strip()
+    from api.services.internal_payloads import strip_jit_graph_blocks
+
+    return strip_jit_graph_blocks(context)
 
 
 def _best_matching_sentence(question: str, context: str) -> str:
