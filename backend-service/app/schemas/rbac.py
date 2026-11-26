@@ -3,8 +3,9 @@ RBAC Schemas — Roles, Permissions, Audit Logs
 """
 
 from typing import Optional, List
+from uuid import UUID
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, Field, UUID4
+from pydantic import BaseModel, ConfigDict, Field
 
 
 # ── Role ──────────────────────────────────────────────────
@@ -30,7 +31,7 @@ class RoleUpdate(BaseModel):
 class RoleResponse(RoleBase):
     model_config = ConfigDict(from_attributes=True)
 
-    id: UUID4
+    id: UUID
     is_system: bool
     is_active: bool
     created_at: datetime
@@ -57,7 +58,7 @@ class PermissionCreate(PermissionBase):
 class PermissionResponse(PermissionBase):
     model_config = ConfigDict(from_attributes=True)
 
-    id: UUID4
+    id: UUID
     created_at: datetime
 
 
@@ -66,8 +67,8 @@ class PermissionResponse(PermissionBase):
 class AuditLogResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: UUID4
-    user_id: Optional[UUID4] = None
+    id: UUID
+    user_id: Optional[UUID] = None
     action: str
     resource_type: str
     resource_id: Optional[str] = None
@@ -84,7 +85,7 @@ class AuditLogResponse(BaseModel):
 class NotificationResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: UUID4
+    id: UUID
     title: str
     body: str
     type: str

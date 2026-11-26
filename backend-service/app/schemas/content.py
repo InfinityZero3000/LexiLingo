@@ -5,7 +5,8 @@ Schemas for Grammar, Question Bank, and Test Exams.
 import json
 from datetime import datetime
 from typing import Any
-from pydantic import BaseModel, ConfigDict, Field, UUID4, field_validator
+from uuid import UUID
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 def _coerce_json_list(value: Any) -> list[Any] | None:
@@ -95,7 +96,7 @@ class GrammarUpdate(BaseModel):
 
 
 class GrammarResponse(GrammarBase):
-    id: UUID4
+    id: UUID
     created_at: datetime
     updated_at: datetime
 
@@ -112,7 +113,7 @@ class QuestionBase(BaseModel):
     explanation: str | None = None
     difficulty_level: str = "A1"
     tags: list[str] | None = None
-    grammar_id: UUID4 | None = None
+    grammar_id: UUID | None = None
     is_active: bool = True
 
     @field_validator("options", mode="before")
@@ -138,12 +139,12 @@ class QuestionUpdate(BaseModel):
     explanation: str | None = None
     difficulty_level: str | None = None
     tags: list[str] | None = None
-    grammar_id: UUID4 | None = None
+    grammar_id: UUID | None = None
     is_active: bool | None = None
 
 
 class QuestionResponse(QuestionBase):
-    id: UUID4
+    id: UUID
     created_at: datetime
     updated_at: datetime
 
@@ -158,7 +159,7 @@ class TestExamBase(BaseModel):
     level: str = "A1"
     duration_minutes: int = 20
     passing_score: int = 70
-    question_ids: list[UUID4] | None = None
+    question_ids: list[UUID] | None = None
     is_published: bool = False
 
     @field_validator("question_ids", mode="before")
@@ -177,12 +178,12 @@ class TestExamUpdate(BaseModel):
     level: str | None = None
     duration_minutes: int | None = None
     passing_score: int | None = None
-    question_ids: list[UUID4] | None = None
+    question_ids: list[UUID] | None = None
     is_published: bool | None = None
 
 
 class TestExamResponse(TestExamBase):
-    id: UUID4
+    id: UUID
     created_at: datetime
     updated_at: datetime
 
