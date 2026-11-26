@@ -7,7 +7,9 @@ from datetime import datetime, timezone
 from sqlalchemy import select, func, and_, desc, case
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.progress import UserCourseProgress, LessonCompletion
+from app.models.progress import LessonCompletion, Streak, UserCourseProgress
+from app.models.gamification import UserAchievement
+from app.models.user import User
 from app.models.course import Course, Unit, Lesson
 
 
@@ -302,11 +304,10 @@ class ProgressCRUD:
         db: AsyncSession,
         user_id: str,
     ) -> dict:
-        """Get comprehensive user statistics in a single query."""
-        # One query: XP + enrolled + completed counts from UserCourseProgress
+        """Get comprehensive user statistics."""
+        # One query: enrolled + completed counts from UserCourseProgress
         progress_result = await db.execute(
             select(
-                func.coalesce(func.sum(UserCourseProgress.total_xp_earned), 0).label("total_xp"),
                 func.count(UserCourseProgress.id).label("courses_enrolled"),
                 func.sum(
                     case((UserCourseProgress.progress_percentage >= 100, 1), else_=0)
@@ -326,12 +327,33 @@ class ProgressCRUD:
         )
         lessons_completed = lessons_result.scalar() or 0
 
+        # The account's own totals. Summing course XP left out games, reviews and
+        # quests, and the streaks and achievements were hardcoded to zero.
+        def of_user(column, model):
+            return select(column).where(model.user_id == user_id).scalar_subquery()
+
+        account = (
+            await db.execute(
+                select(
+                    select(User.total_xp)
+                    .where(User.id == user_id)
+                    .scalar_subquery()
+                    .label("total_xp"),
+                    of_user(Streak.current_streak, Streak).label("current_streak"),
+                    of_user(Streak.longest_streak, Streak).label("longest_streak"),
+                    of_user(func.count(UserAchievement.id), UserAchievement).label(
+                        "achievements"
+                    ),
+                )
+            )
+        ).one()
+
         return {
-            'total_xp': int(row.total_xp or 0),
+            'total_xp': int(account.total_xp or 0),
             'courses_enrolled': int(row.courses_enrolled or 0),
             'courses_completed': int(row.courses_completed or 0),
             'lessons_completed': lessons_completed,
-            'current_streak': 0,
-            'longest_streak': 0,
-            'achievements_unlocked': 0,
+            'current_streak': int(account.current_streak or 0),
+            'longest_streak': int(account.longest_streak or 0),
+            'achievements_unlocked': int(account.achievements or 0),
         }
