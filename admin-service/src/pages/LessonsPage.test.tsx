@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { I18nProvider } from "../lib/i18n";
 import { ConfirmProvider } from "../components/ConfirmDialog";
@@ -149,5 +149,19 @@ describe("LessonsPage bulk AI generation", () => {
     mount();
     await screen.findByText("Beta");
     expect(screen.queryByRole("button", { name: /Generate for/ })).toBeNull();
+  });
+});
+
+describe("editing from the standalone lessons page", () => {
+  it("saves while the unit filter is on all units", async () => {
+    api.updateLesson.mockResolvedValue({});
+    mount();
+    await screen.findByText("Beta");
+    const row = screen.getAllByRole("row").find((r) => r.textContent?.includes("Beta")) as HTMLElement;
+    fireEvent.click(within(row).getByRole("button", { name: "Edit" }));
+    fireEvent.change(screen.getByDisplayValue("Beta"), { target: { value: "Beta 2" } });
+    fireEvent.submit(screen.getByDisplayValue("Beta 2").closest("form") as HTMLFormElement);
+
+    await waitFor(() => expect(api.updateLesson).toHaveBeenCalledWith("b", expect.objectContaining({ title: "Beta 2" })));
   });
 });

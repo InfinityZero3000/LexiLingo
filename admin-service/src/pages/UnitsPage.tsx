@@ -101,7 +101,7 @@ export const UnitsPage = () => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     const targetCourseId = activeCourseId || formCourseId;
-    if (!targetCourseId) return;
+    if (!editingId && !targetCourseId) return;
     setSaving(true);
     setError(null);
     try {
