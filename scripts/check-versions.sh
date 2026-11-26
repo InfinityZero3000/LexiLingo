@@ -17,6 +17,11 @@ done
 [ "$(printf '%s\n' "$flutter" "$admin" "$backend" "$ai" "$mcp" | sort -u | wc -l | tr -d ' ')" = 1 ] \
   || { echo "FAIL: versions differ"; exit 1; }
 
+# An env file that sets APP_VERSION replaces the code value, and nothing bumps it at release.
+if overrides=$(git grep -nE '^[[:space:]#-]*(VITE_)?APP_VERSION[[:space:]]*[=:][[:space:]]*"?[0-9]' -- '*.env*' '*compose*.yml' '*.yaml' '*.toml' '*.sh' ':!pnpm-lock.yaml' ':!*/pnpm-lock.yaml'); then
+  printf '%s\n' "$overrides"; echo "FAIL: APP_VERSION is overridden outside the code"; exit 1
+fi
+
 if tag=$(git tag -l 'v[0-9]*.[0-9]*.[0-9]*' --sort=-v:refname 2>/dev/null | grep -vE -- '-' | head -1) && [ -n "$tag" ] && [ "${tag#v}" != "$flutter" ]; then
   echo "note: highest release tag is $tag, code declares $flutter (bump both at release)"
 fi
