@@ -1,9 +1,9 @@
 """
 Seed Question Bank
 ==================
-Seeds MCQ questions linked to grammar items, then assigns question_ids to
-test exams. Fully idempotent: clears question_bank first, re-creates all
-questions, then re-links test_exams.question_ids.
+Adds the seed MCQ questions that are missing, then fills test exams that have no
+questions yet. Safe on a database with data: it deletes and rewrites nothing,
+and never changes whether an exam is published.
 
 Run:
     cd backend-service
@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import asyncio
 import random
-from sqlalchemy import select, delete, func
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionLocal
@@ -1087,11 +1087,14 @@ GRAMMAR_TOPICS: list[tuple[str, str]] = [
 
 
 async def ensure_grammar_items(db: AsyncSession) -> None:
-    """Create the missing grammar items; existing ones are left untouched."""
-    existing = set((await db.execute(select(GrammarItem.title))).scalars().all())
+    """Create the grammar items, only in an empty table.
+
+    Learners can read these placeholders, so a database with its own grammar
+    library gets none added; questions without a match are skipped.
+    """
+    if await db.scalar(select(func.count(GrammarItem.id))):
+        return
     for title, level in GRAMMAR_TOPICS:
-        if title in existing:
-            continue
         db.add(
             GrammarItem(
                 title=title,
@@ -1110,10 +1113,10 @@ async def ensure_grammar_items(db: AsyncSession) -> None:
 async def seed_questions(db: AsyncSession):
     await ensure_grammar_items(db)
 
-    print("  Clearing existing questions from question_bank...")
-    await db.execute(delete(QuestionItem))
-    await db.commit()
-    print("   question_bank cleared")
+    present = {
+        (row.prompt, tuple(row.options or [])): row
+        for row in (await db.execute(select(QuestionItem))).scalars().all()
+    }
 
     # Load grammar items
     result = await db.execute(select(GrammarItem))
@@ -1159,6 +1162,11 @@ async def seed_questions(db: AsyncSession):
             continue
 
         for q in questions:
+            stored = present.get((q["prompt"], tuple(q["options"])))
+            if stored is not None:
+                if stored.is_active:
+                    level_map.setdefault(stored.difficulty_level, []).append(stored)
+                continue
             item = QuestionItem(
                 prompt=q["prompt"],
                 question_type="mcq",
@@ -1185,12 +1193,14 @@ async def seed_questions(db: AsyncSession):
 
 
 async def update_test_exams(db: AsyncSession, level_map: dict[str, list]):
-    print("  Updating test_exams with question_ids...")
+    print("  Filling test_exams that have no questions...")
     result = await db.execute(select(TestExam))
     exams = result.scalars().all()
 
     updated = 0
     for exam in exams:
+        if exam.question_ids:
+            continue
         # Collect questions for the exam's target levels
         target_levels = EXAM_LEVEL_MAP.get(exam.level, [exam.level])
         candidate_ids = []
@@ -1200,12 +1210,13 @@ async def update_test_exams(db: AsyncSession, level_map: dict[str, list]):
         # Take up to 20 questions per exam
         selected = random.sample(candidate_ids, min(20, len(candidate_ids)))
 
+        if not selected:
+            continue
         exam.question_ids = selected
-        exam.is_published = True
         updated += 1
 
     await db.commit()
-    print(f"   {updated} test exams updated with question_ids and published")
+    print(f"   {updated} empty test exams filled")
 
 
 async def main():
