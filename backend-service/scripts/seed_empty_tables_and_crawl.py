@@ -78,6 +78,7 @@ from app.models import (
     VocabularyReview,
     WalletTransaction,
 )
+from scripts.seed_guard import require_sandbox
 
 
 NOW = datetime.now(timezone.utc)
@@ -780,6 +781,7 @@ async def seed_remaining_empty_tables(db: AsyncSession, empty_set: set[str], for
                 )
 
     if can_seed("question_attempts"):
+        await db.flush()  # the lesson attempts added above must be visible
         lesson_attempts = (await db.execute(select(LessonAttempt))).scalars().all()
         for la in lesson_attempts[: min(120, len(lesson_attempts))]:
             for q_idx in range(4):
@@ -877,6 +879,7 @@ async def seed_remaining_empty_tables(db: AsyncSession, empty_set: set[str], for
 
 async def execute(args: argparse.Namespace) -> None:
     async with AsyncSessionLocal() as db:
+        await require_sandbox(db)
         empty_before = await empty_tables(db)
         print(f"Empty tables before: {len(empty_before)}")
         if empty_before:

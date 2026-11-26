@@ -44,6 +44,7 @@ from app.models.proficiency import (
     LevelAssessmentTest,
     SkillType,
 )
+from scripts.seed_guard import require_sandbox
 
 # ── Constants ────────────────────────────────────────────────────────
 TARGET_EMAIL = "nhthang312@gmail.com"
@@ -128,6 +129,7 @@ async def seed(database_url: str | None = None):
     async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async with async_session() as session:
+        await require_sandbox(session)
         # 1. Find or create the test user
         result = await session.execute(select(User).where(User.email == TARGET_EMAIL))
         user = result.scalar_one_or_none()
@@ -409,6 +411,7 @@ async def clean(database_url: str | None = None):
     async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async with async_session() as session:
+        await require_sandbox(session)
         result = await session.execute(select(User).where(User.email == TARGET_EMAIL))
         user = result.scalar_one_or_none()
         if not user:
