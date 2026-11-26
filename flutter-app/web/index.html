@@ -54,6 +54,13 @@
   <link rel="manifest" href="manifest.json">
 
   <style>
+    /* flutter-view covers the whole page, so Chrome's tap highlight tints the
+       entire app blue. The engine only turns it off on Safari. Inherited, and
+       it reaches into Flutter's shadow root. */
+    html {
+      -webkit-tap-highlight-color: transparent;
+    }
+
     html,
     body {
       width: 100%;
