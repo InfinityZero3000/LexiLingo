@@ -701,8 +701,7 @@ async def get_user_activity(
             ActivityLogResponse(
                 activity_date=lesson.completed_at.isoformat() if lesson.completed_at else "",
                 activity_type="lesson_completed",
-                description=f"Completed lesson (Score: {lesson.score}%)",
-                xp_earned=lesson.xp_earned,
+                description=f"{'Completed' if lesson.is_passed else 'Attempted'} lesson (best score: {lesson.best_score}%)",
             )
         )
     
