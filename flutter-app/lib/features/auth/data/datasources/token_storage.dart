@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,6 +12,20 @@ import '../../../../core/utils/app_logger.dart';
 import '../models/auth_models.dart';
 
 const _tag = 'TokenStorage';
+
+/// The account an access token belongs to, or null if it cannot be read.
+String? tokenSubject(String accessToken) {
+  try {
+    final payload = jsonDecode(
+      utf8.decode(
+        base64Url.decode(base64Url.normalize(accessToken.split('.')[1])),
+      ),
+    );
+    return (payload as Map)['sub']?.toString();
+  } catch (_) {
+    return null;
+  }
+}
 
 /// Secure storage for authentication tokens
 /// Uses flutter_secure_storage for encrypted storage on mobile,
@@ -26,6 +42,23 @@ class TokenStorage {
       accessibility: KeychainAccessibility.first_unlock_this_device,
     ),
   );
+
+  /// The account this tab is signed in as. Browser tabs share storage, so what
+  /// is stored may now belong to whoever signed in last in another one.
+  String? _account;
+
+  /// Whether [accessToken] is someone else's. A tab that has no account yet
+  /// takes the first one it reads.
+  bool _isForeign(String? accessToken) {
+    final subject = accessToken == null ? null : tokenSubject(accessToken);
+    if (subject == null) return false;
+    return (_account ??= subject) != subject;
+  }
+
+  /// True when the stored tokens are someone else's: this tab must then neither
+  /// send them nor delete them.
+  Future<bool> _heldByAnotherAccount() async =>
+      _isForeign(await _read(_accessTokenKey));
 
   Future<void> _write(String key, String value) async {
     if (kIsWeb) {
@@ -76,6 +109,7 @@ class TokenStorage {
       await _write(_refreshTokenKey, tokens.refreshToken);
       await _write(_accessTokenKey, tokens.accessToken);
       await _write(_tokenTypeKey, tokens.tokenType);
+      _account = tokenSubject(tokens.accessToken);
       logInfo(_tag, 'Tokens saved successfully');
     } catch (e) {
       logError(_tag, 'Error saving tokens', e);
@@ -85,11 +119,13 @@ class TokenStorage {
 
   /// Get stored access token
   Future<String?> getAccessToken() async {
-    return await _read(_accessTokenKey);
+    final token = await _read(_accessTokenKey);
+    return _isForeign(token) ? null : token;
   }
 
   /// Get stored refresh token
   Future<String?> getRefreshToken() async {
+    if (await _heldByAnotherAccount()) return null;
     return await _read(_refreshTokenKey);
   }
 
@@ -124,6 +160,7 @@ class TokenStorage {
 
   Future<String?> readSessionUser() async {
     try {
+      if (await _heldByAnotherAccount()) return null;
       return await _read(_sessionUserKey);
     } catch (_) {
       return null;
@@ -154,6 +191,11 @@ class TokenStorage {
 
   /// Clear all stored tokens (logout)
   Future<void> clearTokens() async {
+    // Signing this tab out must not sign the other account out. [_account]
+    // stays, so this tab keeps refusing their tokens until it signs in again.
+    if (await _heldByAnotherAccount()) return;
+    _account = null;
+
     final userScope = await UserScopeService.getActiveUserId();
 
     await Future.wait([
@@ -175,6 +217,7 @@ class TokenStorage {
 
   /// Clear all secure storage (complete wipe)
   Future<void> clearAll() async {
+    _account = null;
     if (kIsWeb) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();

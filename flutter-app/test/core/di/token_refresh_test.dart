@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:lexilingo_app/core/di/core_di.dart';
+import 'package:lexilingo_app/core/network/backend_auth_header_provider.dart';
 import 'package:lexilingo_app/core/services/session_expired_service.dart';
 import 'package:lexilingo_app/features/auth/data/datasources/token_storage.dart';
 import 'package:lexilingo_app/features/auth/data/models/auth_models.dart';
@@ -286,6 +287,36 @@ void main() {
         expect(refreshCalls, 0);
         expect(expired, 1);
         expect(tab.cleared, isFalse);
+      },
+    );
+
+    test(
+      'every request path refuses the other account, not just refresh',
+      () async {
+        final tabStorage = TokenStorage();
+        await tabStorage.saveTokens(mine);
+        final theirs = AuthTokens(
+          accessToken: jwt('u2', const Duration(minutes: 30), 'other'),
+          refreshToken: 'other-refresh',
+        );
+        // Another tab signs in as someone else; a storage reload shows it here.
+        await TokenStorage().saveTokens(theirs);
+
+        expect(await tabStorage.getAccessToken(), isNull);
+        expect(await tabStorage.getTokens(), isNull);
+        expect(
+          await BackendAuthHeaderProvider(tokenStorage: tabStorage)(),
+          isEmpty,
+        );
+
+        // Signing this tab out leaves them signed in, and it stays refused.
+        await tabStorage.clearTokens();
+        expect(await TokenStorage().getAccessToken(), theirs.accessToken);
+        expect(await tabStorage.getAccessToken(), isNull);
+
+        // Signing in here again binds the tab to the new account.
+        await tabStorage.saveTokens(theirs);
+        expect(await tabStorage.getAccessToken(), theirs.accessToken);
       },
     );
 
