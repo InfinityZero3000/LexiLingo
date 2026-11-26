@@ -34,13 +34,6 @@ abstract class StoryRepository {
     String preferredLlm = 'tracecag',
   });
 
-  /// Send a message in a topic session
-  Future<Either<Failure, TopicChatResponse>> sendTopicMessage({
-    required String sessionId,
-    required String userId,
-    required String message,
-  });
-
   /// Send a message and receive the reply as an SSE event stream instead of
   /// waiting for the full response. Raw stream (not wrapped in Either) —
   /// mid-stream failures surface as a [TopicStreamError] event instead.

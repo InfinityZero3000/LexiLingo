@@ -132,28 +132,6 @@ class StoryRepositoryImpl implements StoryRepository {
   }
 
   @override
-  Future<Either<Failure, TopicChatResponse>> sendTopicMessage({
-    required String sessionId,
-    required String userId,
-    required String message,
-  }) async {
-    try {
-      final response = await apiDataSource.sendTopicMessage(
-        sessionId: sessionId,
-        userId: userId,
-        message: message,
-      );
-      return Right(response.toEntity());
-    } on ServerException catch (e) {
-      logError(_tag, 'sendTopicMessage server error: $e');
-      return Left(ServerFailure(e.message));
-    } catch (e) {
-      logError(_tag, 'sendTopicMessage error: $e');
-      return Left(mapFailure(e));
-    }
-  }
-
-  @override
   Stream<TopicStreamEvent> sendTopicMessageStream({
     required String sessionId,
     required String userId,

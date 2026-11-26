@@ -1,10 +1,8 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
 
 import 'package:lexilingo_app/core/di/core_di.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
 import '../../../../core/utils/app_logger.dart';
-import '../../../../core/network/api_config.dart';
 import '../../../../core/network/sse_line_parser.dart';
 import '../../domain/entities/topic_stream_event.dart';
 import '../models/story_model.dart';
@@ -33,16 +31,9 @@ class TopicMessagesMetadataResult {
 /// Remote data source for Story/Topic-based conversation API
 /// Connects to AI Service on port 8001
 class StoryApiDataSource {
-  final String baseUrl;
   final AiApiClient? _apiClient;
 
-  StoryApiDataSource({
-    AiApiClient? apiClient,
-    String? baseUrl,
-    http.Client? client,
-    Future<Map<String, String>> Function()? authHeaderProvider,
-  }) : baseUrl = baseUrl ?? ApiConfig.aiServiceUrl,
-       _apiClient = apiClient;
+  StoryApiDataSource({AiApiClient? apiClient}) : _apiClient = apiClient;
 
   AiApiClient get apiClient => _apiClient ?? sl<AiApiClient>();
 
@@ -166,31 +157,6 @@ class StoryApiDataSource {
       return TopicSession.fromJson(json);
     } catch (e) {
       logError(_tag, 'startTopicSession error: $e');
-      rethrow;
-    }
-  }
-
-  /// Send message in a topic session
-  Future<TopicChatResponse> sendTopicMessage({
-    required String sessionId,
-    required String userId,
-    required String message,
-  }) async {
-    try {
-      logDebug(_tag, 'sendTopicMessage sessionId=$sessionId');
-      final body = {
-        'session_id': sessionId,
-        'user_id': userId,
-        'message': message,
-      };
-
-      final json = await apiClient.post(
-        '/topics/topic-sessions/$sessionId/messages',
-        body: body,
-      );
-      return TopicChatResponse.fromJson(json);
-    } catch (e) {
-      logError(_tag, 'sendTopicMessage error: $e');
       rethrow;
     }
   }
