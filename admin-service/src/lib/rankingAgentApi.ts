@@ -1,4 +1,5 @@
 import { apiFetch, type ApiResponse } from "./api";
+import { ENV } from "./env";
 
 export type RankingAgentJobType =
   | "league_reset"
@@ -109,7 +110,7 @@ type ApplyResult = { job: RankingAgentJob; result: Record<string, unknown> };
 export async function createRankingAgentJob(
   payload: RankingAgentJobCreate
 ): Promise<RankingAgentJob> {
-  const res = await apiFetch<ApiResponse<RankingAgentJob>>("/api/v1/admin/ranking-agent/jobs", {
+  const res = await apiFetch<ApiResponse<RankingAgentJob>>(`${ENV.backendUrl}/admin/ranking-agent/jobs`, {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -121,19 +122,19 @@ export async function listRankingAgentJobs(
   offset = 0
 ): Promise<RankingAgentJob[]> {
   const res = await apiFetch<ApiResponse<RankingAgentJob[]>>(
-    `/api/v1/admin/ranking-agent/jobs?limit=${limit}&offset=${offset}`
+    `${ENV.backendUrl}/admin/ranking-agent/jobs?limit=${limit}&offset=${offset}`
   );
   return (res.data ?? []) as RankingAgentJob[];
 }
 
 export async function getRankingAgentJob(id: string): Promise<RankingAgentJob> {
-  const res = await apiFetch<ApiResponse<RankingAgentJob>>(`/api/v1/admin/ranking-agent/jobs/${id}`);
+  const res = await apiFetch<ApiResponse<RankingAgentJob>>(`${ENV.backendUrl}/admin/ranking-agent/jobs/${id}`);
   return res.data as RankingAgentJob;
 }
 
 export async function applyRankingAgentJob(id: string): Promise<ApplyResult> {
   const res = await apiFetch<ApiResponse<ApplyResult>>(
-    `/api/v1/admin/ranking-agent/jobs/${id}/apply`,
+    `${ENV.backendUrl}/admin/ranking-agent/jobs/${id}/apply`,
     { method: "POST" }
   );
   return res.data as ApplyResult;
@@ -141,7 +142,7 @@ export async function applyRankingAgentJob(id: string): Promise<ApplyResult> {
 
 export async function cancelRankingAgentJob(id: string): Promise<RankingAgentJob> {
   const res = await apiFetch<ApiResponse<RankingAgentJob>>(
-    `/api/v1/admin/ranking-agent/jobs/${id}/cancel`,
+    `${ENV.backendUrl}/admin/ranking-agent/jobs/${id}/cancel`,
     { method: "POST" }
   );
   return res.data as RankingAgentJob;
@@ -149,7 +150,7 @@ export async function cancelRankingAgentJob(id: string): Promise<RankingAgentJob
 
 export async function retryRankingAgentJob(id: string): Promise<RankingAgentJob> {
   const res = await apiFetch<ApiResponse<RankingAgentJob>>(
-    `/api/v1/admin/ranking-agent/jobs/${id}/retry`,
+    `${ENV.backendUrl}/admin/ranking-agent/jobs/${id}/retry`,
     { method: "POST" }
   );
   return res.data as RankingAgentJob;
