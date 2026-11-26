@@ -28,6 +28,8 @@ const en: Translations = {
     removeFilled: "Remove “{name}” from this form?",
     remove: "Remove",
     usage: {
+      required_by_lessons: "required by {n} other lesson(s)",
+      level_exam_attempts: "on {n} level exam paper(s) of learners",
       enrolled_learners: "{n} enrolled learner(s)",
       learners_with_lesson_records: "{n} learner(s) with lesson history",
       learners_reviewing: "{n} learner(s) reviewing it",

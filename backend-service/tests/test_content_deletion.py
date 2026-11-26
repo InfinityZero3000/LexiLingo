@@ -1,4 +1,5 @@
 """Deleting admin content must never erase what learners did."""
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 import pytest
@@ -9,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.content import QuestionItem, TestExam
 from app.models.course import Course, Lesson, Unit
 from app.models.gamification import Achievement, ShopItem, UserAchievement, UserInventory
+from app.models.proficiency import LevelExamAttempt
 from app.models.progress import LessonCompletion, UserCourseProgress
 from app.models.user import User
 from app.models.vocabulary import DifficultyLevel, PartOfSpeech, UserVocabulary, VocabularyItem
@@ -149,3 +151,47 @@ async def test_a_question_on_a_paper_is_kept_until_the_paper_drops_it(
     exam.question_ids = []
     await db_session.commit()
     assert (await async_client.delete(url, headers=admin_headers)).status_code == 200
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("state", ["in_progress", "submitted"])
+async def test_a_question_on_a_learners_exam_paper_is_kept(
+    state: str, async_client: AsyncClient, admin_headers: dict, db_session: AsyncSession
+):
+    """Deleting it would leave a hole that is still counted against the learner."""
+    question = QuestionItem(prompt="p?", question_type="multiple_choice", difficulty_level="B1",
+                            options=["a", "b"], answer={"value": "a"})
+    learner = await _learner(db_session)
+    await _save(db_session, question)
+    question_id = question.id
+    await _save(db_session, LevelExamAttempt(
+        user_id=learner.id, from_level="A2", status=state,
+        sections=[{"level": "B1", "question_ids": [str(question_id)], "pass_percent": 80}],
+        expires_at=datetime.now(timezone.utc) + timedelta(minutes=30),
+    ))
+
+    response = await async_client.delete(f"/api/v1/admin/questions/{question_id}", headers=admin_headers)
+
+    assert _refusal(response)["usage"] == {"level_exam_attempts": 1}
+    assert await _exists(db_session, QuestionItem, question_id)
+
+
+@pytest.mark.asyncio
+async def test_a_prerequisite_of_a_remaining_lesson_is_kept(
+    async_client: AsyncClient, admin_headers: dict, db_session: AsyncSession
+):
+    """A deleted lesson can never be completed, so whatever requires it stays locked forever."""
+    course, unit, first = await _course(db_session)
+    second = Lesson(course_id=course.id, unit_id=unit.id, title="Next", order_index=1,
+                    lesson_type="lesson", prerequisites=[first.id])
+    await _save(db_session, second)
+    first_id, second_id, unit_id = first.id, second.id, unit.id
+
+    response = await async_client.delete(f"/api/v1/admin/lessons/{first_id}", headers=admin_headers)
+    assert _refusal(response)["usage"] == {"required_by_lessons": 1}
+
+    # Together with the lesson that requires it, nothing is left locked.
+    response = await async_client.delete(f"/api/v1/admin/units/{unit_id}", headers=admin_headers)
+    assert response.status_code == 200, response.text
+    db_session.expire_all()
+    assert not await _exists(db_session, Lesson, second_id)

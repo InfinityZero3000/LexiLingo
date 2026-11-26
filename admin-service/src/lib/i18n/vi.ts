@@ -26,6 +26,8 @@ const vi = {
     removeFilled: "Gỡ “{name}” khỏi biểu mẫu?",
     remove: "Gỡ",
     usage: {
+      required_by_lessons: "{n} bài khác yêu cầu học trước",
+      level_exam_attempts: "nằm trong {n} bài thi lên cấp của người học",
       enrolled_learners: "{n} người đã ghi danh",
       learners_with_lesson_records: "{n} người có lịch sử học",
       learners_reviewing: "{n} người đang ôn từ này",
