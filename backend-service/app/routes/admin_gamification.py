@@ -3,7 +3,7 @@ from typing import Optional, List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status, UploadFile, File
-from sqlalchemy import select, func
+from sqlalchemy import select, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -17,6 +17,23 @@ router = APIRouter(prefix="/admin", tags=["Admin"])
 
 require_achievements = require_resource("achievements")
 require_shop = require_resource("shop")
+
+async def _assert_achievement_free(
+    db: AsyncSession, name: Optional[str], slug: Optional[str], own_id: Optional[UUID] = None
+) -> None:
+    """name and slug are unique; say so instead of failing on the constraint."""
+    clauses = [column == value for column, value in ((Achievement.name, name), (Achievement.slug, slug)) if value]
+    if not clauses:
+        return
+    query = select(Achievement.id).where(or_(*clauses))
+    if own_id:
+        query = query.where(Achievement.id != own_id)
+    if await db.scalar(query.limit(1)):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Another achievement already uses this name or slug",
+        )
+
 
 # ============================================================================
 # Achievement Admin CRUD
@@ -60,18 +77,18 @@ async def list_achievements_admin(
 
 @router.post("/achievements", response_model=ApiResponse[dict])
 async def create_achievement(
-    name: str,
-    description: str,
-    condition_type: str,
-    condition_value: int = 1,
-    category: str = "special",
-    rarity: str = "common",
-    xp_reward: int = 0,
-    gems_reward: int = 0,
+    name: str = Query(..., min_length=1, max_length=100),
+    description: str = Query(...),
+    condition_type: str = Query(..., min_length=1, max_length=50),
+    condition_value: int = Query(1, ge=0),
+    category: str = Query("special", max_length=50),
+    rarity: str = Query("common", max_length=20),
+    xp_reward: int = Query(0, ge=0),
+    gems_reward: int = Query(0, ge=0),
     is_hidden: bool = False,
-    badge_icon: Optional[str] = None,
-    badge_color: Optional[str] = None,
-    slug: Optional[str] = None,
+    badge_icon: Optional[str] = Query(None, max_length=500),
+    badge_color: Optional[str] = Query(None, max_length=20),
+    slug: Optional[str] = Query(None, max_length=100),
     db: AsyncSession = Depends(get_db),
     admin_user: User = Depends(require_achievements)
 ):
@@ -80,6 +97,7 @@ async def create_achievement(
     
     Admin only endpoint.
     """
+    await _assert_achievement_free(db, name, slug)
     achievement = Achievement(
         name=name,
         slug=slug,
@@ -112,18 +130,18 @@ async def create_achievement(
 @router.put("/achievements/{achievement_id}", response_model=ApiResponse[dict])
 async def update_achievement(
     achievement_id: UUID,
-    name: Optional[str] = None,
+    name: Optional[str] = Query(None, min_length=1, max_length=100),
     description: Optional[str] = None,
-    condition_type: Optional[str] = None,
-    condition_value: Optional[int] = None,
-    category: Optional[str] = None,
-    rarity: Optional[str] = None,
-    xp_reward: Optional[int] = None,
-    gems_reward: Optional[int] = None,
+    condition_type: Optional[str] = Query(None, min_length=1, max_length=50),
+    condition_value: Optional[int] = Query(None, ge=0),
+    category: Optional[str] = Query(None, max_length=50),
+    rarity: Optional[str] = Query(None, max_length=20),
+    xp_reward: Optional[int] = Query(None, ge=0),
+    gems_reward: Optional[int] = Query(None, ge=0),
     is_hidden: Optional[bool] = None,
-    badge_icon: Optional[str] = None,
-    badge_color: Optional[str] = None,
-    slug: Optional[str] = None,
+    badge_icon: Optional[str] = Query(None, max_length=500),
+    badge_color: Optional[str] = Query(None, max_length=20),
+    slug: Optional[str] = Query(None, max_length=100),
     db: AsyncSession = Depends(get_db),
     admin_user: User = Depends(require_achievements)
 ):
@@ -135,6 +153,7 @@ async def update_achievement(
     if not achievement:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Achievement not found")
 
+    await _assert_achievement_free(db, name, slug, own_id=achievement_id)
     for field, value in {
         "name": name, "description": description, "condition_type": condition_type,
         "condition_value": condition_value, "category": category, "rarity": rarity,
@@ -297,14 +316,14 @@ async def update_shop_item(
         item.item_type = payload.item_type
     if payload.price_gems is not None:
         item.price_gems = payload.price_gems
-    if payload.icon_url is not None:
-        item.icon_url = payload.icon_url
     if payload.effects is not None:
         item.effects = payload.effects
     if payload.is_available is not None:
         item.is_available = payload.is_available
-    if payload.stock_quantity is not None:
-        item.stock_quantity = payload.stock_quantity
+    # An explicit null clears these (no icon, unlimited stock); leaving a field out keeps it.
+    for field in ("icon_url", "stock_quantity"):
+        if field in payload.model_fields_set:
+            setattr(item, field, getattr(payload, field))
 
     await db.commit()
     await db.refresh(item)

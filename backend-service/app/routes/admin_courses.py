@@ -26,7 +26,7 @@ from app.models.content import GrammarItem, QuestionItem, TestExam
 from app.models.course import Course, Lesson, Unit, count_exercises, exercise_shape_problems
 from app.models.course_category import CourseCategory
 from app.models.user import User
-from app.models.vocabulary import VocabularyItem
+from app.models.vocabulary import DifficultyLevel, PartOfSpeech, VocabularyItem
 from app.schemas.content import (
     GrammarCreate,
     GrammarResponse,
@@ -790,6 +790,21 @@ async def generate_lesson_exercises_draft(
     return ApiResponse(success=True, message="Draft generated", data={"exercises": exercises})
 
 
+async def _assert_word_free(
+    db: AsyncSession, word: str, part_of_speech: PartOfSpeech, own_id: Optional[UUID] = None
+) -> None:
+    query = select(VocabularyItem.id).where(
+        VocabularyItem.word == word, VocabularyItem.part_of_speech == part_of_speech
+    )
+    if own_id:
+        query = query.where(VocabularyItem.id != own_id)
+    if await db.scalar(query.limit(1)):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f'"{word}" already exists with this part of speech',
+        )
+
+
 # ============================================================================
 # Vocabulary Admin CRUD
 # ============================================================================
@@ -834,9 +849,9 @@ async def create_vocabulary(
     word: str,
     definition: str,
     translation: str,
-    part_of_speech: str = "noun",
+    part_of_speech: PartOfSpeech = PartOfSpeech.NOUN,
     pronunciation: Optional[str] = None,
-    difficulty_level: str = "A1",
+    difficulty_level: DifficultyLevel = DifficultyLevel.A1,
     db: AsyncSession = Depends(get_db),
     admin_user: User = Depends(require_content)
 ):
@@ -853,6 +868,7 @@ async def create_vocabulary(
     
     Admin only endpoint.
     """
+    await _assert_word_free(db, word, part_of_speech)
     vocab = VocabularyItem(
         word=word,
         definition=definition,
@@ -915,9 +931,9 @@ async def update_vocabulary(
     word: Optional[str] = None,
     definition: Optional[str] = None,
     translation: Optional[str] = None,
-    part_of_speech: Optional[str] = None,
+    part_of_speech: Optional[PartOfSpeech] = None,
     pronunciation: Optional[str] = None,
-    difficulty_level: Optional[str] = None,
+    difficulty_level: Optional[DifficultyLevel] = None,
     db: AsyncSession = Depends(get_db),
     admin_user: User = Depends(require_content)
 ):
@@ -928,7 +944,9 @@ async def update_vocabulary(
     vocab = result.scalar_one_or_none()
     if not vocab:
         raise HTTPException(status_code=404, detail="Vocabulary not found")
-    
+
+    if word is not None or part_of_speech is not None:
+        await _assert_word_free(db, word or vocab.word, part_of_speech or vocab.part_of_speech, vocab_id)
     if word is not None: vocab.word = word
     if definition is not None:
         if definition != vocab.definition and isinstance(vocab.translation, dict):
@@ -987,7 +1005,12 @@ async def bulk_import_vocabulary(
         if not word:
             skipped += 1
             continue
-        part_of_speech = row.get("part_of_speech", "noun").strip() or "noun"
+        try:
+            part_of_speech = PartOfSpeech((row.get("part_of_speech") or "").strip().lower() or "noun")
+            difficulty_level = DifficultyLevel((row.get("difficulty_level") or "").strip().upper() or "A1")
+        except ValueError as exc:
+            errors.append(f"Row {row_num}: {exc}")
+            continue
         key = (word, part_of_speech)
         if key in pending:
             skipped += 1
@@ -998,8 +1021,8 @@ async def bulk_import_vocabulary(
             "definition": definition or word,
             "translation": {"vi": translation} if translation else {},
             "part_of_speech": part_of_speech,
-            "pronunciation": row.get("pronunciation", "").strip() or None,
-            "difficulty_level": row.get("difficulty_level", "A1").strip() or "A1",
+            "pronunciation": (row.get("pronunciation") or "").strip() or None,
+            "difficulty_level": difficulty_level,
         }
 
     if pending:
@@ -1227,7 +1250,7 @@ async def bulk_import_grammar(
 
         try:
             tags = [t.strip() for t in (row.get("tags") or "").split(";") if t.strip()]
-            pending[title] = {
+            item = {
                 "title": title,
                 "level": (row.get("level") or "A1").strip() or "A1",
                 "topic": (row.get("topic") or "").strip() or None,
@@ -1235,6 +1258,8 @@ async def bulk_import_grammar(
                 "content": content_text,
                 "tags": tags or None,
             }
+            item["level"] = GrammarCreate(**item).level
+            pending[title] = item
         except Exception as e:
             errors.append(f"Row {row_num}: {str(e)}")
 
@@ -1259,6 +1284,11 @@ async def bulk_import_grammar(
 # ============================================================================
 # Question Bank Admin CRUD
 # ============================================================================
+
+async def _require_grammar(db: AsyncSession, grammar_id: Optional[UUID]) -> None:
+    if grammar_id is not None and await db.get(GrammarItem, grammar_id) is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Grammar item not found")
+
 
 @router.get("/questions", response_model=ApiResponse[List[QuestionResponse]])
 async def list_questions_admin(
@@ -1294,6 +1324,7 @@ async def create_question_admin(
     db: AsyncSession = Depends(get_db),
     admin_user: User = Depends(require_content)
 ):
+    await _require_grammar(db, payload.grammar_id)
     item = QuestionItem(
         prompt=payload.prompt,
         question_type=payload.question_type,
@@ -1323,6 +1354,7 @@ async def update_question_admin(
     if not item:
         raise HTTPException(status_code=404, detail="Question not found")
 
+    await _require_grammar(db, payload.grammar_id)
     for field, value in payload.model_dump(exclude_unset=True).items():
         setattr(item, field, value)
 
@@ -1386,6 +1418,7 @@ async def bulk_import_questions(
                 "explanation": (row.get("explanation") or "").strip() or None,
                 "tags": tags or None,
             }
+            parsed_row["difficulty_level"] = QuestionCreate(**parsed_row).difficulty_level
             signature = json.dumps(parsed_row, sort_keys=True)
             if signature in seen_rows:
                 skipped += 1
@@ -1518,7 +1551,7 @@ async def bulk_import_test_exams(
         try:
             question_ids = [q.strip() for q in (row.get("question_ids") or "").split(";") if q.strip()]
             published_raw = (row.get("is_published") or "").strip().lower()
-            pending[title] = {
+            item = {
                 "title": title,
                 "description": (row.get("description") or "").strip() or None,
                 "level": (row.get("level") or "A1").strip() or "A1",
@@ -1527,6 +1560,8 @@ async def bulk_import_test_exams(
                 "question_ids": question_ids or None,
                 "is_published": published_raw in ("true", "1", "yes", "có"),
             }
+            item["level"] = TestExamCreate(**item).level
+            pending[title] = item
         except Exception as e:
             errors.append(f"Row {row_num}: {str(e)}")
 

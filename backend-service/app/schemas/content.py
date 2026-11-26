@@ -8,6 +8,8 @@ from typing import Any
 from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from app.schemas.validators import cefr_field, not_null
+
 
 def _coerce_json_list(value: Any) -> list[Any] | None:
     if value is None:
@@ -81,10 +83,13 @@ class GrammarBase(BaseModel):
 
 
 class GrammarCreate(GrammarBase):
-    pass
+    _level = cefr_field("level")
 
 
 class GrammarUpdate(BaseModel):
+    _required = not_null("title", "level", "content", "is_active")
+    _level = cefr_field("level")
+
     title: str | None = None
     level: str | None = None
     topic: str | None = None
@@ -128,10 +133,13 @@ class QuestionBase(BaseModel):
 
 
 class QuestionCreate(QuestionBase):
-    pass
+    _level = cefr_field("difficulty_level")
 
 
 class QuestionUpdate(BaseModel):
+    _required = not_null("prompt", "question_type", "difficulty_level", "is_active")
+    _level = cefr_field("difficulty_level")
+
     prompt: str | None = None
     question_type: str | None = None
     options: list[Any] | None = None
@@ -169,15 +177,21 @@ class TestExamBase(BaseModel):
 
 
 class TestExamCreate(TestExamBase):
-    pass
+    duration_minutes: int = Field(20, ge=1)
+    passing_score: int = Field(70, ge=0, le=100)
+
+    _level = cefr_field("level")
 
 
 class TestExamUpdate(BaseModel):
+    _required = not_null("title", "level", "duration_minutes", "passing_score", "is_published")
+    _level = cefr_field("level")
+
     title: str | None = None
     description: str | None = None
     level: str | None = None
-    duration_minutes: int | None = None
-    passing_score: int | None = None
+    duration_minutes: int | None = Field(None, ge=1)
+    passing_score: int | None = Field(None, ge=0, le=100)
     question_ids: list[UUID] | None = None
     is_published: bool | None = None
 

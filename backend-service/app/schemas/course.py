@@ -11,6 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 import uuid
 
 from app.schemas.proficiency import SkillType
+from app.schemas.validators import not_null
 
 
 def _validate_skill(v):
@@ -61,6 +62,8 @@ class CourseCreate(CourseBase):
 
 
 class CourseUpdate(BaseModel):
+    _required = not_null("title", "language", "level", "is_published")
+
     """Schema for updating a course (admin only)."""
     title: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = None
@@ -179,6 +182,8 @@ class UnitCreate(UnitBase):
 
 
 class UnitUpdate(BaseModel):
+    _required = not_null("title", "order_index")
+
     """Schema for updating a unit (admin only)."""
     title: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = None
@@ -239,6 +244,8 @@ class LessonCreate(LessonBase):
 
 
 class LessonUpdate(BaseModel):
+    _required = not_null("title", "order_index", "lesson_type", "xp_reward", "pass_threshold")
+
     """Schema for updating a lesson (admin only)."""
     title: Optional[str] = Field(None, min_length=1, max_length=255)
     description: Optional[str] = None
@@ -250,7 +257,14 @@ class LessonUpdate(BaseModel):
     pass_threshold: Optional[int] = Field(None, ge=0, le=100)
     prerequisites: Optional[List[uuid.UUID]] = None
     estimated_minutes: Optional[int] = Field(None, ge=0)
-    content: Optional[Any] = None
+    content: Optional[dict[str, Any]] = None
+
+    @field_validator("content")
+    @classmethod
+    def validate_content(cls, v):
+        if v is not None and "exercises" in v and not isinstance(v["exercises"], list):
+            raise ValueError("content.exercises must be a list")
+        return v
 
     @field_validator("lesson_type")
     @classmethod

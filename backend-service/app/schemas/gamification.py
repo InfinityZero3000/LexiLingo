@@ -228,26 +228,27 @@ class ShopItemResponse(BaseModel):
 
 class ShopItemAdminCreate(BaseModel):
     """Admin payload to create a shop item, including effects/icon_url."""
-    name: str
+    name: str = Field(..., min_length=1, max_length=100)
     description: str
-    item_type: str
-    price_gems: int
+    item_type: str = Field(..., min_length=1, max_length=50)
+    # A negative price makes a purchase credit the wallet.
+    price_gems: int = Field(..., ge=0, le=1_000_000)
     icon_url: Optional[str] = None
     effects: Optional[Dict[str, Any]] = None
     is_available: bool = True
-    stock_quantity: Optional[int] = None
+    stock_quantity: Optional[int] = Field(None, ge=0)
 
 
 class ShopItemAdminUpdate(BaseModel):
     """Admin payload to update a shop item. All fields optional (partial update)."""
-    name: Optional[str] = None
+    name: Optional[str] = Field(None, min_length=1, max_length=100)
     description: Optional[str] = None
-    item_type: Optional[str] = None
-    price_gems: Optional[int] = None
+    item_type: Optional[str] = Field(None, min_length=1, max_length=50)
+    price_gems: Optional[int] = Field(None, ge=0, le=1_000_000)
     icon_url: Optional[str] = None
     effects: Optional[Dict[str, Any]] = None
     is_available: Optional[bool] = None
-    stock_quantity: Optional[int] = None
+    stock_quantity: Optional[int] = Field(None, ge=0)
 
 
 class PurchaseRequest(BaseModel):

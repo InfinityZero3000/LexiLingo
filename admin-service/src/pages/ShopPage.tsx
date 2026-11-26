@@ -171,8 +171,9 @@ export const ShopPage = () => {
           description: form.description,
           price_gems: form.price_gems,
           is_available: form.is_available,
-          stock_quantity: form.stock_quantity ?? undefined,
-          icon_url: form.icon_url || undefined,
+          // null clears; an omitted key would keep the old value.
+          stock_quantity: form.stock_quantity ?? null,
+          icon_url: form.icon_url || null,
           effects,
         });
       } else {
