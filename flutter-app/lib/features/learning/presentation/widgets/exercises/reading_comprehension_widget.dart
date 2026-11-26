@@ -29,7 +29,8 @@ class ReadingComprehensionWidget extends StatelessWidget {
   (String, String) _splitPassageAndQuestion() {
     final q = exercise.question;
     // Find last sentence that looks like a question
-    final sentences = q.split(RegExp(r'(?<=[.!?])\s+'));
+    // A sentence may close with a quote after its full stop ("…restaurant.' ").
+    final sentences = q.split(RegExp(r'''(?:(?<=[.!?])|(?<=[.!?]["'”’]))\s+'''));
     if (sentences.length > 1) {
       final last = sentences.last;
       if (last.trim().endsWith('?')) {
