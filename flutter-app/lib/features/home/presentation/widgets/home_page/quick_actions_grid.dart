@@ -196,6 +196,8 @@ class _QuickActionTile extends StatelessWidget {
     return Semantics(
       button: true,
       label: label,
+      // excludeSemantics also drops the child's tap action.
+      onTap: onTap,
       excludeSemantics: true,
       child: InkResponse(
         onTap: onTap,

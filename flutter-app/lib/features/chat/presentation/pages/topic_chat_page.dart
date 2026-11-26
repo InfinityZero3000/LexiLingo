@@ -774,6 +774,7 @@ class _TopicChatPageState extends State<TopicChatPage> {
             button: true,
             enabled: canSend,
             label: 'chat.send'.tr(),
+            onTap: canSend ? _sendMessage : null,
             excludeSemantics: true,
             child: TapTarget(
               onTap: canSend ? _sendMessage : null,

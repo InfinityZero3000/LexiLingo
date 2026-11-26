@@ -66,4 +66,25 @@ void main() {
 
     expect(second, first);
   });
+
+  testWidgets('a screen reader can pair the words', (tester) async {
+    final semantics = tester.ensureSemantics();
+    await renderedTexts(tester, exerciseWithId('a11y'));
+
+    for (final word in [keys.first, values.first]) {
+      tester.semantics.tap(find.semantics.byLabel(word));
+      await tester.pump();
+    }
+
+    expect(
+      tester.getSemantics(find.bySemanticsLabel(keys.first)),
+      matchesSemantics(
+        label: keys.first,
+        isButton: true,
+        hasSelectedState: true,
+        hasTapAction: true,
+      ),
+    );
+    semantics.dispose();
+  });
 }
