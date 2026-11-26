@@ -2129,7 +2129,7 @@
     "privacy3Title": "3. 데이터 저장 및 보안",
     "privacy3Body": "데이터는 보안 서버에 저장됩니다. 전송 구간(TLS)과 저장 시 업계 표준 암호화를 사용합니다. 로그인 자격 증명은 Firebase Authentication이 관리합니다.",
     "privacy4Title": "4. 제3자 서비스",
-    "privacy4Body": "LexiLingo는 자체 개인정보처리방침을 가진 Google(Firebase, YouTube)과 연동됩니다. 오류 모니터링에는 Sentry를 사용하며, 오류 보고서에는 익명화된 기기 정보가 포함될 수 있습니다.",
+    "privacy4Body": "LexiLingo는 Google(Firebase, YouTube)과 연동되며, Facebook 로그인을 선택하면 Meta(Facebook 로그인)와도 연동됩니다. 이들 서비스에는 자체 개인정보처리방침이 있습니다. Facebook으로 로그인하면 계정 생성과 로그인 목적으로만 Meta로부터 이름, 이메일 주소, 프로필 사진을 받습니다. Facebook 비밀번호는 절대 받지 않으며 사용자를 대신해 게시하지 않습니다. 오류 모니터링에는 Sentry를 사용하며, 오류 보고서에는 익명화된 기기 정보가 포함될 수 있습니다.",
     "privacy5Title": "5. 사용자의 권리",
     "privacy5Body": "설정 → 계정 → 계정 삭제에서 언제든지 개인 데이터의 열람, 정정, 영구 삭제를 요청할 수 있습니다. 삭제는 되돌릴 수 없으며 즉시 처리됩니다.",
     "privacy6Title": "6. 아동의 개인정보",

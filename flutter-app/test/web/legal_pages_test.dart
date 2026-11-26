@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 /// every path with its own shell. They are generated from the strings the in-app pages show; these tests
 /// fail when the two drift, and when the SPA rewrite would swallow them.
 void main() {
+  const langs = ['en', 'vi', 'es', 'fr', 'ja', 'ko', 'zh'];
   const fix = 'run: python3 scripts/build-legal-pages.py';
 
   Map<String, dynamic> legal(String lang) =>
@@ -26,7 +27,7 @@ void main() {
     ('privacy.html', 'privacy', 7),
     ('terms.html', 'terms', 8),
   ]) {
-    for (final lang in ['en', 'vi']) {
+    for (final lang in langs) {
       test('$file carries every $lang section of the in-app page', () {
         final text = plain(file);
         final strings = legal(lang);
@@ -39,7 +40,7 @@ void main() {
   }
 
   test('the privacy policy discloses Facebook sign-in', () {
-    for (final lang in ['en', 'vi']) {
+    for (final lang in langs) {
       expect(legal(lang)['privacy4Body'], contains('Facebook'));
     }
     expect(plain('privacy.html'), contains('Facebook'));
@@ -47,11 +48,22 @@ void main() {
 
   test('the deletion page names the in-app path and a contact', () {
     final text = plain('data-deletion.html');
-    expect(text, contains('Settings → Account → Delete account'));
-    expect(text, contains('Cài đặt → Tài khoản → Xoá tài khoản'));
-    final email = RegExp(r'[\w.+-]+@[\w-]+\.[\w.-]+\w')
-        .firstMatch(legal('en')['privacy7Body'] as String)!
-        .group(0)!;
+    for (final lang in langs) {
+      final settings =
+          (jsonDecode(File('assets/i18n/$lang.json').readAsStringSync())
+                  as Map<String, dynamic>)['settings']
+              as Map<String, dynamic>;
+      expect(
+        text,
+        contains(
+          '${settings['title']} → ${settings['account']} → ${settings['delete_account']}',
+        ),
+        reason: lang,
+      );
+    }
+    final email = RegExp(
+      r'[\w.+-]+@[\w-]+\.[\w.-]+\w',
+    ).firstMatch(legal('en')['privacy7Body'] as String)!.group(0)!;
     expect(text, contains(email));
   });
 

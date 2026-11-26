@@ -2129,7 +2129,7 @@
     "privacy3Title": "3. Almacenamiento y seguridad de datos",
     "privacy3Body": "Tus datos se almacenan en servidores seguros. Usamos cifrado estándar en tránsito (TLS) y en reposo. Firebase Authentication gestiona tus credenciales de acceso.",
     "privacy4Title": "4. Servicios de terceros",
-    "privacy4Body": "LexiLingo se integra con Google (Firebase, YouTube), que tienen sus propias políticas de privacidad. Usamos Sentry para supervisar errores; los informes pueden incluir información anonimizada del dispositivo.",
+    "privacy4Body": "LexiLingo se integra con Google (Firebase, YouTube) y, si decides iniciar sesión con Facebook, con Meta (Facebook Login); estos servicios tienen sus propias políticas de privacidad. Cuando inicias sesión con Facebook, recibimos de Meta tu nombre, correo electrónico y foto de perfil, únicamente para crear tu cuenta e iniciar sesión en ella; nunca recibimos tu contraseña de Facebook ni publicamos en tu nombre. Usamos Sentry para supervisar errores; los informes pueden incluir información anonimizada del dispositivo.",
     "privacy5Title": "5. Tus derechos",
     "privacy5Body": "Puedes solicitar el acceso, la corrección o la eliminación permanente de tus datos personales en cualquier momento desde Ajustes → Cuenta → Eliminar cuenta. La eliminación es irreversible e inmediata.",
     "privacy6Title": "6. Privacidad de los menores",

@@ -2129,7 +2129,7 @@
     "privacy3Title": "3. データの保存とセキュリティ",
     "privacy3Body": "データは安全なサーバーに保存されます。通信時（TLS）および保存時に業界標準の暗号化を使用します。ログイン情報は Firebase Authentication が管理します。",
     "privacy4Title": "4. 第三者サービス",
-    "privacy4Body": "LexiLingo は Google（Firebase、YouTube）と連携しており、これらには独自のプライバシーポリシーがあります。エラー監視には Sentry を使用し、エラーレポートには匿名化された端末情報が含まれる場合があります。",
+    "privacy4Body": "LexiLingo は Google（Firebase、YouTube）と、また Facebook でのログインを選択した場合は Meta（Facebook ログイン）と連携しており、これらには独自のプライバシーポリシーがあります。Facebook でログインすると、アカウントの作成とログインのみを目的として、お名前、メールアドレス、プロフィール写真を Meta から受け取ります。Facebook のパスワードを受け取ることはなく、お客様に代わって投稿することもありません。エラー監視には Sentry を使用し、エラーレポートには匿名化された端末情報が含まれる場合があります。",
     "privacy5Title": "5. お客様の権利",
     "privacy5Body": "設定 → アカウント → アカウント削除 から、いつでも個人データの開示、訂正、完全削除を請求できます。削除は取り消せず、直ちに処理されます。",
     "privacy6Title": "6. 子どものプライバシー",
