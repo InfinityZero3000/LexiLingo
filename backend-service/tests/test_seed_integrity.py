@@ -106,3 +106,16 @@ async def test_question_seed_keeps_an_edited_level_and_fills_only_empty_exams(
     assert (await db_session.get(QuestionItem, edited_id)).difficulty_level == "C2"
     filled = await db_session.get(TestExam, empty_id)
     assert filled.question_ids and filled.is_published is False
+
+
+async def test_question_seed_moves_a_misfiled_question_only_when_asked(db_session):
+    await seed.seed_questions(db_session)
+    question = (await db_session.execute(select(QuestionItem).limit(1))).scalar_one()
+    question_id, seeded_level = question.id, question.difficulty_level
+    question.difficulty_level = "C2"
+    await db_session.commit()
+
+    await seed.seed_questions(db_session, fix_levels=True)
+
+    db_session.expire_all()
+    assert (await db_session.get(QuestionItem, question_id)).difficulty_level == seeded_level

@@ -1089,8 +1089,8 @@ GRAMMAR_TOPICS: list[tuple[str, str]] = [
 async def ensure_grammar_items(db: AsyncSession) -> None:
     """Create the grammar items, only in an empty table.
 
-    Learners can read these placeholders, so a database with its own grammar
-    library gets none added; questions without a match are skipped.
+    They are placeholders, so they stay inactive (learners do not see them) and a
+    database with its own grammar library gets none; unmatched questions are skipped.
     """
     if await db.scalar(select(func.count(GrammarItem.id))):
         return
@@ -1104,13 +1104,13 @@ async def ensure_grammar_items(db: AsyncSession) -> None:
                 content=f"Explanation and guided examples for {title}.",
                 examples=[],
                 tags=[level.lower(), "grammar"],
-                is_active=True,
+                is_active=False,
             )
         )
     await db.flush()
 
 
-async def seed_questions(db: AsyncSession):
+async def seed_questions(db: AsyncSession, fix_levels: bool = False):
     await ensure_grammar_items(db)
 
     present = {
@@ -1153,6 +1153,7 @@ async def seed_questions(db: AsyncSession):
         return grammar_items.get(target)
 
     total = 0
+    misfiled = 0
     level_map: dict[str, list] = {}  # level → list of QuestionItem
 
     for title, questions in GRAMMAR_QUESTIONS.items():
@@ -1164,6 +1165,13 @@ async def seed_questions(db: AsyncSession):
         for q in questions:
             stored = present.get((q["prompt"], tuple(q["options"])))
             if stored is not None:
+                if stored.difficulty_level != QUESTION_LEVELS[title]:
+                    # An older seed filed some of these too low, but an admin may
+                    # also have moved one: change it only when asked.
+                    misfiled += 1
+                    print(f"    level {stored.difficulty_level} (seed says {QUESTION_LEVELS[title]}): {stored.prompt}")
+                    if fix_levels:
+                        stored.difficulty_level = QUESTION_LEVELS[title]
                 if stored.is_active:
                     level_map.setdefault(stored.difficulty_level, []).append(stored)
                 continue
@@ -1189,6 +1197,9 @@ async def seed_questions(db: AsyncSession):
             await db.refresh(item)
 
     print(f"   {total} questions created")
+    if misfiled:
+        outcome = "moved to the seed's level" if fix_levels else "left as stored; --fix-levels moves them"
+        print(f"   {misfiled} questions differ from the seed's level: {outcome}")
     return level_map
 
 
@@ -1225,7 +1236,7 @@ async def main():
     print("=" * 56 + "\n")
 
     async with AsyncSessionLocal() as db:
-        level_map = await seed_questions(db)
+        level_map = await seed_questions(db, fix_levels="--fix-levels" in sys.argv)
         await update_test_exams(db, level_map)
 
         # Summary
