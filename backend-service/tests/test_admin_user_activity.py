@@ -19,3 +19,14 @@ async def test_activity_timeline_includes_lesson_completions(
     [entry] = response.json()["data"]
     assert entry["activity_type"] == "lesson_completed"
     assert "85%" in entry["description"]
+
+
+async def test_user_role_filter_includes_accounts_that_have_no_role_row(
+    async_client, admin_headers, test_user
+):
+    # They are listed as "User" (role_level 0), so filtering by "User" must keep them.
+    assert test_user.role_id is None
+
+    response = await async_client.get("/api/v1/admin/users?role=0", headers=admin_headers)
+
+    assert [u["email"] for u in response.json()["data"]["users"]] == [test_user.email]

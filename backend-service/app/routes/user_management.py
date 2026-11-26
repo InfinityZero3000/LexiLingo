@@ -183,9 +183,12 @@ async def list_users(
         )
     
     if role is not None:
-        filters.append(Role.level == role)
+        # An account with no role row is a plain user everywhere else (User.role_level).
+        by_level = Role.level == role
+        filters.append(or_(by_level, User.role_id.is_(None)) if role == 0 else by_level)
     if role_slug:
-        filters.append(Role.slug == role_slug)
+        by_slug = Role.slug == role_slug
+        filters.append(or_(by_slug, User.role_id.is_(None)) if role_slug == "user" else by_slug)
     
     if is_active is not None:
         filters.append(User.is_active == is_active)
