@@ -135,6 +135,7 @@ async def test_first_social_login_receives_reward_only_once(db_session):
         "uid": "social-user-id",
         "name": "Social User",
         "email_verified": True,
+        "firebase": {"sign_in_provider": "google.com"},
     }
 
     first_user = await get_or_create_user_from_claims(db_session, claims)

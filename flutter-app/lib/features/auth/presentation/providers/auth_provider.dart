@@ -54,6 +54,7 @@ class AuthProvider extends ChangeNotifier {
   bool _isCheckingAuth = true;
   bool _isJustLoggedIn = false;
   UiText? _errorMessage;
+  FacebookLinkRequired? _pendingFacebookLink;
   late final StreamSubscription<void> _sessionExpiredSub;
 
   AuthProvider({
@@ -76,6 +77,7 @@ class AuthProvider extends ChangeNotifier {
 
   void _onSessionExpired() {
     _user = null;
+    _pendingFacebookLink = null;
     _errorMessage = null;
     _isJustLoggedIn = false;
     UserScopeService.clearActiveUserId();
@@ -107,6 +109,9 @@ class AuthProvider extends ChangeNotifier {
   bool get isCheckingAuth => _isCheckingAuth;
   bool get isJustLoggedIn => _isJustLoggedIn;
   String? get errorMessage => _errorMessage?.resolve();
+  String? get facebookLinkEmail => _pendingFacebookLink?.email;
+
+  void dismissFacebookLink() => _pendingFacebookLink = null;
 
   // Clear just logged in flag (call after welcome screen)
   void clearJustLoggedIn() {
@@ -272,6 +277,7 @@ class AuthProvider extends ChangeNotifier {
 
   // Sign in with Google
   Future<void> signInWithGoogle() async {
+    _pendingFacebookLink = null;
     try {
       _isLoading = true;
       _errorMessage = null;
@@ -337,14 +343,31 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // Sign in with Facebook
-  Future<void> signInWithFacebook() async {
+  Future<void> signInWithFacebook() {
+    _pendingFacebookLink = null;
+    // Get Firebase ID token via Facebook authentication
+    return _completeFacebookSignIn(facebookSignInService.signIn);
+  }
+
+  /// Finishes a sign-in that stopped on [facebookLinkEmail]. Call it from a tap.
+  Future<void> linkFacebookWithGoogle() {
+    final request = _pendingFacebookLink;
+    if (request == null) return Future<void>.value();
+    _pendingFacebookLink = null;
+    return _completeFacebookSignIn(
+      () => facebookSignInService.linkWithGoogle(request),
+    );
+  }
+
+  Future<void> _completeFacebookSignIn(
+    Future<String?> Function() obtainIdToken,
+  ) async {
     try {
       _isLoading = true;
       _errorMessage = null;
       notifyListeners();
 
-      // Get Firebase ID token via Facebook authentication
-      final idToken = await facebookSignInService.signIn();
+      final idToken = await obtainIdToken();
       if (idToken == null) {
         _errorMessage = UiText.key('auth.facebookSignInCancelled');
         _isLoading = false;
@@ -372,6 +395,8 @@ class AuthProvider extends ChangeNotifier {
           unawaited(_claimPendingReferral());
         },
       );
+    } on FacebookLinkRequired catch (link) {
+      _pendingFacebookLink = link;
     } catch (e) {
       debugPrint("Facebook sign in error: $e");
       _errorMessage = _parseErrorMessage(e.toString());
@@ -796,6 +821,9 @@ class AuthProvider extends ChangeNotifier {
       return const UiText.key('auth.errGoogleConfig');
     }
 
+    if (normalized.contains(FacebookSignInService.emailMismatchCode)) {
+      return const UiText.key('auth.errFacebookLinkMismatch');
+    }
     if (normalized.contains('account-exists-with-different-credential')) {
       return const UiText.key('auth.errAccountExists');
     }
