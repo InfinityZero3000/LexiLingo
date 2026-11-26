@@ -48,7 +48,6 @@ const AiMonitoringPage = lazy(() => import("./pages/AiMonitoringPage").then(m =>
 const AiQualityDashboardPage = lazy(() => import("./pages/AiQualityDashboardPage").then(m => ({ default: m.AiQualityDashboardPage })));
 const SystemSettingsPage = lazy(() => import("./pages/SystemSettingsPage").then(m => ({ default: m.SystemSettingsPage })));
 const AdminManagementPage = lazy(() => import("./pages/AdminManagementPage").then(m => ({ default: m.AdminManagementPage })));
-const AiChatSettingsPage = lazy(() => import("./pages/AiChatSettingsPage").then(m => ({ default: m.AiChatSettingsPage })));
 const RankingAgentPage = lazy(() => import("./pages/RankingAgentPage").then(m => ({ default: m.RankingAgentPage })));
 const NotificationCampaignPage = lazy(() => import("./pages/NotificationCampaignPage").then(m => ({ default: m.NotificationCampaignPage })));
 const NoAccessPage = lazy(() => import("./pages/NoAccessPage").then(m => ({ default: m.NoAccessPage })));
@@ -99,7 +98,6 @@ const AppRoutes = () => {
     { to: "/super", label: t.nav.superDashboard, icon: <Shield size={18} /> },
     { to: "/super/admins", label: t.nav.adminManagement, icon: <Users size={18} /> },
     { to: "/super/partner-keys", label: t.nav.partnerKeys, icon: <Handshake size={18} /> },
-    { to: "/super/ai-chat", label: t.nav.aiChatConfig, icon: <Bot size={18} /> },
     { to: "/super/db", label: t.nav.database, icon: <Database size={18} /> },
     { to: "/super/ai-models", label: t.nav.aiModels, icon: <Bot size={18} /> },
     { to: "/admin", label: t.nav.adminZone, icon: <ArrowRight size={18} /> },
@@ -153,7 +151,6 @@ const AppRoutes = () => {
               <Route path="/super" element={<SuperAdminDashboard />} />
               <Route path="/super/admins" element={<AdminManagementPage />} />
               <Route path="/super/partner-keys" element={<PartnerKeysPage />} />
-              <Route path="/super/ai-chat" element={<AiChatSettingsPage />} />
               <Route path="/super/db" element={<DatabasePage />} />
               <Route path="/super/ai-models" element={<AiModelsPage />} />
             </Route>

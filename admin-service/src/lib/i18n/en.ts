@@ -87,7 +87,6 @@ const en: Translations = {
     aiModels: "AI Models",
     adminZone: "Admin Zone",
     adminManagement: "Admin Management",
-    aiChatConfig: "AI Chat Config",
     roles: "Roles & Permissions",
     opsCenter: "Operations Center",
     categories: "Course Categories",
@@ -962,35 +961,6 @@ const en: Translations = {
   },
 
   // ============== AI Chat Settings ==============
-  aiChat: {
-    title: "AI Chat Configuration",
-    description: "Configure Gemini API and AI features",
-    model: "Model",
-    temperature: "Temperature",
-    creativity: "Creativity",
-    maxTokens: "Max Tokens",
-    responseLength: "Response length",
-    features: "Features",
-    modulesEnabled: "modules enabled",
-    modelSettings: "Model Settings",
-    temperatureHint: "0 = precise, 2 = creative",
-    voiceSupport: "Voice Support",
-    voiceDesc: "STT & TTS for AI chat",
-    grammarCheck: "Grammar Check",
-    grammarDesc: "Auto-analyze grammar errors",
-    topicAnalysis: "Topic Analysis",
-    topicDesc: "Identify conversation topics",
-    mongodb: "MongoDB",
-    mongodbDesc: "Store chat history",
-    chatMemory: "Chat Memory (turns)",
-    chatMemoryHint: "Number of messages to keep in context",
-    apiKeyConfig: "API Key Configuration",
-    geminiApiKey: "Gemini API Key",
-    apiKeyHint: "API key for accessing Gemini AI (starts with AIza...)",
-    apiKeyNote: "API key will be stored securely. If left empty, system will use environment variable.",
-    show: "Show",
-    hide: "Hide",
-  },
 
   // ============== User management list ==============
   userList: {

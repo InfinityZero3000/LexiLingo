@@ -1,6 +1,6 @@
 """Admin proxy to ai-service's X-Admin-Key-gated endpoints.
 
-The ai-service admin routes (topic-chat management, AI config) are only
+The ai-service admin routes (topic-chat management, monitoring) are only
 protected by a static `X-Admin-Key` header — see ai-service/api/routes/admin.py.
 That key must never reach a browser. This router re-exposes the same
 operations behind the backend's own JWT + role checks, and injects the key
@@ -18,7 +18,7 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.core.config import settings
-from app.core.dependencies import get_current_super_admin, require_resource
+from app.core.dependencies import require_resource
 from app.models.user import User
 
 logger = logging.getLogger(__name__)
@@ -127,18 +127,3 @@ async def get_topic(
     _admin: User = Depends(require_resource("topics")),
 ) -> Any:
     return await _forward("GET", f"/topics/{quote(story_id, safe='')}")
-
-
-@router.get("/config")
-async def get_ai_config(
-    _admin: User = Depends(get_current_super_admin),
-) -> Any:
-    return await _forward("GET", "/config")
-
-
-@router.put("/config")
-async def update_ai_config(
-    payload: dict,
-    _admin: User = Depends(get_current_super_admin),
-) -> Any:
-    return await _forward("PUT", "/config", json=payload)

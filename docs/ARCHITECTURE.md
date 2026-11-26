@@ -330,7 +330,6 @@ admin-service/src/pages/
 ├── ShopPage — In-app shop items
 ├── MonitoringPage — Service health, AI model status
 ├── AiModelsPage — LLM model configuration
-├── AiChatSettingsPage — TraceCag prompt config
 ├── ContentAnalyticsPage — Content engagement metrics
 ├── ContentLabPage — AI content generation
 ├── DatabasePage — DB health, query stats

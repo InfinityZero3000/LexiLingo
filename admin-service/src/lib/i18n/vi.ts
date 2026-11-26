@@ -85,7 +85,6 @@ const vi = {
     aiModels: "Mô hình AI",
     adminZone: "Khu vực Admin",
     adminManagement: "Quản lý Admin",
-    aiChatConfig: "Cấu hình AI Chat",
     roles: "Vai trò & Quyền",
     opsCenter: "Trung tâm vận hành",
     categories: "Danh mục khoá học",
@@ -950,35 +949,6 @@ const vi = {
   },
 
   // ============== AI Chat Settings ==============
-  aiChat: {
-    title: "Cấu hình AI Chat",
-    description: "Thiết lập Gemini API và các tính năng AI",
-    model: "Mô hình",
-    temperature: "Temperature",
-    creativity: "Sáng tạo",
-    maxTokens: "Max Tokens",
-    responseLength: "Độ dài phản hồi",
-    features: "Tính năng",
-    modulesEnabled: "modules đang bật",
-    modelSettings: "Cấu hình mô hình",
-    temperatureHint: "0 = chính xác, 2 = sáng tạo",
-    voiceSupport: "Hỗ trợ Voice",
-    voiceDesc: "STT & TTS cho AI chat",
-    grammarCheck: "Kiểm tra ngữ pháp",
-    grammarDesc: "Tự động phân tích lỗi ngữ pháp",
-    topicAnalysis: "Phân tích chủ đề",
-    topicDesc: "Xác định chủ đề hội thoại",
-    mongodb: "MongoDB",
-    mongodbDesc: "Lưu trữ lịch sử chat",
-    chatMemory: "Bộ nhớ chat (turns)",
-    chatMemoryHint: "Số lượng tin nhắn ghi nhớ trong ngữ cảnh",
-    apiKeyConfig: "Cấu hình API Key",
-    geminiApiKey: "Gemini API Key",
-    apiKeyHint: "API key để truy cập Gemini AI (bắt đầu với AIza...)",
-    apiKeyNote: "API key sẽ được lưu trữ an toàn. Nếu để trống, hệ thống sẽ dùng key từ biến môi trường.",
-    show: "Hiện",
-    hide: "Ẩn",
-  },
 
   // ============== Error Pages ==============
   errorPages: {

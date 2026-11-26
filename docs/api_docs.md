@@ -595,7 +595,6 @@ well-known không có tiền tố này.
 
 | Method | Endpoint |
 | --- | --- |
-| `GET`, `PUT` | `/api/v1/admin/config` |
 | `GET`, `POST` | `/api/v1/admin/topics` |
 | `GET` | `/api/v1/ollama/health` |
 | `POST` | `/api/v1/ollama/chat` |

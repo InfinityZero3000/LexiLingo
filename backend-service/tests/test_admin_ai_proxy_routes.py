@@ -11,7 +11,7 @@ import httpx
 import pytest
 from fastapi.routing import APIRoute
 
-from app.core.dependencies import get_current_admin, get_current_super_admin
+from app.core.dependencies import get_current_admin
 from app.routes import admin_ai_proxy
 
 router = admin_ai_proxy.router
@@ -37,13 +37,8 @@ def test_topics_routes_require_admin():
         )
 
 
-def test_config_routes_require_super_admin():
-    config_routes = [r for r in router.routes if isinstance(r, APIRoute) and r.path.endswith("/config")]
-    assert config_routes, "No /config routes found — router might not be wired"
-    for route in config_routes:
-        assert get_current_super_admin in _dependency_calls(route), (
-            f"{route.path} is missing get_current_super_admin dependency"
-        )
+def test_there_is_no_config_proxy_for_settings_nothing_reads():
+    assert [r.path for r in router.routes if isinstance(r, APIRoute) and r.path.endswith("/config")] == []
 
 
 @pytest.mark.asyncio
@@ -75,7 +70,7 @@ async def test_forward_fails_closed_when_key_not_configured(monkeypatch):
     monkeypatch.delenv("AI_ADMIN_API_KEY", raising=False)
 
     with pytest.raises(Exception) as exc_info:
-        await admin_ai_proxy._forward("GET", "/config")
+        await admin_ai_proxy._forward("GET", "/topics")
 
     assert getattr(exc_info.value, "status_code", None) == 503
 
