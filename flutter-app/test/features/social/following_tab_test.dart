@@ -20,6 +20,9 @@ class _Repo implements SocialRepository {
   Future<bool> followUser(String userId) async => true;
 
   @override
+  Future<bool> unfollowUser(String userId) async => true;
+
+  @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
@@ -35,5 +38,16 @@ void main() {
       ('leo', true),
     ]);
     expect(provider.followingCount, 1);
+  });
+
+  test('unfollowing takes them out of Following again', () async {
+    final provider = SocialProvider(repository: _Repo());
+    await provider.loadSuggestedUsers();
+    await provider.followUser('leo');
+
+    await provider.unfollowUser('leo');
+
+    expect(provider.following, isEmpty);
+    expect(provider.followingCount, 0);
   });
 }

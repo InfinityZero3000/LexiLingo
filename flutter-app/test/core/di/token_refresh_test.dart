@@ -340,7 +340,9 @@ void main() {
 
 /// A tab: [cache] is what it reads, [stored] is the shared localStorage.
 class _TabStorage extends Fake implements TokenStorage {
-  _TabStorage(this.cache) : stored = cache;
+  _TabStorage(this.cache) : stored = cache, _own = cache;
+
+  final AuthTokens _own;
 
   AuthTokens cache;
   AuthTokens stored;
@@ -350,7 +352,11 @@ class _TabStorage extends Fake implements TokenStorage {
   Future<void> reload() async => cache = stored;
 
   @override
-  Future<AuthTokens?> getTokens() async => cleared ? null : cache;
+  Future<AuthTokens?> getTokens() async =>
+      cleared ||
+          tokenSubject(cache.accessToken) != tokenSubject(_own.accessToken)
+      ? null
+      : cache;
 
   @override
   Future<void> updateTokens({
@@ -364,5 +370,10 @@ class _TabStorage extends Fake implements TokenStorage {
   }
 
   @override
-  Future<void> clearTokens() async => cleared = true;
+  Future<void> clearTokens() async {
+    // As in TokenStorage: never delete another account's tokens.
+    if (tokenSubject(stored.accessToken) == tokenSubject(_own.accessToken)) {
+      cleared = true;
+    }
+  }
 }

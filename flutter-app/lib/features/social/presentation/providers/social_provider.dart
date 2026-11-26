@@ -228,6 +228,12 @@ class SocialProvider extends ChangeNotifier with ResetEpoch {
       }
     }
 
+    // Unfollowed: it leaves the Following tab, and the count with it.
+    if (!isFollowing && _following.any((user) => user.userId == userId)) {
+      _following = _following.where((user) => user.userId != userId).toList();
+      if (_followingCount > 0) _followingCount--;
+    }
+
     // Update in following list
     _following = _following.map((user) {
       if (user.userId == userId) {

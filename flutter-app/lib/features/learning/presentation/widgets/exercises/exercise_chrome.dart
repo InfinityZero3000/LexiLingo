@@ -378,13 +378,13 @@ class CircleAudioButton extends StatelessWidget {
   return null;
 }
 
-/// Extract first quoted word from text — tries single then double quotes
 /// The sentence a speaking exercise is graded against. The question is only the
 /// instruction around it ("Repeat: '…'"), which must not be read aloud.
 String speakingTarget(Exercise exercise) => exercise.correctAnswer.isNotEmpty
     ? exercise.correctAnswer
     : exercise.question;
 
+/// Extract first quoted word from text — tries single then double quotes
 String extractQuotedWord(String text) {
   final s = RegExp("'([^']+)'").firstMatch(text);
   if (s != null) return s.group(1)!;

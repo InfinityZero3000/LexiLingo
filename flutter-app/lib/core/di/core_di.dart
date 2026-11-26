@@ -82,14 +82,6 @@ Future<bool> refreshBackendToken(
     }
 
     if (held != null && held.refreshToken != tokens.refreshToken) {
-      if (tokenSubject(held.accessToken) !=
-          tokenSubject(tokens.accessToken)) {
-        // Another tab signed into a different account: leave its tokens alone,
-        // and never retry this account's requests with them.
-        SessionExpiredService.instance.notifyExpired();
-        completer.complete(false);
-        return false;
-      }
       if (!isAccessTokenExpiring(tokens.accessToken)) {
         completer.complete(true);
         return true;
@@ -111,13 +103,9 @@ Future<bool> refreshBackendToken(
         await tokenStorage.reload();
         final latest = await tokenStorage.getTokens();
         if (latest != null && latest.refreshToken != tokens.refreshToken) {
-          // Another tab replaced the tokens while this request was in flight.
-          final sameAccount =
-              tokenSubject(latest.accessToken) ==
-              tokenSubject(tokens.accessToken);
-          if (!sameAccount) SessionExpiredService.instance.notifyExpired();
-          completer.complete(sameAccount);
-          return sameAccount;
+          // Another tab rotated the tokens while this request was in flight.
+          completer.complete(true);
+          return true;
         }
         // Expired, revoked or reused: the only case that ends the session.
         await tokenStorage.clearTokens();

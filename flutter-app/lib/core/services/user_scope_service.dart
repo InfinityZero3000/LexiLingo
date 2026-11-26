@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:lexilingo_app/core/storage/fresh_preferences.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Stores and resolves active authenticated user scope for local cache/sync.
@@ -94,8 +95,13 @@ class UserScopeService {
     return prefs.getString(_activeUserIdKey);
   }
 
-  static Future<void> clearActiveUserId() async {
-    final prefs = await SharedPreferences.getInstance();
+  /// With [expected], only that learner's scope is removed: another browser
+  /// tab may since have signed someone else in.
+  static Future<void> clearActiveUserId({String? expected}) async {
+    final prefs = await freshPreferences();
+    if (expected != null && prefs.getString(_activeUserIdKey) != expected) {
+      return;
+    }
     await prefs.remove(_activeUserIdKey);
   }
 

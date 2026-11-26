@@ -1,8 +1,8 @@
-import 'package:lexilingo_app/core/navigation/reload_on_return.dart';
 import 'dart:math';
 import 'dart:ui';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/l10n/locale_keys.g.dart';
+import 'package:lexilingo_app/core/navigation/reload_on_return.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';

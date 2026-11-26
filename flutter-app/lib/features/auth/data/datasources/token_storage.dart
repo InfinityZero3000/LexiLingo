@@ -57,8 +57,10 @@ class TokenStorage {
 
   /// True when the stored tokens are someone else's: this tab must then neither
   /// send them nor delete them.
-  Future<bool> _heldByAnotherAccount() async =>
-      _isForeign(await _read(_accessTokenKey));
+  Future<bool> heldByAnotherAccount() async {
+    await reload();
+    return _isForeign(await _read(_accessTokenKey));
+  }
 
   Future<void> _write(String key, String value) async {
     if (kIsWeb) {
@@ -125,7 +127,7 @@ class TokenStorage {
 
   /// Get stored refresh token
   Future<String?> getRefreshToken() async {
-    if (await _heldByAnotherAccount()) return null;
+    if (await heldByAnotherAccount()) return null;
     return await _read(_refreshTokenKey);
   }
 
@@ -155,15 +157,32 @@ class TokenStorage {
   /// The learner as the server last described them (`/users/me`), so a cold
   /// start can open the app at once, and offline, instead of waiting on the
   /// network to learn who is signed in.
-  Future<void> saveSessionUser(String userJson) =>
-      _write(_sessionUserKey, userJson);
+  Future<void> saveSessionUser(String userJson) async {
+    if (await heldByAnotherAccount()) return;
+    await _write(_sessionUserKey, userJson);
+  }
 
   Future<String?> readSessionUser() async {
     try {
-      if (await _heldByAnotherAccount()) return null;
-      return await _read(_sessionUserKey);
+      if (await heldByAnotherAccount()) return null;
+      final user = await _read(_sessionUserKey);
+      final owner = await _read(_accessTokenKey);
+      return _belongsTo(user, owner) ? user : null;
     } catch (_) {
       return null;
+    }
+  }
+
+  /// False when the cached learner and the stored token name different
+  /// accounts; either side being unreadable proves nothing.
+  static bool _belongsTo(String? userJson, String? accessToken) {
+    final subject = accessToken == null ? null : tokenSubject(accessToken);
+    if (userJson == null || subject == null) return true;
+    try {
+      final id = (jsonDecode(userJson) as Map)['id']?.toString();
+      return id == null || id == subject;
+    } catch (_) {
+      return true;
     }
   }
 
@@ -193,7 +212,7 @@ class TokenStorage {
   Future<void> clearTokens() async {
     // Signing this tab out must not sign the other account out. [_account]
     // stays, so this tab keeps refusing their tokens until it signs in again.
-    if (await _heldByAnotherAccount()) return;
+    if (await heldByAnotherAccount()) return;
     _account = null;
 
     final userScope = await UserScopeService.getActiveUserId();
