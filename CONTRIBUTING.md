@@ -483,7 +483,7 @@ When requesting features:
 
 - **Questions:** GitHub Discussions
 - **Bugs:** GitHub Issues
-- **Security:** Email to nhthang312@gmail.com
+- **Security:** Email to support@lexilingo.me
 - **Chat:** Team Slack/Discord
 
 ## 📜 License

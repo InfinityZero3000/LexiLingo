@@ -30,7 +30,13 @@ class LegalPage extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
           children: [
             Text(
-              'legal.last_updated'.tr(namedArgs: {'date': 'June 2025'}),
+              'legal.last_updated'.tr(
+                namedArgs: {
+                  'date': type == LegalPageType.privacyPolicy
+                      ? 'November 2026'
+                      : 'June 2025',
+                },
+              ),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppColorRoles.textMuted(isDark),
               ),

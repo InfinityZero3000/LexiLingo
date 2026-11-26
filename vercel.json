@@ -8,7 +8,7 @@
   "outputDirectory": "flutter-app/build/web",
   "rewrites": [
     {
-      "source": "/((?!.*\\.(?:js|css|png|jpg|jpeg|gif|svg|ico|wasm|json|ttf|woff|woff2|eot|map)$).*)",
+      "source": "/((?!.*\\.(?:js|css|png|jpg|jpeg|gif|svg|ico|wasm|json|ttf|woff|woff2|eot|map|html)$).*)",
       "destination": "/index.html"
     }
   ],
