@@ -147,3 +147,23 @@ def test_monitoring_routes_need_the_ops_permission():
     assert len(routes) == 4
     for route in routes:
         assert get_current_admin in _dependency_calls(route)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("body", "detail"),
+    [
+        ('{"detail": "AI is busy, try again"}', "AI is busy, try again"),
+        ('{"detail": [{"loc": ["body", "title_en"], "msg": "Field required"}]}', "title_en: Field required"),
+        ("upstream exploded", "upstream exploded"),
+    ],
+)
+async def test_forward_shows_the_admin_the_message_not_the_raw_json(monkeypatch, body, detail):
+    monkeypatch.setenv("AI_ADMIN_API_KEY", "server-secret")
+    response = httpx.Response(422, text=body)
+
+    with patch.object(httpx.AsyncClient, "request", autospec=True, return_value=response):
+        with pytest.raises(Exception) as exc_info:
+            await admin_ai_proxy._forward("POST", "/topics/draft", json={})
+
+    assert exc_info.value.detail == detail

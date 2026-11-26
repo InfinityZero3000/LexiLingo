@@ -56,8 +56,24 @@ async def _forward(
         raise HTTPException(status_code=502, detail="ai-service unreachable") from exc
 
     if resp.status_code >= 400:
-        raise HTTPException(status_code=resp.status_code, detail=resp.text)
+        raise HTTPException(status_code=resp.status_code, detail=_error_message(resp))
     return resp.json()
+
+
+def _error_message(resp: httpx.Response) -> str:
+    """ai-service's own message; the admin web shows this text as it is."""
+    try:
+        detail = resp.json()["detail"]
+    except (ValueError, KeyError, TypeError):
+        return resp.text
+    if isinstance(detail, str):
+        return detail
+    if isinstance(detail, list) and all(isinstance(item, dict) for item in detail):
+        return "; ".join(
+            f"{'.'.join(str(part) for part in item.get('loc', [])[1:])}: {item.get('msg', '')}"
+            for item in detail
+        )
+    return resp.text
 
 
 @router.get("/monitoring/chat")
