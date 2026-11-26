@@ -247,7 +247,12 @@ class _RotatingLearningCardState extends State<_RotatingLearningCard> {
                   ),
                   layoutBuilder: (current, previous) => Stack(
                     alignment: Alignment.topLeft,
-                    fit: StackFit.expand,
+                    // Expand only inside the fixed card height. With one face
+                    // Home's scroll view gives no height to expand into, and
+                    // the whole page failed to lay out.
+                    fit: activeCourse != null
+                        ? StackFit.expand
+                        : StackFit.passthrough,
                     children: [...previous, ?current],
                   ),
                   child: !_showReminder && activeCourse != null
