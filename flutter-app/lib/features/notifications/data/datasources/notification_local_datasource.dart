@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/storage/fresh_preferences.dart';
 import 'package:lexilingo_app/core/services/user_scope_service.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -124,7 +125,8 @@ class NotificationLocalDataSourceImpl implements NotificationLocalDataSource {
   /// Get all notifications from local storage
   @override
   Future<List<NotificationEntity>> getNotifications() async {
-    final p = await prefs;
+    // Every change is built on this read, so it must see other tabs' writes.
+    final p = await freshPreferences();
     final jsonString = p.getString(
       await UserScopeService.scopedKey(_notificationsKey),
     );

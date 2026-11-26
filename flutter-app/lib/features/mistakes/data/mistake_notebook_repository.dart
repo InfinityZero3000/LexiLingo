@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/storage/fresh_preferences.dart';
 import 'dart:convert';
 
 import 'package:lexilingo_app/core/di/service_locator.dart';
@@ -19,7 +20,7 @@ class MistakeNotebookRepository {
     Future<SharedPreferences> Function()? prefsFactory,
     MistakeNotebookRemoteDataSource? remoteDataSource,
     bool syncEnabled = true,
-  }) : _prefsFactory = prefsFactory ?? SharedPreferences.getInstance,
+  }) : _prefsFactory = prefsFactory ?? freshPreferences,
        _remoteDataSource = remoteDataSource,
        _syncEnabled = syncEnabled;
 
@@ -156,25 +157,39 @@ class MistakeNotebookRepository {
     }
   }
 
-  Future<void> _flushPendingOps(MistakeNotebookRemoteDataSource remote) async {
-    final prefs = await _prefsFactory();
+  static Future<void>? _flushInFlight;
+
+  /// One flush at a time: two would send the same review twice.
+  Future<void> _flushPendingOps(MistakeNotebookRemoteDataSource remote) =>
+      _flushInFlight ??= _sendPendingOps(
+        remote,
+      ).whenComplete(() => _flushInFlight = null);
+
+  /// The queue is re-read after every request and only the sent operation is
+  /// removed, so one queued meanwhile, here or in another tab, survives.
+  Future<void> _sendPendingOps(MistakeNotebookRemoteDataSource remote) async {
     final pendingOpsKey = await _scopedKey(_pendingOpsKey);
-    final ops = _decodePendingOps(prefs.getString(pendingOpsKey));
-    if (ops.isEmpty) return;
+    while (true) {
+      final ops = _decodePendingOps(
+        (await _prefsFactory()).getString(pendingOpsKey),
+      );
+      if (ops.isEmpty) return;
+      // The request carries the current token: never send these as someone else.
+      if (await _scopedKey(_pendingOpsKey) != pendingOpsKey) return;
 
-    final remaining = <Map<String, dynamic>>[];
-    for (var index = 0; index < ops.length; index++) {
-      final op = ops[index];
       try {
-        await _applyRemoteOp(remote, op);
+        await _applyRemoteOp(remote, ops.first);
       } catch (_) {
-        remaining.add(op);
-        remaining.addAll(ops.skip(index + 1));
-        break;
+        return;
       }
-    }
 
-    await prefs.setString(pendingOpsKey, jsonEncode(remaining));
+      final sent = jsonEncode(ops.first);
+      final prefs = await _prefsFactory();
+      final latest = _decodePendingOps(prefs.getString(pendingOpsKey));
+      final at = latest.indexWhere((op) => jsonEncode(op) == sent);
+      if (at != -1) latest.removeAt(at);
+      await prefs.setString(pendingOpsKey, jsonEncode(latest));
+    }
   }
 
   Future<void> _queuePendingOp(Map<String, dynamic> op) async {

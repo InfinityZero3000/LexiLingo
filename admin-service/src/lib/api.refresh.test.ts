@@ -18,7 +18,7 @@ const { ENV, authStore } = vi.hoisted(() => ({
 vi.mock("./env", () => ({ ENV }));
 vi.mock("./auth", () => ({ authStore }));
 
-import { ApiError, apiFetch } from "./api";
+import { ApiError, NoAdminRoleError, apiFetch, endsSession } from "./api";
 
 // This suite runs in node (no jsdom installed, and it is not worth adding for
 // two globals). api.ts reads `window.atob` to find a token's exp and
@@ -95,6 +95,34 @@ describe("apiFetch token refresh", () => {
     await expect(apiFetch(`${ENV.backendUrl}/admin/courses`)).rejects.toThrow(ApiError);
     expect(authStore.clear).toHaveBeenCalled();
     expect(location.href).toBe("/login");
+  });
+
+  it("keeps the tokens another tab stored while this refresh was refused", async () => {
+    authStore.accessToken = token(-10);
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (url: string) => {
+        if (url.endsWith("/auth/refresh")) {
+          authStore.refreshToken = "other-tab-refresh";
+          authStore.accessToken = token(3600);
+          return jsonResponse(401, { detail: "reused" });
+        }
+        return jsonResponse(200, { ok: true });
+      })
+    );
+
+    await apiFetch(`${ENV.backendUrl}/admin/courses`);
+
+    expect(authStore.clear).not.toHaveBeenCalled();
+    expect(authStore.refreshToken).toBe("other-tab-refresh");
+  });
+
+  it("ends a session only on the server's verdict", () => {
+    expect(endsSession(new ApiError("x", 401))).toBe(true);
+    expect(endsSession(new ApiError("x", 403))).toBe(true);
+    expect(endsSession(new NoAdminRoleError("x"))).toBe(true);
+    expect(endsSession(new ApiError("x", 503))).toBe(false);
+    expect(endsSession(new TypeError("Failed to fetch"))).toBe(false);
   });
 
   it("retries the original call once with the refreshed token", async () => {

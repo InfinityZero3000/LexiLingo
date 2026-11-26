@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/storage/fresh_preferences.dart';
 import 'dart:convert';
 import 'dart:io';
 
@@ -293,7 +294,7 @@ class BookRepository {
   }
 
   Future<void> saveBook(Book book) async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await freshPreferences();
     final ids = prefs.getStringList(await _k(_savedBooksKey)) ?? [];
     if (!ids.contains(book.id)) {
       ids.add(book.id);
@@ -305,7 +306,7 @@ class BookRepository {
   }
 
   Future<void> unsaveBook(String bookId) async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await freshPreferences();
     final ids = prefs.getStringList(await _k(_savedBooksKey)) ?? [];
     ids.remove(bookId);
     await prefs.setStringList(await _k(_savedBooksKey), ids);
@@ -332,7 +333,7 @@ class BookRepository {
   static const _bookmarksKeyPrefix = 'book_bookmarks_';
 
   Future<List<Bookmark>> getBookmarks(String bookId) async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = await freshPreferences();
     final raw = prefs.getString(await _k('$_bookmarksKeyPrefix$bookId'));
     if (raw == null) return [];
     final list = jsonDecode(raw) as List<dynamic>;

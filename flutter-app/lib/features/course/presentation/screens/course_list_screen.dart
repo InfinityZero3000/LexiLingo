@@ -492,7 +492,7 @@ class _CourseBanner extends StatelessWidget {
           children: [
             // Banner image
             Image.asset(
-              'assets/course/banner_course.png',
+              'assets/course/banner_course.webp',
               width: double.infinity,
               height: 88,
               fit: BoxFit.cover,

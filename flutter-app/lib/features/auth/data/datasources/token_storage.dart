@@ -5,6 +5,7 @@ import '../../../../core/services/account_data_cleaner.dart';
 import '../../../../core/services/background_sync_queue_service.dart';
 import '../../../../core/services/encrypted_local_cache_service.dart';
 import '../../../../core/services/user_scope_service.dart';
+import '../../../../core/storage/fresh_preferences.dart';
 import '../../../../core/utils/app_logger.dart';
 import '../models/auth_models.dart';
 
@@ -58,6 +59,11 @@ class TokenStorage {
     } else {
       await _secureStorage.delete(key: key);
     }
+  }
+
+  /// Picks up a rotation another browser tab made; see [freshPreferences].
+  Future<void> reload() async {
+    await freshPreferences();
   }
 
   /// Save authentication tokens securely

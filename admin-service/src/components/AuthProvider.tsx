@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { authStore, resolveRole, Role, UserProfile } from "../lib/auth";
 import { getCurrentUser, loginRequest, googleLoginRequest } from "../lib/authApi";
+import { endsSession, NoAdminRoleError } from "../lib/api";
 
 type AuthContextValue = {
   user: UserProfile | null;
@@ -103,7 +104,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const resolvedRole = resolveRole(profile);
 
         if (!resolvedRole) {
-          throw new Error("Tài khoản không có quyền truy cập Admin Dashboard.");
+          throw new NoAdminRoleError("Tài khoản không có quyền truy cập Admin Dashboard.");
         }
 
         authStore.user = profile;
@@ -113,8 +114,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setUser(profile);
           setRole(resolvedRole);
         }
-      } catch {
-        authStore.clear();
+      } catch (error) {
+        // A restart or a dropped connection says nothing about the session:
+        // keep the tokens so a reload picks it up again.
+        if (endsSession(error)) authStore.clear();
         if (!cancelled) {
           setUser(null);
           setRole(null);

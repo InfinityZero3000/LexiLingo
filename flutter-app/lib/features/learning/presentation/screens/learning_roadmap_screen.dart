@@ -32,9 +32,9 @@ const double _kEdgeMargin = 8.0;
 /// ~375px phone unchanged and ~380px of swing on wider screens.
 const double kRoadmapColumnMaxWidth = 520.0;
 
-const String _kBgPortrait = 'assets/background-roadmap/background-roadmap.png';
+const String _kBgPortrait = 'assets/background-roadmap/background-roadmap.webp';
 const String _kBgLandscape =
-    'assets/background-roadmap/background-roadmap-2.png';
+    'assets/background-roadmap/background-roadmap-2.webp';
 
 /// Sine-wave x positions (normalized 0..1).
 /// 8-step cycle gives a smooth winding road from edge to edge.

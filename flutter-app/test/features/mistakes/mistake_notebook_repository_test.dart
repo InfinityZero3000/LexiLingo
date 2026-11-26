@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lexilingo_app/core/services/user_scope_service.dart';
 import 'package:lexilingo_app/features/mistakes/data/mistake_notebook_remote_datasource.dart';
@@ -142,6 +144,34 @@ void main() {
       },
     );
 
+    test('an operation queued while the queue is being sent is kept', () async {
+      final remote = _FakeMistakeRemoteDataSource(shouldFail: true);
+      final repository = MistakeNotebookRepository(remoteDataSource: remote);
+      await repository.saveMistake(_entry(id: 'first'));
+
+      remote.shouldFail = false;
+      final prefs = await SharedPreferences.getInstance();
+      const key = 'mistake_notebook_pending_ops_v1';
+      remote.onSave = () async {
+        remote.onSave = null;
+        final ops = jsonDecode(prefs.getString(key)!) as List<dynamic>;
+        // What another tab, or a tap during the request, would append.
+        await prefs.setString(
+          key,
+          jsonEncode([
+            ...ops,
+            {'type': 'delete', 'id': 'second'},
+          ]),
+        );
+      };
+
+      await repository.getEntries();
+
+      expect(remote.saved.map((entry) => entry.id), ['first']);
+      expect(remote.deletedIds, ['second']);
+      expect(jsonDecode(prefs.getString(key)!), isEmpty);
+    });
+
     test('suppresses remote entries while delete is still pending', () async {
       final remote = _FakeMistakeRemoteDataSource();
       remote.saved.add(_entry(id: 'delete-pending'));
@@ -225,6 +255,7 @@ class _FakeMistakeRemoteDataSource implements MistakeNotebookRemoteDataSource {
   bool shouldFail;
   bool failDeletes = false;
   int saveCalls = 0;
+  Future<void> Function()? onSave;
 
   _FakeMistakeRemoteDataSource({this.shouldFail = false});
 
@@ -238,6 +269,7 @@ class _FakeMistakeRemoteDataSource implements MistakeNotebookRemoteDataSource {
   Future<MistakeNotebookEntry> saveMistake(MistakeNotebookEntry entry) async {
     saveCalls++;
     if (shouldFail) throw Exception('offline');
+    await onSave?.call();
     saved.removeWhere((item) => item.id == entry.id);
     saved.add(entry);
     return entry;

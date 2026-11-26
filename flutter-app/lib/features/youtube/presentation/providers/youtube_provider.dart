@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/storage/fresh_preferences.dart';
 import 'package:lexilingo_app/core/services/user_scope_service.dart';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
@@ -89,18 +90,22 @@ class YouTubeProvider extends ChangeNotifier with ResetEpoch {
   /// until the explore screen has been opened.
   Future<void>? _loaded;
 
-  Future<void> _ensureLoaded() => _loaded ?? loadSavedVideos();
+  /// On the web the lists are re-read before each change: writing this tab's
+  /// memory back would undo what another tab saved or removed.
+  Future<void> _ensureLoaded() =>
+      kIsWeb ? loadSavedVideos() : _loaded ?? loadSavedVideos();
 
   Future<void> _loadStored() async {
     final epoch = resetEpoch;
     try {
-      final prefs = await SharedPreferences.getInstance();
+      final prefs = await freshPreferences();
       final raw = prefs.getString(
         await UserScopeService.scopedKey(_prefsSavedKey),
       );
       if (isStale(epoch)) return;
       if (raw != null) {
         final list = jsonDecode(raw) as List<dynamic>;
+        _savedVideos.clear();
         for (final item in list) {
           final v = SavedVideo.fromJson(item as Map<String, dynamic>);
           _savedVideos[v.videoId] = v;
