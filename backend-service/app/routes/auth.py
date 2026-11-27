@@ -20,6 +20,7 @@ from sqlalchemy.exc import IntegrityError
 from app.core.database import get_db
 from app.core.config import settings
 from app.core.dependencies import get_current_user
+from app.core.firebase_auth import revoke_all_refresh_tokens as _revoke_all_refresh_tokens
 from app.core import login_lockout
 from app.core.redis import RedisClient
 from app.core.security import (
@@ -485,7 +486,7 @@ async def google_login(
     - Returns JWT tokens
     """
     from app.core.security import verify_google_token
-    from app.core.firebase_auth import verify_firebase_token
+    from app.core.firebase_auth import verify_firebase_token, drop_unproven_credentials
     from app.core.config import settings
     
     # Select the correct Client ID based on source
@@ -587,7 +588,8 @@ async def google_login(
         # Google has verified this email, and it matches an existing local account —
         # let Google vouch for the email instead of leaving the user locked out
         # behind an unclicked verification link.
-        can_verify_local_account = user.has_local_auth and email_verified
+        has_facebook = "facebook" in (user.provider or [])
+        can_verify_local_account = (user.has_local_auth or has_facebook) and email_verified
 
         if not is_admin_link and not can_verify_local_account:
             if not user.has_local_auth:
@@ -604,11 +606,11 @@ async def google_login(
 
         # Admin-allowlisted link, or Google vouching for a local account's email →
         # link google to this account.
-        if email_verified and not user.is_verified and user.has_local_auth:
+        if email_verified and not user.is_verified:
             # Whoever registered this address never proved they own it, and unverified
             # accounts can now sign in. The real owner just proved it through Google,
-            # so the password and sessions the registrant holds must not survive.
-            user.hashed_password = await get_password_hash_async(uuid.uuid4().hex)
+            # so the password, Facebook link and sessions the registrant holds must not survive.
+            await drop_unproven_credentials(user)
             await _revoke_all_refresh_tokens(db, user.id)
         user.add_provider("google")
         user.is_verified = email_verified or user.is_verified
@@ -687,12 +689,12 @@ async def facebook_login(
             detail="Invalid Firebase ID token"
         )
 
-    # Some basic checks before we accept the token:
-    if "firebase" not in claims or claims["firebase"].get("sign_in_provider") != "facebook.com":
+    if (claims.get("firebase") or {}).get("sign_in_provider") != "facebook.com":
         logger.warning("Token provided to /facebook is not a facebook.com login token.")
-        # We might still accept it if we want generic /firebase endpoint, 
-        # but let's restrict to facebook for exactness.
-        pass # Optional to raise error here, we let get_or_create handle the user.
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not a Facebook sign-in token"
+        )
 
     email = claims.get("email")
     if not email:
@@ -703,7 +705,7 @@ async def facebook_login(
 
     try:
         user = await get_or_create_user_from_claims(db, claims)
-    except Exception as exc:
+    except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(exc)
@@ -741,16 +743,6 @@ async def facebook_login(
         username=user.username,
         email=user.email,
         role=user.role_slug if hasattr(user, 'role_slug') else "user",
-    )
-
-
-async def _revoke_all_refresh_tokens(db: AsyncSession, user_id: uuid.UUID) -> None:
-    # A new password must end every other session: a stolen refresh token kept renewing
-    # access for its full 7 days after the owner reset the password.
-    await db.execute(
-        update(RefreshToken)
-        .where(RefreshToken.user_id == user_id, RefreshToken.is_revoked.is_(False))
-        .values(is_revoked=True)
     )
 
 

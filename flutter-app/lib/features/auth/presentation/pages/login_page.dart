@@ -12,6 +12,7 @@ import 'forgot_password_page.dart';
 import 'register_page.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/features/auth/presentation/widgets/facebook_sign_in.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -568,7 +569,10 @@ class _LoginPageState extends State<LoginPage> {
                               onPressed: authProvider.isLoading
                                   ? null
                                   : () async {
-                                      await authProvider.signInWithFacebook();
+                                      await signInWithFacebookOrLink(
+                                        context,
+                                        authProvider,
+                                      );
                                     },
                               icon: const Icon(Icons.facebook, size: 22),
                               label: const Text('Facebook'),

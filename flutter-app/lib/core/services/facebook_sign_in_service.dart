@@ -1,13 +1,34 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 
 import '../utils/app_logger.dart';
 
 const _tag = 'FacebookSignInService';
 
+/// The email already uses another sign-in method: its owner has to prove that
+/// before Facebook is added to the account.
+class FacebookLinkRequired implements Exception {
+  const FacebookLinkRequired(this.email, this.credential);
+
+  final String email;
+  final AuthCredential credential;
+
+  @override
+  String toString() => 'account-exists-with-different-credential';
+}
+
 /// Service for handling Facebook Sign In
 class FacebookSignInService {
+  FacebookSignInService({FirebaseAuth? auth}) : _injectedAuth = auth;
+
+  static const emailMismatchCode = 'facebook-link-email-mismatch';
+
+  final FirebaseAuth? _injectedAuth;
+
+  /// Resolved late: Firebase may not be initialised when this is constructed.
+  FirebaseAuth get _auth => _injectedAuth ?? FirebaseAuth.instance;
+
   /// Sign in with Facebook and return the Firebase ID token.
   /// Returns null if sign-in was cancelled or failed.
   Future<String?> signIn() async {
@@ -28,6 +49,9 @@ class FacebookSignInService {
         return null;
       }
 
+      final link = linkRequest(e, isWeb: kIsWeb);
+      if (link != null) throw link;
+
       // Let provider map this to a user-friendly message.
       throw Exception(e.code);
     } catch (e) {
@@ -39,6 +63,66 @@ class FacebookSignInService {
       }
 
       rethrow;
+    }
+  }
+
+  /// The backend's wording when the email already belongs to an account that
+  /// Facebook may not open; it arrives in English whatever the app language is.
+  static bool isExistingAccountRefusal(String message) =>
+      message.contains('login with your existing method');
+
+  /// Web only: mobile has no linking flow yet.
+  @visibleForTesting
+  static FacebookLinkRequired? linkRequest(
+    FirebaseAuthException error, {
+    required bool isWeb,
+  }) {
+    final email = error.email;
+    final credential = error.credential;
+    if (!isWeb ||
+        error.code != 'account-exists-with-different-credential' ||
+        email == null ||
+        credential == null) {
+      return null;
+    }
+    return FacebookLinkRequired(email, credential);
+  }
+
+  /// Proves ownership with Google, adds Facebook to that account and returns a
+  /// Facebook Firebase ID token. Returns null if the popup was closed. Must be
+  /// called straight from a tap, or the browser blocks the popup.
+  Future<String?> linkWithGoogle(FacebookLinkRequired request) async {
+    final google = GoogleAuthProvider()
+      ..setCustomParameters({
+        'login_hint': request.email,
+        'prompt': 'select_account',
+      });
+
+    try {
+      final owner = (await _auth.signInWithPopup(google)).user;
+      if (owner == null) return null;
+      if (owner.email?.toLowerCase() != request.email.toLowerCase()) {
+        throw Exception(emailMismatchCode);
+      }
+
+      try {
+        await owner.linkWithCredential(request.credential);
+      } on FirebaseAuthException catch (e) {
+        if (e.code != 'provider-already-linked') rethrow;
+      }
+
+      // The backend accepts only a token whose sign-in method is Facebook.
+      final linked = await _auth.signInWithCredential(request.credential);
+      return await linked.user?.getIdToken(true);
+    } on FirebaseAuthException catch (e) {
+      logError(_tag, 'Facebook linking Firebase error: ${e.code}');
+      if (e.code == 'popup-closed-by-user' ||
+          e.code == 'cancelled-popup-request') {
+        return null;
+      }
+      throw Exception(e.code);
+    } finally {
+      await _auth.signOut();
     }
   }
 

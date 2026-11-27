@@ -11,6 +11,7 @@ import 'login_page.dart';
 import 'email_verification_pending_page.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/features/auth/presentation/widgets/facebook_sign_in.dart';
 
 class RegisterPage extends StatefulWidget {
   /// The name the pre-sign-up questions already asked for.
@@ -536,7 +537,10 @@ class _RegisterPageState extends State<RegisterPage> {
                         onPressed: authProvider.isLoading
                             ? null
                             : () async {
-                                await authProvider.signInWithFacebook();
+                                await signInWithFacebookOrLink(
+                                  context,
+                                  authProvider,
+                                );
                               },
                         icon: Icon(
                           Icons.facebook,
