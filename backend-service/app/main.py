@@ -145,6 +145,16 @@ async def lifespan(app: FastAPI):
         # Running Alembic from inside an active event loop can emit noisy coroutine warnings.
         logger.info("Skipping runtime Alembic check; migrations are managed by entrypoint")
     
+    try:
+        from app.core.database import engine as db_engine
+        from app.services.schema_drift import check_schema_drift
+
+        drift = await check_schema_drift(db_engine)
+        for issue in drift["issues"]:
+            logger.warning("Schema drift: %(kind)s %(table)s %(detail)s", issue)
+    except Exception as e:
+        logger.warning(f"Schema drift check could not run: {e}")
+
     # Initialize Redis (rate limiting, token blacklist, caching)
     try:
         await RedisClient.connect()
