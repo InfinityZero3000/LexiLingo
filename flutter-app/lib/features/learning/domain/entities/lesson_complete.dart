@@ -1,6 +1,10 @@
+/// Pass mark assumed when the server does not report the lesson's own.
+const int kDefaultLessonPassMark = 80;
+
 class LessonComplete {
   final String attemptId;
   final bool passed;
+  final int? passThreshold;
   final double finalScore;
   final int totalXpEarned;
   final int timeSpentSeconds;
@@ -16,6 +20,7 @@ class LessonComplete {
   const LessonComplete({
     required this.attemptId,
     required this.passed,
+    this.passThreshold,
     required this.finalScore,
     required this.totalXpEarned,
     required this.timeSpentSeconds,

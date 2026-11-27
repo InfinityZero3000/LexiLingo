@@ -18,9 +18,11 @@ import {
   getProductEventOverview,
   getQuotaUsage,
   getReminderOverview,
+  getSchemaDrift,
   resetQuota,
   IntegrationResult,
   QuotaUsage,
+  SchemaDriftIssue,
   ScheduledTask,
 } from "../lib/opsApi";
 import { useI18n } from "../lib/i18n";
@@ -78,6 +80,7 @@ export const OpsCenterPage = () => {
   const events = useQuery({ queryKey: ["ops-events", days], queryFn: () => getProductEventOverview(days) });
   const agent = useQuery({ queryKey: ["ops-content-agent"], queryFn: getContentAgentOverview });
   const celery = useQuery({ queryKey: ["ops-celery"], queryFn: getCeleryOverview, refetchInterval: 30_000 });
+  const drift = useQuery({ queryKey: ["ops-schema-drift"], queryFn: getSchemaDrift });
   const backups = useQuery({ queryKey: ["ops-backups"], queryFn: getBackupOverview, refetchInterval: 60_000 });
 
   const [resetError, setResetError] = useState<string | null>(null);
@@ -137,6 +140,12 @@ export const OpsCenterPage = () => {
           ),
         }]
       : []),
+  ];
+
+  const driftColumns: Column<SchemaDriftIssue>[] = [
+    { header: t.ops.schemaDriftKind, render: (x) => <StatusPill tone="danger" label={t.ops.schemaDriftKinds[x.kind] ?? x.kind} /> },
+    { header: t.ops.schemaDriftTable, render: (x) => <span className="mono text-small">{x.table ?? "—"}</span> },
+    { header: t.ops.detail, render: (x) => <span className="mono text-small">{x.detail}</span> },
   ];
 
   const r = reminders.data;
@@ -299,6 +308,19 @@ export const OpsCenterPage = () => {
                 </tbody>
               </table>
             )}
+          </>
+        )}
+      </Section>
+
+      <Section title={t.ops.schemaDriftTitle} description={t.ops.schemaDriftHint}>
+        {drift.error && <div className="form-error" role="alert">{messageOf(drift.error, t.ops.loadFailed)}</div>}
+        {drift.data && (
+          <>
+            <StatusPill
+              tone={drift.data.ok ? "success" : "danger"}
+              label={drift.data.ok ? t.ops.schemaDriftClean : t.ops.schemaDriftBroken.replace("{n}", String(drift.data.issue_count))}
+            />
+            {!drift.data.ok && <DataTable columns={driftColumns} rows={drift.data.issues} rowKey={(x) => `${x.kind}:${x.table}:${x.detail}`} />}
           </>
         )}
       </Section>

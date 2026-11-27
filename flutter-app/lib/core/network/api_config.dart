@@ -80,13 +80,13 @@ class ApiConfig {
   }
 
   /// URL dự phòng — thử khi [baseUrl] không kết nối được.
-  /// Trống trong production mode (không có fallback về local).
+  /// Trống = không có fallback; không bao giờ ngầm trỏ về production.
   static String get fallbackBaseUrl {
     if (_mustUseProductionBackend) {
       return ''; // production không fallback về local
     }
     final envUrl = _normalizedEnvUrl('API_BASE_URL_FALLBACK');
-    return envUrl ?? AppConstants.apiBaseUrl;
+    return envUrl ?? '';
   }
 
   // ── AI Service URL ───────────────────────────────────────────────────────────
@@ -111,7 +111,7 @@ class ApiConfig {
   static String get fallbackAiServiceUrl {
     if (_mustUseProductionBackend) return '';
     final envUrl = _normalizedEnvUrl('AI_SERVICE_URL_FALLBACK');
-    return envUrl ?? AppConstants.aiServiceUrl;
+    return envUrl ?? '';
   }
 
   // ── Timeouts ─────────────────────────────────────────────────────────────────
@@ -136,7 +136,7 @@ class ApiConfig {
     return normalized;
   }
 
-  static bool get _shouldUseLocalFallback => false;
+  static bool get _shouldUseLocalFallback => !_mustUseProductionBackend;
 
   static bool get _mustUseProductionBackend {
     if (kReleaseMode) return true;

@@ -355,6 +355,10 @@ class Settings(BaseSettings):
     REMINDER_MAX_LATENESS_MINUTES: int = 180
     REMINDER_DEFAULT_TIMEZONE: str = "Asia/Ho_Chi_Minh"
 
+    # The sign-up page advertises learner counts only above this floor.
+    PUBLIC_STATS_MIN_LEARNERS: int = 1000
+    PUBLIC_STATS_CACHE_SECONDS: int = 600
+
     # Activation / streak-at-risk / weekly-summary mail. Off: the tasks run and
     # log how many they would have sent, and send nothing.
     NURTURE_EMAILS_ENABLED: bool = False

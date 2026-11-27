@@ -14,6 +14,13 @@ from httpx import AsyncClient, ASGITransport
 import uuid
 
 
+@pytest.fixture(autouse=True)
+def _streak_credit_is_tested_in_test_streak_from_xp():
+    with patch("app.services.streak_service.update_user_streak", new=AsyncMock()):
+        yield
+
+
+
 # ============================================================================
 # Fixture: authenticated client with mocked DB and auth
 # ============================================================================
@@ -375,6 +382,7 @@ class TestXPProfile:
     @pytest.mark.asyncio
     async def test_daily_cap_remaining_calculated_correctly(self, auth_client: AsyncClient):
         with patch("app.routes.xp._get_daily_xp", new_callable=AsyncMock) as mock_daily, \
+             patch("app.routes.xp.get_daily_activity_xp", new_callable=AsyncMock, return_value=200), \
              patch("app.routes.xp._get_streak_days", new_callable=AsyncMock) as mock_streak, \
              patch("app.routes.xp.get_numeric_level_progress") as mock_level_info:
 

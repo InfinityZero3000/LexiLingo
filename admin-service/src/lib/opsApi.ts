@@ -132,3 +132,15 @@ export type BackupOverview = {
 };
 
 export const getBackupOverview = () => apiFetch<BackupOverview>(`${ENV.backendUrl}/admin/ops/backups`);
+
+/* ─── Schema drift ─── */
+
+export type SchemaDriftIssue = {
+  kind: "missing_table" | "missing_column" | "missing_unique" | "missing_enum" | "missing_enum_label";
+  table: string | null;
+  detail: string;
+};
+
+export type SchemaDrift = { ok: boolean; checked_at: string; issue_count: number; issues: SchemaDriftIssue[] };
+
+export const getSchemaDrift = () => apiFetch<SchemaDrift>(`${ENV.backendUrl}/admin/ops/schema-drift`);

@@ -6,6 +6,7 @@ class LessonCompleteModel extends LessonComplete {
   const LessonCompleteModel({
     required super.attemptId,
     required super.passed,
+    super.passThreshold,
     required super.finalScore,
     required super.totalXpEarned,
     required super.timeSpentSeconds,
@@ -23,7 +24,8 @@ class LessonCompleteModel extends LessonComplete {
     return LessonCompleteModel(
       attemptId: json['attempt_id'] as String,
       passed: json['passed'] as bool,
-      finalScore: (json['final_score'] as num).toDouble(),
+      passThreshold: (json['pass_threshold'] as num?)?.round(),
+      finalScore: ((json['final_score'] ?? json['score']) as num).toDouble(),
       totalXpEarned: json['total_xp_earned'] as int? ?? 0,
       timeSpentSeconds: json['time_spent_seconds'] as int? ?? 0,
       accuracy: (json['accuracy'] as num?)?.toDouble() ?? 0.0,
@@ -45,6 +47,7 @@ class LessonCompleteModel extends LessonComplete {
     return {
       'attempt_id': attemptId,
       'passed': passed,
+      'pass_threshold': passThreshold,
       'final_score': finalScore,
       'total_xp_earned': totalXpEarned,
       'time_spent_seconds': timeSpentSeconds,

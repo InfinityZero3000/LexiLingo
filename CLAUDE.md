@@ -176,6 +176,20 @@ wherever the format is known.
   the clients actually send — all four report time now, so a source left False
   would have its real minutes hidden by the UI. Shown in the Progress screen's
   **Content** tab.
+- **Achievements pay their `xp_reward` through `award_xp_transaction`** as `achievement`,
+  an `UNCAPPED_SOURCES` member: server-only (`/xp/award` refuses it), `source_id` = achievement
+  id, no per-award ceiling (catalog goes to 1000), no streak bonus, not counted by
+  `get_daily_xp`, so it never uses up the 500/day cap, and it does not credit the streak.
+  Unlocks before 2026-11-27 were never paid and are not backfilled.
+- **The day's streak is credited where activity is recorded**: `award_xp_transaction`
+  calls `update_user_streak` for every capped award that earns XP; `POST /progress/streak/update`
+  only credits a day that already holds XP, a passed lesson or a review. A failed lesson
+  records nothing and runs no achievement checks. `daily_xp_today` is
+  `DailyActivity.xp_earned` (every source); `daily_cap_remaining` counts capped transactions.
+  A replayed lesson completion reports the lesson's current `pass_threshold`.
+- **Placement scores above chance** (`chance_corrected_percentage`): blind guessing lands
+  at A1; answering one question twice is a 422. `PLACEMENT_LEVEL_THRESHOLDS` apply to the
+  corrected percentage.
 - **There is exactly one XP endpoint: `POST /xp/award`.** `POST /users/me/xp`
   took any `amount` the client sent with no cap, no dedup and no audit row; it
   was deleted (2026-10-01) and no client had ever called it.
@@ -209,6 +223,13 @@ wherever the format is known.
   (`flutter-app/lib/core/services/skill_event_recorder.dart`), fire-and-forget.
   `vocabConceptId` there must stay in sync with `_vocab_concept_id` in
   `backend-service/app/crud/vocabulary.py`.
+
+## Schema drift
+
+`app/services/schema_drift.py` compares the live DB with the models (tables, columns, enum
+labels, unique constraints an upsert relies on). `GET /admin/ops/schema-drift` (Ops Center
+panel) and a startup warning use it; it never fails startup or `/health`. A new migration-only
+change that the models do not declare is invisible to it.
 
 ## Course Content Invariant
 

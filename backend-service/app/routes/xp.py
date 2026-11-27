@@ -25,8 +25,11 @@ from app.models.games import XPTransaction
 from app.services.level_service import get_numeric_level_progress
 from app.services.xp_service import (
     MAX_STUDY_MINUTES_PER_AWARD,
+    SERVER_ONLY_SOURCES,
     award_xp_transaction,
     capped_duration_seconds,
+    get_daily_activity_xp,
+    get_daily_xp,
 )
 from app.crud.leaderboard import competition_ranks
 
@@ -103,16 +106,8 @@ class XPProfileResponse(BaseModel):
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
 async def _get_daily_xp(user_id: uuid.UUID, db: AsyncSession) -> int:
-    """Get XP earned today for a user from XPTransaction log."""
-    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
-    result = await db.execute(
-        select(func.coalesce(func.sum(XPTransaction.amount), 0))
-        .where(
-            XPTransaction.user_id == user_id,
-            XPTransaction.created_at >= today_start,
-        )
-    )
-    return int(result.scalar() or 0)
+    """XP counted against today's cap."""
+    return await get_daily_xp(user_id, db)
 
 
 def _calculate_streak_multiplier(streak_days: int) -> float:
@@ -163,10 +158,14 @@ async def award_xp(
     - 7+ days → 1.5× multiplier
     - 30+ days → 2.0× multiplier
     """
-    if body.source == "game":
+    if body.source in SERVER_ONLY_SOURCES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Game XP must be awarded through a completed game session.",
+            detail=(
+                "Game XP must be awarded through a completed game session."
+                if body.source == "game"
+                else f"{body.source.capitalize()} XP is awarded by the server."
+            ),
         )
 
     result = await award_xp_transaction(
@@ -234,7 +233,7 @@ async def get_xp_profile(
         level_progress_percent=level_info.level_progress_percent,
         xp_for_next_level=level_info.xp_for_next_level,
         current_xp_in_level=level_info.current_xp_in_level,
-        daily_xp_today=daily_xp,
+        daily_xp_today=await get_daily_activity_xp(user_id, db),
         daily_cap_remaining=max(0, DAILY_XP_CAP - daily_xp),
         streak_days=streak_days,
         best_streak=best_streak,

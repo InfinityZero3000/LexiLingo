@@ -20,6 +20,7 @@ from app.core.database import get_db
 from app.core.dependencies import require_permission
 from app.core.redis import RedisClient
 from app.services.backup_status import read_backup_status
+from app.services.schema_drift import check_schema_drift
 from app.models.content_agent import ContentAgentJob
 from app.models.product_event import ProductEvent
 from app.models.reminder import ReminderDelivery
@@ -34,6 +35,15 @@ def _since(days: int) -> datetime:
 
 def _day(value) -> str:
     return value if isinstance(value, str) else value.isoformat()
+
+
+@router.get("/schema-drift")
+async def schema_drift(
+    admin: User = Depends(require_permission("ops:read")),
+    db: AsyncSession = Depends(get_db),
+):
+    """Where the live database lags the models: missing tables, columns, enum labels, unique constraints."""
+    return await check_schema_drift(db.bind)
 
 
 @router.get("/reminders")

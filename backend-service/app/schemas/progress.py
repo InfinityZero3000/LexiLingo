@@ -140,6 +140,7 @@ class LessonCompleteResponse(BaseModel):
     attempt_id: UUID
     passed: bool
     final_score: float
+    pass_threshold: int = Field(..., ge=0, le=100)
     total_xp_earned: int
     time_spent_seconds: int
     accuracy: float = Field(..., ge=0.0, le=100.0)

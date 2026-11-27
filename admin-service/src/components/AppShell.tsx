@@ -4,6 +4,7 @@ import { useAuth } from "./AuthProvider";
 import { Role } from "../lib/auth";
 import { useI18n } from "../lib/i18n";
 import { ThemeToggle } from "./ThemeToggle";
+import { RouteErrorBoundary } from "./RouteErrorBoundary";
 
 export type NavItem = {
   to: string;
@@ -225,7 +226,9 @@ export const AppShell = ({
         </header>
 
         <div className="page">
-          <Outlet />
+          <RouteErrorBoundary>
+            <Outlet />
+          </RouteErrorBoundary>
         </div>
       </main>
     </div>

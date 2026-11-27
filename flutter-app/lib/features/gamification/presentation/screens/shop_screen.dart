@@ -127,6 +127,8 @@ class _ShopScreenState extends State<ShopScreen>
         if (!mounted) return;
       }
       _showPurchaseSuccess(item);
+    } else if (provider.purchaseNeedsVerifiedEmail) {
+      _showVerifyEmailPrompt();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -135,6 +137,35 @@ class _ShopScreenState extends State<ShopScreen>
         ),
       );
     }
+  }
+
+  void _showVerifyEmailPrompt() {
+    final messenger = ScaffoldMessenger.of(context);
+    final auth = context.read<AuthProvider>();
+    final email = auth.currentUser?.email;
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text('shop.verifyEmailRequired'.tr()),
+        duration: const Duration(seconds: 8),
+        action: email == null || email.isEmpty
+            ? null
+            : SnackBarAction(
+                label: 'shop.verifyEmailAction'.tr(),
+                onPressed: () async {
+                  final sent = await auth.resendVerificationEmail(email);
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        sent
+                            ? 'auth.emailVerificationResendSuccess'.tr()
+                            : 'auth.emailVerificationResendError'.tr(),
+                      ),
+                    ),
+                  );
+                },
+              ),
+      ),
+    );
   }
 
   Future<bool> _showPurchaseConfirmation(ShopItemEntity item) async {

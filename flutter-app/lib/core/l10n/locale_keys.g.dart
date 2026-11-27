@@ -267,6 +267,8 @@ abstract class LocaleKeys {
   static const lesson_nextLesson = 'lesson.nextLesson';
   static const lesson_excellent = 'lesson.excellent';
   static const lesson_wellDone = 'lesson.wellDone';
+  static const lesson_notPassedTitle = 'lesson.notPassedTitle';
+  static const lesson_passMarkHint = 'lesson.passMarkHint';
   static const lesson_scoreSummary = 'lesson.scoreSummary';
   static const lesson_practiceAgain = 'lesson.practiceAgain';
   static const lesson_exitLessonTitle = 'lesson.exitLessonTitle';
@@ -810,6 +812,11 @@ abstract class LocaleKeys {
   static const shop_gotIt = 'shop.gotIt';
   static const shop_noItemsInCategory = 'shop.noItemsInCategory';
   static const shop_purchaseFailed = 'shop.purchaseFailed';
+  static const shop_buy = 'shop.buy';
+  static const shop_owned = 'shop.owned';
+  static const shop_sold = 'shop.sold';
+  static const shop_verifyEmailRequired = 'shop.verifyEmailRequired';
+  static const shop_verifyEmailAction = 'shop.verifyEmailAction';
   static const shop_categoryAll = 'shop.categoryAll';
   static const shop_categoryPowerUps = 'shop.categoryPowerUps';
   static const shop_categoryBoosts = 'shop.categoryBoosts';

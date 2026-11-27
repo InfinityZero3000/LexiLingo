@@ -127,6 +127,7 @@ class GeneratedBadge extends StatefulWidget {
   State<GeneratedBadge> createState() => _GeneratedBadgeState();
 }
 
+/// One sweep of light per badge: a grid of endless ones repaints constantly.
 class _GeneratedBadgeState extends State<GeneratedBadge>
     with SingleTickerProviderStateMixin {
   late AnimationController _shineController;
@@ -142,9 +143,17 @@ class _GeneratedBadgeState extends State<GeneratedBadge>
     _shineAnimation = Tween<double>(begin: -0.5, end: 1.5).animate(
       CurvedAnimation(parent: _shineController, curve: Curves.easeInOut),
     );
+  }
 
-    if (widget.config.showShine && !widget.config.isLocked) {
-      _shineController.repeat(reverse: false);
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (widget.config.showShine &&
+        !widget.config.isLocked &&
+        !MediaQuery.disableAnimationsOf(context) &&
+        _shineController.value == 0 &&
+        !_shineController.isAnimating) {
+      _shineController.forward();
     }
   }
 

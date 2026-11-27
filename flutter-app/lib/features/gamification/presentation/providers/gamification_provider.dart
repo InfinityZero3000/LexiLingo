@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexilingo_app/core/network/api_config.dart';
+import 'package:lexilingo_app/core/network/response_models.dart';
 import 'package:lexilingo_app/core/services/user_scope_service.dart';
 import 'package:lexilingo_app/features/gamification/domain/repositories/gamification_repository.dart';
 import 'package:lexilingo_app/features/gamification/domain/entities/shop_item.dart';
@@ -131,6 +132,7 @@ class GamificationProvider extends ChangeNotifier {
   void reset() {
     _epoch++;
     _walletRequest++;
+    _purchaseNeedsVerifiedEmail = false;
     _wallet = null;
     _transactions = [];
     _isLoadingWallet = false;
@@ -252,12 +254,20 @@ class GamificationProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  bool _purchaseNeedsVerifiedEmail = false;
+
+  /// The last purchase was refused because the account's email is unverified.
+  bool get purchaseNeedsVerifiedEmail => _purchaseNeedsVerifiedEmail;
+
   Future<bool> purchaseItem(String itemId, {int quantity = 1}) async {
+    _purchaseNeedsVerifiedEmail = false;
     try {
       final ok = await _repository.purchaseItem(itemId, quantity: quantity);
       if (ok) await Future.wait([loadWallet(), loadInventory()]);
       return ok;
     } catch (e) {
+      _purchaseNeedsVerifiedEmail =
+          e is ApiErrorException && e.details?['reason'] == 'email_unverified';
       debugPrint('Error purchasing item: $e');
       return false;
     }
