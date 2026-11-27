@@ -55,7 +55,9 @@ def test_tampered_or_foreign_tokens_are_refused():
     body, sig = unsub.make_token(uid).split(".")
     other = unsub.make_token(uuid.uuid4()).split(".")[0]
 
-    for bad in ("", "x", "a.b", f"{other}.{sig}", f"{body}.{sig[:-2]}AA", f"{body}.{sig}.x", "é.é"):
+    # Change the last character to one it is not; "AA" was the signature 1 time in 4096.
+    tampered = sig[:-1] + ("B" if sig[-1] != "B" else "C")
+    for bad in ("", "x", "a.b", f"{other}.{sig}", f"{body}.{tampered}", f"{body}.{sig}.x", "é.é"):
         assert unsub.read_token(bad) is None
 
 
