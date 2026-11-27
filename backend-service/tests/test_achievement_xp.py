@@ -5,7 +5,10 @@ from sqlalchemy import func, select
 from app.models.games import XPTransaction
 from app.models.gamification import Achievement, LeaderboardEntry, UserAchievement
 from app.models.progress import DailyActivity
+import pytest
+
 from app.services.achievement_checker_service import AchievementCheckerService
+from app.services.xp_service import award_xp_transaction, get_daily_xp
 
 
 async def _achievement(db_session, xp: int) -> Achievement:
@@ -59,6 +62,33 @@ async def test_streak_and_daily_cap_do_not_distort_the_advertised_amount(db_sess
 
     paid = (await db_session.execute(select(XPTransaction.amount).where(XPTransaction.source == "achievement"))).scalar_one()
     assert paid == 100
+
+
+@pytest.mark.parametrize("xp", [500, 1000])
+async def test_a_large_achievement_unlocks_and_pays_exactly_once(db_session, test_user, xp):
+    achievement = await _achievement(db_session, xp)
+    checker = AchievementCheckerService(db_session)
+
+    unlocked = await checker.check_by_trigger(test_user.id, "lesson_complete")
+    again = await checker.check_by_trigger(test_user.id, "lesson_complete")
+    await db_session.commit()
+
+    assert [a.id for a in unlocked] == [achievement.id] and again == []
+    await db_session.refresh(test_user)
+    paid = (await db_session.execute(select(XPTransaction.amount).where(XPTransaction.source == "achievement"))).scalar_one()
+    assert paid == test_user.total_xp == xp
+
+
+async def test_achievement_xp_does_not_use_up_the_daily_cap(db_session, test_user):
+    achievement = await _achievement(db_session, 600)
+    await AchievementCheckerService(db_session)._unlock_achievement(test_user.id, achievement)
+    await db_session.commit()
+
+    assert await get_daily_xp(test_user.id, db_session) == 0
+    result = await award_xp_transaction(
+        db=db_session, user=test_user, source="news", base_xp=15, source_id="n-1"
+    )
+    assert result.xp_awarded == 15 and result.daily_cap_remaining == 485
 
 
 async def test_zero_xp_achievement_writes_no_transaction(db_session, test_user):

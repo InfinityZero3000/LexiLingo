@@ -29,6 +29,7 @@ from app.services.xp_service import (
     award_xp_transaction,
     capped_duration_seconds,
     get_daily_activity_xp,
+    get_daily_xp,
 )
 from app.crud.leaderboard import competition_ranks
 
@@ -105,16 +106,8 @@ class XPProfileResponse(BaseModel):
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
 async def _get_daily_xp(user_id: uuid.UUID, db: AsyncSession) -> int:
-    """Get XP earned today for a user from XPTransaction log."""
-    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
-    result = await db.execute(
-        select(func.coalesce(func.sum(XPTransaction.amount), 0))
-        .where(
-            XPTransaction.user_id == user_id,
-            XPTransaction.created_at >= today_start,
-        )
-    )
-    return int(result.scalar() or 0)
+    """XP counted against today's cap."""
+    return await get_daily_xp(user_id, db)
 
 
 def _calculate_streak_multiplier(streak_days: int) -> float:

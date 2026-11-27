@@ -472,13 +472,10 @@ class AchievementCheckerService:
 
 
     async def _award_xp(self, user_id: UUID, achievement: Achievement) -> None:
-        """Pay the advertised XP exactly: no streak bonus, no daily cap."""
+        """Pay the advertised XP exactly (an uncapped source)."""
         user = await self.db.get(User, user_id)
         if user is None:
             return
-
-        async def nothing_earned_yet(_user_id: UUID, _db: AsyncSession) -> int:
-            return 0
 
         try:
             await award_xp_transaction(
@@ -489,8 +486,6 @@ class AchievementCheckerService:
                 source_id=str(achievement.id),
                 source_detail=achievement.slug,
                 commit=False,
-                daily_xp_loader=nothing_earned_yet,
-                streak_loader=nothing_earned_yet,
             )
         except HTTPException as error:
             if error.status_code != status.HTTP_409_CONFLICT:

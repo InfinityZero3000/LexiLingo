@@ -32,8 +32,10 @@ XP_SOURCE_CAPS = {
     "book": 25,
     "lesson": 50,
     "daily_challenge": 50,
-    "achievement": MAX_SINGLE_AWARD,
 }
+# Paid exactly as advertised: no per-award ceiling, no streak bonus, and outside
+# the daily cap, which exists to stop grinding and an unlock cannot be ground.
+UNCAPPED_SOURCES: frozenset[str] = frozenset({"achievement"})
 # Sources where the same activity must never be awarded twice.
 # source_id is required for these to enforce idempotency via the DB partial unique index.
 REPEAT_SENSITIVE_SOURCES: frozenset[str] = frozenset(
@@ -75,6 +77,7 @@ async def get_daily_xp(user_id: uuid.UUID, db: AsyncSession) -> int:
         select(func.coalesce(func.sum(XPTransaction.amount), 0)).where(
             XPTransaction.user_id == user_id,
             XPTransaction.created_at >= today_start,
+            XPTransaction.source.not_in(UNCAPPED_SOURCES),
         )
     )
     return int(result.scalar() or 0)
@@ -161,7 +164,8 @@ async def award_xp_transaction(
         [uuid.UUID, AsyncSession], Awaitable[int]
     ] = get_streak_days,
 ) -> XPAwardResult:
-    if source not in XP_SOURCE_CAPS:
+    uncapped = source in UNCAPPED_SOURCES
+    if source not in XP_SOURCE_CAPS and not uncapped:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Unsupported XP source: {source}",
@@ -171,7 +175,7 @@ async def award_xp_transaction(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=f"source_id is required for source '{source}' to prevent duplicate awards.",
         )
-    if base_xp < 0 or base_xp > MAX_SINGLE_AWARD:
+    if base_xp < 0 or (base_xp > MAX_SINGLE_AWARD and not uncapped):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid base XP amount.",
@@ -196,13 +200,17 @@ async def award_xp_transaction(
                 detail="XP already awarded for this activity.",
             )
 
-    capped_base_xp = min(base_xp, XP_SOURCE_CAPS[source])
     streak_days = await streak_loader(user.id, db)
-    multiplier = calculate_streak_multiplier(streak_days) * max(1.0, item_multiplier)
-    raw_awarded = int(capped_base_xp * multiplier)
     daily_xp_today = await daily_xp_loader(user.id, db)
     cap_remaining = max(0, DAILY_XP_CAP - daily_xp_today)
-    xp_awarded = min(raw_awarded, cap_remaining)
+    if uncapped:
+        capped_base_xp = base_xp
+        multiplier = 1.0
+        xp_awarded = base_xp
+    else:
+        capped_base_xp = min(base_xp, XP_SOURCE_CAPS[source])
+        multiplier = calculate_streak_multiplier(streak_days) * max(1.0, item_multiplier)
+        xp_awarded = min(int(capped_base_xp * multiplier), cap_remaining)
 
     old_xp = locked_user.total_xp or 0
     old_level = locked_user.numeric_level or 1
