@@ -37,6 +37,7 @@ from app.services.proficiency_service import ProficiencyService
 from app.services.rank_service import rank_proficiency_level
 
 SECTION_SIZE = 5
+MIN_GRADED_QUESTIONS = 3
 SECONDS_PER_QUESTION = 90
 SUBMIT_GRACE = timedelta(seconds=60)
 COOLDOWN = timedelta(hours=24)
@@ -176,7 +177,14 @@ def grade(
     questions: dict[str, QuestionItem],
     answers: dict[str, Any],
 ) -> tuple[str | None, list[dict[str, Any]], float]:
-    """(result level or None, per-section scores, overall percent)."""
+    """(result level or None, per-section scores, overall percent).
+
+    A question deleted since the paper was drawn is not counted against the
+    learner: a section is marked over the questions still there, and one left
+    with fewer than MIN_GRADED_QUESTIONS is `graded: False` rather than failed.
+    An ungraded section ends the run of passed sections, so nothing is
+    certified on evidence we do not have.
+    """
     scores: list[dict[str, Any]] = []
     result: str | None = None
     unbroken = True
@@ -184,26 +192,40 @@ def grade(
     question_total = 0
     for section in sections:
         correct = 0
+        total = 0
         for question_id in section["question_ids"]:
             question = questions.get(question_id)
             if question is None:
                 continue
+            total += 1
             given = answer_text(question, answers.get(question_id))
             if given is not None and normalise_answer(given) == normalise_answer(correct_option(question)):
                 correct += 1
-        total = len(section["question_ids"])
-        passed = total > 0 and correct * 100 >= section["pass_percent"] * total
+        graded = total >= MIN_GRADED_QUESTIONS
+        passed = graded and correct * 100 >= section["pass_percent"] * total
         scores.append(
-            {"level": section["level"], "correct": correct, "total": total, "passed": passed}
+            {
+                "level": section["level"],
+                "correct": correct,
+                "total": total,
+                "passed": passed,
+                "graded": graded,
+            }
         )
         if unbroken and passed:
             result = section["level"]
         else:
             unbroken = False
-        correct_total += correct
-        question_total += total
+        if graded:
+            correct_total += correct
+            question_total += total
     percent = round(correct_total * 100 / question_total, 1) if question_total else 0.0
     return result, scores, percent
+
+
+def is_void(section_scores: list[dict[str, Any]] | None) -> bool:
+    """A paper none of whose sections could be graded says nothing about the learner."""
+    return bool(section_scores) and not any(s.get("graded", True) for s in section_scores)
 
 
 async def latest_attempt(db: AsyncSession, user_id: Any) -> LevelExamAttempt | None:
@@ -228,7 +250,9 @@ def is_past_deadline(attempt: LevelExamAttempt, now: datetime) -> bool:
 def retry_at(attempt: LevelExamAttempt) -> datetime | None:
     """When a failed or lapsed sitting allows the next one; None if it did not fail."""
     failed = attempt.status == "expired" or (
-        attempt.status == "submitted" and attempt.result_level is None
+        attempt.status == "submitted"
+        and attempt.result_level is None
+        and not is_void(attempt.section_scores)
     )
     if not failed:
         return None

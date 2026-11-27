@@ -155,6 +155,22 @@ async def submit_exam(
     attempt.section_scores = section_scores
     attempt.score = percent
 
+    if exam.is_void(section_scores):
+        await db.commit()
+        return {
+            "attempt_id": str(attempt.id),
+            "passed": False,
+            "void": True,
+            "result_level": None,
+            "from_level": attempt.from_level,
+            "certified_level": rank_proficiency_level(current_user),
+            "level": current_user.level,
+            "level_verified": level_verified(current_user),
+            "score": percent,
+            "sections": section_scores,
+            "retry_at": None,
+        }
+
     profile = await get_or_create_profile(db, current_user)
     change = None
     if result_level is not None:
