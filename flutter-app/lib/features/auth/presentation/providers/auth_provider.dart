@@ -29,6 +29,22 @@ import 'package:lexilingo_app/core/services/facebook_sign_in_service.dart';
 /// What opening an email verification link did.
 enum VerifyEmailOutcome { signedIn, verified, failed }
 
+enum FacebookMergeStep { none, proveWithGoogle, confirmFacebook, signInToMerge }
+
+/// A Facebook sign-in the backend refused until its owner proves the account.
+class _PendingMerge {
+  _PendingMerge(this.idToken, this.email, this.methods);
+
+  final String idToken;
+  final String? email;
+  final List<String> methods;
+  final DateTime _since = DateTime.now();
+
+  /// Firebase ID tokens live an hour.
+  bool get expired =>
+      DateTime.now().difference(_since) > const Duration(minutes: 50);
+}
+
 class AuthProvider extends ChangeNotifier {
   final SignInWithGoogleUseCase signInWithGoogleUseCase;
   final SignInWithFacebookUseCase signInWithFacebookUseCase;
@@ -55,6 +71,9 @@ class AuthProvider extends ChangeNotifier {
   bool _isJustLoggedIn = false;
   UiText? _errorMessage;
   FacebookLinkRequired? _pendingFacebookLink;
+  bool _awaitingFacebookConfirm = false;
+  _PendingMerge? _pendingMerge;
+  UiText? _accountNotice;
   late final StreamSubscription<void> _sessionExpiredSub;
 
   AuthProvider({
@@ -77,6 +96,8 @@ class AuthProvider extends ChangeNotifier {
 
   void _onSessionExpired() {
     final ended = _user?.id;
+    // A visitor with no session keeps the merge they are in the middle of.
+    if (ended != null) _clearFacebookMerge();
     _user = null;
     _pendingFacebookLink = null;
     _errorMessage = null;
@@ -110,9 +131,64 @@ class AuthProvider extends ChangeNotifier {
   bool get isCheckingAuth => _isCheckingAuth;
   bool get isJustLoggedIn => _isJustLoggedIn;
   String? get errorMessage => _errorMessage?.resolve();
-  String? get facebookLinkEmail => _pendingFacebookLink?.email;
 
-  void dismissFacebookLink() => _pendingFacebookLink = null;
+  /// What stands between the learner and a merged Facebook sign-in.
+  FacebookMergeStep get facebookMergeStep {
+    if (_awaitingFacebookConfirm) return FacebookMergeStep.confirmFacebook;
+    if (_pendingFacebookLink != null) return FacebookMergeStep.proveWithGoogle;
+    if (_pendingMerge != null) return FacebookMergeStep.signInToMerge;
+    return FacebookMergeStep.none;
+  }
+
+  String? get facebookMergeEmail =>
+      _pendingFacebookLink?.email ?? _pendingMerge?.email;
+
+  bool get facebookMergeAllowsGoogle =>
+      _pendingMerge?.methods.contains('google') ?? false;
+
+  bool get facebookMergeAllowsPassword =>
+      _pendingMerge?.methods.contains('password') ?? false;
+
+  /// A one-off message about the account, for whoever shows it first.
+  String? takeAccountNotice() {
+    final notice = _accountNotice?.resolve();
+    _accountNotice = null;
+    return notice;
+  }
+
+  void dismissFacebookLink() {
+    _clearFacebookMerge();
+    notifyListeners();
+  }
+
+  void _clearFacebookMerge() {
+    if (_awaitingFacebookConfirm) unawaited(facebookSignInService.cancelLink());
+    _awaitingFacebookConfirm = false;
+    _pendingFacebookLink = null;
+    _pendingMerge = null;
+  }
+
+  /// Runs after a password or Google sign-in: that proved the account, so the
+  /// Facebook sign-in waiting for it can be merged.
+  Future<void> _applyPendingMerge(UserEntity user) async {
+    final merge = _pendingMerge;
+    _pendingMerge = null;
+    if (merge == null) return;
+
+    final email = merge.email;
+    if (email != null && email.toLowerCase() != user.email.toLowerCase()) {
+      _accountNotice = const UiText.key('auth.fbMergeOtherAccount');
+    } else if (merge.expired) {
+      _accountNotice = const UiText.key('auth.fbMergeLater');
+    } else {
+      final result = await authRepository.linkFacebook(merge.idToken);
+      if (_user?.id != user.id) return;
+      _accountNotice = UiText.key(
+        result.isRight() ? 'auth.fbMerged' : 'auth.fbMergeLater',
+      );
+    }
+    notifyListeners();
+  }
 
   // Clear just logged in flag (call after welcome screen)
   void clearJustLoggedIn() {
@@ -278,6 +354,7 @@ class AuthProvider extends ChangeNotifier {
 
   // Sign in with Google
   Future<void> signInWithGoogle() async {
+    // [_pendingMerge] stays: this sign-in may be what proves the account.
     _pendingFacebookLink = null;
     try {
       _isLoading = true;
@@ -296,9 +373,8 @@ class AuthProvider extends ChangeNotifier {
 
       if (idToken == null) {
         final signInError = googleSignInService.lastError?.toLowerCase();
-        if (signInError == null || signInError.contains('cancelled')) {
-          _errorMessage = UiText.key('auth.googleSignInCancelled');
-        } else {
+        // Closing the window is a choice, not an error to report.
+        if (signInError != null && !signInError.contains('cancelled')) {
           _errorMessage = _parseErrorMessage(googleSignInService.lastError!);
         }
         _isLoading = false;
@@ -339,18 +415,19 @@ class AuthProvider extends ChangeNotifier {
           sl<ApiClient>(),
         );
         unawaited(_claimPendingReferral());
+        unawaited(_applyPendingMerge(user));
       },
     );
   }
 
   // Sign in with Facebook
   Future<void> signInWithFacebook() {
-    _pendingFacebookLink = null;
+    _clearFacebookMerge();
     // Get Firebase ID token via Facebook authentication
     return _completeFacebookSignIn(facebookSignInService.signIn);
   }
 
-  /// Finishes a sign-in that stopped on [facebookLinkEmail]. Call it from a tap.
+  /// First merge step after Firebase reports the email as taken. Call from a tap.
   Future<void> linkFacebookWithGoogle() {
     final request = _pendingFacebookLink;
     if (request == null) return Future<void>.value();
@@ -358,6 +435,13 @@ class AuthProvider extends ChangeNotifier {
     return _completeFacebookSignIn(
       () => facebookSignInService.linkWithGoogle(request),
     );
+  }
+
+  /// Second step, when Facebook needs its own popup. Call from a tap.
+  Future<void> finishFacebookLink() {
+    if (!_awaitingFacebookConfirm) return Future<void>.value();
+    _awaitingFacebookConfirm = false;
+    return _completeFacebookSignIn(facebookSignInService.attachFacebook);
   }
 
   Future<void> _completeFacebookSignIn(
@@ -368,13 +452,9 @@ class AuthProvider extends ChangeNotifier {
       _errorMessage = null;
       notifyListeners();
 
+      // Null is a closed window: nothing to report.
       final idToken = await obtainIdToken();
-      if (idToken == null) {
-        _errorMessage = UiText.key('auth.facebookSignInCancelled');
-        _isLoading = false;
-        notifyListeners();
-        return;
-      }
+      if (idToken == null) return;
 
       final result = await signInWithFacebookUseCase(
         SignInWithFacebookParams(idToken: idToken),
@@ -382,10 +462,15 @@ class AuthProvider extends ChangeNotifier {
 
       result.fold(
         (failure) {
-          _errorMessage =
-              FacebookSignInService.isExistingAccountRefusal(failure.message)
-              ? const UiText.key('auth.errUseExistingSignIn')
-              : _getFailureMessage(failure);
+          if (failure is AccountLinkRequiredFailure) {
+            _pendingMerge = _PendingMerge(
+              idToken,
+              FacebookSignInService.emailOf(idToken),
+              failure.methods,
+            );
+          } else {
+            _errorMessage = _getFailureMessage(failure);
+          }
           _user = null;
           _isJustLoggedIn = false;
         },
@@ -401,6 +486,8 @@ class AuthProvider extends ChangeNotifier {
       );
     } on FacebookLinkRequired catch (link) {
       _pendingFacebookLink = link;
+    } on FacebookConfirmRequired {
+      _awaitingFacebookConfirm = true;
     } catch (e) {
       debugPrint("Facebook sign in error: $e");
       _errorMessage = _parseErrorMessage(e.toString());
@@ -440,6 +527,7 @@ class AuthProvider extends ChangeNotifier {
             sl<ApiClient>(),
           );
           unawaited(_claimPendingReferral());
+          unawaited(_applyPendingMerge(user));
         },
       );
     } catch (e) {
@@ -595,6 +683,7 @@ class AuthProvider extends ChangeNotifier {
       _isLoading = true;
       _errorMessage = null;
       notifyListeners();
+      _clearFacebookMerge();
 
       // Needs the live session, so it goes before the sign-out request.
       await FirebaseMessagingService.instance.unregisterFromBackend(
@@ -826,6 +915,12 @@ class AuthProvider extends ChangeNotifier {
       return const UiText.key('auth.errGoogleConfig');
     }
 
+    if (normalized.contains('credential-already-in-use')) {
+      return const UiText.key('auth.errFacebookInUse');
+    }
+    if (normalized.contains(FacebookSignInService.linkedRetryCode)) {
+      return const UiText.key('auth.fbMergedSignInAgain');
+    }
     if (normalized.contains(FacebookSignInService.emailMismatchCode)) {
       return const UiText.key('auth.errFacebookLinkMismatch');
     }

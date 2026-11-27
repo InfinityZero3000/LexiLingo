@@ -609,6 +609,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
 
+                    FacebookMergeHint(auth: authProvider),
                     if (authProvider.errorMessage != null) ...[
                       const SizedBox(height: AppSpacing.lg),
                       Container(

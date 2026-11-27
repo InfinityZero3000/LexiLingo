@@ -1623,4 +1623,22 @@ abstract class LocaleKeys {
   static const adminGrowth_qa_actionFailed = 'adminGrowth.qa.actionFailed';
   static const adminGrowth_qa = 'adminGrowth.qa';
   static const adminGrowth = 'adminGrowth';
+  static const auth_fbLinkTitle = 'auth.fbLinkTitle';
+  static const auth_fbLinkMessage = 'auth.fbLinkMessage';
+  static const auth_fbLinkMessageNoEmail = 'auth.fbLinkMessageNoEmail';
+  static const auth_fbLinkConfirm = 'auth.fbLinkConfirm';
+  static const auth_fbLinkFinishTitle = 'auth.fbLinkFinishTitle';
+  static const auth_fbLinkFinishMessage = 'auth.fbLinkFinishMessage';
+  static const auth_fbLinkFinishConfirm = 'auth.fbLinkFinishConfirm';
+  static const auth_fbMergeGoogle = 'auth.fbMergeGoogle';
+  static const auth_fbMergeGoogleOrPassword = 'auth.fbMergeGoogleOrPassword';
+  static const auth_fbMergePassword = 'auth.fbMergePassword';
+  static const auth_fbMergeContinue = 'auth.fbMergeContinue';
+  static const auth_fbMergeNotNow = 'auth.fbMergeNotNow';
+  static const auth_fbMergeHint = 'auth.fbMergeHint';
+  static const auth_fbMerged = 'auth.fbMerged';
+  static const auth_fbMergedSignInAgain = 'auth.fbMergedSignInAgain';
+  static const auth_fbMergeLater = 'auth.fbMergeLater';
+  static const auth_fbMergeOtherAccount = 'auth.fbMergeOtherAccount';
+  static const auth_errFacebookInUse = 'auth.errFacebookInUse';
 }

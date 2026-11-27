@@ -350,6 +350,16 @@ class _AuthWrapperState extends State<AuthWrapper> {
       return const Scaffold(body: AppSplash());
     }
 
+    if (authProvider.isAuthenticated) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final notice = authProvider.takeAccountNotice();
+        if (notice == null || !context.mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(notice)));
+      });
+    }
+
     if (authProvider.isAuthenticated && !_isResolvingFlow) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _resolvePostAuthFlow(authProvider);

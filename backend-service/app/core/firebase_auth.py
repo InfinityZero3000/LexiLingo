@@ -39,6 +39,11 @@ def _init_firebase_app() -> None:
 
     cred: Optional[credentials.Base] = None
 
+    if os.getenv("FIREBASE_AUTH_EMULATOR_HOST") and not settings.is_production:
+        # Local emulator (docs/operations/AUTH_TESTING.md): no credentials exist or are needed.
+        firebase_admin.initialize_app(options={'projectId': settings.FIREBASE_PROJECT_ID})
+        return
+
     if settings.FIREBASE_CREDENTIALS_FILE:
         # Option 1: Load from file path (recommended)
         cred = credentials.Certificate(settings.FIREBASE_CREDENTIALS_FILE)

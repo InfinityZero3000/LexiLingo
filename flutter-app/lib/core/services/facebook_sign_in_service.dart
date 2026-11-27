@@ -11,15 +11,21 @@ import '../utils/app_logger.dart';
 const _tag = 'FacebookSignInService';
 
 /// The email already uses another sign-in method: its owner has to prove that
-/// before Facebook is added to the account.
+/// before Facebook is added to the account. Firebase promises neither field.
 class FacebookLinkRequired implements Exception {
   const FacebookLinkRequired(this.email, this.credential);
 
-  final String email;
-  final AuthCredential credential;
+  final String? email;
+  final AuthCredential? credential;
 
   @override
   String toString() => 'account-exists-with-different-credential';
+}
+
+/// The owner is proven, and Facebook has to be added in one more popup. A
+/// browser only opens a popup straight from a tap, so the app asks first.
+class FacebookConfirmRequired implements Exception {
+  const FacebookConfirmRequired();
 }
 
 /// Service for handling Facebook Sign In
@@ -27,6 +33,9 @@ class FacebookSignInService {
   FacebookSignInService({FirebaseAuth? auth}) : _injectedAuth = auth;
 
   static const emailMismatchCode = 'facebook-link-email-mismatch';
+
+  /// Facebook was added but no token came back: signing in again now works.
+  static const linkedRetryCode = 'facebook-linked-sign-in-again';
 
   final FirebaseAuth? _injectedAuth;
 
@@ -48,13 +57,18 @@ class FacebookSignInService {
       logError(_tag, 'Facebook Sign In Firebase error: ${e.code} ${e.message}');
 
       // Treat user-driven popup cancellation as non-fatal.
-      if (e.code == 'popup-closed-by-user' ||
-          e.code == 'cancelled-popup-request') {
-        return null;
-      }
+      if (_isDismissedPopup(e.code)) return null;
 
       final link = linkRequest(e, isWeb: kIsWeb);
-      if (link != null) throw link;
+      if (link != null) {
+        // Presence only: which of the two Firebase left out decides the flow.
+        logInfo(
+          _tag,
+          'Account exists: email=${link.email != null} '
+          'credential=${link.credential != null}',
+        );
+        throw link;
+      }
 
       // Let provider map this to a user-friendly message.
       throw Exception(e.code);
@@ -70,76 +84,118 @@ class FacebookSignInService {
     }
   }
 
-  /// The backend's wording when the email already belongs to an account that
-  /// Facebook may not open; it arrives in English whatever the app language is.
-  static bool isExistingAccountRefusal(String message) =>
-      message.contains('login with your existing method');
-
   /// Web only: mobile has no linking flow yet.
   @visibleForTesting
   static FacebookLinkRequired? linkRequest(
     FirebaseAuthException error, {
     required bool isWeb,
   }) {
-    final email = error.email;
-    final credential = error.credential;
-    if (!isWeb ||
-        error.code != 'account-exists-with-different-credential' ||
-        email == null ||
-        credential == null) {
+    if (!isWeb || error.code != 'account-exists-with-different-credential') {
       return null;
     }
-    return FacebookLinkRequired(email, credential);
+    return FacebookLinkRequired(error.email, error.credential);
   }
 
-  /// Proves ownership with Google, adds Facebook to that account and returns a
-  /// Facebook Firebase ID token. Returns null if the popup was closed. Must be
-  /// called straight from a tap, or the browser blocks the popup.
+  /// Proves ownership with Google, then adds Facebook to that account and
+  /// returns a Facebook Firebase ID token. Returns null if the popup was closed.
+  /// Without the pending credential it throws [FacebookConfirmRequired] and
+  /// keeps the owner signed in to Firebase for [attachFacebook]. Must be called
+  /// straight from a tap, or the browser blocks the popup.
   Future<String?> linkWithGoogle(FacebookLinkRequired request) async {
+    final email = request.email;
     final google = GoogleAuthProvider()
       ..setCustomParameters({
-        'login_hint': request.email,
+        if (email != null) 'login_hint': email,
         'prompt': 'select_account',
       });
 
+    var awaitingFacebook = false;
     try {
       final owner = (await _auth.signInWithPopup(google)).user;
       if (owner == null) return null;
-      if (owner.email?.toLowerCase() != request.email.toLowerCase()) {
+      if (email != null && owner.email?.toLowerCase() != email.toLowerCase()) {
         throw Exception(emailMismatchCode);
       }
 
+      final credential = request.credential;
+      if (credential == null) {
+        awaitingFacebook = true;
+        throw const FacebookConfirmRequired();
+      }
       try {
-        await owner.linkWithCredential(request.credential);
+        await owner.linkWithCredential(credential);
       } on FirebaseAuthException catch (e) {
         if (e.code != 'provider-already-linked') rethrow;
       }
-
-      // The backend accepts only a token whose sign-in method is Facebook.
-      final linked = await _auth.signInWithCredential(request.credential);
-      return await linked.user?.getIdToken(true);
+      return await _facebookIdToken(credential);
     } on FirebaseAuthException catch (e) {
-      logError(_tag, 'Facebook linking Firebase error: ${e.code}');
-      if (e.code == 'popup-closed-by-user' ||
-          e.code == 'cancelled-popup-request') {
-        return null;
-      }
-      throw Exception(e.code);
+      return _linkingFailed(e);
+    } finally {
+      if (!awaitingFacebook) await _auth.signOut();
+    }
+  }
+
+  /// The second step after [FacebookConfirmRequired]: a Facebook popup that adds
+  /// Facebook to the proven account. Must be called straight from a tap.
+  Future<String?> attachFacebook() async {
+    try {
+      final owner = _auth.currentUser;
+      if (owner == null) return null;
+      final linked = await owner.linkWithPopup(_facebookProvider());
+      final credential = linked.credential;
+      if (credential == null) throw Exception(linkedRetryCode);
+      return await _facebookIdToken(credential);
+    } on FirebaseAuthException catch (e) {
+      return _linkingFailed(e);
     } finally {
       await _auth.signOut();
     }
   }
 
+  /// The learner gave up between the two steps.
+  Future<void> cancelLink() => _auth.signOut();
+
+  /// The backend accepts only a token whose sign-in method is Facebook.
+  Future<String?> _facebookIdToken(AuthCredential credential) async {
+    final signedIn = await _auth.signInWithCredential(credential);
+    return await signedIn.user?.getIdToken(true);
+  }
+
+  String? _linkingFailed(FirebaseAuthException e) {
+    logError(_tag, 'Facebook linking Firebase error: ${e.code}');
+    if (_isDismissedPopup(e.code)) return null;
+    throw Exception(e.code);
+  }
+
+  static bool _isDismissedPopup(String code) =>
+      code == 'popup-closed-by-user' ||
+      code == 'cancelled-popup-request' ||
+      code == 'user-cancelled';
+
+  static FacebookAuthProvider _facebookProvider() => FacebookAuthProvider()
+    ..addScope('email')
+    ..addScope('public_profile');
+
+  /// The email a Firebase ID token names, or null if it cannot be read.
+  static String? emailOf(String idToken) {
+    try {
+      final payload = jsonDecode(
+        utf8.decode(
+          base64Url.decode(base64Url.normalize(idToken.split('.')[1])),
+        ),
+      );
+      return (payload as Map)['email'] as String?;
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Web: use Firebase Auth signInWithPopup
   Future<String?> _signInWeb() async {
-    final provider = FacebookAuthProvider()
-      ..addScope('email')
-      ..addScope('public_profile');
-
-    await FirebaseAuth.instance.signInWithPopup(provider);
+    await _auth.signInWithPopup(_facebookProvider());
 
     // With Firebase Auth, get the Firebase ID Token to send to our backend
-    final user = FirebaseAuth.instance.currentUser;
+    final user = _auth.currentUser;
     if (user == null) {
       logError(_tag, 'Failed to get Firebase User after popup');
       return null;
@@ -152,7 +208,7 @@ class FacebookSignInService {
     }
 
     // Sign out from Firebase immediately since the app manages its own session to the backend
-    await FirebaseAuth.instance.signOut();
+    await _auth.signOut();
 
     logInfo(_tag, 'Facebook Sign In successful (web)');
     return idToken;

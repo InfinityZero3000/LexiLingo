@@ -620,6 +620,7 @@ class _LoginPageState extends State<LoginPage> {
                       ],
                     ),
 
+                    FacebookMergeHint(auth: authProvider),
                     if (authProvider.errorMessage != null) ...[
                       const SizedBox(height: AppSpacing.md),
                       Container(

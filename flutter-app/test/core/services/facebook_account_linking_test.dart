@@ -25,14 +25,24 @@ class _User extends Fake implements User {
   }
 
   @override
+  Future<UserCredential> linkWithPopup(AuthProvider provider) async {
+    log.add('link popup ${provider.providerId} to $email');
+    if (linkError != null) throw FirebaseAuthException(code: linkError!);
+    return _Credential(this, credential: _facebook);
+  }
+
+  @override
   Future<String?> getIdToken([bool forceRefresh = false]) async => token;
 }
 
 class _Credential extends Fake implements UserCredential {
-  _Credential(this.user);
+  _Credential(this.user, {this.credential});
 
   @override
   final User? user;
+
+  @override
+  final AuthCredential? credential;
 }
 
 class _Auth extends Fake implements FirebaseAuth {
@@ -42,12 +52,18 @@ class _Auth extends Fake implements FirebaseAuth {
   final String? linkError;
   final String? popupError;
   final log = <String>[];
+  User? _signedIn;
+
+  @override
+  User? get currentUser => _signedIn;
 
   @override
   Future<UserCredential> signInWithPopup(AuthProvider provider) async {
     log.add('popup ${provider.providerId}');
     if (popupError != null) throw FirebaseAuthException(code: popupError!);
-    return _Credential(_User(log, googleEmail, linkError: linkError));
+    return _Credential(
+      _signedIn = _User(log, googleEmail, linkError: linkError),
+    );
   }
 
   @override
@@ -63,21 +79,6 @@ class _Auth extends Fake implements FirebaseAuth {
 const _request = FacebookLinkRequired('owner@example.com', _facebook);
 
 void main() {
-  test('recognises the backend refusal for an existing account', () {
-    expect(
-      FacebookSignInService.isExistingAccountRefusal(
-        'Email already registered. Please login with your existing method.',
-      ),
-      isTrue,
-    );
-    expect(
-      FacebookSignInService.isExistingAccountRefusal(
-        'User account is inactive',
-      ),
-      isFalse,
-    );
-  });
-
   group('linkRequest', () {
     FirebaseAuthException error({
       String code = 'account-exists-with-different-credential',
@@ -93,17 +94,28 @@ void main() {
       expect(request?.credential, _facebook);
     });
 
-    test('offers nothing it cannot finish', () {
-      for (final candidate in [
-        error(code: 'network-request-failed'),
-        error(email: null),
-        error(credential: null),
-      ]) {
-        expect(
-          FacebookSignInService.linkRequest(candidate, isWeb: true),
-          isNull,
-        );
-      }
+    // Firebase does not promise either field; without them the owner can still
+    // merge in two steps, so the offer must not depend on them.
+    test(
+      'offers to merge even when Firebase omits the email or credential',
+      () {
+        for (final candidate in [error(email: null), error(credential: null)]) {
+          expect(
+            FacebookSignInService.linkRequest(candidate, isWeb: true),
+            isNotNull,
+          );
+        }
+      },
+    );
+
+    test('offers nothing for other errors or off the web', () {
+      expect(
+        FacebookSignInService.linkRequest(
+          error(code: 'network-request-failed'),
+          isWeb: true,
+        ),
+        isNull,
+      );
       expect(FacebookSignInService.linkRequest(error(), isWeb: false), isNull);
     });
   });
@@ -176,6 +188,61 @@ void main() {
         throwsException,
       );
       expect(auth.log, isNot(contains('sign in facebook.com')));
+      expect(auth.log.last, 'sign out');
+    });
+  });
+
+  group('merging when Firebase gave no credential', () {
+    const bare = FacebookLinkRequired(null, null);
+
+    test('keeps the owner signed in until Facebook is added by a second tap, '
+        'then signs in with Facebook', () async {
+      final auth = _Auth(googleEmail: 'owner@example.com');
+      final service = FacebookSignInService(auth: auth);
+
+      await expectLater(
+        service.linkWithGoogle(bare),
+        throwsA(isA<FacebookConfirmRequired>()),
+      );
+      expect(auth.log, ['popup google.com']);
+
+      expect(await service.attachFacebook(), 'facebook-id-token');
+      expect(auth.log, [
+        'popup google.com',
+        'link popup facebook.com to owner@example.com',
+        'sign in facebook.com',
+        'sign out',
+      ]);
+    });
+
+    test('a Facebook account already used elsewhere signs nobody in', () async {
+      final auth = _Auth(
+        googleEmail: 'owner@example.com',
+        linkError: 'credential-already-in-use',
+      );
+      final service = FacebookSignInService(auth: auth);
+      await expectLater(
+        service.linkWithGoogle(bare),
+        throwsA(isA<FacebookConfirmRequired>()),
+      );
+
+      await expectLater(
+        service.attachFacebook(),
+        throwsA(predicate((e) => '$e'.contains('credential-already-in-use'))),
+      );
+      expect(auth.log.last, 'sign out');
+    });
+
+    test('giving up before the second step leaves nobody signed in', () async {
+      final auth = _Auth(googleEmail: 'owner@example.com');
+      final service = FacebookSignInService(auth: auth);
+      await expectLater(
+        service.linkWithGoogle(bare),
+        throwsA(isA<FacebookConfirmRequired>()),
+      );
+
+      await service.cancelLink();
+
       expect(auth.log.last, 'sign out');
     });
   });

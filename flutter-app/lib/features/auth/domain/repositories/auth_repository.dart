@@ -27,6 +27,10 @@ abstract class AuthRepository {
   /// Login with Facebook OAuth (via Firebase)
   Future<Either<Failure, UserEntity>> loginWithFacebook(String firebaseIdToken);
 
+  /// Merges the Facebook sign-in behind [firebaseIdToken] into the signed-in
+  /// account.
+  Future<Either<Failure, void>> linkFacebook(String firebaseIdToken);
+
   /// Logout current user
   Future<Either<Failure, void>> logout();
 
