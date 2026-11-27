@@ -443,6 +443,10 @@ class _LessonNode extends StatefulWidget {
   State<_LessonNode> createState() => _LessonNodeState();
 }
 
+/// The ping draws the eye to the current lesson a few times, then rests: an
+/// endless one repainted the whole roadmap for as long as it stayed open.
+const int _kPingCycles = 3;
+
 class _LessonNodeState extends State<_LessonNode>
     with SingleTickerProviderStateMixin {
   // Single forward-looping controller drives both the flat "radar ping"
@@ -456,7 +460,17 @@ class _LessonNodeState extends State<_LessonNode>
       duration: const Duration(milliseconds: 1600),
       vsync: this,
     );
-    if (widget.layout.lesson.isCurrent) _pulse.repeat();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!widget.layout.lesson.isCurrent ||
+        MediaQuery.disableAnimationsOf(context)) {
+      _pulse.stop();
+    } else if (_pulse.value == 0 && !_pulse.isAnimating) {
+      _pulse.repeat(count: _kPingCycles);
+    }
   }
 
   @override

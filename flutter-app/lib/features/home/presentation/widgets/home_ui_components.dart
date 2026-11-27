@@ -195,6 +195,8 @@ class _AvatarRing extends StatefulWidget {
   State<_AvatarRing> createState() => _AvatarRingState();
 }
 
+/// One turn when the header first appears, then still: an endless sweep kept
+/// the whole Home page repainting while nothing was happening.
 class _AvatarRingState extends State<_AvatarRing>
     with SingleTickerProviderStateMixin {
   late final AnimationController _spin = AnimationController(
@@ -207,8 +209,8 @@ class _AvatarRingState extends State<_AvatarRing>
     super.didChangeDependencies();
     if (MediaQuery.disableAnimationsOf(context)) {
       _spin.stop();
-    } else if (!_spin.isAnimating) {
-      _spin.repeat();
+    } else if (_spin.value == 0 && !_spin.isAnimating) {
+      _spin.forward();
     }
   }
 

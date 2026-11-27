@@ -35,11 +35,21 @@ class _EmptyNotificationWidgetState extends State<EmptyNotificationWidget>
     _pulseController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
-    )..repeat(reverse: true);
+    );
 
-    _pulseAnimation = Tween<double>(begin: 0.9, end: 1.1).animate(
+    _pulseAnimation = Tween<double>(begin: 0.9, end: 1.0).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _pulseController.value = 1;
+    } else if (_pulseController.value == 0 && !_pulseController.isAnimating) {
+      _pulseController.forward();
+    }
   }
 
   @override
