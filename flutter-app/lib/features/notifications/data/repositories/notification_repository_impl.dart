@@ -76,7 +76,9 @@ class NotificationRepositoryImpl implements NotificationRepository {
   Future<void> markAsRead(String notificationId) async {
     await _localDataSource.markAsRead(notificationId);
     try {
-      await _remoteDataSource?.markAsRead(notificationId);
+      if (_isServerId(notificationId)) {
+        await _remoteDataSource?.markAsRead(notificationId);
+      }
     } catch (e) {
       debugPrint('Remote mark notification read failed: $e');
     }
@@ -98,7 +100,9 @@ class NotificationRepositoryImpl implements NotificationRepository {
   Future<void> deleteNotification(String notificationId) async {
     await _localDataSource.deleteNotification(notificationId);
     try {
-      await _remoteDataSource?.deleteNotification(notificationId);
+      if (_isServerId(notificationId)) {
+        await _remoteDataSource?.deleteNotification(notificationId);
+      }
     } catch (e) {
       debugPrint('Remote delete notification failed: $e');
     }
@@ -175,4 +179,13 @@ class NotificationRepositoryImpl implements NotificationRepository {
     _notificationsController.close();
     _unreadCountController.close();
   }
+
+  /// Server notifications have UUID ids; local ones (such as the review
+  /// reminder) exist only on this device and the server would answer 422.
+  static final _serverId = RegExp(
+    r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+    caseSensitive: false,
+  );
+
+  static bool _isServerId(String id) => _serverId.hasMatch(id);
 }
