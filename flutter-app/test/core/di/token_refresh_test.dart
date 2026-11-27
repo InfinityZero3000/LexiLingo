@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:lexilingo_app/core/di/core_di.dart';
+import 'package:lexilingo_app/core/network/backend_auth_header_provider.dart';
 import 'package:lexilingo_app/core/services/session_expired_service.dart';
 import 'package:lexilingo_app/features/auth/data/datasources/token_storage.dart';
 import 'package:lexilingo_app/features/auth/data/models/auth_models.dart';
@@ -289,6 +290,36 @@ void main() {
       },
     );
 
+    test(
+      'every request path refuses the other account, not just refresh',
+      () async {
+        final tabStorage = TokenStorage();
+        await tabStorage.saveTokens(mine);
+        final theirs = AuthTokens(
+          accessToken: jwt('u2', const Duration(minutes: 30), 'other'),
+          refreshToken: 'other-refresh',
+        );
+        // Another tab signs in as someone else; a storage reload shows it here.
+        await TokenStorage().saveTokens(theirs);
+
+        expect(await tabStorage.getAccessToken(), isNull);
+        expect(await tabStorage.getTokens(), isNull);
+        expect(
+          await BackendAuthHeaderProvider(tokenStorage: tabStorage)(),
+          isEmpty,
+        );
+
+        // Signing this tab out leaves them signed in, and it stays refused.
+        await tabStorage.clearTokens();
+        expect(await TokenStorage().getAccessToken(), theirs.accessToken);
+        expect(await tabStorage.getAccessToken(), isNull);
+
+        // Signing in here again binds the tab to the new account.
+        await tabStorage.saveTokens(theirs);
+        expect(await tabStorage.getAccessToken(), theirs.accessToken);
+      },
+    );
+
     test('a rejection that lost the race keeps the newer tokens', () async {
       tab.stored = mine;
       final racing = MockClient((_) async {
@@ -309,7 +340,9 @@ void main() {
 
 /// A tab: [cache] is what it reads, [stored] is the shared localStorage.
 class _TabStorage extends Fake implements TokenStorage {
-  _TabStorage(this.cache) : stored = cache;
+  _TabStorage(this.cache) : stored = cache, _own = cache;
+
+  final AuthTokens _own;
 
   AuthTokens cache;
   AuthTokens stored;
@@ -319,7 +352,11 @@ class _TabStorage extends Fake implements TokenStorage {
   Future<void> reload() async => cache = stored;
 
   @override
-  Future<AuthTokens?> getTokens() async => cleared ? null : cache;
+  Future<AuthTokens?> getTokens() async =>
+      cleared ||
+          tokenSubject(cache.accessToken) != tokenSubject(_own.accessToken)
+      ? null
+      : cache;
 
   @override
   Future<void> updateTokens({
@@ -333,5 +370,10 @@ class _TabStorage extends Fake implements TokenStorage {
   }
 
   @override
-  Future<void> clearTokens() async => cleared = true;
+  Future<void> clearTokens() async {
+    // As in TokenStorage: never delete another account's tokens.
+    if (tokenSubject(stored.accessToken) == tokenSubject(_own.accessToken)) {
+      cleared = true;
+    }
+  }
 }

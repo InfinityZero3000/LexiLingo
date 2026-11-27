@@ -328,6 +328,8 @@ async def calculate_challenge_progress(
                 select(func.count(LessonCompletion.id)).where(
                     and_(
                         LessonCompletion.user_id == user_id,
+                        # A failed attempt leaves a row too.
+                        LessonCompletion.is_passed.is_(True),
                         LessonCompletion.completed_at >= today_start,
                         LessonCompletion.completed_at < today_end,
                     )

@@ -24,6 +24,7 @@ export type MonitoringDashboard = {
     memory_percent?: number;
     num_threads?: number;
   };
+  trace_cag?: { status: string; backend: string };
 };
 
 export const getMonitoringDashboard = async () => {

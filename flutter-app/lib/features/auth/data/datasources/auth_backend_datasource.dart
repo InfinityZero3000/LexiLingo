@@ -129,7 +129,6 @@ class AuthBackendDataSource {
       // Even if logout fails, clear local tokens
     } finally {
       await tokenStorage.clearTokens();
-      await UserScopeService.clearActiveUserId();
     }
   }
 

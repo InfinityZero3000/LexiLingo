@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/navigation/reload_on_return.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/core/network/course_network_image.dart';
 import 'package:lexilingo_app/core/widgets/content_width.dart';
@@ -35,7 +36,12 @@ class CourseDetailScreen extends StatefulWidget {
   State<CourseDetailScreen> createState() => _CourseDetailScreenState();
 }
 
-class _CourseDetailScreenState extends State<CourseDetailScreen> {
+class _CourseDetailScreenState extends State<CourseDetailScreen>
+    with ReloadOnReturn {
+  @override
+  void reload() =>
+      context.read<CourseProvider>().loadCourseDetail(widget.courseId);
+
   @override
   void initState() {
     super.initState();
@@ -407,8 +413,6 @@ Future<void> _openLesson(
           LearningSessionScreen(lessonId: lessonId, courseId: courseId),
     ),
   );
-  if (!context.mounted) return;
-  context.read<CourseProvider>().loadCourseDetail(courseId);
 }
 
 class _DetailError extends StatelessWidget {

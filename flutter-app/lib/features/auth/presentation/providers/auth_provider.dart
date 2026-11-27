@@ -75,10 +75,11 @@ class AuthProvider extends ChangeNotifier {
   }
 
   void _onSessionExpired() {
+    final ended = _user?.id;
     _user = null;
     _errorMessage = null;
     _isJustLoggedIn = false;
-    UserScopeService.clearActiveUserId();
+    UserScopeService.clearActiveUserId(expected: ended);
     notifyListeners();
   }
 

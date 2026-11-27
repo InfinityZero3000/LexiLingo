@@ -239,6 +239,7 @@ class _DuplexVoicePanelState extends State<DuplexVoicePanel>
     return Semantics(
       button: _orbTappable,
       label: _orbLabel,
+      onTap: _orbTappable ? widget.onOrbTap : null,
       excludeSemantics: true,
       child: SizedBox(
         width: 96,

@@ -1123,7 +1123,10 @@ async def complete_lesson(
     xp_to_award = 0
     if attempt.passed and xp_earned_first_time > 0:
         xp_to_award = attempt.xp_earned or lesson.xp_reward or 0
-        
+    # Until now this was the running per-answer tally. A failed or repeated
+    # lesson pays nothing, so the result screen must not show that tally.
+    attempt.xp_earned = xp_to_award
+
     # Recalculate and update course progress percentage
     new_progress = await ProgressCRUD.calculate_course_progress(
         db, str(current_user.id), str(lesson.course_id)
@@ -1227,6 +1230,11 @@ async def complete_lesson(
             )
     except Exception as e:
         logger.warning("Proficiency update error: %s", e)
+        # A failed statement aborts the transaction: without this every query
+        # below fails too and the finished lesson is answered with a 500.
+        await db.rollback()
+        for instance in (current_user, attempt, lesson):
+            await db.refresh(instance)
 
     await delete_cached(build_cache_key("progress_me", user_id=str(current_user.id)))
     await delete_cached(build_cache_key("progress_xp", user_id=str(current_user.id)))

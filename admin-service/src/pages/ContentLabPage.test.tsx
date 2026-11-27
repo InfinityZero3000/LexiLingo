@@ -135,7 +135,7 @@ describe("question form", () => {
     fireEvent.change(screen.getByLabelText("Answer"), { target: { value: "went" } });
     fireEvent.click(screen.getByRole("button", { name: "Tạo" }));
     await waitFor(() => expect(api.createQuestion).toHaveBeenCalled());
-    expect(api.createQuestion.mock.calls[0][0]).toMatchObject({ question_type: "fill_blank", answer: "went", options: undefined });
+    expect(api.createQuestion.mock.calls[0][0]).toMatchObject({ question_type: "fill_blank", answer: "went", options: null });
   });
 });
 
@@ -223,5 +223,18 @@ describe("test exam picker", () => {
     expect(screen.getByText("Selected (1)")).toBeTruthy();
     const selected = screen.getByRole("list");
     expect(within(selected).getByText("Pick the noun")).toBeTruthy();
+  });
+});
+
+describe("clearing optional fields", () => {
+  it("sends null for a cleared exam description", async () => {
+    api.listTestExams.mockResolvedValue({ data: [exam({ description: "Old text" })] });
+    mount();
+    await openTab("Test Exams");
+    fireEvent.click(within(await rowOf("Placement")).getByRole("button", { name: "Sửa" }));
+    fireEvent.change(screen.getByDisplayValue("Old text"), { target: { value: "" } });
+    fireEvent.submit(screen.getByDisplayValue("Placement").closest("form") as HTMLFormElement);
+    await waitFor(() => expect(api.updateTestExam).toHaveBeenCalled());
+    expect(api.updateTestExam.mock.calls[0][1]).toMatchObject({ description: null });
   });
 });

@@ -9,6 +9,7 @@ Run this script after seeding roles and permissions.
 """
 
 import asyncio
+import secrets
 import sys
 from pathlib import Path
 
@@ -60,7 +61,8 @@ async def setup_admin_oauth():
         ]
 
         import bcrypt
-        oauth_password_hash = bcrypt.hashpw(b"OAUTH_USER_NO_PASSWORD", bcrypt.gensalt(12)).decode()
+        # Password sign-in does not look at the provider, so this must be unknowable.
+        oauth_password_hash = bcrypt.hashpw(secrets.token_urlsafe(32).encode(), bcrypt.gensalt(12)).decode()
 
         for user_data in admin_users:
             email = user_data["email"]

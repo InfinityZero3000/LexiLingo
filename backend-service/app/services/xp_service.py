@@ -194,7 +194,8 @@ async def award_xp_transaction(
             multiplier=multiplier,
             new_total_xp=old_xp,
             daily_xp_today=daily_xp_today,
-            daily_cap_remaining=0,
+            # Nothing earned is not the same as nothing left to earn.
+            daily_cap_remaining=cap_remaining,
             leveled_up=False,
             old_level=old_level,
             new_level=old_level,
@@ -202,7 +203,11 @@ async def award_xp_transaction(
             level_progress_percent=progress.level_progress_percent,
             xp_for_next_level=progress.xp_for_next_level,
             streak_days=streak_days,
-            message="Daily XP cap (500) reached. Come back tomorrow!",
+            message=(
+                "No XP earned this time."
+                if cap_remaining
+                else "Daily XP cap (500) reached. Come back tomorrow!"
+            ),
         )
 
     new_xp = old_xp + xp_awarded

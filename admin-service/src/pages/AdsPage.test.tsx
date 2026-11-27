@@ -138,4 +138,18 @@ describe("AdsPage", () => {
     expect(screen.getByRole("alert").textContent).toContain("hero");
     expect(within(screen.getByLabelText("Position")).getAllByRole("option").map((o) => o.textContent)).toEqual(["hero", "sidebar"]);
   });
+
+  it("sends null for cleared optional fields so an edit really clears them", async () => {
+    api.listBanners.mockResolvedValue({ data: [banner({ link_url: "https://x.test/go", target_min_level: "A2", end_at: "2027-01-01T00:00:00Z" })] });
+    api.updateBanner.mockResolvedValue({});
+    mount();
+    fireEvent.click(within(await rowOf("Spring sale")).getByRole("button", { name: "Edit" }));
+    fireEvent.change(screen.getByDisplayValue("All courses"), { target: { value: "" } });
+    fireEvent.change(screen.getByDisplayValue("https://x.test/go"), { target: { value: "" } });
+    fireEvent.change(screen.getByDisplayValue("A2"), { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText("End Date"), { target: { value: "" } });
+    fireEvent.submit(screen.getByDisplayValue("Spring sale").closest("form") as HTMLFormElement);
+    await waitFor(() => expect(api.updateBanner).toHaveBeenCalled());
+    expect(api.updateBanner.mock.calls[0][1]).toMatchObject({ description: null, link_url: null, target_min_level: null, end_at: null });
+  });
 });

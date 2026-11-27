@@ -6,7 +6,7 @@ Supports filtering, pagination, and user-specific data (enrollment, progress).
 """
 
 from typing import List, Optional
-from sqlalchemy import String, case, cast, select, func, and_
+from sqlalchemy import String, case, cast, select, func, and_, delete
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 import uuid
@@ -151,14 +151,11 @@ class CourseCRUD:
 
     @staticmethod
     async def delete_course(db: AsyncSession, course_id: uuid.UUID) -> bool:
-        """Delete a course (soft delete by unpublishing)."""
-        db_course = await CourseCRUD.get_course(db, course_id)
-        if not db_course:
-            return False
-        
-        db_course.is_published = False
+        """Remove the course and, by cascade, its units and lessons."""
+        # A core delete: the ORM cascade would lazy-load children, which async sessions refuse.
+        result = await db.execute(delete(Course).where(Course.id == course_id))
         await db.commit()
-        return True
+        return result.rowcount > 0
     
     @staticmethod
     async def is_user_enrolled(
@@ -179,24 +176,23 @@ class CourseCRUD:
         return result.scalar_one_or_none() is not None
 
     @staticmethod
-    async def get_enrolled_course_ids(
+    async def get_progress_by_course(
         db: AsyncSession,
         user_id: uuid.UUID,
-        course_ids: List[uuid.UUID]
-    ) -> set[uuid.UUID]:
-        """Batch check enrollment — returns set of enrolled course IDs."""
+        course_ids: List[uuid.UUID],
+    ) -> dict[uuid.UUID, float]:
+        """Progress per enrolled course; a course that is absent is not enrolled."""
         if not course_ids:
-            return set()
-        result = await db.execute(
-            select(UserCourseProgress.course_id)
-            .where(
-                and_(
-                    UserCourseProgress.user_id == user_id,
-                    UserCourseProgress.course_id.in_(course_ids)
-                )
+            return {}
+        rows = await db.execute(
+            select(
+                UserCourseProgress.course_id, UserCourseProgress.progress_percentage
+            ).where(
+                UserCourseProgress.user_id == user_id,
+                UserCourseProgress.course_id.in_(course_ids),
             )
         )
-        return set(result.scalars().all())
+        return {course_id: progress or 0.0 for course_id, progress in rows.all()}
 
 
 # =====================

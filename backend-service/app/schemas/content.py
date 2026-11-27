@@ -5,7 +5,10 @@ Schemas for Grammar, Question Bank, and Test Exams.
 import json
 from datetime import datetime
 from typing import Any
-from pydantic import BaseModel, ConfigDict, Field, UUID4, field_validator
+from uuid import UUID
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from app.schemas.validators import cefr_field, not_null
 
 
 def _coerce_json_list(value: Any) -> list[Any] | None:
@@ -80,10 +83,13 @@ class GrammarBase(BaseModel):
 
 
 class GrammarCreate(GrammarBase):
-    pass
+    _level = cefr_field("level")
 
 
 class GrammarUpdate(BaseModel):
+    _required = not_null("title", "level", "content", "is_active")
+    _level = cefr_field("level")
+
     title: str | None = None
     level: str | None = None
     topic: str | None = None
@@ -95,7 +101,7 @@ class GrammarUpdate(BaseModel):
 
 
 class GrammarResponse(GrammarBase):
-    id: UUID4
+    id: UUID
     created_at: datetime
     updated_at: datetime
 
@@ -112,7 +118,7 @@ class QuestionBase(BaseModel):
     explanation: str | None = None
     difficulty_level: str = "A1"
     tags: list[str] | None = None
-    grammar_id: UUID4 | None = None
+    grammar_id: UUID | None = None
     is_active: bool = True
 
     @field_validator("options", mode="before")
@@ -127,10 +133,13 @@ class QuestionBase(BaseModel):
 
 
 class QuestionCreate(QuestionBase):
-    pass
+    _level = cefr_field("difficulty_level")
 
 
 class QuestionUpdate(BaseModel):
+    _required = not_null("prompt", "question_type", "difficulty_level", "is_active")
+    _level = cefr_field("difficulty_level")
+
     prompt: str | None = None
     question_type: str | None = None
     options: list[Any] | None = None
@@ -138,12 +147,12 @@ class QuestionUpdate(BaseModel):
     explanation: str | None = None
     difficulty_level: str | None = None
     tags: list[str] | None = None
-    grammar_id: UUID4 | None = None
+    grammar_id: UUID | None = None
     is_active: bool | None = None
 
 
 class QuestionResponse(QuestionBase):
-    id: UUID4
+    id: UUID
     created_at: datetime
     updated_at: datetime
 
@@ -158,7 +167,7 @@ class TestExamBase(BaseModel):
     level: str = "A1"
     duration_minutes: int = 20
     passing_score: int = 70
-    question_ids: list[UUID4] | None = None
+    question_ids: list[UUID] | None = None
     is_published: bool = False
 
     @field_validator("question_ids", mode="before")
@@ -168,21 +177,27 @@ class TestExamBase(BaseModel):
 
 
 class TestExamCreate(TestExamBase):
-    pass
+    duration_minutes: int = Field(20, ge=1)
+    passing_score: int = Field(70, ge=0, le=100)
+
+    _level = cefr_field("level")
 
 
 class TestExamUpdate(BaseModel):
+    _required = not_null("title", "level", "duration_minutes", "passing_score", "is_published")
+    _level = cefr_field("level")
+
     title: str | None = None
     description: str | None = None
     level: str | None = None
-    duration_minutes: int | None = None
-    passing_score: int | None = None
-    question_ids: list[UUID4] | None = None
+    duration_minutes: int | None = Field(None, ge=1)
+    passing_score: int | None = Field(None, ge=0, le=100)
+    question_ids: list[UUID] | None = None
     is_published: bool | None = None
 
 
 class TestExamResponse(TestExamBase):
-    id: UUID4
+    id: UUID
     created_at: datetime
     updated_at: datetime
 

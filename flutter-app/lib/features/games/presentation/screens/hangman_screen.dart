@@ -272,7 +272,7 @@ class _HangmanScreenState extends State<HangmanScreen>
             totalQuestions: 1,
             correctAnswers: correctAnswers,
             xpEarned: xpResult?.xpAwarded ?? 0,
-            durationSeconds: 0,
+            durationSeconds: provider.lastGameResult?.durationSeconds ?? 0,
             xpResult: xpResult,
           ),
           xpResult: xpResult,

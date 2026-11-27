@@ -207,6 +207,12 @@ class _QuizWidgetState extends State<QuizWidget>
                 enabled: !widget.isAnswered,
                 selected: isSelected,
                 label: option,
+                onTap: widget.isAnswered
+                    ? null
+                    : () {
+                        setState(() => _selectedAnswer = option);
+                        widget.onAnswer(option);
+                      },
                 excludeSemantics: true,
                 child: InkWell(
                   onTap: widget.isAnswered

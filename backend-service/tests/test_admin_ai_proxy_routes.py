@@ -11,7 +11,7 @@ import httpx
 import pytest
 from fastapi.routing import APIRoute
 
-from app.core.dependencies import get_current_admin, get_current_super_admin
+from app.core.dependencies import get_current_admin
 from app.routes import admin_ai_proxy
 
 router = admin_ai_proxy.router
@@ -37,13 +37,8 @@ def test_topics_routes_require_admin():
         )
 
 
-def test_config_routes_require_super_admin():
-    config_routes = [r for r in router.routes if isinstance(r, APIRoute) and r.path.endswith("/config")]
-    assert config_routes, "No /config routes found — router might not be wired"
-    for route in config_routes:
-        assert get_current_super_admin in _dependency_calls(route), (
-            f"{route.path} is missing get_current_super_admin dependency"
-        )
+def test_there_is_no_config_proxy_for_settings_nothing_reads():
+    assert [r.path for r in router.routes if isinstance(r, APIRoute) and r.path.endswith("/config")] == []
 
 
 @pytest.mark.asyncio
@@ -75,7 +70,7 @@ async def test_forward_fails_closed_when_key_not_configured(monkeypatch):
     monkeypatch.delenv("AI_ADMIN_API_KEY", raising=False)
 
     with pytest.raises(Exception) as exc_info:
-        await admin_ai_proxy._forward("GET", "/config")
+        await admin_ai_proxy._forward("GET", "/topics")
 
     assert getattr(exc_info.value, "status_code", None) == 503
 
@@ -152,3 +147,23 @@ def test_monitoring_routes_need_the_ops_permission():
     assert len(routes) == 4
     for route in routes:
         assert get_current_admin in _dependency_calls(route)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("body", "detail"),
+    [
+        ('{"detail": "AI is busy, try again"}', "AI is busy, try again"),
+        ('{"detail": [{"loc": ["body", "title_en"], "msg": "Field required"}]}', "title_en: Field required"),
+        ("upstream exploded", "upstream exploded"),
+    ],
+)
+async def test_forward_shows_the_admin_the_message_not_the_raw_json(monkeypatch, body, detail):
+    monkeypatch.setenv("AI_ADMIN_API_KEY", "server-secret")
+    response = httpx.Response(422, text=body)
+
+    with patch.object(httpx.AsyncClient, "request", autospec=True, return_value=response):
+        with pytest.raises(Exception) as exc_info:
+            await admin_ai_proxy._forward("POST", "/topics/draft", json={})
+
+    assert exc_info.value.detail == detail

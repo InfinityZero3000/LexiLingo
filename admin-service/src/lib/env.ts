@@ -43,9 +43,8 @@ export const ENV = {
    */
   aiAdminUrl: `${backendUrl}/admin/ai-proxy`,
 
-  /** Health endpoints differ between direct services and gateway */
+  /** The health endpoint differs between a direct backend and the gateway */
   backendHealthUrl: useGateway ? `${gatewayBase}/backend-health` : `${stripApiV1(backendUrl)}/health`,
-  aiHealthUrl: useGateway ? `${gatewayBase}/ai-health` : `${stripApiV1(aiUrl)}/health`,
 
   googleClientId:   (import.meta.env.VITE_GOOGLE_CLIENT_ID as string) || "",
   adminEmails:      splitList(import.meta.env.VITE_ADMIN_EMAILS as string | undefined),

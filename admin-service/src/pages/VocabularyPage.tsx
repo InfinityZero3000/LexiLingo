@@ -1,3 +1,5 @@
+import { BulkBar, useRowSelection } from "../components/BulkActions";
+import { describeDeletionError, fillText } from "../lib/deletion";
 import { useConfirm } from "../components/ConfirmDialog";
 import { Dialog } from "../components/Dialog";
 import React, { useEffect, useState, useRef } from "react";
@@ -110,13 +112,14 @@ export const VocabularyPage = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!(await confirm({ message: t.vocabulary.deleteWord, confirmLabel: t.common.delete, danger: true }))) return;
+  const handleDelete = async (row: VocabItem) => {
+    const message = fillText(t.deletion.one, { name: row.word });
+    if (!(await confirm({ message, confirmLabel: t.common.delete, danger: true }))) return;
     try {
-      await deleteVocabulary(id);
+      await deleteVocabulary(row.id);
       await loadItems();
-    } catch (err: any) {
-      setError(err?.message || t.common.deleteFailed);
+    } catch (err) {
+      setError(describeDeletionError(err, t));
     }
   };
 
@@ -167,12 +170,20 @@ export const VocabularyPage = () => {
       (v.definition || "").toLowerCase().includes(search.toLowerCase())
     );
   });
+  const selection = useRowSelection(filtered, (row) => row.id, (row) => row.word);
 
   return (
     <div className="stack">
       <SectionHeader title={t.vocabulary.title} description={`${items.length} ${t.vocabulary.description}`} />
 
       {error && <div className="form-error">{error}</div>}
+      <BulkBar
+        selection={selection}
+        onDone={loadItems}
+        actions={[
+          { label: t.common.delete, consequence: t.deletion.permanent, danger: true, run: (row) => deleteVocabulary(row.id) },
+        ]}
+      />
 
       {importResult && (
         <div
@@ -248,6 +259,7 @@ export const VocabularyPage = () => {
         ) : (
           <DataTable
             columns={[
+              selection.column,
               {
                 header: t.vocabulary.word,
                 sortValue: (row) => row.word,
@@ -293,7 +305,7 @@ export const VocabularyPage = () => {
                 render: (row) => (
                   <div className="table-actions">
                     <button className="ghost-button small" onClick={() => handleEdit(row)}>{t.common.edit}</button>
-                    <button className="ghost-button small danger" onClick={() => handleDelete(row.id)}>{t.common.delete}</button>
+                    <button className="ghost-button small danger" onClick={() => handleDelete(row)}>{t.common.delete}</button>
                   </div>
                 ),
                 align: "right",

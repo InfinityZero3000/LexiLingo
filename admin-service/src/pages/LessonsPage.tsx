@@ -1,3 +1,5 @@
+import { BulkBar, useRowSelection } from "../components/BulkActions";
+import { describeDeletionError, fillText } from "../lib/deletion";
 import { useConfirm } from "../components/ConfirmDialog";
 import { Dialog } from "../components/Dialog";
 import React, { useEffect, useRef, useState } from "react";
@@ -190,7 +192,7 @@ export const LessonsPage = () => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     const targetUnitId = activeUnitId || formUnitId;
-    if (!targetUnitId) return;
+    if (!editingId && !targetUnitId) return;
     setSaving(true);
     setError(null);
     try {
@@ -217,13 +219,16 @@ export const LessonsPage = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!(await confirm({ message: t.lessons.deleteLesson, confirmLabel: t.common.delete, danger: true }))) return;
+  const selection = useRowSelection(lessons, (row) => row.id, (row) => row.title);
+
+  const handleDelete = async (row: LessonItem) => {
+    const message = fillText(t.deletion.one, { name: row.title });
+    if (!(await confirm({ message, confirmLabel: t.common.delete, danger: true }))) return;
     try {
-      await deleteLesson(id);
+      await deleteLesson(row.id);
       await loadLessons();
-    } catch (err: any) {
-      setError(err?.message || t.common.deleteFailed);
+    } catch (err) {
+      setError(describeDeletionError(err, t));
     }
   };
 
@@ -288,6 +293,13 @@ export const LessonsPage = () => {
       />
 
       {error && <div className="form-error">{error}</div>}
+      <BulkBar
+        selection={selection}
+        onDone={loadLessons}
+        actions={[
+          { label: t.common.delete, consequence: t.deletion.permanent, danger: true, run: (row) => deleteLesson(row.id) },
+        ]}
+      />
 
       <div className="panel filter-panel">
         <div className="filter-bar">
@@ -382,6 +394,7 @@ export const LessonsPage = () => {
         ) : (
           <DataTable
             columns={[
+              selection.column,
               {
                 header: "#",
                 sortValue: (row: LessonItem) => row.order_index,
@@ -458,7 +471,7 @@ export const LessonsPage = () => {
                       Bài tập ({row.exercise_count})
                     </button>
                     <button className="ghost-button small" onClick={() => handleEdit(row)}>{t.common.edit}</button>
-                    <button className="ghost-button small danger" onClick={() => handleDelete(row.id)}>{t.common.delete}</button>
+                    <button className="ghost-button small danger" onClick={() => handleDelete(row)}>{t.common.delete}</button>
                   </div>
                 ),
                 align: "right",

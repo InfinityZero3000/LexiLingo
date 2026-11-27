@@ -299,7 +299,7 @@ class _FillBlankScreenState extends State<FillBlankScreen> {
             totalQuestions: game.questions.length,
             correctAnswers: _correctCount,
             xpEarned: xpResult?.xpAwarded ?? 0,
-            durationSeconds: 0,
+            durationSeconds: provider.lastGameResult?.durationSeconds ?? 0,
             xpResult: xpResult,
           ),
           xpResult: xpResult,

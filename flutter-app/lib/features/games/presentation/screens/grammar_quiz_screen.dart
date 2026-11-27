@@ -342,7 +342,7 @@ class _GrammarQuizScreenState extends State<GrammarQuizScreen> {
             totalQuestions: game.questions.length,
             correctAnswers: _correctCount,
             xpEarned: xpResult?.xpAwarded ?? 0,
-            durationSeconds: 0,
+            durationSeconds: provider.lastGameResult?.durationSeconds ?? 0,
             xpResult: xpResult,
           ),
           xpResult: xpResult,

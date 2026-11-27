@@ -59,6 +59,11 @@ class CachedTranslationLoader extends AssetLoader {
   static Future<void> warmSupported(Iterable<Locale> locales) =>
       preload(translationsPath, locales);
 
+  /// Has [locale] in memory before it becomes the app's, when the app reads its
+  /// tables through this loader (it has loaded at least the startup one).
+  static Future<void> warmBeforeSwitch(Locale locale) =>
+      _cache.isEmpty ? Future.value() : warmSupported([locale]);
+
   @visibleForTesting
   static bool isCached(String path, Locale locale) =>
       _cache.containsKey(_assetPath(path, locale));

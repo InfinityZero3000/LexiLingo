@@ -154,6 +154,8 @@ class _MatchWordMeaningWidgetState extends State<MatchWordMeaningWidget> {
       button: true,
       selected: highlighted,
       label: text,
+      // excludeSemantics also drops the child's tap action.
+      onTap: onTap,
       excludeSemantics: true,
       child: GestureDetector(
         key: key,

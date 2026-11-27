@@ -207,13 +207,13 @@ class TestAdminCourses:
         admin_headers: dict,
         db_session: AsyncSession
     ):
-        """Test deleting a course"""
+        """Test deleting a draft course"""
         course = Course(
             title="To Delete",
             description="Will be deleted",
             language="en",
             level="A1",
-            is_published=True
+            is_published=False
         )
         db_session.add(course)
         await db_session.commit()

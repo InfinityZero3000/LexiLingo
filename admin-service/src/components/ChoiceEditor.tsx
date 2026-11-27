@@ -1,3 +1,4 @@
+import { useRemoveFromForm } from "../lib/useRemoveFromForm";
 import { useI18n } from "../lib/i18n";
 import type { ChoiceProblem } from "../lib/questionForm";
 
@@ -23,6 +24,7 @@ export const ChoiceEditor = ({ label, options, onOptionsChange, correct, onCorre
     noCorrect: c.errNoCorrect
   };
 
+  const removeFromForm = useRemoveFromForm();
   const remove = (index: number) => {
     onOptionsChange(options.filter((_, i) => i !== index));
     if (!onCorrectChange || correct === null || correct === undefined) return;
@@ -69,7 +71,7 @@ export const ChoiceEditor = ({ label, options, onOptionsChange, correct, onCorre
               className="ghost-button small"
               style={{ borderRadius: 999 }}
               aria-label={c.removeOption.replace("{n}", String(index + 1))}
-              onClick={() => remove(index)}
+              onClick={() => void removeFromForm(text, () => remove(index))}
             >
               ×
             </button>

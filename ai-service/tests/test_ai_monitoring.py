@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
+from redis.exceptions import MaxConnectionsError
 
 from api.core.groq_key_pool import GroqKeyPool
 from api.routes import ai as ai_routes
@@ -361,6 +362,39 @@ async def test_key_snapshot_applies_the_admission_rule_without_key_material():
     assert snapshot[2]["rpd"] == 13_000 and snapshot[2]["rpd_limit"] == 14_400
     assert snapshot[4]["voice_rpm"] == 27
     assert SECRET not in json.dumps(snapshot)
+
+
+class _LimitedPipe(_Pipe):
+    """Holds one pooled connection while executing, as redis-py's non-blocking pool does."""
+
+    async def execute(self):
+        redis = self._redis
+        if redis.in_use >= redis.max_connections:
+            raise MaxConnectionsError("Too many connections")
+        redis.in_use += 1
+        try:
+            await asyncio.sleep(0)
+            return await super().execute()
+        finally:
+            redis.in_use -= 1
+
+
+class _LimitedRedis(_Redis):
+    def __init__(self, max_connections):
+        super().__init__()
+        self.max_connections, self.in_use = max_connections, 0
+
+    def pipeline(self, transaction=True):
+        return _LimitedPipe(self)
+
+
+@pytest.mark.asyncio
+async def test_a_large_key_pool_snapshot_does_not_exhaust_the_redis_pool():
+    # Production: 34 keys against max_connections=50 returned 503. The smallest pool
+    # redis_client allows is 10, and live chat shares it.
+    snapshot = await _pool(_LimitedRedis(max_connections=10), n=34).usage_snapshot()
+
+    assert [k["index"] for k in snapshot] == list(range(34))
 
 
 @pytest.mark.asyncio

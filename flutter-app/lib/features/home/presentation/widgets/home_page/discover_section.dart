@@ -38,6 +38,15 @@ class _DiscoverSectionState extends State<DiscoverSection> {
   late Future<DiscoverFeed> _future;
 
   @override
+  void initState() {
+    super.initState();
+    // Nothing else loads the profile before Home, and an unloaded one reads A1.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<ProficiencyProvider>().loadProfile();
+    });
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final level = Provider.of<ProficiencyProvider>(context).assessedLevel;

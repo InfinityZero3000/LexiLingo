@@ -45,20 +45,6 @@ const _refreshTokenRejectedStatuses = {400, 401, 403};
 bool _refreshTokenWasRejected(int statusCode) =>
     _refreshTokenRejectedStatuses.contains(statusCode);
 
-/// The account an access token belongs to, or null if it cannot be read.
-String? _tokenSubject(String accessToken) {
-  try {
-    final payload = jsonDecode(
-      utf8.decode(
-        base64Url.decode(base64Url.normalize(accessToken.split('.')[1])),
-      ),
-    );
-    return (payload as Map)['sub']?.toString();
-  } catch (_) {
-    return null;
-  }
-}
-
 @visibleForTesting
 void resetTokenRefreshStateForTest() {
   _tokenRefreshCompleter = null;
@@ -96,14 +82,6 @@ Future<bool> refreshBackendToken(
     }
 
     if (held != null && held.refreshToken != tokens.refreshToken) {
-      if (_tokenSubject(held.accessToken) !=
-          _tokenSubject(tokens.accessToken)) {
-        // Another tab signed into a different account: leave its tokens alone,
-        // and never retry this account's requests with them.
-        SessionExpiredService.instance.notifyExpired();
-        completer.complete(false);
-        return false;
-      }
       if (!isAccessTokenExpiring(tokens.accessToken)) {
         completer.complete(true);
         return true;
@@ -125,13 +103,9 @@ Future<bool> refreshBackendToken(
         await tokenStorage.reload();
         final latest = await tokenStorage.getTokens();
         if (latest != null && latest.refreshToken != tokens.refreshToken) {
-          // Another tab replaced the tokens while this request was in flight.
-          final sameAccount =
-              _tokenSubject(latest.accessToken) ==
-              _tokenSubject(tokens.accessToken);
-          if (!sameAccount) SessionExpiredService.instance.notifyExpired();
-          completer.complete(sameAccount);
-          return sameAccount;
+          // Another tab rotated the tokens while this request was in flight.
+          completer.complete(true);
+          return true;
         }
         // Expired, revoked or reused: the only case that ends the session.
         await tokenStorage.clearTokens();

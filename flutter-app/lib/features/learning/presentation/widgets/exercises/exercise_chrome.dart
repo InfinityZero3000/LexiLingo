@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:lexilingo_app/features/learning/domain/entities/lesson_entity.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/speak_button.dart';
 import 'package:lexilingo_app/features/learning/presentation/widgets/exercises/exercise_palette.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
@@ -376,6 +377,12 @@ class CircleAudioButton extends StatelessWidget {
   }
   return null;
 }
+
+/// The sentence a speaking exercise is graded against. The question is only the
+/// instruction around it ("Repeat: '…'"), which must not be read aloud.
+String speakingTarget(Exercise exercise) => exercise.correctAnswer.isNotEmpty
+    ? exercise.correctAnswer
+    : exercise.question;
 
 /// Extract first quoted word from text — tries single then double quotes
 String extractQuotedWord(String text) {

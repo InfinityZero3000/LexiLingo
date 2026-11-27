@@ -1,3 +1,5 @@
+import { BulkBar, useRowSelection } from "../components/BulkActions";
+import { describeDeletionError, fillText } from "../lib/deletion";
 import { useConfirm } from "../components/ConfirmDialog";
 import { Dialog } from "../components/Dialog";
 import React, { useEffect, useState } from "react";
@@ -101,7 +103,7 @@ export const UnitsPage = () => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     const targetCourseId = activeCourseId || formCourseId;
-    if (!targetCourseId) return;
+    if (!editingId && !targetCourseId) return;
     setSaving(true);
     setError(null);
     try {
@@ -121,13 +123,16 @@ export const UnitsPage = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!(await confirm({ message: t.units.deleteUnit, confirmLabel: t.common.delete, danger: true }))) return;
+  const selection = useRowSelection(units, (row) => row.id, (row) => row.title);
+
+  const handleDelete = async (row: UnitItem) => {
+    const message = `${fillText(t.deletion.one, { name: row.title })} ${t.deletion.withLessons}`;
+    if (!(await confirm({ message, confirmLabel: t.common.delete, danger: true }))) return;
     try {
-      await deleteUnit(id);
+      await deleteUnit(row.id);
       await loadUnits();
-    } catch (err: any) {
-      setError(err?.message || t.common.deleteFailed);
+    } catch (err) {
+      setError(describeDeletionError(err, t));
     }
   };
 
@@ -139,6 +144,13 @@ export const UnitsPage = () => {
       />
 
       {error && <div className="form-error">{error}</div>}
+      <BulkBar
+        selection={selection}
+        onDone={loadUnits}
+        actions={[
+          { label: t.common.delete, consequence: `${t.deletion.withLessons} ${t.deletion.permanent}`, danger: true, run: (row) => deleteUnit(row.id) },
+        ]}
+      />
 
       <div className="panel filter-panel">
         <div className="filter-bar">
@@ -179,6 +191,7 @@ export const UnitsPage = () => {
         ) : (
           <DataTable
             columns={[
+              selection.column,
               {
                 header: "#",
                 sortValue: (row: UnitItem) => row.order_index,
@@ -246,7 +259,7 @@ export const UnitsPage = () => {
                       {t.nav.lessons}
                     </button>
                     <button className="ghost-button small" onClick={() => handleEdit(row)}>{t.common.edit}</button>
-                    <button className="ghost-button small danger" onClick={() => handleDelete(row.id)}>{t.common.delete}</button>
+                    <button className="ghost-button small danger" onClick={() => handleDelete(row)}>{t.common.delete}</button>
                   </div>
                 ),
                 align: "right",

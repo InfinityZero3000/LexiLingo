@@ -51,6 +51,7 @@ from app.models.gamification import (
     UserWallet,
     LeaderboardEntry,
 )
+from scripts.seed_guard import require_sandbox
 
 
 # ─── Seed config ──────────────────────────────────────────────────────────────
@@ -553,6 +554,9 @@ async def main():
     print("=" * 56 + "\n")
 
     async with AsyncSessionLocal() as db:
+        await require_sandbox(db)
+        # A fixed seed: re-running rebuilds the same demo data.
+        random.seed(20261126)
         # ── 0. Cleanup demo users to prevent duplicates ──────────────────────
         print(" Cleaning up old demo users...")
         await cleanup_demo_users(db)

@@ -2651,7 +2651,8 @@ textarea:focus {
   }
   
   .grid-2 {
-    grid-template-columns: 1fr !important;
+    /* 1fr alone grows to the widest child (a 720px table) and clips the column. */
+    grid-template-columns: minmax(0, 1fr) !important;
   }
   
   .stack {
@@ -3624,6 +3625,23 @@ textarea:focus {
   .filter-bar button {
     width: 100%;
   }
+
+  /* In a column, the desktop flex-basis (a width) would become a height. */
+  .filter-bar > .search-input,
+  .filter-bar > .filter-search-form,
+  .filter-bar > .filter-group-grow {
+    flex: 0 0 auto;
+  }
+
+  .filter-bar .filter-search-form .filter-search-button,
+  .filter-bar .tab-row button {
+    width: auto;
+    flex: 0 0 auto;
+  }
+
+  .filter-bar .tab-row {
+    border-radius: 22px;
+  }
   
   .search-form {
     flex-direction: column;
@@ -3673,16 +3691,17 @@ textarea:focus {
     padding: 16px !important;
   }
 
-  /* Prevent long monospace values (e.g. URLs) from overflowing tables */
-  .panel table {
+  /* A table without its own .table-wrap scrolls by itself. Never break-all its cells:
+     columns then shrink to one letter wide. */
+  .panel :not(.table-wrap) > table,
+  .panel > table {
     display: block;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
 
-  .panel td,
-  .panel th {
-    word-break: break-all;
+  .kv-table td {
+    overflow-wrap: anywhere;
   }
 }
 
@@ -3733,109 +3752,6 @@ textarea:focus {
   .nav-link:active {
     background: var(--panel-soft);
   }
-}
-
-/* ========================================
-   Toggle Switch
-   Modern toggle switch for boolean settings
-   ======================================== */
-.toggle-switch {
-  position: relative;
-  display: inline-block;
-  width: 48px;
-  height: 26px;
-}
-
-.toggle-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.toggle-slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: var(--line);
-  transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border-radius: 26px;
-}
-
-.toggle-slider:before {
-  position: absolute;
-  content: "";
-  height: 20px;
-  width: 20px;
-  left: 3px;
-  bottom: 3px;
-  background-color: var(--panel);
-  transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-}
-
-.toggle-switch input:checked + .toggle-slider {
-  background-color: var(--accent);
-}
-
-.toggle-switch input:checked + .toggle-slider:before {
-  transform: translateX(22px);
-}
-
-.toggle-switch input:focus + .toggle-slider {
-  box-shadow: 0 0 0 3px rgba(255, 77, 0, 0.16);
-}
-
-.toggle-switch input:disabled + .toggle-slider {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Slider component */
-.slider {
-  -webkit-appearance: none;
-  width: 100%;
-  height: 6px;
-  border-radius: 3px;
-  background: var(--line);
-  outline: none;
-  transition: background 0.2s;
-}
-
-.slider:hover {
-  background: #ddd;
-}
-
-.slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--accent);
-  cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-}
-
-.slider::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--accent);
-  cursor: pointer;
-  border: none;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
-}
-
-.slider::-webkit-slider-thumb:hover {
-  transform: scale(1.1);
-}
-
-.slider::-moz-range-thumb:hover {
-  transform: scale(1.1);
 }
 
 /* ─── Lesson Exercises Page ───────────────────── */
@@ -4568,7 +4484,7 @@ textarea:focus {
   gap: 6px;
 }
 
-/* ─── Scattered fixes: SuperAdminDashboard / MonitoringPage / AiChatSettingsPage / TopicsPage / UserDetailModal ───── */
+/* ─── Scattered fixes: SuperAdminDashboard / MonitoringPage / TopicsPage / UserDetailModal ───── */
 
 .dashboard-config-panel h3 {
   margin: 0 0 14px;
@@ -4625,24 +4541,6 @@ textarea:focus {
   background: rgba(245, 158, 11, 0.12);
   color: #D97706;
   font-size: 12px;
-}
-
-.info-callout {
-  display: flex;
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 77, 0, 0.28);
-  background: rgba(255, 77, 0, 0.08);
-}
-
-.info-callout p {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  margin: 0;
-  color: var(--ink-orange);
-  font-size: 13px;
-  line-height: 1.5;
 }
 
 .page-header-actions {
@@ -4966,7 +4864,7 @@ textarea:focus {
 }
 
 /* ─── Monitoring ─── */
-.mon-actions { display: flex; align-items: center; gap: 10px; }
+.mon-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .mon-updated { font-size: 12px; color: var(--muted); }
 .ghost-button.with-icon { display: inline-flex; align-items: center; gap: 6px; }
 .mon-row { display: grid; gap: 20px; }
@@ -5300,3 +5198,27 @@ textarea:focus {
 .picker-selected li::marker {
   color: var(--muted);
 }
+
+.ielts-editor label:not(.ghost-button) {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.ielts-editor textarea {
+  width: 100%;
+}
+
+.bulk-bar { flex-wrap: wrap; margin-bottom: 12px; }
+
+.bulk-report {
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-inner, 16px);
+  background: var(--panel);
+  font-size: 14px;
+}
+.bulk-report ul { margin: 8px 0; padding-left: 18px; }

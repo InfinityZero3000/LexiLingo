@@ -1,4 +1,5 @@
 import { apiFetch, type ApiResponse } from "./api";
+import { ENV } from "./env";
 
 export type NotificationCampaignJobType =
   | "targeted_push"
@@ -89,7 +90,7 @@ export async function createNotificationCampaignJob(
   payload: Record<string, unknown>
 ): Promise<NotificationCampaignJob> {
   const res = await apiFetch<ApiResponse<NotificationCampaignJob>>(
-    "/api/v1/admin/notification-campaign/jobs",
+    `${ENV.backendUrl}/admin/notification-campaign/jobs`,
     { method: "POST", body: JSON.stringify(payload) }
   );
   return res.data as NotificationCampaignJob;
@@ -100,7 +101,7 @@ export async function listNotificationCampaignJobs(
   offset = 0
 ): Promise<NotificationCampaignJob[]> {
   const res = await apiFetch<ApiResponse<NotificationCampaignJob[]>>(
-    `/api/v1/admin/notification-campaign/jobs?limit=${limit}&offset=${offset}`
+    `${ENV.backendUrl}/admin/notification-campaign/jobs?limit=${limit}&offset=${offset}`
   );
   return (res.data ?? []) as NotificationCampaignJob[];
 }
@@ -109,7 +110,7 @@ export async function getNotificationCampaignJob(
   id: string
 ): Promise<NotificationCampaignJob> {
   const res = await apiFetch<ApiResponse<NotificationCampaignJob>>(
-    `/api/v1/admin/notification-campaign/jobs/${id}`
+    `${ENV.backendUrl}/admin/notification-campaign/jobs/${id}`
   );
   return res.data as NotificationCampaignJob;
 }
@@ -118,7 +119,7 @@ export async function applyNotificationCampaignJob(
   id: string
 ): Promise<NotificationCampaignJob> {
   const res = await apiFetch<ApiResponse<NotificationCampaignJob>>(
-    `/api/v1/admin/notification-campaign/jobs/${id}/apply`,
+    `${ENV.backendUrl}/admin/notification-campaign/jobs/${id}/apply`,
     { method: "POST" }
   );
   return res.data as NotificationCampaignJob;
@@ -128,7 +129,7 @@ export async function cancelNotificationCampaignJob(
   id: string
 ): Promise<NotificationCampaignJob> {
   const res = await apiFetch<ApiResponse<NotificationCampaignJob>>(
-    `/api/v1/admin/notification-campaign/jobs/${id}/cancel`,
+    `${ENV.backendUrl}/admin/notification-campaign/jobs/${id}/cancel`,
     { method: "POST" }
   );
   return res.data as NotificationCampaignJob;
@@ -138,7 +139,7 @@ export async function retryNotificationCampaignJob(
   id: string
 ): Promise<NotificationCampaignJob> {
   const res = await apiFetch<ApiResponse<NotificationCampaignJob>>(
-    `/api/v1/admin/notification-campaign/jobs/${id}/retry`,
+    `${ENV.backendUrl}/admin/notification-campaign/jobs/${id}/retry`,
     { method: "POST" }
   );
   return res.data as NotificationCampaignJob;

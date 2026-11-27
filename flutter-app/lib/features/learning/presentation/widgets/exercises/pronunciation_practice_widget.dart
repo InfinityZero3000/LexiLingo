@@ -70,7 +70,7 @@ class _PronunciationPracticeWidgetState
           child: Row(
             children: [
               CircleAudioButton(
-                text: widget.exercise.question,
+                text: speakingTarget(widget.exercise),
                 audioUrl: widget.exercise.audioUrl,
                 size: 44,
               ),
@@ -80,7 +80,7 @@ class _PronunciationPracticeWidgetState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '"${widget.exercise.question}"',
+                      '"${speakingTarget(widget.exercise)}"',
                       style: Theme.of(context).textTheme.bodyLarge!.copyWith(
                         fontWeight: FontWeight.w600,
                         color: colors.textPrimary,
@@ -106,9 +106,7 @@ class _PronunciationPracticeWidgetState
         const SizedBox(height: 24),
         Center(
           child: LessonSpeakingRecorder(
-            targetText: widget.exercise.correctAnswer.isNotEmpty
-                ? widget.exercise.correctAnswer
-                : widget.exercise.question,
+            targetText: speakingTarget(widget.exercise),
             isAnswered: widget.isAnswered,
             onApproved: widget.onAnswer,
             onAttempt: widget.onInputChanged,

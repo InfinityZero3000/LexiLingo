@@ -77,8 +77,11 @@ Future<void> _pumpCard(
           ),
           child: child!,
         ),
+        // Home scrolls, so the card is laid out with no height limit.
         home: Scaffold(
-          body: ContinueLearningCard(rotationInterval: rotationInterval),
+          body: SingleChildScrollView(
+            child: ContinueLearningCard(rotationInterval: rotationInterval),
+          ),
         ),
       ),
     ),
@@ -133,6 +136,16 @@ void main() {
     expect(find.text('home.startLesson'), findsOneWidget);
     expect(find.text('Course new'), findsOneWidget);
     expect(find.text('home.continueLearningSection'), findsNothing);
+  });
+
+  testWidgets('a learner with no course in progress still gets a card', (
+    tester,
+  ) async {
+    await _pumpCard(tester, const []);
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('home.enrollCoursePrompt'), findsOneWidget);
+    expect(tester.getSize(find.byType(ContinueLearningCard)).height, isNot(0));
   });
 
   testWidgets('started course rotates from continue learning to reminder', (

@@ -5,7 +5,7 @@ User Schemas
 from typing import Literal, Optional
 from uuid import UUID
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, UUID4
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 LexiReplyLanguage = Literal["app", "native"]
@@ -46,7 +46,7 @@ class UserUpdate(BaseModel):
 
 class UserResponse(UserBase):
     """Schema for user response (public info)."""
-    id: UUID4
+    id: UUID
     avatar_url: Optional[str] = None
     is_active: bool
     is_verified: bool
@@ -99,7 +99,7 @@ class AdminUserUpdate(BaseModel):
 
 class AdminUserListItem(BaseModel):
     """Admin view of user list."""
-    id: UUID4
+    id: UUID
     email: EmailStr
     username: str
     display_name: Optional[str] = None

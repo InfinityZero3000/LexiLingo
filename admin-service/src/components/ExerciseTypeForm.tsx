@@ -1,4 +1,5 @@
-import React from "react";
+import { useRemoveFromForm } from "../lib/useRemoveFromForm";
+import React, { useState } from "react";
 import { ArrowRight, Check, Plus, Trash2 } from "lucide-react";
 import {
   type Exercise,
@@ -93,6 +94,7 @@ const OptionsEditor = ({
     }
   };
 
+  const removeFromForm = useRemoveFromForm();
   const addOption = () => onChange([...options, newOption(options.length)]);
   const removeOption = (idx: number) =>
     onChange(options.filter((_, i) => i !== idx).map((o, i) => ({ ...o, id: String(i) })));
@@ -122,7 +124,7 @@ const OptionsEditor = ({
               type="button"
               className="icon-button exercise-remove-button"
               aria-label={`Xóa option ${idx + 1}`}
-              onClick={() => removeOption(idx)}
+              onClick={() => void removeFromForm(opt.text, () => removeOption(idx))}
             >
               <Trash2 size={15} aria-hidden="true" />
             </button>
@@ -159,6 +161,7 @@ const PairsEditor = ({
     onChange(next);
   };
   const add = () => onChange([...pairs, ["", ""]]);
+  const removeFromForm = useRemoveFromForm();
   const remove = (idx: number) => onChange(pairs.filter((_, i) => i !== idx));
 
   // Derive options array: first half = left, second half = right
@@ -192,7 +195,7 @@ const PairsEditor = ({
               type="button"
               className="icon-button exercise-remove-button"
               aria-label={`Xóa cặp ${idx + 1}`}
-              onClick={() => remove(idx)}
+              onClick={() => void removeFromForm([l, r].filter(Boolean).join(" → "), () => remove(idx))}
             >
               <Trash2 size={15} aria-hidden="true" />
             </button>
@@ -395,10 +398,12 @@ const DialogueForm = ({ value, onChange }: { value: Exercise; onChange: (u: Exer
 
 /** Arrange the sentence: instruction + word array + correct sentence */
 const ArrangeForm = ({ value, onChange }: { value: Exercise; onChange: (u: Exercise) => void }) => {
-  const options = value.options ?? [];
-  const wordsText = options.map((o) => o.text).join(" / ");
+  // The typed text is its own state: rebuilding it from the parsed words dropped every
+  // "/" and space as soon as it was typed.
+  const [wordsText, setWordsText] = useState(() => (value.options ?? []).map((o) => o.text).join(" / "));
 
   const handleWordsChange = (raw: string) => {
+    setWordsText(raw);
     const words = raw.split("/").map((w) => w.trim()).filter(Boolean);
     const opts: ExerciseOption[] = words.map((w, i) => ({ id: String(i), text: w, is_correct: false }));
     onChange({ ...value, options: opts });

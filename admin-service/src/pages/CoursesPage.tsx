@@ -1,3 +1,5 @@
+import { BulkBar, useRowSelection } from "../components/BulkActions";
+import { describeDeletionError, fillText } from "../lib/deletion";
 import { useConfirm } from "../components/ConfirmDialog";
 import { Dialog } from "../components/Dialog";
 import React, { useEffect, useState } from "react";
@@ -185,13 +187,27 @@ export const CoursesPage = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!(await confirm({ message: t.courses.deleteCourse, confirmLabel: t.common.delete, danger: true }))) return;
+  const selection = useRowSelection(courses, (row) => row.id, (row) => row.title);
+
+  const handleUnpublish = async (row: CourseItem) => {
+    const message = fillText(t.deletion.unpublishOne, { name: row.title });
+    if (!(await confirm({ message, confirmLabel: t.deletion.unpublish }))) return;
     try {
-      await deleteCourse(id);
+      await updateCourse(row.id, { is_published: false });
       await loadCourses();
     } catch (err: any) {
-      setError(err?.message || t.common.deleteFailed);
+      setError(err?.message || t.common.saveFailed);
+    }
+  };
+
+  const handleDelete = async (row: CourseItem) => {
+    const message = `${fillText(t.deletion.one, { name: row.title })} ${t.deletion.withUnits}`;
+    if (!(await confirm({ message, confirmLabel: t.common.delete, danger: true }))) return;
+    try {
+      await deleteCourse(row.id);
+      await loadCourses();
+    } catch (err) {
+      setError(describeDeletionError(err, t));
     }
   };
 
@@ -221,6 +237,14 @@ export const CoursesPage = () => {
       />
 
       {error && <div className="form-error">{error}</div>}
+      <BulkBar
+        selection={selection}
+        onDone={loadCourses}
+        actions={[
+          { label: t.deletion.unpublish, consequence: t.deletion.unpublishNote, run: (row) => updateCourse(row.id, { is_published: false }) },
+          { label: t.common.delete, consequence: `${t.deletion.withUnits} ${t.deletion.permanent}`, danger: true, run: (row) => deleteCourse(row.id) },
+        ]}
+      />
 
       {/* Toolbar */}
       <div className="panel filter-panel">
@@ -314,6 +338,7 @@ export const CoursesPage = () => {
           <>
             <DataTable
               columns={[
+              selection.column,
                 {
                   header: t.courses.course,
                   sortValue: (row) => row.title,
@@ -369,7 +394,17 @@ export const CoursesPage = () => {
                         {t.courses.units}
                       </button>
                       <button className="ghost-button small" onClick={() => handleEdit(row)}>{t.common.edit}</button>
-                      <button className="ghost-button small danger" onClick={() => handleDelete(row.id)}>{t.common.delete}</button>
+                      {row.is_published && (
+                        <button className="ghost-button small" onClick={() => handleUnpublish(row)}>{t.deletion.unpublish}</button>
+                      )}
+                      <button
+                        className="ghost-button small danger"
+                        disabled={row.is_published}
+                        title={row.is_published ? t.deletion.published : undefined}
+                        onClick={() => handleDelete(row)}
+                      >
+                        {t.common.delete}
+                      </button>
                     </div>
                   ),
                   align: "right",

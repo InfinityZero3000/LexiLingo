@@ -1,7 +1,10 @@
+import { describeDeletionError, fillText } from "../lib/deletion";
+import { useI18n } from "../lib/i18n";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { AlertTriangle, CheckCircle2, FileAudio, Plus, RefreshCw, Trash2 } from "lucide-react";
 
 import { IeltsProvenancePanel } from "../components/IeltsProvenancePanel";
+import { useConfirm } from "../components/ConfirmDialog";
 import { EmptyState } from "../components/EmptyState";
 import { SectionHeader } from "../components/SectionHeader";
 import { StatusPill } from "../components/StatusPill";
@@ -140,6 +143,8 @@ const emptyDraft = (): Draft => ({
 });
 
 export const IeltsTestsPage = () => {
+  const confirm = useConfirm();
+  const { t } = useI18n();
   const [tests, setTests] = useState<IeltsTest[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -304,14 +309,20 @@ export const IeltsTestsPage = () => {
     }
   };
 
-  const removeTest = async (id: string) => {
+  const removeTest = async ({ id, title }: IeltsTest) => {
+    const ok = await confirm({
+      message: fillText(t.deletion.one, { name: title }),
+      confirmLabel: t.common.delete,
+      danger: true,
+    });
+    if (!ok) return;
     setBusy(true);
     try {
       await deleteIeltsTest(id);
       if (selectedId === id) startNew();
       await refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Delete failed");
+      setError(describeDeletionError(err, t));
     } finally {
       setBusy(false);
     }
@@ -463,9 +474,15 @@ export const IeltsTestsPage = () => {
                       type="button"
                       onClick={(event) => {
                         event.stopPropagation();
-                        void removeTest(test.id);
+                        void removeTest(test);
                       }}
                       aria-label={`Delete ${test.title}`}
+                      disabled={test.attempt_count > 0}
+                      title={
+                        test.attempt_count > 0
+                          ? fillText(t.deletion.inUse, { used: `${test.attempt_count} attempt(s)` })
+                          : undefined
+                      }
                     >
                       <Trash2 size={14} />
                     </button>
@@ -477,7 +494,7 @@ export const IeltsTestsPage = () => {
         )}
       </div>
 
-      <div className="panel stack">
+      <div className="panel stack ielts-editor">
         <SectionHeader
           title={selectedId ? "Edit test" : "New test"}
           description={

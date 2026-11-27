@@ -4,45 +4,21 @@ import { SectionHeader } from "../components/SectionHeader";
 import { StatusPill } from "../components/StatusPill";
 import { Skeleton } from "../components/Skeleton";
 import { BentoRingGauge } from "../components/dashboard/BentoChartPrimitives";
-import { getMonitoringDashboard, MonitoringDashboard } from "../lib/aiApi";
+import { LiveAiModels } from "../components/LiveAiModels";
+import { getLlmKeyMonitoring, getMonitoringDashboard, getSpoolMonitoring, type LlmKeyMonitoring, type MonitoringDashboard } from "../lib/aiApi";
 import { getSystemInfo, type SystemInfo } from "../lib/adminApi";
-import { checkBackendHealth, checkAiHealth } from "../lib/healthApi";
+import { checkBackendHealth } from "../lib/healthApi";
 import { useI18n } from "../lib/i18n";
 
-type HealthStatus = { status?: string; message?: string; version?: string; services?: Record<string, string> };
-
-const AI_MODELS = [
-  {
-    name: "Gemini 2.0 Flash",
-    desc: "Chat, Grammar, Topic • Cloud API",
-    runtime: "Cloud API",
-    tone: "info" as const,
-  },
-  {
-    name: "Whisper Base",
-    desc: "Speech-to-Text • Local CPU",
-    runtime: "Local CPU",
-    tone: "success" as const,
-  },
-  {
-    name: "Piper TTS",
-    desc: "Text-to-Speech • en_US-lessac",
-    runtime: "en_US-lessac",
-    tone: "neutral" as const,
-  },
-  {
-    name: "TRACECAG",
-    desc: "Knowledge Graph • Custom Pipeline",
-    runtime: "Knowledge Graph",
-    tone: "info" as const,
-  },
-];
+type HealthStatus = { status?: string; version?: string };
 
 export const SuperAdminDashboard = () => {
   const [monitor, setMonitor] = useState<MonitoringDashboard | null>(null);
   const [sysInfo, setSysInfo] = useState<SystemInfo | null>(null);
   const [backendHealth, setBackendHealth] = useState<HealthStatus | null>(null);
-  const [aiHealth, setAiHealth] = useState<HealthStatus | null>(null);
+  const [llm, setLlm] = useState<LlmKeyMonitoring | null>(null);
+  // The observation queue is read from MongoDB, so an answer means Mongo is reachable.
+  const [mongoOk, setMongoOk] = useState(false);
   const [loading, setLoading] = useState(true);
   const { t } = useI18n();
 
@@ -53,13 +29,15 @@ export const SuperAdminDashboard = () => {
       getMonitoringDashboard(),
       getSystemInfo(),
       checkBackendHealth().then((r) => r.json()),
-      checkAiHealth().then((r) => r.json()),
+      getLlmKeyMonitoring(),
+      getSpoolMonitoring(),
     ])
-      .then(([monRes, sysRes, beRes, aiRes]) => {
+      .then(([monRes, sysRes, beRes, llmRes, spoolRes]) => {
         if (monRes.status === "fulfilled") setMonitor(monRes.value);
         if (sysRes.status === "fulfilled") setSysInfo(sysRes.value.data || null);
         if (beRes.status === "fulfilled") setBackendHealth(beRes.value);
-        if (aiRes.status === "fulfilled") setAiHealth(aiRes.value);
+        if (llmRes.status === "fulfilled") setLlm(llmRes.value);
+        setMongoOk(spoolRes.status === "fulfilled");
       })
       .finally(() => setLoading(false));
   }, []);
@@ -71,7 +49,9 @@ export const SuperAdminDashboard = () => {
   const diskPercent = sys ? (sys.disk_percent ?? sys.disk?.percent) : undefined;
 
   const beOk = backendHealth?.status === "healthy";
-  const aiOk = aiHealth?.status === "healthy" || aiHealth?.status === "ok";
+  const aiOk = monitor !== null;
+  // system-info counts rows, so it only answers when PostgreSQL does.
+  const postgresOk = sysInfo !== null;
   const warnCount = monitor?.health?.warning_count || 0;
   const critCount = monitor?.health?.critical_count || 0;
 
@@ -214,7 +194,7 @@ export const SuperAdminDashboard = () => {
             <div className="pill-item">
               <div>
                 <div className="pill-title">{t.superDashboard.aiService}</div>
-                <div className="pill-desc">FastAPI • Gemini + Voice</div>
+                <div className="pill-desc">FastAPI</div>
               </div>
               <StatusPill tone={aiOk ? "success" : "danger"} label={aiOk ? t.common.online : t.common.offline} />
             </div>
@@ -223,47 +203,22 @@ export const SuperAdminDashboard = () => {
                 <div className="pill-title">{t.superDashboard.postgresql}</div>
                 <div className="pill-desc">{t.superDashboard.backendDatabase}</div>
               </div>
-              <StatusPill tone={beOk ? "success" : "warning"} label={beOk ? t.common.connected : t.common.unknown} />
+              <StatusPill tone={postgresOk ? "success" : "warning"} label={postgresOk ? t.common.connected : t.common.unknown} />
             </div>
             <div className="pill-item">
               <div>
                 <div className="pill-title">{t.superDashboard.mongodb}</div>
                 <div className="pill-desc">{t.superDashboard.aiDataStore}</div>
               </div>
-              <StatusPill
-                tone={aiHealth?.services?.mongodb === "connected" ? "success" : "warning"}
-                label={aiHealth?.services?.mongodb || "Unknown"}
-              />
+              <StatusPill tone={mongoOk ? "success" : "warning"} label={mongoOk ? t.common.connected : t.common.unknown} />
             </div>
-            {aiHealth?.services?.redis && (
-              <div className="pill-item">
-                <div>
-                  <div className="pill-title">{t.superDashboard.redis}</div>
-                  <div className="pill-desc">{t.superDashboard.cacheLayer}</div>
-                </div>
-                <StatusPill
-                  tone={aiHealth.services.redis === "connected" ? "success" : "warning"}
-                  label={aiHealth.services.redis}
-                />
-              </div>
-            )}
           </div>
         </div>
 
         {/* AI Models */}
         <div className="panel">
           <SectionHeader title={t.superDashboard.aiModels} description={t.superDashboard.aiModelsDesc} />
-          <div className="mini-list">
-            {AI_MODELS.map((model) => (
-              <div className="pill-item" key={model.name} style={{ gap: 12 }}>
-                <div style={{ minWidth: 0 }}>
-                  <div className="mini-title">{model.name}</div>
-                  <div className="mini-desc">{model.desc}</div>
-                </div>
-                <StatusPill tone={model.tone} label={model.runtime} />
-              </div>
-            ))}
-          </div>
+          <LiveAiModels llm={llm} monitor={monitor} />
         </div>
       </div>
 

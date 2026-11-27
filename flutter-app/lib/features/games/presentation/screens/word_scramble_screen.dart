@@ -328,7 +328,7 @@ class _WordScrambleScreenState extends State<WordScrambleScreen> {
       totalQuestions: game?.words.length ?? 0,
       correctAnswers: _correctCount,
       xpEarned: xpResult?.xpAwarded ?? 0,
-      durationSeconds: 0,
+      durationSeconds: provider.lastGameResult?.durationSeconds ?? 0,
       xpResult: xpResult,
     );
     Navigator.pushReplacement(

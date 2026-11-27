@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/features/auth/data/datasources/token_storage.dart';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
@@ -140,9 +141,15 @@ abstract final class UserSessionSync {
   /// The signed-out transition seen by the app shell: reset everything in
   /// memory at once, then clear the caches. The clean-up is repeated here even
   /// though sign-out already ran it, because a session can end without one.
-  static Future<void> onSignedOut(BuildContext context) {
+  static Future<void> onSignedOut(BuildContext context) async {
     afterSignOut(context);
-    return AccountDataCleaner.clear();
+    // In a browser tab left behind by another account's sign-in, those caches
+    // are theirs now.
+    if (sl.isRegistered<TokenStorage>() &&
+        await sl<TokenStorage>().heldByAnotherAccount()) {
+      return;
+    }
+    await AccountDataCleaner.clear();
   }
 
   static void afterSignOut(BuildContext context) {

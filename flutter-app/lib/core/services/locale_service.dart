@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/l10n/cached_translation_loader.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:easy_localization/easy_localization.dart';
 
@@ -61,11 +62,15 @@ class LocaleService {
   static Future<bool> updateAppLocale(
     BuildContext context,
     String languageCode,
-  ) => _requestLocale(languageCode, (code) {
+  ) => _requestLocale(languageCode, (code) async {
+    // setLocale changes the locale before its table arrives. Any rebuild in
+    // between loads the new locale with the old strings, and nothing reloads
+    // them, so the text stayed one switch behind. Fetch the table first.
+    await CachedTranslationLoader.warmBeforeSwitch(Locale(code));
     if (!context.mounted) {
       throw StateError('Cannot update locale with an unmounted context');
     }
-    return context.setLocale(Locale(code));
+    await context.setLocale(Locale(code));
   });
 
   static Future<bool> _requestLocale(

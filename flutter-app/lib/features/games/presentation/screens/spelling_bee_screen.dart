@@ -222,7 +222,7 @@ class _SpellingBeeScreenState extends State<SpellingBeeScreen> {
             totalQuestions: game.words.length,
             correctAnswers: _correctCount,
             xpEarned: xpResult?.xpAwarded ?? 0,
-            durationSeconds: 0,
+            durationSeconds: provider.lastGameResult?.durationSeconds ?? 0,
             xpResult: xpResult,
           ),
           xpResult: xpResult,

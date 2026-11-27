@@ -6,6 +6,8 @@ import uuid
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.schemas.validators import cefr_field, not_null
+
 BannerPosition = Literal["hero", "sidebar", "interstitial"]
 
 
@@ -25,16 +27,21 @@ class BannerBase(BaseModel):
 
 
 class BannerCreate(BannerBase):
-    pass
+    priority: int = Field(default=0, ge=-1_000_000, le=1_000_000)
+
+    _levels = cefr_field("target_min_level", "target_max_level")
 
 
 class BannerUpdate(BaseModel):
+    _required = not_null("title", "image_url", "position", "priority", "is_active")
+    _levels = cefr_field("target_min_level", "target_max_level")
+
     title: Optional[str] = Field(None, min_length=1, max_length=200)
     description: Optional[str] = None
     image_url: Optional[str] = Field(None, min_length=1, max_length=1000)
     link_url: Optional[str] = Field(None, max_length=1000)
     position: Optional[BannerPosition] = None
-    priority: Optional[int] = None
+    priority: Optional[int] = Field(None, ge=-1_000_000, le=1_000_000)
     is_active: Optional[bool] = None
     start_at: Optional[datetime] = None
     end_at: Optional[datetime] = None

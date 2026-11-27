@@ -21,6 +21,7 @@ Usage:
 import asyncio
 import sys
 import random
+import secrets
 import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -44,6 +45,7 @@ from app.models.proficiency import (
     LevelAssessmentTest,
     SkillType,
 )
+from scripts.seed_guard import require_sandbox
 
 # ── Constants ────────────────────────────────────────────────────────
 TARGET_EMAIL = "nhthang312@gmail.com"
@@ -128,6 +130,7 @@ async def seed(database_url: str | None = None):
     async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async with async_session() as session:
+        await require_sandbox(session)
         # 1. Find or create the test user
         result = await session.execute(select(User).where(User.email == TARGET_EMAIL))
         user = result.scalar_one_or_none()
@@ -137,7 +140,7 @@ async def seed(database_url: str | None = None):
             user = User(
                 email=TARGET_EMAIL,
                 username="nhthang312",
-                hashed_password=get_password_hash("SeedUser_testpass123!"),
+                hashed_password=get_password_hash(secrets.token_urlsafe(32)),
                 display_name="Nguyen Huu Thang (seed)",
             )
             session.add(user)
@@ -409,6 +412,7 @@ async def clean(database_url: str | None = None):
     async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async with async_session() as session:
+        await require_sandbox(session)
         result = await session.execute(select(User).where(User.email == TARGET_EMAIL))
         user = result.scalar_one_or_none()
         if not user:

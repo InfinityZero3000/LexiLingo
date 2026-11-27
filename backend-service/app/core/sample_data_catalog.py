@@ -3,16 +3,16 @@
 from typing import Any
 
 SAMPLE_ACHIEVEMENTS: list[dict[str, Any]] = [
-    {"name": "First Steps", "description": "Complete your first lesson",
+    {"slug": "first_steps", "name": "First Steps", "description": "Complete your first lesson",
      "condition_type": "lessons_completed", "condition_value": 1,
      "category": "lessons", "rarity": "common", "xp_reward": 10, "gems_reward": 5},
-    {"name": "Week Warrior", "description": "Maintain a 7-day streak",
+    {"slug": "week_warrior", "name": "Week Warrior", "description": "Maintain a 7-day streak",
      "condition_type": "streak_days", "condition_value": 7,
      "category": "streak", "rarity": "rare", "xp_reward": 50, "gems_reward": 20},
-    {"name": "Word Collector", "description": "Add 100 words to vocabulary",
+    {"slug": "word_collector", "name": "Word Collector", "description": "Add 100 words to vocabulary",
      "condition_type": "vocab_count", "condition_value": 100,
      "category": "vocabulary", "rarity": "epic", "xp_reward": 100, "gems_reward": 50},
-    {"name": "Social Butterfly", "description": "Follow 10 friends",
+    {"slug": "social_butterfly", "name": "Social Butterfly", "description": "Follow 10 friends",
      "condition_type": "following_count", "condition_value": 10,
      "category": "social", "rarity": "rare", "xp_reward": 30, "gems_reward": 15},
 ]

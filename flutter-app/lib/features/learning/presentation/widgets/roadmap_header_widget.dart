@@ -62,7 +62,7 @@ class RoadmapHeaderWidget extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  _buildLevelBadge(context, roadmap.level, isDark: isDark),
+                  _buildLevelBadge(context, roadmap.level),
                 ],
               ),
             ),
@@ -145,7 +145,8 @@ class RoadmapHeaderWidget extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: roadmap.completionPercentage / 100,
                       minHeight: 8,
-                      backgroundColor: AppColors.surfaceLight,
+                      // A solid white track made 0% look complete.
+                      backgroundColor: Colors.white.withValues(alpha: 0.3),
                       valueColor: const AlwaysStoppedAnimation<Color>(
                         Colors.white,
                       ),
@@ -174,11 +175,7 @@ class RoadmapHeaderWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildLevelBadge(
-    BuildContext context,
-    String level, {
-    required bool isDark,
-  }) {
+  Widget _buildLevelBadge(BuildContext context, String level) {
     Color badgeColor;
     switch (level.toLowerCase()) {
       case 'beginner':
@@ -191,7 +188,8 @@ class RoadmapHeaderWidget extends StatelessWidget {
         badgeColor = Theme.of(context).colorScheme.error;
         break;
       default:
-        badgeColor = AppColorRoles.primary(isDark);
+        // CEFR codes: the header itself is primary, so primary was invisible.
+        badgeColor = Colors.white;
     }
 
     return Container(

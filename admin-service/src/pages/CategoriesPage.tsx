@@ -1,3 +1,4 @@
+import { BulkBar, useRowSelection } from "../components/BulkActions";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { SectionHeader } from "../components/SectionHeader";
@@ -90,7 +91,10 @@ export const CategoriesPage = () => {
 
   const rows = [...(categories.data ?? [])].sort((a, b) => a.order_index - b.order_index);
 
+  const selection = useRowSelection(rows, (row) => row.id, (row) => row.name);
+
   const columns: Column<CourseCategory>[] = [
+    selection.column,
     { header: t.categoriesPage.order, align: "center", sortValue: (c) => c.order_index, render: (c) => c.order_index },
     {
       header: t.categoriesPage.category,
@@ -160,7 +164,16 @@ export const CategoriesPage = () => {
             action={<button className="primary-button" onClick={() => open("new")}>{t.categoriesPage.create}</button>}
           />
         ) : (
-          <DataTable columns={columns} rows={rows} rowKey={(c) => c.id} />
+          <>
+            <BulkBar
+              selection={selection}
+              onDone={refresh}
+              actions={[
+                { label: t.categoriesPage.hide, consequence: t.deletion.hideNote, run: (row) => hideCategory(row.id) },
+              ]}
+            />
+            <DataTable columns={columns} rows={rows} rowKey={(c) => c.id} />
+          </>
         )}
       </div>
 

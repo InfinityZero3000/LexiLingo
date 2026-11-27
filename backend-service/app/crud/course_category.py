@@ -65,6 +65,17 @@ class CourseCategoryCRUD:
         return result.scalar_one_or_none()
     
     @staticmethod
+    async def get_category_by_name(
+        db: AsyncSession,
+        name: str
+    ) -> Optional[CourseCategory]:
+        """Get category by exact name (the column is unique)."""
+        result = await db.execute(
+            select(CourseCategory).where(CourseCategory.name == name)
+        )
+        return result.scalar_one_or_none()
+
+    @staticmethod
     async def get_all_categories(
         db: AsyncSession,
         active_only: bool = True,

@@ -38,6 +38,7 @@ from app.models import (
     UserAchievement,
     UserVocabulary, VocabularyItem,
 )
+from scripts.seed_guard import require_sandbox
 
 # ─────────────────────────────────────────────
 # Config
@@ -971,6 +972,7 @@ async def main() -> None:
     print()
 
     async with AsyncSessionLocal() as db:
+        await require_sandbox(db)
         try:
             print(" Cleaning up old test users…")
             await cleanup_test_users(db)

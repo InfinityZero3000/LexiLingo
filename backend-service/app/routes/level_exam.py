@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.refusal import refusal
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.models.proficiency import LevelAssessmentTest, LevelExamAttempt
@@ -26,14 +27,6 @@ from app.services.cefr_level_service import (
 from app.services.rank_service import rank_proficiency_level
 
 router = APIRouter(prefix="/proficiency/level-exam", tags=["proficiency"])
-
-
-def _refusal(status_code: int, message: str, details: dict[str, Any]) -> HTTPException:
-    """An error the app can act on: the global handler puts `details` in
-    `error.details`; a dict `detail` would reach the client as a Python repr."""
-    error = HTTPException(status_code=status_code, detail=message)
-    error.details = details
-    return error
 
 
 class ExamSubmission(BaseModel):
@@ -99,13 +92,13 @@ async def start_exam(
         return await _paper(db, attempt)
     if not gate["available"]:
         await db.commit()
-        raise _refusal(status.HTTP_403_FORBIDDEN, f"Level exam unavailable: {gate['reason']}", gate)
+        raise refusal(status.HTTP_403_FORBIDDEN, f"Level exam unavailable: {gate['reason']}", gate)
 
     from_level = rank_proficiency_level(current_user)
     sections = await exam.build_paper(db, from_level)
     if not sections:
         await db.commit()
-        raise _refusal(
+        raise refusal(
             status.HTTP_409_CONFLICT,
             "Level exam unavailable: no_questions",
             {**gate, "available": False, "reason": "no_questions"},
@@ -145,7 +138,7 @@ async def submit_exam(
         attempt.status = "expired"
         attempt.submitted_at = now
         await db.commit()
-        raise _refusal(
+        raise refusal(
             status.HTTP_410_GONE,
             "Exam time is over",
             {"reason": "expired", "retry_at": exam.retry_at(attempt).isoformat()},

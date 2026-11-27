@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.dependencies import require_resource
 from app.core.real_users import real_user_clause
-from app.models.course import Course
+from app.models.course import Course, Lesson
 from app.models.progress import (
     DailyActivity,
     LessonAttempt,
@@ -29,6 +29,8 @@ router = APIRouter(prefix="/admin/analytics", tags=["Analytics"])
 # ============================================================================
 # Dashboard Analytics
 # ============================================================================
+
+LESSONS_LISTED = 20
 
 @router.get("/dashboard/kpis")
 async def get_dashboard_kpis(
@@ -460,21 +462,55 @@ async def get_content_performance(
         .group_by(Course.id, Course.title)
     )
 
+    finished = LessonAttempt.finished_at.is_not(None)
+    score_rows = await db.execute(
+        select(Lesson.course_id, func.avg(LessonAttempt.score), func.avg(LessonAttempt.time_spent_ms))
+        .join(Lesson, Lesson.id == LessonAttempt.lesson_id)
+        .where(finished)
+        .group_by(Lesson.course_id)
+    )
+    by_course = {course_id: (score, ms) for course_id, score, ms in score_rows.all()}
+
     courses = []
     for row in course_result.fetchall():
         completion_rate = (row.completions / row.enrollments * 100) if row.enrollments > 0 else 0
+        score, spent_ms = by_course.get(row.id, (None, None))
         courses.append({
             "course_id": str(row.id),
             "course_title": row.title,
             "enrollments": row.enrollments,
             "completions": row.completions,
             "completion_rate": completion_rate,
-            "avg_score": 0.0,  # Placeholder
-            "avg_time_minutes": 0,  # Placeholder
+            "avg_score": round(float(score or 0), 1),
+            # Per lesson sitting, which is what the app times.
+            "avg_time_minutes": round(float(spent_ms or 0) / 60_000, 1),
         })
 
-    # Lesson difficulty (simplified - would need LessonAttempt data for full metrics)
-    lessons = []  # Placeholder for MVP
+    attempts = func.count(LessonAttempt.id)
+    lesson_rows = await db.execute(
+        select(
+            Lesson.id,
+            Lesson.title,
+            attempts.label("attempts"),
+            func.count(case((LessonAttempt.passed.is_(True), 1))).label("completions"),
+            func.avg(LessonAttempt.score).label("avg_score"),
+        )
+        .join(LessonAttempt, LessonAttempt.lesson_id == Lesson.id)
+        .where(finished)
+        .group_by(Lesson.id, Lesson.title)
+        .order_by(attempts.desc(), Lesson.title)
+        .limit(LESSONS_LISTED)
+    )
+    lessons = [
+        {
+            "lesson_id": str(row.id),
+            "lesson_title": row.title,
+            "attempts": row.attempts,
+            "completions": row.completions,
+            "avg_score": round(float(row.avg_score or 0), 1),
+        }
+        for row in lesson_rows.all()
+    ]
 
     return {
         "courses": courses,

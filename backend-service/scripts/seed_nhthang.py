@@ -1,7 +1,7 @@
 """
 seed_nhthang.py
 ───────────────
-Set up the nhthang312@gmail.com account for local development/testing.
+Set up one existing account for local development/testing.
 
 Actions:
   1. Update provider → add 'local' (keeps existing 'google' if already linked)
@@ -19,7 +19,7 @@ Note on admin dashboard security:
 
 Usage:
     cd backend-service
-    venv/bin/python3 scripts/seed_nhthang.py
+    SEED_ACCOUNT_EMAIL=... SEED_ACCOUNT_PASSWORD=... venv/bin/python3 -m scripts.seed_nhthang
 """
 
 import asyncio
@@ -40,13 +40,15 @@ from app.models.user import User
 from app.models.course import Course, Lesson
 from app.models.progress import UserCourseProgress, LessonCompletion, DailyActivity
 from app.models.games import XPTransaction
+from scripts.seed_guard import require_sandbox
 
 # ─────────────────────────────────────────────
 # Config
 # ─────────────────────────────────────────────
 
-TARGET_EMAIL = "nhthang312@gmail.com"
-NEW_PASSWORD = "thang123"
+# Both come from the environment: this repository is public.
+TARGET_EMAIL = os.getenv("SEED_ACCOUNT_EMAIL", "")
+NEW_PASSWORD = os.getenv("SEED_ACCOUNT_PASSWORD", "")
 
 # Courses to enroll + target progress %
 COURSE_TARGETS = [
@@ -98,6 +100,9 @@ async def run():
     Session = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
     async with Session() as db:
+        if not TARGET_EMAIL or len(NEW_PASSWORD) < 12:
+            raise SystemExit("Set SEED_ACCOUNT_EMAIL and SEED_ACCOUNT_PASSWORD (12+ characters).")
+        await require_sandbox(db)
         # 1. Load user ─────────────────────────────
         result = await db.execute(select(User).where(User.email == TARGET_EMAIL))
         user: User | None = result.scalar_one_or_none()
@@ -120,7 +125,7 @@ async def run():
         user.numeric_level  = max(user.numeric_level, 18)
         user.rank           = "gold"
         await db.flush()
-        print(f"[OK]   Providers={user.provider}, password='{NEW_PASSWORD}'")
+        print(f"[OK]   Providers={user.provider}")
 
         # 3. Clean up previous seed data ───────────
         await db.execute(delete(DailyActivity).where(DailyActivity.user_id == user_id))
@@ -221,7 +226,6 @@ async def run():
         await db.commit()
         print(f"\n Done! Login credentials:")
         print(f"  Email    : {TARGET_EMAIL}")
-        print(f"  Password : {NEW_PASSWORD}")
         print(f"  Providers: {user.provider}")
         print(f"  Role     : {user.role_slug if hasattr(user, 'role_slug') else 'admin (unchanged)'}")
         print(f"\n  - API login (POST /api/v1/auth/login) works via password")

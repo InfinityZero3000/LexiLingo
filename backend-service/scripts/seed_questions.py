@@ -1,9 +1,9 @@
 """
 Seed Question Bank
 ==================
-Seeds MCQ questions linked to grammar items, then assigns question_ids to
-test exams. Fully idempotent: clears question_bank first, re-creates all
-questions, then re-links test_exams.question_ids.
+Adds the seed MCQ questions that are missing, then fills test exams that have no
+questions yet. Safe on a database with data: it deletes and rewrites nothing,
+and never changes whether an exam is published.
 
 Run:
     cd backend-service
@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import asyncio
 import random
-from sqlalchemy import select, delete, func
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionLocal
@@ -1018,6 +1018,43 @@ GRAMMAR_QUESTIONS: dict[str, list[dict]] = {
     ],
 }
 
+# The CEFR level of each question group. A grammar item covers several groups, so
+# its own level cannot grade them: that filed C1 questions under A1, and the level
+# test picks questions by this value.
+QUESTION_LEVELS: dict[str, str] = {
+    "Articles: A, An, The": "A1",
+    "The Verb 'To Be': Am / Is / Are": "A1",
+    "Simple Present Tense": "A1",
+    "Subject Pronouns vs Object Pronouns": "A1",
+    "There is / There are": "A1",
+    "Comparative Adjectives": "A2",
+    "Comparative and Superlative Adjectives": "A2",
+    "Countable and Uncountable Nouns": "A2",
+    "Possessive Adjectives and Possessive Pronouns": "A2",
+    "Simple Past Tense": "A2",
+    "There Is / There Are": "A2",
+    "Present Perfect Tense": "B1",
+    "Modal Verbs: Should, Must, Have To": "B1",
+    "Modal Verbs — Ability, Permission, Obligation": "B1",
+    "Gerunds and Infinitives": "B1",
+    "Present & Past Passive Voice": "B1",
+    "Conditional Sentences: 1st & 2nd": "B1",
+    "Conditionals: Zero and First": "B1",
+    "Reported Speech — Statements": "B1",
+    "Used to / Would — Past Habits": "B1",
+    "Passive Voice": "B2",
+    "Relative Clauses: Defining & Non-Defining": "B2",
+    "Second and Third Conditional": "B2",
+    "Third Conditional": "B2",
+    "Expressing Contrast: Although, Despite, However": "B2",
+    "The Subjunctive Mood": "B2",
+    "Advanced Modals: Speculation & Deduction": "C1",
+    "Inversion for Emphasis": "C1",
+    "Cleft Sentences for Focus and Emphasis": "C1",
+    "Ellipsis and Substitution": "C1",
+    "Perfect Aspect — All Forms": "C1",
+}
+
 # Test exam → levels map (used to assign questions)
 EXAM_LEVEL_MAP: dict[str, list[str]] = {
     "A1": ["A1"],
@@ -1031,11 +1068,55 @@ EXAM_LEVEL_MAP: dict[str, list[str]] = {
 
 # ─────────────────────────────────────────────────────────────────────────────
 
-async def seed_questions(db: AsyncSession):
-    print("  Clearing existing questions from question_bank...")
-    await db.execute(delete(QuestionItem))
-    await db.commit()
-    print("   question_bank cleared")
+# Grammar items the questions hang off: (title, level). None of the earlier seed
+# steps creates them, so without this the question bank stayed empty.
+GRAMMAR_TOPICS: list[tuple[str, str]] = [
+    ("Articles A/An/The", "A1"),
+    ("Present Simple", "A1"),
+    ("Present Continuous", "A1"),
+    ("Past Simple", "A2"),
+    ("Future with Will", "A2"),
+    ("Comparatives", "A2"),
+    ("Superlatives", "A2"),
+    ("Present Perfect", "B1"),
+    ("Conditionals Type 1", "B1"),
+    ("Relative Clauses", "B1"),
+    ("Passive Voice", "B2"),
+    ("Conditionals Type 2/3", "B2"),
+]
+
+
+async def ensure_grammar_items(db: AsyncSession) -> None:
+    """Create the grammar items, only in an empty table.
+
+    They are placeholders, so they stay inactive (learners do not see them) and a
+    database with its own grammar library gets none; unmatched questions are skipped.
+    """
+    if await db.scalar(select(func.count(GrammarItem.id))):
+        return
+    for title, level in GRAMMAR_TOPICS:
+        db.add(
+            GrammarItem(
+                title=title,
+                level=level,
+                topic="grammar",
+                summary=f"Core pattern for {title.lower()}.",
+                content=f"Explanation and guided examples for {title}.",
+                examples=[],
+                tags=[level.lower(), "grammar"],
+                is_active=False,
+            )
+        )
+    await db.flush()
+
+
+async def seed_questions(db: AsyncSession, fix_levels: bool = False):
+    await ensure_grammar_items(db)
+
+    present = {
+        (row.prompt, tuple(row.options or [])): row
+        for row in (await db.execute(select(QuestionItem))).scalars().all()
+    }
 
     # Load grammar items
     result = await db.execute(select(GrammarItem))
@@ -1072,6 +1153,7 @@ async def seed_questions(db: AsyncSession):
         return grammar_items.get(target)
 
     total = 0
+    misfiled = 0
     level_map: dict[str, list] = {}  # level → list of QuestionItem
 
     for title, questions in GRAMMAR_QUESTIONS.items():
@@ -1081,19 +1163,31 @@ async def seed_questions(db: AsyncSession):
             continue
 
         for q in questions:
+            stored = present.get((q["prompt"], tuple(q["options"])))
+            if stored is not None:
+                if stored.difficulty_level != QUESTION_LEVELS[title]:
+                    # An older seed filed some of these too low, but an admin may
+                    # also have moved one: change it only when asked.
+                    misfiled += 1
+                    print(f"    level {stored.difficulty_level} (seed says {QUESTION_LEVELS[title]}): {stored.prompt}")
+                    if fix_levels:
+                        stored.difficulty_level = QUESTION_LEVELS[title]
+                if stored.is_active:
+                    level_map.setdefault(stored.difficulty_level, []).append(stored)
+                continue
             item = QuestionItem(
                 prompt=q["prompt"],
                 question_type="mcq",
                 options=q["options"],
                 answer={"correct": q["answer"]},
                 explanation=q["explanation"],
-                difficulty_level=grammar.level,
+                difficulty_level=QUESTION_LEVELS[title],
                 grammar_id=grammar.id,
                 tags=[grammar.topic] if grammar.topic else [],
                 is_active=True,
             )
             db.add(item)
-            level_map.setdefault(grammar.level, []).append(item)
+            level_map.setdefault(item.difficulty_level, []).append(item)
             total += 1
 
     await db.commit()
@@ -1103,16 +1197,21 @@ async def seed_questions(db: AsyncSession):
             await db.refresh(item)
 
     print(f"   {total} questions created")
+    if misfiled:
+        outcome = "moved to the seed's level" if fix_levels else "left as stored; --fix-levels moves them"
+        print(f"   {misfiled} questions differ from the seed's level: {outcome}")
     return level_map
 
 
 async def update_test_exams(db: AsyncSession, level_map: dict[str, list]):
-    print("  Updating test_exams with question_ids...")
+    print("  Filling test_exams that have no questions...")
     result = await db.execute(select(TestExam))
     exams = result.scalars().all()
 
     updated = 0
     for exam in exams:
+        if exam.question_ids:
+            continue
         # Collect questions for the exam's target levels
         target_levels = EXAM_LEVEL_MAP.get(exam.level, [exam.level])
         candidate_ids = []
@@ -1122,12 +1221,13 @@ async def update_test_exams(db: AsyncSession, level_map: dict[str, list]):
         # Take up to 20 questions per exam
         selected = random.sample(candidate_ids, min(20, len(candidate_ids)))
 
+        if not selected:
+            continue
         exam.question_ids = selected
-        exam.is_published = True
         updated += 1
 
     await db.commit()
-    print(f"   {updated} test exams updated with question_ids and published")
+    print(f"   {updated} empty test exams filled")
 
 
 async def main():
@@ -1136,7 +1236,7 @@ async def main():
     print("=" * 56 + "\n")
 
     async with AsyncSessionLocal() as db:
-        level_map = await seed_questions(db)
+        level_map = await seed_questions(db, fix_levels="--fix-levels" in sys.argv)
         await update_test_exams(db, level_map)
 
         # Summary
