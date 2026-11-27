@@ -275,9 +275,9 @@ async def test_the_allowlist_restores_a_super_admin_when_none_is_left(db_session
     assert await _role_of(db_session, user) == "super_admin"
 
 
-@pytest.mark.parametrize("verified, status_code", [(True, 200), (False, 400)])
+@pytest.mark.parametrize("verified, role", [(True, "admin"), (False, "user")])
 async def test_google_route_grants_the_allowlisted_role_only_on_a_verified_email(
-    async_client, db_session, monkeypatch, verified, status_code
+    async_client, db_session, monkeypatch, verified, role
 ):
     await _role(db_session, "user")
     await _role(db_session, "admin")
@@ -288,12 +288,24 @@ async def test_google_route_grants_the_allowlisted_role_only_on_a_verified_email
         AsyncMock(return_value={"email": email, "email_verified": verified, "name": "n", "picture": None}),
     )
     r = await async_client.post(f"{API}/auth/google", json={"id_token": "x", "source": "app"})
-    assert r.status_code == status_code, r.text
-    created = (await db_session.execute(select(User).where(User.email == email))).scalar_one_or_none()
-    if verified:
-        assert r.json()["role"] == "admin"
-    else:
-        assert created is None
+    assert r.status_code == 200, r.text
+    assert r.json()["role"] == role
+    # An unverified email gets an account, flagged for the app to ask for verification.
+    created = (await db_session.execute(select(User).where(User.email == email))).scalar_one()
+    assert created.is_verified is verified
+    me = await async_client.get(f"{API}/auth/me", headers={"Authorization": f"Bearer {r.json()['access_token']}"})
+    assert me.json()["is_verified"] is verified
+
+
+async def test_a_flagged_account_cannot_sign_in_to_the_admin_web(async_client, db_session, monkeypatch):
+    user = await _make(db_session, "admin", provider=["google"], is_verified=False)
+    monkeypatch.setattr(settings, "GOOGLE_ADMIN_CLIENT_ID", "admin-client-id")
+    monkeypatch.setattr(
+        security, "verify_google_token",
+        AsyncMock(return_value={"email": user.email, "email_verified": False, "name": "a", "picture": None}),
+    )
+    r = await async_client.post(f"{API}/auth/google", json={"id_token": "x", "source": "admin"})
+    assert r.status_code == 403
 
 
 # ---------------------------------------------------------------- email letter case

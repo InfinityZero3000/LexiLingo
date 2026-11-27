@@ -606,7 +606,7 @@ async def google_login(
 
     if request.source == "admin":
         await db.refresh(user, ["role"])
-        if user.role_level < 1:
+        if user.role_level < 1 or not user.is_verified:
             await _audit_admin_login(db, http_request, "denied", user, via="google")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -694,7 +694,7 @@ async def facebook_login(
     # For admin source verify the role (as done in Google logic)
     if request.source == "admin":
         await db.refresh(user, ["role"])
-        if user.role_level < 1:
+        if user.role_level < 1 or not user.is_verified:
             await _audit_admin_login(db, http_request, "denied", user, via="facebook")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

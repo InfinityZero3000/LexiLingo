@@ -71,11 +71,48 @@ async def test_facebook_can_create_an_account_and_return_to_it(db_session):
     assert first.is_verified is False
 
 
-async def test_only_facebook_may_open_an_account_without_a_verified_email(db_session):
+async def test_an_unverified_google_email_opens_a_flagged_account_and_returns_to_it(db_session):
+    claims = _claims("new@example.com", "google.com", verified=False)
+
+    first = await get_or_create_user_from_claims(db_session, claims)
+    second = await get_or_create_user_from_claims(db_session, claims)
+
+    assert second.id == first.id
+    assert first.provider == ["google"]
+    assert first.is_verified is False
+
+
+@pytest.mark.parametrize(
+    "providers, provider",
+    [(["local"], "google.com"), (["local"], "facebook.com"), (["google"], "facebook.com"), (["facebook"], "google.com")],
+)
+async def test_an_unverified_email_cannot_enter_a_flagged_account_made_another_way(db_session, providers, provider):
+    user = await _account(db_session, "someone@example.com", providers, verified=False)
+
+    with pytest.raises(ValueError, match="existing method"):
+        await get_or_create_user_from_claims(db_session, _claims(user.email, provider, verified=False))
+    await db_session.refresh(user)
+    assert user.provider == providers
+
+
+async def test_facebook_still_opens_its_account_after_the_email_is_verified(db_session):
+    user = await _account(db_session, "owner@example.com", ["facebook"], verified=True)
+
+    signed_in = await get_or_create_user_from_claims(
+        db_session, _claims(user.email, "facebook.com", verified=False)
+    )
+
+    assert signed_in.id == user.id
+    assert signed_in.is_verified is True
+
+
+async def test_once_the_owner_proves_the_address_an_unverified_google_claim_stops_working(db_session):
+    unproven = _claims("owner@example.com", "google.com", verified=False)
+    await get_or_create_user_from_claims(db_session, unproven)
+    await get_or_create_user_from_claims(db_session, _claims("owner@example.com", "google.com", verified=True))
+
     with pytest.raises(ValueError):
-        await get_or_create_user_from_claims(
-            db_session, _claims("new@example.com", "google.com", verified=False)
-        )
+        await get_or_create_user_from_claims(db_session, unproven)
 
 
 async def test_a_linked_account_gains_facebook_once_the_email_is_verified(db_session):

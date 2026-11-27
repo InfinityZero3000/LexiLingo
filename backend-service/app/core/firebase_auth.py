@@ -121,13 +121,18 @@ async def get_or_create_user_from_claims(db: AsyncSession, claims: Dict[str, Any
         raise ValueError("This sign-in method is not supported.")
     user = await find_user_by_email(db, email)
 
-    # Firebase never marks a Facebook email verified. Such a claim may open its own
-    # account and come back to it, but never walk into one made another way.
-    if not is_verified and (
-        provider_tag != "facebook" or (user and "facebook" not in (user.provider or []))
-    ):
-        raise ValueError("Email already registered. Please login with your existing method."
-                         if user else "Email is not verified.")
+    # An unverified email is flagged, not refused: it may open a new account (is_verified
+    # stays False) and come back to it. It never walks into an account made another way:
+    # the flag only limits a few actions, while signing in hands over the whole account.
+    if not is_verified and user is not None:
+        # Facebook never reports a verified email, so its holder must still get back in
+        # after verifying. Other providers can, so once someone has proven the address,
+        # an unproven claim no longer opens it.
+        returning = provider_tag in (user.provider or []) and (
+            provider_tag == "facebook" or not user.is_verified
+        )
+        if not returning:
+            raise ValueError("Email already registered. Please login with your existing method.")
 
     allowlisted_role = await allowlisted_role_for_sign_in(
         db, email, email_verified=is_verified, is_new_account=user is None
