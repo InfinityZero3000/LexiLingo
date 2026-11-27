@@ -176,6 +176,14 @@ wherever the format is known.
   the clients actually send — all four report time now, so a source left False
   would have its real minutes hidden by the UI. Shown in the Progress screen's
   **Content** tab.
+- **Achievements pay their `xp_reward` through `award_xp_transaction`** (source
+  `achievement`, `source_id` = achievement id, server-only: `/xp/award` refuses it). It
+  bypasses the streak bonus and the daily cap so the advertised number is the paid number.
+  Unlocks before 2026-11-27 were never paid and are not backfilled. A failed lesson does not
+  touch the streak or `DailyActivity`; `daily_xp_today` is `DailyActivity.xp_earned`
+  (every source), while `daily_cap_remaining` still counts only capped transactions.
+- **Placement scores above chance** (`chance_corrected_percentage`): blind guessing lands
+  at A1. `PLACEMENT_LEVEL_THRESHOLDS` apply to the corrected percentage.
 - **There is exactly one XP endpoint: `POST /xp/award`.** `POST /users/me/xp`
   took any `amount` the client sent with no cap, no dedup and no audit row; it
   was deleted (2026-10-01) and no client had ever called it.
@@ -209,6 +217,13 @@ wherever the format is known.
   (`flutter-app/lib/core/services/skill_event_recorder.dart`), fire-and-forget.
   `vocabConceptId` there must stay in sync with `_vocab_concept_id` in
   `backend-service/app/crud/vocabulary.py`.
+
+## Schema drift
+
+`app/services/schema_drift.py` compares the live DB with the models (tables, columns, enum
+labels, unique constraints an upsert relies on). `GET /admin/ops/schema-drift` (Ops Center
+panel) and a startup warning use it; it never fails startup or `/health`. A new migration-only
+change that the models do not declare is invisible to it.
 
 ## Course Content Invariant
 
