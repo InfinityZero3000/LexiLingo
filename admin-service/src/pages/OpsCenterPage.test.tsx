@@ -15,6 +15,7 @@ const api = vi.hoisted(() => ({
   getContentAgentOverview: vi.fn(),
   getCeleryOverview: vi.fn(),
   getBackupOverview: vi.fn(),
+  getSchemaDrift: vi.fn(),
 }));
 vi.mock("../lib/opsApi", () => ({ ...api }));
 const auth = vi.hoisted(() => ({ role: "super_admin" }));
@@ -56,6 +57,7 @@ beforeEach(() => {
     state: "stale", backup: { result: "ok", at: "2026-11-09T00:00:00Z", postgres_bytes: 2097152, mongo_bytes: 1048576, sets_kept: 12, offsite: false, age_seconds: 90000 },
     verify: { state: "failed", result: "failed", age_seconds: 3600 }, failure_marker_at: "2026-11-09T06:00:00Z",
   });
+  api.getSchemaDrift.mockResolvedValue({ ok: true, checked_at: "2026-11-27T00:00:00Z", issue_count: 0, issues: [] });
   api.getContentAgentOverview.mockResolvedValue({ by_status: { completed: 3, failed: 1 }, recent_failures: [{ id: "abcdef123456", status: "failed", error: "quota", updated_at: null }] });
 });
 afterEach(cleanup);
@@ -154,5 +156,21 @@ describe("OpsCenterPage", () => {
     api.getBackupOverview.mockResolvedValue({ state: "unavailable", backup: null, verify: { state: "never" }, failure_marker_at: null });
     mount();
     expect(await screen.findByText(/cannot see the backup status directory/)).toBeTruthy();
+  });
+
+  it("says when the schema matches the models", async () => {
+    mount();
+    expect(await screen.findByText("Schema matches the models")).toBeTruthy();
+  });
+
+  it("lists every difference between the live database and the models", async () => {
+    api.getSchemaDrift.mockResolvedValue({
+      ok: false, checked_at: "2026-11-27T00:00:00Z", issue_count: 1,
+      issues: [{ kind: "missing_column", table: "exercise_attempts", detail: "attempt_metadata" }],
+    });
+    mount();
+    expect(await screen.findByText("1 differences from the models")).toBeTruthy();
+    expect(screen.getByText("Missing column")).toBeTruthy();
+    expect(screen.getByText("attempt_metadata")).toBeTruthy();
   });
 });
