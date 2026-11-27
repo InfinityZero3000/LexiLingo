@@ -381,6 +381,11 @@ class TestGetStreak:
 class TestUpdateStreak:
     """Tests for POST /api/v1/progress/streak/update."""
 
+    @pytest.fixture(autouse=True)
+    def _active_today(self):
+        with patch("app.routes.progress.has_activity_today", new=AsyncMock(return_value=True)):
+            yield
+
     @pytest.mark.asyncio
     async def test_requires_auth(self, no_auth_client: AsyncClient):
         response = await no_auth_client.post(f"{BASE}/streak/update")

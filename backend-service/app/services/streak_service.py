@@ -157,6 +157,23 @@ async def record_daily_activity(
     return daily
 
 
+async def has_activity_today(db: AsyncSession, user_id: UUID) -> bool:
+    """Whether today holds XP, a passed lesson or a vocabulary review: what makes a day count."""
+    daily = (
+        await db.execute(
+            select(DailyActivity).where(
+                DailyActivity.user_id == user_id,
+                DailyActivity.activity_date == _utc_today(),
+            )
+        )
+    ).scalar_one_or_none()
+    return daily is not None and bool(
+        (daily.xp_earned or 0) > 0
+        or (daily.lessons_completed or 0) > 0
+        or (daily.vocabulary_reviewed or 0) > 0
+    )
+
+
 async def update_user_streak(db: AsyncSession, user_id: UUID) -> tuple[Streak, bool, bool, list]:
     """
     Unified function to update user's streak.

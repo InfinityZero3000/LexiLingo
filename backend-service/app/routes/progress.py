@@ -31,7 +31,7 @@ from app.schemas.response import ApiResponse
 from app.models.user import User
 from app.models.progress import Streak, DailyActivity, LessonCompletion
 from app.models.course import Lesson, Unit
-from app.services.streak_service import update_user_streak
+from app.services.streak_service import has_activity_today, update_user_streak
 from app.crud.gamification import WalletCRUD
 
 router = APIRouter(prefix="/progress", tags=["Progress"])
@@ -441,6 +441,24 @@ async def update_streak(
     - streak_increased: Whether streak went up
     - streak_saved: Whether freeze was used
     """
+    if not await has_activity_today(db, current_user.id):
+        existing = (
+            await db.execute(select(Streak).where(Streak.user_id == current_user.id))
+        ).scalar_one_or_none()
+        return ApiResponse(
+            success=True,
+            message="Streak unchanged: no activity today",
+            data={
+                "current_streak": existing.current_streak if existing else 0,
+                "longest_streak": existing.longest_streak if existing else 0,
+                "total_days_active": existing.total_days_active if existing else 0,
+                "freeze_count": existing.freeze_count if existing else 0,
+                "streak_increased": False,
+                "streak_saved": False,
+                "achievements_unlocked": [],
+            },
+        )
+
     streak, streak_increased, streak_saved, unlocked_achievements = await update_user_streak(db, current_user.id)
     await db.commit()
     await db.refresh(streak)
