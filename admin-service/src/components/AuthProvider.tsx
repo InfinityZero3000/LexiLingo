@@ -1,13 +1,12 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { authStore, resolveRole, Role, UserProfile } from "../lib/auth";
-import { getCurrentUser, loginRequest, googleLoginRequest } from "../lib/authApi";
+import { getCurrentUser, googleLoginRequest, logoutRequest } from "../lib/authApi";
 import { endsSession, NoAdminRoleError } from "../lib/api";
 
 type AuthContextValue = {
   user: UserProfile | null;
   role: Role | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<Role>;
   signInWithGoogle: (idToken: string) => Promise<Role>;
   signOut: () => void;
   refreshProfile: () => Promise<void>;
@@ -15,19 +14,29 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+const hasStoredSession = () =>
+  Boolean(authStore.accessToken || authStore.refreshToken || authStore.cookieSession);
+
+/** Tells the server too: forgetting the tokens alone would leave the session (and cookie) alive. */
+const endServerSession = () => {
+  const session = { accessToken: authStore.accessToken, refreshToken: authStore.refreshToken };
+  authStore.clear();
+  // Best effort: the browser is signed out either way.
+  void logoutRequest(session).catch(() => undefined);
+};
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<UserProfile | null>(authStore.user);
   const [role, setRole] = useState<Role | null>(authStore.role);
-  const [loading, setLoading] = useState(Boolean(authStore.accessToken || authStore.refreshToken));
+  const [loading, setLoading] = useState(hasStoredSession);
 
   const processLogin = async (accessToken: string, refreshToken: string) => {
-    authStore.accessToken = accessToken;
-    authStore.refreshToken = refreshToken;
+    authStore.saveSession(accessToken, refreshToken);
     const profile = await getCurrentUser();
     const resolvedRole = resolveRole(profile);
 
     if (!resolvedRole) {
-      authStore.clear();
+      endServerSession();
       throw new Error("Tài khoản không có quyền truy cập Admin Dashboard.");
     }
 
@@ -36,16 +45,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setUser(profile);
     setRole(resolvedRole);
     return resolvedRole;
-  };
-
-  const signIn = async (email: string, password: string) => {
-    setLoading(true);
-    try {
-      const login = await loginRequest(email, password);
-      return await processLogin(login.access_token, login.refresh_token);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const signInWithGoogle = async (idToken: string) => {
@@ -59,7 +58,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signOut = () => {
-    authStore.clear();
+    endServerSession();
     setUser(null);
     setRole(null);
     // Revoke Google session so user can pick account again
@@ -69,13 +68,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const refreshProfile = async () => {
-    if (!authStore.accessToken && !authStore.refreshToken) return;
+    if (!hasStoredSession()) return;
     setLoading(true);
     try {
       const profile = await getCurrentUser();
       const resolvedRole = resolveRole(profile);
       if (!resolvedRole) {
-        authStore.clear();
+        endServerSession();
         setUser(null);
         setRole(null);
         throw new Error("Tài khoản không có quyền truy cập Admin Dashboard.");
@@ -93,7 +92,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     let cancelled = false;
 
     const bootstrapSession = async () => {
-      if (!authStore.accessToken && !authStore.refreshToken) {
+      if (!hasStoredSession()) {
         setLoading(false);
         return;
       }
@@ -117,7 +116,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       } catch (error) {
         // A restart or a dropped connection says nothing about the session:
         // keep the tokens so a reload picks it up again.
-        if (endsSession(error)) authStore.clear();
+        // Signed in but no longer an admin: end it on the server too.
+        if (error instanceof NoAdminRoleError) endServerSession();
+        else if (endsSession(error)) authStore.clear();
         if (!cancelled) {
           setUser(null);
           setRole(null);
@@ -137,7 +138,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const value = useMemo(
-    () => ({ user, role, loading, signIn, signInWithGoogle, signOut, refreshProfile }),
+    () => ({ user, role, loading, signInWithGoogle, signOut, refreshProfile }),
     [user, role, loading]
   );
 

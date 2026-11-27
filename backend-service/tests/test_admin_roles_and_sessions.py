@@ -4,11 +4,15 @@ from unittest.mock import AsyncMock
 from uuid import UUID, uuid4
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import delete, func, select, text
+from sqlalchemy.exc import IntegrityError
 
 from app.core import dependencies, firebase_auth, security
 from app.core.config import settings
-from app.core.security import create_access_token, get_password_hash
+from app.core.security import create_access_token, decode_token, get_password_hash
+from app.core.session_cookie import COOKIE_NAME
+from app.core.token_blacklist import InactiveUserFlag, SessionCut
+from app.models.proficiency import SkillType, UserProficiencyProfile, UserSkillScore
 from app.models.rbac import AuditLog, Role
 from app.models.user import RefreshToken, User
 from app.services.auth_service import issue_refresh_token, refresh_lifetime_days
@@ -46,13 +50,18 @@ async def _make(db, slug: str = "user", **fields) -> User:
     return user
 
 
-def _headers(user: User) -> dict:
-    return {"Authorization": f"Bearer {create_access_token({'sub': str(user.id)})}"}
+def _headers(user: User, signed_in: timedelta | None = None) -> dict:
+    """`signed_in` is how long ago this session proved who it is; None is an older token without that."""
+    claims = {"sub": str(user.id)}
+    if signed_in is not None:
+        claims["auth_time"] = int((datetime.now(timezone.utc) - signed_in).timestamp())
+    return {"Authorization": f"Bearer {create_access_token(claims)}"}
+
+
+_JUST_NOW = timedelta(0)
 
 
 async def _owner(db, **fields) -> User:
-    """A super admin who signed in a moment ago."""
-    fields.setdefault("last_login", datetime.now(timezone.utc))
     return await _make(db, "super_admin", **fields)
 
 
@@ -196,29 +205,32 @@ async def test_an_admin_cannot_switch_a_super_admin_back_on(async_client, db_ses
 async def test_recently_signed_in_super_admin_can_revoke_an_unlisted_one(async_client, db_session):
     actor, target = await _owner(db_session), await _make(db_session, "super_admin")
     await _role(db_session, "user")
-    off = await async_client.put(f"{API}/admin/users/{target.id}/status", headers=_headers(actor), json={"is_active": False})
-    on = await async_client.put(f"{API}/admin/users/{target.id}/status", headers=_headers(actor), json={"is_active": True})
-    demote = await async_client.put(f"{API}/admin/users/{target.id}/role", headers=_headers(actor), json={"slug": "user"})
+    h = _headers(actor, _JUST_NOW)
+    off = await async_client.put(f"{API}/admin/users/{target.id}/status", headers=h, json={"is_active": False})
+    on = await async_client.put(f"{API}/admin/users/{target.id}/status", headers=h, json={"is_active": True})
+    demote = await async_client.put(f"{API}/admin/users/{target.id}/role", headers=h, json={"slug": "user"})
     assert (off.status_code, on.status_code, demote.status_code) == (200, 200, 200)
     assert await _role_of(db_session, target) == "user"
 
 
-@pytest.mark.parametrize("last_login", [None, datetime.now(timezone.utc) - timedelta(hours=1)])
-async def test_revoking_a_super_admin_needs_a_recent_sign_in(async_client, db_session, last_login):
-    actor = await _make(db_session, "super_admin", last_login=last_login)
+@pytest.mark.parametrize("signed_in", [None, timedelta(hours=1)])
+async def test_revoking_a_super_admin_needs_a_recent_sign_in(async_client, db_session, signed_in):
+    # A sign-in elsewhere (last_login) must not vouch for an old session.
+    actor = await _make(db_session, "super_admin", last_login=datetime.now(timezone.utc))
     target = await _make(db_session, "super_admin")
     await _role(db_session, "user")
-    r = await async_client.put(f"{API}/admin/users/{target.id}/role", headers=_headers(actor), json={"slug": "user"})
+    r = await async_client.put(f"{API}/admin/users/{target.id}/role", headers=_headers(actor, signed_in), json={"slug": "user"})
     assert r.status_code == 403
-    assert "recent sign-in" in r.text
+    assert r.json()["error"]["details"] == {"reason": "recent_sign_in_required"}
 
 
 async def test_a_super_admin_listed_in_server_config_is_protected(async_client, db_session, monkeypatch):
     actor, target = await _owner(db_session), await _make(db_session, "super_admin", email="owner@example.com")
     await _role(db_session, "user")
     monkeypatch.setattr(settings, "SUPER_ADMIN_EMAIL_WHITELIST", "owner@example.com")
-    demote = await async_client.put(f"{API}/admin/users/{target.id}/role", headers=_headers(actor), json={"slug": "user"})
-    off = await async_client.put(f"{API}/admin/users/{target.id}/status", headers=_headers(actor), json={"is_active": False})
+    h = _headers(actor, _JUST_NOW)
+    demote = await async_client.put(f"{API}/admin/users/{target.id}/role", headers=h, json={"slug": "user"})
+    off = await async_client.put(f"{API}/admin/users/{target.id}/status", headers=h, json={"is_active": False})
     assert (demote.status_code, off.status_code) == (403, 403)
     assert "protected" in demote.text
 
@@ -226,7 +238,7 @@ async def test_a_super_admin_listed_in_server_config_is_protected(async_client, 
 async def test_the_only_super_admin_cannot_close_their_own_account(async_client, db_session):
     only = await _owner(db_session)
     for url in (f"{API}/users/me", f"{API}/users/me/permanent"):
-        assert (await async_client.delete(url, headers=_headers(only))).status_code == 409
+        assert (await async_client.delete(url, headers=_headers(only, _JUST_NOW))).status_code == 409
 
 
 async def test_disabling_an_account_ends_its_sessions_for_good(async_client, db_session, super_admin_user):
@@ -263,9 +275,9 @@ async def test_the_allowlist_restores_a_super_admin_when_none_is_left(db_session
     assert await _role_of(db_session, user) == "super_admin"
 
 
-@pytest.mark.parametrize("verified, expected", [(True, "admin"), (False, "user")])
+@pytest.mark.parametrize("verified, status_code", [(True, 200), (False, 400)])
 async def test_google_route_grants_the_allowlisted_role_only_on_a_verified_email(
-    async_client, db_session, monkeypatch, verified, expected
+    async_client, db_session, monkeypatch, verified, status_code
 ):
     await _role(db_session, "user")
     await _role(db_session, "admin")
@@ -276,8 +288,12 @@ async def test_google_route_grants_the_allowlisted_role_only_on_a_verified_email
         AsyncMock(return_value={"email": email, "email_verified": verified, "name": "n", "picture": None}),
     )
     r = await async_client.post(f"{API}/auth/google", json={"id_token": "x", "source": "app"})
-    assert r.status_code == 200
-    assert r.json()["role"] == expected
+    assert r.status_code == status_code, r.text
+    created = (await db_session.execute(select(User).where(User.email == email))).scalar_one_or_none()
+    if verified:
+        assert r.json()["role"] == "admin"
+    else:
+        assert created is None
 
 
 # ---------------------------------------------------------------- email letter case
@@ -303,7 +319,20 @@ async def test_an_older_mixed_case_account_still_signs_in(async_client, db_sessi
     assert r.status_code == 200
 
 
-async def test_accounts_differing_only_by_case_each_stay_reachable(async_client, db_session):
+@pytest.fixture
+async def data_from_before_the_unique_index(db_session):
+    await db_session.execute(text("DROP INDEX uq_users_email_lower"))
+    await db_session.commit()
+    yield
+    await db_session.rollback()
+    await db_session.execute(delete(User).where(func.lower(User.email) == "twin@example.com"))
+    await db_session.execute(text("CREATE UNIQUE INDEX uq_users_email_lower ON users (lower(email))"))
+    await db_session.commit()
+
+
+async def test_accounts_differing_only_by_case_each_stay_reachable(
+    async_client, db_session, data_from_before_the_unique_index
+):
     first = await _make(db_session, email="Twin@example.com")
     second = await _make(db_session, email="twin@example.com", hashed_password=get_password_hash("Other0ne!x"))
     a = await async_client.post(f"{API}/auth/login", json={"email": first.email, "password": PASSWORD})
@@ -371,8 +400,224 @@ async def test_users_me_reports_admin_rights(async_client, super_admin_user, adm
     assert (plain["is_admin"], plain["is_super_admin"]) == (True, False)
 
 
-async def test_otp_admin_sign_in_is_audited(async_client, db_session, super_admin_user):
+async def test_otp_admin_sign_in_is_audited(async_client, db_session, super_admin_user, monkeypatch):
+    monkeypatch.setattr(settings, "ADMIN_CODE_LOGIN_ENABLED", True)
     r = await async_client.post(f"{API}/auth/admin/verify-otp", json={"email": super_admin_user.email, "otp": "000000"})
     assert r.status_code == 400
     rows = (await db_session.execute(select(AuditLog.action).where(AuditLog.resource_type == "auth"))).scalars().all()
     assert "login_failed" in rows
+
+
+async def test_the_database_refuses_a_second_account_differing_only_by_case(db_session):
+    await _make(db_session, email="unique@example.com")
+    with pytest.raises(IntegrityError):
+        await _make(db_session, email="Unique@Example.com")
+    await db_session.rollback()
+
+
+# ---------------------------------------------------------------- recent sign-in
+
+
+async def _sign_in(client, user: User) -> dict:
+    r = await client.post(f"{API}/auth/login", json={"email": user.email, "password": PASSWORD})
+    assert r.status_code == 200, r.text
+    return r.json()
+
+
+async def test_refreshing_keeps_the_original_sign_in_time(async_client, db_session):
+    tokens = await _sign_in(async_client, await _make(db_session))
+    first = decode_token(tokens["access_token"])["auth_time"]
+    renewed = (await async_client.post(f"{API}/auth/refresh", json={"refresh_token": tokens["refresh_token"]})).json()
+    assert decode_token(renewed["access_token"])["auth_time"] == first
+    assert decode_token(renewed["refresh_token"])["auth_time"] == first
+
+
+async def test_a_session_from_before_sign_in_times_stays_unproven_after_refresh(async_client, db_session):
+    user = await _make(db_session)
+    legacy = await issue_refresh_token(db_session, user.id)
+    renewed = (await async_client.post(f"{API}/auth/refresh", json={"refresh_token": legacy})).json()
+    assert "auth_time" not in decode_token(renewed["access_token"])
+
+
+@pytest.mark.parametrize("path", ["/users/me", "/users/me/permanent"])
+@pytest.mark.parametrize("signed_in", [None, timedelta(minutes=16)])
+async def test_deleting_the_account_needs_a_recent_sign_in(async_client, db_session, path, signed_in):
+    user = await _make(db_session)
+    r = await async_client.delete(f"{API}{path}", headers=_headers(user, signed_in))
+    assert r.status_code == 403
+    assert r.json()["error"]["details"] == {"reason": "recent_sign_in_required"}
+    await db_session.refresh(user)
+    assert user.is_active is True
+
+
+async def test_a_learner_who_just_signed_in_can_delete_the_account(async_client, db_session):
+    """Self-deletion failed for everyone: it filtered tables that have no user_id column."""
+    user = await _make(db_session)
+    user_id = user.id
+    profile = UserProficiencyProfile(user_id=user_id)
+    db_session.add(profile)
+    await db_session.flush()
+    db_session.add(UserSkillScore(profile_id=profile.id, skill=SkillType.VOCABULARY, score=10.0))
+    await db_session.commit()
+    tokens = await _sign_in(async_client, user)
+    r = await async_client.delete(
+        f"{API}/users/me/permanent", headers={"Authorization": f"Bearer {tokens['access_token']}"}
+    )
+    assert r.status_code == 200, r.text
+    db_session.expire_all()
+    for model, column in ((User, User.id), (UserProficiencyProfile, UserProficiencyProfile.user_id)):
+        assert await db_session.scalar(select(func.count()).select_from(model).where(column == user_id)) == 0
+    assert await db_session.scalar(select(func.count()).select_from(UserSkillScore)) == 0
+    assert await db_session.scalar(select(func.count()).select_from(RefreshToken).where(RefreshToken.user_id == user_id)) == 0
+
+
+# ---------------------------------------------------------------- session cuts for ai-service
+
+
+async def test_password_change_and_disabling_tell_ai_service_to_drop_older_tokens(
+    async_client, db_session, super_admin_user, monkeypatch
+):
+    monkeypatch.setattr(EmailService, "send_password_changed_email", AsyncMock())
+    cut = AsyncMock()
+    monkeypatch.setattr(SessionCut, "publish", cut)
+    user = await _make(db_session)
+    tokens = await _sign_in(async_client, user)
+    r = await async_client.post(
+        f"{API}/auth/change-password", headers={"Authorization": f"Bearer {tokens['access_token']}"},
+        json={"current_password": PASSWORD, "new_password": "N3wPassw0rd!x"},
+    )
+    assert r.status_code == 200
+    cut.assert_awaited_once_with(user.id)
+
+
+async def test_disabling_publishes_a_cut_that_outlives_reactivation(monkeypatch):
+    store: dict[str, str] = {}
+
+    class FakeRedis:
+        async def setex(self, key, ttl, value):
+            store[key] = value
+
+        async def delete(self, key):
+            store.pop(key, None)
+
+    async def instance():
+        return FakeRedis()
+
+    monkeypatch.setattr("app.core.token_blacklist.RedisClient.get_instance", instance)
+    await InactiveUserFlag.sync("u1", False)
+    await InactiveUserFlag.sync("u1", True)
+    assert list(store) == ["user:sessions-cut:u1"]
+    assert int(store["user:sessions-cut:u1"]) > 0
+
+
+# ---------------------------------------------------------------- admin code sign-in
+
+
+@pytest.mark.parametrize("path", ["login", "request-otp", "verify-otp"])
+async def test_password_and_code_admin_sign_in_are_off_by_default(async_client, super_admin_user, path):
+    r = await async_client.post(
+        f"{API}/auth/admin/{path}", json={"email": super_admin_user.email, "password": "x", "otp": "000000"}
+    )
+    assert r.status_code == 404
+
+
+# ---------------------------------------------------------------- admin web cookie session
+
+ADMIN_ORIGIN = {"Origin": "https://admin.lexilingo.me"}
+
+
+async def _google_admin(client, db, monkeypatch, headers=ADMIN_ORIGIN, **body):
+    user = await _make(db, "admin", provider=["google"])
+    monkeypatch.setattr(settings, "GOOGLE_ADMIN_CLIENT_ID", "admin-client-id")
+    monkeypatch.setattr(
+        security, "verify_google_token",
+        AsyncMock(return_value={"email": user.email, "email_verified": True, "name": "a", "picture": None}),
+    )
+    payload = {"id_token": "x", "source": "admin", "session": "cookie", **body}
+    return await client.post(f"{API}/auth/google", json=payload, headers=headers)
+
+
+async def test_cookie_session_keeps_the_refresh_token_away_from_scripts(async_client, db_session, monkeypatch):
+    r = await _google_admin(async_client, db_session, monkeypatch)
+    assert r.status_code == 200, r.text
+    assert r.json()["refresh_token"] == "" and r.json()["access_token"]
+    cookie = r.headers["set-cookie"].lower()
+    for flag in (f"{COOKIE_NAME}=", "httponly", "samesite=strict", "path=/api/v1/auth", "max-age="):
+        assert flag in cookie
+    first = async_client.cookies.get(COOKIE_NAME)
+
+    renewed = await async_client.post(f"{API}/auth/refresh", json={"session": "cookie"}, headers=ADMIN_ORIGIN)
+    assert renewed.status_code == 200, renewed.text
+    assert renewed.json()["refresh_token"] == "" and renewed.json()["access_token"]
+    assert async_client.cookies.get(COOKIE_NAME) != first
+
+    current = async_client.cookies.get(COOKIE_NAME)
+    out = await async_client.post(f"{API}/auth/logout", json={"session": "cookie"}, headers=ADMIN_ORIGIN)
+    assert out.status_code == 200
+    assert async_client.cookies.get(COOKIE_NAME) is None
+    reused = await async_client.post(f"{API}/auth/refresh", json={"refresh_token": current})
+    assert reused.status_code == 401
+
+
+async def test_the_cookie_is_marked_secure_in_production(monkeypatch):
+    from fastapi import Response
+    from app.core.session_cookie import set_refresh_cookie
+
+    monkeypatch.setattr(settings, "APP_ENV", "production")
+    response = Response()
+    set_refresh_cookie(response, "t", 7)
+    assert "secure" in response.headers["set-cookie"].lower()
+
+
+@pytest.mark.parametrize("origin", ["https://www.lexilingo.me", "https://evil.example", None])
+async def test_only_the_admin_web_may_use_the_cookie(async_client, db_session, monkeypatch, origin):
+    assert (await _google_admin(async_client, db_session, monkeypatch)).status_code == 200
+    headers = {"Origin": origin} if origin else {}
+    for path in ("refresh", "logout"):
+        r = await async_client.post(f"{API}/auth/{path}", json={"session": "cookie"}, headers=headers)
+        assert r.status_code == 403
+    # Nothing was spent: the admin web can still renew.
+    ok = await async_client.post(f"{API}/auth/refresh", json={"session": "cookie"}, headers=ADMIN_ORIGIN)
+    assert ok.status_code == 200
+
+
+async def test_local_origins_work_outside_production_only(async_client, db_session, monkeypatch):
+    local = {"Origin": "http://localhost:5173"}
+    assert (await _google_admin(async_client, db_session, monkeypatch, headers=local)).status_code == 200
+    monkeypatch.setattr(settings, "APP_ENV", "production")
+    r = await async_client.post(f"{API}/auth/refresh", json={"session": "cookie"}, headers=local)
+    assert r.status_code == 403
+
+
+async def test_a_stored_token_moves_into_the_cookie(async_client, db_session):
+    user = await _make(db_session, "admin")
+    stored = (await _sign_in(async_client, user))["refresh_token"]
+    r = await async_client.post(
+        f"{API}/auth/refresh", json={"refresh_token": stored, "session": "cookie"}, headers=ADMIN_ORIGIN
+    )
+    assert r.status_code == 200
+    assert r.json()["refresh_token"] == ""
+    assert async_client.cookies.get(COOKIE_NAME)
+
+
+async def test_without_opting_in_sessions_work_as_before(async_client, db_session, monkeypatch):
+    r = await _google_admin(async_client, db_session, monkeypatch, headers={}, session="token")
+    assert r.status_code == 200
+    assert r.json()["refresh_token"] and "set-cookie" not in r.headers
+    assert (await async_client.post(f"{API}/auth/refresh", json={})).status_code == 422
+
+
+# ---------------------------------------------------------------- shared account matching
+
+
+async def test_google_sign_in_keeps_a_picture_the_learner_chose(async_client, db_session, monkeypatch):
+    await _role(db_session, "user")
+    user = await _make(db_session, avatar_url="/media/avatars/mine.png")
+    monkeypatch.setattr(
+        security, "verify_google_token",
+        AsyncMock(return_value={"email": user.email, "email_verified": True, "name": "n", "picture": "https://g/p.png"}),
+    )
+    r = await async_client.post(f"{API}/auth/google", json={"id_token": "x", "source": "app"})
+    assert r.status_code == 200, r.text
+    await db_session.refresh(user)
+    assert user.avatar_url == "/media/avatars/mine.png"

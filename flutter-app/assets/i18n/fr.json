@@ -1015,7 +1015,9 @@
     "delete_account": "Supprimer le compte",
     "delete_account_confirm": "Cette action supprime définitivement votre compte et toutes vos données d'apprentissage. Elle est irréversible.",
     "delete_account_confirm_btn": "Supprimer définitivement",
-    "delete_account_error": "Impossible de supprimer le compte. Veuillez réessayer."
+    "delete_account_error": "Impossible de supprimer le compte. Veuillez réessayer.",
+    "delete_account_reauth_title": "Reconnectez-vous pour continuer",
+    "delete_account_reauth_message": "Pour votre sécurité, un compte ne peut être supprimé que juste après la connexion. Déconnectez-vous, reconnectez-vous, puis supprimez votre compte."
   },
   "notifications": {
     "pageTitle": "Notifications",

@@ -1,5 +1,6 @@
 import { apiFetch } from "./api";
 import { ENV } from "./env";
+import { credentialsFor, sessionTransport } from "./sessionTransport";
 import { UserProfile } from "./auth";
 
 export type LoginResponse = {
@@ -12,31 +13,30 @@ export type LoginResponse = {
   role?: string;
 };
 
-export const loginRequest = async (email: string, password: string) => {
-  return apiFetch<LoginResponse>(`${ENV.backendUrl}/auth/login`, {
-    skipAuth: true,
-    method: "POST",
-    body: JSON.stringify({ email, password })
-  });
-};
-
 export const googleLoginRequest = async (idToken: string) => {
+  const transport = sessionTransport();
   return apiFetch<LoginResponse>(`${ENV.backendUrl}/auth/google`, {
     skipAuth: true,
     method: "POST",
-    body: JSON.stringify({ id_token: idToken, source: "admin" })
+    ...credentialsFor(transport),
+    body: JSON.stringify({ id_token: idToken, source: "admin", session: transport })
   });
 };
 
-export const refreshTokenRequest = async (refreshToken: string) => {
-  return apiFetch<{ access_token: string; refresh_token: string; token_type: string }>(
-    `${ENV.backendUrl}/auth/refresh`,
-    {
-      skipAuth: true,
-      method: "POST",
-      body: JSON.stringify({ refresh_token: refreshToken })
-    }
-  );
+/** Revokes the session on the server and, in cookie mode, clears the cookie. */
+export const logoutRequest = async (session: { accessToken: string | null; refreshToken: string | null }) => {
+  const transport = sessionTransport();
+  return apiFetch<{ message: string }>(`${ENV.backendUrl}/auth/logout`, {
+    skipAuth: true,
+    method: "POST",
+    keepalive: true,
+    ...credentialsFor(transport),
+    headers: session.accessToken ? { Authorization: `Bearer ${session.accessToken}` } : {},
+    body: JSON.stringify({
+      ...(session.refreshToken ? { refresh_token: session.refreshToken } : {}),
+      session: transport
+    })
+  });
 };
 
 export const getCurrentUser = async () => {

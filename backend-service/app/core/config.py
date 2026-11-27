@@ -124,6 +124,11 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: str = (
         "https://lexilingo.me,https://www.lexilingo.me,https://admin.lexilingo.me"
     )
+    # The only origins allowed to hold an admin session cookie. Local hosts also pass outside production.
+    ADMIN_WEB_ORIGINS: str = "https://admin.lexilingo.me"
+    # Password and emailed-code sign-in to the admin panel. The admin web signs in with Google,
+    # so these stay off unless an operator needs them.
+    ADMIN_CODE_LOGIN_ENABLED: bool = False
     CORS_ALLOW_ORIGIN_REGEX: str = r"https?://([a-zA-Z0-9-]+\.)*lexilingo\.me(:\d+)?"
     ALLOWED_HOSTS: list[str] = [
         "api.lexilingo.me",
@@ -138,6 +143,10 @@ class Settings(BaseSettings):
         if isinstance(value, str):
             return [host.strip() for host in value.split(",") if host.strip()]
         return value
+
+    @property
+    def admin_web_origins(self) -> list[str]:
+        return [o.strip().rstrip("/") for o in self.ADMIN_WEB_ORIGINS.split(",") if o.strip()]
 
     @property
     def cors_origins(self) -> list[str]:

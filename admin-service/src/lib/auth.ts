@@ -20,6 +20,8 @@ const ACCESS_TOKEN_KEY = "lexi_admin_access";
 const REFRESH_TOKEN_KEY = "lexi_admin_refresh";
 const USER_KEY = "lexi_admin_user";
 const ROLE_KEY = "lexi_admin_role";
+// Set while the refresh token is in the HttpOnly cookie. It says nothing secret.
+const SESSION_KEY = "lexi_admin_session";
 
 export const authStore = {
   get accessToken(): string | null {
@@ -35,6 +37,19 @@ export const authStore = {
   set refreshToken(value: string | null) {
     if (value) localStorage.setItem(REFRESH_TOKEN_KEY, value);
     else localStorage.removeItem(REFRESH_TOKEN_KEY);
+  },
+  get cookieSession(): boolean {
+    return localStorage.getItem(SESSION_KEY) === "cookie";
+  },
+  set cookieSession(value: boolean) {
+    if (value) localStorage.setItem(SESSION_KEY, "cookie");
+    else localStorage.removeItem(SESSION_KEY);
+  },
+  /** Keeps what the server returned. An empty refresh token means it went into the cookie. */
+  saveSession(accessToken: string, refreshToken: string) {
+    this.accessToken = accessToken;
+    this.refreshToken = refreshToken || null;
+    this.cookieSession = !refreshToken;
   },
   get user(): UserProfile | null {
     const raw = localStorage.getItem(USER_KEY);
@@ -56,6 +71,7 @@ export const authStore = {
     localStorage.removeItem(REFRESH_TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
     localStorage.removeItem(ROLE_KEY);
+    localStorage.removeItem(SESSION_KEY);
   }
 };
 

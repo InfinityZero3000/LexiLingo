@@ -59,6 +59,7 @@ async def get_current_user(
             user = result.scalar_one_or_none()
             if user and user.is_active and password_still_matches(payload, user.hashed_password):
                 user.signed_in_with_firebase = False
+                user.authenticated_at = payload.get("auth_time")
                 return user
         except (ValueError, TypeError):
             pass  # Invalid UUID format, try Firebase next
@@ -87,6 +88,7 @@ async def get_current_user(
                 )
                 loaded = result.scalar_one_or_none() or user
                 loaded.signed_in_with_firebase = True
+                loaded.authenticated_at = claims.get("auth_time")
                 return loaded
         except ValueError:
             raise HTTPException(

@@ -1,5 +1,6 @@
 """Who may take privileges away from whom, and when allowlisted emails grant a role."""
-from datetime import datetime, timedelta, timezone
+import time
+from datetime import timedelta
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -7,6 +8,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.refusal import refusal
 from app.models.rbac import Role
 from app.models.user import User
 
@@ -25,6 +27,16 @@ async def active_super_admin_ids(db: AsyncSession, *, lock: bool = False) -> set
         # order for everyone, so they queue instead of deadlocking.
         query = query.order_by(User.id).with_for_update(of=User)
     return set((await db.execute(query)).scalars().all())
+
+
+def ensure_recent_sign_in(user: User, message: str) -> None:
+    """For actions a long-lived or borrowed session must not perform on its own."""
+    signed_in = getattr(user, "authenticated_at", None)
+    if (
+        not isinstance(signed_in, (int, float))
+        or time.time() - signed_in > RECENT_SIGN_IN.total_seconds()
+    ):
+        raise refusal(status.HTTP_403_FORBIDDEN, message, {"reason": "recent_sign_in_required"})
 
 
 def is_protected_owner(user: User) -> bool:
@@ -47,14 +59,10 @@ async def ensure_may_change_privileged_account(
             status.HTTP_403_FORBIDDEN,
             "This super admin is protected by the server configuration (SUPER_ADMIN_EMAIL_WHITELIST).",
         )
-    signed_in = actor.last_login
-    if signed_in is not None and signed_in.tzinfo is None:
-        signed_in = signed_in.replace(tzinfo=timezone.utc)
-    if signed_in is None or datetime.now(timezone.utc) - signed_in > RECENT_SIGN_IN:
-        raise HTTPException(
-            status.HTTP_403_FORBIDDEN,
-            "Changing another super admin needs a recent sign-in: sign out, sign in again, then retry.",
-        )
+    ensure_recent_sign_in(
+        actor,
+        "Changing another super admin needs a recent sign-in: sign out, sign in again, then retry.",
+    )
     if actor.id not in await active_super_admin_ids(db, lock=True):
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Super admin privileges required")
 

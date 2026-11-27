@@ -1,44 +1,18 @@
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import delete as sa_delete
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.games import GameSession, XPTransaction
-from app.models.gamification import (
-    ActivityFeed,
-    ChallengeRewardClaim,
-    LeaderboardEntry,
-    UserAchievement,
-    UserFollowing,
-    UserInventory,
-    UserWallet,
-    WalletTransaction,
-)
-from app.models.notification import Notification
-from app.models.proficiency import (
-    ExerciseAttempt,
-    LevelAssessmentTest,
-    UserLevelHistory,
-    UserProficiencyProfile,
-    UserSkillScore,
-)
+from app.models.gamification import UserAchievement, UserWallet
 from app.models.progress import (
     DailyActivity,
-    DailyReviewSession,
     LessonAttempt,
     LessonCompletion,
-    QuestionAttempt,
     Streak,
     UserCourseProgress,
-    UserProgress,
-    UserVocabKnowledge,
 )
-from app.models.rbac import AuditLog
-from app.models.reminder import ReminderDelivery, UserReminderPreference
-from app.models.reward_grant import UserRewardGrant
-from app.models.user import RefreshToken, User, UserDevice
-from app.models.vocabulary import UserVocabulary, VocabularyDeck, VocabularyReview
+from app.models.user import User
+from app.models.vocabulary import UserVocabulary
 from app.schemas.level import (
     UserStatsResponse,
     WeeklyActivityData,
@@ -171,29 +145,3 @@ async def get_weekly_activity(db: AsyncSession, user: User) -> WeeklyActivityRes
         total_study_time=sum(d.study_time for d in week_data),
         total_vocabulary=sum(d.vocabulary for d in week_data),
     )
-
-
-_DELETE_ORDER = (
-    ReminderDelivery, UserReminderPreference, Notification, AuditLog,
-    ExerciseAttempt, LevelAssessmentTest, UserSkillScore, UserLevelHistory,
-    UserProficiencyProfile, ChallengeRewardClaim, UserRewardGrant,
-    ActivityFeed, UserInventory, WalletTransaction, LeaderboardEntry,
-    UserWallet, UserAchievement, XPTransaction, GameSession,
-    VocabularyReview, VocabularyDeck, UserVocabulary, DailyReviewSession,
-    UserVocabKnowledge, QuestionAttempt, DailyActivity, LessonAttempt,
-    LessonCompletion, UserCourseProgress, UserProgress, Streak,
-    RefreshToken, UserDevice,
-)
-
-
-async def delete_user_permanently(db: AsyncSession, user: User) -> None:
-    uid = user.id
-    for model in _DELETE_ORDER:
-        await db.execute(sa_delete(model).where(model.user_id == uid))
-    await db.execute(
-        sa_delete(UserFollowing).where(
-            (UserFollowing.follower_id == uid) | (UserFollowing.following_id == uid)
-        )
-    )
-    await db.delete(user)
-    await db.commit()

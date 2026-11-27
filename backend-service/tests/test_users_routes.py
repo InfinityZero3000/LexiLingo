@@ -14,6 +14,7 @@ Covers:
 - POST /api/v1/users/me/xp           — award XP (auth)
 """
 
+import time
 import pytest
 import uuid
 from datetime import UTC, datetime
@@ -56,6 +57,7 @@ def _make_mock_user(user_id: str = "550e8400-e29b-41d4-a716-446655440001"):
     user.role_level = 0
     user.is_admin = False
     user.is_super_admin = False
+    user.authenticated_at = time.time()  # signed in just now, as account deletion requires
     return user
 
 

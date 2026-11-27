@@ -142,6 +142,13 @@ def _make_mock_session(
 # ---------------------------------------------------------------------------
 
 @pytest.fixture
+def admin_code_login_enabled(monkeypatch):
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "ADMIN_CODE_LOGIN_ENABLED", True)
+
+
+@pytest.fixture
 async def client():
     """Unauthenticated client — DB always returns 'not found'."""
     from app.main import app
@@ -928,8 +935,8 @@ class TestGoogleLogin:
 
         google_info = {"email": "newgoogle@example.com", "email_verified": True, "name": "New Google User"}
         with patch("app.core.security.verify_google_token", new=AsyncMock(return_value=google_info)), \
-             patch("app.routes.auth._ensure_unique_username", new=AsyncMock(return_value="newgoogleuser")), \
-             patch("app.routes.auth._get_role_id", new=AsyncMock(return_value=None)), \
+             patch("app.core.firebase_auth._generate_unique_username", new=AsyncMock(return_value="newgoogleuser")), \
+             patch("app.core.firebase_auth._get_role_id", new=AsyncMock(return_value=None)), \
              patch(
                  "app.services.starter_reward_service.StarterRewardService.grant_new_user_reward",
                  new=AsyncMock(),
@@ -993,7 +1000,7 @@ class TestGoogleLogin:
         google_info = {"email": "test@example.com", "email_verified": True, "name": "Test User"}
         revoke = AsyncMock()
         with patch("app.core.security.verify_google_token", new=AsyncMock(return_value=google_info)), \
-             patch("app.routes.auth._revoke_all_refresh_tokens", new=revoke):
+             patch("app.core.firebase_auth.revoke_all_refresh_tokens", new=revoke):
             async with AsyncClient(transport=transport, base_url="http://test") as c:
                 response = await c.post(f"{BASE}/google", json={"id_token": "good-token", "source": "app"})
         app.dependency_overrides.clear()
@@ -1019,7 +1026,7 @@ class TestGoogleLogin:
         google_info = {"email": "test@example.com", "email_verified": True, "name": "Test User"}
         revoke = AsyncMock()
         with patch("app.core.security.verify_google_token", new=AsyncMock(return_value=google_info)), \
-             patch("app.routes.auth._revoke_all_refresh_tokens", new=revoke):
+             patch("app.core.firebase_auth.revoke_all_refresh_tokens", new=revoke):
             async with AsyncClient(transport=transport, base_url="http://test") as c:
                 response = await c.post(f"{BASE}/google", json={"id_token": "good-token", "source": "app"})
         app.dependency_overrides.clear()
@@ -1143,6 +1150,7 @@ class TestFacebookLogin:
 # POST /auth/admin/login
 # ===========================================================================
 
+@pytest.mark.usefixtures("admin_code_login_enabled")
 class TestAdminLogin:
 
     def _admin_user(self, *, is_active=True, is_verified=True, role_level=1):
@@ -1275,6 +1283,7 @@ class TestAdminLogin:
 # POST /auth/admin/request-otp, /auth/admin/verify-otp
 # ===========================================================================
 
+@pytest.mark.usefixtures("admin_code_login_enabled")
 class TestAdminOtp:
 
     async def test_request_otp_unknown_email_still_200(self, client):
@@ -1501,6 +1510,7 @@ class TestResendVerification:
         assert results == [True, True, True, True, True, False]
 
 
+@pytest.mark.usefixtures("admin_code_login_enabled")
 class TestAdminOtpSecurityControls:
 
     @pytest.fixture(autouse=True)

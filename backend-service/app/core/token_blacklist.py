@@ -137,6 +137,32 @@ class TokenBlacklist:
         return f"{cls.PREFIX}{token_suffix}"
 
 
+class SessionCut:
+    """Tells ai-service that tokens issued before this moment no longer count.
+
+    The backend refuses them itself; ai-service validates access tokens without Postgres.
+    The key outlives any access token issued before the cut.
+    """
+
+    PREFIX = "user:sessions-cut:"
+
+    @classmethod
+    async def publish(cls, user_id) -> bool:
+        redis_client = await RedisClient.get_instance()
+        if redis_client is None:
+            logger.warning("Redis not available - session cut for %s not published", user_id)
+            return False
+        try:
+            ttl = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60 + 300
+            await redis_client.setex(
+                f"{cls.PREFIX}{user_id}", ttl, str(int(datetime.now(timezone.utc).timestamp()))
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to publish session cut for {user_id}: {e}")
+            return False
+
+
 class InactiveUserFlag:
     """Tells ai-service that an account was deactivated.
 
@@ -162,6 +188,8 @@ class InactiveUserFlag:
             if is_active:
                 await redis_client.delete(cls._key(user_id))
             else:
+                # Switching the account back on must not revive tokens issued before.
+                await SessionCut.publish(user_id)
                 ttl = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60 + 300
                 await redis_client.setex(cls._key(user_id), ttl, "1")
             return True

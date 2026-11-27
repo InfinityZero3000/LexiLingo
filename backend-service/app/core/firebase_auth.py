@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.security import get_password_hash_async
+from app.core.token_blacklist import SessionCut
 from app.models.rbac import Role
 from app.models.user import RefreshToken, User
 from app.services.role_guard import allowlisted_role_for_sign_in
@@ -134,16 +135,17 @@ async def get_or_create_user_from_claims(db: AsyncSession, claims: Dict[str, Any
 
     if user:
         updated = False
+        sessions_cut = False
 
         if is_verified and not user.is_verified:
             await drop_unproven_credentials(user)
             await revoke_all_refresh_tokens(db, user.id)
             user.is_verified = True
-            updated = True
+            updated = sessions_cut = True
         if provider_tag not in (user.provider or []):
             user.add_provider(provider_tag)
             updated = True
-        if avatar_url and user.avatar_url != avatar_url:
+        if avatar_url and not user.avatar_url:
             user.avatar_url = avatar_url
             updated = True
         if allowlisted_role:
@@ -155,6 +157,8 @@ async def get_or_create_user_from_claims(db: AsyncSession, claims: Dict[str, Any
         if updated:
             await db.commit()
             await db.refresh(user)
+        if sessions_cut:
+            await SessionCut.publish(user.id)
         return user
 
     username_base = (email.split("@", 1)[0]) if "@" in email else (uid or "user")

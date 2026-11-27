@@ -16,7 +16,7 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.token_blacklist import InactiveUserFlag
 from app.core.firebase_auth import revoke_all_refresh_tokens
-from app.services.role_guard import ensure_not_last_super_admin
+from app.services.role_guard import ensure_not_last_super_admin, ensure_recent_sign_in
 from app.crud.user import UserCRUD
 from app.models.user import User
 from app.services.cefr_level_service import (
@@ -43,8 +43,8 @@ from app.services.rank_service import apply_rank_info_to_user, calculate_rank as
 from app.services.user_stats_service import (
     get_user_stats,
     get_weekly_activity,
-    delete_user_permanently,
 )
+from app.services.user_deletion_service import permanently_delete_user
 
 router = APIRouter()
 
@@ -231,6 +231,9 @@ async def upload_current_user_avatar(
     )
 
 
+_DELETE_NEEDS_SIGN_IN = "For your security, sign in again before deleting your account."
+
+
 @router.delete("/me", response_model=MessageResponse)
 async def delete_current_user(
     current_user: User = Depends(get_current_user),
@@ -241,6 +244,7 @@ async def delete_current_user(
     
     This is a soft delete (sets is_active to False).
     """
+    ensure_recent_sign_in(current_user, _DELETE_NEEDS_SIGN_IN)
     await ensure_not_last_super_admin(db, current_user)
     current_user.is_active = False
     await revoke_all_refresh_tokens(db, current_user.id)
@@ -259,9 +263,11 @@ async def permanently_delete_current_user(
     db: AsyncSession = Depends(get_db),
 ):
     """GDPR hard delete — removes all user data permanently."""
+    ensure_recent_sign_in(current_user, _DELETE_NEEDS_SIGN_IN)
     await ensure_not_last_super_admin(db, current_user)
     user_id = current_user.id
-    await delete_user_permanently(db, current_user)
+    await permanently_delete_user(db, current_user)
+    await db.commit()
     await InactiveUserFlag.sync(user_id, False)
     return MessageResponse(
         message="Account permanently deleted",

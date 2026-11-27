@@ -5,7 +5,7 @@ Extended for Phase 1: Authentication & Secure User Foundation
 
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import String, Boolean, Integer, Float, ForeignKey, Index, CheckConstraint
+from sqlalchemy import String, Boolean, Integer, Float, ForeignKey, Index, CheckConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -165,6 +165,9 @@ class User(Base):
 # Every leaderboard read filters on is_active + rank (league) — without this the
 # query is a full table scan over `users`.
 Index("idx_users_active_rank", User.is_active, User.rank)
+
+# One account per address, whatever its letter case; also serves the case-insensitive lookup.
+Index("uq_users_email_lower", func.lower(User.email), unique=True)
 
 
 class UserDevice(Base):

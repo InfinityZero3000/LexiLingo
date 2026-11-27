@@ -1,3 +1,4 @@
+import time
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -93,6 +94,7 @@ async def issue_refresh_token(
     family_id: uuid.UUID | None = None,
     *,
     commit: bool = True,
+    auth_time: int | None = None,
 ) -> str:
     """Create a refresh token and store it, with the lifetime this user's role calls for.
 
@@ -100,7 +102,10 @@ async def issue_refresh_token(
     route that issues a session goes through this instead of pairing the two calls itself.
     """
     days = await refresh_lifetime_days(db, user_id)
-    token = create_refresh_token({"sub": str(user_id)}, expires_days=days)
+    claims = {"sub": str(user_id)}
+    if auth_time is not None:
+        claims["auth_time"] = auth_time
+    token = create_refresh_token(claims, expires_days=days)
     await save_refresh_token(db, user_id, token, family_id, commit=commit, lifetime_days=days)
     return token
 
@@ -162,8 +167,9 @@ async def revoke_refresh_family(db: AsyncSession, db_token: RefreshToken) -> Non
 async def issue_token_pair(
     db: AsyncSession, user_id: uuid.UUID, hashed_password: str | None
 ) -> tuple[str, str]:
-    """Return (access_token, refresh_token); the refresh token is stored and role-aware."""
+    """A new sign-in: (access_token, refresh_token), the latter stored and role-aware."""
+    now = int(time.time())
     return (
-        create_user_access_token(user_id, hashed_password),
-        await issue_refresh_token(db, user_id),
+        create_user_access_token(user_id, hashed_password, auth_time=now),
+        await issue_refresh_token(db, user_id, auth_time=now),
     )
