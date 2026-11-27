@@ -140,4 +140,19 @@ describe("LessonExercisesPage AI generation", () => {
     expect(saveBtn().disabled).toBe(true);
     expect(api.updateLessonContent).not.toHaveBeenCalled();
   });
+
+  it("shows inline validation error instead of alert() and confirms before discarding dirty changes", async () => {
+    mount();
+    await screen.findByText("Existing question");
+
+    fireEvent.click(screen.getByRole("button", { name: /Add exercise/i }));
+    fireEvent.click(await screen.findByRole("button", { name: "Multiple Choice" }));
+
+    fireEvent.click(await screen.findByRole("button", { name: /Save exercise/i }));
+    expect((await screen.findByRole("alert")).textContent).toContain("Please enter a question / prompt.");
+
+    fireEvent.change(screen.getAllByRole("textbox")[0], { target: { value: "New prompt?" } });
+    fireEvent.click(screen.getByRole("button", { name: /Save exercise/i }));
+    expect((await screen.findByRole("alert")).textContent).toContain("Please enter the correct answer.");
+  });
 });

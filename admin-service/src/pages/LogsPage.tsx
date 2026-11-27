@@ -191,7 +191,9 @@ export const LogsPage = () => {
               placeholder={t.logs.searchPlaceholder}
               aria-label={t.common.search}
             />
-            <button type="submit" className="primary-button">{t.common.search}</button>
+            <button type="submit" className="primary-button small" style={{ position: "static", transform: "none" }}>
+              {t.common.search}
+            </button>
           </form>
 
           <select

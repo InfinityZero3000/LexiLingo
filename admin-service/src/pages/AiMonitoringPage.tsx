@@ -61,18 +61,21 @@ export const AiMonitoringPage = () => {
   const chat = useQuery({
     queryKey: ["ai-monitoring", "chat", window],
     queryFn: () => getChatMonitoring(window),
-    refetchInterval: REFRESH_MS,
+    retry: false,
+    refetchInterval: (query) => (query.state.status === "error" ? false : REFRESH_MS),
   });
   const keys = useQuery({
     queryKey: ["ai-monitoring", "llm-keys"],
     queryFn: getLlmKeyMonitoring,
-    refetchInterval: REFRESH_MS,
+    retry: false,
+    refetchInterval: (query) => (query.state.status === "error" ? false : REFRESH_MS),
   });
 
   const spool = useQuery({
     queryKey: ["ai-monitoring", "spool"],
     queryFn: getSpoolMonitoring,
-    refetchInterval: REFRESH_MS,
+    retry: false,
+    refetchInterval: (query) => (query.state.status === "error" ? false : REFRESH_MS),
   });
 
   const windowLabel: Record<AiWindow, string> = { "1h": m.window1h, "24h": m.window24h, "7d": m.window7d };

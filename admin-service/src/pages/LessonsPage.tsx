@@ -143,6 +143,10 @@ export const LessonsPage = () => {
     if (isStandalone) {
       loadCourses();
       loadUnits();
+    } else {
+      // Drilled in: load names so the header says which course and unit this is.
+      loadCourses();
+      loadUnits(paramCourseId);
     }
   }, []);
 
@@ -289,7 +293,19 @@ export const LessonsPage = () => {
     <div className="stack">
       <SectionHeader
         title={t.lessons.title}
-        description={`${lessons.length} ${t.lessons.description}`}
+        description={`${[paramCourseId && courseMap.get(paramCourseId), paramUnitId && unitMap.get(paramUnitId)].filter(Boolean).join(" › ")}${paramUnitId && (courseMap.get(paramCourseId ?? "") || unitMap.get(paramUnitId)) ? " · " : ""}${lessons.length} ${t.lessons.description}`}
+        action={
+          <>
+            {emptyLessons.length > 0 && (
+              <button className="ghost-button small" style={{ borderRadius: 999 }} onClick={handleBulkGenerate} disabled={bulk !== null}>
+                {t.aiGenerate.bulkButton.replace("{count}", String(emptyLessons.length))}
+              </button>
+            )}
+            <button className="primary-button small" style={{ borderRadius: 999 }} onClick={() => { resetForm(); setShowForm(true); }}>
+              {t.lessons.createLesson}
+            </button>
+          </>
+        }
       />
 
       {error && <div className="form-error">{error}</div>}
@@ -301,16 +317,16 @@ export const LessonsPage = () => {
         ]}
       />
 
-      <div className="panel filter-panel">
-        <div className="filter-bar">
+      {(isStandalone || bulk || bulkResult) && (
+        <div className="panel filter-panel">
           {isStandalone && (
-            <div className="filter-group">
+            <div className="filter-bar">
               <select
                 className="filter-select"
                 value={selectedCourseId}
                 onChange={(e) => setSelectedCourseId(e.target.value)}
               >
-                <option value="">-- Tất cả khóa học --</option>
+                <option value="">{t.units.allCourses}</option>
                 {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
               </select>
               <select
@@ -318,64 +334,56 @@ export const LessonsPage = () => {
                 value={selectedUnitId}
                 onChange={(e) => setSelectedUnitId(e.target.value)}
               >
-                <option value="">-- Tất cả chương --</option>
+                <option value="">{t.lessons.allUnits}</option>
                 {units.map(u => <option key={u.id} value={u.id}>{u.title}</option>)}
               </select>
             </div>
           )}
-          {emptyLessons.length > 0 && (
-            <button className="ghost-button" style={{ borderRadius: 999 }} onClick={handleBulkGenerate} disabled={bulk !== null}>
-              {t.aiGenerate.bulkButton.replace("{count}", String(emptyLessons.length))}
-            </button>
-          )}
-          <button className="primary-button" style={{ borderRadius: 999 }} onClick={() => { resetForm(); setShowForm(true); }}>
-            {t.lessons.createLesson}
-          </button>
+          <div role="status" aria-live="polite">
+            {bulk && (
+              <div className="form-hint">
+                {t.aiGenerate.bulkProgress
+                  .replace("{current}", String(bulk.current))
+                  .replace("{total}", String(bulk.total))
+                  .replace("{title}", bulk.title)}
+                {" "}
+                <button
+                  type="button"
+                  className="ghost-button small"
+                  disabled={stopping}
+                  onClick={() => { stopRef.current = true; setStopping(true); }}
+                >
+                  {t.aiGenerate.stop}
+                </button>
+                {stopping && <div>{t.aiGenerate.stopping}</div>}
+              </div>
+            )}
+            {bulkResult && (
+              <div className={bulkResult.failed.length ? "form-hint" : "form-success"}>
+                {(bulkResult.stopped ? t.aiGenerate.bulkStopped : t.aiGenerate.bulkDone).replace(
+                  "{count}",
+                  String(bulkResult.succeeded),
+                )}
+                {bulkResult.skipped > 0 && (
+                  <div>{t.aiGenerate.bulkSkipped.replace("{count}", String(bulkResult.skipped))}</div>
+                )}
+                {bulkResult.failed.length > 0 && (
+                  <div className="form-error">
+                    {t.aiGenerate.bulkFailedTitle.replace("{count}", String(bulkResult.failed.length))}
+                    <ul>
+                      {bulkResult.failed.map((f) => (
+                        <li key={f.item.id}>
+                          {f.item.title}: {f.message}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
-        <div role="status" aria-live="polite">
-          {bulk && (
-            <div className="form-hint">
-              {t.aiGenerate.bulkProgress
-                .replace("{current}", String(bulk.current))
-                .replace("{total}", String(bulk.total))
-                .replace("{title}", bulk.title)}
-              {" "}
-              <button
-                type="button"
-                className="ghost-button small"
-                disabled={stopping}
-                onClick={() => { stopRef.current = true; setStopping(true); }}
-              >
-                {t.aiGenerate.stop}
-              </button>
-              {stopping && <div>{t.aiGenerate.stopping}</div>}
-            </div>
-          )}
-          {bulkResult && (
-            <div className={bulkResult.failed.length ? "form-hint" : "form-success"}>
-              {(bulkResult.stopped ? t.aiGenerate.bulkStopped : t.aiGenerate.bulkDone).replace(
-                "{count}",
-                String(bulkResult.succeeded),
-              )}
-              {bulkResult.skipped > 0 && (
-                <div>{t.aiGenerate.bulkSkipped.replace("{count}", String(bulkResult.skipped))}</div>
-              )}
-              {bulkResult.failed.length > 0 && (
-                <div className="form-error">
-                  {t.aiGenerate.bulkFailedTitle.replace("{count}", String(bulkResult.failed.length))}
-                  <ul>
-                    {bulkResult.failed.map((f) => (
-                      <li key={f.item.id}>
-                        {f.item.title}: {f.message}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
+      )}
 
       <div className="panel">
         {loading ? (
@@ -402,7 +410,7 @@ export const LessonsPage = () => {
                 align: "center",
               },
               ...(isStandalone ? [{
-                header: "Chương",
+                header: t.lessons.unit,
                 sortValue: (row: LessonItem) => unitMap.get(row.unit_id) || row.unit_id,
                 render: (row: LessonItem) => (
                   <span className="table-meta" style={{ color: "var(--text)", fontWeight: 500 }}>
@@ -435,20 +443,20 @@ export const LessonsPage = () => {
                 align: "center",
               },
               {
-                header: "Ngưỡng đạt",
+                header: t.lessons.passThresholdCol,
                 sortValue: (row: LessonItem) => row.pass_threshold,
                 render: (row: LessonItem) => <span className="table-meta">{row.pass_threshold}%</span>,
                 align: "center",
               },
               {
-                header: "Bài tập",
+                header: t.lessons.exercisesCol,
                 sortValue: (row: LessonItem) => row.exercise_count,
                 render: (row: LessonItem) =>
                   row.exercise_count > 0 ? (
                     <span className="table-meta">{row.exercise_count}</span>
                   ) : (
-                    <span title="Bài học chưa có bài tập — người học không mở được và khóa học không thể xuất bản">
-                      <StatusPill tone="warning" label="Chưa có" />
+                    <span title={t.lessons.noExercisesHint}>
+                      <StatusPill tone="warning" label={t.lessons.noExercisesBadge} />
                     </span>
                   ),
                 align: "center",
@@ -466,9 +474,9 @@ export const LessonsPage = () => {
                         borderRadius: 999,
                       }}
                       onClick={() => handleEditExercises(row)}
-                      title="Quản lý bài tập"
+                      title={t.lessons.manageExercisesTitle}
                     >
-                      Bài tập ({row.exercise_count})
+                      {t.lessons.exercisesCol} ({row.exercise_count})
                     </button>
                     <button className="ghost-button small" onClick={() => handleEdit(row)}>{t.common.edit}</button>
                     <button className="ghost-button small danger" onClick={() => handleDelete(row)}>{t.common.delete}</button>
@@ -489,68 +497,68 @@ export const LessonsPage = () => {
           <form className="form" onSubmit={handleSave}>
             {isStandalone && !editingId && (
               <label>
-                Chương *
+                {t.lessons.unitRequired}
                 <select
                   value={formUnitId}
                   onChange={(e) => setFormUnitId(e.target.value)}
                   required
                 >
-                  <option value="">-- Chọn chương --</option>
+                  <option value="">{t.lessons.chooseUnitOption}</option>
                   {units.map(u => <option key={u.id} value={u.id}>{u.title}</option>)}
                 </select>
               </label>
             )}
             <label>
-              Tiêu đề *
+              {t.lessons.lessonTitle}
               <input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
             </label>
             <label>
-              Mô tả
+              {t.common.description}
               <textarea rows={2} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
             </label>
             <label>
-              Outcome (can-do statement)
+              {t.lessons.outcomeLabel}
               <textarea
                 rows={2}
-                placeholder="Vd: Bạn có thể đặt bàn ăn qua điện thoại bằng tiếng Anh."
+                placeholder={t.lessons.outcomePlaceholder}
                 value={form.outcome}
                 onChange={(e) => setForm({ ...form, outcome: e.target.value })}
               />
             </label>
             <div className="form-row">
               <label>
-                Loại bài học *
+                {t.lessons.lessonTypeRequired}
                 <select value={form.lesson_type} onChange={(e) => setForm({ ...form, lesson_type: e.target.value })}>
                   {LESSON_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
                 </select>
               </label>
               <label>
-                Kỹ năng chấm điểm
+                {t.lessons.scoringSkillLabel}
                 <select value={form.skill} onChange={(e) => setForm({ ...form, skill: e.target.value })}>
-                  <option value="">— Theo khóa học —</option>
+                  <option value="">{t.lessons.inheritFromCourseOption}</option>
                   {SKILLS.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
               </label>
             </div>
             <div className="form-row">
               <label>
-                Thứ tự
+                {t.lessons.order}
                 <input type="number" min={0} value={form.order_index} onChange={(e) => setForm({ ...form, order_index: Number(e.target.value) })} />
               </label>
             </div>
             <div className="form-row">
               <label>
-                XP thưởng
+                {t.lessons.xpReward}
                 <input type="number" min={0} value={form.xp_reward} onChange={(e) => setForm({ ...form, xp_reward: Number(e.target.value) })} />
               </label>
               <label>
-                Ngưỡng đạt (%)
+                {t.lessons.passThresholdLabel}
                 <input type="number" min={0} max={100} value={form.pass_threshold} onChange={(e) => setForm({ ...form, pass_threshold: Number(e.target.value) })} />
               </label>
             </div>
             <div className="form-row">
               <label>
-                Thời lượng (phút)
+                {t.lessons.durationMinutesLabel}
                 <input type="number" min={1} max={120} value={form.estimated_minutes} onChange={(e) => setForm({ ...form, estimated_minutes: Number(e.target.value) })} />
               </label>
             </div>

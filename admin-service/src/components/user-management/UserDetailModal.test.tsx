@@ -18,6 +18,8 @@ vi.mock("../../lib/userManagementApi", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../lib/userManagementApi")>()),
   ...api,
 }));
+const { getMyPermissions } = vi.hoisted(() => ({ getMyPermissions: vi.fn() }));
+vi.mock("../../lib/rbacApi", () => ({ getMyPermissions }));
 vi.mock("../../lib/gemLimitsApi", () => ({
   getGemLimits: vi.fn().mockResolvedValue({
     usage: { role: "admin", max_per_action: 500, daily_budget: 2000, spent_today: 150, remaining_today: 1850, item_gift_max_qty: 100 },
@@ -58,7 +60,12 @@ const mount = (onClose = vi.fn()) =>
   );
 
 beforeEach(() => {
-  const store = new Map<string, string>([["lexi_admin_locale", "en"]]);
+  const store = new Map<string, string>([
+    ["lexi_admin_locale", "en"], ["lexi_admin_access", "test-token"],
+    ["lexi_admin_user", JSON.stringify({ id: "operator-1", email: "operator@example.com", username: "operator" })],
+  ]);
+  getMyPermissions.mockReset();
+  getMyPermissions.mockResolvedValue({ all: false, permissions: ["gifts:grant"] });
   vi.stubGlobal("localStorage", {
     getItem: (k: string) => store.get(k) ?? null,
     setItem: (k: string, v: string) => void store.set(k, v),
@@ -128,10 +135,19 @@ describe("UserDetailModal", () => {
     await waitFor(() => expect(api.updateUserRole.mock.calls[0].slice(0, 2)).toEqual(["u1", { slug: "test" }]));
   });
 
+  it("hides gifting without a backend grant", async () => {
+    getMyPermissions.mockResolvedValue({ all: false, permissions: [] });
+    mount();
+    await screen.findByText("Personal info");
+    await waitFor(() => expect(getMyPermissions).toHaveBeenCalledOnce());
+    expect(screen.queryByRole("tab", { name: "Send gift" })).toBeNull();
+    expect(api.giftToUser).not.toHaveBeenCalled();
+  });
+
   it("rejects an empty course gift without calling the API", async () => {
     mount();
     await screen.findByText("Personal info");
-    fireEvent.click(screen.getByRole("tab", { name: "Send gift" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Send gift" }));
     fireEvent.change(screen.getByRole("combobox"), { target: { value: "course" } });
     fireEvent.change(screen.getByLabelText("Reason for the gift"), { target: { value: "welcome back" } });
     const form = (await screen.findByText("Choose a course")).closest("form") as HTMLFormElement;
@@ -144,7 +160,7 @@ describe("UserDetailModal", () => {
     api.giftToUser.mockResolvedValue({ success: true, message: "ok", data: { gift_description: "100 Gems" } });
     mount();
     await screen.findByText("Personal info");
-    fireEvent.click(screen.getByRole("tab", { name: "Send gift" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Send gift" }));
     expect(await screen.findByText("Up to 500 gems per gift · 1,850/2,000 gems left today")).toBeTruthy();
     fireEvent.change(screen.getByLabelText("Reason for the gift"), { target: { value: "support goodwill" } });
     fireEvent.click(await screen.findByRole("button", { name: "Send gift" }));
@@ -155,11 +171,26 @@ describe("UserDetailModal", () => {
   it("will not send a gift without a written reason", async () => {
     mount();
     await screen.findByText("Personal info");
-    fireEvent.click(screen.getByRole("tab", { name: "Send gift" }));
+    fireEvent.click(await screen.findByRole("tab", { name: "Send gift" }));
     const form = (await screen.findByLabelText("Reason for the gift")).closest("form") as HTMLFormElement;
     fireEvent.change(screen.getByLabelText("Reason for the gift"), { target: { value: "hi" } });
     fireEvent.submit(form);
     expect((await screen.findByRole("alert")).textContent).toBe("Please enter a reason (min. 5 characters)");
     expect(api.giftToUser).not.toHaveBeenCalled();
+  });
+
+  it("requires typing Super Admin before promoting a user to Super Admin", async () => {
+    api.updateUserRole.mockResolvedValue({});
+    mount();
+    await screen.findByText("Personal info");
+    fireEvent.click(screen.getByRole("button", { name: "Super Admin" }));
+    const text = await screen.findByText("Change this user's role to Super Admin?");
+    const dialog = text.closest('[role="dialog"]') as HTMLElement;
+    const confirmBtn = within(dialog).getByRole("button", { name: "Change role" }) as HTMLButtonElement;
+    expect(confirmBtn.disabled).toBe(true);
+    fireEvent.change(within(dialog).getByRole("textbox"), { target: { value: "Super Admin" } });
+    expect(confirmBtn.disabled).toBe(false);
+    fireEvent.click(confirmBtn);
+    await waitFor(() => expect(api.updateUserRole.mock.calls[0].slice(0, 2)).toEqual(["u1", { slug: "super_admin" }]));
   });
 });

@@ -92,29 +92,19 @@ export const TopicsPage = () => {
       <SectionHeader
         title="Conversation Topics"
         description={`${topics.length} topics: ${customCount} created here, ${topics.length - customCount} built in`}
-      />
-
-      {error && <div className="form-error" role="alert">{error}</div>}
-      {notice && <div className="form-hint" role="status">{notice}</div>}
-
-      <div className="panel" style={{ padding: "12px 16px" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
-          <div>
-            <div className="table-title">Topic catalog</div>
-            <div className="table-sub">
-              Type a title and the category and icon are picked for you; or let the AI draft the whole topic.
-              Built-in topics are read-only: clone one to make your own version.
-            </div>
-          </div>
+        action={
           <button
-            className="primary-button"
+            className="primary-button small"
             style={{ borderRadius: 999 }}
             onClick={() => (editor?.mode === "create" ? setEditor(null) : openEditor("create", emptyForm()))}
           >
             {editor?.mode === "create" ? t.adminPages.topicsHideForm : t.adminPages.topicsCreate}
           </button>
-        </div>
-      </div>
+        }
+      />
+
+      {error && <div className="form-error" role="alert">{error}</div>}
+      {notice && <div className="form-hint" role="status">{notice}</div>}
 
       {editor && (
         <TopicForm
@@ -130,23 +120,29 @@ export const TopicsPage = () => {
         />
       )}
 
-      <div className="panel" style={{ padding: "12px 16px" }}>
-        <div className="form-row" style={{ alignItems: "end" }}>
-          <label className="form" style={{ gap: 6 }}>
-            <span className="table-meta"><Search size={12} aria-hidden="true" /> Search</span>
+      <div className="panel filter-panel">
+        <div className="filter-bar">
+          <div className="filter-search-form">
             <input
+              className="search-input"
+              aria-label="Search"
               placeholder="title, category or id"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
-          </label>
-          <label className="form" style={{ gap: 6 }}>
-            <span className="table-meta">Level</span>
-            <select style={{ borderRadius: 999 }} value={level} onChange={(e) => setLevel(e.target.value as "" | TopicDifficulty)}>
-              <option value="">All levels</option>
-              {DIFFICULTIES.map((item) => <option key={item} value={item}>{item}</option>)}
-            </select>
-          </label>
+            <span className="filter-search-button" aria-hidden="true" style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
+              <Search size={16} />
+            </span>
+          </div>
+          <select
+            className="filter-select"
+            aria-label="Level"
+            value={level}
+            onChange={(e) => setLevel(e.target.value as "" | TopicDifficulty)}
+          >
+            <option value="">All levels</option>
+            {DIFFICULTIES.map((item) => <option key={item} value={item}>{item}</option>)}
+          </select>
           <div
             className="tab-row"
             role="group"

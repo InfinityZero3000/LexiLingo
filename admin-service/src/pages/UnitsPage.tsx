@@ -75,7 +75,8 @@ export const UnitsPage = () => {
   };
 
   useEffect(() => {
-    if (isStandalone) loadCourses();
+    // Courses are needed in both modes: the filter in standalone, the header name when drilled in.
+    loadCourses();
   }, []);
 
   useEffect(() => { void loadUnits(); }, [paramCourseId, selectedCourseId]);
@@ -140,7 +141,12 @@ export const UnitsPage = () => {
     <div className="stack">
       <SectionHeader
         title={t.units.title}
-        description={`${units.length} ${t.units.description}`}
+        description={`${paramCourseId && courseMap.get(paramCourseId) ? `${courseMap.get(paramCourseId)} · ` : ""}${units.length} ${t.units.description}`}
+        action={
+          <button className="primary-button small" style={{ borderRadius: 999 }} onClick={() => { resetForm(); setShowForm(true); }}>
+            {t.units.createUnit}
+          </button>
+        }
       />
 
       {error && <div className="form-error">{error}</div>}
@@ -154,32 +160,27 @@ export const UnitsPage = () => {
 
       <div className="panel filter-panel">
         <div className="filter-bar">
-          <div className="filter-group filter-group-grow">
-            <form onSubmit={handleSearch} className="filter-search-form">
-              <input
-                className="search-input"
-                placeholder={t.units.searchPlaceholder}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              <button className="icon-button filter-search-button" type="submit" aria-label={t.common.search} title={t.common.search}>
-                <Search size={18} aria-hidden="true" />
-              </button>
-            </form>
-            {isStandalone && (
-              <select
-                className="filter-select"
-                value={selectedCourseId}
-                onChange={(e) => setSelectedCourseId(e.target.value)}
-              >
-                <option value="">-- Tất cả khóa học --</option>
-                {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
-              </select>
-            )}
-          </div>
-          <button className="primary-button" style={{ borderRadius: 999 }} onClick={() => { resetForm(); setShowForm(true); }}>
-            {t.units.createUnit}
-          </button>
+          <form onSubmit={handleSearch} className="filter-search-form">
+            <input
+              className="search-input"
+              placeholder={t.units.searchPlaceholder}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <button className="icon-button filter-search-button" type="submit" aria-label={t.common.search} title={t.common.search}>
+              <Search size={16} aria-hidden="true" />
+            </button>
+          </form>
+          {isStandalone && (
+            <select
+              className="filter-select"
+              value={selectedCourseId}
+              onChange={(e) => setSelectedCourseId(e.target.value)}
+            >
+              <option value="">{t.units.allCourses}</option>
+              {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+            </select>
+          )}
         </div>
       </div>
 
@@ -199,7 +200,7 @@ export const UnitsPage = () => {
                 align: "center",
               },
               ...(isStandalone ? [{
-                header: "Khóa học",
+                header: t.units.course,
                 sortValue: (row: UnitItem) => courseMap.get(row.course_id) || row.course_id,
                 render: (row: UnitItem) => (
                   <span className="table-meta" style={{ color: "var(--text)", fontWeight: 500 }}>
@@ -224,13 +225,13 @@ export const UnitsPage = () => {
                 ),
               },
               {
-                header: "Bài học",
+                header: t.units.lessonsCount,
                 sortValue: (row: UnitItem) => row.total_lessons,
                 render: (row: UnitItem) => <span className="table-meta">{row.total_lessons}</span>,
                 align: "center",
               },
               {
-                header: "Màu",
+                header: t.units.colorCol,
                 render: (row: UnitItem) =>
                   row.background_color ? (
                     <div
@@ -277,13 +278,13 @@ export const UnitsPage = () => {
           <form className="form" onSubmit={handleSave}>
             {isStandalone && !editingId && (
               <label>
-                Khóa học *
+                {t.units.courseRequired}
                 <select
                   value={formCourseId}
                   onChange={(e) => setFormCourseId(e.target.value)}
                   required
                 >
-                  <option value="">-- Chọn khóa học --</option>
+                  <option value="">{t.units.chooseCourseOption}</option>
                   {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
                 </select>
               </label>
@@ -302,7 +303,7 @@ export const UnitsPage = () => {
                 <input type="number" min={0} value={form.order_index} onChange={(e) => setForm({ ...form, order_index: Number(e.target.value) })} />
               </label>
               <label>
-                Màu nền
+                {t.units.bgColorLabel}
                 <input value={form.background_color} onChange={(e) => setForm({ ...form, background_color: e.target.value })} placeholder="#FF4D00" />
               </label>
             </div>

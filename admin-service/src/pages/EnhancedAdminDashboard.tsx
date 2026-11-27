@@ -32,7 +32,8 @@ const getActivityBadgeStyle = (action: string, index: number) => {
 };
 
 export const EnhancedAdminDashboard = () => {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const dateLocale = locale === "vi" ? "vi-VN" : "en-US";
   // Parallel data fetching - applying async-parallel pattern from React best practices
   const { data: kpisData, isLoading: kpisLoading, error: kpisError } = useQuery({
     queryKey: ["dashboard", "kpis"],
@@ -177,7 +178,7 @@ export const EnhancedAdminDashboard = () => {
               const date = new Date(a.created_at);
               const badge = getActivityBadgeStyle(a.action, i);
               const initial = (a.resource_type || a.action || "A").trim().slice(0, 1).toUpperCase();
-              const timestamp = `${date.toLocaleDateString("vi-VN")} ${date.toLocaleTimeString("vi-VN", {
+              const timestamp = `${date.toLocaleDateString(dateLocale)} ${date.toLocaleTimeString(dateLocale, {
                 hour: "2-digit",
                 minute: "2-digit",
               })}`;

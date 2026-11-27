@@ -7,28 +7,21 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  RadialBarChart,
-  RadialBar,
   BarChart,
   Bar,
   Legend,
-  PolarAngleAxis,
 } from "recharts";
-import { Activity, CheckCircle, AlertTriangle, XCircle, RefreshCw, Pause, Play, Database, Cpu, HardDrive, Server, Wifi } from "lucide-react";
+import { Activity, CheckCircle, AlertTriangle, XCircle, RefreshCw, Pause, Play, Database, Server, Wifi } from "lucide-react";
 import { SectionHeader } from "../components/SectionHeader";
 import { StatCard } from "../components/StatCard";
 import { BentoTooltip } from "../components/dashboard/BentoChartPrimitives";
 import {
-  getSystemMetrics,
   getServicesHealth,
   getDbStats,
   getRequestStats,
-  getMonitoringDashboard,
-  type SystemMetrics,
   type ServicesHealth,
   type DbStats,
   type RequestStats,
-  type MonitoringDashboard,
 } from "../lib/aiApi";
 import { useI18n } from "../lib/i18n";
 
@@ -36,9 +29,8 @@ import { useI18n } from "../lib/i18n";
 
 type TimePoint = {
   time: string;
-  cpu: number;
-  memory: number;
   connections: number;
+  requests: number;
 };
 
 type LoadingState = "idle" | "loading" | "ok" | "error";
@@ -54,66 +46,11 @@ const StatusIcon = ({ status }: { status: string }) => {
   return <AlertTriangle size={16} aria-hidden="true" />;
 };
 
-const fmt = (n: number | undefined, dec = 1) =>
-  n !== undefined ? n.toFixed(dec) : "--";
-
 const nowLabel = () =>
   new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
 const fill = (text: string, vars: Record<string, string | number>) =>
   text.replace(/\{(\w+)\}/g, (_, k) => String(vars[k] ?? ""));
-
-// ─── GaugeBar ─────────────────────────────────────────────────────────────────
-
-const GaugeBar = ({
-  label,
-  value,
-  max = 100,
-  unit = "%",
-  color,
-}: {
-  label: string;
-  value: number;
-  max?: number;
-  unit?: string;
-  color?: string;
-}) => {
-  const pct = Math.min(100, (value / max) * 100);
-  const level = pct > 85 ? "crit" : pct > 60 ? "warn" : "ok";
-  const fillColor =
-    level === "crit" ? "#F43F5E" : level === "warn" ? "#F59E0B" : (color ?? "#FF4D00");
-
-  return (
-    <div className="mon-gauge">
-      <div className="mon-gauge-head">
-        <span>{label}</span>
-        <span className="mon-gauge-value">
-          {fmt(value, unit === "%" ? 1 : 2)}
-          {unit}
-        </span>
-      </div>
-      <div
-        className="mon-gauge-track"
-        style={{ height: 10, borderRadius: 999 }}
-        role="meter"
-        aria-label={label}
-        aria-valuemin={0}
-        aria-valuemax={max}
-        aria-valuenow={value}
-      >
-        <div
-          className={`mon-gauge-fill mon-gauge-fill--${level}`}
-          style={{
-            width: `${pct}%`,
-            borderRadius: 999,
-            backgroundColor: fillColor,
-            "--gauge-color": fillColor,
-          } as React.CSSProperties}
-        />
-      </div>
-    </div>
-  );
-};
 
 // ─── ServiceBadge ─────────────────────────────────────────────────────────────
 
@@ -136,11 +73,9 @@ const REFRESH_MS = 30_000;
 export const MonitoringPage = () => {
   const { t } = useI18n();
 
-  const [system, setSystem] = useState<SystemMetrics | null>(null);
   const [services, setServices] = useState<ServicesHealth | null>(null);
   const [db, setDb] = useState<DbStats | null>(null);
   const [reqStats, setReqStats] = useState<RequestStats | null>(null);
-  const [aiDash, setAiDash] = useState<MonitoringDashboard | null>(null);
   const [history, setHistory] = useState<TimePoint[]>([]);
   const [loadState, setLoadState] = useState<LoadingState>("idle");
   const [lastUpdated, setLastUpdated] = useState<string>("");
@@ -150,40 +85,34 @@ export const MonitoringPage = () => {
   const fetchAll = useCallback(async () => {
     setLoadState("loading");
     try {
-      const [sys, svc, dbSt, rq, ai] = await Promise.allSettled([
-        getSystemMetrics(),
+      const [svc, dbSt, rq] = await Promise.allSettled([
         getServicesHealth(),
         getDbStats(),
         getRequestStats(),
-        getMonitoringDashboard(),
       ]);
 
-      const sysVal = sys.status === "fulfilled" ? sys.value : null;
       const svcVal = svc.status === "fulfilled" ? svc.value : null;
       const dbVal = dbSt.status === "fulfilled" ? dbSt.value : null;
       const rqVal = rq.status === "fulfilled" ? rq.value : null;
-      const aiVal = ai.status === "fulfilled" ? ai.value : null;
 
-      setSystem(sysVal);
       setServices(svcVal);
       setDb(dbVal);
       setReqStats(rqVal);
-      setAiDash(aiVal);
 
       const label = nowLabel();
       setHistory((prev) => {
         const point: TimePoint = {
           time: label,
-          cpu: sysVal?.cpu_percent ?? aiVal?.system?.cpu?.percent ?? aiVal?.system?.cpu_percent ?? 0,
-          memory: sysVal?.memory?.percent ?? aiVal?.system?.memory?.percent ?? aiVal?.system?.memory_percent ?? 0,
           connections: rqVal?.active_connections ?? 0,
+          requests: rqVal?.requests_last_minute ?? 0,
         };
         const next = [...prev, point];
         return next.length > HISTORY_MAX ? next.slice(-HISTORY_MAX) : next;
       });
 
       setLastUpdated(label);
-      setLoadState("ok");
+      // All three telemetry calls failed: say so instead of rendering calm "Unknown" cards.
+      setLoadState([svc, dbSt, rq].every((r) => r.status === "rejected") ? "error" : "ok");
     } catch {
       setLoadState("error");
     }
@@ -203,19 +132,6 @@ export const MonitoringPage = () => {
 
   // ── Derived values ──────────────────────────────────────────────────────────
 
-  const cpu = system?.cpu_percent ?? aiDash?.system?.cpu?.percent ?? aiDash?.system?.cpu_percent;
-  const mem = system?.memory?.percent ?? aiDash?.system?.memory?.percent ?? aiDash?.system?.memory_percent;
-  const disk = system?.disk?.percent ?? aiDash?.system?.disk?.percent ?? aiDash?.system?.disk_percent;
-  const load1 = system?.load_avg?.["1m"] ?? (aiDash?.system?.load_avg?.[0]);
-  const load5 = system?.load_avg?.["5m"] ?? (aiDash?.system?.load_avg?.[1]);
-  const load15 = system?.load_avg?.["15m"] ?? (aiDash?.system?.load_avg?.[2]);
-
-  const radialData = [
-    { name: "CPU", value: cpu ?? 0, fill: "#FF4D00" },
-    { name: t.monitoring.memory, value: mem ?? 0, fill: "#FF8A3D" },
-    { name: t.monitoring.disk, value: disk ?? 0, fill: "#FDBA74" },
-  ];
-
   const dbCounts = db?.counts;
   const m = t.monitoring;
   const statusLabel = (status: string) => {
@@ -225,11 +141,7 @@ export const MonitoringPage = () => {
       : tone === "unreachable" ? m.statusUnreachable
       : m.statusUnknown;
   };
-  const aiCpu = aiDash?.system?.cpu?.percent ?? aiDash?.system?.cpu_percent;
-  const aiMem = aiDash?.system?.memory?.percent ?? aiDash?.system?.memory_percent;
-  const backendStatus = aiDash?.health?.healthy !== undefined
-    ? (aiDash.health.healthy ? "healthy" : "unhealthy")
-    : "unknown";
+  const backendStatus = services ? "healthy" : "unknown";
 
   return (
     <div className="stack">
@@ -260,35 +172,30 @@ export const MonitoringPage = () => {
         }
       />
 
+      {loadState === "error" && (
+        <div className="form-error" role="alert">
+          {m.loadFailed}
+        </div>
+      )}
+
       <div className="card-grid">
         <StatCard
-          label="CPU"
-          value={cpu !== undefined ? `${fmt(cpu)}%` : "--"}
-          note={load1 !== undefined ? `Load: ${fmt(load1)} / ${fmt(load5)} / ${fmt(load15)}` : undefined}
+          label={m.backendStatus}
+          value={statusLabel(backendStatus)}
           variant="blue"
-          icon={<Cpu size={16} aria-hidden="true" />}
+          icon={<Server size={16} aria-hidden="true" />}
         />
         <StatCard
-          label={m.memory}
-          value={mem !== undefined ? `${fmt(mem)}%` : "--"}
-          note={
-            system?.memory
-              ? `${fmt(system.memory.used_mb / 1024, 1)} / ${fmt(system.memory.total_mb / 1024, 1)} GB`
-              : undefined
-          }
+          label={m.dbStatus}
+          value={statusLabel(services?.postgres ?? "unknown")}
           accent="teal"
-          icon={<Activity size={16} aria-hidden="true" />}
+          icon={<Database size={16} aria-hidden="true" />}
         />
         <StatCard
-          label={m.disk}
-          value={disk !== undefined ? `${fmt(disk)}%` : "--"}
-          note={
-            system?.disk
-              ? `${fmt(system.disk.used_gb, 1)} / ${fmt(system.disk.total_gb, 1)} GB`
-              : undefined
-          }
+          label={m.aiStatus}
+          value={statusLabel(services?.ai_service ?? "unknown")}
           accent="berry"
-          icon={<HardDrive size={16} aria-hidden="true" />}
+          icon={<Activity size={16} aria-hidden="true" />}
         />
         <StatCard
           label={m.connections}
@@ -299,106 +206,32 @@ export const MonitoringPage = () => {
         />
       </div>
 
-      <div className="mon-row mon-row--chart">
+      {history.length > 0 && (
         <div className="card bento-card--dark">
-          <div className="mon-card-title mon-card-title--plain" style={{ color: "#F8FAFC" }}>{fill(m.cpuMemChart, { n: HISTORY_MAX })}</div>
-          <ResponsiveContainer width="100%" height={220}>
+          <div className="mon-card-title mon-card-title--plain" style={{ color: "#F8FAFC" }}>
+            {m.connections} & {m.requests} ({HISTORY_MAX})
+          </div>
+          <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={history} margin={{ top: 5, right: 10, left: -10, bottom: 0 }}>
               <defs>
-                <linearGradient id="gradCpu" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id="gradConn" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#FF4D00" stopOpacity={0.45} />
                   <stop offset="95%" stopColor="#FF4D00" stopOpacity={0} />
                 </linearGradient>
-                <linearGradient id="gradMem" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id="gradReq" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#FF9F43" stopOpacity={0.38} />
                   <stop offset="95%" stopColor="#FF9F43" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="rgba(148, 163, 184, 0.16)" />
               <XAxis dataKey="time" tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
-              <YAxis domain={[0, 100]} unit="%" tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} />
-              <Tooltip content={<BentoTooltip dark valueFormatter={(v) => `${Number(v).toFixed(1)}%`} />} />
+              <YAxis tick={{ fontSize: 11, fill: "#94A3B8" }} axisLine={false} tickLine={false} allowDecimals={false} />
+              <Tooltip content={<BentoTooltip dark />} />
               <Legend wrapperStyle={{ fontSize: 12, color: "#CBD5E1" }} />
-              <Area type="monotone" dataKey="cpu" name="CPU %" stroke="#FF4D00" fill="url(#gradCpu)" strokeWidth={2.5} dot={false} />
-              <Area type="monotone" dataKey="memory" name={m.memoryPct} stroke="#FF9F43" fill="url(#gradMem)" strokeWidth={2.5} dot={false} />
+              <Area type="monotone" dataKey="connections" name={m.connections} stroke="#FF4D00" fill="url(#gradConn)" strokeWidth={2.5} dot={false} />
+              <Area type="monotone" dataKey="requests" name={m.requests} stroke="#FF9F43" fill="url(#gradReq)" strokeWidth={2.5} dot={false} />
             </AreaChart>
           </ResponsiveContainer>
-        </div>
-
-        <div className="card">
-          <div className="mon-card-title mon-card-title--plain">{m.resourceUsage}</div>
-          <ResponsiveContainer width="100%" height={160}>
-            <RadialBarChart cx="50%" cy="50%" innerRadius="32%" outerRadius="92%" data={radialData} startAngle={90} endAngle={-270}>
-              <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
-              <RadialBar dataKey="value" background={{ fill: "rgba(148, 163, 184, 0.16)" }} cornerRadius={8} angleAxisId={0} label={{ position: "insideStart", fill: "#fff", fontSize: 10 }} />
-              <Tooltip content={<BentoTooltip dark={false} valueFormatter={(v) => `${Number(v).toFixed(1)}%`} />} />
-              <Legend iconSize={10} />
-            </RadialBarChart>
-          </ResponsiveContainer>
-          <div className="mon-gauges">
-            <GaugeBar label="CPU" value={cpu ?? 0} color="#FF4D00" />
-            <GaugeBar label={m.memory} value={mem ?? 0} color="#FF8A3D" />
-            <GaugeBar label={m.disk} value={disk ?? 0} color="#FDBA74" />
-          </div>
-        </div>
-      </div>
-
-      {system && (
-        <div className="mon-row mon-row--thirds">
-          <div className="card">
-            <div className="mon-card-title mon-card-title--sm"><Wifi size={15} aria-hidden="true" /> {m.networkIo}</div>
-            <GaugeBar
-              label={fill(m.sent, { gb: fmt(system.network.bytes_sent_mb / 1024, 2) })}
-              value={system.network.packets_sent}
-              max={Math.max(system.network.packets_sent, system.network.packets_recv, 1)}
-              unit={m.packets}
-            />
-            <GaugeBar
-              label={fill(m.received, { gb: fmt(system.network.bytes_recv_mb / 1024, 2) })}
-              value={system.network.packets_recv}
-              max={Math.max(system.network.packets_sent, system.network.packets_recv, 1)}
-              unit={m.packets}
-              color="#FF8A3D"
-            />
-          </div>
-
-          <div className="card">
-            <div className="mon-card-title mon-card-title--sm"><Cpu size={15} aria-hidden="true" /> {m.loadAverage}</div>
-            <div className="mon-load">
-              {(
-                [
-                  [m.minutes1, load1],
-                  [m.minutes5, load5],
-                  [m.minutes15, load15],
-                ] as [string, number | undefined][]
-              ).map(([label, val]) => (
-                <div key={label} className="mon-load-cell">
-                  <div className="mon-load-value">{val !== undefined ? fmt(val, 2) : "--"}</div>
-                  <div className="mon-load-label">{label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="card">
-            <div className="mon-card-title mon-card-title--sm"><HardDrive size={15} aria-hidden="true" /> {m.diskIo}</div>
-            <GaugeBar
-              label={m.read}
-              value={system.disk_io.read_mb}
-              max={Math.max(system.disk_io.read_mb, system.disk_io.write_mb, 1)}
-              unit=" MB"
-            />
-            <GaugeBar
-              label={m.write}
-              value={system.disk_io.write_mb}
-              max={Math.max(system.disk_io.read_mb, system.disk_io.write_mb, 1)}
-              unit=" MB"
-              color="#FF8A3D"
-            />
-            <div className="mon-foot">
-              {fill(m.diskUsed, { used: fmt(system.disk.used_gb, 1), total: fmt(system.disk.total_gb, 1), pct: fmt(system.disk.percent) })}
-            </div>
-          </div>
         </div>
       )}
 
@@ -415,11 +248,6 @@ export const MonitoringPage = () => {
               <ServiceBadge key={name} name={name} status={status} label={statusLabel(status)} icon={icon} />
             ))}
           </div>
-          {aiDash?.health?.warnings && aiDash.health.warnings.length > 0 && (
-            <div className="monitor-warning">
-              <AlertTriangle size={15} aria-hidden="true" /> {aiDash.health.warnings.join(" • ")}
-            </div>
-          )}
         </div>
 
         <div className="card">
@@ -447,31 +275,6 @@ export const MonitoringPage = () => {
           )}
         </div>
       </div>
-
-      {aiDash && (
-        <div className="card">
-          <div className="mon-card-title">{m.aiMetrics}</div>
-          <div className="card-grid">
-            <StatCard label={m.aiCpu} value={aiCpu !== undefined ? `${fmt(aiCpu)}%` : "--"} />
-            <StatCard label={m.aiMemory} value={aiMem !== undefined ? `${fmt(aiMem)}%` : "--"} accent="teal" />
-            <StatCard
-              label={m.threads}
-              value={aiDash.process?.num_threads !== undefined ? String(aiDash.process.num_threads) : "--"}
-              accent="berry"
-            />
-            <StatCard
-              label={m.aiStatusLabel}
-              value={aiDash.health?.healthy !== undefined ? (aiDash.health.healthy ? m.healthy : m.warning) : "--"}
-              accent={aiDash.health?.healthy ? "teal" : "orange"}
-              note={
-                aiDash.health
-                  ? fill(m.issueCount, { c: aiDash.health.critical_count ?? 0, w: aiDash.health.warning_count ?? 0 })
-                  : undefined
-              }
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -149,6 +149,8 @@ const en: Translations = {
     themeToLight: "Switch to light theme",
     themeToDark: "Switch to dark theme",
     breadcrumb: "Breadcrumb",
+    filterNav: "Filter navigation...",
+    switchLanguage: "Switch language",
   },
 
   // ============== Login ==============
@@ -277,6 +279,20 @@ const en: Translations = {
     allStatus: "All Status",
     filters: "Filters",
     resetFilters: "Reset Filters",
+    searchAria: "Search users",
+    searchByNameEmail: "Search by name or email...",
+    statusLabel: "Status",
+    statusActive: "Active",
+    statusPaused: "Paused",
+    sortByLabel: "Sort by",
+    sortJoined: "Joined date",
+    sortLastLogin: "Last login",
+    sortEmail: "Email",
+    sortRole: "Role",
+    sortTotalXp: "Total XP",
+    orderLabel: "Order",
+    orderAsc: "Ascending",
+    orderDesc: "Descending",
   },
 
   // ============== Courses ==============
@@ -309,6 +325,9 @@ const en: Translations = {
     loadFailed: "Failed to load courses",
     viewUnits: "View Units",
     importData: "Import Data",
+    exportCsv: "Export CSV",
+    primarySkill: "Primary skill",
+    unlabeledSkill: "— Unlabeled —",
     units: "Units",
   },
 
@@ -426,6 +445,11 @@ const en: Translations = {
     viewLessons: "View Lessons",
     loadFailed: "Failed to load units",
     selectCourse: "Select Course",
+    allCourses: "-- All courses --",
+    colorCol: "Color",
+    bgColorLabel: "Background color",
+    courseRequired: "Course *",
+    chooseCourseOption: "-- Choose a course --",
   },
 
   // ============== Lessons ==============
@@ -448,6 +472,51 @@ const en: Translations = {
     selectUnit: "Select Unit",
     content: "Content",
     difficulty: "Difficulty",
+    allUnits: "-- All units --",
+    passThresholdCol: "Pass threshold",
+    exercisesCol: "Exercises",
+    noExercisesBadge: "Empty",
+    noExercisesHint: "This lesson has no exercises yet — learners cannot open it and the course cannot be published",
+    manageExercisesTitle: "Manage exercises",
+    unitRequired: "Unit *",
+    chooseUnitOption: "-- Choose a unit --",
+    outcomeLabel: "Outcome (can-do statement)",
+    outcomePlaceholder: "e.g. You can book a restaurant table over the phone in English.",
+    lessonTypeRequired: "Lesson type *",
+    scoringSkillLabel: "Scoring skill",
+    inheritFromCourseOption: "— Inherit from course —",
+    passThresholdLabel: "Pass threshold (%)",
+    durationMinutesLabel: "Duration (minutes)",
+  },
+
+  // ============== Lesson Exercises ==============
+  lessonExercises: {
+    selectTypeTitle: "Choose exercise type",
+    exerciseHeading: "Exercise #{n}",
+    errPromptRequired: "Please enter a question / prompt.",
+    errAnswerRequired: "Please enter the correct answer.",
+    saveExercise: "Save exercise",
+    noQuestionText: "No question text",
+    moveUpAria: "Move exercise {n} up",
+    moveDownAria: "Move exercise {n} down",
+    editAria: "Edit exercise {n}",
+    deleteAria: "Delete exercise {n}",
+    loadFailed: "Could not load lesson.",
+    serverError: "Server connection error.",
+    deleteConfirm: "Delete this exercise?",
+    discardConfirm: "You have unsaved exercise changes. Leave this page and discard them?",
+    discardConfirmLabel: "Discard changes",
+    backToLessons: "Back to Lessons",
+    estimatedMinutesLabel: "Estimated minutes:",
+    exercisesCount: "{n} exercises",
+    savedSuccess: "Saved successfully!",
+    listTitle: "Exercises ({n})",
+    addExercise: "Add exercise",
+    emptyTitle: "No exercises yet",
+    emptyDesc: "Click \"Add exercise\" to get started",
+    saveAll: "Save all",
+    savingAll: "Saving...",
+    difficultyLabel: "Difficulty (1–5)",
   },
 
   // ============== Vocabulary ==============
@@ -985,8 +1054,6 @@ const en: Translations = {
     deactivate: "Deactivate",
     emailHint: "Email of an existing user in the system",
   },
-
-  // ============== AI Chat Settings ==============
 
   // ============== User management list ==============
   userList: {

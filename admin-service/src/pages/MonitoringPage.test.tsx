@@ -5,30 +5,18 @@ import { I18nProvider } from "../lib/i18n";
 import { MonitoringPage } from "./MonitoringPage";
 
 const api = vi.hoisted(() => ({
-  getSystemMetrics: vi.fn(),
   getServicesHealth: vi.fn(),
   getDbStats: vi.fn(),
   getRequestStats: vi.fn(),
-  getMonitoringDashboard: vi.fn(),
 }));
 vi.mock("../lib/aiApi", () => api);
 vi.mock("recharts", () => {
   const Stub = () => null;
   return {
     AreaChart: Stub, Area: Stub, XAxis: Stub, YAxis: Stub, CartesianGrid: Stub, Tooltip: Stub,
-    ResponsiveContainer: Stub, RadialBarChart: Stub, RadialBar: Stub, BarChart: Stub, Bar: Stub,
-    Legend: Stub, PolarAngleAxis: Stub,
+    ResponsiveContainer: Stub, BarChart: Stub, Bar: Stub, Legend: Stub,
   };
 });
-
-const system = {
-  cpu_percent: 42,
-  memory: { percent: 70, used_mb: 2048, total_mb: 4096 },
-  disk: { percent: 90, used_gb: 90, total_gb: 100 },
-  load_avg: { "1m": 0.5, "5m": 0.4, "15m": 0.3 },
-  network: { bytes_sent_mb: 1024, bytes_recv_mb: 2048, packets_sent: 10, packets_recv: 20 },
-  disk_io: { read_mb: 5, write_mb: 7 },
-};
 
 const mount = () =>
   render(
@@ -44,11 +32,9 @@ beforeEach(() => {
     setItem: (k: string, v: string) => void store.set(k, v),
     removeItem: (k: string) => void store.delete(k),
   });
-  api.getSystemMetrics.mockResolvedValue(system);
   api.getServicesHealth.mockResolvedValue({ postgres: "healthy", redis: "unreachable", ai_service: "weird" });
   api.getDbStats.mockResolvedValue({ counts: { users: 3 } });
   api.getRequestStats.mockResolvedValue({ active_connections: 4, requests_last_minute: 9 });
-  api.getMonitoringDashboard.mockResolvedValue(null);
 });
 afterEach(() => {
   cleanup();
@@ -59,26 +45,25 @@ afterEach(() => {
 describe("MonitoringPage", () => {
   it("labels each service with a translated status, not the raw API string", async () => {
     mount();
-    expect(await screen.findByText("Healthy")).toBeTruthy();
-    expect(screen.getByText("Unreachable")).toBeTruthy();
+    expect((await screen.findAllByText("Healthy")).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Unreachable").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Unknown").length).toBeGreaterThan(0);
     expect(screen.queryByText("weird")).toBeNull();
   });
 
-  it("exposes usage bars as meters with their value", async () => {
+  it("shows active connections and request rate without host CPU/RAM/Disk metrics", async () => {
     mount();
-    await screen.findByText("Healthy");
-    const disk = screen.getAllByRole("meter", { name: "Disk" })[0];
-    expect(disk.getAttribute("aria-valuenow")).toBe("90");
-    expect(disk.getAttribute("aria-valuemax")).toBe("100");
+    await screen.findAllByText("Healthy");
+    expect(screen.getByText("4")).toBeTruthy();
     expect(screen.getByText("9 req/min")).toBeTruthy();
+    expect(screen.queryByText("CPU")).toBeNull();
   });
 
   it("stops polling while paused and resumes afterwards", async () => {
     vi.useFakeTimers();
     mount();
     await act(async () => {});
-    const calls = () => api.getSystemMetrics.mock.calls.length;
+    const calls = () => api.getServicesHealth.mock.calls.length;
     expect(calls()).toBe(1);
 
     await act(async () => { vi.advanceTimersByTime(30_000); });
@@ -91,5 +76,13 @@ describe("MonitoringPage", () => {
     fireEvent.click(screen.getByRole("button", { name: "Resume auto-refresh" }));
     await act(async () => { vi.advanceTimersByTime(30_000); });
     expect(calls()).toBe(3);
+  });
+
+  it("displays an error alert when all three monitoring endpoints fail", async () => {
+    api.getServicesHealth.mockRejectedValueOnce(new Error("down"));
+    api.getDbStats.mockRejectedValueOnce(new Error("down"));
+    api.getRequestStats.mockRejectedValueOnce(new Error("down"));
+    mount();
+    expect((await screen.findByRole("alert")).textContent).toContain("Failed to load monitoring data");
   });
 });

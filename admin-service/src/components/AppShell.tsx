@@ -28,11 +28,22 @@ export const AppShell = ({
   children?: React.ReactNode;
 }) => {
   const { user, signOut } = useAuth();
-  const { t } = useI18n();
+  const { t, locale, setLocale } = useI18n();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [navFilter, setNavFilter] = useState("");
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const { pathname } = useLocation();
 
-  const sections = navItems.reduce<{ label?: string; items: NavItem[] }[]>((acc, item) => {
+  const normalizedFilter = navFilter.trim().toLowerCase();
+  const visibleNavItems = normalizedFilter
+    ? navItems.filter(
+        (item) =>
+          item.label.toLowerCase().includes(normalizedFilter) ||
+          (item.group && item.group.toLowerCase().includes(normalizedFilter))
+      )
+    : navItems;
+
+  const sections = visibleNavItems.reduce<{ label?: string; items: NavItem[] }[]>((acc, item) => {
     const last = acc[acc.length - 1];
     if (last && last.label === item.group) last.items.push(item);
     else acc.push({ label: item.group, items: [item] });
@@ -60,6 +71,9 @@ export const AppShell = ({
 
   const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
   const closeMobileMenu = () => setMobileMenuOpen(false);
+  const toggleGroup = (groupLabel: string) => {
+    setCollapsedGroups((prev) => ({ ...prev, [groupLabel]: !prev[groupLabel] }));
+  };
 
   const formatRole = (role: Role) => {
     return role === "super_admin" ? "Super Admin" : "Admin";
@@ -86,25 +100,58 @@ export const AppShell = ({
 
         <div className="nav-section">
           <div className="nav-title">{t.appShell.navigation}</div>
+          {navItems.length > 8 && (
+            <div className="nav-filter-wrap">
+              <input
+                type="search"
+                className="nav-filter-input"
+                placeholder={t.appShell.filterNav}
+                aria-label={t.appShell.filterNav}
+                value={navFilter}
+                onChange={(e) => setNavFilter(e.target.value)}
+              />
+            </div>
+          )}
           <nav className="nav-links">
-            {sections.map((section, i) => (
-              <div className="nav-group" key={section.label ?? i} role="group" aria-label={section.label}>
-                {section.label && <div className="nav-group-title">{section.label}</div>}
-                {section.items.map((item) => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    end={item.to === "/admin" || item.to === "/super"}
-                    className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
-                    onClick={closeMobileMenu}
-                  >
-                    {item.icon && <span className="nav-icon">{item.icon}</span>}
-                    <span className="nav-label">{item.label}</span>
-                    {item.badge && <span className="nav-badge">{item.badge}</span>}
-                  </NavLink>
-                ))}
-              </div>
-            ))}
+            {sections.map((section, i) => {
+              const hasActiveItem = section.items.some(
+                (item) => pathname === item.to || pathname.startsWith(`${item.to}/`)
+              );
+              const isCollapsed =
+                !!section.label &&
+                !normalizedFilter &&
+                !hasActiveItem &&
+                !!collapsedGroups[section.label];
+              return (
+                <div className="nav-group" key={section.label ?? i} role="group" aria-label={section.label}>
+                  {section.label && (
+                    <button
+                      type="button"
+                      className="nav-group-toggle"
+                      aria-expanded={!isCollapsed}
+                      onClick={() => toggleGroup(section.label!)}
+                    >
+                      <span>{section.label}</span>
+                      <span aria-hidden="true">{isCollapsed ? "+" : "−"}</span>
+                    </button>
+                  )}
+                  {!isCollapsed &&
+                    section.items.map((item) => (
+                      <NavLink
+                        key={item.to}
+                        to={item.to}
+                        end={item.to === "/admin" || item.to === "/super"}
+                        className={({ isActive }) => (isActive ? "nav-link active" : "nav-link")}
+                        onClick={closeMobileMenu}
+                      >
+                        {item.icon && <span className="nav-icon">{item.icon}</span>}
+                        <span className="nav-label">{item.label}</span>
+                        {item.badge && <span className="nav-badge">{item.badge}</span>}
+                      </NavLink>
+                    ))}
+                </div>
+              );
+            })}
           </nav>
         </div>
 
@@ -154,7 +201,27 @@ export const AppShell = ({
               </ol>
             </nav>
           )}
-          <ThemeToggle className="topbar-theme-toggle" />
+          <div className="topbar-actions">
+            <div className="locale-toggle" role="group" aria-label={t.appShell.switchLanguage}>
+              <button
+                type="button"
+                className={`locale-toggle__btn ${locale === "en" ? "active" : ""}`}
+                aria-pressed={locale === "en"}
+                onClick={() => setLocale("en")}
+              >
+                EN
+              </button>
+              <button
+                type="button"
+                className={`locale-toggle__btn ${locale === "vi" ? "active" : ""}`}
+                aria-pressed={locale === "vi"}
+                onClick={() => setLocale("vi")}
+              >
+                VI
+              </button>
+            </div>
+            <ThemeToggle />
+          </div>
         </header>
 
         <div className="page">

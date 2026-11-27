@@ -22,6 +22,7 @@ import {
 import { listCoursesAdmin, listShopItems } from '../../lib/adminApi';
 import { usePermissions } from '../../lib/usePermissions';
 import { getGemLimits } from '../../lib/gemLimitsApi';
+import { getUserWallet } from '../../lib/userSupportApi';
 import { UserWalletPanel } from './UserWalletPanel';
 import { UserPremiumPanel } from './UserPremiumPanel';
 import { useI18n } from '../../lib/i18n';
@@ -42,7 +43,8 @@ interface UserDetailModalProps {
 }
 
 export default function UserDetailModal({ userId, onClose }: UserDetailModalProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const dateLocale = locale === 'vi' ? 'vi-VN' : 'en-US';
   const confirm = useConfirm();
   const { can } = usePermissions();
   const queryClient = useQueryClient();
@@ -126,9 +128,13 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
   };
   
   const handleRoleChange = async (slug: RoleSlug) => {
+    const isSuper = slug === "super_admin";
     const ok = await confirm({
       message: t.userDetail.changeRoleConfirm.replace("{role}", getRoleLabel(slug)),
       confirmLabel: t.userDetail.changeRoleAction,
+      danger: isSuper,
+      // Granting Super Admin is the highest-risk change here: make the admin type it out.
+      requireText: isSuper ? getRoleLabel(slug) : undefined,
     });
     if (ok) roleChangeMutation.mutate(slug);
   };
@@ -136,6 +142,13 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
   const { data: gemLimits } = useQuery({
     queryKey: ['gem-limits'],
     queryFn: getGemLimits,
+    enabled: activeTab === 'gift',
+  });
+
+  // Current balance, so the admin sees it while gifting instead of switching to the Wallet tab.
+  const { data: giftWallet } = useQuery({
+    queryKey: ['support-wallet', userId, 'gift-balance'],
+    queryFn: () => getUserWallet(userId, 1, 0),
     enabled: activeTab === 'gift',
   });
 
@@ -440,12 +453,12 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
                 </div>
                 <div className="pill-item">
                   <span className="table-sub">{t.userDetail.joined}</span>
-                  <span className="pill-title ud-value">{new Date(user.created_at).toLocaleDateString('vi-VN')}</span>
+                  <span className="pill-title ud-value">{new Date(user.created_at).toLocaleDateString(dateLocale)}</span>
                 </div>
                 <div className="pill-item">
                   <span className="table-sub">{t.userDetail.lastLogin}</span>
                   <span className="pill-title ud-value">
-                    {user.last_login ? new Date(user.last_login).toLocaleDateString('vi-VN') : t.userDetail.neverLoggedIn}
+                    {user.last_login ? new Date(user.last_login).toLocaleDateString(dateLocale) : t.userDetail.neverLoggedIn}
                   </span>
                 </div>
               </div>
@@ -492,7 +505,7 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
                   <div className="ud-activity-main">
                     <div className="table-title ud-value">{activity.description}</div>
                     <div className="ud-activity-meta">
-                      <span>{new Date(activity.activity_date).toLocaleDateString('vi-VN')}</span>
+                      <span>{new Date(activity.activity_date).toLocaleDateString(dateLocale)}</span>
                       {activity.xp_earned > 0 && (
                         <span
                           className="ud-activity-xp"
@@ -523,6 +536,9 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
           <div className="stack">
             <div className="panel-inner" style={{ borderRadius: 18 }}>
               <h4 className="ud-section-title ud-section-title--spaced">{t.userDetail.giftTitle}</h4>
+              {giftWallet && (
+                <p className="ud-hint">{t.support.balance}: <strong>{giftWallet.balance.toLocaleString()}</strong></p>
+              )}
 
               {successMessage && <div className="form-success" role="status">{successMessage}</div>}
               {errorMessage && <div className="form-error" role="alert">{errorMessage}</div>}

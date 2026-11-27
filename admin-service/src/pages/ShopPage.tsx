@@ -230,7 +230,19 @@ export const ShopPage = () => {
 
   return (
     <div className="stack">
-      <SectionHeader title={t.shop.title} description={`${items.length} ${t.shop.description}`} />
+      <SectionHeader
+        title={t.shop.title}
+        description={`${items.length} ${t.shop.description}`}
+        action={
+          <button
+            className="primary-button small"
+            style={{ borderRadius: 9999 }}
+            onClick={() => { resetForm(); setShowForm(true); }}
+          >
+            {t.shop.createItem}
+          </button>
+        }
+      />
 
       {error && <div className="form-error">{error}</div>}
       <BulkBar
@@ -247,18 +259,6 @@ export const ShopPage = () => {
         <StatCard label={t.shop.onSale} value={activeCount.toLocaleString()} accent="teal" />
         <StatCard label={t.shop.hidden} value={hiddenCount.toLocaleString()} accent="ink" />
         <StatCard label={t.shop.price} value={`${avgPrice} Gems`} accent="ink" />
-      </div>
-
-      <div className="panel" style={{ padding: "12px 16px", borderRadius: 20 }}>
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          <button
-            className="primary-button"
-            style={{ borderRadius: 9999 }}
-            onClick={() => { resetForm(); setShowForm(true); }}
-          >
-            {t.shop.createItem}
-          </button>
-        </div>
       </div>
 
       <div className="panel" style={{ borderRadius: 20 }}>

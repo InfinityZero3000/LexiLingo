@@ -351,7 +351,19 @@ export const AchievementsPage = () => {
 
   return (
     <div className="stack">
-      <SectionHeader title={t.achievements.title} description={`${items.length} ${t.achievements.description}`} />
+      <SectionHeader
+        title={t.achievements.title}
+        description={`${items.length} ${t.achievements.description}`}
+        action={
+          <button
+            className="primary-button small"
+            style={{ borderRadius: 9999 }}
+            onClick={() => { resetForm(); setShowForm(true); }}
+          >
+            {t.achievements.createAchievement}
+          </button>
+        }
+      />
 
       {error && <div className="form-error">{error}</div>}
       <BulkBar
@@ -369,7 +381,7 @@ export const AchievementsPage = () => {
         <StatCard label="Gems" value={totalGemsReward.toLocaleString()} accent="teal" />
       </div>
 
-      <div className="panel filter-panel" style={{ borderRadius: 20 }}>
+      <div className="panel filter-panel">
         <div className="filter-bar">
           <select
             className="filter-select"
@@ -381,13 +393,6 @@ export const AchievementsPage = () => {
               <option key={c} value={c}>{c} ({categoryCounts[c] || 0})</option>
             ))}
           </select>
-          <button
-            className="primary-button"
-            style={{ borderRadius: 9999 }}
-            onClick={() => { resetForm(); setShowForm(true); }}
-          >
-            {t.achievements.createAchievement}
-          </button>
         </div>
       </div>
 

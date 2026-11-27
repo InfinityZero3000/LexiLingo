@@ -283,7 +283,19 @@ export const AdsPage = () => {
 
   return (
     <div className="stack">
-      <SectionHeader title={t.ads.title} description={`${banners.length} ${t.ads.description}`} />
+      <SectionHeader
+        title={t.ads.title}
+        description={`${banners.length} ${t.ads.description}`}
+        action={
+          <button
+            className="primary-button small"
+            style={{ borderRadius: 9999 }}
+            onClick={() => { resetForm(); setShowForm(true); }}
+          >
+            {t.ads.createBanner}
+          </button>
+        }
+      />
 
       {error && <div className="form-error">{error}</div>}
       <BulkBar
@@ -299,18 +311,6 @@ export const AdsPage = () => {
         <StatCard label={t.ads.status.running} value={runningCount.toLocaleString()} accent="teal" />
         <StatCard label={t.ads.status.scheduled} value={scheduledCount.toLocaleString()} accent="ink" />
         <StatCard label={t.ads.status.off} value={offCount.toLocaleString()} accent="ink" />
-      </div>
-
-      <div className="panel" style={{ padding: "12px 16px", borderRadius: 20 }}>
-        <div style={{ display: "flex", justifyContent: "flex-end" }}>
-          <button
-            className="primary-button"
-            style={{ borderRadius: 9999 }}
-            onClick={() => { resetForm(); setShowForm(true); }}
-          >
-            {t.ads.createBanner}
-          </button>
-        </div>
       </div>
 
       <div className="panel" style={{ borderRadius: 20 }}>

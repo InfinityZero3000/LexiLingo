@@ -174,7 +174,24 @@ export const VocabularyPage = () => {
 
   return (
     <div className="stack">
-      <SectionHeader title={t.vocabulary.title} description={`${items.length} ${t.vocabulary.description}`} />
+      <SectionHeader
+        title={t.vocabulary.title}
+        description={`${items.length} ${t.vocabulary.description}`}
+        action={
+          <>
+            <input type="file" accept=".csv,.pdf" ref={fileRef} onChange={handleBulkImport} hidden />
+            <button className="ghost-button small" style={{ borderRadius: 999 }} onClick={() => fileRef.current?.click()} disabled={importing}>
+              {importing ? "Đang import..." : "Import CSV/PDF"}
+            </button>
+            <button className="ghost-button small" style={{ borderRadius: 999 }} onClick={handleExport} disabled={items.length === 0}>
+              Export CSV
+            </button>
+            <button className="primary-button small" style={{ borderRadius: 999 }} onClick={() => { resetForm(); setShowForm(true); }}>
+              {t.vocabulary.createWord}
+            </button>
+          </>
+        }
+      />
 
       {error && <div className="form-error">{error}</div>}
       <BulkBar
@@ -208,6 +225,7 @@ export const VocabularyPage = () => {
         <div className="filter-bar">
           <input
             className="search-input"
+            style={{ maxWidth: 360 }}
             placeholder={t.vocabulary.searchPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -238,16 +256,6 @@ export const VocabularyPage = () => {
               </button>
             ))}
           </div>
-          <input type="file" accept=".csv,.pdf" ref={fileRef} onChange={handleBulkImport} hidden />
-          <button className="ghost-button" style={{ borderRadius: 999 }} onClick={() => fileRef.current?.click()} disabled={importing}>
-            {importing ? "Đang import..." : "Import CSV/PDF"}
-          </button>
-          <button className="ghost-button" style={{ borderRadius: 999 }} onClick={handleExport} disabled={items.length === 0}>
-            Export CSV
-          </button>
-          <button className="primary-button" style={{ borderRadius: 999 }} onClick={() => { resetForm(); setShowForm(true); }}>
-            {t.vocabulary.createWord}
-          </button>
         </div>
       </div>
 

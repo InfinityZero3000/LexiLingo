@@ -147,6 +147,8 @@ const vi = {
     themeToLight: "Chuyển sang giao diện sáng",
     themeToDark: "Chuyển sang giao diện tối",
     breadcrumb: "Đường dẫn",
+    filterNav: "Lọc menu...",
+    switchLanguage: "Đổi ngôn ngữ",
   },
 
   // ============== Login ==============
@@ -275,6 +277,20 @@ const vi = {
     allStatus: "Tất cả trạng thái",
     filters: "Bộ lọc",
     resetFilters: "Xóa bộ lọc",
+    searchAria: "Tìm kiếm người dùng",
+    searchByNameEmail: "Tìm theo tên hoặc email...",
+    statusLabel: "Trạng thái",
+    statusActive: "Hoạt động",
+    statusPaused: "Tạm dừng",
+    sortByLabel: "Sắp xếp",
+    sortJoined: "Ngày tham gia",
+    sortLastLogin: "Đăng nhập cuối",
+    sortEmail: "Email",
+    sortRole: "Vai trò",
+    sortTotalXp: "Tổng XP",
+    orderLabel: "Thứ tự",
+    orderAsc: "Tăng dần",
+    orderDesc: "Giảm dần",
   },
 
   // ============== Courses ==============
@@ -307,6 +323,9 @@ const vi = {
     loadFailed: "Không tải được danh sách khóa học",
     viewUnits: "Xem chương",
     importData: "Nhập dữ liệu",
+    exportCsv: "Xuất CSV",
+    primarySkill: "Kỹ năng chính",
+    unlabeledSkill: "— Chưa gắn nhãn —",
     units: "Chương",
   },
 
@@ -424,6 +443,11 @@ const vi = {
     viewLessons: "Xem bài học",
     loadFailed: "Không tải được danh sách chương",
     selectCourse: "Chọn khóa học",
+    allCourses: "-- Tất cả khóa học --",
+    colorCol: "Màu",
+    bgColorLabel: "Màu nền",
+    courseRequired: "Khóa học *",
+    chooseCourseOption: "-- Chọn khóa học --",
   },
 
   // ============== Lessons ==============
@@ -446,6 +470,51 @@ const vi = {
     selectUnit: "Chọn chương",
     content: "Nội dung",
     difficulty: "Độ khó",
+    allUnits: "-- Tất cả chương --",
+    passThresholdCol: "Ngưỡng đạt",
+    exercisesCol: "Bài tập",
+    noExercisesBadge: "Chưa có",
+    noExercisesHint: "Bài học chưa có bài tập — người học không mở được và khóa học không thể xuất bản",
+    manageExercisesTitle: "Quản lý bài tập",
+    unitRequired: "Chương *",
+    chooseUnitOption: "-- Chọn chương --",
+    outcomeLabel: "Outcome (can-do statement)",
+    outcomePlaceholder: "Vd: Bạn có thể đặt bàn ăn qua điện thoại bằng tiếng Anh.",
+    lessonTypeRequired: "Loại bài học *",
+    scoringSkillLabel: "Kỹ năng chấm điểm",
+    inheritFromCourseOption: "— Theo khóa học —",
+    passThresholdLabel: "Ngưỡng đạt (%)",
+    durationMinutesLabel: "Thời lượng (phút)",
+  },
+
+  // ============== Lesson Exercises ==============
+  lessonExercises: {
+    selectTypeTitle: "Chọn loại bài tập",
+    exerciseHeading: "Bài tập #{n}",
+    errPromptRequired: "Vui lòng nhập câu hỏi / prompt.",
+    errAnswerRequired: "Vui lòng nhập đáp án đúng.",
+    saveExercise: "Lưu bài tập",
+    noQuestionText: "Chưa có nội dung câu hỏi",
+    moveUpAria: "Di chuyển bài tập {n} lên",
+    moveDownAria: "Di chuyển bài tập {n} xuống",
+    editAria: "Sửa bài tập {n}",
+    deleteAria: "Xóa bài tập {n}",
+    loadFailed: "Không tải được bài học.",
+    serverError: "Lỗi kết nối server.",
+    deleteConfirm: "Xóa bài tập này?",
+    discardConfirm: "Bạn có thay đổi bài tập chưa lưu. Rời trang và hủy các thay đổi này?",
+    discardConfirmLabel: "Rời trang",
+    backToLessons: "Quay lại bài học",
+    estimatedMinutesLabel: "Thời lượng dự kiến (phút):",
+    exercisesCount: "{n} bài tập",
+    savedSuccess: "Đã lưu thành công!",
+    listTitle: "Danh sách bài tập ({n})",
+    addExercise: "Thêm bài tập",
+    emptyTitle: "Chưa có bài tập nào",
+    emptyDesc: "Nhấn \"Thêm bài tập\" để bắt đầu",
+    saveAll: "Lưu tất cả",
+    savingAll: "Đang lưu...",
+    difficultyLabel: "Độ khó (1–5)",
   },
 
   // ============== Vocabulary ==============
@@ -973,8 +1042,6 @@ const vi = {
     deactivate: "Vô hiệu hóa",
     emailHint: "Email của người dùng đã tồn tại trong hệ thống",
   },
-
-  // ============== AI Chat Settings ==============
 
   // ============== Error Pages ==============
   errorPages: {

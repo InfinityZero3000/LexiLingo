@@ -234,6 +234,52 @@ export const CoursesPage = () => {
       <SectionHeader
         title={t.courses.title}
         description={`${total} ${t.courses.description}`}
+        action={
+          <>
+            <button
+              className="ghost-button small"
+              style={{ borderRadius: 999 }}
+              onClick={() => setShowImport(true)}
+            >
+              {t.courses.importData}
+            </button>
+            <button
+              className="ghost-button small"
+              style={{ borderRadius: 999 }}
+              onClick={handleExport}
+              disabled={courses.length === 0}
+            >
+              {t.courses.exportCsv}
+            </button>
+            <button
+              className="ghost-button small content-agent-launch-button"
+              style={{ borderRadius: 999 }}
+              onClick={() => {
+                if (
+                  contentAgentJob &&
+                  (isContentAgentJobActive(contentAgentJob.status) ||
+                    contentAgentJob.status === "preview_ready" ||
+                    contentAgentJob.status === "failed" ||
+                    contentAgentJob.status === "cancelled")
+                ) {
+                  setShowContentAgentDrawer(true);
+                } else {
+                  setShowContentAgent(true);
+                }
+              }}
+            >
+              <Sparkles aria-hidden="true" size={15} />
+              {t.contentAgent.generateWithAgent}
+            </button>
+            <button
+              className="primary-button small"
+              style={{ borderRadius: 999 }}
+              onClick={() => { resetForm(); setShowForm(true); }}
+            >
+              {t.courses.createCourse}
+            </button>
+          </>
+        }
       />
 
       {error && <div className="form-error">{error}</div>}
@@ -246,7 +292,7 @@ export const CoursesPage = () => {
         ]}
       />
 
-      {/* Toolbar */}
+      {/* Compact Single-Row Filter Toolbar */}
       <div className="panel filter-panel">
         <div className="filter-bar">
           <form onSubmit={handleSearch} className="filter-search-form">
@@ -257,65 +303,39 @@ export const CoursesPage = () => {
               onChange={(e) => setSearch(e.target.value)}
             />
             <button className="icon-button filter-search-button" type="submit" aria-label={t.common.search} title={t.common.search}>
-              <Search size={18} aria-hidden="true" />
+              <Search size={16} aria-hidden="true" />
             </button>
           </form>
-          <select className="filter-select" style={{ borderRadius: 999 }} value={filterLevel} onChange={(e) => { setFilterLevel(e.target.value); setPage(1); }}>
+          <select className="filter-select" value={filterLevel} onChange={(e) => { setFilterLevel(e.target.value); setPage(1); }}>
             <option value="">{t.courses.allLevels}</option>
             {LEVELS.map((l) => <option key={l} value={l}>{l}</option>)}
           </select>
-          <select className="filter-select" style={{ borderRadius: 999 }} value={filterPublished} onChange={(e) => { setFilterPublished(e.target.value); setPage(1); }}>
+          <select className="filter-select" value={filterPublished} onChange={(e) => { setFilterPublished(e.target.value); setPage(1); }}>
             <option value="">{t.courses.allStatus}</option>
             <option value="true">{t.common.published}</option>
             <option value="false">{t.common.draft}</option>
           </select>
-          <select className="filter-select" style={{ borderRadius: 999 }} aria-label={t.courses.category} value={filterCategory}
+          <select className="filter-select" aria-label={t.courses.category} value={filterCategory}
             onChange={(e) => { setFilterCategory(e.target.value); setPage(1); }}>
             <option value="">{t.courses.allCategories}</option>
             {(categories.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
-          <button
-            className="ghost-button"
-            style={{ borderRadius: 999 }}
-            onClick={() => setShowImport(true)}
-          >
-            {t.courses.importData}
-          </button>
-          <button
-            className="ghost-button"
-            style={{ borderRadius: 999 }}
-            onClick={handleExport}
-            disabled={courses.length === 0}
-          >
-            Export CSV
-          </button>
-          <button
-            className="ghost-button content-agent-launch-button"
-            style={{ borderRadius: 999 }}
-            onClick={() => {
-              if (
-                contentAgentJob &&
-                (isContentAgentJobActive(contentAgentJob.status) ||
-                  contentAgentJob.status === "preview_ready" ||
-                  contentAgentJob.status === "failed" ||
-                  contentAgentJob.status === "cancelled")
-              ) {
-                setShowContentAgentDrawer(true);
-              } else {
-                setShowContentAgent(true);
-              }
-            }}
-          >
-            <Sparkles aria-hidden="true" size={16} />
-            {t.contentAgent.generateWithAgent}
-          </button>
-          <button
-            className="primary-button"
-            style={{ borderRadius: 999 }}
-            onClick={() => { resetForm(); setShowForm(true); }}
-          >
-            {t.courses.createCourse}
-          </button>
+          {(search || filterLevel || filterPublished !== "" || filterCategory) && (
+            <button
+              type="button"
+              className="ghost-button small"
+              style={{ borderRadius: 999 }}
+              onClick={() => {
+                setSearch("");
+                setFilterLevel("");
+                setFilterPublished("");
+                setFilterCategory("");
+                setPage(1);
+              }}
+            >
+              {t.logs.clearFilters}
+            </button>
+          )}
         </div>
       </div>
 
@@ -343,12 +363,14 @@ export const CoursesPage = () => {
                   header: t.courses.course,
                   sortValue: (row) => row.title,
                   render: (row) => (
-                    <div>
+                    <div style={{ maxWidth: 480 }}>
                       <button type="button" className="link-button link-button--accent table-title"
                         onClick={() => navigate(`/admin/courses/${row.id}/units`)}>
                         {row.title}
                       </button>
-                      <div className="table-sub">{row.description || "—"}</div>
+                      <div className="table-sub table-sub--clamp" title={row.description || undefined}>
+                        {row.description || "—"}
+                      </div>
                     </div>
                   ),
                 },
@@ -361,7 +383,11 @@ export const CoursesPage = () => {
                 {
                   header: t.courses.category,
                   sortValue: (row) => row.category_name ?? "",
-                  render: (row) => <span className="table-meta">{row.category_name || "—"}</span>,
+                  render: (row) => (
+                    <span className="table-meta col-nowrap">
+                      {row.category_name || "—"}
+                    </span>
+                  ),
                 },
                 {
                   header: t.courses.lessons,
@@ -452,9 +478,9 @@ export const CoursesPage = () => {
                 </select>
               </label>
               <label>
-                Kỹ năng chính
+                {t.courses.primarySkill}
                 <select value={form.skill} onChange={(e) => setForm({ ...form, skill: e.target.value })}>
-                  <option value="">— Chưa gắn nhãn —</option>
+                  <option value="">{t.courses.unlabeledSkill}</option>
                   {SKILLS.map((s) => <option key={s} value={s}>{s}</option>)}
                 </select>
               </label>

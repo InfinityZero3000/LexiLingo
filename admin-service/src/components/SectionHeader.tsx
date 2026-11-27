@@ -10,10 +10,11 @@ export const SectionHeader = ({
   action?: React.ReactNode;
 }) => (
   <div className="section-header">
-    <div>
+    <div className="section-header-main">
       <h1>{title}</h1>
       {description && <p>{description}</p>}
     </div>
-    {action && <div>{action}</div>}
+    {action && <div className="section-header-actions">{action}</div>}
   </div>
 );
+

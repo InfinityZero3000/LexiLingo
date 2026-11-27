@@ -13,6 +13,7 @@ import {
   UI_TYPE_TO_TYPE,
 } from "../lib/adminApi";
 import { ExerciseTypeForm } from "../components/ExerciseTypeForm";
+import { Dialog } from "../components/Dialog";
 import { useI18n } from "../lib/i18n";
 import {
   ArrowLeft,
@@ -26,7 +27,6 @@ import {
   BookOpen,
   Clock,
   Sparkles,
-  GripVertical,
   X,
 } from "lucide-react";
 
@@ -122,44 +122,47 @@ const TypeSelectorModal = ({
 }: {
   onSelect: (t: UiType) => void;
   onClose: () => void;
-}) => (
-  <div className="modal-overlay lesson-exercise-overlay" role="presentation">
-    <div className="lesson-exercise-modal lesson-exercise-type-modal" role="dialog" aria-modal="true" aria-labelledby="exercise-type-title">
-      <div className="lesson-exercise-modal-header">
-        <h2 id="exercise-type-title">Chọn loại bài tập</h2>
-        <button
-          type="button"
-          onClick={onClose}
-          className="icon-button"
-          aria-label="Đóng"
-        >
-          <X size={18} aria-hidden="true" />
-        </button>
-      </div>
-      <div className="lesson-exercise-modal-body exercise-type-groups">
-        {UI_TYPE_GROUPS.map((group) => (
-          <div key={group.label}>
-            <p className="exercise-group-label">
-              {group.label}
-            </p>
-            <div className="exercise-type-grid">
-              {group.types.map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => onSelect(t)}
-                  className={`exercise-type-choice ${TYPE_TONES[t] ?? "tone-neutral"}`}
-                >
-                  {UI_TYPE_LABELS[t]}
-                </button>
-              ))}
+}) => {
+  const { t: tr } = useI18n();
+  return (
+    <Dialog onClose={onClose} maxWidth={720}>
+      <div className="lesson-exercise-modal-flat">
+        <div className="lesson-exercise-modal-header">
+          <h2>{tr.lessonExercises.selectTypeTitle}</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="icon-button"
+            aria-label={tr.common.close}
+          >
+            <X size={18} aria-hidden="true" />
+          </button>
+        </div>
+        <div className="lesson-exercise-modal-body exercise-type-groups">
+          {UI_TYPE_GROUPS.map((group) => (
+            <div key={group.label}>
+              <p className="exercise-group-label">
+                {group.label}
+              </p>
+              <div className="exercise-type-grid">
+                {group.types.map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => onSelect(t)}
+                    className={`exercise-type-choice ${TYPE_TONES[t] ?? "tone-neutral"}`}
+                  >
+                    {UI_TYPE_LABELS[t]}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-    </div>
-  </div>
-);
+    </Dialog>
+  );
+};
 
 // ─── ExerciseModal ────────────────────────────────────────────────────────────
 
@@ -174,23 +177,26 @@ const ExerciseModal = ({
   onSave: (e: Exercise) => void;
   onClose: () => void;
 }) => {
+  const { t: tr } = useI18n();
   const [exercise, setExercise] = useState<Exercise>(initial);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const handleSave = () => {
     if (!exercise.question.trim()) {
-      alert("Vui lòng nhập câu hỏi / prompt.");
+      setFormError(tr.lessonExercises.errPromptRequired);
       return;
     }
     if (!exercise.correct_answer.trim() && exercise.ui_type !== "short_writing_answer") {
-      alert("Vui lòng nhập đáp án đúng.");
+      setFormError(tr.lessonExercises.errAnswerRequired);
       return;
     }
+    setFormError(null);
     onSave(exercise);
   };
 
   return (
-    <div className="modal-overlay lesson-exercise-overlay" role="presentation">
-      <div className="lesson-exercise-modal" role="dialog" aria-modal="true" aria-labelledby="exercise-editor-title">
+    <Dialog onClose={onClose} maxWidth={560}>
+      <div className="lesson-exercise-modal-flat">
         <div className="lesson-exercise-modal-header">
           <div>
             <span
@@ -198,15 +204,15 @@ const ExerciseModal = ({
             >
               {UI_TYPE_LABELS[exercise.ui_type as UiType] ?? exercise.ui_type}
             </span>
-            <h2 id="exercise-editor-title">
-              Bài tập #{index + 1}
+            <h2>
+              {tr.lessonExercises.exerciseHeading.replace("{n}", String(index + 1))}
             </h2>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="icon-button"
-            aria-label="Đóng"
+            aria-label={tr.common.close}
           >
             <X size={18} aria-hidden="true" />
           </button>
@@ -222,7 +228,7 @@ const ExerciseModal = ({
           {/* Difficulty */}
           <div className="exercise-form-field">
             <label className="exercise-form-label">
-              Difficulty (1–5)
+              {tr.lessonExercises.difficultyLabel}
             </label>
             <div className="exercise-difficulty-options">
               {[1, 2, 3, 4, 5].map((d) => (
@@ -239,24 +245,28 @@ const ExerciseModal = ({
           </div>
         </div>
 
+        {formError && (
+          <div className="form-error" role="alert">{formError}</div>
+        )}
+
         <div className="lesson-exercise-modal-footer">
           <button
             type="button"
             onClick={onClose}
             className="ghost-button"
           >
-            Hủy
+            {tr.common.cancel}
           </button>
           <button
             type="button"
             onClick={handleSave}
             className="primary-button"
           >
-            <Save size={15} /> Lưu bài tập
+            <Save size={15} /> {tr.lessonExercises.saveExercise}
           </button>
         </div>
       </div>
-    </div>
+    </Dialog>
   );
 };
 
@@ -278,9 +288,10 @@ const ExerciseRow = ({
   onDelete: () => void;
   onMoveUp: () => void;
   onMoveDown: () => void;
-}) => (
+}) => {
+  const { t: tr } = useI18n();
+  return (
   <div className="exercise-row">
-    <GripVertical size={16} className="exercise-drag-icon" aria-hidden="true" />
     <span className="exercise-index">
       {index + 1}
     </span>
@@ -289,15 +300,15 @@ const ExerciseRow = ({
     >
       {UI_TYPE_LABELS[exercise.ui_type as UiType] ?? exercise.ui_type}
     </span>
-    <p className="exercise-question">{exercise.question || <em>No question text</em>}</p>
+    <p className="exercise-question">{exercise.question || <em>{tr.lessonExercises.noQuestionText}</em>}</p>
     <div className="exercise-row-actions">
       <button
         type="button"
         disabled={index === 0}
         onClick={onMoveUp}
         className="icon-button"
-        aria-label={`Di chuyển bài tập ${index + 1} lên`}
-        title="Move up"
+        aria-label={tr.lessonExercises.moveUpAria.replace("{n}", String(index + 1))}
+        title={tr.lessonExercises.moveUpAria.replace("{n}", String(index + 1))}
       >
         <ChevronUp size={15} />
       </button>
@@ -306,8 +317,8 @@ const ExerciseRow = ({
         disabled={index === total - 1}
         onClick={onMoveDown}
         className="icon-button"
-        aria-label={`Di chuyển bài tập ${index + 1} xuống`}
-        title="Move down"
+        aria-label={tr.lessonExercises.moveDownAria.replace("{n}", String(index + 1))}
+        title={tr.lessonExercises.moveDownAria.replace("{n}", String(index + 1))}
       >
         <ChevronDown size={15} />
       </button>
@@ -315,8 +326,8 @@ const ExerciseRow = ({
         type="button"
         onClick={onEdit}
         className="icon-button"
-        aria-label={`Sửa bài tập ${index + 1}`}
-        title="Edit"
+        aria-label={tr.lessonExercises.editAria.replace("{n}", String(index + 1))}
+        title={tr.common.edit}
       >
         <Pencil size={15} />
       </button>
@@ -324,14 +335,15 @@ const ExerciseRow = ({
         type="button"
         onClick={onDelete}
         className="icon-button exercise-delete-button"
-        aria-label={`Xóa bài tập ${index + 1}`}
-        title="Delete"
+        aria-label={tr.lessonExercises.deleteAria.replace("{n}", String(index + 1))}
+        title={tr.common.delete}
       >
         <Trash2 size={15} />
       </button>
     </div>
   </div>
-);
+  );
+};
 
 // ─── main page ────────────────────────────────────────────────────────────────
 
@@ -374,12 +386,23 @@ export const LessonExercisesPage = () => {
           setExercises(res.data.content?.exercises ?? []);
           setEstimatedMinutes(res.data.estimated_minutes ?? 10);
         } else {
-          setError("Không tải được bài học.");
+          setError(t.lessonExercises.loadFailed);
         }
       })
-      .catch(() => setError("Lỗi kết nối server."))
+      .catch(() => setError(t.lessonExercises.serverError))
       .finally(() => setLoading(false));
   }, [lessonId]);
+
+  // Warn before closing/reloading the tab with unsaved exercises.
+  useEffect(() => {
+    if (!isDirty) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [isDirty]);
 
   const markDirty = useCallback(() => {
     setIsDirty(true);
@@ -405,7 +428,7 @@ export const LessonExercisesPage = () => {
   };
 
   const handleDelete = async (index: number) => {
-    if (!(await confirm({ message: "Xóa bài tập này?", confirmLabel: "Xóa", danger: true }))) return;
+    if (!(await confirm({ message: t.lessonExercises.deleteConfirm, confirmLabel: t.common.delete, danger: true }))) return;
     setExercises((prev) => prev.filter((_, i) => i !== index));
     markDirty();
   };
@@ -436,11 +459,11 @@ export const LessonExercisesPage = () => {
         }
         setTimeout(() => setSaveSuccess(false), 3000);
       } else {
-        setError(res.message ?? "Lưu thất bại.");
+        setError(res.message ?? t.common.saveFailed);
       }
     } catch (err: any) {
       // Server rejects e.g. emptying exercises of a live lesson — show why.
-      setError(err?.message || "Lỗi kết nối server.");
+      setError(err?.message || t.lessonExercises.serverError);
     } finally {
       savingRef.current = false;
       setSaving(false);
@@ -470,7 +493,15 @@ export const LessonExercisesPage = () => {
     }
   };
 
-  const goBack = () => {
+  const goBack = async () => {
+    if (isDirty) {
+      const ok = await confirm({
+        message: t.lessonExercises.discardConfirm,
+        confirmLabel: t.lessonExercises.discardConfirmLabel,
+        danger: true,
+      });
+      if (!ok) return;
+    }
     if (courseId && unitId && courseId !== "_") {
       navigate(`/admin/courses/${courseId}/units/${unitId}/lessons`);
     } else {
@@ -483,7 +514,7 @@ export const LessonExercisesPage = () => {
   if (loading) {
     return (
       <div className="lesson-exercise-loading">
-        <Loader2 size={28} className="is-spinning" aria-label="Đang tải" />
+        <Loader2 size={28} className="is-spinning" aria-label={t.common.loading} />
       </div>
     );
   }
@@ -497,7 +528,7 @@ export const LessonExercisesPage = () => {
           onClick={goBack}
           className="ghost-button small lesson-back-button"
         >
-          <ArrowLeft size={16} /> Quay lại Lessons
+          <ArrowLeft size={16} /> {t.lessonExercises.backToLessons}
         </button>
       </div>
 
@@ -517,7 +548,7 @@ export const LessonExercisesPage = () => {
         <div className="lesson-meta-row">
           <div className="lesson-duration-field">
             <Clock size={15} aria-hidden="true" />
-            <label htmlFor="estimated-minutes">Estimated minutes:</label>
+            <label htmlFor="estimated-minutes">{t.lessonExercises.estimatedMinutesLabel}</label>
             <input
               id="estimated-minutes"
               type="number"
@@ -531,7 +562,7 @@ export const LessonExercisesPage = () => {
               }}
             />
           </div>
-          <span className="table-meta">{exercises.length} bài tập</span>
+          <span className="table-meta">{t.lessonExercises.exercisesCount.replace("{n}", String(exercises.length))}</span>
         </div>
       </section>
 
@@ -545,14 +576,14 @@ export const LessonExercisesPage = () => {
       {/* Save success */}
       {saveSuccess && (
         <div className="form-success">
-          Đã lưu thành công!
+          {t.lessonExercises.savedSuccess}
         </div>
       )}
 
       {/* Exercise list + actions header */}
       <div className="lesson-exercise-section-header">
         <h2>
-          Danh sách bài tập ({exercises.length})
+          {t.lessonExercises.listTitle.replace("{n}", String(exercises.length))}
         </h2>
         <div className="table-actions">
           <button
@@ -573,7 +604,7 @@ export const LessonExercisesPage = () => {
             onClick={() => setShowTypeSelector(true)}
             className="primary-button"
           >
-            <Plus size={15} /> Thêm bài tập
+            <Plus size={15} /> {t.lessonExercises.addExercise}
           </button>
         </div>
       </div>
@@ -599,8 +630,8 @@ export const LessonExercisesPage = () => {
       {exercises.length === 0 ? (
         <div className="empty-state lesson-exercise-empty">
           <BookOpen size={36} aria-hidden="true" />
-          <p className="empty-title">Chưa có bài tập nào</p>
-          <p className="empty-description">Nhấn "Thêm bài tập" để bắt đầu</p>
+          <p className="empty-title">{t.lessonExercises.emptyTitle}</p>
+          <p className="empty-description">{t.lessonExercises.emptyDesc}</p>
         </div>
       ) : (
         <div className="exercise-list">
@@ -632,7 +663,7 @@ export const LessonExercisesPage = () => {
           ) : (
             <Save size={16} />
           )}
-          {saving ? "Đang lưu..." : "Lưu tất cả"}
+          {saving ? t.lessonExercises.savingAll : t.lessonExercises.saveAll}
         </button>
       </div>
 
