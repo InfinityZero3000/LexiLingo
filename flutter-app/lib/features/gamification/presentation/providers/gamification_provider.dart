@@ -132,6 +132,7 @@ class GamificationProvider extends ChangeNotifier {
   void reset() {
     _epoch++;
     _walletRequest++;
+    _purchaseNeedsVerifiedEmail = false;
     _wallet = null;
     _transactions = [];
     _isLoadingWallet = false;

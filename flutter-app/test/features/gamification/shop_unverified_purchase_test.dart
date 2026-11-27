@@ -248,4 +248,15 @@ void main() {
     expect(find.text('Purchase failed. Please try again.'), findsOneWidget);
     expect(find.text('Verify your email to buy from the shop.'), findsNothing);
   });
+
+  test('the unverified-email flag does not survive a reset to the next account', () async {
+    final provider = GamificationProvider(repository: _ShopRepo(_refusal('email_unverified')));
+
+    expect(await provider.purchaseItem('i'), isFalse);
+    expect(provider.purchaseNeedsVerifiedEmail, isTrue);
+
+    provider.reset();
+
+    expect(provider.purchaseNeedsVerifiedEmail, isFalse);
+  });
 }

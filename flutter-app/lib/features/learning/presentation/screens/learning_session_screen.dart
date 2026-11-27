@@ -804,6 +804,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
         provider.lessonResult?.passThreshold ?? kDefaultLessonPassMark;
     final passed = provider.lessonResult?.passed ?? percentage >= passMark;
     final excellent = passed && percentage >= kDefaultLessonPassMark;
+    final pending = saving && provider.lessonResult == null;
 
     if (!_streakRecorded) {
       _streakRecorded = true;
@@ -812,7 +813,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
 
     return Stack(
       children: [
-        if (passed)
+        if (passed && !pending)
           Positioned.fill(
             child: IgnorePointer(
               child: Lottie.asset(
@@ -869,7 +870,13 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                             ],
                           ),
                         ),
-                        if (!passed)
+                        if (pending)
+                          const SizedBox(
+                            width: 56,
+                            height: 56,
+                            child: CircularProgressIndicator(),
+                          )
+                        else if (!passed)
                           Icon(
                             Icons.replay_rounded,
                             color: context.status.warning,
@@ -909,7 +916,9 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                     },
                     child: Column(
                       children: [
-                        if (!passed)
+                        if (pending)
+                          const SizedBox.shrink()
+                        else if (!passed)
                           Text(
                             'lesson.notPassedTitle'.tr(),
                             textAlign: TextAlign.center,
@@ -972,7 +981,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                                 ),
                               ),
                         ),
-                        if (!passed) ...[
+                        if (!passed && !pending) ...[
                           const SizedBox(height: 4),
                           Text(
                             'lesson.passMarkHint'.tr(
