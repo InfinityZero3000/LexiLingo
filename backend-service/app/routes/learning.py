@@ -1012,13 +1012,14 @@ def _stars_for_score(score: float) -> int:
 
 
 def _lesson_complete_payload(
-    attempt: LessonAttempt, next_lesson_id: UUID | None, achievements: list
+    attempt: LessonAttempt, lesson: Lesson, next_lesson_id: UUID | None, achievements: list
 ) -> LessonCompleteResponse:
     """Response body for a finished attempt."""
     return LessonCompleteResponse(
         attempt_id=attempt.id,
         passed=attempt.passed,
         final_score=attempt.score,
+        pass_threshold=round(lesson.pass_threshold or 80.0),
         total_xp_earned=attempt.xp_earned,
         time_spent_seconds=attempt.time_spent_ms // 1000,
         accuracy=(
@@ -1069,7 +1070,7 @@ async def complete_lesson(
         return ApiResponse(
             success=True,
             message="Congratulations!" if attempt.passed else "Keep practicing!",
-            data=_lesson_complete_payload(attempt, next_id, []),
+            data=_lesson_complete_payload(attempt, lesson, next_id, []),
         )
     
     # Complete
@@ -1175,8 +1176,9 @@ async def complete_lesson(
         )
 
 
-    # Update streak
-    await update_user_streak(db, current_user.id)
+    # A failed lesson is practice, not an active day.
+    if attempt.passed:
+        await update_user_streak(db, current_user.id)
     
     # Check achievements after lesson completion
     unlocked_achievements = []
@@ -1250,7 +1252,7 @@ async def complete_lesson(
         # check_achievements_for_user returns rich dicts but the schema and the
         # Flutter model expect bare ids; passing the dicts 500'd the reward moment.
         data=_lesson_complete_payload(
-            attempt, next_lesson_id, [a["id"] for a in unlocked_achievements]
+            attempt, lesson, next_lesson_id, [a["id"] for a in unlocked_achievements]
         ),
     )
 
