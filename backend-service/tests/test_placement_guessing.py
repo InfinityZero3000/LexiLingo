@@ -35,3 +35,14 @@ async def test_a_real_strong_result_still_places_high(async_client, auth_headers
         f"{BASE}/placement-test/submit", json={"answers": answers}, headers=auth_headers
     )
     assert response.json()["test_level"] == "C2"
+
+
+async def test_repeating_one_question_cannot_inflate_the_score(async_client, auth_headers):
+    hardest = max(PLACEMENT_QUESTIONS, key=lambda q: q["points"])
+    answers = [{"question_id": hardest["id"], "selected_option": hardest["correct"]}] * 20
+
+    response = await async_client.post(
+        f"{BASE}/placement-test/submit", json={"answers": answers}, headers=auth_headers
+    )
+
+    assert response.status_code == 422

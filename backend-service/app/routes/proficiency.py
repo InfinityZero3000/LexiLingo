@@ -13,7 +13,7 @@ import asyncio
 import logging
 from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -266,6 +266,13 @@ class PlacementAnswer(BaseModel):
 
 class PlacementSubmission(BaseModel):
     answers: List[PlacementAnswer]
+
+    @model_validator(mode="after")
+    def one_answer_per_question(self) -> "PlacementSubmission":
+        ids = [answer.question_id for answer in self.answers]
+        if len(ids) != len(set(ids)):
+            raise ValueError("Each question may be answered only once.")
+        return self
 
 
 @router.get("/profile", response_model=dict)
