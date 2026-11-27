@@ -91,6 +91,17 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
     return encoded_jwt
 
 
+def create_user_access_token(user_id: Any, hashed_password: Optional[str]) -> str:
+    """Access token that stops working once the account's password changes."""
+    return create_access_token({"sub": str(user_id), "pwv": password_fingerprint(hashed_password)})
+
+
+def password_still_matches(payload: Dict[str, Any], hashed_password: Optional[str]) -> bool:
+    # Tokens issued before the claim existed carry none; they expire on their own.
+    claim = payload.get("pwv")
+    return claim is None or claim == password_fingerprint(hashed_password)
+
+
 def create_refresh_token(data: Dict[str, Any], expires_days: Optional[int] = None) -> str:
     """Create JWT refresh token with longer expiration."""
     to_encode = data.copy()

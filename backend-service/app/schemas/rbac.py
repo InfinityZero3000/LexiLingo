@@ -5,7 +5,7 @@ RBAC Schemas — Roles, Permissions, Audit Logs
 from typing import Optional, List
 from uuid import UUID
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 # ── Role ──────────────────────────────────────────────────
@@ -17,8 +17,25 @@ class RoleBase(BaseModel):
     level: int = 0
 
 
-class RoleCreate(RoleBase):
-    pass
+# Built-in slugs carry behaviour elsewhere, so a new role may not take one.
+RESERVED_ROLE_SLUGS = frozenset({"user", "test", "admin", "super_admin"})
+
+
+class RoleCreate(BaseModel):
+    """A custom admin role. It is always admin level; permissions decide what it may do."""
+
+    name: str = Field(..., min_length=2, max_length=50)
+    slug: str = Field(..., pattern=r"^[a-z][a-z0-9_]{1,49}$")
+    description: Optional[str] = Field(None, max_length=500)
+    permission_slugs: List[str] = Field(default_factory=list)
+
+    @field_validator("name")
+    @classmethod
+    def strip_name(cls, value: str) -> str:
+        value = value.strip()
+        if len(value) < 2:
+            raise ValueError("Name must have at least 2 characters")
+        return value
 
 
 class RoleUpdate(BaseModel):

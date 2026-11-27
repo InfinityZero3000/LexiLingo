@@ -6,13 +6,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.security import (
-    create_access_token,
+    create_user_access_token,
     create_refresh_token,
     hash_refresh_token,
     get_password_hash_async,
     verify_password_async,
 )
 from app.models.rbac import Role
+from app.services.user_lookup import find_user_by_email, normalize_email
 from app.models.user import RefreshToken, User
 from app.schemas.auth import RegisterRequest
 
@@ -40,7 +41,7 @@ async def register_user(db: AsyncSession, request: RegisterRequest) -> User:
 
     role_id = await get_role_id(db, "user")
     user = User(
-        email=request.email,
+        email=normalize_email(request.email),
         username=request.username,
         hashed_password=await get_password_hash_async(request.password),
         display_name=request.display_name or request.username,
@@ -63,8 +64,7 @@ async def authenticate_user(
 
     dummy_hash is always run when the email is not found to prevent timing attacks.
     """
-    result = await db.execute(select(User).where(User.email == email))
-    user = result.scalar_one_or_none()
+    user = await find_user_by_email(db, email)
     hash_to_check = user.hashed_password if (user and user.hashed_password) else dummy_hash
     password_ok = await verify_password_async(password, hash_to_check)
     if not user or not password_ok:
@@ -72,18 +72,17 @@ async def authenticate_user(
     return user
 
 
-PRIVILEGED_ROLE_SLUGS = frozenset({"admin", "super_admin"})
-
-
 async def refresh_lifetime_days(db: AsyncSession, user_id: uuid.UUID) -> int:
     """How long a refresh token issued to this user stays valid: shorter for admin roles."""
-    slug = (
+    privileged = (
         await db.execute(
-            select(Role.slug).join(User, User.role_id == Role.id).where(User.id == user_id)
+            select(User.id)
+            .join(Role, User.role_id == Role.id)
+            .where(User.id == user_id, Role.level >= 1)
         )
     ).scalar_one_or_none()
     days = settings.REFRESH_TOKEN_EXPIRE_DAYS
-    if slug in PRIVILEGED_ROLE_SLUGS:
+    if privileged is not None:
         days = min(days, settings.REFRESH_TOKEN_EXPIRE_DAYS_PRIVILEGED)
     return days
 
@@ -160,9 +159,11 @@ async def revoke_refresh_family(db: AsyncSession, db_token: RefreshToken) -> Non
     await db.execute(query)
 
 
-async def issue_token_pair(db: AsyncSession, user_id: uuid.UUID) -> tuple[str, str]:
+async def issue_token_pair(
+    db: AsyncSession, user_id: uuid.UUID, hashed_password: str | None
+) -> tuple[str, str]:
     """Return (access_token, refresh_token); the refresh token is stored and role-aware."""
     return (
-        create_access_token({"sub": str(user_id)}),
+        create_user_access_token(user_id, hashed_password),
         await issue_refresh_token(db, user_id),
     )

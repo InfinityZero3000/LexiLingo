@@ -13,7 +13,7 @@ interface AdminUser {
   id: string;
   email: string;
   display_name: string;
-  role: "admin" | "super_admin";
+  role: string;
   provider: string[];
   is_active: boolean;
   created_at: string;
@@ -47,7 +47,7 @@ export const AdminManagementPage = () => {
         id: u.id,
         email: u.email,
         display_name: u.display_name ?? u.username,
-        role: u.role_slug as "admin" | "super_admin",
+        role: u.role_slug,
         provider: Array.isArray(u.provider) ? u.provider : [u.provider ?? "—"],
         is_active: u.is_active,
         created_at: u.created_at,
@@ -194,7 +194,9 @@ export const AdminManagementPage = () => {
                         }}
                       >
                         <Shield size={13} />
-                        {admin.role === "super_admin" ? t.adminManagement.superAdmin : t.adminManagement.admin}
+                        {admin.role === "super_admin"
+                          ? t.adminManagement.superAdmin
+                          : admin.role === "admin" ? t.adminManagement.admin : admin.role}
                       </span>
                     </td>
                     <td>

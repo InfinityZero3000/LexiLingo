@@ -272,8 +272,8 @@ class TestRegister:
         from app.core.database import get_db
 
         existing_user = _make_mock_user()
-        # First call (email check) → None; second call (username check) → existing_user
-        side_effects = [None, existing_user]
+        # The email check looks up the exact address, then any letter case; then the username.
+        side_effects = [None, None, existing_user]
         call_idx = [0]
 
         def get_side():

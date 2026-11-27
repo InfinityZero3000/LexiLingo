@@ -15,6 +15,8 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.token_blacklist import InactiveUserFlag
+from app.core.firebase_auth import revoke_all_refresh_tokens
+from app.services.role_guard import ensure_not_last_super_admin
 from app.crud.user import UserCRUD
 from app.models.user import User
 from app.services.cefr_level_service import (
@@ -104,8 +106,8 @@ def _serialize_user_response(user: User, lessons_completed: int = 0) -> UserResp
         role_id=getattr(user, "role_id", None),
         role_slug=role_slug,
         role_level=role_level,
-        is_admin=role_level >= 50,
-        is_super_admin=role_level >= 100,
+        is_admin=role_level >= 1,
+        is_super_admin=role_level >= 2,
     )
 
 
@@ -239,7 +241,9 @@ async def delete_current_user(
     
     This is a soft delete (sets is_active to False).
     """
+    await ensure_not_last_super_admin(db, current_user)
     current_user.is_active = False
+    await revoke_all_refresh_tokens(db, current_user.id)
     await db.commit()
     await InactiveUserFlag.sync(current_user.id, False)
     
@@ -255,6 +259,7 @@ async def permanently_delete_current_user(
     db: AsyncSession = Depends(get_db),
 ):
     """GDPR hard delete — removes all user data permanently."""
+    await ensure_not_last_super_admin(db, current_user)
     user_id = current_user.id
     await delete_user_permanently(db, current_user)
     await InactiveUserFlag.sync(user_id, False)

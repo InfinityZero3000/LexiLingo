@@ -11,6 +11,8 @@ const api = vi.hoisted(() => ({
   getPermissions: vi.fn(),
   getRoleWithPermissions: vi.fn(),
   setRolePermissions: vi.fn(),
+  createRole: vi.fn(),
+  deleteRole: vi.fn(),
 }));
 vi.mock("../lib/rbacApi", () => ({ ...api }));
 const auth = vi.hoisted(() => ({ role: "admin" }));
@@ -115,5 +117,61 @@ describe("RolesPermissionsPage", () => {
 
     await waitFor(() => expect(api.setRolePermissions).toHaveBeenCalledWith("admin", ["users:read"]));
     expect(await screen.findByText("Permissions saved")).toBeTruthy();
+  });
+
+  const asSuperAdminWith = (...roles: Array<ReturnType<typeof role>>) => {
+    auth.role = "super_admin";
+    api.getRoles.mockResolvedValue(roles);
+    api.getPermissions.mockResolvedValue([permission("users:read", "users")]);
+    api.getRoleWithPermissions.mockImplementation(async (slug: string) => ({
+      ...roles.find((r) => r.slug === slug)!,
+      permissions: [],
+    }));
+  };
+
+  it("creates a role, building the identifier from a Vietnamese name", async () => {
+    asSuperAdminWith(role("admin", 1));
+    api.createRole.mockResolvedValue({});
+    renderPage();
+
+    fireEvent.click(await screen.findByRole("button", { name: "New role" }));
+    const dialog = within(await screen.findByRole("dialog"));
+    const submit = dialog.getByRole("button", { name: "Create role" }) as HTMLButtonElement;
+    expect(submit.disabled).toBe(true);
+    fireEvent.change(dialog.getByLabelText("Name"), { target: { value: "Biên tập viên Đề thi" } });
+    expect((dialog.getByLabelText("Identifier") as HTMLInputElement).value).toBe("bien_tap_vien_de_thi");
+    fireEvent.click(submit);
+
+    await waitFor(() =>
+      expect(api.createRole).toHaveBeenCalledWith({
+        name: "Biên tập viên Đề thi", slug: "bien_tap_vien_de_thi", description: undefined,
+      }),
+    );
+    expect(await screen.findByText(/Role Biên tập viên Đề thi created/)).toBeTruthy();
+  });
+
+  it("deletes only custom roles, after a confirmation, and shows why one is refused", async () => {
+    asSuperAdminWith(role("admin", 1), { ...role("editor", 1), is_system: false });
+    api.deleteRole.mockRejectedValue(new Error("2 user(s) still have this role."));
+    renderPage();
+
+    const button = await screen.findByRole("button", { name: "Delete role editor" });
+    expect(screen.queryByRole("button", { name: "Delete role admin" })).toBeNull();
+    fireEvent.click(button);
+    expect(api.deleteRole).not.toHaveBeenCalled();
+    fireEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: "Delete role" }));
+
+    await waitFor(() => expect(api.deleteRole).toHaveBeenCalledWith("editor"));
+    expect((await screen.findByRole("alert")).textContent).toContain("still have this role");
+  });
+
+  it("offers a plain admin neither creating nor deleting", async () => {
+    asSuperAdminWith({ ...role("editor", 1), is_system: false });
+    auth.role = "admin";
+    renderPage();
+
+    await screen.findByText("users:read");
+    expect(screen.queryByRole("button", { name: "New role" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Delete role editor" })).toBeNull();
   });
 });

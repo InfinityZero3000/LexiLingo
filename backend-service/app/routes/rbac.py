@@ -11,7 +11,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, or_
+from sqlalchemy import delete, select, func, or_
+from sqlalchemy.exc import IntegrityError
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_admin, get_current_super_admin, require_permission
@@ -19,6 +20,8 @@ from app.models.user import User
 from app.services.admin_audit import record_admin_action
 from app.models.rbac import Role, Permission, RolePermission, AuditLog
 from app.schemas.rbac import (
+    RESERVED_ROLE_SLUGS,
+    RoleCreate,
     RoleResponse,
     RoleWithPermissions,
     PermissionResponse,
@@ -75,6 +78,84 @@ async def get_role_with_permissions(
     )
 
 
+async def _permissions_by_slug(db: AsyncSession, wanted: set[str]) -> dict[str, Permission]:
+    known = {
+        p.slug: p
+        for p in (await db.execute(select(Permission).where(Permission.slug.in_(wanted)))).scalars().all()
+    }
+    unknown = sorted(wanted - known.keys())
+    if unknown:
+        raise HTTPException(status_code=422, detail=f"Unknown permissions: {', '.join(unknown)}")
+    return known
+
+
+@router.post("/roles", response_model=RoleWithPermissions, status_code=201)
+async def create_role(
+    data: RoleCreate,
+    request: Request,
+    admin: User = Depends(get_current_super_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Create a custom admin-level role (super admin only; this cannot be delegated)."""
+    if data.slug in RESERVED_ROLE_SLUGS:
+        raise HTTPException(status_code=409, detail=f"'{data.slug}' is a built-in role")
+    clash = await db.execute(
+        select(Role.id)
+        .where(or_(Role.slug == data.slug, func.lower(Role.name) == data.name.lower()))
+        .limit(1)
+    )
+    if clash.first() is not None:
+        raise HTTPException(status_code=409, detail="A role with this name or slug already exists")
+
+    wanted = set(data.permission_slugs)
+    known = await _permissions_by_slug(db, wanted)
+    role = Role(
+        name=data.name, slug=data.slug, description=data.description,
+        level=1, is_system=False, is_active=True,
+    )
+    db.add(role)
+    try:
+        await db.flush()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(status_code=409, detail="A role with this name or slug already exists")
+    for slug in sorted(wanted):
+        db.add(RolePermission(role_id=role.id, permission_id=known[slug].id))
+    record_admin_action(
+        db, admin, "role_create", "role", role.slug, {"name": role.name, "permissions": sorted(wanted)}, request
+    )
+    await db.commit()
+    return await get_role_with_permissions(role.slug, admin, db)
+
+
+@router.delete("/roles/{role_slug}")
+async def delete_role(
+    role_slug: str,
+    request: Request,
+    admin: User = Depends(get_current_super_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete a custom role that nobody holds."""
+    role = (
+        await db.execute(select(Role).where(Role.slug == role_slug).with_for_update())
+    ).scalar_one_or_none()
+    if not role:
+        raise HTTPException(status_code=404, detail=f"Role '{role_slug}' not found")
+    if role.is_system or role.slug in RESERVED_ROLE_SLUGS:
+        raise HTTPException(status_code=400, detail="Built-in roles cannot be deleted")
+    holders = await db.scalar(select(func.count(User.id)).where(User.role_id == role.id)) or 0
+    if holders:
+        raise HTTPException(
+            status_code=409,
+            detail=f"{holders} user(s) still have this role. Give them another role first.",
+        )
+    record_admin_action(db, admin, "role_delete", "role", role.slug, {"name": role.name}, request)
+    await db.execute(delete(RolePermission).where(RolePermission.role_id == role.id))
+    await db.execute(delete(Role).where(Role.id == role.id))
+    await db.commit()
+    return {"deleted": role_slug}
+
+
 # ============================================================================
 # Permissions (admin can read)
 # ============================================================================
@@ -111,13 +192,7 @@ async def set_role_permissions(
         raise HTTPException(status_code=400, detail="Only admin-level roles can be edited")
 
     wanted = set(data.permission_slugs)
-    known = {
-        p.slug: p
-        for p in (await db.execute(select(Permission).where(Permission.slug.in_(wanted)))).scalars().all()
-    }
-    unknown = sorted(wanted - known.keys())
-    if unknown:
-        raise HTTPException(status_code=422, detail=f"Unknown permissions: {', '.join(unknown)}")
+    known = await _permissions_by_slug(db, wanted)
 
     current_rows = (
         await db.execute(

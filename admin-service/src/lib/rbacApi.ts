@@ -94,6 +94,17 @@ export const setRolePermissions = (slug: string, permissionSlugs: string[]) =>
     body: JSON.stringify({ permission_slugs: permissionSlugs }),
   });
 
+export type NewRole = { name: string; slug: string; description?: string };
+
+export const createRole = (role: NewRole) =>
+  apiFetch<RoleWithPermissions>(`${base()}/admin/rbac/roles`, {
+    method: "POST",
+    body: JSON.stringify(role),
+  });
+
+export const deleteRole = (slug: string) =>
+  apiFetch<{ deleted: string }>(`${base()}/admin/rbac/roles/${slug}`, { method: "DELETE" });
+
 export type MyPermissions = { all: boolean; permissions: string[] };
 
 export const getMyPermissions = () =>
