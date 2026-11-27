@@ -15,6 +15,9 @@ class _Auth extends Mock with ChangeNotifier implements AuthProvider {
 
   @override
   bool get isAuthenticated => false;
+
+  @override
+  Future<void> signInWithGoogle() async {}
 }
 
 void main() {
@@ -47,5 +50,31 @@ void main() {
     tester,
   ) async {
     expect(await nameFieldText(tester, null), '');
+  });
+
+  testWidgets('a name edited in the form is the one kept for the account', (
+    tester,
+  ) async {
+    tester.view.devicePixelRatio = 1;
+    tester.view.physicalSize = const Size(1400, 2400);
+    addTearDown(tester.view.reset);
+    String? reported;
+    await tester.pumpWidget(
+      ChangeNotifierProvider<AuthProvider>.value(
+        value: _Auth(),
+        child: MaterialApp(
+          home: RegisterPage(
+            initialName: 'Linh',
+            onNameChosen: (name) async => reported = name,
+          ),
+        ),
+      ),
+    );
+
+    await tester.enterText(find.byType(TextFormField).first, 'Linh Tran');
+    await tester.tap(find.byIcon(Icons.g_mobiledata));
+    await tester.pump();
+
+    expect(reported, 'Linh Tran');
   });
 }

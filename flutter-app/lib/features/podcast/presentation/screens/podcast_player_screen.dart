@@ -172,7 +172,11 @@ class _PodcastPlayerScreenState extends State<PodcastPlayerScreen> {
   Future<void> _loadEpisode() async {
     if (_loadError) setState(() => _loadError = false);
     try {
-      final loaded = await _handler!.setEpisode(widget.episode);
+      final loaded = await _handler!.setEpisode(
+        widget.episode,
+        podcastTitle: widget.podcastTitle,
+        artworkUrl: widget.artworkUrl,
+      );
       if (!mounted) return;
       if (!loaded) {
         // Already playing in the background: adopt its live state instead of

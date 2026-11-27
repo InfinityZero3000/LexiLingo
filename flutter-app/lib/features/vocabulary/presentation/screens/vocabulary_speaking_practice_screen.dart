@@ -18,6 +18,7 @@ import 'package:lexilingo_app/features/voice/presentation/widgets/tts_speed_sele
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/core/services/podcast_audio_handler.dart';
 
 class VocabularySpeakingPracticeScreen extends StatefulWidget {
   const VocabularySpeakingPracticeScreen({super.key});
@@ -91,6 +92,7 @@ class _VocabularySpeakingPracticeScreenState
             '${directory.path}/vocab_speaking_${DateTime.now().millisecondsSinceEpoch}.wav';
       }
 
+      PodcastAudioHandler.pauseBackgroundPlayback();
       await _recorder.start(
         const RecordConfig(encoder: AudioEncoder.wav),
         path: kIsWeb

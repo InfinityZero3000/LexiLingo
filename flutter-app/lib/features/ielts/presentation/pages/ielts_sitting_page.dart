@@ -18,6 +18,7 @@ import '../providers/ielts_provider.dart';
 import '../widgets/ielts_passage_attribution.dart';
 import 'ielts_result_page.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/core/services/podcast_audio_handler.dart';
 
 String _skillLabel(IeltsSkill skill) => switch (skill) {
   IeltsSkill.listening => 'ielts.skillListening'.tr(),
@@ -355,8 +356,9 @@ class _AudioPlayerBarState extends State<_AudioPlayerBar> {
       await _player.setUrl(url);
       if (mounted) setState(() => _ready = true);
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(() => _error = const UiText.key('ielts.audioUnavailable'));
+      }
     }
   }
 
@@ -365,6 +367,7 @@ class _AudioPlayerBarState extends State<_AudioPlayerBar> {
     if (_player.processingState == ProcessingState.completed) {
       await _player.seek(Duration.zero);
     }
+    PodcastAudioHandler.pauseBackgroundPlayback();
     await _player.play();
   }
 
@@ -995,6 +998,7 @@ class _SpeakingPartState extends State<_SpeakingPart> {
     final dir = await getTemporaryDirectory();
     if (!mounted) return;
     final path = '${dir.path}/ielts_$_key.m4a';
+    PodcastAudioHandler.pauseBackgroundPlayback();
     await _recorder.start(const RecordConfig(), path: path);
     if (!mounted) return;
     setState(() {

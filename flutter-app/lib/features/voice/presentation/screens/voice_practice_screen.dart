@@ -16,6 +16,7 @@ import 'package:lexilingo_app/features/voice/presentation/providers/voice_provid
 import 'package:lexilingo_app/features/voice/presentation/widgets/record_button.dart';
 import 'package:lexilingo_app/features/voice/presentation/widgets/pronunciation_score_card.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/core/services/podcast_audio_handler.dart';
 
 /// Voice Practice Screen
 /// Allows users to practice pronunciation by:
@@ -132,6 +133,7 @@ class _VoicePracticeScreenState extends State<VoicePracticeScreen> {
             '${directory.path}/recording_${DateTime.now().millisecondsSinceEpoch}.wav';
       }
 
+      PodcastAudioHandler.pauseBackgroundPlayback();
       await _recorder.start(
         const RecordConfig(encoder: AudioEncoder.wav),
         path: kIsWeb

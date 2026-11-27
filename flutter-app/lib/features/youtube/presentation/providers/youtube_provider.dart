@@ -310,14 +310,20 @@ class YouTubeProvider extends ChangeNotifier with ResetEpoch {
   // ── Save / Unsave Videos ──
 
   Future<void> saveVideo(YouTubeVideo video) async {
+    // A sign-out during the load would otherwise write this into the next
+    // account's list and storage.
+    final epoch = resetEpoch;
     await _ensureLoaded();
+    if (isStale(epoch)) return;
     _savedVideos[video.videoId] = SavedVideo.fromVideo(video);
     notifyListeners();
     await _persistSavedVideos();
   }
 
   Future<void> unsaveVideo(String videoId) async {
+    final epoch = resetEpoch;
     await _ensureLoaded();
+    if (isStale(epoch)) return;
     _savedVideos.remove(videoId);
     notifyListeners();
     await _persistSavedVideos();
@@ -387,7 +393,9 @@ class YouTubeProvider extends ChangeNotifier with ResetEpoch {
   // ── Watch History Actions ──
 
   Future<void> addToHistory(YouTubeVideo video) async {
+    final epoch = resetEpoch;
     await _ensureLoaded();
+    if (isStale(epoch)) return;
     _watchHistory.removeWhere((v) => v.videoId == video.videoId);
     _watchHistory.insert(0, video);
     if (_watchHistory.length > 20) {
@@ -398,7 +406,9 @@ class YouTubeProvider extends ChangeNotifier with ResetEpoch {
   }
 
   Future<void> clearWatchHistory() async {
+    final epoch = resetEpoch;
     await _ensureLoaded();
+    if (isStale(epoch)) return;
     _watchHistory.clear();
     notifyListeners();
     await _persistWatchHistory();

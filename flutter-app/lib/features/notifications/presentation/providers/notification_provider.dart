@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/services/locale_service.dart';
 import 'package:lexilingo_app/core/state/reset_epoch.dart';
 import 'package:lexilingo_app/core/l10n/ui_text.dart';
@@ -167,6 +168,44 @@ class NotificationProvider with ChangeNotifier, ResetEpoch {
     } catch (e) {
       debugPrint('Review reminder notification sync failed: $e');
     }
+  }
+
+  static const emailVerificationId = 'email_verification_pending';
+
+  /// Keeps one "verify your email" entry in the inbox while the account is
+  /// unverified, and removes it once it is. It replaced a banner pinned to the
+  /// top of Home: a standing request belongs with the other requests.
+  Future<void> syncEmailVerification({
+    required String? email,
+    required bool verified,
+  }) async {
+    final epoch = resetEpoch;
+    final existing = await _repository.getNotificationById(emailVerificationId);
+    if (isStale(epoch)) return;
+    if (verified || email == null || email.isEmpty) {
+      if (existing == null) return;
+      await _repository.deleteNotification(emailVerificationId);
+    } else {
+      // Rewritten each time so it follows the UI language; read state and
+      // date are kept, or every launch would mark it new again.
+      await _repository.addNotification(
+        NotificationEntity(
+          id: emailVerificationId,
+          type: NotificationType.system,
+          title: 'notifications.verifyEmailTitle'.tr(),
+          body: 'notifications.verifyEmailBody'.tr(namedArgs: {'email': email}),
+          timestamp: existing?.timestamp ?? DateTime.now(),
+          isRead: existing?.isRead ?? false,
+          data: const {
+            'route': '/profile/edit',
+            'source': 'email_verification',
+          },
+          iconIdentifier: 'mark_email_unread',
+          colorHex: '#9C27B0',
+        ),
+      );
+    }
+    if (!isStale(epoch)) await loadNotifications();
   }
 
   /// Mark a notification as read

@@ -20,6 +20,7 @@ import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_stream_eve
 import 'package:lexilingo_app/features/lexi_chat/domain/entities/lexi_session.dart';
 import 'package:lexilingo_app/features/lexi_chat/domain/repositories/lexi_chat_repository.dart';
 import 'package:lexilingo_app/features/voice/domain/entities/pronunciation_score.dart';
+import 'package:lexilingo_app/core/services/podcast_audio_handler.dart';
 
 const _tag = 'LexiChatProvider';
 
@@ -1152,6 +1153,7 @@ class LexiChatProvider extends ChangeNotifier with ResetEpoch {
       await _ttsPlayer.setUrl(uri.toString());
       await _ttsPlayer.setSpeed(_ttsSpeed);
       if (_audioMuted || isStale(epoch)) return;
+      PodcastAudioHandler.pauseBackgroundPlayback();
       await _ttsPlayer.play();
     } catch (e) {
       logWarn(_tag, 'TTS playback failed: $e');

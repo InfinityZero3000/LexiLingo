@@ -10,6 +10,7 @@ import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/features/notifications/domain/entities/notification_entity.dart';
 import 'package:lexilingo_app/features/notifications/domain/services/notification_navigation_service.dart';
 import 'package:lexilingo_app/features/notifications/domain/services/push_permission_gateway.dart';
+import 'package:lexilingo_app/core/services/locale_service.dart';
 
 /// Firebase Cloud Messaging Service
 /// Handles push notifications from Firebase
@@ -215,6 +216,9 @@ class FirebaseMessagingService implements PushPermissionGateway {
           'device_id': deviceId,
           'device_type': deviceType,
           'fcm_token': token,
+          // Picks the language of the welcome push this request may send;
+          // onboarding has usually not saved the learner's language yet.
+          'locale': await LocaleService.getSavedLocale(),
         },
       );
 

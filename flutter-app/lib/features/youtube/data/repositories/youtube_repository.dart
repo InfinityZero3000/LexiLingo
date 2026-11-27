@@ -35,7 +35,7 @@ class YouTubeRepository {
         final uri = Uri.parse('$_baseUrl/channels').replace(
           queryParameters: {if (category != null) 'category': category},
         );
-        final response = await _client.get(uri);
+        final response = await _get(uri);
         _checkResponse(response);
         return jsonDecode(response.body) as Map<String, dynamic>;
       },
@@ -73,7 +73,7 @@ class YouTubeRepository {
         final uri = Uri.parse(
           '$_baseUrl/search',
         ).replace(queryParameters: params);
-        final response = await _client.get(uri);
+        final response = await _get(uri);
         _checkResponse(response);
         return jsonDecode(response.body) as Map<String, dynamic>;
       },
@@ -106,7 +106,7 @@ class YouTubeRepository {
         final uri = Uri.parse(
           '$_baseUrl/captions/$videoId',
         ).replace(queryParameters: {'lang': lang});
-        final response = await _client.get(uri);
+        final response = await _get(uri);
         _checkResponse(response);
         final body = jsonDecode(response.body) as Map<String, dynamic>;
         if (body['status'] == 'unavailable') {
@@ -156,7 +156,7 @@ class YouTubeRepository {
           final uri = Uri.parse(
             '$_baseUrl/translate',
           ).replace(queryParameters: params);
-          final response = await _client.get(uri);
+          final response = await _get(uri);
           if (response.statusCode >= 400) {
             return {
               'word': cleanWord,
@@ -199,7 +199,7 @@ class YouTubeRepository {
         final uri = Uri.parse(
           '$_baseUrl/channels/$channelId/videos',
         ).replace(queryParameters: params);
-        final response = await _client.get(uri);
+        final response = await _get(uri);
         _checkResponse(response);
         return jsonDecode(response.body) as Map<String, dynamic>;
       },
@@ -213,6 +213,12 @@ class YouTubeRepository {
   }
 
   // ──── Helpers ────
+
+  // http has no default timeout: on a dead connection a caption load spun
+  // forever instead of falling back to the cache or "unavailable".
+  static const _timeout = Duration(seconds: 20);
+
+  Future<http.Response> _get(Uri uri) => _client.get(uri).timeout(_timeout);
 
   void _checkResponse(http.Response response) {
     if (response.statusCode >= 400) {

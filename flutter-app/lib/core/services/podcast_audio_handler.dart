@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:audio_service/audio_service.dart';
+import 'package:audio_session/audio_session.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:just_audio/just_audio.dart';
+import 'package:lexilingo_app/core/di/service_locator.dart';
 import 'package:lexilingo_app/features/podcast/data/repositories/podcast_repository.dart'
     show podcastAudioUri;
 import 'package:lexilingo_app/features/podcast/domain/entities/podcast_entities.dart';
@@ -16,6 +18,17 @@ import 'sleep_timer_countdown.dart';
 ///
 /// Phase 4: Podcast — skill: audio-format-optimization.
 class PodcastAudioHandler extends BaseAudioHandler with SeekHandler {
+  static const Duration skipInterval = Duration(seconds: 15);
+
+  /// Pauses an episode left playing in the background. Call before the app
+  /// opens the microphone (the episode would be recorded into the learner's
+  /// answer) or plays speech of its own (two voices at once).
+  static void pauseBackgroundPlayback() {
+    if (!sl.isRegistered<PodcastAudioHandler>()) return;
+    final handler = sl<PodcastAudioHandler>();
+    if (handler.playing) handler.pause().ignore();
+  }
+
   final AudioPlayer _player = AudioPlayer();
 
   // Owned here rather than by the player screen's State: this handler is the
@@ -28,8 +41,12 @@ class PodcastAudioHandler extends BaseAudioHandler with SeekHandler {
   int? _sleepTimerSecondsRemaining;
 
   PodcastAudioHandler() {
-    // Forward every playback event to AudioService's playbackState BehaviourSubject
-    _player.playbackEventStream.map(_transformEvent).pipe(playbackState);
+    // The lock screen extrapolates its progress bar from the last state it
+    // was given. A play() whose audio session fails to activate flips
+    // `playing` back with no playback event, which left the lock screen
+    // advancing a bar over silence.
+    _player.playbackEventStream.listen(_broadcastState);
+    _player.playingStream.listen(_broadcastState);
 
     // Keep AudioService's mediaItem duration up-to-date as the stream resolves
     _player.durationStream.listen((duration) {
@@ -58,18 +75,29 @@ class PodcastAudioHandler extends BaseAudioHandler with SeekHandler {
   /// Returns `false` without touching the player when [episode] is already
   /// loaded: reopening the player screen on an episode playing in the
   /// background must not restart it.
-  Future<bool> setEpisode(PodcastEpisode episode) async {
+  Future<bool> setEpisode(
+    PodcastEpisode episode, {
+    String podcastTitle = '',
+    String artworkUrl = '',
+  }) async {
     if (mediaItem.value?.id == episode.guid &&
         _player.processingState != ProcessingState.idle) {
       return false;
     }
+    final art = (episode.imageUrl?.isNotEmpty ?? false)
+        ? episode.imageUrl!
+        : artworkUrl;
     final item = MediaItem(
       id: episode.guid,
       title: episode.title,
-      album: '',
-      artUri: (episode.imageUrl?.isNotEmpty ?? false)
-          ? Uri.tryParse(episode.imageUrl!)
+      artist: podcastTitle.isEmpty ? null : podcastTitle,
+      album: podcastTitle,
+      // Known before the stream resolves, so the lock screen bar has its
+      // length from the first frame.
+      duration: episode.durationSeconds > 0
+          ? Duration(seconds: episode.durationSeconds)
           : null,
+      artUri: art.isEmpty ? null : Uri.tryParse(art),
     );
     mediaItem.add(item);
 
@@ -98,8 +126,18 @@ class PodcastAudioHandler extends BaseAudioHandler with SeekHandler {
 
   // ── BaseAudioHandler overrides ────────────────────────────────────────────
 
+  // iOS starts an app in SoloAmbient, which the mute switch silences and
+  // locking or leaving the app stops. Set on every play, not once: recording
+  // for Lexi switches the shared session to playAndRecord, which would send
+  // the next episode to the earpiece.
   @override
-  Future<void> play() => _player.play();
+  Future<void> play() async {
+    if (!kIsWeb) {
+      final session = await AudioSession.instance;
+      await session.configure(const AudioSessionConfiguration.speech());
+    }
+    await _player.play();
+  }
 
   @override
   Future<void> pause() => _player.pause();
@@ -108,12 +146,11 @@ class PodcastAudioHandler extends BaseAudioHandler with SeekHandler {
   Future<void> seek(Duration position) => _player.seek(position);
 
   @override
-  Future<void> fastForward() =>
-      _player.seek(_player.position + const Duration(seconds: 15));
+  Future<void> fastForward() => _player.seek(_player.position + skipInterval);
 
   @override
   Future<void> rewind() {
-    final target = _player.position - const Duration(seconds: 15);
+    final target = _player.position - skipInterval;
     return _player.seek(target.isNegative ? Duration.zero : target);
   }
 
@@ -172,6 +209,9 @@ class PodcastAudioHandler extends BaseAudioHandler with SeekHandler {
   Duration get currentPosition => _player.position;
 
   // ── Internal helpers ──────────────────────────────────────────────────────
+
+  void _broadcastState(Object? _) =>
+      playbackState.add(_transformEvent(_player.playbackEvent));
 
   PlaybackState _transformEvent(PlaybackEvent event) {
     return PlaybackState(

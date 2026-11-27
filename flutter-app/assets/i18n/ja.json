@@ -152,11 +152,8 @@
     "verifyEmailDoneMessage": "ログインして学習を始めましょう。",
     "verifyEmailFailedTitle": "このリンクは使用できません",
     "verifyEmailFailedMessage": "すでに使用済みか、有効期限が切れています。新しいリンクを受け取るにはメールアドレスを入力してください。",
-    "verifyEmailBanner": "メールアドレスを確認すると、ショップと紹介特典が使えるようになります。",
-    "verifyEmailBannerAction": "リンクを再送",
     "googleLoginFailed": "Google サインインに失敗しました。もう一度お試しください。",
-    "facebookLoginFailed": "Facebook サインインに失敗しました。もう一度お試しください。",
-    "facebookEmailInUse": "このFacebookアカウントのメールアドレスは、すでに別のアカウントで使用されています。以前と同じ方法でサインインしてください。"
+    "facebookLoginFailed": "Facebook サインインに失敗しました。もう一度お試しください。"
   },
   "home": {
     "wordsLeftToReview": "復習する単語",
@@ -1038,11 +1035,11 @@
     "reviewReminderTitle": "単語を復習する時間です",
     "reviewChannelName": "毎日のリマインダー",
     "reviewChannelDescription": "毎日単語を復習するようリマインドします",
-    "reviewTitle": "単語の復習",
-    "reviewBodyDue": "今日は{count}語の復習があります！",
-    "reviewBodyStreak": "単語を復習する時間です。連続記録を守りましょう！",
-    "reviewBodyDueNow": "復習期限の単語が{count}語あります！",
+    "reviewTitle": "📚 単語の復習タイム",
+    "reviewBodyStreak": "2分の復習で記憶に定着。連続記録も守りましょう！🔥",
     "reviewWaitingBody": "{count}語が復習を待っています。",
+    "verifyEmailTitle": "✉️ メールアドレスを確認してください",
+    "verifyEmailBody": "{email} に送ったリンクを開くと、ショップと紹介特典が使えるようになります。",
     "checkin": {
       "channelName": "チェックインのリマインダー",
       "channelDescription": "選んだ時間に学習の連続記録を守れるようお知らせします",

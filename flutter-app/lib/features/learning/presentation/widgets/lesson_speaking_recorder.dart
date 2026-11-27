@@ -12,6 +12,7 @@ import '../../../voice/presentation/providers/voice_provider.dart';
 import '../../domain/services/speaking_answer_matcher.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/core/services/podcast_audio_handler.dart';
 
 typedef StartLessonRecording = Future<void> Function();
 typedef StopLessonRecording = Future<Uint8List> Function();
@@ -148,6 +149,7 @@ class _LessonSpeakingRecorderState extends State<LessonSpeakingRecorder> {
           '${directory.path}/lesson_speaking_${DateTime.now().millisecondsSinceEpoch}.wav';
     }
 
+    PodcastAudioHandler.pauseBackgroundPlayback();
     await _recorder.start(
       const RecordConfig(
         encoder: AudioEncoder.wav,

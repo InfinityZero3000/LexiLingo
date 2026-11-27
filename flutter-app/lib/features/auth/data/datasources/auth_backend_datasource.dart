@@ -8,6 +8,7 @@ import '../models/auth_models.dart';
 import '../models/user_model.dart';
 import 'device_manager.dart';
 import 'token_storage.dart';
+import 'package:lexilingo_app/core/services/locale_service.dart';
 
 const _tag = 'AuthBackendDataSource';
 
@@ -41,7 +42,9 @@ class AuthBackendDataSource {
 
     final envelope = await apiClient.postEnvelope<Map<String, dynamic>>(
       '/auth/register',
-      body: request.toJson(),
+      // The verification email goes out before onboarding saves the native
+      // language, so it is written in the UI language instead.
+      body: {...request.toJson(), 'locale': await LocaleService.getSavedLocale()},
       fromJson: (data) => data as Map<String, dynamic>,
     );
 

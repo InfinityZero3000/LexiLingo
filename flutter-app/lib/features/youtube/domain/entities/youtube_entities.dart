@@ -4,10 +4,12 @@ String decodeHtmlEntities(String text) {
     RegExp(r'&(#x[0-9a-fA-F]+|#\d+|amp|lt|gt|quot|apos);'),
     (m) {
       final e = m.group(1)!;
-      if (e.startsWith('#x'))
+      if (e.startsWith('#x')) {
         return String.fromCharCode(int.parse(e.substring(2), radix: 16));
-      if (e.startsWith('#'))
+      }
+      if (e.startsWith('#')) {
         return String.fromCharCode(int.parse(e.substring(1)));
+      }
       return const {
         'amp': '&',
         'lt': '<',

@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/widgets/stat_card.dart';
 import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -206,73 +207,34 @@ class ProfileHeader extends StatelessWidget {
                               ),
                             ),
                           ),
-                          // Verified Badge
-                          if (user?.isVerified == true)
-                            Positioned(
-                              bottom: 4,
-                              right: 4,
-                              child: Semantics(
-                                label: 'profile.emailVerified'.tr(),
-                                child: Tooltip(
-                                  message: 'profile.emailVerified'.tr(),
-                                  excludeFromSemantics: true,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          isDark
-                                              ? accent
-                                              : Theme.of(
-                                                  context,
-                                                ).colorScheme.primary,
-
-                                          isDark
-                                              ? accent
-                                              : Theme.of(
-                                                  context,
-                                                ).colorScheme.primary,
-                                        ],
-                                      ),
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: AppColors.surfaceLight,
-                                        width: 2,
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color:
-                                              (isDark
-                                                      ? accent
-                                                      : Theme.of(
-                                                          context,
-                                                        ).colorScheme.primary)
-                                                  .withValues(alpha: 0.5),
-                                          blurRadius: 8,
-                                        ),
-                                      ],
-                                    ),
-                                    child: Icon(
-                                      Icons.verified,
-                                      color: AppColors.surfaceLight,
-                                      size: 16,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
                         ],
                       ),
                       const SizedBox(height: AppSpacing.md),
-                      // User Name
-                      Text(
-                        user?.displayName ?? 'profile.guestUser'.tr(),
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: -0.5,
+                      // User Name, with the verified tick beside it
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              user?.displayName ?? 'profile.guestUser'.tr(),
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.headlineSmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: -0.5,
+                                  ),
                             ),
+                          ),
+                          if (user?.isVerified == true) ...[
+                            const SizedBox(width: 6),
+                            Icon(
+                              Icons.verified,
+                              size: 22,
+                              color: accent,
+                              semanticLabel: 'profile.emailVerified'.tr(),
+                            ),
+                          ],
+                        ],
                       ),
                       const SizedBox(height: 6),
                       // Email
@@ -284,6 +246,25 @@ class ProfileHeader extends StatelessWidget {
                                 color: AppColorRoles.textSecondary(isDark),
                               ),
                         ),
+                      // Unverified: say so here, and lead to the resend button.
+                      if (user != null && !user!.isVerified) ...[
+                        const SizedBox(height: AppSpacing.sm),
+                        TapTarget(
+                          onTap: () async {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const EditProfileScreen(),
+                              ),
+                            );
+                            if (result == true) onProfileEdited();
+                          },
+                          child: StatusPill(
+                            label: 'profile.emailNotVerified'.tr(),
+                            tone: StatusTone.warning,
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: AppSpacing.md),
                       // Level Badge + CEFR Proficiency Badge + Rank Badge
                       Consumer<LevelProvider>(

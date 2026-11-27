@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- AppColors.primary; tints the notification icon and app name. -->
+    <color name="notification_accent">#137FEC</color>
+</resources>
