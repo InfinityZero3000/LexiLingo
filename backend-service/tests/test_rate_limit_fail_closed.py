@@ -97,3 +97,17 @@ if __name__ == "__main__":
     asyncio.run(test_sensitive_route_fails_closed_when_redis_unavailable())
     asyncio.run(test_ordinary_route_falls_back_to_memory_when_redis_unavailable())
     print("All rate-limit fail-closed self-checks passed.")
+
+
+@pytest.mark.asyncio
+async def test_email_images_are_never_rate_limited(monkeypatch):
+    """Mail clients' image proxies share IPs across every recipient."""
+    monkeypatch.setattr(RateLimitMiddleware, "_testing", False)
+    middleware = RateLimitMiddleware(app=AsyncMock(), requests_per_minute=1, requests_per_hour=1)
+    check = AsyncMock(return_value=(False, 0, 0))
+    monkeypatch.setattr(middleware, "_check_redis", check)
+
+    for _ in range(3):
+        response = await middleware.dispatch(_make_request("GET", "/email-assets/hero.jpg"), _call_next)
+        assert response.status_code == 200
+    check.assert_not_awaited()

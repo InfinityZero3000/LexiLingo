@@ -680,10 +680,15 @@
             "correct_answer": "reluctant to speak",
             "explanation": "Nodding without speaking suggests hesitation or unwillingness to speak.",
             "id": "ex_ee95152f-ba88-4039-9297-320a9a32bfff_3",
-            "options": [],
+            "options": [
+              "reluctant to speak",
+              "eager to talk",
+              "angry and shouting",
+              "confused by the question"
+            ],
             "question": "The phrase 'He nodded, but said nothing' implies that he was {blank}.",
             "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "ui_type": "fill_in_the_blank"
           },
           {
             "correct_answer": "Cô ấy phớt lờ đề xuất của anh ấy.",
@@ -711,6 +716,15 @@
             "question": "Match each adjective with its implied Vietnamese meaning.",
             "type": "matching",
             "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "It implies that she was impatient or worried about being late.",
+            "explanation": "An inference is what the text suggests without saying it directly.",
+            "id": "ex_ee95152f-ba88-4039-9297-320a9a32bfff_6",
+            "options": [],
+            "question": "Read: 'She checked her watch for the third time.' Write one sentence saying what this implies about her.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
           }
         ],
         "version": 1
@@ -730,7 +744,7 @@
       "prerequisites": [],
       "skill": null,
       "title": "Inferences & Implied Meaning",
-      "total_exercises": 5,
+      "total_exercises": 6,
       "unit_id": "46ada53d-f733-48fc-baf6-6a546f54873a",
       "updated_at": {
         "__dt__": "2026-08-14T06:39:10.796259"
@@ -1293,10 +1307,15 @@
             "correct_answer": "transition word",
             "explanation": "Transition words help connect ideas smoothly.",
             "id": "ex_i9j0k1l2-cccc-dddd-eeee-ffff2222gggg_3",
-            "options": [],
+            "options": [
+              "transition word",
+              "question mark",
+              "quotation",
+              "statistic"
+            ],
             "question": "In the body paragraph, each supporting sentence should begin with a suitable {blank}.",
             "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "ui_type": "fill_in_the_blank"
           },
           {
             "correct_answer": "Hơn nữa",
@@ -1325,6 +1344,15 @@
             "question": "Match each essay component with its Vietnamese description.",
             "type": "matching",
             "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "Making public transport free would reduce traffic congestion in major cities.",
+            "explanation": "A topic sentence states the paragraph's main point clearly, and the supporting sentences then develop it.",
+            "id": "ex_5495e9ef-ef39-42a6-9124-3944c9c87fe8_6",
+            "options": [],
+            "question": "Write a topic sentence for a body paragraph arguing that public transport should be free.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
           }
         ],
         "version": 1
@@ -1344,7 +1372,7 @@
       "prerequisites": [],
       "skill": "writing",
       "title": "Essay Writing Test – B2",
-      "total_exercises": 5,
+      "total_exercises": 6,
       "unit_id": "deed9efe-7627-4bc1-8102-ee5fbe567c2b",
       "updated_at": {
         "__dt__": "2026-08-21T05:38:10.061215"

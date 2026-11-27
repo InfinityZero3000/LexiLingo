@@ -997,8 +997,8 @@
               "No, it describes only one part of the chart."
             ],
             "question": "Read the following overview sentence. Does it correctly summarize the main trend without giving specific data points?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "Overall, car sales rose while bicycle sales fell.",
@@ -1028,8 +1028,8 @@
               "To sum up, the first graph shows..."
             ],
             "question": "Which phrase is best for starting an overview sentence in IELTS Task 1?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "False",
@@ -1040,8 +1040,8 @@
               "False"
             ],
             "question": "True or False: An overview sentence must include the highest and lowest figures from the chart to be accurate.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "true_false",
+            "ui_type": "true_or_false"
           }
         ],
         "version": 1
@@ -1165,8 +1165,8 @@
               "Topic: Urban planning; Instruction: Compare cities with and without cars."
             ],
             "question": "Task 2 Question: 'Some people think that governments should ban all private cars from city centres. To what extent do you agree or disagree?' Identify the main topic and the specific instruction for your essay.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "increasing",
@@ -1188,22 +1188,22 @@
               "Public transport is often late and unreliable."
             ],
             "question": "Brainstorming: You are writing an essay arguing that banning cars is a good idea. Which of the following is a valid supporting argument for this position?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "Advantage/Disadvantage Essay: Discuss the pros and cons.",
             "explanation": "The question explicitly asks for 'advantages and disadvantages', which corresponds to the Advantage/Disadvantage essay structure. You must discuss both sides, but you are not strictly required to give a personal opinion unless asked 'To what extent do you agree...'",
             "id": "ex_e150bfa0-1ff9-462e-a6b8-0ea329c32735_4",
             "options": [
-              "Discussion Essay: Discuss both views and give your opinion.",
               "Advantage/Disadvantage Essay: Discuss the pros and cons.",
-              "Opinion Essay: State your opinion and give reasons.",
-              "Problem/Solution Essay: Identify problems and suggest solutions."
+              "Opinion Essay: Give only your view.",
+              "Problem/Solution Essay: Explain problems and solutions.",
+              "Discussion Essay: Compare two people's views."
             ],
-            "question": "Match the question type to the correct essay structure. Question: 'What are the advantages and disadvantages of working from home?'",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "question": "Which essay structure fits this question? 'What are the advantages and disadvantages of working from home?'",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "better",
@@ -1246,12 +1246,7 @@
             "correct_answer": "It is argued by some that high school students should be required to do voluntary work for their community without pay.",
             "explanation": "This answer successfully paraphrases the original prompt by changing the subject ('Some people believe' -> 'It is argued by some') and using synonyms ('mandatory' -> 'required', 'unpaid' -> 'without pay'), which is a key skill for Task 2 introductions.",
             "id": "ex_a1b2c3d4-e5f6-7890-abcd-ef1234567890_1",
-            "options": [
-              "It is argued by some that high school students should be required to do voluntary work for their community without pay.",
-              "High school programs are too busy to include unpaid community service.",
-              "Many people think that community service is a waste of time for high school students.",
-              "The government should pay high school students for doing community service."
-            ],
+            "options": [],
             "question": "Write a sentence that paraphrases the following Task 2 question: 'Some people believe that unpaid community service should be a mandatory part of high school programs.'",
             "type": "fill_blank",
             "ui_type": "short_writing_answer"
@@ -1276,8 +1271,8 @@
               "In conclusion, this essay has discussed the two types of shopping and I have given my opinion."
             ],
             "question": "Choose the best concluding sentence for an essay arguing that 'online shopping is better than traditional shopping.'",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "In conclusion",
@@ -1292,12 +1287,7 @@
             "correct_answer": "I firmly believe that governments should implement a total ban on plastic bags to reduce environmental pollution.",
             "explanation": "A thesis statement must clearly state the writer's position. Option A is just an outline, not an opinion. Option C is a balanced view but lacks a clear stance. Option D describes the debate but does not give the writer's opinion. Option B clearly states the position and the reason.",
             "id": "ex_e5f6a7b8-c9d0-1234-efab-345678901234_5",
-            "options": [
-              "This essay will discuss both views and give my opinion.",
-              "I firmly believe that governments should implement a total ban on plastic bags to reduce environmental pollution.",
-              "Plastic bags are bad for the environment, but they are convenient.",
-              "Many people think plastic bags are a problem, and others disagree."
-            ],
+            "options": [],
             "question": "Write a thesis statement for the following prompt: 'Should governments ban plastic bags?' Your answer must state your opinion clearly.",
             "type": "fill_blank",
             "ui_type": "short_writing_answer"
@@ -1350,8 +1340,8 @@
               "Cars are more popular than bicycles because they are faster."
             ],
             "question": "Which of the following is the best Overview sentence for a Task 1 chart showing that car sales rose while bicycle sales fell over 10 years?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "but it can be dangerous",
@@ -1373,8 +1363,8 @@
               "Dear Mr. Smith,"
             ],
             "question": "You are writing a General Training Task 1 letter to a neighbor about noise. Which opening is appropriate for a semi-formal letter?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "than those of oranges",
@@ -1594,8 +1584,8 @@
               "C. I cook. It is good. I don't like restaurants. They are too far."
             ],
             "question": "Part 1: Food. The examiner asks: 'Do you prefer cooking at home or eating out?' Plan your answer using note form. Which of the following sets of notes best represents a Band 6-7 structure for this personal question?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "take the bus",
@@ -1623,10 +1613,13 @@
             "correct_answer": "False",
             "explanation": "Part 3 requires abstract discussion. A Band 7 candidate must analyze trends, causes, and effects. Merely listing examples (apps/games) without discussing social, psychological, or lifestyle implications (e.g., social isolation, connectivity, sedentary behavior) would result in a lower score for Task Response and Coherence & Cohesion. The answer must be analytical, not just descriptive.",
             "id": "ex_70c2d0f1-314b-4f7d-a665-9590f7459589_4",
-            "options": [],
+            "options": [
+              "True",
+              "False"
+            ],
             "question": "Part 3: Free Time. The examiner asks: 'How has technology changed the way people spend their free time?' Is the following statement true or false? 'A Band 7 candidate should only list apps and games without explaining the broader social impact.'",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "true_false",
+            "ui_type": "true_or_false"
           }
         ],
         "version": 1
@@ -1748,8 +1741,8 @@
               "My hometown is the best place in the world without any doubt."
             ],
             "question": "Part 1: Do you like your hometown? Plan your answer by selecting the best opening structure for a Band 5 response.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "that",
@@ -1775,18 +1768,18 @@
             "ui_type": "pronunciation_practice"
           },
           {
-            "correct_answer": "Who the person is -> My teacher, Mrs. Smith",
+            "correct_answer": "My teacher, Mrs. Smith",
             "explanation": "For Part 2, you need specific details. 'My teacher, Mrs. Smith' is a concrete, personal detail that is easy to talk about for two minutes. 'A famous actor' is less personal and harder to describe in detail unless you know them well.",
             "id": "ex_4d5e6f7g-8h9i-0j1k-2l3m-4n5o6p7q8r9s",
             "options": [
-              "Who the person is -> My teacher, Mrs. Smith",
-              "Who the person is -> A famous actor",
-              "How you felt -> Sad",
-              "How you felt -> Confused"
+              "My teacher, Mrs. Smith",
+              "A famous actor",
+              "Last summer",
+              "I felt grateful"
             ],
-            "question": "Part 2 Cue Card: Describe a person who helped you. Match the cue card point to the best note for your plan.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "question": "Part 2 Cue Card: Describe a person who helped you. Which note best covers the point 'Who the person is'?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "False",

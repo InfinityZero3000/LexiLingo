@@ -507,9 +507,24 @@ except ImportError:
 
 # Images the transactional emails link to (hosted, so Gmail does not list them as attachments)
 from pathlib import Path as _Path
+
+
+class _EmailAssets(StaticFiles):
+    """Cached for a year by Cloudflare and the mail clients' image proxies, so
+    a bulk send does not reach this server once per open. A file is therefore
+    never changed in place: a new image gets a new name, and old names stay so
+    mails already sent keep their pictures."""
+
+    async def get_response(self, path, scope):
+        response = await super().get_response(path, scope)
+        if response.status_code == 200:
+            response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        return response
+
+
 app.mount(
     "/email-assets",
-    StaticFiles(directory=_Path(__file__).parent / "templates" / "assets"),
+    _EmailAssets(directory=_Path(__file__).parent / "templates" / "assets"),
     name="email-assets",
 )
 

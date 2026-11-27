@@ -958,11 +958,7 @@
             "correct_answer": "quản lý rủi ro",
             "explanation": "'Risk management' translates to 'quản lý rủi ro' in Vietnamese.",
             "id": "ex_b17f6018-5139-4261-b87a-c5da81762c8b_4",
-            "options": [
-              "quản lý rủi ro",
-              "đánh giá rủi ro",
-              "đầu tư rủi ro"
-            ],
+            "options": [],
             "question": "Translate the phrase 'risk management' into Vietnamese.",
             "type": "fill_blank",
             "ui_type": "short_writing_answer"

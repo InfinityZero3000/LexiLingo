@@ -940,8 +940,8 @@
               "In 2020, the electricity consumption varied significantly, with Country A leading the chart and Country E at the bottom."
             ],
             "question": "Which of the following sentences best serves as an effective 'Overview' for a bar chart comparing the electricity consumption of five countries in 2020, where Country A used the most and Country E used the least?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "than",
@@ -965,10 +965,15 @@
             "correct_answer": "whereas",
             "explanation": "'Whereas' is a high-register conjunction used to contrast two ideas or facts. It is appropriate for academic writing (Task 1) to show the difference between two static data points. 'However' is also possible but often starts a new sentence; 'whereas' fits seamlessly within the sentence structure provided.",
             "id": "ex_a282375b-8000-4814-8040-c9767f3a5030_5",
-            "options": [],
-            "question": "Match the correct linking phrase to the context of describing a static chart comparison. Which phrase is most appropriate to contrast two static data points in an overview? \n\nContext: Country X had the highest budget. _______ Country Y had the lowest budget.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "options": [
+              "whereas",
+              "because",
+              "therefore",
+              "moreover"
+            ],
+            "question": "Which word best contrasts two static data points in one sentence?\n\nCountry X had the highest budget, {blank} Country Y had the lowest budget.",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           }
         ],
         "version": 1
@@ -1090,12 +1095,7 @@
             "correct_answer": "Overall, it is clear that electricity consumption increased in all three countries during the period shown.",
             "explanation": "An overview sentence must summarize the main trend or feature, not list specific details or merely describe the chart's topic. 'Overall' is a standard signal phrase for Task 1 overviews.",
             "id": "ex_17844f6e-a16b-4f7b-8913-2acde5136cca_1",
-            "options": [
-              "Overall, it is clear that electricity consumption increased in all three countries during the period shown.",
-              "In conclusion, the graph shows that China used the most electricity while Germany used the least.",
-              "Generally speaking, the data indicates that electricity usage was high in the USA in 2010 but low in 2020.",
-              "Overall, the chart compares electricity consumption in the USA, China, and Germany."
-            ],
+            "options": [],
             "question": "Write an overview sentence summarizing the main trend shown in a bar chart comparing electricity consumption in three countries (USA, China, Germany) over ten years, where all three show a steady increase.",
             "type": "fill_blank",
             "ui_type": "short_writing_answer"
@@ -1113,12 +1113,7 @@
             "correct_answer": "Consumption in Brazil was 20kg higher than in Germany.",
             "explanation": "This option correctly uses comparative language ('higher than') and specifies the difference (20kg) with appropriate units. It avoids personifying countries ('Brazil drank') and maintains an academic tone.",
             "id": "ex_17844f6e-a16b-4f7b-8913-2acde5136cca_3",
-            "options": [
-              "Consumption in Brazil was 20kg higher than in Germany.",
-              "Brazil drank more coffee than Germany.",
-              "The amount of coffee in Brazil was 80kg, while Germany was 60kg.",
-              "Coffee in Brazil was 80kg higher than Germany's 60kg."
-            ],
+            "options": [],
             "question": "Write a sentence comparing two data points from a bar chart: Coffee consumption in Brazil (80kg per capita) vs. Germany (60kg per capita) in 2022.",
             "type": "fill_blank",
             "ui_type": "short_writing_answer"
@@ -1136,12 +1131,7 @@
             "correct_answer": "While internet usage was 50% in 2015, it rose to 85% by 2020.",
             "explanation": "This sentence uses a concession clause ('While...') to contrast two points in time, demonstrating complex sentence structure. It accurately reports the figures and uses the verb 'rose' to indicate the upward trend, which is appropriate for Task 1.",
             "id": "ex_17844f6e-a16b-4f7b-8913-2acde5136cca_5",
-            "options": [
-              "While internet usage was 50% in 2015, it rose to 85% by 2020.",
-              "Internet usage was 50% in 2015 and 85% in 2020.",
-              "There was a big increase in internet usage from 2015 to 2020.",
-              "Internet usage grew from 50% to 85% between 2015 and 2020."
-            ],
+            "options": [],
             "question": "Write a sentence contrasting two data sets from a table: Internet usage in 2015 (50%) vs. 2020 (85%) in a specific region.",
             "type": "fill_blank",
             "ui_type": "short_writing_answer"
@@ -1280,8 +1270,8 @@
               "In 2023, the numbers were highest for football."
             ],
             "question": "Select the best overview sentence for a bar chart comparing the percentage of males and females in three different sports clubs.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "largest",
@@ -1317,8 +1307,8 @@
               "It went up from 50 to 60 between 2015 and 2016."
             ],
             "question": "Choose the sentence that best groups specific details for a paragraph body in Task 1, focusing on the years 2015 and 2016.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           }
         ],
         "version": 1
@@ -1377,8 +1367,8 @@
               "Many people are worried about the clean air."
             ],
             "question": "Which of the following topic sentences best introduces a solution paragraph in a Problem-Solution essay regarding environmental pollution?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "recent",
@@ -1430,12 +1420,7 @@
             "correct_answer": "Although some individuals favour railway development due to its environmental benefits, others advocate for road construction for its convenience; this essay will argue that railways are the superior option.",
             "explanation": "This answer is correct because it follows the standard IELTS introduction structure: it paraphrases the prompt's two opposing views and clearly states the writer's position (thesis). It uses appropriate academic register and complex sentence structures suitable for Band 5-6.",
             "id": "ex_001_intro_thesis",
-            "options": [
-              "While some argue that railways are more efficient, others claim roads are better; I think both are important.",
-              "Although some individuals favour railway development due to its environmental benefits, others advocate for road construction for its convenience; this essay will argue that railways are the superior option.",
-              "Railways and roads are both transport methods. I like railways because they are fast.",
-              "The government should spend money on railways because roads cause traffic jams."
-            ],
+            "options": [],
             "question": "Write a thesis statement for an introduction to the following IELTS Task 2 prompt: 'Some people believe that governments should spend money on building railways, while others think that public funds should be used for road construction. Discuss both views and give your opinion.' Your answer must clearly state the two opposing views and your position.",
             "type": "fill_blank",
             "ui_type": "short_writing_answer"
@@ -1453,12 +1438,7 @@
             "correct_answer": "To sum up, distance education offers comparable efficacy to conventional face-to-face instruction, making it a viable alternative for modern learners.",
             "explanation": "This answer correctly paraphrases the main idea using higher-level vocabulary ('distance education' for 'online learning', 'comparable efficacy' for 'as effective as', 'conventional face-to-face instruction' for 'traditional classroom education'). It avoids introducing new arguments, which is crucial for a strong conclusion.",
             "id": "ex_003_conclusion_paraphrase",
-            "options": [
-              "In conclusion, online learning is just as good as going to school in a classroom because students can study at home.",
-              "To sum up, distance education offers comparable efficacy to conventional face-to-face instruction, making it a viable alternative for modern learners.",
-              "Therefore, we should all use computers to learn because it is cheaper than going to university.",
-              "In my opinion, online classes are better because teachers can record their lessons."
-            ],
+            "options": [],
             "question": "Write a concluding sentence that summarizes the main argument of an essay stating that 'Online learning is as effective as traditional classroom education.' Do not introduce new ideas. Rephrase the main idea using different vocabulary.",
             "type": "fill_blank",
             "ui_type": "short_writing_answer"
@@ -1481,8 +1461,8 @@
               "False"
             ],
             "question": "True or False: In an IELTS Task 2 essay, the overview paragraph (which summarizes the main trends or arguments) must always be placed at the very end of the essay, immediately after the conclusion.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "true_false",
+            "ui_type": "true_or_false"
           }
         ],
         "version": 1
@@ -1541,8 +1521,8 @@
               "I think tourism is good for nature."
             ],
             "question": "Which of the following is the strongest topic sentence for a paragraph discussing the negative environmental impact of tourism?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "continued",
@@ -1684,8 +1664,8 @@
               "It introduces a new topic regarding global economics."
             ],
             "question": "Read this Band 6 model essay sentence: 'While some argue that technology isolates individuals, others believe it connects us globally.' Identify the function of the clause starting with 'While' in the context of Task 2 argumentation.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "the",
@@ -1707,8 +1687,8 @@
               "It is too short and lacks detail."
             ],
             "question": "Analyze this Band 6 body paragraph topic sentence: 'One significant benefit of renewable energy is its positive impact on the environment.' Why is this sentence effective for a Task 2 essay?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "invests",
@@ -1730,8 +1710,8 @@
               "It asks a rhetorical question to engage the reader."
             ],
             "question": "Look at this conclusion from a Band 6 model essay: 'In conclusion, although there are challenges in implementing remote work, the benefits for employees and companies outweigh the drawbacks.' What makes this conclusion effective for Task 2?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           }
         ],
         "version": 1
@@ -1971,8 +1951,8 @@
               "Famous person. Acting. Charity."
             ],
             "question": "You have 1 minute to prepare your notes for the cue card: 'Describe a famous person from your country.' Select the most effective note-taking structure that covers all prompt requirements.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "packed",

@@ -199,7 +199,8 @@ async def send_word_of_day_notification(db: AsyncSession) -> dict:
     """Send the daily Word of the Day push notification to all users at 8:00 AM UTC."""
     from sqlalchemy import func, select as sa_select
     from app.models.vocabulary import VocabularyItem as VocabModel
-    from app.models.user import UserDevice
+    from app.models.user import User, UserDevice
+    from app.services.push_copy import push_language
     from app.services.push_notification_service import PushNotificationService
 
     count_result = await db.execute(sa_select(func.count()).select_from(VocabModel))
@@ -220,27 +221,41 @@ async def send_word_of_day_notification(db: AsyncSession) -> dict:
         logger.warning("Word-of-day task: could not select vocabulary item")
         return {"sent": 0, "skipped": 0}
 
-    devices_result = await db.execute(
-        sa_select(UserDevice).where(UserDevice.fcm_token.isnot(None))
+    rows = await db.execute(
+        sa_select(UserDevice.fcm_token, User.native_language)
+        .join(User, User.id == UserDevice.user_id)
+        .where(UserDevice.fcm_token.isnot(None), User.is_active.is_(True))
     )
-    devices = devices_result.scalars().all()
-    tokens = [d.fcm_token for d in devices if d.fcm_token]
+    # One multicast per language: the copy is written in the learner's own.
+    tokens_by_lang: dict[str, list[str]] = {}
+    for token, native_language in rows.all():
+        if token:
+            tokens_by_lang.setdefault(push_language(native_language), []).append(token)
 
-    if not tokens:
+    if not tokens_by_lang:
         logger.info("Word-of-day task: no FCM tokens registered, skipping push")
         return {"sent": 0, "skipped": 0}
 
     push = PushNotificationService()
-    ok = await push.send_word_of_day(
-        tokens=tokens,
-        word=vocab.word,
-        definition=vocab.definition,
-    )
+    sent = skipped = 0
+    for lang, tokens in tokens_by_lang.items():
+        ok = await push.send_word_of_day(
+            tokens=tokens,
+            word=vocab.word,
+            definition=vocab.definition,
+            lang=lang,
+            pronunciation=vocab.pronunciation,
+            translation=vocab.translation,
+        )
+        if ok:
+            sent += len(tokens)
+        else:
+            skipped += len(tokens)
 
     result = {
         "word": vocab.word,
-        "sent": len(tokens) if ok else 0,
-        "skipped": len(tokens) if not ok else 0,
+        "sent": sent,
+        "skipped": skipped,
         "ts": date.today().isoformat(),
     }
     logger.info("Word-of-day notification: %s", result)

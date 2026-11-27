@@ -864,10 +864,15 @@
             "correct_answer": "balanced",
             "explanation": "A balanced diet means having a variety of nutrients.",
             "id": "ex_f957613b-a1e2-41b8-ae90-b18a530809d2_3",
-            "options": [],
+            "options": [
+              "balanced",
+              "greasy",
+              "skipped",
+              "frozen"
+            ],
             "question": "I try to eat {blank} meals each day to stay healthy.",
             "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "ui_type": "fill_in_the_blank"
           },
           {
             "correct_answer": "dinh dưỡng",
@@ -896,6 +901,15 @@
             "question": "Match each health-related term with its Vietnamese meaning.",
             "type": "matching",
             "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "I walk for thirty minutes every day to stay healthy.",
+            "explanation": "Use the present simple for habits: I walk, I eat, I sleep.",
+            "id": "ex_f957613b-a1e2-41b8-ae90-b18a530809d2_6",
+            "options": [],
+            "question": "Write one sentence about what you do to stay healthy.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
           }
         ],
         "version": 1
@@ -915,7 +929,7 @@
       "prerequisites": [],
       "skill": null,
       "title": "Health Unit Test",
-      "total_exercises": 5,
+      "total_exercises": 6,
       "unit_id": "5c1322a2-e6d4-45f5-91c5-84b2429d8beb",
       "updated_at": {
         "__dt__": "2026-08-14T06:39:10.796266"

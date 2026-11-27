@@ -282,6 +282,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         "/docs", "/redoc", "/openapi.json",
         "/",
     }
+    _EXEMPT_PREFIXES = ("/email-assets/",)
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Rate limit based on client IP with Redis → memory fallback."""
@@ -292,6 +293,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if request.method == "OPTIONS":
             return await call_next(request)
         if request.url.path in self._EXEMPT_PATHS:
+            return await call_next(request)
+        # Email images are fetched by Gmail's and Outlook's image proxies, which
+        # share a few IPs across every recipient: counting them against one
+        # client's budget turned a bulk send into broken images (429).
+        if request.url.path.startswith(self._EXEMPT_PREFIXES):
             return await call_next(request)
 
         client_ip = self._client_ip(request)

@@ -16,6 +16,7 @@ from app.core.database import get_db
 from app.core.cache import build_cache_key, delete_cached
 from app.core.config import settings
 from app.core.dependencies import get_current_user
+from app.core.free_form_writing import grade_free_form
 from app.services.learner_state import record_concept_observation
 from app.services.streak_service import record_daily_activity, update_user_streak
 from app.models.user import User
@@ -761,6 +762,7 @@ async def _validate_answer(
                     correct_answer,
                     question_type,
                     ui_type,
+                    str(ex.get("question") or ""),
                 )
                 # A free-form answer we merely accepted is not evidence about
                 # the concept: we know the learner wrote something, not whether
@@ -782,6 +784,7 @@ async def _validate_answer(
                     correct_answer,
                     question_type,
                     demo_ex.ui_type,
+                    demo_ex.question,
                 )
                 return is_correct, correct_answer, explanation, None
 
@@ -919,23 +922,8 @@ def _normalize_answer(answer: any, question_type: str) -> str:
 # right answer, so matching them exactly is correct.
 _FREE_FORM_WRITING_UI_TYPES = {"short_writing_answer"}
 
-# Shortest response worth treating as an attempt rather than a stray keypress.
-_MIN_FREE_FORM_ANSWER_CHARS = 3
-
-
 def _is_free_form_writing(ui_type: Optional[str]) -> bool:
     return str(ui_type or "").lower() in _FREE_FORM_WRITING_UI_TYPES
-
-
-def _free_form_answer_is_substantive(user_answer: any) -> bool:
-    """Whether the learner actually wrote something.
-
-    This is all we can honestly assess for a free-form answer without a grader
-    that understands meaning. It deliberately does not claim the answer is
-    *right* — see _validate_answer, which withholds the concept evidence for
-    these so a good answer we cannot grade never counts as a mistake.
-    """
-    return len(_normalize_answer(user_answer, "translate")) >= _MIN_FREE_FORM_ANSWER_CHARS
 
 
 def _answers_match(
@@ -943,6 +931,7 @@ def _answers_match(
     correct_answer: any,
     question_type: str,
     ui_type: Optional[str] = None,
+    question: str = "",
 ) -> bool:
     if str(ui_type or "").lower() in {
         "speaking_repeat",
@@ -951,10 +940,10 @@ def _answers_match(
         return _speaking_answers_match(user_answer, correct_answer)
 
     if _is_free_form_writing(ui_type):
-        # Marking these wrong would punish the learner for the grader's limits:
-        # every non-verbatim answer scored 0, dragging down the lesson score,
-        # the skill it credits and the spaced-repetition schedule at once.
-        return _free_form_answer_is_substantive(user_answer)
+        # Never verbatim: a right answer has many phrasings. What is checkable
+        # is that it is English, that a translation carries the model answer's
+        # meaning and that a named word was used; see free_form_writing.
+        return grade_free_form(str(user_answer or ""), str(correct_answer or ""), question)
 
     return _normalize_answer(user_answer, question_type) == _normalize_answer(
         correct_answer,

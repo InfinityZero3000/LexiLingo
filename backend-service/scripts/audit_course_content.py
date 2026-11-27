@@ -36,6 +36,7 @@ from app.models.course import (
     base_type_for,
     exercise_shape_problems,
     option_text,
+    retype_misused_writing,
 )
 
 
@@ -86,6 +87,11 @@ def _repair_exercise(exercise: dict) -> str | None:
                 exercise["options"] = tiles
                 reasons.append("arrange word bank rebuilt")
             # else: nothing to rebuild from; a human has to write this one.
+
+    retyped = retype_misused_writing(exercise)
+    if retyped:
+        ui_type = exercise["ui_type"]
+        reasons.append(retyped)
 
     if ui_type == "image_based_choice" and not exercise.get("image_url"):
         # No image pipeline exists, so the picture slot renders as a grey

@@ -164,6 +164,20 @@ async def test_flag_off_sends_nothing_writes_nothing_and_reports_counts(db_sessi
 
 
 @pytest.mark.asyncio
+async def test_activation_is_written_in_the_learners_language(db_session, live, senders):
+    user = await make_user(db_session, "korean")
+    user.native_language = "ko"
+    db_session.add(UserDevice(user_id=user.id, device_id="d-ko", fcm_token="tok", device_type="ios"))
+    await db_session.commit()
+
+    await nurture.run_activation(db_session, nurture.D1, NOW)
+
+    row = (await db_session.execute(select(Notification).where(Notification.user_id == user.id))).scalar_one()
+    assert row.title == "🚀 첫 레슨이 준비됐어요"
+    assert senders.push.call_args.kwargs["title"] == "🚀 첫 레슨이 준비됐어요"
+
+
+@pytest.mark.asyncio
 async def test_activation_pushes_only_to_learners_with_a_device(db_session, live, senders):
     with_device = await make_user(db_session, "withdevice")
     await make_user(db_session, "nodevice")

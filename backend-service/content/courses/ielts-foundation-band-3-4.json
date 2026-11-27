@@ -344,7 +344,7 @@
             "options": [],
             "question": "The Listening section lasts {blank} minutes.",
             "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "ui_type": "fill_in_the_blank"
           },
           {
             "correct_answer": "Listening:30 minutes, Reading:60 minutes",
@@ -441,12 +441,7 @@
             "correct_answer": "IELTS is an international English proficiency test.",
             "explanation": "The translation conveys that IELTS assesses English ability on an international level.",
             "id": "ex_1f31ab64-e1cb-4c22-8690-2552d3293706_4",
-            "options": [
-              "IELTS is an international English proficiency test.",
-              "IELTS is a global English exam.",
-              "IELTS is a test of English language skills.",
-              "IELTS is an English language test."
-            ],
+            "options": [],
             "question": "Translate into English: \"IELTS là một kỳ thi kiểm tra năng lực tiếng Anh quốc tế.\"",
             "type": "fill_blank",
             "ui_type": "short_writing_answer"
@@ -1107,8 +1102,8 @@
               "Prices fell sharply."
             ],
             "question": "Which sentence correctly describes a slight change? Data: 'Prices changed from $10 to $11.'",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "False",
@@ -1551,8 +1546,8 @@
               "I have worked in an office every day."
             ],
             "question": "Which sentence best describes a daily routine in the correct tense?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "at",
@@ -1693,8 +1688,8 @@
               "People used the internet more and more."
             ],
             "question": "Which of the following is the best overview sentence for a Task 1 line graph showing a steady increase in internet users from 2000 to 2010? Choose the option that clearly summarizes the main trend without specific data points.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "the",
@@ -1716,8 +1711,8 @@
               "To whom it may concern,"
             ],
             "question": "Identify the correct way to start a formal letter for General Training Task 1, complaining about a faulty product. Choose the most appropriate salutation.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "relied",
@@ -1861,10 +1856,13 @@
             "correct_answer": "False",
             "explanation": "Effective planning for Part 2 requires organizing ideas into logical categories (e.g., 'What', 'When', 'Why'). Listing every activity in a single sentence leads to a lack of coherence and cohesion. Candidates should use bullet points or short phrases to structure their thoughts, ensuring they cover all parts of the cue card systematically.",
             "id": "ex_d3f01213-55e1-4bbb-b2dc-b3c9b1624345_3",
-            "options": [],
+            "options": [
+              "True",
+              "False"
+            ],
             "question": "True or False: When planning your answer for Part 2 (Cue Card: 'Describe a hobby you enjoy'), you should list every single activity you do in one sentence without grouping them by theme.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "true_false",
+            "ui_type": "true_or_false"
           },
           {
             "correct_answer": "Q: 'What do you do to relax?' -> A: 'I usually find that listening to classical music helps me unwind after a long day at work.'",
@@ -1975,13 +1973,17 @@
             "ui_type": "speaking_repeat"
           },
           {
-            "correct_answer": "de-LIC-i-ous",
+            "correct_answer": "de-LI-cious",
             "explanation": "The word 'delicious' has stress on the second syllable (/dɪˈlɪʃəs/). When planning your answer, noting the stress helps you prepare to say it clearly. Example answer: 'Yes, I do. I find cooking delicious and fun.'",
             "id": "ex_005_part1_planning",
-            "options": [],
-            "question": "Plan a short answer for Part 1: 'Do you like cooking?' Focus on the word 'delicious'. What is the correct stress pattern? (Write the stressed syllable in capital letters).",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "options": [
+              "de-LI-cious",
+              "DE-li-cious",
+              "de-li-CIOUS"
+            ],
+            "question": "Plan a short answer for Part 1: 'Do you like cooking?' You want to use the word 'delicious'. Which syllable is stressed?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           }
         ],
         "version": 1
@@ -2142,8 +2144,8 @@
               "Book."
             ],
             "question": "You have 1 minute to prepare for Part 2. The topic is 'Describe a book you like'. Which notes are best for a Band 4-5 speaker?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "To create pictures in the mind.",

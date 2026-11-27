@@ -1,20 +1,20 @@
                 <p class="ll-t" style="margin:0 0 24px;font-size:16px;line-height:1.6;color:#3D4A5C;">
-                  Hi <strong class="ll-h" style="color:#111418;">{display_name}</strong>, welcome to LexiLingo. Confirm this address to activate your account and start your first lesson.
+                  {t_intro}
                 </p>
                 <table role="presentation" class="ll-btn" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 24px;">
                   <tr>
                     <td bgcolor="#0D5FC4" style="background:#0D5FC4;border-radius:14px;border-bottom:4px solid #0A4A9C;">
-                      <a href="{verify_link}" style="display:inline-block;padding:15px 32px;font-size:16px;line-height:1.25;font-weight:700;color:#FFFFFF;text-decoration:none;">Confirm email</a>
+                      <a href="{verify_link}" style="display:inline-block;padding:15px 32px;font-size:16px;line-height:1.25;font-weight:700;color:#FFFFFF;text-decoration:none;">{t_cta}</a>
                     </td>
                   </tr>
                 </table>
                 <p class="ll-m" style="margin:0 0 20px;font-size:13px;line-height:1.6;color:#5B6B7F;">
-                  The link works for {expiry_hours} hours. If you did not create a LexiLingo account, ignore this email and nothing will happen.
+                  {t_expiry}
                 </p>
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                   <tr>
                     <td class="ll-well ll-m" bgcolor="#F2F7FD" style="background:#F2F7FD;border:1px solid #E1EAF5;border-radius:12px;padding:16px 20px;font-size:13px;line-height:1.6;color:#5B6B7F;">
-                      <strong class="ll-t" style="color:#3D4A5C;">Button not working?</strong> Paste this link into your browser:<br />
+                      {t_fallback}<br />
                       <a href="{verify_link}" style="color:#0D5FC4;word-break:break-all;">{verify_link}</a>
                     </td>
                   </tr>

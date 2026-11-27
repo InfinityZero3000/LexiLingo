@@ -223,7 +223,10 @@ async def register(
     try:
         token = _email_verification_token(user)
         await EmailService.send_verification_email(
-            to_email=user.email, token=token, display_name=user.display_name,
+            to_email=user.email,
+            token=token,
+            display_name=user.display_name,
+            lang=request.locale or user.native_language,
         )
     except Exception as exc:
         logger.warning("Could not send verification email: %s", exc)
@@ -249,6 +252,7 @@ async def resend_verification_email(
                 user.email,
                 token,
                 user.display_name,
+                user.native_language,
             )
         except Exception as exc:
             logger.warning("Could not schedule verification email: %s", exc)
@@ -763,6 +767,7 @@ async def change_password(
         EmailService.send_password_changed_email,
         to_email=current_user.email,
         display_name=current_user.display_name,
+        lang=current_user.native_language,
     )
 
     return MessageResponse(
@@ -812,6 +817,7 @@ async def forgot_password(
         to_email=user.email,
         reset_token=reset_token,
         display_name=user.display_name or user.username,
+        lang=user.native_language,
     )
     
     return MessageResponse(
@@ -874,6 +880,7 @@ async def reset_password(
         EmailService.send_password_changed_email,
         to_email=user.email,
         display_name=user.display_name,
+        lang=user.native_language,
     )
 
     return MessageResponse(
@@ -927,6 +934,7 @@ async def verify_email(
         EmailService.send_welcome_email,
         to_email=user.email,
         display_name=user.display_name,
+        lang=user.native_language,
     )
 
     # Opening the link is proof of the inbox, the same proof a password reset relies on, so it

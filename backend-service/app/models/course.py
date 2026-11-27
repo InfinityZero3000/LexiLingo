@@ -3,6 +3,7 @@ Course, Unit, and Lesson Models
 Extended for Phase 2: Advanced Content Management System
 """
 
+import re
 import uuid
 from datetime import datetime, timezone
 from sqlalchemy import String, Integer, Boolean, Text, ForeignKey, Index
@@ -11,6 +12,7 @@ from typing import Any, List
 
 from app.core.database import Base
 from app.core.db_types import GUID, GUIDArray, TZDateTime, PortableJSON
+from app.core.free_form_writing import shape_problems as free_form_shape_problems
 
 
 def count_exercises(content) -> int:
@@ -111,6 +113,37 @@ _SINGLE_CHOICE_UI_TYPES = {
 _PAIR_UI_TYPES = {"match_word_to_meaning", "categorization", "cognitive_fluidity"}
 
 
+def retype_misused_writing(exercise: dict) -> str | None:
+    """Move a short_writing_answer that is really another type; None if it is not.
+
+    The writing widget shows a text box only, so a True/False question accepted
+    "ok" and a "Which of the following..." question hid its options. Mechanical
+    only: a gap or a choice question whose options were lost needs a human.
+    """
+    if exercise.get("ui_type") != "short_writing_answer":
+        return None
+    answer = str(exercise.get("correct_answer") or "")
+    question = str(exercise.get("question") or "")
+    texts = [option_text(o) for o in exercise.get("options") or []]
+    if answer.strip().lower() in ("true", "false"):
+        exercise.update(ui_type="true_or_false", options=["True", "False"],
+                        correct_answer=answer.strip().capitalize())
+        reason = "short_writing -> true_or_false"
+    elif len([t for t in texts if t]) >= 2 and answer in texts:
+        if re.match(r"\s*(?:write|translate)\b", question, re.I):
+            # A production task, which every lesson needs: keep it written. The
+            # options were hidden anyway and gave the answer away.
+            exercise["options"] = []
+            return "short_writing options dropped (writing task)"
+        ui_type = "fill_in_the_blank" if "{blank}" in question else "multiple_choice"
+        exercise["ui_type"] = ui_type
+        reason = f"short_writing with options -> {ui_type}"
+    else:
+        return None
+    exercise["type"] = base_type_for(exercise["ui_type"])
+    return reason
+
+
 def exercise_shape_problems(exercise) -> list[str]:
     """Why the app could not render or grade this exercise; [] when it can.
 
@@ -129,6 +162,13 @@ def exercise_shape_problems(exercise) -> list[str]:
     options = [option_text(o).strip() for o in exercise.get("options") or []]
     if not question:
         problems.append("question is empty")
+    if ui_type == "short_writing_answer":
+        # A translation prompt has one meaning to grade against; without an
+        # English model answer anything typed would pass.
+        problems.extend(free_form_shape_problems(question, answer))
+        if len([o for o in options if o]) >= 2 and answer in options:
+            # The writing widget shows a text box and hides the options.
+            problems.append("has options to choose from: use multiple_choice")
     if not answer and ui_type != "short_writing_answer":
         problems.append("correct_answer is empty")
         return problems

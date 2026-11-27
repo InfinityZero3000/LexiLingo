@@ -766,10 +766,15 @@
             "correct_answer": "credibility",
             "explanation": "Evaluating a source's credibility (authority, bias, evidence) is essential for critical essay writing.",
             "id": "ex_aef2dcf8-8317-4dbd-9550-134ff21ede86_3",
-            "options": [],
+            "options": [
+              "credibility",
+              "length",
+              "popularity",
+              "publication date"
+            ],
             "question": "To demonstrate evaluation, a writer must assess the {blank} of each source.",
             "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "ui_type": "fill_in_the_blank"
           },
           {
             "correct_answer": "độ chặt chẽ phương pháp luận",
@@ -798,6 +803,15 @@
             "question": "Match each critical essay component with its Vietnamese description.",
             "type": "matching",
             "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "The 2010 survey is somewhat outdated, so its findings should be treated with caution.",
+            "explanation": "Evaluating a source means judging its credibility, bias or currency rather than only summarising what it says.",
+            "id": "ex_aef2dcf8-8317-4dbd-9550-134ff21ede86_6",
+            "options": [],
+            "question": "Write one sentence that evaluates a source for an essay, saying how credible or up to date it is.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
           }
         ],
         "version": 1
@@ -817,7 +831,7 @@
       "prerequisites": [],
       "skill": "writing",
       "title": "Critical Essay Writing: Evaluation & Synthesis",
-      "total_exercises": 5,
+      "total_exercises": 6,
       "unit_id": "f05ecd44-071a-481a-b740-a8db10cb6d0c",
       "updated_at": {
         "__dt__": "2026-08-21T05:38:10.061278"
@@ -1128,7 +1142,7 @@
             ],
             "question": "Complete the understatement: 'I only ate {blank} slices of pizza.'",
             "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "ui_type": "fill_in_the_blank"
           },
           {
             "correct_answer": "Tuyệt vời, lại một buổi họp nữa—đúng là điều tôi cần!",
@@ -1157,6 +1171,15 @@
             "question": "Match each ironic expression with its Vietnamese meaning.",
             "type": "matching",
             "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "The traffic was a little slow this morning.",
+            "explanation": "An understatement makes something sound much smaller or less serious than it really is, often for humour.",
+            "id": "ex_ce15dcbd-e69d-4827-b002-e221197f3e59_6",
+            "options": [],
+            "question": "Write an understatement to describe a terrible traffic jam.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
           }
         ],
         "version": 1
@@ -1176,7 +1199,7 @@
       "prerequisites": [],
       "skill": null,
       "title": "Irony, Sarcasm & Understatement in Context",
-      "total_exercises": 5,
+      "total_exercises": 6,
       "unit_id": "6d448b1c-2dec-4dbb-a506-b87e1c36863d",
       "updated_at": {
         "__dt__": "2026-08-14T06:39:10.796225"

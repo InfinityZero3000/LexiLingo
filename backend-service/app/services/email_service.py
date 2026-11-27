@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import html
 import logging
+import re
 import smtplib
 from datetime import UTC, datetime
 from email.message import EmailMessage
@@ -15,7 +16,9 @@ from urllib.parse import quote
 from fastapi.concurrency import run_in_threadpool
 
 from app.core.config import settings
+from app.services.email_copy import email_text, section_keys
 from app.services.email_unsubscribe import unsubscribe_headers, unsubscribe_url
+from app.services.push_copy import push_language
 
 logger = logging.getLogger(__name__)
 
@@ -44,16 +47,64 @@ def is_undeliverable(address: str) -> bool:
     )
 
 
+class _KeepMissing(dict):
+    """A copy line may name a field this email does not have (the shared
+    "manage" line has two links); leave it for the template check to catch."""
+
+    def __missing__(self, key: str) -> str:
+        return "{" + key + "}"
+
+
+_BOLD = '<strong class="ll-h" style="color:#111418;">'
+_LINK = '<a href="{{{field}}}" style="color:#0D5FC4;">'
+_TOKEN = re.compile(r"\[a:([a-z_]+)\]")
+# The section a template takes its words from, when it is not its own name.
+_SECTION = {"_layout": "common", "_weekly_suggestion": "weekly_summary_email"}
+
+
+def _markup(text: str, html_mode: bool) -> str:
+    """Turn email_copy's [b]/[a:field]/[br] tokens into HTML, or drop them."""
+    if not html_mode:
+        return re.sub(r"\[/?(?:b|a)(?::[a-z_]+)?\]", "", text.replace("[br]", " "))
+    text = html.escape(text, quote=False)
+    text = text.replace("[b]", _BOLD).replace("[/b]", "</strong>").replace("[br]", "<br />")
+    text = text.replace("[a:mailto]", _LINK.format(field="support_email").replace('href="{', 'href="mailto:{'))
+    return _TOKEN.sub(lambda m: _LINK.format(field=m.group(1)), text).replace("[/a]", "</a>")
+
+
 class EmailService:
     """SMTP-based email sender with lightweight HTML template rendering."""
 
     @staticmethod
-    def _render_template(template_name: str, context: dict[str, str]) -> str:
+    def _render_template(
+        template_name: str,
+        context: dict[str, str],
+        *,
+        lang: str | None = None,
+        count: int | None = None,
+        variant: str | None = None,
+    ) -> str:
         template_path = _TEMPLATE_DIR / template_name
         if not template_path.exists():
             raise FileNotFoundError(f"Email template not found: {template_path}")
         content = template_path.read_text(encoding="utf-8")
-        return content.format(**context)
+        stem, _, suffix = template_name.rpartition(".")
+        section = _SECTION.get(stem, stem)
+        values = _KeepMissing(context)
+        words = {
+            f"t_{key}": _markup(
+                email_text(lang, section, key, count=count, variant=variant), suffix == "html"
+            ).format_map(values)
+            for key in section_keys(section)
+        }
+        return content.format(**context, **words)
+
+    @classmethod
+    def _text(
+        cls, lang: str | None, section: str, key: str, values: dict[str, object], **pick: object
+    ) -> str:
+        """A subject, title or preheader: plain text, no markup."""
+        return _markup(email_text(lang, section, key, **pick), False).format_map(_KeepMissing(values))
 
     @classmethod
     def _render_html(
@@ -63,23 +114,33 @@ class EmailService:
         *,
         title: str,
         preheader: str,
-        hero: str | None = None,
+        lang: str | None = None,
+        count: int | None = None,
+        variant: str | None = None,
     ) -> str:
-        """Render a body fragment inside the shared layout."""
+        """Render a body fragment inside the shared layout.
+
+        The headline is HTML over a text-free background image, so it is in the
+        learner's language; the old per-mail images had English baked in.
+        """
         home_url = settings.APP_PUBLIC_URL.rstrip("/")
         assets = settings.EMAIL_ASSET_BASE_URL.rstrip("/")
-        hero = hero or template_name.removesuffix(".html")
+        content = cls._render_template(
+            template_name, context, lang=lang, count=count, variant=variant
+        )
         return cls._render_template(
             "_layout.html",
             {
+                "html_lang": push_language(lang),
                 "title": html.escape(title),
                 "preheader": html.escape(preheader),
-                "content": cls._render_template(template_name, context),
+                "content": content,
                 "home_url": html.escape(home_url),
-                "hero_url": html.escape(f"{assets}/hero_{hero}.jpg"),
+                "hero_url": html.escape(f"{assets}/hero.jpg"),
                 "footer_url": html.escape(f"{assets}/footer.jpg"),
                 "support_email": html.escape(cls._support_email()),
             },
+            lang=lang,
         )
 
     @staticmethod
@@ -117,210 +178,24 @@ class EmailService:
             server.send_message(message)
 
     @classmethod
-    async def send_password_reset_email(
-        cls,
-        *,
-        to_email: str,
-        reset_token: str,
-        display_name: str | None,
-    ) -> bool:
-        """Send password-reset email with a tokenized reset URL.
-
-        Returns True when sent successfully. If SMTP is not configured, returns
-        False after logging a warning and the generated reset URL for local dev.
-        """
-        encoded_token = quote(reset_token, safe="")
-        reset_link = f"{settings.effective_password_reset_url_base}?token={encoded_token}"
-
-        if not settings.SMTP_HOST:
-            logger.warning(
-                "SMTP_HOST not configured. Password reset email was not sent. "
-                "Generated reset URL for %s: %s",
-                to_email,
-                reset_link,
-            )
-            return False
-
-        html_context = {
-            "display_name": html.escape(display_name or "Learner"),
-            "reset_link": html.escape(reset_link),
-            "expiry_minutes": "60",
-            "support_email": html.escape(cls._support_email()),
-        }
-        text_context = {
-            "display_name": display_name or "Learner",
-            "reset_link": reset_link,
-            "expiry_minutes": "60",
-            "support_email": cls._support_email(),
-        }
-
-        html_body = cls._render_html(
-            "password_reset_email.html",
-            html_context,
-            title="Choose a new password",
-            preheader="Use this link to choose a new password. It works for 60 minutes.",
-        )
-        text_body = cls._render_template("password_reset_email.txt", text_context)
-
-        message = EmailMessage()
-        message["Subject"] = "LexiLingo - Reset your password"
-        cls._set_sender(message)
-        message["To"] = to_email
-        message.set_content(text_body)
-        message.add_alternative(html_body, subtype="html")
-
-        try:
-            await run_in_threadpool(cls._send_message_blocking, message)
-            logger.info("Password reset email sent to %s", to_email)
-            return True
-        except Exception as exc:  # pragma: no cover - external IO
-            logger.exception("Failed to send password reset email to %s: %s", to_email, exc)
-            return False
-
-    @classmethod
-    async def send_verification_email(
-        cls,
-        to_email: str,
-        token: str,
-        display_name: str | None = None,
-    ) -> bool:
-        """Send email verification link to a newly registered user.
-
-        Returns True when sent successfully. If SMTP is not configured, returns
-        False without exposing the verification token in logs.
-        """
-        from urllib.parse import quote
-        encoded_token = quote(token, safe="")
-        verify_link = f"{settings.effective_email_verification_url_base}?token={encoded_token}"
-        if not settings.SMTP_HOST:
-            logger.warning(
-                "SMTP_HOST not configured. Verification email was not sent"
-            )
-            return False
-
-        html_context = {
-            "display_name": html.escape(display_name or "Learner"),
-            "verify_link": html.escape(verify_link),
-            "expiry_hours": "24",
-            "support_email": html.escape(cls._support_email()),
-        }
-        text_context = {
-            "display_name": display_name or "Learner",
-            "verify_link": verify_link,
-            "expiry_hours": "24",
-            "support_email": cls._support_email(),
-        }
-
-        html_body = cls._render_html(
-            "verification_email.html",
-            html_context,
-            title="Confirm your email",
-            preheader="Confirm your email to activate your LexiLingo account.",
-        )
-        text_body = cls._render_template("verification_email.txt", text_context)
-
-        message = EmailMessage()
-        message["Subject"] = "LexiLingo - Verify your email address"
-        cls._set_sender(message)
-        message["To"] = to_email
-        message.set_content(text_body)
-        message.add_alternative(html_body, subtype="html")
-
-        try:
-            await run_in_threadpool(cls._send_message_blocking, message)
-            logger.info("Verification email sent")
-            return True
-        except Exception as exc:  # pragma: no cover - external IO
-            logger.exception(
-                "Failed to send verification email: %s",
-                exc,
-            )
-            return False
-
-    @classmethod
-    async def send_vocabulary_review_reminder_email(
-        cls,
-        *,
-        to_email: str,
-        display_name: str | None,
-        due_count: int,
-    ) -> bool:
-        """Send an occasional vocabulary review reminder email."""
-        review_link = f"{settings.APP_PUBLIC_URL.rstrip('/')}{settings.REMINDER_REVIEW_ROUTE}"
-        settings_link = f"{settings.APP_PUBLIC_URL.rstrip('/')}/settings"
-
-        if not settings.SMTP_HOST:
-            logger.warning(
-                "SMTP_HOST not configured. Vocabulary review reminder email was not sent. "
-                "Generated review URL for %s: %s",
-                to_email,
-                review_link,
-            )
-            return False
-
-        due = max(0, due_count)
-        due_noun = "word" if due == 1 else "words"
-        html_context = {
-            "display_name": html.escape(display_name or "Learner"),
-            "due_count": str(due),
-            "due_noun": due_noun,
-            "review_link": html.escape(review_link),
-            "settings_link": html.escape(settings_link),
-            "support_email": html.escape(cls._support_email()),
-        }
-        text_context = {
-            "display_name": display_name or "Learner",
-            "due_count": str(due),
-            "due_noun": due_noun,
-            "review_link": review_link,
-            "settings_link": settings_link,
-            "support_email": cls._support_email(),
-        }
-
-        html_body = cls._render_html(
-            "vocabulary_review_reminder.html",
-            html_context,
-            title="Time to review",
-            preheader=f"{due} {due_noun} waiting for review.",
-        )
-        text_body = cls._render_template("vocabulary_review_reminder.txt", text_context)
-
-        message = EmailMessage()
-        message["Subject"] = "LexiLingo - Time to review your vocabulary"
-        message["List-Unsubscribe"] = f"<{settings_link}>"
-        cls._set_sender(message)
-        message["To"] = to_email
-        message.set_content(text_body)
-        message.add_alternative(html_body, subtype="html")
-
-        try:
-            await run_in_threadpool(cls._send_message_blocking, message)
-            logger.info("Vocabulary review reminder email sent to %s", to_email)
-            return True
-        except Exception as exc:  # pragma: no cover - external IO
-            logger.exception(
-                "Failed to send vocabulary review reminder email to %s: %s",
-                to_email,
-                exc,
-            )
-            return False
-
-    @classmethod
     async def _send_templated(
         cls,
         *,
         to_email: str,
-        subject: str,
         template: str,
         ctx: dict[str, object],
-        title: str,
-        preheader: str,
+        lang: str | None = None,
+        count: int | None = None,
+        variant: str | None = None,
         headers: dict[str, str] | None = None,
         html_extra: dict[str, str] | None = None,
         text_extra: dict[str, str] | None = None,
-        hero: str | None = None,
     ) -> bool:
-        """Render `<template>.html/.txt` inside the shared layout and send it; never raises."""
+        """Render `<template>.html/.txt` inside the shared layout and send it; never raises.
+
+        Subject, title and preheader come from email_copy's section of the same
+        name, in `lang`; `count` picks a singular line, `variant` a named one.
+        """
         if not settings.SMTP_HOST:
             logger.warning("SMTP_HOST not configured. %s email was not sent", template)
             return False
@@ -333,17 +208,25 @@ class EmailService:
         raw["support_email"] = cls._support_email()
         html_ctx = {**{k: html.escape(v) for k, v in raw.items()}, **(html_extra or {})}
         text_ctx = {**raw, **(text_extra or {})}
+        pick = {"count": count, "variant": variant}
 
         message = EmailMessage()
-        message["Subject"] = subject
+        message["Subject"] = cls._text(lang, template, "subject", raw, **pick)
         for name, value in (headers or {}).items():
             message[name] = value
         cls._set_sender(message)
         message["To"] = to_email
-        message.set_content(cls._render_template(f"{template}.txt", text_ctx))
+        message.set_content(
+            cls._render_template(f"{template}.txt", text_ctx, lang=lang, **pick)
+        )
         message.add_alternative(
             cls._render_html(
-                f"{template}.html", html_ctx, title=title, preheader=preheader, hero=hero
+                f"{template}.html",
+                html_ctx,
+                title=cls._text(lang, template, "title", raw, **pick),
+                preheader=cls._text(lang, template, "preheader", raw, **pick),
+                lang=lang,
+                **pick,
             ),
             subtype="html",
         )
@@ -356,57 +239,144 @@ class EmailService:
             return False
 
     @classmethod
-    async def send_welcome_email(cls, *, to_email: str, display_name: str | None) -> bool:
+    async def send_password_reset_email(
+        cls,
+        *,
+        to_email: str,
+        reset_token: str,
+        display_name: str | None,
+        lang: str | None = None,
+    ) -> bool:
+        """Send password-reset email with a tokenized reset URL.
+
+        If SMTP is not configured, returns False after logging the generated
+        reset URL, which is how a local developer resets a password.
+        """
+        encoded_token = quote(reset_token, safe="")
+        reset_link = f"{settings.effective_password_reset_url_base}?token={encoded_token}"
+        if not settings.SMTP_HOST:
+            logger.warning(
+                "SMTP_HOST not configured. Password reset email was not sent. "
+                "Generated reset URL for %s: %s",
+                to_email,
+                reset_link,
+            )
+            return False
+        return await cls._send_templated(
+            to_email=to_email,
+            template="password_reset_email",
+            ctx={"display_name": display_name, "reset_link": reset_link, "expiry_minutes": 60},
+            lang=lang,
+        )
+
+    @classmethod
+    async def send_verification_email(
+        cls,
+        to_email: str,
+        token: str,
+        display_name: str | None = None,
+        lang: str | None = None,
+    ) -> bool:
+        """Send email verification link to a newly registered user.
+
+        Never logs the token, even when SMTP is not configured.
+        """
+        verify_link = (
+            f"{settings.effective_email_verification_url_base}?token={quote(token, safe='')}"
+        )
+        return await cls._send_templated(
+            to_email=to_email,
+            template="verification_email",
+            ctx={"display_name": display_name, "verify_link": verify_link, "expiry_hours": 24},
+            lang=lang,
+        )
+
+    @classmethod
+    async def send_vocabulary_review_reminder_email(
+        cls,
+        *,
+        to_email: str,
+        display_name: str | None,
+        due_count: int,
+        lang: str | None = None,
+    ) -> bool:
+        """Send an occasional vocabulary review reminder email."""
+        base = settings.APP_PUBLIC_URL.rstrip("/")
+        review_link = f"{base}{settings.REMINDER_REVIEW_ROUTE}"
+        settings_link = f"{base}/settings"
+        if not settings.SMTP_HOST:
+            logger.warning(
+                "SMTP_HOST not configured. Vocabulary review reminder email was not sent. "
+                "Generated review URL for %s: %s",
+                to_email,
+                review_link,
+            )
+            return False
+        due = max(0, due_count)
+        return await cls._send_templated(
+            to_email=to_email,
+            template="vocabulary_review_reminder",
+            ctx={
+                "display_name": display_name,
+                "due_count": due,
+                "review_link": review_link,
+                "settings_link": settings_link,
+            },
+            lang=lang,
+            count=due,
+            headers={"List-Unsubscribe": f"<{settings_link}>"},
+        )
+
+    @classmethod
+    async def send_welcome_email(
+        cls, *, to_email: str, display_name: str | None, lang: str | None = None
+    ) -> bool:
         """Sent once, right after the address is verified."""
         return await cls._send_templated(
             to_email=to_email,
-            subject="Welcome to LexiLingo",
             template="welcome_email",
             ctx={"display_name": display_name, "start_link": settings.APP_PUBLIC_URL.rstrip("/")},
-            title="Welcome to LexiLingo",
-            preheader="Your account is ready. Start your first lesson.",
+            lang=lang,
         )
 
     @classmethod
     async def send_activation_nudge_email(
-        cls, *, to_email: str, display_name: str | None, user_id: uuid.UUID, day: int, start_link: str
+        cls,
+        *,
+        to_email: str,
+        display_name: str | None,
+        user_id: uuid.UUID,
+        day: int,
+        start_link: str,
+        lang: str | None = None,
     ) -> bool:
         """Day-1 / day-3 nudge for a verified learner who has not finished a lesson."""
-        settings_link = f"{settings.APP_PUBLIC_URL.rstrip('/')}/settings"
-        if day <= 1:
-            subject = "Your first LexiLingo lesson takes five minutes"
-            lead = "your account is ready, and your first lesson is ready when you are."
-        else:
-            subject = "Still want to start with LexiLingo?"
-            lead = "your first lesson is still waiting. One short lesson is enough to begin."
         return await cls._send_templated(
             to_email=to_email,
-            subject=subject,
             template="activation_nudge_email",
             ctx={
                 "display_name": display_name,
-                "lead": lead,
                 "start_link": start_link,
-                "settings_link": settings_link,
+                "settings_link": f"{settings.APP_PUBLIC_URL.rstrip('/')}/settings",
                 "unsubscribe_link": unsubscribe_url(user_id),
             },
-            title=subject,
-            preheader="One tap opens your first lesson.",
+            lang=lang,
+            variant="d1" if day <= 1 else "d3",
             headers=unsubscribe_headers(user_id),
-            hero="welcome_email",
         )
 
     @classmethod
-    async def send_password_changed_email(cls, *, to_email: str, display_name: str | None) -> bool:
+    async def send_password_changed_email(
+        cls, *, to_email: str, display_name: str | None, lang: str | None = None
+    ) -> bool:
         """Security notice after a password change or reset."""
-        changed_at = datetime.now(UTC).strftime("%d %b %Y, %H:%M UTC")
+        # Numeric, so it reads the same in every language.
+        changed_at = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
         return await cls._send_templated(
             to_email=to_email,
-            subject="Your LexiLingo password was changed",
             template="password_changed_email",
             ctx={"display_name": display_name, "changed_at": changed_at},
-            title="Your password was changed",
-            preheader="If this was not you, act now.",
+            lang=lang,
         )
 
     @classmethod
@@ -421,6 +391,7 @@ class EmailService:
         words_learned: int,
         suggestion_title: str | None = None,
         suggestion_link: str | None = None,
+        lang: str | None = None,
     ) -> bool:
         """Weekly recap; the caller must have checked the user's nurture opt-out."""
         settings_link = f"{settings.APP_PUBLIC_URL.rstrip('/')}/settings"
@@ -432,11 +403,12 @@ class EmailService:
                     "suggestion_title": html.escape(suggestion_title),
                     "suggestion_link": html.escape(suggestion_link),
                 },
+                lang=lang,
             )
-            suggestion_text = f"Up next for you: {suggestion_title}\n{suggestion_link}\n\n"
+            up_next = email_text(lang, "weekly_summary_email", "up_next")
+            suggestion_text = f"{up_next}: {suggestion_title}\n{suggestion_link}\n\n"
         return await cls._send_templated(
             to_email=to_email,
-            subject="Your week in LexiLingo",
             template="weekly_summary_email",
             ctx={
                 "display_name": display_name,
@@ -446,8 +418,7 @@ class EmailService:
                 "settings_link": settings_link,
                 "unsubscribe_link": unsubscribe_url(user_id),
             },
-            title="Your week in LexiLingo",
-            preheader=f"{max(0, xp):,} XP and a {max(0, streak_days)}-day streak this week.",
+            lang=lang,
             headers=unsubscribe_headers(user_id),
             html_extra={"suggestion_block": suggestion_html},
             text_extra={"suggestion_block": suggestion_text},
@@ -455,25 +426,29 @@ class EmailService:
 
     @classmethod
     async def send_streak_at_risk_email(
-        cls, *, to_email: str, display_name: str | None, user_id: uuid.UUID, streak_days: int
+        cls,
+        *,
+        to_email: str,
+        display_name: str | None,
+        user_id: uuid.UUID,
+        streak_days: int,
+        lang: str | None = None,
     ) -> bool:
         """Nudge for learners who have not practised today; the caller checks the nurture opt-out."""
-        settings_link = f"{settings.APP_PUBLIC_URL.rstrip('/')}/settings"
+        base = settings.APP_PUBLIC_URL.rstrip("/")
         days = max(0, streak_days)
         return await cls._send_templated(
             to_email=to_email,
-            subject=f"Your {days}-day streak ends tonight",
             template="streak_at_risk_email",
             ctx={
                 "display_name": display_name,
                 "streak_days": days,
-                "day_noun": "day" if days == 1 else "days",
-                "practice_link": f"{settings.APP_PUBLIC_URL.rstrip('/')}{settings.REMINDER_REVIEW_ROUTE}",
-                "settings_link": settings_link,
+                "practice_link": f"{base}{settings.REMINDER_REVIEW_ROUTE}",
+                "settings_link": f"{base}/settings",
                 "unsubscribe_link": unsubscribe_url(user_id),
             },
-            title="Keep your streak alive",
-            preheader=f"{days} {'day' if days == 1 else 'days'} in a row. A few minutes is enough.",
+            lang=lang,
+            count=days,
             headers=unsubscribe_headers(user_id),
         )
 

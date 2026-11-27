@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="{html_lang}">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -14,6 +14,8 @@
         .ll-btn {{ width: 100% !important; }}
         .ll-btn a {{ display: block !important; text-align: center !important; }}
         .ll-digit {{ width: 36px !important; font-size: 24px !important; }}
+        .ll-hero {{ padding: 0 20px !important; background-position: 72% center !important; }}
+        .ll-hero-title {{ font-size: 22px !important; width: 62% !important; }}
       }}
       @media (prefers-color-scheme: dark) {{
         .ll-bg {{ background: #151C26 !important; }}
@@ -34,9 +36,10 @@
         <td align="center" style="padding:32px 16px;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="max-width:520px;">
             <tr>
-              <td bgcolor="#0A4A9C" style="background:#0A4A9C;border-radius:20px 20px 0 0;overflow:hidden;line-height:0;font-size:0;">
-                <a href="{home_url}" style="text-decoration:none;">
-                  <img src="{hero_url}" width="520" height="180" alt="{title}" style="display:block;width:100%;max-width:520px;height:auto;border:0;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;font-size:26px;line-height:1.3;font-weight:800;color:#FFFFFF;" />
+              <td class="ll-hero" bgcolor="#034EB4" background="{hero_url}" height="180" valign="middle" style="background:#034EB4 url('{hero_url}') no-repeat right center;background-size:cover;border-radius:20px 20px 0 0;height:180px;padding:0 32px;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+                <a href="{home_url}" style="text-decoration:none;color:#FFFFFF;">
+                  <div style="font-size:14px;line-height:1.4;font-weight:700;color:#FFFFFF;">LexiLingo</div>
+                  <div class="ll-hero-title" style="width:58%;margin-top:6px;font-size:28px;line-height:1.2;font-weight:800;color:#FFFFFF;">{title}</div>
                 </a>
               </td>
             </tr>
@@ -47,7 +50,7 @@
             </tr>
             <tr>
               <td class="ll-m" align="center" style="padding:20px 4px 16px;font-size:13px;line-height:1.6;color:#5B6B7F;">
-                Questions? Write to <a href="mailto:{support_email}" style="color:#0D5FC4;">{support_email}</a><br />
+                {t_questions}<br />
                 LexiLingo &middot; <a href="{home_url}" style="color:#5B6B7F;">lexilingo.me</a>
               </td>
             </tr>

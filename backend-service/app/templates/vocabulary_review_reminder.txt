@@ -1,9 +1,12 @@
-Hi {display_name},
+{t_intro}
 
-You have {due_count} {due_noun} waiting for review in LexiLingo.
+{due_count} {t_label}
 
-Review now: {review_link}
+{t_why}
 
-Too many reminders? Change how often we email you: {settings_link}
+{t_cta}: {review_link}
 
-LexiLingo Team
+{t_manage}
+{t_settings_label}: {settings_link}
+
+{t_team}

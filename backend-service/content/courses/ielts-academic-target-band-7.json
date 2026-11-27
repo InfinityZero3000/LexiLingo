@@ -985,12 +985,7 @@
             "correct_answer": "Overall, the process involves several stages, beginning with the extraction of raw materials and culminating in the heating of the final product to ensure durability.",
             "explanation": "This option correctly identifies the process as linear (non-circular) and accurately summarizes the start (extraction/digging) and end (heating/firing) points without adding unsupported details like 'painting' or 'recycling'. It uses appropriate academic vocabulary ('extraction', 'culminating').",
             "id": "ex_1a2b3c4d-5678-90ab-cdef-111111111111_1",
-            "options": [
-              "Overall, the process involves several stages, beginning with the extraction of raw materials and culminating in the heating of the final product to ensure durability.",
-              "Overall, the process has many steps that happen at the same time, starting with digging and ending with painting the bricks.",
-              "Overall, the process is circular, which means the bricks are recycled immediately after they are fired in the kiln.",
-              "Overall, the process is very complex and requires many different types of machinery to dig the clay effectively."
-            ],
+            "options": [],
             "question": "Write an overview sentence for a process diagram describing how bricks are manufactured. The process starts with digging clay and ends with firing the bricks in a kiln.",
             "type": "fill_blank",
             "ui_type": "short_writing_answer"
@@ -1013,12 +1008,7 @@
             "correct_answer": "Next, cement, sand, and water are combined within a large rotating drum to form a uniform mixture.",
             "explanation": "This answer correctly uses the passive voice ('are combined') which is standard for process diagrams. It includes the correct sequence marker ('Next') and accurately describes the inputs and the mechanism ('large rotating drum').",
             "id": "ex_3c4d5e6f-7890-12cd-ef34-333333333333_3",
-            "options": [
-              "In the second stage, a large rotating drum mixes cement, sand, and water together to create a homogeneous mixture.",
-              "Next, cement, sand, and water are combined within a large rotating drum to form a uniform mixture.",
-              "During the second phase, the workers put cement, sand, and water into the drum and mix them manually.",
-              "Afterwards, the mixture is placed into a large rotating drum where cement, sand, and water are added."
-            ],
+            "options": [],
             "question": "Write a sentence describing the second stage of a concrete production process, where cement, sand, and water are mixed together in a large rotating drum. Use a passive structure.",
             "type": "fill_blank",
             "ui_type": "short_writing_answer"
@@ -1041,12 +1031,7 @@
             "correct_answer": "Once the bottles have been collected and sorted, they are subsequently crushed into small pieces known as cullet.",
             "explanation": "This option uses a perfect passive clause ('have been collected') to show completion before the next step, followed by a clear sequence marker ('subsequently'). It accurately reflects the chronological order without implying contrast ('but', 'although') or incorrect causality ('so').",
             "id": "ex_5e6f7g8h-9012-34ef-5678-555555555555_5",
-            "options": [
-              "Once the bottles have been collected and sorted, they are subsequently crushed into small pieces known as cullet.",
-              "First, the bottles are collected and sorted, but then they are crushed into small pieces known as cullet.",
-              "Although the bottles are collected and sorted, they are crushed into small pieces known as cullet.",
-              "The bottles are collected and sorted, so they are crushed into small pieces known as cullet."
-            ],
+            "options": [],
             "question": "Write a sentence linking two stages in a glass bottle recycling process. Stage 1: Bottles are collected and sorted. Stage 2: They are crushed into small pieces called cullet.",
             "type": "fill_blank",
             "ui_type": "short_writing_answer"
@@ -1108,8 +1093,8 @@
               "The forest in the north was replaced by a hotel."
             ],
             "question": "Which sentence best describes the transformation of the northern section of the island, where trees were removed to build a hotel?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "into",
@@ -1272,8 +1257,8 @@
               "Country A has a higher number of dog owners compared to Country B's cat owners."
             ],
             "question": "Which of the following options best demonstrates a Band 7+ level of lexical resource when describing a static bar chart comparing the percentage of households with pets in two different countries?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "are",
@@ -1332,8 +1317,8 @@
               "Many people enjoy extreme sports such as skydiving and bungee jumping, which offer adrenaline rushes that are difficult to find in other forms of entertainment."
             ],
             "question": "Task 2 Prompt: 'Some people believe that governments should ban dangerous sports, while others think individuals should be free to choose their leisure activities. Discuss both views and give your own opinion.' Write a thesis statement that fully addresses both parts of this two-part question.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "Overall, both countries witnessed a significant increase in the proportion of energy derived from renewable sources over the two-decade period, with Country B consistently outperforming Country A in terms of percentage growth by the end of the period.",
@@ -1346,8 +1331,8 @@
               "The chart illustrates data regarding energy production. It is important to note that the data refers specifically to renewable sources, excluding fossil fuels and nuclear power."
             ],
             "question": "Task 1 Prompt: 'The chart below shows the percentage of energy produced by renewable sources in Country A and Country B in 2000 and 2020. Summarize the information by selecting and reporting the main features, and make comparisons where relevant.' Which of the following overview paragraphs best fully addresses the task requirements?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "however",
@@ -1388,8 +1373,8 @@
               "Paragraph 1 argues that community service builds character. Paragraph 2 argues that community service helps the local economy. The conclusion states that both arguments are valid."
             ],
             "question": "Task 2 Prompt: 'Some people think that unpaid community service should be a mandatory part of high school programs. Others believe that young people should have the freedom to choose how they spend their free time. Discuss both views and give your own opinion.' Which body paragraph structure best ensures that both parts of the question are fully addressed?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           }
         ],
         "version": 1
@@ -1793,8 +1778,8 @@
               "1. Education is important. 2. Technology is new. 3. We need both."
             ],
             "question": "You are asked to discuss the impact of technology on traditional education. Select the most appropriate logical structure for a Part 3 response.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "It is unlikely that remote work will completely supplant office-based employment, as interpersonal dynamics and spontaneous collaboration often suffer in virtual environments.",
@@ -1971,8 +1956,8 @@
               "globalization, the, impact"
             ],
             "question": "Match the Part 3 abstract topic with the appropriate lexical set and stress pattern strategy. Topic: 'The impact of globalization on local cultures.' Identify the key content words that should receive primary stress to convey meaning effectively.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "Rise on 'efficiency', rise on 'costs', fall on 'morale'.",
@@ -2108,8 +2093,8 @@
               "I don't like reading. I prefer watching TV. TV is more exciting than books."
             ],
             "question": "For Part 1 of the mock interview, the examiner asks: 'Do you enjoy reading books?' Which of the following note structures best supports a Band 7+ response by providing a clear opinion, a reason, and a specific example?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "Looking back, that decision proved to be pivotal, as it not only broadened my horizons but also set the trajectory for my current career path.",
@@ -2151,14 +2136,14 @@
             "explanation": "This phrase allows for a nuanced, balanced argument, which is key for Band 7+ in Part 3. It acknowledges the opposite view ('undeniable benefits') before presenting a critical perspective ('I would argue that'), demonstrating the ability to discuss abstract issues with depth and complexity.",
             "id": "ex_5fg7h4c2-9fi9-8be6-fihg-1875ig095i31_5",
             "options": [
-              "To cut a long story short",
-              "It's a matter of personal preference",
               "While there are undeniable benefits, I would argue that...",
-              "As far as I'm concerned"
+              "Technology is good.",
+              "I don't know much about this.",
+              "Yes, I agree with this."
             ],
-            "question": "Match the Part 3 question on the left with the most appropriate advanced vocabulary phrase to structure your argument on the right. Question: 'To what extent do you agree that technology has improved children's education?' Target Phrase: '{blank}'",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "question": "Part 3 question: 'To what extent do you agree that technology has improved children's education?' Which phrase best starts a balanced Band 7+ answer?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           }
         ],
         "version": 1

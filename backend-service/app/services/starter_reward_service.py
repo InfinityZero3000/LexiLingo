@@ -10,7 +10,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.crud.gamification import WalletCRUD
 from app.models.notification import Notification
 from app.models.reward_grant import UserRewardGrant
-from app.models.user import UserDevice
+from app.models.user import User, UserDevice
+from app.services.push_copy import starter_reward_copy
 
 
 class StarterRewardService:
@@ -58,11 +59,18 @@ class StarterRewardService:
                 return existing
             raise
 
+        # The app shows this row in its own UI language by type; the stored text
+        # is for anything else that reads it. At sign-up the native language is
+        # usually still the default.
+        native_language = (
+            await db.execute(select(User.native_language).where(User.id == user_id))
+        ).scalar_one_or_none()
+        title, body = starter_reward_copy(native_language, cls.gems_awarded)
         db.add(
             Notification(
                 user_id=user_id,
-                title="Welcome gift",
-                body="100 Gems have been added to your wallet.",
+                title=title,
+                body=body,
                 type="starter_reward",
                 data={
                     "reward_key": cls.reward_key,
@@ -121,6 +129,7 @@ class StarterRewardService:
         db: AsyncSession,
         user_id: UUID,
         tokens: list[str] | None = None,
+        lang: str | None = None,
     ) -> bool:
         result = await db.execute(
             select(UserRewardGrant).where(
@@ -151,12 +160,13 @@ class StarterRewardService:
             PushNotificationService,
         )
 
+        title, body = starter_reward_copy(lang, grant.gems_awarded)
         delivered = await PushNotificationService().send_starter_reward(
             tokens=clean_tokens,
             gems=grant.gems_awarded,
             reward_key=grant.reward_key,
-            title="Welcome gift",
-            body=f"{grant.gems_awarded} Gems are waiting in your wallet.",
+            title=title,
+            body=body,
         )
         if delivered:
             grant.push_sent_at = datetime.now(timezone.utc)
