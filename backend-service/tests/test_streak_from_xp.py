@@ -36,3 +36,15 @@ async def test_an_achievement_is_not_activity(db_session, test_user):
     )
 
     assert await _streak(db_session, test_user) is None
+
+
+async def test_a_capped_zero_xp_award_on_an_otherwise_idle_day_does_not_extend_the_streak(db_session, test_user):
+    from app.models.games import XPTransaction
+
+    db_session.add(XPTransaction(user_id=test_user.id, amount=500, base_amount=500, source="news", source_id="old"))
+    await db_session.commit()
+
+    result = await award_xp_transaction(db=db_session, user=test_user, source="news", base_xp=15, source_id="n:1")
+
+    assert result.xp_awarded == 0
+    assert await _streak(db_session, test_user) is None
