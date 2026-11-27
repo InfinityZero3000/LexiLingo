@@ -25,7 +25,35 @@ async def test_counts_real_learners_and_hides_a_small_number(async_client, db_se
 
     body = (await async_client.get("/api/v1/public/stats")).json()
 
-    assert body == {"learners": 1, "lessons_completed_today": 3, "show": False}
+    assert body == {"learners": 0, "lessons_completed_today": 0, "show": False}
+
+
+async def test_counts_are_exact_above_the_floor_and_skip_staff_and_test_accounts(
+    async_client, db_session, monkeypatch
+):
+    from app.models.rbac import Role
+
+    monkeypatch.setattr(settings, "PUBLIC_STATS_MIN_LEARNERS", 1)
+    roles = {
+        slug: Role(name=slug, slug=slug, level=level, description=slug)
+        for slug, level in (("user", 0), ("test", 0), ("admin", 1))
+    }
+    db_session.add_all(roles.values())
+    await db_session.flush()
+    learner, tester, admin = _user("l@example.com"), _user("t@example.com"), _user("a@example.com")
+    learner.role_id, tester.role_id, admin.role_id = roles["user"].id, roles["test"].id, roles["admin"].id
+    plain = _user("p@example.com")
+    db_session.add_all([learner, tester, admin, plain])
+    await db_session.flush()
+    today = datetime.now(timezone.utc).date()
+    db_session.add_all([
+        DailyActivity(user_id=u.id, activity_date=today, lessons_completed=2) for u in (learner, tester, admin, plain)
+    ])
+    await db_session.commit()
+
+    body = (await async_client.get("/api/v1/public/stats")).json()
+
+    assert body == {"learners": 2, "lessons_completed_today": 4, "show": True}
 
 
 async def test_show_turns_on_at_the_floor(async_client, db_session, monkeypatch):
