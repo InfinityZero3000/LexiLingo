@@ -15,6 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
+from app.core.refusal import refusal
 from app.core.permissions import ACTION_BY_METHOD
 from app.core.security import decode_token, is_locally_issued_token
 from app.core.token_blacklist import TokenBlacklist
@@ -105,9 +106,10 @@ async def get_current_verified_user(
     farm or abuse: referral pay-outs and spending gems.
     """
     if not current_user.is_verified:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Verify your email to use this.",
+        raise refusal(
+            status.HTTP_403_FORBIDDEN,
+            "Verify your email to use this.",
+            {"reason": "email_unverified"},
         )
     return current_user
 
