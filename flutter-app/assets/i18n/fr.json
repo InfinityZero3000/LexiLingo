@@ -1038,8 +1038,10 @@
     "reviewReminderTitle": "C'est l'heure de réviser votre vocabulaire",
     "reviewChannelName": "Rappels quotidiens",
     "reviewChannelDescription": "Vous rappelle de réviser votre vocabulaire chaque jour",
-    "reviewTitle": "📚 Petite révision ?",
-    "reviewBodyStreak": "Deux minutes maintenant pour retenir vos mots… et garder votre série ! 🔥",
+    "reviewTitle": "Révision de vocabulaire",
+    "reviewBodyDue": "Vous avez {count} mots à réviser aujourd'hui !",
+    "reviewBodyStreak": "C'est l'heure de réviser — gardez votre série !",
+    "reviewBodyDueNow": "{count} mots doivent être révisés !",
     "reviewWaitingBody": "{count} mots attendent d'être révisés.",
     "checkin": {
       "channelName": "Rappels de présence",

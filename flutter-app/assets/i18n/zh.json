@@ -1038,8 +1038,10 @@
     "reviewReminderTitle": "该复习词汇了",
     "reviewChannelName": "每日提醒",
     "reviewChannelDescription": "每天提醒你复习词汇",
-    "reviewTitle": "📚 来快速复习一下吧",
-    "reviewBodyStreak": "花 2 分钟复习，单词记得更牢，连续记录也不断！🔥",
+    "reviewTitle": "词汇复习",
+    "reviewBodyDue": "今天有 {count} 个单词需要复习！",
+    "reviewBodyStreak": "该复习词汇了，保持你的连续记录！",
+    "reviewBodyDueNow": "有 {count} 个单词到复习时间了！",
     "reviewWaitingBody": "有 {count} 个单词等你复习。",
     "checkin": {
       "channelName": "签到提醒",

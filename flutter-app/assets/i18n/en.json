@@ -1038,8 +1038,10 @@
     "reviewReminderTitle": "Time to review your vocabulary",
     "reviewChannelName": "Daily reminders",
     "reviewChannelDescription": "Reminds you to review vocabulary every day",
-    "reviewTitle": "📚 Time for a quick review",
-    "reviewBodyStreak": "Two minutes now keeps your words fresh — and your streak alive! 🔥",
+    "reviewTitle": "Vocabulary review",
+    "reviewBodyDue": "You have {count} words to review today!",
+    "reviewBodyStreak": "Time to review your vocabulary — keep your streak alive!",
+    "reviewBodyDueNow": "You have {count} words due for review!",
     "reviewWaitingBody": "{count} words are waiting for you to review.",
     "checkin": {
       "channelName": "Check-in reminders",

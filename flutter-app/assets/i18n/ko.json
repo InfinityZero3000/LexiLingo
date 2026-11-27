@@ -1038,8 +1038,10 @@
     "reviewReminderTitle": "단어를 복습할 시간이에요",
     "reviewChannelName": "일일 알림",
     "reviewChannelDescription": "매일 단어를 복습하도록 알려 줍니다",
-    "reviewTitle": "📚 단어 복습할 시간이에요",
-    "reviewBodyStreak": "지금 2분만 복습하면 오래 기억하고 연속 기록도 지킬 수 있어요! 🔥",
+    "reviewTitle": "단어 복습",
+    "reviewBodyDue": "오늘 복습할 단어가 {count}개 있습니다!",
+    "reviewBodyStreak": "단어를 복습할 시간입니다 — 연속 기록을 이어가세요!",
+    "reviewBodyDueNow": "복습할 때가 된 단어가 {count}개 있습니다!",
     "reviewWaitingBody": "{count}개 단어가 복습을 기다리고 있습니다.",
     "checkin": {
       "channelName": "출석 알림",

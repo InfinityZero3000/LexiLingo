@@ -198,12 +198,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   ? 'admin.shell.roleSuper'
                                   : 'admin.shell.roleAdmin')
                               .tr(),
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: isSuperAdmin
-                                ? context.ac.onPrimary
-                                : context.ac.primary,
-                            fontWeight: FontWeight.w700,
-                          ),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: isSuperAdmin
+                                    ? context.ac.onPrimary
+                                    : context.ac.primary,
+                                fontWeight: FontWeight.w700,
+                              ),
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -221,9 +222,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         alignment: Alignment.centerLeft,
                         child: Text(
                           'adminUi.settings.syncedFromGoogle'.tr(),
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: context.ac.onSurfaceMuted,
-                          ),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(color: context.ac.onSurfaceMuted),
                         ),
                       ),
                     ],
@@ -465,9 +465,9 @@ class _FormFieldState extends State<_FormField> {
         TextField(
           controller: _ctrl,
           readOnly: true,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: context.ac.onSurfaceVariant,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: context.ac.onSurfaceVariant),
           decoration: InputDecoration(
             isDense: true,
             filled: true,

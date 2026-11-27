@@ -1038,8 +1038,10 @@
     "reviewReminderTitle": "単語を復習する時間です",
     "reviewChannelName": "毎日のリマインダー",
     "reviewChannelDescription": "毎日単語を復習するようリマインドします",
-    "reviewTitle": "📚 単語の復習タイム",
-    "reviewBodyStreak": "2分の復習で記憶に定着。連続記録も守りましょう！🔥",
+    "reviewTitle": "単語の復習",
+    "reviewBodyDue": "今日は{count}語の復習があります！",
+    "reviewBodyStreak": "単語を復習する時間です。連続記録を守りましょう！",
+    "reviewBodyDueNow": "復習期限の単語が{count}語あります！",
     "reviewWaitingBody": "{count}語が復習を待っています。",
     "checkin": {
       "channelName": "チェックインのリマインダー",

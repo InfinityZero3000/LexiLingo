@@ -1038,8 +1038,10 @@
     "reviewReminderTitle": "Đến giờ ôn từ vựng",
     "reviewChannelName": "Nhắc nhở hàng ngày",
     "reviewChannelDescription": "Nhắc bạn ôn tập từ vựng mỗi ngày",
-    "reviewTitle": "📚 Đến giờ ôn từ vựng rồi",
-    "reviewBodyStreak": "Ôn 2 phút để nhớ lâu hơn và giữ vững chuỗi ngày học nhé! 🔥",
+    "reviewTitle": "Ôn tập từ vựng",
+    "reviewBodyDue": "Bạn có {count} từ cần ôn tập hôm nay!",
+    "reviewBodyStreak": "Đã đến giờ ôn từ vựng – giữ vững streak của bạn!",
+    "reviewBodyDueNow": "Bạn có {count} từ đến hạn ôn tập!",
     "reviewWaitingBody": "{count} từ đang đợi bạn ôn tập.",
     "checkin": {
       "channelName": "Nhắc điểm danh",

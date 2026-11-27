@@ -1038,8 +1038,10 @@
     "reviewReminderTitle": "Es hora de repasar tu vocabulario",
     "reviewChannelName": "Recordatorios diarios",
     "reviewChannelDescription": "Te recuerda repasar vocabulario cada día",
-    "reviewTitle": "📚 Hora de un repaso rápido",
-    "reviewBodyStreak": "Dos minutos ahora mantienen tus palabras frescas… ¡y tu racha viva! 🔥",
+    "reviewTitle": "Repaso de vocabulario",
+    "reviewBodyDue": "¡Hoy tienes {count} palabras para repasar!",
+    "reviewBodyStreak": "Hora de repasar: ¡mantén tu racha!",
+    "reviewBodyDueNow": "¡Tienes {count} palabras pendientes de repaso!",
     "reviewWaitingBody": "{count} palabras esperan tu repaso.",
     "checkin": {
       "channelName": "Recordatorios de asistencia",

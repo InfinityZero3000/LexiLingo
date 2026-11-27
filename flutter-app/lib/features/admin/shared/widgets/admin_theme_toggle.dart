@@ -56,7 +56,11 @@ class AdminThemeModeSelector extends StatelessWidget {
     final current = controller.mode;
 
     final options = <(ThemeMode, IconData, String)>[
-      (ThemeMode.light, Icons.light_mode_rounded, 'admin.shell.themeLight'.tr()),
+      (
+        ThemeMode.light,
+        Icons.light_mode_rounded,
+        'admin.shell.themeLight'.tr(),
+      ),
       (ThemeMode.dark, Icons.dark_mode_rounded, 'admin.shell.themeDark'.tr()),
       (
         ThemeMode.system,
