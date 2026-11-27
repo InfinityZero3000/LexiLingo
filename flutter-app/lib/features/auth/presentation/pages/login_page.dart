@@ -243,6 +243,11 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     SizedBox(height: gap(24, 12)),
 
+                    // Above the form: it says what to type there.
+                    Consumer<AuthProvider>(
+                      builder: (_, auth, _) => FacebookMergeHint(auth: auth),
+                    ),
+
                     Text(
                       'auth.email'.tr(),
                       style: theme.textTheme.bodyMedium?.copyWith(
@@ -620,7 +625,6 @@ class _LoginPageState extends State<LoginPage> {
                       ],
                     ),
 
-                    FacebookMergeHint(auth: authProvider),
                     if (authProvider.errorMessage != null) ...[
                       const SizedBox(height: AppSpacing.md),
                       Container(

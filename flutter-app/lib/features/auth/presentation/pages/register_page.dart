@@ -107,6 +107,17 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
+  void _goToLogin() {
+    if (!mounted) return;
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+      return;
+    }
+    Navigator.of(
+      context,
+    ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginPage()));
+  }
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -551,6 +562,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 await signInWithFacebookOrLink(
                                   context,
                                   authProvider,
+                                  toPasswordForm: _goToLogin,
                                 );
                               },
                         icon: Icon(
@@ -586,17 +598,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                           ),
                           TapTarget(
-                            onTap: () {
-                              if (Navigator.of(context).canPop()) {
-                                Navigator.of(context).pop();
-                                return;
-                              }
-                              Navigator.of(context).pushReplacement(
-                                MaterialPageRoute(
-                                  builder: (_) => const LoginPage(),
-                                ),
-                              );
-                            },
+                            onTap: _goToLogin,
                             child: Text(
                               'auth.login'.tr(),
                               style: textTheme.titleMedium?.copyWith(
@@ -609,7 +611,6 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
 
-                    FacebookMergeHint(auth: authProvider),
                     if (authProvider.errorMessage != null) ...[
                       const SizedBox(height: AppSpacing.lg),
                       Container(

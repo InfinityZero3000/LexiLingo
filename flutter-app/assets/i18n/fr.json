@@ -137,7 +137,7 @@
     "errAccountExists": "Cet e-mail est déjà associé à une autre méthode de connexion. Veuillez d'abord utiliser cette méthode.",
     "fbLinkTitle": "Fusionner Facebook avec votre compte ?",
     "fbLinkMessage": "{email} a déjà un compte LexiLingo. Confirmez avec le compte Google de cette adresse pour fusionner ; vous pourrez ensuite utiliser l'un ou l'autre.",
-    "fbLinkConfirm": "Confirmer avec Google",
+    "fbLinkConfirm": "Fusionner via Google",
     "errFacebookLinkMismatch": "Il s'agissait d'un autre compte Google. Choisissez celui qui a la même adresse que votre compte Facebook.",
     "errCors": "La connexion est temporairement bloquée. Veuillez réessayer dans un instant.",
     "errCancelled": "La connexion a été annulée.",

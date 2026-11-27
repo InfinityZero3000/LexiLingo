@@ -137,7 +137,7 @@
     "errAccountExists": "Email này đã liên kết với phương thức đăng nhập khác. Vui lòng đăng nhập bằng phương thức đó trước.",
     "fbLinkTitle": "Gộp Facebook vào tài khoản của bạn?",
     "fbLinkMessage": "{email} đã có tài khoản LexiLingo. Xác nhận bằng Google của email này để gộp; từ lần sau bạn đăng nhập được bằng cả hai.",
-    "fbLinkConfirm": "Xác nhận bằng Google",
+    "fbLinkConfirm": "Gộp bằng Google",
     "errFacebookLinkMismatch": "Đó là tài khoản Google khác. Hãy chọn tài khoản có cùng email với Facebook của bạn.",
     "errCors": "Đăng nhập tạm thời bị chặn. Vui lòng thử lại sau giây lát.",
     "errCancelled": "Đăng nhập đã bị hủy.",

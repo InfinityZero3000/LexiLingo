@@ -137,7 +137,7 @@
     "errAccountExists": "このメールアドレスは別のサインイン方法に関連付けられています。先にその方法でサインインしてください。",
     "fbLinkTitle": "Facebookをアカウントに統合しますか？",
     "fbLinkMessage": "{email} にはすでにLexiLingoアカウントがあります。このメールのGoogleアカウントで確認すると統合され、次回からどちらでもログインできます。",
-    "fbLinkConfirm": "Googleで確認",
+    "fbLinkConfirm": "Googleで統合",
     "errFacebookLinkMismatch": "別の Google アカウントです。Facebook と同じメールアドレスのアカウントを選んでください。",
     "errCors": "サインインは一時的にブロックされています。しばらくしてからもう一度お試しください。",
     "errCancelled": "サインインがキャンセルされました。",

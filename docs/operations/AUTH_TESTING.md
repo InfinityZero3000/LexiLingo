@@ -26,6 +26,24 @@ flutter run -d chrome --dart-define=FIREBASE_AUTH_EMULATOR=127.0.0.1:9099
 In the emulator popup choose **Add new account** and type any email. The emulator
 UI (`http://127.0.0.1:4400/auth`) lists the users; **Clear all data** resets them.
 
+**One difference from real Firebase, and it matters.** The emulator's popup marks
+every email as verified, Facebook's included. Real Facebook emails are not, and
+that is what raises the "account exists" conflict. Left alone, the emulator just
+signs in and merges without asking. Before submitting a **Facebook** popup, paste
+this into that popup's DevTools console:
+
+```js
+const make = window.createFakeClaims;
+window.createFakeClaims = (info) => {
+  const claims = JSON.parse(decodeURIComponent(make(info)));
+  claims.email_verified = false;
+  return encodeURIComponent(JSON.stringify(claims));
+};
+```
+
+The two-step variant (Firebase returning no pending credential) cannot be produced
+by the emulator; `facebook_account_linking_test.dart` covers it.
+
 ## Cases to walk
 
 | Set up | Then | Expected |

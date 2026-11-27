@@ -137,7 +137,7 @@
     "errAccountExists": "This email is already linked to another sign-in method. Please use that method first.",
     "fbLinkTitle": "Merge Facebook into your account?",
     "fbLinkMessage": "{email} already has a LexiLingo account. Confirm with that email's Google account to merge; after that you can sign in with either.",
-    "fbLinkConfirm": "Confirm with Google",
+    "fbLinkConfirm": "Merge with Google",
     "errFacebookLinkMismatch": "That was a different Google account. Choose the one with the same email as your Facebook account.",
     "errCors": "Sign-in is temporarily blocked. Please try again in a moment.",
     "errCancelled": "Sign-in was cancelled.",

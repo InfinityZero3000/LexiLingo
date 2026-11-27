@@ -137,7 +137,7 @@
     "errAccountExists": "此邮箱已关联其他登录方式，请先使用该方式登录。",
     "fbLinkTitle": "将 Facebook 合并到您的账号？",
     "fbLinkMessage": "{email} 已有 LexiLingo 账号。请用该邮箱的 Google 账号确认以完成合并；之后两种方式都可登录。",
-    "fbLinkConfirm": "用 Google 确认",
+    "fbLinkConfirm": "用 Google 合并",
     "errFacebookLinkMismatch": "这是另一个 Google 账户。请选择与你的 Facebook 账户邮箱相同的账户。",
     "errCors": "登录暂时被阻止，请稍后重试。",
     "errCancelled": "登录已取消。",

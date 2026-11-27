@@ -6,16 +6,18 @@ import 'package:lexilingo_app/features/auth/presentation/providers/auth_provider
 
 /// Signs in with Facebook. When the email already has an account, asks whether
 /// to merge and walks through the proof. Every popup opens from a confirm tap,
-/// which is what lets the browser allow it.
+/// which is what lets the browser allow it. [toPasswordForm] takes the learner
+/// to where they can type their password, if this is not that page.
 Future<void> signInWithFacebookOrLink(
   BuildContext context,
-  AuthProvider auth,
-) async {
+  AuthProvider auth, {
+  VoidCallback? toPasswordForm,
+}) async {
   await auth.signInWithFacebook();
   var step = auth.facebookMergeStep;
   while (step != FacebookMergeStep.none) {
     if (!context.mounted) return;
-    final carryOn = await _ask(context, auth, step);
+    final carryOn = await _ask(context, auth, step, toPasswordForm);
     if (!carryOn) return;
     step = auth.facebookMergeStep;
   }
@@ -26,6 +28,7 @@ Future<bool> _ask(
   BuildContext context,
   AuthProvider auth,
   FacebookMergeStep step,
+  VoidCallback? toPasswordForm,
 ) async {
   final email = auth.facebookMergeEmail;
   final usesGoogle =
@@ -76,7 +79,11 @@ Future<bool> _ask(
     case FacebookMergeStep.signInToMerge:
       // With Google it happens now; with a password the learner types it into
       // the form, and the merge follows that sign-in.
-      if (usesGoogle) await auth.signInWithGoogle();
+      if (usesGoogle) {
+        await auth.signInWithGoogle();
+      } else if (context.mounted) {
+        toPasswordForm?.call();
+      }
       return false;
     case FacebookMergeStep.none:
       return false;
@@ -97,7 +104,7 @@ class FacebookMergeHint extends StatelessWidget {
     }
     final scheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.only(top: AppSpacing.md),
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
       child: Material(
         color: scheme.secondaryContainer,
         borderRadius: BorderRadius.circular(AppRadius.md),

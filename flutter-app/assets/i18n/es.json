@@ -137,7 +137,7 @@
     "errAccountExists": "Este correo ya está vinculado a otro método de inicio de sesión. Usa ese método primero.",
     "fbLinkTitle": "¿Unir Facebook a tu cuenta?",
     "fbLinkMessage": "{email} ya tiene una cuenta de LexiLingo. Confirma con la cuenta de Google de ese correo para unirlas; después podrás entrar con cualquiera.",
-    "fbLinkConfirm": "Confirmar con Google",
+    "fbLinkConfirm": "Unir con Google",
     "errFacebookLinkMismatch": "Esa era otra cuenta de Google. Elige la que tenga el mismo correo que tu cuenta de Facebook.",
     "errCors": "El inicio de sesión está bloqueado temporalmente. Inténtalo de nuevo en un momento.",
     "errCancelled": "Se canceló el inicio de sesión.",
