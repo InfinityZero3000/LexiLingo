@@ -1016,7 +1016,9 @@
     "delete_account": "アカウントを削除",
     "delete_account_confirm": "アカウントとすべての学習データが完全に削除されます。この操作は取り消せません。",
     "delete_account_confirm_btn": "完全に削除",
-    "delete_account_error": "アカウントを削除できませんでした。もう一度お試しください。"
+    "delete_account_error": "アカウントを削除できませんでした。もう一度お試しください。",
+    "delete_account_reauth_title": "続けるには再ログインしてください",
+    "delete_account_reauth_message": "安全のため、アカウントはログイン直後にのみ削除できます。ログアウトして再度ログインしてから、アカウントを削除してください。"
   },
   "notifications": {
     "pageTitle": "通知",

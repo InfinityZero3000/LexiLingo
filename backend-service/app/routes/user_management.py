@@ -3,7 +3,7 @@ User Management Routes (Admin Panel - Phase 2)
 Provides user CRUD operations, role management, and activity tracking.
 """
 from datetime import datetime, timedelta, timezone
-from typing import Literal, Optional, List
+from typing import Optional, List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, HTTPException, Request, status
@@ -14,12 +14,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.schemas.response import ApiResponse
 from app.core.dependencies import get_current_super_admin, require_permission
+from app.core.firebase_auth import revoke_all_refresh_tokens
 from app.core.token_blacklist import InactiveUserFlag
 from app.models.user import User
 from app.models.rbac import Role
 from app.models.progress import DailyActivity, LessonCompletion, UserCourseProgress, Streak
 from app.services.admin_audit import record_admin_action
 from app.services.gem_limits import get_gem_limits, reserve_gems
+from app.services.role_guard import ensure_may_change_privileged_account
 from app.services.user_deletion_service import permanently_delete_user
 
 
@@ -94,9 +96,9 @@ _ROLE_SLUG_FOR_LEVEL = {0: "user", 1: "admin", 2: "super_admin"}
 
 
 class RoleUpdateRequest(BaseModel):
-    """Update user role: by `slug`, or by `level` for the three main roles."""
+    """Update user role: by `slug` (any role), or by `level` for the three main roles."""
     level: Optional[int] = Field(None, ge=0, le=2, description="0=user, 1=admin, 2=super_admin")
-    slug: Optional[Literal["user", "test", "admin", "super_admin"]] = None
+    slug: Optional[str] = Field(None, pattern=r"^[a-z][a-z0-9_]{1,49}$")
 
     @model_validator(mode="after")
     def _one_target(self) -> "RoleUpdateRequest":
@@ -334,19 +336,18 @@ async def get_user_detail(
     )
 
 
-def _assert_may_change_status(admin: User, user: User, is_active: bool) -> None:
-    """The one rule for both status routes; it matches what the bulk action skips."""
+async def _assert_may_change_status(
+    db: AsyncSession, admin: User, user: User, is_active: bool
+) -> None:
+    """The one rule for both status routes. Switching on is as much a change as off."""
     if user.id == admin.id:
         if not is_active:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Cannot deactivate your own account",
             )
-    elif user.role_level >= admin.role_level:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Cannot modify status of users with equal or higher role level",
-        )
+        return
+    await ensure_may_change_privileged_account(db, admin, user, revoking=not is_active)
 
 
 # ============================================================================
@@ -381,7 +382,7 @@ async def update_user(
         )
     
     if data.is_active is not None and data.is_active != user.is_active:
-        _assert_may_change_status(admin, user, data.is_active)
+        await _assert_may_change_status(db, admin, user, data.is_active)
 
     # Update fields
     changes = {}
@@ -392,6 +393,8 @@ async def update_user(
     if data.is_active is not None:
         changes["is_active"] = {"from": user.is_active, "to": data.is_active}
         user.is_active = data.is_active
+        if not data.is_active:
+            await revoke_all_refresh_tokens(db, user.id)
 
     if changes:
         _audit(db, admin, "update", user, changes, request)
@@ -485,7 +488,7 @@ async def update_user_role(
     ).scalar_one_or_none()
     if not new_role:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=422,
             detail=f"Role {data.role_slug} not found"
         )
 
@@ -496,12 +499,15 @@ async def update_user_role(
             detail="Cannot demote yourself"
         )
     
-    # A super admin may not rewrite another super admin (or anyone at their level)
-    if user.id != admin.id and user.role_level >= admin.role_level:
+    if not new_role.is_active:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Cannot modify a user with equal or higher role level"
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Role {new_role.slug} is not active"
         )
+
+    await ensure_may_change_privileged_account(
+        db, admin, user, revoking=new_role.level < user.role_level
+    )
 
     old_role = user.role_slug
     user.role_id = new_role.id
@@ -547,9 +553,12 @@ async def update_user_status(
             detail="User not found"
         )
     
-    _assert_may_change_status(admin, user, data.is_active)
+    await _assert_may_change_status(db, admin, user, data.is_active)
 
     user.is_active = data.is_active
+    if not data.is_active:
+        # Otherwise switching the account back on would revive every old session.
+        await revoke_all_refresh_tokens(db, user.id)
     _audit(
         db,
         admin,
@@ -811,6 +820,10 @@ async def bulk_user_action(
             detail=f"Unknown action: {data.action}"
         )
     
+    if data.action in ("deactivate", "delete"):
+        for user in actionable_users:
+            await revoke_all_refresh_tokens(db, user.id)
+
     record_admin_action(
         db, admin, f"bulk_{data.action}", "user", None,
         {

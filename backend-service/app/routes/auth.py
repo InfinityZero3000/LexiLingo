@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 
 import anyio
-from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request, Response, status
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
@@ -22,17 +22,23 @@ from app.core.config import settings
 from app.core.dependencies import get_current_user
 from app.core.firebase_auth import revoke_all_refresh_tokens as _revoke_all_refresh_tokens
 from app.core import login_lockout
+from app.core.session_cookie import (
+    COOKIE_NAME,
+    clear_refresh_cookie,
+    require_admin_web_origin,
+    set_refresh_cookie,
+)
 from app.core.redis import RedisClient
 from app.core.security import (
     get_password_hash,
     get_password_hash_async,
-    create_access_token,
+    create_user_access_token,
     decode_token,
     verify_password_async,
 )
-from app.core.token_blacklist import TokenBlacklist
+from app.core.token_blacklist import SessionCut, TokenBlacklist
 from app.services.admin_audit import record_admin_action
-from app.services.starter_reward_service import StarterRewardService
+from app.services.user_lookup import find_user_by_email
 from app.models.user import User, RefreshToken
 from app.services.cefr_level_service import level_verified
 from app.services.rank_service import rank_proficiency_level
@@ -44,8 +50,6 @@ from app.services.auth_service import (
     refresh_lifetime_days,
     find_refresh_token,
     revoke_refresh_family,
-    get_role_id as _get_role_id,
-    ensure_unique_username as _ensure_unique_username,
     issue_token_pair,
 )
 from app.schemas.auth import (
@@ -206,7 +210,7 @@ async def register(
     request: RegisterRequest,
     db: AsyncSession = Depends(get_db),
 ):
-    if (await db.execute(select(User).where(User.email == request.email))).scalar_one_or_none():
+    if await find_user_by_email(db, request.email):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
     if (await db.execute(select(User).where(User.username == request.username))).scalar_one_or_none():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already taken")
@@ -235,8 +239,7 @@ async def resend_verification_email(
 ):
     """Resend email verification link."""
     can_send = await _claim_verification_resend_cooldown(body.email)
-    result = await db.execute(select(User).where(User.email == body.email))
-    user = result.scalar_one_or_none()
+    user = await find_user_by_email(db, body.email)
     # Always return 200 to avoid email enumeration
     if can_send and user and not user.is_verified:
         try:
@@ -280,6 +283,7 @@ async def login(
     username = user.username
     email = user.email
     role = user.role_slug if hasattr(user, "role_slug") else "user"
+    hashed_password = user.hashed_password
 
     try:
         user.last_login = datetime.now(timezone.utc)
@@ -287,7 +291,7 @@ async def login(
     except Exception:
         await db.rollback()
 
-    access_token, refresh_token = await issue_token_pair(db, uuid.UUID(user_id))
+    access_token, refresh_token = await issue_token_pair(db, uuid.UUID(user_id), hashed_password)
 
     return LoginResponse(
         access_token=access_token,
@@ -303,15 +307,28 @@ async def login(
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_token(
     request: RefreshTokenRequest,
+    http_request: Request,
+    response: Response,
     db: AsyncSession = Depends(get_db)
 ):
     """
     Refresh access token using refresh token.
     """
     from app.core.security import decode_token
-    
+
+    presented = request.refresh_token
+    if request.session == "cookie":
+        require_admin_web_origin(http_request)
+        # A token in the body wins: that is a session moving from the old storage.
+        presented = presented or http_request.cookies.get(COOKIE_NAME)
+    if not presented:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token"
+        )
+
     # Decode refresh token
-    payload = decode_token(request.refresh_token)
+    payload = decode_token(presented)
     if not payload:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -326,7 +343,7 @@ async def refresh_token(
             detail="Invalid token type - expected refresh token"
         )
     
-    db_token = await find_refresh_token(db, request.refresh_token, for_update=True)
+    db_token = await find_refresh_token(db, presented, for_update=True)
 
     if not db_token:
         raise HTTPException(
@@ -410,10 +427,17 @@ async def refresh_token(
         db_token.rotated_at = now
     
     # Create new tokens
-    access_token = create_access_token({"sub": str(user.id)})
-    new_refresh_token = await issue_refresh_token(db, user.id, db_token.family_id, commit=False)
+    auth_time = payload.get("auth_time")
+    access_token = create_user_access_token(user.id, user.hashed_password, auth_time=auth_time)
+    new_refresh_token = await issue_refresh_token(
+        db, user.id, db_token.family_id, commit=False, auth_time=auth_time
+    )
     await db.commit()
-    
+
+    if request.session == "cookie":
+        set_refresh_cookie(response, new_refresh_token, window_days)
+        new_refresh_token = ""
+
     return TokenResponse(
         access_token=access_token,
         refresh_token=new_refresh_token,
@@ -437,15 +461,23 @@ async def get_current_user_via_auth(
 @router.post("/logout", response_model=MessageResponse)
 async def logout(
     request: LogoutRequest,
+    http_request: Request,
+    response: Response,
     db: AsyncSession = Depends(get_db),
     authorization: str | None = Header(default=None),
 ):
     """
     Logout user.
     """
-    if request.refresh_token:
+    presented = request.refresh_token
+    if request.session == "cookie":
+        require_admin_web_origin(http_request)
+        presented = presented or http_request.cookies.get(COOKIE_NAME)
+        clear_refresh_cookie(response)
+
+    if presented:
         # FIX: Revoke token in DB
-        db_token = await find_refresh_token(db, request.refresh_token)
+        db_token = await find_refresh_token(db, presented)
         if db_token:
             await revoke_refresh_family(db, db_token)
             await db.commit()
@@ -476,6 +508,7 @@ async def logout(
 async def google_login(
     request: GoogleLoginRequest,
     http_request: Request,
+    response: Response,
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -486,9 +519,13 @@ async def google_login(
     - Returns JWT tokens
     """
     from app.core.security import verify_google_token
-    from app.core.firebase_auth import verify_firebase_token, drop_unproven_credentials
+    from app.core.firebase_auth import verify_firebase_token, get_or_create_user_from_claims
     from app.core.config import settings
-    
+
+    use_cookie = request.session == "cookie" and request.source == "admin"
+    if use_cookie:
+        require_admin_web_origin(http_request)
+
     # Select the correct Client ID based on source
     if request.source == "admin":
         audience = settings.GOOGLE_ADMIN_CLIENT_ID
@@ -545,112 +582,54 @@ async def google_login(
             detail="Email not provided by Google"
         )
 
-    allowlisted_admin_role = settings.get_admin_role_for_email(email)
-    email_verified = bool(google_info.get("email_verified", False))
-    
-    # Check if user exists
-    result = await db.execute(
-        select(User).where(User.email == email)
-    )
-    user = result.scalar_one_or_none()
-    
-    if not user:
-        if request.source == "admin" and not allowlisted_admin_role:
+    email_verified = google_info.get("email_verified") in (True, "true")
+
+    if request.source == "admin" and not await find_user_by_email(db, email):
+        if not (email_verified and settings.get_admin_role_for_email(email)):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Email is not allowlisted for admin access."
             )
 
-        username = await _ensure_unique_username(db, email.split("@")[0])
-        role_slug = allowlisted_admin_role or "user"
-        role_id = await _get_role_id(db, role_slug)
-        
-        user = User(
-            email=email,
-            username=username,
-            hashed_password=await get_password_hash_async(uuid.uuid4().hex),
-            display_name=google_info.get("name", username),
-            avatar_url=google_info.get("picture"),
-            provider=["google"],  # OAuth-created accounts never have local auth by default
-            is_verified=email_verified,
-            role_id=role_id,
-            is_onboarding_completed=False,
-        )
-        db.add(user)
-        await db.flush()
-        if role_slug == "user":
-            await StarterRewardService.grant_new_user_reward(db, user.id)
-        await db.commit()
-        await db.refresh(user)
-    elif not user.has_google_auth:
-        # "google" is NOT yet in this user's providers list
-        is_admin_link = request.source == "admin" and allowlisted_admin_role
-        # Google has verified this email, and it matches an existing local account —
-        # let Google vouch for the email instead of leaving the user locked out
-        # behind an unclicked verification link.
-        has_facebook = "facebook" in (user.provider or [])
-        can_verify_local_account = (user.has_local_auth or has_facebook) and email_verified
+    # Account matching is the same rule as for every other social sign-in.
+    claims = {
+        "email": email,
+        "email_verified": email_verified,
+        "name": google_info.get("name") or email.split("@")[0],
+        "picture": google_info.get("picture"),
+        "firebase": {"sign_in_provider": "google.com"},
+    }
+    try:
+        user = await get_or_create_user_from_claims(db, claims)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
 
-        if not is_admin_link and not can_verify_local_account:
-            if not user.has_local_auth:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Email already registered with a different login method."
-                )
-            # Local account exists but Google hasn't verified this email either —
-            # an unverified claim can't be trusted to unlock it.
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already registered. Please login with your existing method."
-            )
-
-        # Admin-allowlisted link, or Google vouching for a local account's email →
-        # link google to this account.
-        if email_verified and not user.is_verified:
-            # Whoever registered this address never proved they own it, and unverified
-            # accounts can now sign in. The real owner just proved it through Google,
-            # so the password, Facebook link and sessions the registrant holds must not survive.
-            await drop_unproven_credentials(user)
-            await _revoke_all_refresh_tokens(db, user.id)
-        user.add_provider("google")
-        user.is_verified = email_verified or user.is_verified
-        user.avatar_url = google_info.get("picture") or user.avatar_url
-
-    if request.source == "admin" and allowlisted_admin_role:
-        target_role_id = await _get_role_id(db, allowlisted_admin_role)
-        if target_role_id and user.role_id != target_role_id:
-            user.role_id = target_role_id
-    
-    # For admin source, verify user has admin or super_admin role
     if request.source == "admin":
-        await db.commit()
-
-        # Load user with role relationship to get role_slug
         await db.refresh(user, ["role"])
-        user_role = user.role.slug if user.role else None
-        
-        if user_role not in ["admin", "super_admin"]:
+        if user.role_level < 1 or not user.is_verified:
             await _audit_admin_login(db, http_request, "denied", user, via="google")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied. Admin privileges required."
             )
-    
+
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User account is inactive"
         )
-    
+
     # Update last login
     user.last_login = datetime.now(timezone.utc)
     if request.source == "admin":
         await _audit_admin_login(db, http_request, "ok", user, via="google")
     await db.commit()
-    
+
     # Create tokens
-    access_token = create_access_token({"sub": str(user.id)})
-    refresh_token = await issue_refresh_token(db, user.id)
+    access_token, refresh_token = await issue_token_pair(db, user.id, user.hashed_password)
+    if use_cookie:
+        set_refresh_cookie(response, refresh_token, await refresh_lifetime_days(db, user.id))
+        refresh_token = ""
     
     return LoginResponse(
         access_token=access_token,
@@ -666,6 +645,7 @@ async def google_login(
 @router.post("/facebook", response_model=LoginResponse)
 async def facebook_login(
     request: FacebookLoginRequest,
+    http_request: Request,
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -714,8 +694,8 @@ async def facebook_login(
     # For admin source verify the role (as done in Google logic)
     if request.source == "admin":
         await db.refresh(user, ["role"])
-        user_role = user.role.slug if user.role else None
-        if user_role not in ["admin", "super_admin"]:
+        if user.role_level < 1 or not user.is_verified:
+            await _audit_admin_login(db, http_request, "denied", user, via="facebook")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied. Admin privileges required."
@@ -729,11 +709,12 @@ async def facebook_login(
     
     # Update last login
     user.last_login = datetime.now(timezone.utc)
+    if request.source == "admin":
+        await _audit_admin_login(db, http_request, "ok", user, via="facebook")
     await db.commit()
     
     # Create tokens
-    access_token = create_access_token({"sub": str(user.id)})
-    refresh_token = await issue_refresh_token(db, user.id)
+    access_token, refresh_token = await issue_token_pair(db, user.id, user.hashed_password)
     
     return LoginResponse(
         access_token=access_token,
@@ -777,6 +758,7 @@ async def change_password(
     current_user.updated_at = datetime.now(timezone.utc)
     await _revoke_all_refresh_tokens(db, current_user.id)
     await db.commit()
+    await SessionCut.publish(current_user.id)
     background_tasks.add_task(
         EmailService.send_password_changed_email,
         to_email=current_user.email,
@@ -801,11 +783,7 @@ async def forgot_password(
     """
     from app.core.security import create_verification_token
 
-    # Find user by email
-    result = await db.execute(
-        select(User).where(User.email == request.email)
-    )
-    user = result.scalar_one_or_none()
+    user = await find_user_by_email(db, request.email)
     
     # Always return success to prevent email enumeration
     if not user:
@@ -879,11 +857,19 @@ async def reset_password(
     if payload.get("pfp") != password_fingerprint(user.hashed_password):
         raise invalid
 
+    # Opening the emailed link proves the inbox, so the account is verified. Without this
+    # the next Google sign-in would treat the new password as unproven and drop it.
+    if not user.is_verified:
+        from app.core.firebase_auth import drop_unproven_credentials
+        await drop_unproven_credentials(user)
+        user.is_verified = True
+
     # Update password
     user.hashed_password = await get_password_hash_async(request.new_password)
     user.updated_at = datetime.now(timezone.utc)
     await _revoke_all_refresh_tokens(db, user.id)
     await db.commit()
+    await SessionCut.publish(user.id)
     background_tasks.add_task(
         EmailService.send_password_changed_email,
         to_email=user.email,
@@ -948,7 +934,7 @@ async def verify_email(
     # transition: the "already verified" branch above returns no session, so a link is a
     # one-time login.
     user_id = str(user.id)
-    access_token, refresh_token = await issue_token_pair(db, user.id)
+    access_token, refresh_token = await issue_token_pair(db, user.id, user.hashed_password)
 
     return VerifyEmailResponse(
         verified=True,
@@ -967,7 +953,12 @@ async def verify_email(
 # Admin password login
 # ============================================================================
 
-@router.post("/admin/login")
+def _require_admin_code_login() -> None:
+    if not settings.ADMIN_CODE_LOGIN_ENABLED:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")
+
+
+@router.post("/admin/login", dependencies=[Depends(_require_admin_code_login)])
 async def admin_login(
     body: dict,
     http_request: Request,
@@ -985,8 +976,7 @@ async def admin_login(
 
     await login_lockout.ensure_not_locked(email)
 
-    result = await db.execute(select(User).where(User.email == email))
-    user = result.scalar_one_or_none()
+    user = await find_user_by_email(db, email)
 
     hash_to_check = user.hashed_password if (user and user.hashed_password) else _DUMMY_HASH
     password_ok = await verify_password_async(password, hash_to_check)
@@ -1015,7 +1005,6 @@ async def admin_login(
         await _audit_admin_login(db, http_request, "denied", user)
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required")
 
-    user_id = str(user.id)
     user.last_login = datetime.now(timezone.utc)
     record_admin_action(
         db, user, "login", "auth", user.id, {"email": user.email, "via": "password"}, http_request
@@ -1025,8 +1014,7 @@ async def admin_login(
     except Exception:
         await db.rollback()
 
-    access_token = create_access_token({"sub": user_id})
-    refresh_token_val = await issue_refresh_token(db, user.id)
+    access_token, refresh_token_val = await issue_token_pair(db, user.id, user.hashed_password)
 
     user_data = _build_user_response(user)
 
@@ -1159,7 +1147,7 @@ async def _consume_admin_otp(email: str, otp: str, redis=None) -> bool:
         return True
 
 
-@router.post("/admin/request-otp")
+@router.post("/admin/request-otp", dependencies=[Depends(_require_admin_code_login)])
 async def admin_request_otp(
     body: dict,
     db: AsyncSession = Depends(get_db),
@@ -1175,10 +1163,7 @@ async def admin_request_otp(
     if not await _claim_admin_otp_cooldown(email, otp_redis):
         return {"success": True, "message": "If this email belongs to an admin, an OTP has been sent."}
 
-    result = await db.execute(
-        select(User).where(User.email == email)
-    )
-    user = result.scalar_one_or_none()
+    user = await find_user_by_email(db, email)
 
     # Respond the same way whether the user exists or not (anti-enumeration)
     if user and user.is_active and user.is_verified and getattr(user, "role_level", 0) >= 1:
@@ -1190,7 +1175,7 @@ async def admin_request_otp(
             await run_in_threadpool(
                 EmailService._send_message_blocking,
                 EmailService._build_otp_message(
-                    to_email=email,
+                    to_email=user.email,
                     otp=otp,
                     display_name=user.display_name or user.username or email,
                 ),
@@ -1201,9 +1186,10 @@ async def admin_request_otp(
     return {"success": True, "message": "If this email belongs to an admin, an OTP has been sent."}
 
 
-@router.post("/admin/verify-otp")
+@router.post("/admin/verify-otp", dependencies=[Depends(_require_admin_code_login)])
 async def admin_verify_otp(
     body: dict,
+    http_request: Request,
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -1216,25 +1202,19 @@ async def admin_verify_otp(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email and OTP are required")
 
     if not await _consume_admin_otp(email, otp):
+        await _audit_admin_login(db, http_request, "failed", None, email=email, via="otp")
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired OTP")
 
-    result = await db.execute(
-        select(User).where(User.email == email)
-    )
-    user = result.scalar_one_or_none()
+    user = await find_user_by_email(db, email)
 
     if not user or not user.is_active or not user.is_verified or getattr(user, "role_level", 0) < 1:
+        await _audit_admin_login(db, http_request, "denied", user, email=email, via="otp")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Insufficient permissions")
 
-    user_id = str(user.id)
     user.last_login = datetime.now(timezone.utc)
-    try:
-        await db.commit()
-    except Exception:
-        await db.rollback()
+    await _audit_admin_login(db, http_request, "ok", user, via="otp")
 
-    access_token = create_access_token({"sub": user_id})
-    refresh_token_val = await issue_refresh_token(db, user.id)
+    access_token, refresh_token_val = await issue_token_pair(db, user.id, user.hashed_password)
 
     user_data = _build_user_response(user)
 

@@ -201,9 +201,11 @@ export async function permanentlyDeleteUser(userId: string): Promise<{ message: 
   return response.data;
 }
 
-export type RoleSlug = 'user' | 'test' | 'admin' | 'super_admin';
+export type BuiltInRoleSlug = 'user' | 'test' | 'admin' | 'super_admin';
+/** A built-in role, or the slug of a custom one. */
+export type RoleSlug = BuiltInRoleSlug | (string & {});
 
-export const ROLE_LABELS: Record<RoleSlug, string> = {
+export const ROLE_LABELS: Record<BuiltInRoleSlug, string> = {
   user: 'User',
   test: 'Test',
   admin: 'Admin',
@@ -211,7 +213,7 @@ export const ROLE_LABELS: Record<RoleSlug, string> = {
 };
 
 export function getRoleLabel(roleSlug: string): string {
-  return ROLE_LABELS[roleSlug as RoleSlug] ?? roleSlug;
+  return ROLE_LABELS[roleSlug as BuiltInRoleSlug] ?? roleSlug;
 }
 
 // ============================================================================

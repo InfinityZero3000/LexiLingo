@@ -18,8 +18,8 @@ vi.mock("../../lib/userManagementApi", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../../lib/userManagementApi")>()),
   ...api,
 }));
-const { getMyPermissions } = vi.hoisted(() => ({ getMyPermissions: vi.fn() }));
-vi.mock("../../lib/rbacApi", () => ({ getMyPermissions }));
+const { getMyPermissions, getRoles } = vi.hoisted(() => ({ getMyPermissions: vi.fn(), getRoles: vi.fn() }));
+vi.mock("../../lib/rbacApi", () => ({ getMyPermissions, getRoles }));
 vi.mock("../../lib/gemLimitsApi", () => ({
   getGemLimits: vi.fn().mockResolvedValue({
     usage: { role: "admin", max_per_action: 500, daily_budget: 2000, spent_today: 150, remaining_today: 1850, item_gift_max_qty: 100 },
@@ -66,6 +66,8 @@ beforeEach(() => {
   ]);
   getMyPermissions.mockReset();
   getMyPermissions.mockResolvedValue({ all: false, permissions: ["gifts:grant"] });
+  getRoles.mockReset();
+  getRoles.mockResolvedValue([]);
   vi.stubGlobal("localStorage", {
     getItem: (k: string) => store.get(k) ?? null,
     setItem: (k: string, v: string) => void store.set(k, v),
@@ -133,6 +135,32 @@ describe("UserDetailModal", () => {
     const dialog = await screen.findByText("Change this user's role to Test?");
     fireEvent.click(within(dialog.closest('[role="dialog"]') as HTMLElement).getByRole("button", { name: "Change role" }));
     await waitFor(() => expect(api.updateUserRole.mock.calls[0].slice(0, 2)).toEqual(["u1", { slug: "test" }]));
+  });
+
+  const customRole = (slug: string, name: string, is_active = true) => ({
+    id: slug, slug, name, description: "", level: 1, is_system: false, is_active, created_at: "",
+  });
+
+  it("offers active custom roles and assigns one by its slug", async () => {
+    getRoles.mockResolvedValue([customRole("editor", "Course Editor"), customRole("retired", "Retired", false)]);
+    api.updateUserRole.mockResolvedValue({});
+    mount();
+    await screen.findByText("Personal info");
+    fireEvent.click(await screen.findByRole("button", { name: "Course Editor" }));
+    expect(screen.queryByRole("button", { name: "Retired" })).toBeNull();
+    const dialog = await screen.findByText("Change this user's role to Course Editor?");
+    fireEvent.click(within(dialog.closest('[role="dialog"]') as HTMLElement).getByRole("button", { name: "Change role" }));
+    await waitFor(() => expect(api.updateUserRole.mock.calls[0].slice(0, 2)).toEqual(["u1", { slug: "editor" }]));
+  });
+
+  it("says why the server refused a role change", async () => {
+    api.updateUserRole.mockRejectedValue(new Error("Changing another super admin needs a recent sign-in"));
+    mount();
+    await screen.findByText("Personal info");
+    fireEvent.click(screen.getByRole("button", { name: "Admin" }));
+    const dialog = await screen.findByText("Change this user's role to Admin?");
+    fireEvent.click(within(dialog.closest('[role="dialog"]') as HTMLElement).getByRole("button", { name: "Change role" }));
+    expect(await screen.findByText(/needs a recent sign-in/)).toBeTruthy();
   });
 
   it("hides gifting without a backend grant", async () => {

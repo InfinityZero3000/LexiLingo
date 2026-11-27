@@ -19,6 +19,8 @@ import 'package:lexilingo_app/features/user/presentation/pages/legal_page.dart';
 import 'package:lexilingo_app/features/user/presentation/providers/settings_provider.dart';
 import 'package:lexilingo_app/features/user/presentation/widgets/nurture_emails_switch.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/core/network/response_models.dart';
+import 'package:lexilingo_app/core/widgets/confirm_dialog.dart';
 
 /// Settings page for user preferences
 class SettingsPage extends StatefulWidget {
@@ -1429,7 +1431,17 @@ class _SettingsPageState extends State<SettingsPage> {
       if (context.mounted) {
         Navigator.of(context).popUntil((route) => route.isFirst);
       }
-    } catch (_) {
+    } catch (e) {
+      if (context.mounted && needsRecentSignIn(e)) {
+        final signOutNow = await showConfirm(
+          context,
+          title: 'settings.delete_account_reauth_title'.tr(),
+          message: 'settings.delete_account_reauth_message'.tr(),
+          confirmLabel: 'settings.sign_out'.tr(),
+        );
+        if (signOutNow && context.mounted) await _signOutNow(context);
+        return;
+      }
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('settings.delete_account_error'.tr())),
@@ -1469,7 +1481,12 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     );
 
-    if (confirmed != true || !context.mounted || _signingOut) return;
+    if (confirmed != true || !context.mounted) return;
+    await _signOutNow(context);
+  }
+
+  Future<void> _signOutNow(BuildContext context) async {
+    if (_signingOut) return;
     final auth = context.read<AuthProvider>();
     final navigator = Navigator.of(context);
     final messenger = ScaffoldMessenger.of(context);
@@ -1492,6 +1509,12 @@ class _SettingsPageState extends State<SettingsPage> {
     }
   }
 }
+
+/// The server deletes an account only for a session that signed in moments ago.
+@visibleForTesting
+bool needsRecentSignIn(Object error) =>
+    error is ApiErrorException &&
+    error.details?['reason'] == 'recent_sign_in_required';
 
 /// Deliberate sign-out, in the order that has no race.
 ///

@@ -13,6 +13,7 @@ class UserModel extends UserEntity {
     super.isVerified,
     super.isOnboardingCompleted,
     super.roleSlug,
+    super.roleLevel,
     super.cefrLevel,
     super.certifiedLevel,
     super.levelVerified,
@@ -73,6 +74,7 @@ class UserModel extends UserEntity {
           _optionalString(json['role_slug']) ??
           _optionalString(json['role']) ??
           'user',
+      roleLevel: json['role_level'] as int? ?? 0,
       cefrLevel: _optionalString(json['cefr_level']) ?? 'A1',
       certifiedLevel: _optionalString(json['certified_level']) ?? 'A1',
       levelVerified: json['level_verified'] as bool? ?? true,
@@ -110,6 +112,7 @@ class UserModel extends UserEntity {
       'is_verified': isVerified,
       'is_onboarding_completed': isOnboardingCompleted,
       'role_slug': roleSlug,
+      'role_level': roleLevel,
       'cefr_level': cefrLevel,
       'level': cefrLevel,
       'certified_level': certifiedLevel,
@@ -139,6 +142,7 @@ class UserModel extends UserEntity {
       isVerified: entity.isVerified,
       isOnboardingCompleted: entity.isOnboardingCompleted,
       roleSlug: entity.roleSlug,
+      roleLevel: entity.roleLevel,
       cefrLevel: entity.cefrLevel,
       certifiedLevel: entity.certifiedLevel,
       levelVerified: entity.levelVerified,

@@ -112,7 +112,10 @@ async def test_email_case_does_not_dodge_the_lock(async_client, test_user):
 
 
 @pytest.mark.asyncio
-async def test_admin_login_shares_the_protection(async_client, admin_user):
+async def test_admin_login_shares_the_protection(async_client, admin_user, monkeypatch):
+    from app.core.config import settings
+
+    monkeypatch.setattr(settings, "ADMIN_CODE_LOGIN_ENABLED", True)
     for _ in range(login_lockout.MAX_FAILURES - 1):
         assert (await _fail(async_client, 1, "admin@example.com", "/admin/login")).status_code == 401
     locked = await _fail(async_client, 1, "admin@example.com", "/admin/login")

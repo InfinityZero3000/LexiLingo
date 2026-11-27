@@ -188,5 +188,27 @@ void main() {
       expect(superAdmin.canAccessAdminPanel, true);
       expect(regularUser.canAccessAdminPanel, false);
     });
+
+    test('a custom admin-level role keeps panel access through a cache', () {
+      final editor = UserModel.fromJson({
+        ...testJson,
+        'role_slug': 'editor',
+        'role_level': 1,
+      });
+      final cached = UserModel.fromJson(
+        UserModel.fromEntity(editor.copyWith()).toJson(),
+      );
+
+      expect(editor.canAccessAdminPanel, true);
+      expect(cached.canAccessAdminPanel, true);
+      expect(
+        UserModel.fromJson({
+          ...testJson,
+          'role_slug': 'test',
+          'role_level': 0,
+        }).canAccessAdminPanel,
+        false,
+      );
+    });
   });
 }

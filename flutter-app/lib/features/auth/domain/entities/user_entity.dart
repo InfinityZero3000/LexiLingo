@@ -9,7 +9,10 @@ class UserEntity {
   final String provider; // 'local', 'google', 'facebook'
   final bool isVerified;
   final bool isOnboardingCompleted;
-  final String roleSlug; // 'user', 'admin', 'super_admin'
+  final String roleSlug; // 'user', 'admin', 'super_admin' or a custom role
+
+  /// 0 learner, 1 admin (custom roles included), 2 super admin.
+  final int roleLevel;
   final String cefrLevel; // CEFR level: A1, A2, B1, B2, C1, C2
 
   /// What a test confirmed; rank reads it. [cefrLevel] is the working level
@@ -44,6 +47,7 @@ class UserEntity {
     this.isVerified = false,
     this.isOnboardingCompleted = false,
     this.roleSlug = 'user',
+    this.roleLevel = 0,
     this.cefrLevel = 'A1',
     this.certifiedLevel = 'A1',
     this.levelVerified = true,
@@ -69,6 +73,7 @@ class UserEntity {
     bool? isVerified,
     bool? isOnboardingCompleted,
     String? roleSlug,
+    int? roleLevel,
     String? cefrLevel,
     String? certifiedLevel,
     bool? levelVerified,
@@ -94,6 +99,7 @@ class UserEntity {
       isOnboardingCompleted:
           isOnboardingCompleted ?? this.isOnboardingCompleted,
       roleSlug: roleSlug ?? this.roleSlug,
+      roleLevel: roleLevel ?? this.roleLevel,
       cefrLevel: cefrLevel ?? this.cefrLevel,
       certifiedLevel: certifiedLevel ?? this.certifiedLevel,
       levelVerified: levelVerified ?? this.levelVerified,
@@ -115,6 +121,8 @@ class UserEntity {
       lexiReplyLanguage == lexiReplyNative ? nativeLanguage : appLanguage;
 
   bool get canAccessAdminPanel {
+    if (roleLevel >= 1) return true;
+    // Responses and cached profiles without a level still name the built-ins.
     final normalizedRole = roleSlug.trim().toLowerCase();
     return normalizedRole == 'admin' || normalizedRole == 'super_admin';
   }

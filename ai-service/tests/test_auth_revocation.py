@@ -27,9 +27,9 @@ def _pinned_env(monkeypatch):
     monkeypatch.setattr(auth_revocation, "_last_failure_log", 0.0)
 
 
-def _token(sub: str = "user-123") -> str:
+def _token(sub: str = "user-123", **claims) -> str:
     return jwt.encode(
-        {"sub": sub, "type": "access", "iss": "lexilingo-backend", "aud": "lexilingo-services"},
+        {"sub": sub, "type": "access", "iss": "lexilingo-backend", "aud": "lexilingo-services", **claims},
         SECRET,
         algorithm="HS256",
     )
@@ -49,7 +49,7 @@ def _fake_redis(results):
 
 @pytest.mark.asyncio
 async def test_clean_token_is_accepted():
-    client, pipe = _fake_redis([0, 0])
+    client, pipe = _fake_redis([0, 0, None])
     with patch.object(auth_revocation, "_get_client", autospec=True, return_value=client):
         user = await get_current_user(credentials=_creds(_token()))
     assert user.user_id == "user-123"
@@ -59,7 +59,7 @@ async def test_clean_token_is_accepted():
 
 @pytest.mark.asyncio
 async def test_blacklisted_token_is_401():
-    client, _ = _fake_redis([1, 0])
+    client, _ = _fake_redis([1, 0, None])
     with patch.object(auth_revocation, "_get_client", autospec=True, return_value=client):
         with pytest.raises(HTTPException) as exc:
             await get_current_user(credentials=_creds(_token()))
@@ -68,11 +68,31 @@ async def test_blacklisted_token_is_401():
 
 @pytest.mark.asyncio
 async def test_inactive_user_is_401():
-    client, _ = _fake_redis([0, 1])
+    client, _ = _fake_redis([0, 1, None])
     with patch.object(auth_revocation, "_get_client", autospec=True, return_value=client):
         with pytest.raises(HTTPException) as exc:
             await get_current_user(credentials=_creds(_token()))
     assert exc.value.status_code == 401
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("claims", [{"iat": 999}, {}])
+async def test_token_issued_before_a_session_cut_is_401(claims):
+    client, pipe = _fake_redis([0, 0, "1000"])
+    with patch.object(auth_revocation, "_get_client", autospec=True, return_value=client):
+        with pytest.raises(HTTPException) as exc:
+            await get_current_user(credentials=_creds(_token(**claims)))
+    assert exc.value.status_code == 401
+    pipe.get.assert_called_once_with("user:sessions-cut:user-123")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("issued_at", [1000, 1001])
+async def test_token_issued_after_a_session_cut_is_accepted(issued_at):
+    client, _ = _fake_redis([0, 0, "1000"])
+    with patch.object(auth_revocation, "_get_client", autospec=True, return_value=client):
+        user = await get_current_user(credentials=_creds(_token(iat=issued_at)))
+    assert user.user_id == "user-123"
 
 
 @pytest.mark.asyncio

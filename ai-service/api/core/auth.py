@@ -112,7 +112,7 @@ async def get_current_user(
             detail="Invalid or expired authentication token",
         )
 
-    reason = await revocation_reason(token, str(payload.get("sub")))
+    reason = await revocation_reason(token, str(payload.get("sub")), payload.get("iat"))
     if reason:
         logger.info("Rejected %s token for user %s", reason, payload.get("sub"))
         raise HTTPException(

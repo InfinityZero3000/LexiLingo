@@ -16,9 +16,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.security import get_password_hash_async
+from app.core.token_blacklist import SessionCut
 from app.models.rbac import Role
 from app.models.user import RefreshToken, User
+from app.services.role_guard import allowlisted_role_for_sign_in
 from app.services.starter_reward_service import StarterRewardService
+from app.services.user_lookup import find_user_by_email, normalize_email
 
 logger = logging.getLogger(__name__)
 
@@ -116,31 +119,38 @@ async def get_or_create_user_from_claims(db: AsyncSession, claims: Dict[str, Any
     provider_tag = _PROVIDER_TAGS.get(sign_in_provider)
     if provider_tag is None:
         raise ValueError("This sign-in method is not supported.")
-    allowlisted_role = settings.get_admin_role_for_email(email) if is_verified else None
+    user = await find_user_by_email(db, email)
 
-    result = await db.execute(select(User).where(User.email == email))
-    user = result.scalar_one_or_none()
+    # An unverified email is flagged, not refused: it may open a new account (is_verified
+    # stays False) and come back to it. It never walks into an account made another way:
+    # the flag only limits a few actions, while signing in hands over the whole account.
+    if not is_verified and user is not None:
+        # Facebook never reports a verified email, so its holder must still get back in
+        # after verifying. Other providers can, so once someone has proven the address,
+        # an unproven claim no longer opens it.
+        returning = provider_tag in (user.provider or []) and (
+            provider_tag == "facebook" or not user.is_verified
+        )
+        if not returning:
+            raise ValueError("Email already registered. Please login with your existing method.")
 
-    # Firebase never marks a Facebook email verified. Such a claim may open its own
-    # account and come back to it, but never walk into one made another way.
-    if not is_verified and (
-        provider_tag != "facebook" or (user and "facebook" not in (user.provider or []))
-    ):
-        raise ValueError("Email already registered. Please login with your existing method."
-                         if user else "Email is not verified.")
+    allowlisted_role = await allowlisted_role_for_sign_in(
+        db, email, email_verified=is_verified, is_new_account=user is None
+    )
 
     if user:
         updated = False
+        sessions_cut = False
 
         if is_verified and not user.is_verified:
             await drop_unproven_credentials(user)
             await revoke_all_refresh_tokens(db, user.id)
             user.is_verified = True
-            updated = True
+            updated = sessions_cut = True
         if provider_tag not in (user.provider or []):
             user.add_provider(provider_tag)
             updated = True
-        if avatar_url and user.avatar_url != avatar_url:
+        if avatar_url and not user.avatar_url:
             user.avatar_url = avatar_url
             updated = True
         if allowlisted_role:
@@ -152,6 +162,8 @@ async def get_or_create_user_from_claims(db: AsyncSession, claims: Dict[str, Any
         if updated:
             await db.commit()
             await db.refresh(user)
+        if sessions_cut:
+            await SessionCut.publish(user.id)
         return user
 
     username_base = (email.split("@", 1)[0]) if "@" in email else (uid or "user")
@@ -160,7 +172,7 @@ async def get_or_create_user_from_claims(db: AsyncSession, claims: Dict[str, Any
     role_id = await _get_role_id(db, role_slug)
 
     user = User(
-        email=email,
+        email=normalize_email(email),
         username=generated_username,
         hashed_password=await get_password_hash_async(uuid.uuid4().hex),
         display_name=display_name,

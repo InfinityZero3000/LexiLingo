@@ -1016,7 +1016,9 @@
     "delete_account": "Eliminar cuenta",
     "delete_account_confirm": "Esto elimina de forma permanente tu cuenta y todos tus datos de aprendizaje. No se puede deshacer.",
     "delete_account_confirm_btn": "Eliminar definitivamente",
-    "delete_account_error": "No se pudo eliminar la cuenta. Inténtalo de nuevo."
+    "delete_account_error": "No se pudo eliminar la cuenta. Inténtalo de nuevo.",
+    "delete_account_reauth_title": "Vuelve a iniciar sesión para continuar",
+    "delete_account_reauth_message": "Por tu seguridad, una cuenta solo se puede eliminar justo después de iniciar sesión. Cierra sesión, vuelve a iniciarla y elimina tu cuenta."
   },
   "notifications": {
     "pageTitle": "Notificaciones",

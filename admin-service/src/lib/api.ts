@@ -1,5 +1,6 @@
 import { authStore } from "./auth";
 import { ENV } from "./env";
+import { credentialsFor, sessionTransport } from "./sessionTransport";
 
 export type ApiResponse<T> = {
   success: boolean;
@@ -118,9 +119,12 @@ async function fetchWithFallback(
 // ─────────────────────────────────────────────────────────────────────────────
 // Refresh token (cũng có fallback)
 // ─────────────────────────────────────────────────────────────────────────────
+const canRefresh = (): boolean => Boolean(authStore.refreshToken) || Boolean(authStore.cookieSession);
+
 async function tryRefreshToken(): Promise<boolean> {
   const refreshToken = authStore.refreshToken;
-  if (!refreshToken) return false;
+  const accessBefore = authStore.accessToken;
+  if (!canRefresh()) return false;
 
   if (isRefreshing && refreshPromise) {
     return refreshPromise;
@@ -128,6 +132,8 @@ async function tryRefreshToken(): Promise<boolean> {
 
   isRefreshing = true;
   refreshPromise = (async () => {
+    // A token still stored from before is sent once; the server answers with the cookie.
+    const transport = sessionTransport();
     try {
       const response = await fetchWithFallback(`${ENV.backendUrl}/auth/refresh`, {
         method: "POST",
@@ -136,7 +142,11 @@ async function tryRefreshToken(): Promise<boolean> {
           Accept: "application/json",
           ...(ENV.apiKey ? { "X-Api-Key": ENV.apiKey } : {}),
         },
-        body: JSON.stringify({ refresh_token: refreshToken }),
+        ...credentialsFor(transport),
+        body: JSON.stringify({
+          ...(refreshToken ? { refresh_token: refreshToken } : {}),
+          ...(transport === "cookie" ? { session: "cookie" } : {}),
+        }),
       });
 
       if (!response.ok) {
@@ -149,6 +159,8 @@ async function tryRefreshToken(): Promise<boolean> {
           // this request was in flight, the rejection is about the old one.
           const stored = authStore.refreshToken;
           if (stored && stored !== refreshToken) return true;
+          const access = authStore.accessToken;
+          if (access && access !== accessBefore) return true;
           authStore.clear();
         }
         return false;
@@ -158,6 +170,9 @@ async function tryRefreshToken(): Promise<boolean> {
       authStore.accessToken = data.access_token;
       if (data.refresh_token) {
         authStore.refreshToken = data.refresh_token;
+      } else if (transport === "cookie" && data.refresh_token === "") {
+        authStore.refreshToken = null;
+        authStore.cookieSession = true;
       }
       return true;
     } catch {
@@ -176,7 +191,7 @@ async function tryRefreshToken(): Promise<boolean> {
 async function getUsableAccessToken(): Promise<string | null> {
   const token = authStore.accessToken;
 
-  if (!authStore.refreshToken) {
+  if (!canRefresh()) {
     return token;
   }
 
@@ -222,11 +237,11 @@ export const apiFetch = async <T>(
   let response = await makeRequest(skipAuth ? null : await getUsableAccessToken());
 
   // If 401 and we have a refresh token, try to refresh and retry once
-  if (!skipAuth && response.status === 401 && authStore.refreshToken) {
+  if (!skipAuth && response.status === 401 && canRefresh()) {
     const refreshed = await tryRefreshToken();
     if (refreshed) {
       response = await makeRequest(authStore.accessToken);
-    } else if (!authStore.refreshToken) {
+    } else if (!canRefresh()) {
       // tryRefreshToken only clears the store when the server actually
       // rejected the token. Still holding one means the refresh failed for
       // another reason (network, 503), so keep the session and let the caller

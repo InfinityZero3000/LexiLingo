@@ -1016,7 +1016,9 @@
     "delete_account": "Delete account",
     "delete_account_confirm": "This permanently deletes your account and all learning data. This cannot be undone.",
     "delete_account_confirm_btn": "Delete permanently",
-    "delete_account_error": "Could not delete the account. Please try again."
+    "delete_account_error": "Could not delete the account. Please try again.",
+    "delete_account_reauth_title": "Sign in again to continue",
+    "delete_account_reauth_message": "For your security, an account can only be deleted just after signing in. Sign out, sign in again, then delete your account."
   },
   "notifications": {
     "pageTitle": "Notifications",

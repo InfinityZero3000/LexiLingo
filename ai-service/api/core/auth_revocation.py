@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 BLACKLIST_PREFIX = "blacklist:token:"
 INACTIVE_PREFIX = "user:inactive:"
+SESSIONS_CUT_PREFIX = "user:sessions-cut:"
 FAILURE_COUNTER = "auth_revocation_check_failed_total"
 _LOG_EVERY_SECONDS = 30.0
 
@@ -33,6 +34,20 @@ def blacklist_key(token: str) -> str:
 
 def inactive_key(user_id: str) -> str:
     return f"{INACTIVE_PREFIX}{user_id}"
+
+
+def sessions_cut_key(user_id: str) -> str:
+    # Must match backend-service app/core/token_blacklist.py::SessionCut.
+    return f"{SESSIONS_CUT_PREFIX}{user_id}"
+
+
+def _issued_before(issued_at: Optional[int], cut: Optional[str]) -> bool:
+    if not cut:
+        return False
+    try:
+        return issued_at is None or int(issued_at) < int(cut)
+    except (TypeError, ValueError):
+        return True
 
 
 def _enabled() -> bool:
@@ -80,7 +95,7 @@ def _record_failure(exc: Exception) -> None:
         )
 
 
-async def revocation_reason(token: str, user_id: str) -> Optional[str]:
+async def revocation_reason(token: str, user_id: str, issued_at: Optional[int] = None) -> Optional[str]:
     """Return "revoked" or "inactive" when the token must be refused, else None.
 
     Fails open: Redis trouble must not take chat down with it.
@@ -91,11 +106,12 @@ async def revocation_reason(token: str, user_id: str) -> Optional[str]:
         pipe = _get_client().pipeline(transaction=False)
         pipe.exists(blacklist_key(token))
         pipe.exists(inactive_key(user_id))
-        revoked, inactive = await pipe.execute()
+        pipe.get(sessions_cut_key(user_id))
+        revoked, inactive, cut = await pipe.execute()
     except Exception as exc:
         _record_failure(exc)
         return None
-    if revoked:
+    if revoked or _issued_before(issued_at, cut):
         return "revoked"
     if inactive:
         return "inactive"

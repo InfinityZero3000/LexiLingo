@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Info, KeyRound, Layers, Minus, Shield, ShieldCheck } from "lucide-react";
+import { Check, Info, KeyRound, Layers, Minus, Plus, Shield, ShieldCheck, Trash2 } from "lucide-react";
 import { useAuth } from "../components/AuthProvider";
 import { useConfirm } from "../components/ConfirmDialog";
+import { CreateRoleDialog } from "../components/CreateRoleDialog";
 import { SectionHeader } from "../components/SectionHeader";
 import { StatCard } from "../components/StatCard";
 import { EmptyState } from "../components/EmptyState";
 import { TableSkeleton } from "../components/Skeleton";
 import { StatusPill } from "../components/StatusPill";
-import { getRoles, getRoleWithPermissions, getPermissions, setRolePermissions, Permission } from "../lib/rbacApi";
+import { getRoles, getRoleWithPermissions, getPermissions, setRolePermissions, deleteRole, Permission, Role } from "../lib/rbacApi";
 import { useI18n } from "../lib/i18n";
 
 const groupByResource = (permissions: Permission[]) => {
@@ -29,7 +30,8 @@ export const RolesPermissionsPage = () => {
   const canEdit = myRole === "super_admin";
   const [draft, setDraft] = useState<Record<string, Set<string>>>({});
   const [saveError, setSaveError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
   const roles = useQuery({ queryKey: ["rbac-roles"], queryFn: getRoles });
   const permissions = useQuery({ queryKey: ["rbac-permissions"], queryFn: getPermissions });
 
@@ -58,7 +60,7 @@ export const RolesPermissionsPage = () => {
     return draft[slug].size !== original.size || [...draft[slug]].some((p) => !original.has(p));
   });
   const toggle = (role: string, slug: string) => {
-    setSaved(false);
+    setNotice(null);
     setDraft((current) => {
       const next = new Set(current[role] ?? granted.get(role) ?? []);
       next.has(slug) ? next.delete(slug) : next.add(slug);
@@ -72,7 +74,7 @@ export const RolesPermissionsPage = () => {
     },
     onMutate: () => setSaveError(null),
     onSuccess: () => {
-      setSaved(true);
+      setNotice(t.rolesPage.saved);
       queryClient.invalidateQueries({ queryKey: ["rbac-role"] });
       queryClient.invalidateQueries({ queryKey: ["my-permissions"] });
     },
@@ -88,19 +90,56 @@ export const RolesPermissionsPage = () => {
     if (ok) save.mutate();
   };
 
+  // Only the list: each column's details follow it. Refetching them here would ask for a deleted role.
+  const refreshRoles = () => queryClient.invalidateQueries({ queryKey: ["rbac-roles"] });
+
+  const remove = useMutation({
+    mutationFn: (role: Role) => deleteRole(role.slug),
+    onMutate: () => {
+      setSaveError(null);
+      setNotice(null);
+    },
+    onSuccess: (_, role) => {
+      queryClient.setQueryData<Role[]>(["rbac-roles"], (list) => list?.filter((r) => r.slug !== role.slug));
+      setNotice(t.rolesPage.deleted.replace("{role}", role.name));
+      refreshRoles();
+    },
+    onError: (err) => setSaveError(err instanceof Error && err.message ? err.message : t.rolesPage.deleteFailed),
+  });
+
+  const askDelete = async (role: Role) => {
+    const ok = await confirm({
+      title: t.rolesPage.deleteTitle,
+      message: t.rolesPage.deleteMessage.replace("{role}", role.name),
+      confirmLabel: t.rolesPage.deleteAction,
+      danger: true,
+    });
+    if (ok) remove.mutate(role);
+  };
+
+  // Reloading the role list clears unsaved ticks, so finish those first.
+  const hasUnsaved = dirtyRoles.length > 0;
+
   return (
     <div className="stack">
       <SectionHeader
         title={t.rolesPage.title}
         description={t.rolesPage.description}
         action={
-          canEdit && dirtyRoles.length > 0 ? (
-            <div className="cluster">
-              <button className="ghost-button" onClick={() => setDraft({})} disabled={save.isPending}>{t.rolesPage.discard}</button>
-              <button className="primary-button" onClick={askSave} disabled={save.isPending}>
-                {save.isPending ? t.common.saving : t.rolesPage.saveChanges}
+          canEdit ? (
+            hasUnsaved ? (
+              <div className="cluster">
+                <button className="ghost-button" onClick={() => setDraft({})} disabled={save.isPending}>{t.rolesPage.discard}</button>
+                <button className="primary-button" onClick={askSave} disabled={save.isPending}>
+                  {save.isPending ? t.common.saving : t.rolesPage.saveChanges}
+                </button>
+              </div>
+            ) : (
+              <button className="primary-button" onClick={() => { setNotice(null); setCreating(true); }}>
+                <Plus size={16} />
+                {t.rolesPage.createRole}
               </button>
-            </div>
+            )
           ) : undefined
         }
       />
@@ -115,7 +154,7 @@ export const RolesPermissionsPage = () => {
             loading={loading}
           />
           <StatCard
-            label={t.rolesPage.systemRole}
+            label={t.rolesPage.roles}
             value={String(sortedRoles.length)}
             accent="teal"
             icon={<Shield size={18} />}
@@ -163,7 +202,7 @@ export const RolesPermissionsPage = () => {
           {canEdit ? t.rolesPage.editHint : t.rolesPage.readOnlyHint}
         </span>
       </div>
-      {saved && <div className="form-success" role="status">{t.rolesPage.saved}</div>}
+      {notice && <div className="form-success" role="status">{notice}</div>}
       {saveError && <div className="form-error" role="alert">{saveError}</div>}
 
       {error && (
@@ -205,6 +244,19 @@ export const RolesPermissionsPage = () => {
                           {role.is_system ? ` · ${t.rolesPage.systemRole}` : ""}
                         </span>
                         {!role.is_active && <StatusPill tone="neutral" label={t.rolesPage.inactive} />}
+                        {canEdit && !role.is_system && (
+                          <button
+                            type="button"
+                            className="ghost-button"
+                            aria-label={t.rolesPage.deleteRole.replace("{role}", role.name)}
+                            title={t.rolesPage.deleteRole.replace("{role}", role.name)}
+                            onClick={() => askDelete(role)}
+                            disabled={hasUnsaved || remove.isPending}
+                            style={{ minWidth: 44, minHeight: 44, justifyContent: "center" }}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
                       </div>
                     </th>
                   ))}
@@ -346,6 +398,17 @@ export const RolesPermissionsPage = () => {
           </div>
         )}
       </div>
+
+      {creating && (
+        <CreateRoleDialog
+          onClose={() => setCreating(false)}
+          onCreated={(name) => {
+            setCreating(false);
+            setNotice(t.rolesPage.created.replace("{role}", name));
+            refreshRoles();
+          }}
+        />
+      )}
     </div>
   );
 };

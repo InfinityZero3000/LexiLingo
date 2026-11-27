@@ -4,7 +4,7 @@ Authentication Schemas
 
 import re
 from typing import Literal, Optional
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 
 
 def _fits_bcrypt(v: str) -> str:
@@ -65,14 +65,26 @@ class LoginResponse(TokenResponse):
     role: Optional[str] = "user"  # Role slug: user, admin, super_admin
 
 
+# "cookie": the refresh token travels in an HttpOnly cookie instead of the JSON body.
+SessionTransport = Literal["token", "cookie"]
+
+
 class RefreshTokenRequest(BaseModel):
     """Refresh token request."""
-    refresh_token: str
+    refresh_token: Optional[str] = None
+    session: SessionTransport = "token"
+
+    @model_validator(mode="after")
+    def _token_unless_cookie(self) -> "RefreshTokenRequest":
+        if self.session == "token" and not self.refresh_token:
+            raise ValueError("refresh_token is required")
+        return self
 
 
 class LogoutRequest(BaseModel):
     """Logout request."""
     refresh_token: Optional[str] = None
+    session: str = "token"
 
 
 class ChangePasswordRequest(BaseModel):
@@ -92,6 +104,7 @@ class GoogleLoginRequest(BaseModel):
     """Google OAuth login request."""
     id_token: str = Field(..., description="Google ID token from client")
     source: Literal["app", "admin"] = Field(default="app", description="Login source: 'app' for Flutter, 'admin' for web admin")
+    session: Literal["token", "cookie"] = "token"
 
 class FacebookLoginRequest(BaseModel):
     """Facebook login request (via Firebase)."""

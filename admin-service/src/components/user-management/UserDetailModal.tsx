@@ -23,6 +23,7 @@ import { listCoursesAdmin, listShopItems } from '../../lib/adminApi';
 import { usePermissions } from '../../lib/usePermissions';
 import { getGemLimits } from '../../lib/gemLimitsApi';
 import { getUserWallet } from '../../lib/userSupportApi';
+import { getRoles } from '../../lib/rbacApi';
 import { UserWalletPanel } from './UserWalletPanel';
 import { UserPremiumPanel } from './UserPremiumPanel';
 import { useI18n } from '../../lib/i18n';
@@ -112,6 +113,15 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
     },
   });
   
+  // Custom roles join the built-in ones. If the list cannot be read, the built-ins still work.
+  const { data: roles } = useQuery({ queryKey: ['rbac-roles'], queryFn: getRoles, retry: false });
+  const roleOptions: [RoleSlug, string][] = [
+    ...Object.entries(ROLE_LABELS),
+    ...(Array.isArray(roles) ? roles : [])
+      .filter((r) => r.is_active && !(r.slug in ROLE_LABELS))
+      .map((r): [string, string] => [r.slug, r.name]),
+  ];
+
   // Handlers
   const handleEdit = () => {
     if (user) {
@@ -127,10 +137,10 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
     updateMutation.mutate(formData);
   };
   
-  const handleRoleChange = async (slug: RoleSlug) => {
+  const handleRoleChange = async (slug: RoleSlug, label: string) => {
     const isSuper = slug === "super_admin";
     const ok = await confirm({
-      message: t.userDetail.changeRoleConfirm.replace("{role}", getRoleLabel(slug)),
+      message: t.userDetail.changeRoleConfirm.replace("{role}", label),
       confirmLabel: t.userDetail.changeRoleAction,
       danger: isSuper,
       // Granting Super Admin is the highest-risk change here: make the admin type it out.
@@ -466,10 +476,10 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
               <div className="ud-role-change">
                 <p className="ud-role-label">{t.userDetail.changeRole}</p>
                 <div className="action-group">
-                  {(Object.entries(ROLE_LABELS) as [RoleSlug, string][]).map(([slug, label]) => (
+                  {roleOptions.map(([slug, label]) => (
                     <button
                       key={slug}
-                      onClick={() => handleRoleChange(slug)}
+                      onClick={() => handleRoleChange(slug, label)}
                       disabled={user.role_slug === slug || roleChangeMutation.isPending}
                       className="mini-btn"
                       style={{ borderRadius: '9999px' }}
@@ -478,6 +488,9 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
                     </button>
                   ))}
                 </div>
+                {roleChangeMutation.error && (
+                  <div className="form-error" role="alert">{(roleChangeMutation.error as Error).message}</div>
+                )}
               </div>
             </div>
           </div>

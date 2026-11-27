@@ -72,7 +72,7 @@ async def _websocket_user_id(websocket: WebSocket) -> str | None:
     if not payload or payload.get("type") != "access":
         return None
     sub = payload.get("sub") if payload else None
-    if not sub or await revocation_reason(token, str(sub)):
+    if not sub or await revocation_reason(token, str(sub), payload.get("iat")):
         return None
     return str(sub)
 

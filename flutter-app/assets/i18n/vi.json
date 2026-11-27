@@ -1016,7 +1016,9 @@
     "delete_account": "Xoá tài khoản",
     "delete_account_confirm": "Thao tác này sẽ xoá vĩnh viễn tài khoản và toàn bộ dữ liệu học tập của bạn. Không thể hoàn tác.",
     "delete_account_confirm_btn": "Xoá vĩnh viễn",
-    "delete_account_error": "Không thể xoá tài khoản. Vui lòng thử lại."
+    "delete_account_error": "Không thể xoá tài khoản. Vui lòng thử lại.",
+    "delete_account_reauth_title": "Đăng nhập lại để tiếp tục",
+    "delete_account_reauth_message": "Để bảo vệ bạn, chỉ xóa được tài khoản ngay sau khi đăng nhập. Hãy đăng xuất, đăng nhập lại rồi xóa tài khoản."
   },
   "notifications": {
     "pageTitle": "Thông báo",

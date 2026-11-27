@@ -17,7 +17,7 @@ from sqlalchemy.orm import selectinload
 from app.core.database import get_db
 from app.core.refusal import refusal
 from app.core.permissions import ACTION_BY_METHOD
-from app.core.security import decode_token, is_locally_issued_token
+from app.core.security import decode_token, is_locally_issued_token, password_still_matches
 from app.core.token_blacklist import TokenBlacklist
 from app.core.firebase_auth import verify_firebase_token, get_or_create_user_from_claims
 from app.models.rbac import Permission, RolePermission
@@ -57,7 +57,9 @@ async def get_current_user(
                 select(User).where(User.id == user_id).options(selectinload(User.role))
             )
             user = result.scalar_one_or_none()
-            if user and user.is_active:
+            if user and user.is_active and password_still_matches(payload, user.hashed_password):
+                user.signed_in_with_firebase = False
+                user.authenticated_at = payload.get("auth_time")
                 return user
         except (ValueError, TypeError):
             pass  # Invalid UUID format, try Firebase next
@@ -84,7 +86,10 @@ async def get_current_user(
                     .where(User.id == user.id)
                     .options(selectinload(User.role))
                 )
-                return result.scalar_one_or_none() or user
+                loaded = result.scalar_one_or_none() or user
+                loaded.signed_in_with_firebase = True
+                loaded.authenticated_at = claims.get("auth_time")
+                return loaded
         except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -145,7 +150,7 @@ async def get_current_user_optional(
                 select(User).where(User.id == user_id).options(selectinload(User.role))
             )
             user = result.scalar_one_or_none()
-            if user and user.is_active:
+            if user and user.is_active and password_still_matches(payload, user.hashed_password):
                 return user
         except (ValueError, TypeError):
             pass  # Invalid UUID format, try Firebase next
@@ -186,6 +191,16 @@ def _get_user_role_level(user: User) -> int:
     return 0
 
 
+def _require_backend_session(user: User) -> None:
+    # A raw Firebase token passes get_current_user. Admin rights need a session this
+    # backend issued, so every admin sign-in goes through a login route and its audit.
+    if getattr(user, "signed_in_with_firebase", False) is True:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Sign in to LexiLingo to use admin features",
+        )
+
+
 async def get_current_admin(
     request: Request,
     current_user: User = Depends(get_current_user),
@@ -204,6 +219,7 @@ async def get_current_admin(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin privileges required",
         )
+    _require_backend_session(current_user)
     request.state.admin_actor_id = current_user.id
     return current_user
 
@@ -270,6 +286,7 @@ async def get_current_super_admin(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Super admin privileges required",
         )
+    _require_backend_session(current_user)
     request.state.admin_actor_id = current_user.id
     return current_user
 
