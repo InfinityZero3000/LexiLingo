@@ -4,18 +4,24 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/widgets/language_switcher_button.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:intl/intl.dart';
+import 'package:lexilingo_app/core/di/service_locator.dart';
+import 'package:lexilingo_app/core/network/api_client.dart';
+import 'package:lexilingo_app/features/auth/data/public_stats_service.dart';
 
 /// Get Started page for first-time visitors before authentication.
 class WelcomePage extends StatefulWidget {
   final VoidCallback onGetStarted;
   final VoidCallback onSkip;
   final String? userName;
+  final PublicStatsLoader? loadStats;
 
   const WelcomePage({
     super.key,
     required this.onGetStarted,
     required this.onSkip,
     this.userName,
+    this.loadStats,
   });
 
   @override
@@ -25,10 +31,23 @@ class WelcomePage extends StatefulWidget {
 class _WelcomePageState extends State<WelcomePage>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  PublicStats? _stats;
+
+  PublicStatsLoader? get _statsLoader {
+    if (widget.loadStats != null) return widget.loadStats;
+    if (!sl.isRegistered<ApiClient>()) return null;
+    return PublicStatsService(apiClient: sl<ApiClient>()).fetch;
+  }
+
+  Future<void> _loadStats() async {
+    final stats = await _statsLoader?.call();
+    if (stats != null && mounted) setState(() => _stats = stats);
+  }
 
   @override
   void initState() {
     super.initState();
+    _loadStats();
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 900),
@@ -210,21 +229,31 @@ class _WelcomePageState extends State<WelcomePage>
                                 ),
                               ),
                               const SizedBox(height: 28),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  _buildStatItem(
-                                    context,
-                                    'onboarding.activeUsers'.tr(),
-                                    '50k+',
-                                  ),
-                                  const SizedBox(width: 20),
-                                  _buildStatItem(
-                                    context,
-                                    'onboarding.dailyLessons'.tr(),
-                                    '12k+',
-                                  ),
-                                ],
+                              SizedBox(
+                                height: AppSpacing.xxl + AppSpacing.md,
+                                child: AnimatedOpacity(
+                                  opacity: _stats == null ? 0 : 1,
+                                  duration: const Duration(milliseconds: 300),
+                                  child: _stats == null
+                                      ? null
+                                      : Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            _buildStatItem(
+                                              context,
+                                              'onboarding.activeUsers'.tr(),
+                                              _compact(_stats!.learners),
+                                            ),
+                                            const SizedBox(width: 20),
+                                            _buildStatItem(
+                                              context,
+                                              'onboarding.dailyLessons'.tr(),
+                                              _compact(_stats!.lessonsToday),
+                                            ),
+                                          ],
+                                        ),
+                                ),
                               ),
                               const SizedBox(height: 14),
                               Row(
@@ -280,6 +309,10 @@ class _WelcomePageState extends State<WelcomePage>
       ),
     );
   }
+
+  String _compact(int value) => NumberFormat.compact(
+    locale: Localizations.localeOf(context).toString(),
+  ).format(value);
 
   Widget _buildStatItem(BuildContext context, String label, String value) {
     final theme = Theme.of(context);
