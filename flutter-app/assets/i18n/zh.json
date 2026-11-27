@@ -155,7 +155,8 @@
     "verifyEmailBanner": "验证邮箱即可解锁商店和邀请奖励。",
     "verifyEmailBannerAction": "重新发送链接",
     "googleLoginFailed": "Google 登录失败，请重试。",
-    "facebookLoginFailed": "Facebook 登录失败，请重试。"
+    "facebookLoginFailed": "Facebook 登录失败，请重试。",
+    "facebookEmailInUse": "此 Facebook 账号的邮箱已被其他账号使用。请使用之前的方式登录。"
   },
   "home": {
     "wordsLeftToReview": "个单词待复习",
@@ -2513,7 +2514,10 @@
       "roleAdmin": "ADMIN",
       "roleSuper": "SUPER ADMIN",
       "permissionsFailed": "Could not load your permissions.",
-      "exit": "Exit admin"
+      "exit": "Exit admin",
+      "themeLight": "浅色",
+      "themeDark": "深色",
+      "themeSystem": "跟随系统"
     },
     "access": {
       "forbiddenTitle": "No access",
@@ -3047,9 +3051,20 @@
       "analytics": "ANALYTICS",
       "totalUsers": "TOTAL USERS",
       "nActiveInTheLast": "{} active in the last 7 days",
-      "labelprefixn": "$labelPrefix{}",
+      "labelprefixn": "{}{}",
       "n": "{}%",
-      "retry": "Retry"
+      "retry": "Retry",
+      "loadError": "Could not load data. Pull to refresh.",
+      "noKpiData": "No KPI data is available yet.",
+      "last7Days": "Last 7 days",
+      "published": "Published",
+      "avg30Days": "30-day avg",
+      "completed": "Completed",
+      "noEngagementData": "No engagement data for this period.",
+      "noGrowthData": "No user growth data for this period.",
+      "noLanguageData": "No language enrollment data yet.",
+      "weekPrefix": "W",
+      "dayPrefix": "D"
     },
     "exercises": {
       "exercisesSavedSuccessfully": "Exercises saved successfully.",
@@ -3107,7 +3122,18 @@
       "switch": "SWITCH",
       "yourDualAccount": "Your dual account",
       "yourAdminAccountIsLinked": "Your admin account is linked to a LexiLingo learner profile. Open the LexiLingo app on your device to continue as a learner — you'll be logged in automatically if you use the same email.",
-      "dismiss": "Dismiss"
+      "dismiss": "Dismiss",
+      "appearance": "外观与主题",
+      "syncedFromGoogle": "Account details are synced from your Google / LexiLingo profile.",
+      "language": "Display language",
+      "authMethodLabel": "Authentication",
+      "authMethodGoogle": "Google OAuth · Verified",
+      "serverConfigHint": "Inspect server configuration, environment & service flags",
+      "webConfigBody": "Editing Gem gift limits, partner LLM/API keys, and advanced system settings is managed on Web Admin.",
+      "userZoneStep1": "Return to the main LexiLingo learner experience",
+      "userZoneStep2": "Signed in as {}",
+      "userZoneStep3": "Your learner progress and personal data are ready",
+      "openLearnerApp": "Switch to Learner View"
     },
     "superDash": {
       "superAdminDashboard": "Super Admin Dashboard",

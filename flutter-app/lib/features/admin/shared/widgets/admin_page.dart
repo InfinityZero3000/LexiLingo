@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'admin_shell.dart';
+import 'admin_theme_toggle.dart';
 
 /// The frame of one admin screen: a menu button that opens the shell's drawer
 /// on phones (the sidebar is always there on wide layouts), a title and the
@@ -41,8 +42,8 @@ class AdminPage extends StatelessWidget {
                 onPressed: AdminShell.openDrawer,
               )
             : null,
-        title: Text(title),
-        actions: actions,
+        title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+        actions: [...actions, const AdminThemeToggleButton()],
         bottom: bottom,
       ),
       floatingActionButton: floatingActionButton,

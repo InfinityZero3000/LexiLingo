@@ -3,6 +3,7 @@ import 'package:lexilingo_app/core/theme/app_tokens.dart';
 import 'package:lexilingo_app/core/widgets/stat_card.dart';
 
 import '../../../../shared/widgets/admin_shell.dart';
+import '../../../../shared/widgets/admin_theme_toggle.dart';
 import '../../data/system_models.dart';
 
 /// A titled surface holding one idea, per the card spec.
@@ -270,8 +271,8 @@ class SystemPage extends StatelessWidget {
                 icon: const Icon(Icons.menu_rounded),
                 onPressed: AdminShell.openDrawer,
               ),
-        title: Text(title),
-        actions: actions,
+        title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+        actions: [...?actions, const AdminThemeToggleButton()],
         bottom: bottom,
       ),
       body: body,

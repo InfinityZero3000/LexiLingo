@@ -1,8 +1,13 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:lexilingo_app/features/admin/core/theme/admin_palette.dart';
+import '../../../shared/admin_exit_scope.dart';
 import '../../../shared/widgets/admin_shell.dart';
+import '../../../shared/widgets/admin_theme_toggle.dart';
+import '../../../shared/widgets/open_in_web_admin_tile.dart';
 import '../../auth/presentation/auth_provider.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
@@ -14,16 +19,48 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  static const _prefSystemAlerts = 'lexi_admin_pref_system_alerts';
+  static const _prefUserReports = 'lexi_admin_pref_user_reports';
+  static const _prefEmailDigest = 'lexi_admin_pref_email_digest';
+
   bool _systemAlerts = true;
   bool _userReports = true;
   bool _emailDigest = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPrefs();
+  }
+
+  Future<void> _loadPrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (!mounted) return;
+      setState(() {
+        _systemAlerts = prefs.getBool(_prefSystemAlerts) ?? true;
+        _userReports = prefs.getBool(_prefUserReports) ?? true;
+        _emailDigest = prefs.getBool(_prefEmailDigest) ?? false;
+      });
+    } catch (_) {
+      // Keep defaults when SharedPreferences is unavailable.
+    }
+  }
+
+  Future<void> _updatePref(String key, bool value) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(key, value);
+    } catch (_) {
+      // Ignore persistence errors in ephemeral environments.
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final user = auth.user;
     final isSuperAdmin = auth.isSuperAdmin;
-    final hasAvatar = user?.avatarUrl?.trim().isNotEmpty == true;
 
     return Scaffold(
       backgroundColor: context.ac.background,
@@ -31,28 +68,72 @@ class _SettingsScreenState extends State<SettingsScreen> {
         slivers: [
           SliverAppBar(
             pinned: true,
-            backgroundColor: context.ac.background,
+            backgroundColor: context.ac.surface,
+            surfaceTintColor: Colors.transparent,
             elevation: 0,
-            leading: IconButton(
-              icon: Icon(Icons.menu_rounded, color: context.ac.onSurface),
-              onPressed: AdminShell.openDrawer,
-            ),
+            scrolledUnderElevation: 0.5,
+            leading: MediaQuery.sizeOf(context).width >= adminWideBreakpoint
+                ? null
+                : IconButton(
+                    icon: Icon(Icons.menu_rounded, color: context.ac.onSurface),
+                    onPressed: AdminShell.openDrawer,
+                  ),
             title: Row(
               children: [
-                Icon(Icons.language, color: context.ac.primary, size: 22),
-                const SizedBox(width: 6),
-                Text(
-                  'LingoAdmin',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.w700,
+                Container(
+                  width: 30,
+                  height: 30,
+                  decoration: BoxDecoration(
                     color: context.ac.primary,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    'L',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: context.ac.onPrimary,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Flexible(
+                  child: Text(
+                    'LexiLingo',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: context.ac.onSurface,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: context.ac.primaryContainer,
+                    borderRadius: AppRadius.smAll,
+                  ),
+                  child: Text(
+                    'ADMIN',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: context.ac.primary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.6,
+                    ),
                   ),
                 ),
               ],
             ),
+            actions: const [AdminThemeToggleButton()],
           ),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 Text(
@@ -60,7 +141,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: context.ac.onSurface,
-                    letterSpacing: -0.02,
                   ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
@@ -76,91 +156,55 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _Card(
                   child: Column(
                     children: [
-                      SizedBox(
-                        width: 88,
-                        height: 88,
-                        child: Stack(
-                          children: [
-                            Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: context.ac.primary,
-                                  width: 2.5,
-                                ),
-                              ),
-                              child: CircleAvatar(
-                                radius: 38,
-                                backgroundColor: context.ac.primaryContainer,
-                                backgroundImage: hasAvatar
-                                    ? NetworkImage(user!.avatarUrl!.trim())
-                                    : null,
-                                // Initial is always the child so it still shows
-                                // if the network avatar fails to load —
-                                // onBackgroundImageError only silences the
-                                // exception, it can't swap in a fallback.
-                                onBackgroundImageError: hasAvatar
-                                    ? (_, __) {}
-                                    : null,
-                                child: Text(
-                                  user?.displayName.isNotEmpty == true
-                                      ? user!.displayName[0].toUpperCase()
-                                      : 'A',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headlineMedium
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.w700,
-                                        color: context.ac.primary,
-                                      ),
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              bottom: 0,
-                              right: 0,
-                              child: Container(
-                                width: 26,
-                                height: 26,
-                                decoration: BoxDecoration(
-                                  color: context.ac.primaryBright,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onPrimary,
-                                    width: 2,
-                                  ),
-                                ),
-                                child: Icon(
-                                  Icons.camera_alt,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onPrimary,
-                                  size: 12,
-                                ),
-                              ),
-                            ),
-                          ],
+                      Container(
+                        width: 84,
+                        height: 84,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: context.ac.primary,
+                            width: 2.5,
+                          ),
+                        ),
+                        child: AdminUserAvatar(
+                          avatarUrl: user?.avatarUrl,
+                          displayName: user?.displayName ?? '',
+                          radius: 38,
                         ),
                       ),
                       const SizedBox(height: AppSpacing.md),
                       Text(
-                        user?.displayName ?? 'Admin User',
+                        user?.displayName ?? 'Admin',
                         style: Theme.of(context).textTheme.sectionTitle
                             ?.copyWith(
                               fontWeight: FontWeight.w700,
                               color: context.ac.onSurface,
                             ),
                       ),
-                      Text(
-                        isSuperAdmin
-                            ? 'Super Administrator'
-                            : 'Senior Curriculum Director',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: context.ac.onSurfaceMuted,
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSuperAdmin
+                              ? context.ac.primary
+                              : context.ac.primaryContainer,
+                          borderRadius: AppRadius.smAll,
+                        ),
+                        child: Text(
+                          (isSuperAdmin
+                                  ? 'admin.shell.roleSuper'
+                                  : 'admin.shell.roleAdmin')
+                              .tr(),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: isSuperAdmin
+                                    ? context.ac.onPrimary
+                                    : context.ac.primary,
+                                fontWeight: FontWeight.w700,
+                              ),
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -173,6 +217,52 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         label: 'adminUi.settings.emailAddress'.tr(),
                         value: user?.email ?? '',
                       ),
+                      const SizedBox(height: AppSpacing.sm),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'adminUi.settings.syncedFromGoogle'.tr(),
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(color: context.ac.onSurfaceMuted),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+
+                // Appearance & Language
+                _Card(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: context.ac.primaryContainer,
+                              borderRadius: BorderRadius.circular(AppRadius.md),
+                            ),
+                            child: Icon(
+                              Icons.palette_outlined,
+                              color: context.ac.primary,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.md),
+                          Text(
+                            'adminUi.settings.appearance'.tr(),
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(fontWeight: FontWeight.w700),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      const AdminThemeModeSelector(),
+                      const Divider(height: 24),
+                      _LanguageSelectorRow(),
                     ],
                   ),
                 ),
@@ -213,14 +303,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             'adminUi.settings.criticalInfrastructureUpdates'
                                 .tr(),
                         value: _systemAlerts,
-                        onChanged: (v) => setState(() => _systemAlerts = v),
+                        onChanged: (v) {
+                          setState(() => _systemAlerts = v);
+                          _updatePref(_prefSystemAlerts, v);
+                        },
                       ),
                       const Divider(height: 20),
                       _ToggleRow(
                         title: 'adminUi.settings.userReports'.tr(),
                         subtitle: 'adminUi.settings.newCurriculumFeedback'.tr(),
                         value: _userReports,
-                        onChanged: (v) => setState(() => _userReports = v),
+                        onChanged: (v) {
+                          setState(() => _userReports = v);
+                          _updatePref(_prefUserReports, v);
+                        },
                       ),
                       const Divider(height: 20),
                       _ToggleRow(
@@ -228,14 +324,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         subtitle: 'adminUi.settings.weeklyPerformanceAnalytics'
                             .tr(),
                         value: _emailDigest,
-                        onChanged: (v) => setState(() => _emailDigest = v),
+                        onChanged: (v) {
+                          setState(() => _emailDigest = v);
+                          _updatePref(_prefEmailDigest, v);
+                        },
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: AppSpacing.lg),
 
-                // Security
+                // Account & System Configuration (Real Actions, Zero Mock Data)
                 _Card(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -264,38 +363,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ],
                       ),
                       const SizedBox(height: AppSpacing.lg),
-                      _SecurityRow(
-                        label: 'adminUi.settings.changePassword'.tr(),
-                        subtitle: 'adminUi.settings.lastUpdated32DaysAgo'.tr(),
-                        icon: Icons.password_outlined,
+                      _InfoRow(
+                        icon: Icons.verified_user_outlined,
+                        label: 'adminUi.settings.authMethodLabel'.tr(),
+                        subtitle: 'adminUi.settings.authMethodGoogle'.tr(),
                       ),
-                      const Divider(height: 16),
-                      _SecurityRow(
-                        label: 'adminUi.settings.twoFactorAuth'.tr(),
-                        subtitle: 'adminUi.settings.authenticatorAppEnabled'
-                            .tr(),
-                        icon: Icons.security_outlined,
+                      const Divider(height: 20),
+                      _ActionRow(
+                        icon: Icons.tune_rounded,
+                        label: 'admin.nav.config'.tr(),
+                        subtitle: 'adminUi.settings.serverConfigHint'.tr(),
+                        onTap: () => context.go('/system-settings'),
                       ),
-                      const Divider(height: 16),
-                      Text(
-                        'adminUi.settings.activeSessions'.tr(),
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.08,
-                          color: context.ac.onSurfaceMuted,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      _SessionRow(
-                        device: 'MacBook Pro - San Francisco, USA',
-                        subtitle: 'adminUi.settings.currentSession'.tr(),
-                        isCurrent: true,
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
-                      _SessionRow(
-                        device: 'iPhone 15 - San Francisco, USA',
-                        subtitle: 'adminUi.settings.active2HoursAgo'.tr(),
-                        isCurrent: false,
+                      const SizedBox(height: AppSpacing.md),
+                      OpenInWebAdminTile(
+                        body: 'adminUi.settings.webConfigBody'.tr(),
+                        path: '/admin/settings',
                       ),
                     ],
                   ),
@@ -374,15 +457,22 @@ class _FormFieldState extends State<_FormField> {
           widget.label,
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
             fontWeight: FontWeight.w700,
-            letterSpacing: 0.08,
+            letterSpacing: 0.6,
             color: context.ac.onSurfaceMuted,
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
         TextField(
           controller: _ctrl,
-          style: Theme.of(context).textTheme.bodyMedium,
-          decoration: const InputDecoration(isDense: true),
+          readOnly: true,
+          style: Theme.of(
+            context,
+          ).textTheme.bodyMedium?.copyWith(color: context.ac.onSurfaceVariant),
+          decoration: InputDecoration(
+            isDense: true,
+            filled: true,
+            fillColor: context.ac.surfaceDim,
+          ),
         ),
       ],
     );
@@ -436,22 +526,54 @@ class _ToggleRow extends StatelessWidget {
   }
 }
 
-class _SecurityRow extends StatelessWidget {
+class _LanguageSelectorRow extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final currentCode = context.locale.languageCode;
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            'adminUi.settings.language'.tr(),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: context.ac.onSurface,
+            ),
+          ),
+        ),
+        SegmentedButton<String>(
+          showSelectedIcon: false,
+          segments: const [
+            ButtonSegment(value: 'vi', label: Text('Tiếng Việt')),
+            ButtonSegment(value: 'en', label: Text('English')),
+          ],
+          selected: {currentCode == 'vi' ? 'vi' : 'en'},
+          onSelectionChanged: (sel) {
+            final code = sel.first;
+            context.setLocale(Locale(code));
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final IconData icon;
   final String label;
   final String subtitle;
-  final IconData icon;
 
-  const _SecurityRow({
+  const _InfoRow({
+    required this.icon,
     required this.label,
     required this.subtitle,
-    required this.icon,
   });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: context.ac.onSurfaceVariant),
+        Icon(icon, size: 20, color: context.ac.primary),
         const SizedBox(width: AppSpacing.md),
         Expanded(
           child: Column(
@@ -473,54 +595,59 @@ class _SecurityRow extends StatelessWidget {
             ],
           ),
         ),
-        Icon(Icons.chevron_right, color: context.ac.onSurfaceMuted),
       ],
     );
   }
 }
 
-class _SessionRow extends StatelessWidget {
-  final String device;
+class _ActionRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
   final String subtitle;
-  final bool isCurrent;
+  final VoidCallback onTap;
 
-  const _SessionRow({
-    required this.device,
+  const _ActionRow({
+    required this.icon,
+    required this.label,
     required this.subtitle,
-    required this.isCurrent,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(
-          isCurrent ? Icons.laptop_mac_outlined : Icons.smartphone_outlined,
-          size: 18,
-          color: context.ac.onSurfaceVariant,
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                device,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: context.ac.onSurface,
-                ),
+    return InkWell(
+      borderRadius: AppRadius.mdAll,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: context.ac.onSurfaceVariant),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: context.ac.onSurface,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: context.ac.onSurfaceMuted,
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                subtitle,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: context.ac.onSurfaceMuted,
-                ),
-              ),
-            ],
-          ),
+            ),
+            Icon(Icons.chevron_right_rounded, color: context.ac.onSurfaceMuted),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
@@ -767,14 +894,17 @@ class _UserZoneSheet extends StatelessWidget {
                 // Step cards
                 _StepRow(
                   step: '1',
-                  text: 'Open the LexiLingo app on your device',
+                  text: 'adminUi.settings.userZoneStep1'.tr(),
                 ),
                 const SizedBox(height: 10),
-                _StepRow(step: '2', text: 'Sign in with $email'),
+                _StepRow(
+                  step: '2',
+                  text: 'adminUi.settings.userZoneStep2'.tr(args: [email]),
+                ),
                 const SizedBox(height: 10),
                 _StepRow(
                   step: '3',
-                  text: 'Your learner progress and data will be ready',
+                  text: 'adminUi.settings.userZoneStep3'.tr(),
                 ),
                 const SizedBox(height: AppSpacing.xl),
               ],
@@ -794,10 +924,14 @@ class _UserZoneSheet extends StatelessWidget {
                   width: double.infinity,
                   height: 52,
                   child: FilledButton.icon(
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () {
+                      final exit = AdminExitScope.maybeOf(context)?.onExit;
+                      Navigator.of(context).pop();
+                      exit?.call();
+                    },
                     icon: const Icon(Icons.open_in_new, size: 18),
                     label: Text(
-                      'Open LexiLingo App',
+                      'adminUi.settings.openLearnerApp'.tr(),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),

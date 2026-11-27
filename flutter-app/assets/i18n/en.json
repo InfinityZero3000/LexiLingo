@@ -155,7 +155,8 @@
     "verifyEmailBanner": "Verify your email to unlock the shop and referral rewards.",
     "verifyEmailBannerAction": "Resend link",
     "googleLoginFailed": "Google sign-in failed. Please try again.",
-    "facebookLoginFailed": "Facebook sign-in failed. Please try again."
+    "facebookLoginFailed": "Facebook sign-in failed. Please try again.",
+    "facebookEmailInUse": "The email on this Facebook account is already used by another account. Sign in the way you did before."
   },
   "home": {
     "wordsLeftToReview": "words to review",
@@ -266,22 +267,70 @@
     "viewAllChallenges": "View all {count} challenges",
     "completeBonusXp": "Complete all for bonus {xp} XP!",
     "challengeTexts": {
-      "complete_lessons": { "title": "Lesson Master", "description": "Complete {target} lesson(s) today" },
-      "review_vocab": { "title": "Vocabulary Review", "description": "Review {target} vocabulary words" },
-      "earn_xp": { "title": "XP Hunter", "description": "Earn {target} XP today" },
-      "perfect_lesson": { "title": "Perfectionist", "description": "Get 100% on {target} lesson(s)" },
-      "maintain_streak": { "title": "Keep the Fire", "description": "Maintain your learning streak" },
-      "review_flashcards": { "title": "Flashcard Frenzy", "description": "Review {target} flashcards" },
-      "quiz_accuracy": { "title": "Sharp Shooter", "description": "Score 80%+ on {target} quiz(zes)" },
-      "time_spent": { "title": "Dedicated Student", "description": "Study for {target} minute(s)" },
-      "new_words": { "title": "Word Explorer", "description": "Learn {target} new word(s)" },
-      "grammar_drill": { "title": "Grammar Guru", "description": "Complete {target} grammar exercise(s)" },
-      "listening_drill": { "title": "Active Listener", "description": "Complete {target} listening exercise(s)" },
-      "watch_youtube": { "title": "Screen Time, Well Spent", "description": "Watch {target} minute(s) of English video" },
-      "listen_podcast": { "title": "In One Ear", "description": "Listen to {target} minute(s) of podcast" },
-      "read_news": { "title": "Current Affairs", "description": "Pass {target} news quiz(zes)" },
-      "read_minutes": { "title": "Time Well Read", "description": "Read for {target} minute(s)" },
-      "read_book": { "title": "Chapter and Verse", "description": "Finish {target} book chapter quiz(zes)" }
+      "complete_lessons": {
+        "title": "Lesson Master",
+        "description": "Complete {target} lesson(s) today"
+      },
+      "review_vocab": {
+        "title": "Vocabulary Review",
+        "description": "Review {target} vocabulary words"
+      },
+      "earn_xp": {
+        "title": "XP Hunter",
+        "description": "Earn {target} XP today"
+      },
+      "perfect_lesson": {
+        "title": "Perfectionist",
+        "description": "Get 100% on {target} lesson(s)"
+      },
+      "maintain_streak": {
+        "title": "Keep the Fire",
+        "description": "Maintain your learning streak"
+      },
+      "review_flashcards": {
+        "title": "Flashcard Frenzy",
+        "description": "Review {target} flashcards"
+      },
+      "quiz_accuracy": {
+        "title": "Sharp Shooter",
+        "description": "Score 80%+ on {target} quiz(zes)"
+      },
+      "time_spent": {
+        "title": "Dedicated Student",
+        "description": "Study for {target} minute(s)"
+      },
+      "new_words": {
+        "title": "Word Explorer",
+        "description": "Learn {target} new word(s)"
+      },
+      "grammar_drill": {
+        "title": "Grammar Guru",
+        "description": "Complete {target} grammar exercise(s)"
+      },
+      "listening_drill": {
+        "title": "Active Listener",
+        "description": "Complete {target} listening exercise(s)"
+      },
+      "watch_youtube": {
+        "title": "Screen Time, Well Spent",
+        "description": "Watch {target} minute(s) of English video"
+      },
+      "listen_podcast": {
+        "title": "In One Ear",
+        "description": "Listen to {target} minute(s) of podcast"
+      },
+      "read_news": {
+        "title": "Current Affairs",
+        "description": "Pass {target} news quiz(zes)"
+      },
+      "read_minutes": {
+        "title": "Time Well Read",
+        "description": "Read for {target} minute(s)"
+      },
+      "read_book": {
+        "title": "Chapter and Verse",
+        "description": "Finish {target} book chapter quiz(zes)"
+      }
     },
     "allChallengesComplete": "All Challenges Complete!",
     "bonusXpEarned": "+{xp} Bonus XP",
@@ -2465,7 +2514,10 @@
       "roleAdmin": "ADMIN",
       "roleSuper": "SUPER ADMIN",
       "permissionsFailed": "Could not load your permissions.",
-      "exit": "Exit admin"
+      "exit": "Exit admin",
+      "themeLight": "Light",
+      "themeDark": "Dark",
+      "themeSystem": "System"
     },
     "access": {
       "forbiddenTitle": "No access",
@@ -2999,9 +3051,20 @@
       "analytics": "ANALYTICS",
       "totalUsers": "TOTAL USERS",
       "nActiveInTheLast": "{} active in the last 7 days",
-      "labelprefixn": "$labelPrefix{}",
+      "labelprefixn": "{}{}",
       "n": "{}%",
-      "retry": "Retry"
+      "retry": "Retry",
+      "loadError": "Could not load data. Pull to refresh.",
+      "noKpiData": "No KPI data is available yet.",
+      "last7Days": "Last 7 days",
+      "published": "Published",
+      "avg30Days": "30-day avg",
+      "completed": "Completed",
+      "noEngagementData": "No engagement data for this period.",
+      "noGrowthData": "No user growth data for this period.",
+      "noLanguageData": "No language enrollment data yet.",
+      "weekPrefix": "W",
+      "dayPrefix": "D"
     },
     "exercises": {
       "exercisesSavedSuccessfully": "Exercises saved successfully.",
@@ -3059,7 +3122,18 @@
       "switch": "SWITCH",
       "yourDualAccount": "Your dual account",
       "yourAdminAccountIsLinked": "Your admin account is linked to a LexiLingo learner profile. Open the LexiLingo app on your device to continue as a learner — you'll be logged in automatically if you use the same email.",
-      "dismiss": "Dismiss"
+      "dismiss": "Dismiss",
+      "appearance": "Appearance",
+      "syncedFromGoogle": "Account details are synced from your Google / LexiLingo profile.",
+      "language": "Display language",
+      "authMethodLabel": "Authentication",
+      "authMethodGoogle": "Google OAuth · Verified",
+      "serverConfigHint": "Inspect server configuration, environment & service flags",
+      "webConfigBody": "Editing Gem gift limits, partner LLM/API keys, and advanced system settings is managed on Web Admin.",
+      "userZoneStep1": "Return to the main LexiLingo learner experience",
+      "userZoneStep2": "Signed in as {}",
+      "userZoneStep3": "Your learner progress and personal data are ready",
+      "openLearnerApp": "Switch to Learner View"
     },
     "superDash": {
       "superAdminDashboard": "Super Admin Dashboard",

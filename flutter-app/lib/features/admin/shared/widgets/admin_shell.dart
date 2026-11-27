@@ -8,6 +8,7 @@ import '../../core/permissions/admin_permissions.dart';
 import '../../features/auth/data/auth_repository.dart';
 import '../../features/auth/presentation/auth_provider.dart';
 import '../admin_exit_scope.dart';
+import 'admin_theme_toggle.dart';
 
 /// Width from which the navigation is a fixed sidebar instead of a drawer.
 const adminWideBreakpoint = 768.0;
@@ -124,6 +125,7 @@ class _AdminNav extends StatelessWidget {
           ),
         ),
         Divider(height: 1, color: scheme.outlineVariant),
+        const AdminThemeModeSelector(),
         const _ExitTile(),
         const SizedBox(height: AppSpacing.xs),
       ],
@@ -142,32 +144,15 @@ class _Header extends StatelessWidget {
     final scheme = theme.colorScheme;
     final AdminUser? user = auth.user;
     final name = user?.displayName ?? '';
-    final initials = name.isEmpty
-        ? 'A'
-        : name
-              .split(' ')
-              .where((w) => w.isNotEmpty)
-              .take(2)
-              .map((w) => w[0].toUpperCase())
-              .join();
 
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Row(
         children: [
-          CircleAvatar(
+          AdminUserAvatar(
+            avatarUrl: user?.avatarUrl,
+            displayName: name,
             radius: 20,
-            backgroundColor: scheme.primaryContainer,
-            foregroundImage: user?.avatarUrl != null
-                ? NetworkImage(user!.avatarUrl!)
-                : null,
-            onForegroundImageError: user?.avatarUrl != null ? (_, __) {} : null,
-            child: Text(
-              initials,
-              style: theme.textTheme.titleSmall?.copyWith(
-                color: scheme.onPrimaryContainer,
-              ),
-            ),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
@@ -279,10 +264,21 @@ class _NavTile extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
               child: Row(
                 children: [
-                  Icon(
-                    active ? item.activeIcon : item.icon,
-                    size: 20,
-                    color: color,
+                  Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: active
+                          ? scheme.primary.withValues(alpha: 0.14)
+                          : scheme.surfaceContainer,
+                      borderRadius: AppRadius.smAll,
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      active ? item.activeIcon : item.icon,
+                      size: 17,
+                      color: active ? scheme.primary : scheme.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(

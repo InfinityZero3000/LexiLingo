@@ -155,7 +155,8 @@
     "verifyEmailBanner": "Xác minh email để mở khoá cửa hàng và thưởng giới thiệu.",
     "verifyEmailBannerAction": "Gửi lại link",
     "googleLoginFailed": "Đăng nhập Google thất bại. Vui lòng thử lại.",
-    "facebookLoginFailed": "Đăng nhập Facebook thất bại. Vui lòng thử lại."
+    "facebookLoginFailed": "Đăng nhập Facebook thất bại. Vui lòng thử lại.",
+    "facebookEmailInUse": "Email của tài khoản Facebook này đã được sử dụng cho một tài khoản khác. Hãy đăng nhập bằng cách bạn đã dùng trước đó."
   },
   "home": {
     "wordsLeftToReview": "từ cần ôn",
@@ -266,22 +267,70 @@
     "viewAllChallenges": "Xem tất cả {count} thử thách",
     "completeBonusXp": "Hoàn thành tất cả để nhận thêm {xp} XP!",
     "challengeTexts": {
-      "complete_lessons": { "title": "Bậc thầy bài học", "description": "Hoàn thành {target} bài học hôm nay" },
-      "review_vocab": { "title": "Ôn từ vựng", "description": "Ôn {target} từ vựng" },
-      "earn_xp": { "title": "Thợ săn XP", "description": "Kiếm {target} XP hôm nay" },
-      "perfect_lesson": { "title": "Hoàn hảo", "description": "Đạt 100% ở {target} bài học" },
-      "maintain_streak": { "title": "Giữ ngọn lửa", "description": "Giữ chuỗi ngày học của bạn" },
-      "review_flashcards": { "title": "Cuồng thẻ ghi nhớ", "description": "Ôn {target} thẻ ghi nhớ" },
-      "quiz_accuracy": { "title": "Thiện xạ", "description": "Đạt từ 80% ở {target} bài kiểm tra" },
-      "time_spent": { "title": "Học sinh chăm chỉ", "description": "Học trong {target} phút" },
-      "new_words": { "title": "Nhà thám hiểm từ vựng", "description": "Học {target} từ mới" },
-      "grammar_drill": { "title": "Cao thủ ngữ pháp", "description": "Hoàn thành {target} bài tập ngữ pháp" },
-      "listening_drill": { "title": "Người nghe tích cực", "description": "Hoàn thành {target} bài tập nghe" },
-      "watch_youtube": { "title": "Xem video đáng giá", "description": "Xem {target} phút video tiếng Anh" },
-      "listen_podcast": { "title": "Nghe podcast", "description": "Nghe {target} phút podcast" },
-      "read_news": { "title": "Cập nhật thời sự", "description": "Đạt {target} bài kiểm tra tin tức" },
-      "read_minutes": { "title": "Đọc đúng lúc", "description": "Đọc trong {target} phút" },
-      "read_book": { "title": "Từng chương từng trang", "description": "Hoàn thành {target} bài kiểm tra chương sách" }
+      "complete_lessons": {
+        "title": "Bậc thầy bài học",
+        "description": "Hoàn thành {target} bài học hôm nay"
+      },
+      "review_vocab": {
+        "title": "Ôn từ vựng",
+        "description": "Ôn {target} từ vựng"
+      },
+      "earn_xp": {
+        "title": "Thợ săn XP",
+        "description": "Kiếm {target} XP hôm nay"
+      },
+      "perfect_lesson": {
+        "title": "Hoàn hảo",
+        "description": "Đạt 100% ở {target} bài học"
+      },
+      "maintain_streak": {
+        "title": "Giữ ngọn lửa",
+        "description": "Giữ chuỗi ngày học của bạn"
+      },
+      "review_flashcards": {
+        "title": "Cuồng thẻ ghi nhớ",
+        "description": "Ôn {target} thẻ ghi nhớ"
+      },
+      "quiz_accuracy": {
+        "title": "Thiện xạ",
+        "description": "Đạt từ 80% ở {target} bài kiểm tra"
+      },
+      "time_spent": {
+        "title": "Học sinh chăm chỉ",
+        "description": "Học trong {target} phút"
+      },
+      "new_words": {
+        "title": "Nhà thám hiểm từ vựng",
+        "description": "Học {target} từ mới"
+      },
+      "grammar_drill": {
+        "title": "Cao thủ ngữ pháp",
+        "description": "Hoàn thành {target} bài tập ngữ pháp"
+      },
+      "listening_drill": {
+        "title": "Người nghe tích cực",
+        "description": "Hoàn thành {target} bài tập nghe"
+      },
+      "watch_youtube": {
+        "title": "Xem video đáng giá",
+        "description": "Xem {target} phút video tiếng Anh"
+      },
+      "listen_podcast": {
+        "title": "Nghe podcast",
+        "description": "Nghe {target} phút podcast"
+      },
+      "read_news": {
+        "title": "Cập nhật thời sự",
+        "description": "Đạt {target} bài kiểm tra tin tức"
+      },
+      "read_minutes": {
+        "title": "Đọc đúng lúc",
+        "description": "Đọc trong {target} phút"
+      },
+      "read_book": {
+        "title": "Từng chương từng trang",
+        "description": "Hoàn thành {target} bài kiểm tra chương sách"
+      }
     },
     "allChallengesComplete": "Tất cả thử thách đã hoàn thành!",
     "bonusXpEarned": "+{xp} XP thưởng",
@@ -2465,7 +2514,10 @@
       "roleAdmin": "ADMIN",
       "roleSuper": "SUPER ADMIN",
       "permissionsFailed": "Không tải được quyền của bạn.",
-      "exit": "Thoát quản trị"
+      "exit": "Thoát quản trị",
+      "themeLight": "Sáng",
+      "themeDark": "Tối",
+      "themeSystem": "Tự động"
     },
     "access": {
       "forbiddenTitle": "Không có quyền",
@@ -2986,22 +3038,33 @@
       "avgDau": "DAU trung bình",
       "lessonsToday": "Bài học hôm nay",
       "dailyActiveUsers": "Người dùng hoạt động hằng ngày",
-      "engagementOver10Weeks": "Engagement over 10 weeks",
-      "10Weeks": "10 Weeks",
+      "engagementOver10Weeks": "Mức độ tương tác trong 10 tuần",
+      "10Weeks": "10 tuần",
       "userGrowth": "Tăng trưởng người dùng",
-      "totalRegisteredUsersOver30": "Total registered users over 30 days",
-      "30Days": "30 Days",
+      "totalRegisteredUsersOver30": "Tổng người dùng đăng ký trong 30 ngày",
+      "30Days": "30 ngày",
       "languages": "Ngôn ngữ",
-      "enrollmentDistribution": "Enrollment distribution",
+      "enrollmentDistribution": "Phân bổ theo ngôn ngữ",
       "quickActions": "Thao tác nhanh",
       "newLesson": "BÀI HỌC MỚI",
       "users": "NGƯỜI DÙNG",
       "analytics": "PHÂN TÍCH",
       "totalUsers": "TỔNG NGƯỜI DÙNG",
-      "nActiveInTheLast": "{} active in the last 7 days",
-      "labelprefixn": "$labelPrefix{}",
+      "nActiveInTheLast": "{} hoạt động trong 7 ngày qua",
+      "labelprefixn": "{}{}",
       "n": "{}%",
-      "retry": "Thử lại"
+      "retry": "Thử lại",
+      "loadError": "Không thể tải dữ liệu. Kéo xuống để thử lại.",
+      "noKpiData": "Chưa có dữ liệu chỉ số.",
+      "last7Days": "7 ngày qua",
+      "published": "Đã xuất bản",
+      "avg30Days": "TB 30 ngày",
+      "completed": "Hoàn thành",
+      "noEngagementData": "Chưa có dữ liệu tương tác trong giai đoạn này.",
+      "noGrowthData": "Chưa có dữ liệu tăng trưởng trong giai đoạn này.",
+      "noLanguageData": "Chưa có dữ liệu ghi danh ngôn ngữ.",
+      "weekPrefix": "T",
+      "dayPrefix": "N"
     },
     "exercises": {
       "exercisesSavedSuccessfully": "Đã lưu bài tập.",
@@ -3059,7 +3122,18 @@
       "switch": "SWITCH",
       "yourDualAccount": "Your dual account",
       "yourAdminAccountIsLinked": "Tài khoản admin của bạn được liên kết với hồ sơ học viên LexiLingo. Mở ứng dụng LexiLingo trên thiết bị để tiếp tục với tư cách học viên — bạn sẽ tự đăng nhập nếu dùng cùng email.",
-      "dismiss": "Bỏ qua"
+      "dismiss": "Bỏ qua",
+      "appearance": "Giao diện & Nền",
+      "syncedFromGoogle": "Thông tin tài khoản được đồng bộ từ hồ sơ Google / LexiLingo.",
+      "language": "Ngôn ngữ hiển thị",
+      "authMethodLabel": "Phương thức đăng nhập",
+      "authMethodGoogle": "Google OAuth · Đã xác thực",
+      "serverConfigHint": "Xem cấu hình máy chủ, biến môi trường và trạng thái dịch vụ",
+      "webConfigBody": "Chỉnh sửa giới hạn Gem, khóa đối tác (LLM/API) và cấu hình nâng cao được thực hiện trên Web Admin.",
+      "userZoneStep1": "Quay lại giao diện học tập chính của ứng dụng LexiLingo",
+      "userZoneStep2": "Đang sử dụng tài khoản {}",
+      "userZoneStep3": "Tiến độ học tập và dữ liệu cá nhân của bạn luôn sẵn sàng",
+      "openLearnerApp": "Chuyển sang giao diện Học viên"
     },
     "superDash": {
       "superAdminDashboard": "Bảng điều khiển Super Admin",

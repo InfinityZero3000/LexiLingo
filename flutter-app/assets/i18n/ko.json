@@ -155,7 +155,8 @@
     "verifyEmailBanner": "이메일을 인증하면 상점과 추천 보상을 이용할 수 있습니다.",
     "verifyEmailBannerAction": "링크 다시 보내기",
     "googleLoginFailed": "Google 로그인에 실패했어요. 다시 시도해 주세요.",
-    "facebookLoginFailed": "Facebook 로그인에 실패했어요. 다시 시도해 주세요."
+    "facebookLoginFailed": "Facebook 로그인에 실패했어요. 다시 시도해 주세요.",
+    "facebookEmailInUse": "이 Facebook 계정의 이메일은 이미 다른 계정에서 사용 중이에요. 이전에 사용한 방법으로 로그인해 주세요."
   },
   "home": {
     "wordsLeftToReview": "복습할 단어",
@@ -2513,7 +2514,10 @@
       "roleAdmin": "ADMIN",
       "roleSuper": "SUPER ADMIN",
       "permissionsFailed": "Could not load your permissions.",
-      "exit": "Exit admin"
+      "exit": "Exit admin",
+      "themeLight": "라이트",
+      "themeDark": "다크",
+      "themeSystem": "시스템"
     },
     "access": {
       "forbiddenTitle": "No access",
@@ -3047,9 +3051,20 @@
       "analytics": "ANALYTICS",
       "totalUsers": "TOTAL USERS",
       "nActiveInTheLast": "{} active in the last 7 days",
-      "labelprefixn": "$labelPrefix{}",
+      "labelprefixn": "{}{}",
       "n": "{}%",
-      "retry": "Retry"
+      "retry": "Retry",
+      "loadError": "Could not load data. Pull to refresh.",
+      "noKpiData": "No KPI data is available yet.",
+      "last7Days": "Last 7 days",
+      "published": "Published",
+      "avg30Days": "30-day avg",
+      "completed": "Completed",
+      "noEngagementData": "No engagement data for this period.",
+      "noGrowthData": "No user growth data for this period.",
+      "noLanguageData": "No language enrollment data yet.",
+      "weekPrefix": "W",
+      "dayPrefix": "D"
     },
     "exercises": {
       "exercisesSavedSuccessfully": "Exercises saved successfully.",
@@ -3107,7 +3122,18 @@
       "switch": "SWITCH",
       "yourDualAccount": "Your dual account",
       "yourAdminAccountIsLinked": "Your admin account is linked to a LexiLingo learner profile. Open the LexiLingo app on your device to continue as a learner — you'll be logged in automatically if you use the same email.",
-      "dismiss": "Dismiss"
+      "dismiss": "Dismiss",
+      "appearance": "테마 및 배경",
+      "syncedFromGoogle": "Account details are synced from your Google / LexiLingo profile.",
+      "language": "Display language",
+      "authMethodLabel": "Authentication",
+      "authMethodGoogle": "Google OAuth · Verified",
+      "serverConfigHint": "Inspect server configuration, environment & service flags",
+      "webConfigBody": "Editing Gem gift limits, partner LLM/API keys, and advanced system settings is managed on Web Admin.",
+      "userZoneStep1": "Return to the main LexiLingo learner experience",
+      "userZoneStep2": "Signed in as {}",
+      "userZoneStep3": "Your learner progress and personal data are ready",
+      "openLearnerApp": "Switch to Learner View"
     },
     "superDash": {
       "superAdminDashboard": "Super Admin Dashboard",
