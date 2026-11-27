@@ -7,6 +7,7 @@ import '../../../core/constants/api_endpoints.dart';
 import 'package:lexilingo_app/features/admin/core/theme/admin_palette.dart';
 import '../../../core/network/api_client.dart';
 import '../../../shared/widgets/admin_shell.dart';
+import '../../../shared/widgets/admin_theme_toggle.dart';
 import 'package:lexilingo_app/core/widgets/skeleton_loading.dart';
 import 'package:lexilingo_app/core/widgets/stat_card.dart';
 import 'package:lexilingo_app/core/widgets/stagger_list.dart';
@@ -92,7 +93,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (mounted) {
         setState(() {
           _loading = false;
-          _error = 'Could not load data. Pull to refresh.';
+          _error = 'adminUi.dashboard.loadError'.tr();
         });
       }
     }
@@ -114,63 +115,76 @@ class _DashboardScreenState extends State<DashboardScreen> {
           slivers: [
             SliverAppBar(
               pinned: true,
-              backgroundColor: context.ac.background,
+              backgroundColor: context.ac.surface,
+              surfaceTintColor: Colors.transparent,
               elevation: 0,
-              scrolledUnderElevation: 0,
-              leading: IconButton(
-                icon: Icon(Icons.menu_rounded, color: context.ac.onSurface),
-                onPressed: AdminShell.openDrawer,
-              ),
+              scrolledUnderElevation: 0.5,
+              leading: MediaQuery.sizeOf(context).width >= adminWideBreakpoint
+                  ? null
+                  : IconButton(
+                      icon: Icon(Icons.menu_rounded, color: context.ac.onSurface),
+                      onPressed: AdminShell.openDrawer,
+                    ),
               title: Row(
                 children: [
                   Container(
-                    width: 32,
-                    height: 32,
+                    width: 30,
+                    height: 30,
                     decoration: BoxDecoration(
                       color: context.ac.primary,
                       borderRadius: BorderRadius.circular(AppRadius.sm),
                     ),
-                    child: Icon(
-                      Icons.language,
-                      color: context.ac.surface,
-                      size: 18,
+                    alignment: Alignment.center,
+                    child: Text(
+                      'L',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: context.ac.onPrimary,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
                   const SizedBox(width: AppSpacing.sm),
-                  Text(
-                    'LingoAdmin',
-                    style: Theme.of(context).textTheme.sectionTitle?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: context.ac.primary,
+                  Flexible(
+                    child: Text(
+                      'LexiLingo',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: context.ac.onSurface,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: context.ac.primaryContainer,
+                      borderRadius: AppRadius.smAll,
+                    ),
+                    child: Text(
+                      'ADMIN',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: context.ac.primary,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.6,
+                      ),
                     ),
                   ),
                 ],
               ),
               actions: [
+                const AdminThemeToggleButton(),
                 Padding(
                   padding: const EdgeInsets.only(right: 12),
-                  child: CircleAvatar(
+                  child: AdminUserAvatar(
+                    avatarUrl: user?.avatarUrl,
+                    displayName: user?.displayName ?? '',
                     radius: 16,
-                    backgroundColor: context.ac.primaryContainer,
-                    // Initial is always the child so it still shows if the
-                    // network avatar below fails to load — onBackgroundImageError
-                    // only silences the exception, it can't swap in a fallback.
-                    backgroundImage: user?.avatarUrl?.trim().isNotEmpty == true
-                        ? NetworkImage(user!.avatarUrl!.trim())
-                        : null,
-                    onBackgroundImageError:
-                        user?.avatarUrl?.trim().isNotEmpty == true
-                        ? (_, __) {}
-                        : null,
-                    child: Text(
-                      (user?.displayName.isNotEmpty == true)
-                          ? user!.displayName[0].toUpperCase()
-                          : 'A',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: context.ac.primary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
                   ),
                 ),
               ],
@@ -192,14 +206,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return [
         _buildQuickActions(context),
         const SizedBox(height: AppSpacing.xl),
-        GridView.count(
-          crossAxisCount: 2,
+        GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          crossAxisSpacing: 10,
-          mainAxisSpacing: 10,
-          childAspectRatio: 1.45,
-          children: List.generate(4, (_) => const StatCardSkeleton()),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            mainAxisExtent: 128,
+          ),
+          itemCount: 4,
+          itemBuilder: (_, __) => const StatCardSkeleton(),
         ),
         const SizedBox(height: 14),
         const SectionCardSkeleton(contentHeight: 140),
@@ -225,13 +242,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
         'adminUi.dashboard.keyMetrics'.tr(),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
           fontWeight: FontWeight.w700,
-          letterSpacing: 0.08,
+          letterSpacing: 0.6,
           color: context.ac.onSurfaceMuted,
         ),
       ),
       const SizedBox(height: AppSpacing.sm),
       if (_kpis == null || _kpis!.isEmpty)
-        const _EmptyState(message: 'No KPI data is available yet.')
+        _EmptyState(message: 'adminUi.dashboard.noKpiData'.tr())
       else ...[
         StaggeredEntrance(
           index: 0,
@@ -241,21 +258,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
         const SizedBox(height: AppSpacing.sm),
-        GridView.count(
-          crossAxisCount: 2,
+        GridView(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          crossAxisSpacing: 10,
-          mainAxisSpacing: 10,
-          childAspectRatio: 1.45,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            mainAxisExtent: 132,
+          ),
           children: [
             StaggeredEntrance(
               index: 1,
               child: StatCard(
                 label: 'adminUi.dashboard.active7d'.tr(),
                 value: _kpiVal('active_users_7d').round().toString(),
-                icon: Icons.trending_up_outlined,
-                note: 'Last 7 days',
+                icon: Icons.trending_up_rounded,
+                note: 'adminUi.dashboard.last7Days'.tr(),
               ),
             ),
             StaggeredEntrance(
@@ -263,8 +282,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: StatCard(
                 label: 'adminUi.dashboard.courses'.tr(),
                 value: _kpiVal('total_courses').round().toString(),
-                icon: Icons.menu_book_outlined,
-                note: 'Published',
+                icon: Icons.menu_book_rounded,
+                note: 'adminUi.dashboard.published'.tr(),
               ),
             ),
             StaggeredEntrance(
@@ -272,8 +291,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: StatCard(
                 label: 'adminUi.dashboard.avgDau'.tr(),
                 value: _kpiVal('avg_dau_30d').round().toString(),
-                icon: Icons.bar_chart_outlined,
-                note: '30-day avg',
+                icon: Icons.bar_chart_rounded,
+                note: 'adminUi.dashboard.avg30Days'.tr(),
               ),
             ),
             StaggeredEntrance(
@@ -283,8 +302,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 value: _kpiVal(
                   'total_lessons_completed_today',
                 ).round().toString(),
-                icon: Icons.task_alt_outlined,
-                note: 'Completed',
+                icon: Icons.task_alt_rounded,
+                note: 'adminUi.dashboard.completed'.tr(),
               ),
             ),
           ],
@@ -300,10 +319,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
           subtitle: 'adminUi.dashboard.engagementOver10Weeks'.tr(),
           trailing: _Chip(label: 'adminUi.dashboard.10Weeks'.tr()),
           child: _dauSeries.isEmpty
-              ? const _EmptyState(
-                  message: 'No engagement data for this period.',
+              ? _EmptyState(
+                  message: 'adminUi.dashboard.noEngagementData'.tr(),
                 )
-              : SizedBox(height: 130, child: _DauLineChart(values: _dauSeries)),
+              : SizedBox(
+                  height: 144,
+                  child: _DauLineChart(
+                    values: _dauSeries,
+                    labelPrefix: 'adminUi.dashboard.weekPrefix'.tr(),
+                  ),
+                ),
         ),
       ),
       const SizedBox(height: AppSpacing.md),
@@ -316,12 +341,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
           subtitle: 'adminUi.dashboard.totalRegisteredUsersOver30'.tr(),
           trailing: _Chip(label: 'adminUi.dashboard.30Days'.tr()),
           child: _growthSeries.isEmpty
-              ? const _EmptyState(
-                  message: 'No user growth data for this period.',
+              ? _EmptyState(
+                  message: 'adminUi.dashboard.noGrowthData'.tr(),
                 )
               : SizedBox(
-                  height: 130,
-                  child: _DauLineChart(values: _growthSeries, labelPrefix: 'D'),
+                  height: 144,
+                  child: _DauLineChart(
+                    values: _growthSeries,
+                    labelPrefix: 'adminUi.dashboard.dayPrefix'.tr(),
+                  ),
                 ),
         ),
       ),
@@ -334,7 +362,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           title: 'adminUi.dashboard.languages'.tr(),
           subtitle: 'adminUi.dashboard.enrollmentDistribution'.tr(),
           child: _languages.isEmpty
-              ? const _EmptyState(message: 'No language enrollment data yet.')
+              ? _EmptyState(message: 'adminUi.dashboard.noLanguageData'.tr())
               : Column(
                   children: _languages.asMap().entries.map((entry) {
                     final i = entry.key;
@@ -495,21 +523,22 @@ class _DauLineChart extends StatelessWidget {
       return FlSpot(e.key.toDouble(), e.value);
     }).toList();
 
-    final max = values
-        .fold(0.0, (a, b) => a > b ? a : b)
-        .clamp(1.0, double.infinity)
-        .toDouble();
-    final min = values.fold(max, (a, b) => a < b ? a : b);
-    final padding = (max - min) * 0.15;
+    final rawMin = values.fold(values.first, (a, b) => a < b ? a : b);
+    final rawMax = values.fold(values.first, (a, b) => a > b ? a : b);
+    final minY = rawMin <= 0 ? 0.0 : (rawMin * 0.9).floorToDouble();
+    final span = (rawMax - minY).clamp(4.0, double.infinity);
+    final yInterval = (span / 4).ceilToDouble().clamp(1.0, double.infinity);
+    final maxY = minY + yInterval * 4;
+    final xStep = (values.length / 5).ceil().clamp(1, values.length);
 
     return LineChart(
       LineChartData(
-        minY: (min - padding).clamp(0, double.infinity),
-        maxY: max + padding,
+        minY: minY,
+        maxY: maxY,
         gridData: FlGridData(
           show: true,
           drawVerticalLine: false,
-          horizontalInterval: (max / 4).clamp(1, double.infinity),
+          horizontalInterval: yInterval,
           getDrawingHorizontalLine: (_) =>
               FlLine(color: context.ac.outline, strokeWidth: 0.5),
         ),
@@ -518,33 +547,54 @@ class _DauLineChart extends StatelessWidget {
           leftTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 36,
-              interval: (max / 4).clamp(1, double.infinity),
-              getTitlesWidget: (value, _) => Text(
-                _formatY(value),
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: context.ac.onSurfaceMuted,
-                ),
-              ),
+              reservedSize: 38,
+              interval: yInterval,
+              getTitlesWidget: (value, _) {
+                if (value < minY || value > maxY) {
+                  return const SizedBox.shrink();
+                }
+                if (((value - minY) % yInterval).abs() > 0.01) {
+                  return const SizedBox.shrink();
+                }
+                return Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: Text(
+                    _formatY(value),
+                    textAlign: TextAlign.right,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: context.ac.onSurfaceMuted,
+                      fontSize: 10,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 22,
-              interval: (values.length / 5).ceilToDouble().clamp(
-                1,
-                double.infinity,
-              ),
+              reservedSize: 24,
+              interval: 1,
               getTitlesWidget: (value, _) {
-                final i = value.toInt();
-                if (i < 0 || i >= values.length) return const SizedBox.shrink();
-                return Text(
-                  'adminUi.dashboard.labelprefixn'.tr(
-                    args: [(i + 1).toString()],
-                  ),
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: context.ac.onSurfaceMuted,
+                final i = value.round();
+                if ((value - i).abs() > 0.01 || i < 0 || i >= values.length) {
+                  return const SizedBox.shrink();
+                }
+                final isLast = i == values.length - 1;
+                final isStep = i % xStep == 0;
+                final tooCloseToLast =
+                    !isLast && (values.length - 1 - i) < (xStep / 2).ceil();
+                if ((!isStep && !isLast) || tooCloseToLast) {
+                  return const SizedBox.shrink();
+                }
+                return Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    '$labelPrefix${i + 1}',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: context.ac.onSurfaceMuted,
+                      fontSize: 10,
+                    ),
                   ),
                 );
               },
@@ -650,7 +700,7 @@ class _QuickAction extends StatelessWidget {
               label,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                 fontWeight: FontWeight.w700,
-                letterSpacing: 0.05,
+                letterSpacing: 0.2,
                 color: filled ? context.ac.surface : context.ac.primary,
               ),
             ),

@@ -155,7 +155,8 @@
     "verifyEmailBanner": "メールアドレスを確認すると、ショップと紹介特典が使えるようになります。",
     "verifyEmailBannerAction": "リンクを再送",
     "googleLoginFailed": "Google サインインに失敗しました。もう一度お試しください。",
-    "facebookLoginFailed": "Facebook サインインに失敗しました。もう一度お試しください。"
+    "facebookLoginFailed": "Facebook サインインに失敗しました。もう一度お試しください。",
+    "facebookEmailInUse": "このFacebookアカウントのメールアドレスは、すでに別のアカウントで使用されています。以前と同じ方法でサインインしてください。"
   },
   "home": {
     "wordsLeftToReview": "復習する単語",
@@ -1037,10 +1038,8 @@
     "reviewReminderTitle": "単語を復習する時間です",
     "reviewChannelName": "毎日のリマインダー",
     "reviewChannelDescription": "毎日単語を復習するようリマインドします",
-    "reviewTitle": "単語の復習",
-    "reviewBodyDue": "今日は{count}語の復習があります！",
-    "reviewBodyStreak": "単語を復習する時間です。連続記録を守りましょう！",
-    "reviewBodyDueNow": "復習期限の単語が{count}語あります！",
+    "reviewTitle": "📚 単語の復習タイム",
+    "reviewBodyStreak": "2分の復習で記憶に定着。連続記録も守りましょう！🔥",
     "reviewWaitingBody": "{count}語が復習を待っています。",
     "checkin": {
       "channelName": "チェックインのリマインダー",
@@ -2513,7 +2512,10 @@
       "roleAdmin": "ADMIN",
       "roleSuper": "SUPER ADMIN",
       "permissionsFailed": "Could not load your permissions.",
-      "exit": "Exit admin"
+      "exit": "Exit admin",
+      "themeLight": "ライト",
+      "themeDark": "ダーク",
+      "themeSystem": "システム"
     },
     "access": {
       "forbiddenTitle": "No access",
@@ -3047,9 +3049,20 @@
       "analytics": "ANALYTICS",
       "totalUsers": "TOTAL USERS",
       "nActiveInTheLast": "{} active in the last 7 days",
-      "labelprefixn": "$labelPrefix{}",
+      "labelprefixn": "{}{}",
       "n": "{}%",
-      "retry": "Retry"
+      "retry": "Retry",
+      "loadError": "Could not load data. Pull to refresh.",
+      "noKpiData": "No KPI data is available yet.",
+      "last7Days": "Last 7 days",
+      "published": "Published",
+      "avg30Days": "30-day avg",
+      "completed": "Completed",
+      "noEngagementData": "No engagement data for this period.",
+      "noGrowthData": "No user growth data for this period.",
+      "noLanguageData": "No language enrollment data yet.",
+      "weekPrefix": "W",
+      "dayPrefix": "D"
     },
     "exercises": {
       "exercisesSavedSuccessfully": "Exercises saved successfully.",
@@ -3107,7 +3120,18 @@
       "switch": "SWITCH",
       "yourDualAccount": "Your dual account",
       "yourAdminAccountIsLinked": "Your admin account is linked to a LexiLingo learner profile. Open the LexiLingo app on your device to continue as a learner — you'll be logged in automatically if you use the same email.",
-      "dismiss": "Dismiss"
+      "dismiss": "Dismiss",
+      "appearance": "外観",
+      "syncedFromGoogle": "Account details are synced from your Google / LexiLingo profile.",
+      "language": "Display language",
+      "authMethodLabel": "Authentication",
+      "authMethodGoogle": "Google OAuth · Verified",
+      "serverConfigHint": "Inspect server configuration, environment & service flags",
+      "webConfigBody": "Editing Gem gift limits, partner LLM/API keys, and advanced system settings is managed on Web Admin.",
+      "userZoneStep1": "Return to the main LexiLingo learner experience",
+      "userZoneStep2": "Signed in as {}",
+      "userZoneStep3": "Your learner progress and personal data are ready",
+      "openLearnerApp": "Switch to Learner View"
     },
     "superDash": {
       "superAdminDashboard": "Super Admin Dashboard",

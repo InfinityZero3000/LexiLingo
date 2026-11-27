@@ -155,7 +155,8 @@
     "verifyEmailBanner": "Verifica tu correo para desbloquear la tienda y las recompensas por invitación.",
     "verifyEmailBannerAction": "Reenviar enlace",
     "googleLoginFailed": "Falló el inicio de sesión con Google. Inténtalo de nuevo.",
-    "facebookLoginFailed": "Falló el inicio de sesión con Facebook. Inténtalo de nuevo."
+    "facebookLoginFailed": "Falló el inicio de sesión con Facebook. Inténtalo de nuevo.",
+    "facebookEmailInUse": "El correo de esta cuenta de Facebook ya está en uso en otra cuenta. Inicia sesión como lo hiciste antes."
   },
   "home": {
     "wordsLeftToReview": "palabras por repasar",
@@ -1037,10 +1038,8 @@
     "reviewReminderTitle": "Es hora de repasar tu vocabulario",
     "reviewChannelName": "Recordatorios diarios",
     "reviewChannelDescription": "Te recuerda repasar vocabulario cada día",
-    "reviewTitle": "Repaso de vocabulario",
-    "reviewBodyDue": "¡Hoy tienes {count} palabras para repasar!",
-    "reviewBodyStreak": "Hora de repasar: ¡mantén tu racha!",
-    "reviewBodyDueNow": "¡Tienes {count} palabras pendientes de repaso!",
+    "reviewTitle": "📚 Hora de un repaso rápido",
+    "reviewBodyStreak": "Dos minutos ahora mantienen tus palabras frescas… ¡y tu racha viva! 🔥",
     "reviewWaitingBody": "{count} palabras esperan tu repaso.",
     "checkin": {
       "channelName": "Recordatorios de asistencia",
@@ -2513,7 +2512,10 @@
       "roleAdmin": "ADMIN",
       "roleSuper": "SUPER ADMIN",
       "permissionsFailed": "Could not load your permissions.",
-      "exit": "Exit admin"
+      "exit": "Exit admin",
+      "themeLight": "Claro",
+      "themeDark": "Oscuro",
+      "themeSystem": "Sistema"
     },
     "access": {
       "forbiddenTitle": "No access",
@@ -3047,9 +3049,20 @@
       "analytics": "ANALYTICS",
       "totalUsers": "TOTAL USERS",
       "nActiveInTheLast": "{} active in the last 7 days",
-      "labelprefixn": "$labelPrefix{}",
+      "labelprefixn": "{}{}",
       "n": "{}%",
-      "retry": "Retry"
+      "retry": "Retry",
+      "loadError": "Could not load data. Pull to refresh.",
+      "noKpiData": "No KPI data is available yet.",
+      "last7Days": "Last 7 days",
+      "published": "Published",
+      "avg30Days": "30-day avg",
+      "completed": "Completed",
+      "noEngagementData": "No engagement data for this period.",
+      "noGrowthData": "No user growth data for this period.",
+      "noLanguageData": "No language enrollment data yet.",
+      "weekPrefix": "W",
+      "dayPrefix": "D"
     },
     "exercises": {
       "exercisesSavedSuccessfully": "Exercises saved successfully.",
@@ -3107,7 +3120,18 @@
       "switch": "SWITCH",
       "yourDualAccount": "Your dual account",
       "yourAdminAccountIsLinked": "Your admin account is linked to a LexiLingo learner profile. Open the LexiLingo app on your device to continue as a learner — you'll be logged in automatically if you use the same email.",
-      "dismiss": "Dismiss"
+      "dismiss": "Dismiss",
+      "appearance": "Apariencia",
+      "syncedFromGoogle": "Account details are synced from your Google / LexiLingo profile.",
+      "language": "Display language",
+      "authMethodLabel": "Authentication",
+      "authMethodGoogle": "Google OAuth · Verified",
+      "serverConfigHint": "Inspect server configuration, environment & service flags",
+      "webConfigBody": "Editing Gem gift limits, partner LLM/API keys, and advanced system settings is managed on Web Admin.",
+      "userZoneStep1": "Return to the main LexiLingo learner experience",
+      "userZoneStep2": "Signed in as {}",
+      "userZoneStep3": "Your learner progress and personal data are ready",
+      "openLearnerApp": "Switch to Learner View"
     },
     "superDash": {
       "superAdminDashboard": "Super Admin Dashboard",

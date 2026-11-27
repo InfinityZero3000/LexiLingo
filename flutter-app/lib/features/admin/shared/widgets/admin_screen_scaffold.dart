@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import 'admin_shell.dart';
+import 'admin_theme_toggle.dart';
 
 /// Widest a screen's content grows; beyond it the content stays centred so a
 /// list does not stretch across a desktop-sized window.
@@ -39,8 +40,8 @@ class AdminScreenScaffold extends StatelessWidget {
                       onPressed: AdminShell.openDrawer,
                       icon: const Icon(Icons.menu_rounded),
                     )),
-        title: Text(title),
-        actions: actions,
+        title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+        actions: [...?actions, const AdminThemeToggleButton()],
       ),
       floatingActionButton: floatingActionButton,
       body: Align(
