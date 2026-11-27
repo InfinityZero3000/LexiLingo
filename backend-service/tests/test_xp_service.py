@@ -1,7 +1,7 @@
 import uuid
 from datetime import date
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from fastapi import HTTPException
@@ -199,15 +199,16 @@ async def test_a_game_that_earns_nothing_does_not_claim_the_cap_was_reached():
     user = _make_user()
     db = _make_db(_result(scalar_one_or_none=user), _result(scalar_one_or_none=None))
 
-    result = await award_xp_transaction(
-        db=db,
-        user=user,
-        source="game",
-        base_xp=0,
-        source_id="game-session-nothing",
-        daily_xp_loader=AsyncMock(return_value=11),
-        streak_loader=AsyncMock(return_value=1),
-    )
+    with patch("app.services.xp_service.get_daily_activity_xp", new_callable=AsyncMock, return_value=11):
+        result = await award_xp_transaction(
+            db=db,
+            user=user,
+            source="game",
+            base_xp=0,
+            source_id="game-session-nothing",
+            daily_xp_loader=AsyncMock(return_value=11),
+            streak_loader=AsyncMock(return_value=1),
+        )
 
     assert (result.xp_awarded, result.daily_cap_remaining) == (0, 489)
     assert "cap" not in result.message.lower()

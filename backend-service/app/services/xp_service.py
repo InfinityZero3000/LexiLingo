@@ -80,6 +80,21 @@ async def get_daily_xp(user_id: uuid.UUID, db: AsyncSession) -> int:
     return int(result.scalar() or 0)
 
 
+async def get_daily_activity_xp(user_id: uuid.UUID, db: AsyncSession) -> int:
+    """XP earned today from every source, as DailyActivity counts it.
+
+    Differs from `get_daily_xp`, which counts only what the daily cap governs:
+    lessons pay XP without an XPTransaction, so that sum under-reports the day.
+    """
+    result = await db.execute(
+        select(DailyActivity.xp_earned).where(
+            DailyActivity.user_id == user_id,
+            DailyActivity.activity_date == datetime.now(timezone.utc).date(),
+        )
+    )
+    return int(result.scalar() or 0)
+
+
 def calculate_streak_multiplier(streak_days: int) -> float:
     for threshold, multiplier in sorted(
         STREAK_MULTIPLIERS.items(),
@@ -198,7 +213,7 @@ async def award_xp_transaction(
             base_xp=capped_base_xp,
             multiplier=multiplier,
             new_total_xp=old_xp,
-            daily_xp_today=daily_xp_today,
+            daily_xp_today=await get_daily_activity_xp(user.id, db),
             # Nothing earned is not the same as nothing left to earn.
             daily_cap_remaining=cap_remaining,
             leveled_up=False,
@@ -260,7 +275,7 @@ async def award_xp_transaction(
 
     from app.services.streak_service import record_daily_activity
 
-    await record_daily_activity(
+    daily = await record_daily_activity(
         db,
         user.id,
         xp_earned=xp_awarded,
@@ -305,7 +320,7 @@ async def award_xp_transaction(
         base_xp=capped_base_xp,
         multiplier=multiplier,
         new_total_xp=new_xp,
-        daily_xp_today=daily_xp_today + xp_awarded,
+        daily_xp_today=daily.xp_earned,
         daily_cap_remaining=max(0, cap_remaining - xp_awarded),
         leveled_up=leveled_up,
         old_level=calculated_old_level,

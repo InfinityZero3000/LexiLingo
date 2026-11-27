@@ -28,6 +28,7 @@ from app.services.xp_service import (
     SERVER_ONLY_SOURCES,
     award_xp_transaction,
     capped_duration_seconds,
+    get_daily_activity_xp,
 )
 from app.crud.leaderboard import competition_ranks
 
@@ -239,7 +240,7 @@ async def get_xp_profile(
         level_progress_percent=level_info.level_progress_percent,
         xp_for_next_level=level_info.xp_for_next_level,
         current_xp_in_level=level_info.current_xp_in_level,
-        daily_xp_today=daily_xp,
+        daily_xp_today=await get_daily_activity_xp(user_id, db),
         daily_cap_remaining=max(0, DAILY_XP_CAP - daily_xp),
         streak_days=streak_days,
         best_streak=best_streak,
