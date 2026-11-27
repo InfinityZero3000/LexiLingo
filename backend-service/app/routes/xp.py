@@ -25,6 +25,7 @@ from app.models.games import XPTransaction
 from app.services.level_service import get_numeric_level_progress
 from app.services.xp_service import (
     MAX_STUDY_MINUTES_PER_AWARD,
+    SERVER_ONLY_SOURCES,
     award_xp_transaction,
     capped_duration_seconds,
 )
@@ -163,10 +164,14 @@ async def award_xp(
     - 7+ days → 1.5× multiplier
     - 30+ days → 2.0× multiplier
     """
-    if body.source == "game":
+    if body.source in SERVER_ONLY_SOURCES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Game XP must be awarded through a completed game session.",
+            detail=(
+                "Game XP must be awarded through a completed game session."
+                if body.source == "game"
+                else f"{body.source.capitalize()} XP is awarded by the server."
+            ),
         )
 
     result = await award_xp_transaction(

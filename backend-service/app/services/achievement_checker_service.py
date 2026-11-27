@@ -10,6 +10,7 @@ from typing import List, Optional, Dict, Any
 from uuid import UUID
 from datetime import datetime, timezone
 import logging
+from fastapi import HTTPException, status
 from sqlalchemy import select, func, and_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -20,6 +21,7 @@ from app.models.vocabulary import UserVocabulary, VocabularyStatus
 from app.models.user import User
 from app.models.games import GameSession
 from app.models.proficiency import SkillDailyStat, SkillType
+from app.services.xp_service import award_xp_transaction
 
 logger = logging.getLogger(__name__)
 
@@ -451,6 +453,9 @@ class AchievementCheckerService:
             # Another request already unlocked this — safe to ignore.
             return None
 
+        if achievement.xp_reward > 0:
+            await self._award_xp(user_id, achievement)
+
         # Award gems (if configured)
         if achievement.gems_reward > 0:
             from app.crud.gamification import WalletCRUD
@@ -464,6 +469,32 @@ class AchievementCheckerService:
             )
 
         return user_achievement
+
+
+    async def _award_xp(self, user_id: UUID, achievement: Achievement) -> None:
+        """Pay the advertised XP exactly: no streak bonus, no daily cap."""
+        user = await self.db.get(User, user_id)
+        if user is None:
+            return
+
+        async def nothing_earned_yet(_user_id: UUID, _db: AsyncSession) -> int:
+            return 0
+
+        try:
+            await award_xp_transaction(
+                db=self.db,
+                user=user,
+                source="achievement",
+                base_xp=achievement.xp_reward,
+                source_id=str(achievement.id),
+                source_detail=achievement.slug,
+                commit=False,
+                daily_xp_loader=nothing_earned_yet,
+                streak_loader=nothing_earned_yet,
+            )
+        except HTTPException as error:
+            if error.status_code != status.HTTP_409_CONFLICT:
+                raise
 
 
 # ============================================================================

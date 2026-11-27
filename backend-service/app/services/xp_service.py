@@ -32,10 +32,15 @@ XP_SOURCE_CAPS = {
     "book": 25,
     "lesson": 50,
     "daily_challenge": 50,
+    "achievement": MAX_SINGLE_AWARD,
 }
 # Sources where the same activity must never be awarded twice.
 # source_id is required for these to enforce idempotency via the DB partial unique index.
-REPEAT_SENSITIVE_SOURCES: frozenset[str] = frozenset({"game", "lesson", "daily_challenge"})
+REPEAT_SENSITIVE_SOURCES: frozenset[str] = frozenset(
+    {"game", "lesson", "daily_challenge", "achievement"}
+)
+# Sources only the server may grant; /xp/award refuses them.
+SERVER_ONLY_SOURCES: frozenset[str] = frozenset({"game", "achievement"})
 
 
 @dataclass(frozen=True)
