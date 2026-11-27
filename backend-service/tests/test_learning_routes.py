@@ -624,7 +624,7 @@ def test_lesson_complete_response_accepts_achievement_ids():
 
     rich = {"id": str(uuid.uuid4()), "name": "First Lesson", "badge_icon": "star"}
     base = dict(
-        attempt_id=uuid.uuid4(), passed=True, final_score=100.0, total_xp_earned=12,
+        attempt_id=uuid.uuid4(), passed=True, final_score=100.0, pass_threshold=80, total_xp_earned=12,
         time_spent_seconds=9, accuracy=100.0, stars_earned=3, next_lesson_unlocked=None,
         total_questions=5, correct_answers=5, wrong_answers=0, hints_used=0,
     )
