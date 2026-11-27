@@ -395,3 +395,16 @@ async def test_a_void_paper_starts_no_cooldown_and_certifies_nothing(db, user, r
     assert (user.level, user.certified_level) == ("A1", "A1")
     assert (await db.execute(select(LevelAssessmentTest))).scalars().all() == []
     assert (await routes.get_eligibility(db, user))["reason"] != "cooldown"
+
+
+async def test_an_ungraded_first_section_is_void_even_when_later_ones_are_perfect(db, user, ready):
+    await _bank(db, {"A2": 5, "B1": 5})
+    paper = await routes.start_exam(db, user)
+    answers = _answers(paper, {"A2", "B1"})
+    await _delete_questions(db, paper, "A2", keep=1)
+
+    result = await routes.submit_exam(uuid_of(paper), routes.ExamSubmission(answers=answers), db, user)
+
+    assert (result["passed"], result["void"], result["retry_at"]) == (False, True, None)
+    assert user.certified_level == "A1"
+    assert (await routes.get_eligibility(db, user))["reason"] != "cooldown"

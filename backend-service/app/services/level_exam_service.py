@@ -224,8 +224,13 @@ def grade(
 
 
 def is_void(section_scores: list[dict[str, Any]] | None) -> bool:
-    """A paper none of whose sections could be graded says nothing about the learner."""
-    return bool(section_scores) and not any(s.get("graded", True) for s in section_scores)
+    """The run of passed sections ended before it began, on a section we could not grade.
+
+    That says nothing about the learner, whatever the later sections scored:
+    no level is certified and no cooldown starts. A run that ends on a graded,
+    failed section is an ordinary failure.
+    """
+    return bool(section_scores) and not section_scores[0].get("graded", True)
 
 
 async def latest_attempt(db: AsyncSession, user_id: Any) -> LevelExamAttempt | None:
