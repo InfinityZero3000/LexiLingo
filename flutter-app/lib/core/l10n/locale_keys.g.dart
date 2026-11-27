@@ -267,6 +267,8 @@ abstract class LocaleKeys {
   static const lesson_nextLesson = 'lesson.nextLesson';
   static const lesson_excellent = 'lesson.excellent';
   static const lesson_wellDone = 'lesson.wellDone';
+  static const lesson_notPassedTitle = 'lesson.notPassedTitle';
+  static const lesson_passMarkHint = 'lesson.passMarkHint';
   static const lesson_scoreSummary = 'lesson.scoreSummary';
   static const lesson_practiceAgain = 'lesson.practiceAgain';
   static const lesson_exitLessonTitle = 'lesson.exitLessonTitle';

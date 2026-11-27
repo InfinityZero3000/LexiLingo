@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:lottie/lottie.dart';
 import 'package:lexilingo_app/core/services/sound_service.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
+import '../../domain/entities/lesson_complete.dart';
 import '../../domain/entities/lesson_entity.dart';
 import '../providers/learning_provider.dart';
 import '../widgets/quiz_widget.dart';
@@ -799,6 +800,10 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
     final total = provider.totalExercises;
     final percentage = total == 0 ? 0 : (score / total * 100).toInt();
     final saving = provider.isCompleting;
+    final passMark =
+        provider.lessonResult?.passThreshold ?? kDefaultLessonPassMark;
+    final passed = provider.lessonResult?.passed ?? percentage >= passMark;
+    final excellent = passed && percentage >= kDefaultLessonPassMark;
 
     if (!_streakRecorded) {
       _streakRecorded = true;
@@ -807,17 +812,17 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
 
     return Stack(
       children: [
-        // Confetti animation
-        Positioned.fill(
-          child: IgnorePointer(
-            child: Lottie.asset(
-              'animation/Confetti.json',
-              fit: BoxFit.cover,
-              repeat: false,
-              renderCache: RenderCache.raster,
+        if (passed)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Lottie.asset(
+                'animation/Confetti.json',
+                fit: BoxFit.cover,
+                repeat: false,
+                renderCache: RenderCache.raster,
+              ),
             ),
           ),
-        ),
 
         // Content
         LayoutBuilder(
@@ -846,7 +851,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                           height: 140,
                           decoration: BoxDecoration(
                             color:
-                                (percentage >= 80
+                                (!passed || excellent
                                         ? context.status.warning
                                         : context.status.success)
                                     .withValues(alpha: 0.2),
@@ -854,7 +859,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                             boxShadow: [
                               BoxShadow(
                                 color:
-                                    (percentage >= 80
+                                    (!passed || excellent
                                             ? context.status.warning
                                             : context.status.success)
                                         .withValues(alpha: 0.3),
@@ -864,7 +869,13 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                             ],
                           ),
                         ),
-                        if (percentage >= 80)
+                        if (!passed)
+                          Icon(
+                            Icons.replay_rounded,
+                            color: context.status.warning,
+                            size: 72,
+                          )
+                        else if (excellent)
                           const LottieAnimationWidget(
                             animation: LottieAnimation.starBurst,
                             width: 120,
@@ -898,43 +909,51 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                     },
                     child: Column(
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              percentage >= 80
-                                  ? Icons.celebration
-                                  : Icons.auto_awesome,
-                              color: percentage >= 80
-                                  ? context.status.warning
-                                  : AppColors.purple,
-                              size: 28,
-                            ),
-                            const SizedBox(width: 8),
-                            Flexible(
-                              child: Text(
-                                percentage >= 80
-                                    ? 'lesson.excellent'.tr()
-                                    : 'lesson.wellDone'.tr(),
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineMedium
-                                    ?.copyWith(fontWeight: FontWeight.bold),
+                        if (!passed)
+                          Text(
+                            'lesson.notPassedTitle'.tr(),
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.headlineMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          )
+                        else
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                excellent
+                                    ? Icons.celebration
+                                    : Icons.auto_awesome,
+                                color: excellent
+                                    ? context.status.warning
+                                    : AppColors.purple,
+                                size: 28,
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            Icon(
-                              percentage >= 80
-                                  ? Icons.celebration
-                                  : Icons.auto_awesome,
-                              color: percentage >= 80
-                                  ? context.status.warning
-                                  : AppColors.purple,
-                              size: 28,
-                            ),
-                          ],
-                        ),
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  excellent
+                                      ? 'lesson.excellent'.tr()
+                                      : 'lesson.wellDone'.tr(),
+                                  textAlign: TextAlign.center,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineMedium
+                                      ?.copyWith(fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Icon(
+                                excellent
+                                    ? Icons.celebration
+                                    : Icons.auto_awesome,
+                                color: excellent
+                                    ? context.status.warning
+                                    : AppColors.purple,
+                                size: 28,
+                              ),
+                            ],
+                          ),
                         const SizedBox(height: 12),
                         Text(
                           textAlign: TextAlign.center,
@@ -953,6 +972,21 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                                 ),
                               ),
                         ),
+                        if (!passed) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            'lesson.passMarkHint'.tr(
+                              namedArgs: {'passMark': '$passMark'},
+                            ),
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurfaceVariant,
+                                ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
@@ -1036,7 +1070,52 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
                   const SizedBox(height: 24),
 
                   // Action buttons
-                  if (provider.lessonResult?.nextLessonUnlocked != null) ...[
+                  if (!passed) ...[
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: saving ? null : provider.restartLesson,
+                        icon: const Icon(Icons.replay_rounded),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: AppSpacing.lg,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: AppRadius.mdAll,
+                          ),
+                        ),
+                        label: Text(
+                          'lesson.practiceAgain'.tr(),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: saving
+                            ? null
+                            : () => Navigator.pop(context, true),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: AppSpacing.lg,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: AppRadius.mdAll,
+                          ),
+                        ),
+                        child: Text(
+                          'lesson.continueButton'.tr(),
+                          style: const TextStyle(fontSize: 18),
+                        ),
+                      ),
+                    ),
+                  ] else if (provider.lessonResult?.nextLessonUnlocked !=
+                      null) ...[
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
@@ -1123,7 +1202,7 @@ class _LearningSessionScreenState extends State<LearningSessionScreen> {
 
                   const SizedBox(height: 12),
 
-                  if (percentage < 80)
+                  if (passed && percentage < kDefaultLessonPassMark)
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton(

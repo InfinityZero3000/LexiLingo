@@ -428,6 +428,8 @@
     "continueButton": "Continue",
     "nextLesson": "Next lesson",
     "excellent": "Excellent!",
+    "notPassedTitle": "Not passed yet",
+    "passMarkHint": "You need {passMark}% to pass this lesson.",
     "wellDone": "Well done!",
     "scoreSummary": "You scored {score}/{total} ({percentage}%)",
     "practiceAgain": "Practice Again",
