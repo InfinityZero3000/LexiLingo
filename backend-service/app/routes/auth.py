@@ -8,6 +8,7 @@ import secrets
 import time
 import uuid
 from datetime import datetime, timedelta, timezone
+from typing import Any
 
 import anyio
 from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Request, Response, status
@@ -22,6 +23,7 @@ from app.core.config import settings
 from app.core.dependencies import get_current_user
 from app.core.firebase_auth import revoke_all_refresh_tokens as _revoke_all_refresh_tokens
 from app.core import login_lockout
+from app.core.refusal import refusal
 from app.core.session_cookie import (
     COOKIE_NAME,
     clear_refresh_cookie,
@@ -37,8 +39,8 @@ from app.core.security import (
     verify_password_async,
 )
 from app.core.token_blacklist import SessionCut, TokenBlacklist
-from app.services.admin_audit import record_admin_action
-from app.services.user_lookup import find_user_by_email
+from app.services.admin_audit import build_audit_log, record_admin_action
+from app.services.user_lookup import find_user_by_email, normalize_email
 from app.models.user import User, RefreshToken
 from app.services.cefr_level_service import level_verified
 from app.services.rank_service import rank_proficiency_level
@@ -54,7 +56,7 @@ from app.services.auth_service import (
 )
 from app.schemas.auth import (
     RegisterRequest, LoginRequest, LoginResponse, RefreshTokenRequest, TokenResponse,
-    ChangePasswordRequest, GoogleLoginRequest, FacebookLoginRequest, ForgotPasswordRequest,
+    ChangePasswordRequest, GoogleLoginRequest, FacebookLoginRequest, FacebookLinkRequest, ForgotPasswordRequest,
     ResetPasswordRequest, VerifyEmailRequest, VerifyEmailResponse, LogoutRequest
 )
 from app.schemas.user import UserResponse, lexi_reply_language_of
@@ -646,6 +648,61 @@ async def google_login(
     )
 
 
+async def _facebook_claims(id_token: str) -> dict[str, Any]:
+    """The claims of a genuine Facebook sign-in token that names an email."""
+    from app.core.firebase_auth import verify_firebase_token
+
+    claims = await anyio.to_thread.run_sync(verify_firebase_token, id_token)
+    if not claims:
+        logger.error("Firebase token verification failed for a Facebook token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid Firebase ID token"
+        )
+    if (claims.get("firebase") or {}).get("sign_in_provider") != "facebook.com":
+        logger.warning("Token provided is not a facebook.com login token.")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not a Facebook sign-in token"
+        )
+    if not claims.get("email"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email not provided by Facebook/Firebase account."
+        )
+    return claims
+
+
+@router.post("/facebook/link", response_model=MessageResponse)
+async def link_facebook(
+    request: FacebookLinkRequest,
+    http_request: Request,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> MessageResponse:
+    """
+    Merge Facebook into the signed-in account.
+
+    Both sides are proven: the session shows the caller owns the account, the token
+    that they hold a Facebook account with the same email.
+    """
+    claims = await _facebook_claims(request.id_token)
+    if normalize_email(claims["email"]) != normalize_email(current_user.email):
+        raise refusal(
+            status.HTTP_400_BAD_REQUEST,
+            "This Facebook account uses a different email address.",
+            {"reason": "email_mismatch"},
+        )
+    if "facebook" not in (current_user.provider or []):
+        current_user.add_provider("facebook")
+        db.add(build_audit_log(
+            actor_id=current_user.id, action="link_provider", resource_type="auth",
+            resource_id=str(current_user.id), details={"provider": "facebook"}, request=http_request,
+        ))
+        await db.commit()
+    return MessageResponse(message="Facebook is now linked to this account.")
+
+
 @router.post("/facebook", response_model=LoginResponse)
 async def facebook_login(
     request: FacebookLoginRequest,
@@ -659,36 +716,22 @@ async def facebook_login(
     - Uses same account linking / admin rules logic as Google
     - Returns JWT tokens
     """
-    from app.core.firebase_auth import verify_firebase_token, get_or_create_user_from_claims
+    from app.core.firebase_auth import AccountLinkRequired, get_or_create_user_from_claims
     from app.core.config import settings
 
     logger.info(f"Facebook (Firebase) login attempt: source={request.source}")
 
-    # Verify Firebase ID token
-    claims = await anyio.to_thread.run_sync(verify_firebase_token, request.id_token)
-    if not claims:
-        logger.error(f"Firebase token verification failed for Facebook login (source={request.source})")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid Firebase ID token"
-        )
-
-    if (claims.get("firebase") or {}).get("sign_in_provider") != "facebook.com":
-        logger.warning("Token provided to /facebook is not a facebook.com login token.")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not a Facebook sign-in token"
-        )
-
-    email = claims.get("email")
-    if not email:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email not provided by Facebook/Firebase account."
-        )
+    claims = await _facebook_claims(request.id_token)
 
     try:
         user = await get_or_create_user_from_claims(db, claims)
+    except AccountLinkRequired as exc:
+        # 400, as before: installed apps read the sentence; newer ones read the reason.
+        raise refusal(
+            status.HTTP_400_BAD_REQUEST,
+            str(exc),
+            {"reason": "account_link_required", "methods": exc.methods},
+        )
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
