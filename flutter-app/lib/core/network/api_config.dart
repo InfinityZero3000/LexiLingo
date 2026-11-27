@@ -136,7 +136,7 @@ class ApiConfig {
     return normalized;
   }
 
-  static bool get _shouldUseLocalFallback => false;
+  static bool get _shouldUseLocalFallback => !_mustUseProductionBackend;
 
   static bool get _mustUseProductionBackend {
     if (kReleaseMode) return true;
