@@ -14,6 +14,13 @@ from httpx import AsyncClient, ASGITransport
 import uuid
 
 
+@pytest.fixture(autouse=True)
+def _streak_credit_is_tested_in_test_streak_from_xp():
+    with patch("app.services.streak_service.update_user_streak", new=AsyncMock()):
+        yield
+
+
+
 # ============================================================================
 # Fixture: authenticated client with mocked DB and auth
 # ============================================================================

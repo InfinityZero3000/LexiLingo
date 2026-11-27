@@ -291,6 +291,10 @@ async def award_xp_transaction(
         league=rank_info.rank.value,
         today=datetime.now(timezone.utc).date(),
     )
+    if not uncapped:
+        from app.services.streak_service import update_user_streak
+
+        await update_user_streak(db, user.id)
 
     if commit:
         try:

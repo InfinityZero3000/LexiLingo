@@ -10,6 +10,13 @@ from app.models.progress import DailyActivity
 from app.services.xp_service import REPEAT_SENSITIVE_SOURCES, award_xp_transaction
 
 
+@pytest.fixture(autouse=True)
+def _streak_credit_is_tested_in_test_streak_from_xp():
+    with patch("app.services.streak_service.update_user_streak", new=AsyncMock()):
+        yield
+
+
+
 def _result(*, scalar_one_or_none=None):
     result = MagicMock()
     result.scalar_one_or_none.return_value = scalar_one_or_none
