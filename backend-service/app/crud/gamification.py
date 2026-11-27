@@ -104,26 +104,6 @@ class AchievementCRUD:
         result = await db.execute(query)
         return list(result.all())
 
-    @staticmethod
-    async def unlock_achievement(
-        db: AsyncSession,
-        user_id: UUID,
-        achievement_id: UUID
-    ) -> Optional[UserAchievement]:
-        """Unlock an achievement for user (idempotent, race-safe)"""
-        user_achievement = UserAchievement(
-            user_id=user_id,
-            achievement_id=achievement_id
-        )
-        db.add(user_achievement)
-        try:
-            await db.commit()
-            await db.refresh(user_achievement)
-            return user_achievement
-        except IntegrityError:
-            await db.rollback()
-            return None  # Already unlocked
-
 
 # ============================================================================
 # Wallet CRUD

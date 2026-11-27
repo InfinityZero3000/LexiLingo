@@ -1180,24 +1180,25 @@ async def complete_lesson(
     if attempt.passed:
         await update_user_streak(db, current_user.id)
     
-    # Check achievements after lesson completion
+    # Check achievements after a passed lesson; a failed one is practice only.
     unlocked_achievements = []
     try:
-        unlocked_achievements = await check_achievements_for_user(
-            db, current_user.id, "lesson_complete"
-        )
-        # Also check XP-based achievements
-        xp_achievements = await check_achievements_for_user(
-            db, current_user.id, "xp_earned"
-        )
-        unlocked_achievements.extend(xp_achievements)
-        
-        # Check for perfect score achievements
-        if attempt.score == 100:
-            perfect_achievements = await check_achievements_for_user(
-                db, current_user.id, "quiz_complete"
+        if attempt.passed:
+            unlocked_achievements = await check_achievements_for_user(
+                db, current_user.id, "lesson_complete"
             )
-            unlocked_achievements.extend(perfect_achievements)
+            # Also check XP-based achievements
+            xp_achievements = await check_achievements_for_user(
+                db, current_user.id, "xp_earned"
+            )
+            unlocked_achievements.extend(xp_achievements)
+
+            # Check for perfect score achievements
+            if attempt.score == 100:
+                perfect_achievements = await check_achievements_for_user(
+                    db, current_user.id, "quiz_complete"
+                )
+                unlocked_achievements.extend(perfect_achievements)
     except Exception as e:
         # Don't fail the lesson completion if achievement check fails
         logger.warning("Achievement check error: %s", e)

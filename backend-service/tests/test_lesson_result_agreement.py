@@ -96,3 +96,29 @@ async def test_result_carries_the_lessons_own_pass_threshold(
 
     assert result["pass_threshold"] == 65
     assert result["passed"] is True
+
+
+async def test_a_failed_lesson_unlocks_no_achievement(
+    async_client: AsyncClient,
+    auth_headers: dict,
+    test_user,
+    test_lesson_attempt,
+    db_session,
+):
+    from sqlalchemy import func, select
+
+    from app.models.gamification import Achievement, UserAchievement
+
+    db_session.add(
+        Achievement(
+            slug="any-lesson", name="Any", description="d", condition_type="lesson_complete",
+            condition_value=0, xp_reward=0, gems_reward=0,
+        )
+    )
+    test_lesson_attempt.score = 60
+    await db_session.commit()
+
+    result = await _complete(async_client, auth_headers, test_lesson_attempt.id)
+
+    assert result["achievements_unlocked"] == []
+    assert (await db_session.execute(select(func.count(UserAchievement.id)))).scalar_one() == 0
