@@ -1464,6 +1464,11 @@
     "equipNow": "Equip now",
     "avatarEquipped": "Avatar equipped successfully!",
     "avatarEquipFailed": "Could not equip this avatar.",
+    "buy": "Buy",
+    "owned": "Owned",
+    "sold": "Sold",
+    "verifyEmailRequired": "Verify your email to buy from the shop.",
+    "verifyEmailAction": "Resend email",
     "soldOut": "SOLD OUT",
     "stockLeft": "{count} LEFT",
     "boost": "Boost"

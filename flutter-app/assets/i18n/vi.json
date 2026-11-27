@@ -1464,6 +1464,11 @@
     "equipNow": "Trang bị ngay",
     "avatarEquipped": "Đã trang bị avatar!",
     "avatarEquipFailed": "Không thể trang bị avatar này.",
+    "buy": "Mua",
+    "owned": "Đã có",
+    "sold": "Đã bán",
+    "verifyEmailRequired": "Hãy xác minh email để mua trong cửa hàng.",
+    "verifyEmailAction": "Gửi lại email",
     "soldOut": "HẾT HÀNG",
     "stockLeft": "CÒN {count}",
     "boost": "Tăng tốc"

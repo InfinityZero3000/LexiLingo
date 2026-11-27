@@ -251,10 +251,10 @@ class ShopItemCard extends StatelessWidget {
                               )
                             : Text(
                                 isOwned
-                                    ? 'OWNED'
+                                    ? 'shop.owned'.tr()
                                     : item.isOutOfStock
-                                    ? 'SOLD'
-                                    : 'BUY',
+                                    ? 'shop.sold'.tr()
+                                    : 'shop.buy'.tr(),
                                 style: Theme.of(context).textTheme.bodySmall
                                     ?.copyWith(
                                       fontWeight: FontWeight.bold,
