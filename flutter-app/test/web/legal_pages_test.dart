@@ -39,6 +39,16 @@ void main() {
     }
   }
 
+  test('every page names its share image, which link crawlers require', () {
+    for (final page in ['privacy', 'terms', 'data-deletion']) {
+      expect(
+        File('web/$page.html').readAsStringSync(),
+        contains('<meta property="og:image" content="https://'),
+        reason: fix,
+      );
+    }
+  });
+
   test('the privacy policy discloses Facebook sign-in', () {
     for (final lang in langs) {
       expect(legal(lang)['privacy4Body'], contains('Facebook'));

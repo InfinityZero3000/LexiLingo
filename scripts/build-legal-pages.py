@@ -259,6 +259,9 @@ def page(filename: str, title: str, description: str, sections: list[str]) -> st
 <meta name="description" content="{html.escape(description)}">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="{SITE}/{filename}">
+<meta property="og:image" content="{SITE}/og-image.png">
+<meta property="og:image:width" content="1774">
+<meta property="og:image:height" content="887">
 <style>{CSS}</style>
 </head>
 <body>
