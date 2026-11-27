@@ -109,6 +109,7 @@ async def register_device(
             db,
             current_user.id,
             tokens=[request.fcm_token],
+            lang=request.locale or current_user.native_language,
         )
 
     return ApiResponse(

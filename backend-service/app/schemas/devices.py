@@ -15,6 +15,10 @@ class DeviceRegisterRequest(BaseModel):
     device_type: str = Field(..., description="Device type: ios, android, web")
     device_name: Optional[str] = Field(None, description="Human readable device name")
     fcm_token: Optional[str] = Field(None, description="Firebase Cloud Messaging token")
+    # The UI language on this device. Not stored: it only picks the language of
+    # a push sent in this request, which can come before onboarding has saved
+    # the learner's native language.
+    locale: str | None = Field(None, max_length=16, description="App UI language code")
 
 
 class DeviceResponse(BaseModel):

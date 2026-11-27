@@ -22,6 +22,7 @@ from app.models.progress import DailyActivity, LessonCompletion, Streak, UserPro
 from app.models.reminder import UserReminderPreference
 from app.models.user import User, UserDevice
 from app.services.email_service import EmailService, is_undeliverable
+from app.services.push_copy import nudge_copy
 from app.services.push_notification_service import PushNotificationService
 
 logger = logging.getLogger(__name__)
@@ -44,6 +45,8 @@ class Recipient:
     streak_days: int = 0
     xp: int = 0
     words: int = 0
+    # The learner's native language: the push and inbox copy are written in it.
+    lang: str | None = None
 
 
 def _eligible_user():
@@ -94,7 +97,7 @@ async def select_activation(db: AsyncSession, kind: str, now: datetime) -> list[
     low, high = _ACTIVATION_WINDOWS[kind]
     rows = (
         await db.execute(
-            select(User.id, User.email, User.display_name)
+            select(User.id, User.email, User.display_name, User.native_language)
             .where(
                 *_eligible_user(),
                 User.created_at <= now - timedelta(hours=low),
@@ -109,7 +112,11 @@ async def select_activation(db: AsyncSession, kind: str, now: datetime) -> list[
     ).all()
     rows = [r for r in rows if not is_undeliverable(r.email)]
     done = await _already_sent(db, [r.id for r in rows], kind, kind)
-    return [Recipient(r.id, r.email, r.display_name, kind) for r in rows if r.id not in done]
+    return [
+        Recipient(r.id, r.email, r.display_name, kind, lang=r.native_language)
+        for r in rows
+        if r.id not in done
+    ]
 
 
 async def select_streak_risk(db: AsyncSession, now: datetime) -> list[Recipient]:
@@ -120,6 +127,7 @@ async def select_streak_risk(db: AsyncSession, now: datetime) -> list[Recipient]
                 User.id,
                 User.email,
                 User.display_name,
+                User.native_language,
                 Streak.current_streak,
                 Streak.last_activity_date,
                 UserReminderPreference.timezone,
@@ -157,7 +165,14 @@ async def select_streak_risk(db: AsyncSession, now: datetime) -> list[Recipient]
         )
         if not practised:
             out.append(
-                Recipient(row.id, row.email, row.display_name, period, streak_days=row.current_streak)
+                Recipient(
+                    row.id,
+                    row.email,
+                    row.display_name,
+                    period,
+                    streak_days=row.current_streak,
+                    lang=row.native_language,
+                )
             )
     sent = {
         (uid, key)
@@ -184,6 +199,7 @@ async def select_weekly(db: AsyncSession, now: datetime) -> list[Recipient]:
                 User.id,
                 User.email,
                 User.display_name,
+                User.native_language,
                 func.coalesce(
                     select(func.sum(DailyActivity.xp_earned))
                     .where(DailyActivity.user_id == User.id, DailyActivity.activity_date >= week_start)
@@ -213,7 +229,16 @@ async def select_weekly(db: AsyncSession, now: datetime) -> list[Recipient]:
     rows = [r for r in rows if not is_undeliverable(r.email)]
     done = await _already_sent(db, [r.id for r in rows], WEEKLY, period)
     return [
-        Recipient(r.id, r.email, r.display_name, period, streak_days=r.streak, xp=r.xp, words=r.words)
+        Recipient(
+            r.id,
+            r.email,
+            r.display_name,
+            period,
+            streak_days=r.streak,
+            xp=r.xp,
+            words=r.words,
+            lang=r.native_language,
+        )
         for r in rows
         if r.id not in done
     ]
@@ -335,10 +360,8 @@ async def run_activation(db: AsyncSession, kind: str, now: datetime | None = Non
     route = settings.NURTURE_START_ROUTE
     push = PushNotificationService()
 
-    def copy(_r: Recipient) -> tuple[str, str]:
-        if day == 1:
-            return "Your first lesson is ready", "One short lesson is enough to begin. Tap to start."
-        return "Still want to start?", "Your first lesson is waiting. Five minutes is enough."
+    def copy(r: Recipient) -> tuple[str, str]:
+        return nudge_copy(kind, r.lang)
 
     async def send(r: Recipient, title: str, body: str) -> bool:
         emailed = await EmailService.send_activation_nudge_email(
@@ -347,6 +370,7 @@ async def run_activation(db: AsyncSession, kind: str, now: datetime | None = Non
             user_id=r.user_id,
             day=day,
             start_link=_link(route),
+            lang=r.lang,
         )
         tokens = await _tokens(db, r.user_id)
         pushed = bool(tokens) and await push.send_nurture(
@@ -366,11 +390,15 @@ async def run_streak_risk(db: AsyncSession, now: datetime | None = None) -> dict
     route = settings.REMINDER_REVIEW_ROUTE
 
     def copy(r: Recipient) -> tuple[str, str]:
-        return "Keep your streak alive", f"Your {r.streak_days}-day streak ends tonight. A few minutes is enough."
+        return nudge_copy(STREAK_RISK, r.lang, days=r.streak_days)
 
     async def send(r: Recipient, _title: str, _body: str) -> bool:
         return await EmailService.send_streak_at_risk_email(
-            to_email=r.email, display_name=r.display_name, user_id=r.user_id, streak_days=r.streak_days
+            to_email=r.email,
+            display_name=r.display_name,
+            user_id=r.user_id,
+            streak_days=r.streak_days,
+            lang=r.lang,
         )
 
     return {"kind": STREAK_RISK, "mode": "live", **await _deliver(db, recipients, STREAK_RISK, copy, route, send)}
@@ -385,7 +413,7 @@ async def run_weekly(db: AsyncSession, now: datetime | None = None) -> dict:
     route = "/"
 
     def copy(r: Recipient) -> tuple[str, str]:
-        return "Your week in LexiLingo", f"{r.xp:,} XP and a {r.streak_days}-day streak in the last 7 days."
+        return nudge_copy(WEEKLY, r.lang, days=r.streak_days, xp=r.xp)
 
     async def send(r: Recipient, _title: str, _body: str) -> bool:
         return await EmailService.send_weekly_summary_email(
@@ -395,6 +423,7 @@ async def run_weekly(db: AsyncSession, now: datetime | None = None) -> dict:
             xp=r.xp,
             streak_days=r.streak_days,
             words_learned=r.words,
+            lang=r.lang,
         )
 
     return {"kind": WEEKLY, "mode": "live", **await _deliver(db, recipients, WEEKLY, copy, route, send)}

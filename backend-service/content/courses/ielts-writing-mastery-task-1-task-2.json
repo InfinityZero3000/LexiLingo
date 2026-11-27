@@ -59,12 +59,7 @@
             "correct_answer": "Overall, it is clear that while electricity use in France and Italy fluctuated, consumption in Germany rose steadily throughout the period.",
             "explanation": "This is a correct overview sentence because it summarizes the main trends (fluctuation vs. steady rise) without listing specific data points. It uses the signal word 'Overall' and contrasts the different patterns, which is essential for a high band score in Task 1.",
             "id": "ex_167fe798-9f18-43db-b8c4-3d205ac90cb3_1",
-            "options": [
-              "The graph illustrates the changes in electricity consumption in France, Germany, and Italy between 1990 and 2010.",
-              "Overall, it is clear that while electricity use in France and Italy fluctuated, consumption in Germany rose steadily throughout the period.",
-              "France had the highest consumption in 1990, but Germany overtook it in 2005.",
-              "The lines show that Germany used more electricity than France and Italy in every year shown."
-            ],
+            "options": [],
             "question": "Write a single sentence describing the general trend shown in the line graph, focusing on the overall movement from 1990 to 2010.",
             "type": "fill_blank",
             "ui_type": "short_writing_answer"
@@ -82,12 +77,7 @@
             "correct_answer": "Both the import and export figures remained relatively stable throughout the period, hovering around 10 million units.",
             "explanation": "This option correctly uses comparative language ('Both...') and precise vocabulary for stability ('remained relatively stable', 'hovering around'). It accurately describes a parallel trend without incorrectly implying change or difference where there was none.",
             "id": "ex_167fe798-9f18-43db-b8c4-3d205ac90cb3_3",
-            "options": [
-              "Both the import and export figures remained relatively stable throughout the period, hovering around 10 million units.",
-              "Imports went up while exports went down.",
-              "There was a huge difference between imports and exports.",
-              "Imports were higher than exports in 2000."
-            ],
+            "options": [],
             "question": "Write a sentence comparing two lines that remained stable during the same time period.",
             "type": "fill_blank",
             "ui_type": "short_writing_answer"
@@ -112,8 +102,8 @@
               "There was an increase in oil prices and a decrease in renewable energy demand."
             ],
             "question": "Select the best sentence to describe a period where two trends moved in opposite directions.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           }
         ],
         "version": 1
@@ -147,12 +137,7 @@
             "correct_answer": "Overall, there was a significant increase in car ownership across all categories, with the exception of rural households.",
             "explanation": "This answer provides a clear overview that highlights the main trend (increase) and notes the key exception (rural areas), which is essential for a high-scoring Task 1 introduction/overview. It avoids listing specific data points, which belongs in the body paragraphs.",
             "id": "ex_001",
-            "options": [
-              "It is clear that car ownership rose in urban areas but fell in rural areas.",
-              "Overall, there was a significant increase in car ownership across all categories, with the exception of rural households.",
-              "The chart shows numbers for 1990 and 2020 regarding car ownership statistics.",
-              "Car ownership is higher in 2020 than in 1990 for everyone except people living in the countryside."
-            ],
+            "options": [],
             "question": "Write a general overview sentence summarizing the main trends in a bar chart comparing the percentage of households owning cars in 1990 versus 2020, where ownership increased significantly in all categories except rural areas.",
             "type": "fill_blank",
             "ui_type": "short_writing_answer"
@@ -170,12 +155,7 @@
             "correct_answer": "Twice as many units were sold in February as in January.",
             "explanation": "This answer effectively uses a multiplier ('twice as many') to compare the two categories, demonstrating a higher level of lexical resource and grammatical range suitable for Band 7+. It clearly states the relationship between the two data points.",
             "id": "ex_003",
-            "options": [
-              "January had 100 units while February had 200 units.",
-              "Twice as many units were sold in February as in January.",
-              "February sales were double the sales of January.",
-              "There was a big difference between January and February."
-            ],
+            "options": [],
             "question": "Write a body paragraph sentence comparing two categories in a bar chart showing monthly sales. Category A (January) had 100 units, and Category B (February) had 200 units.",
             "type": "fill_blank",
             "ui_type": "short_writing_answer"
@@ -193,12 +173,7 @@
             "correct_answer": "Energy consumption in Country Y was three times that of Country X.",
             "explanation": "This answer uses a comparative structure ('three times that of') to highlight the significant difference between the two categories. This demonstrates the ability to synthesize data effectively, a key skill for achieving a high band score in Task 1.",
             "id": "ex_005",
-            "options": [
-              "Country X used 50 kWh and Country Y used 150 kWh.",
-              "Energy consumption in Country Y was three times that of Country X.",
-              "Country Y consumed more energy than Country X.",
-              "The lowest value was 50 kWh while the highest was 150 kWh."
-            ],
+            "options": [],
             "question": "Write a sentence comparing the lowest and highest values in a bar chart showing energy consumption by country. Country X consumed 50 kWh and Country Y consumed 150 kWh.",
             "type": "fill_blank",
             "ui_type": "short_writing_answer"
@@ -251,8 +226,8 @@
               "This segment represents a fourth of the whole."
             ],
             "question": "Which of the following sentences best expresses that 25% of the data is represented in a pie chart segment, using a fraction rather than a percentage?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "twice as high",
@@ -274,8 +249,8 @@
               "Most people used coal for energy because it was cheaper."
             ],
             "question": "Select the best overview sentence for a pie chart showing that 60% of energy came from coal and 40% from other sources. An overview must summarize the main trend without specific data points.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "account for",
@@ -352,8 +327,8 @@
               "There were 500 units and 50% were red in the same year."
             ],
             "question": "Which of the following sentences best combines information from a bar chart (showing quantity) and a pie chart (showing percentage) for the same year?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "whereas",
@@ -654,13 +629,13 @@
             "id": "ex_004",
             "options": [
               "alongside",
-              "throughout",
-              "inside",
-              "across"
+              "into",
+              "onto",
+              "toward"
             ],
             "question": "Which preposition correctly completes the sentence: 'The new road runs {blank} the river from east to west.'?",
             "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "ui_type": "fill_in_the_blank"
           },
           {
             "correct_answer": "been converted into",
@@ -783,8 +758,8 @@
               "The most important change is that the school became a hospital, which shows the growth of the town."
             ],
             "question": "When writing the overview for a map showing the transformation of a village into a town over 20 years, which sentence best fulfills the Band 7 requirement for a clear, general statement of change?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "was",
@@ -806,8 +781,8 @@
               "While the old library was demolished, most of the village was developed with new amenities."
             ],
             "question": "Which of the following sentences best demonstrates the use of a concession clause to describe a map where most changes were positive, but one area was demolished?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "on",
@@ -829,8 +804,8 @@
               "The most important stages are egg, fry, juvenile, and adult."
             ],
             "question": "Which sentence best summarizes the key changes in a diagram showing the life cycle of a fish, focusing on the main stages?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           }
         ],
         "version": 1
@@ -889,8 +864,8 @@
               "The government spends a lot of money on hospitals every year."
             ],
             "question": "Which of the following sentences best sustains a clear opinion in the body paragraph of an essay arguing that 'universal healthcare is a human right'?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "it",
@@ -912,8 +887,8 @@
               "In conclusion, students should work hard to get scholarships if they cannot afford tuition fees."
             ],
             "question": "You are writing an opinion essay arguing that 'university education should be free for all.' Which conclusion best sustains your position without introducing new ideas?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           }
         ],
         "version": 1
@@ -947,12 +922,7 @@
             "correct_answer": "While critics argue that public funding for the arts is an unnecessary expense, others contend that it is essential for cultural preservation.",
             "explanation": "This answer correctly uses a concession clause ('While...') to present the opposing view fairly before asserting the main argument, demonstrating the balance required in a Discussion Essay.",
             "id": "ex_t2_disc_001",
-            "options": [
-              "Some people think art is useless, so the government should not pay for it.",
-              "While critics argue that public funding for the arts is an unnecessary expense, others contend that it is essential for cultural preservation.",
-              "The government spends too much money on art, which is bad for the economy.",
-              "Art is important, but some people hate it."
-            ],
+            "options": [],
             "question": "Write a topic sentence for a paragraph discussing the view that governments should fund arts programs, acknowledging that some people believe this is a waste of money.",
             "type": "fill_blank",
             "ui_type": "short_writing_answer"
@@ -970,12 +940,7 @@
             "correct_answer": "In conclusion, while banning phones minimizes distractions, allowing them can provide educational resources, so schools must decide which benefit outweighs the drawback.",
             "explanation": "This answer effectively synthesizes the two main arguments (distraction vs. educational resource) and provides a balanced summary without introducing a new opinion or external solution, adhering to Task 2 conventions.",
             "id": "ex_t2_disc_003",
-            "options": [
-              "In conclusion, while banning phones minimizes distractions, allowing them can provide educational resources, so schools must decide which benefit outweighs the drawback.",
-              "I think phones are bad and everyone should agree with me because they are distracting.",
-              "To sum up, phones are useful for calling parents but bad for gaming, and also many students have them.",
-              "Therefore, the government should buy new computers for all students immediately."
-            ],
+            "options": [],
             "question": "Write a concluding sentence that summarizes the discussion on whether schools should ban mobile phones, without introducing new information.",
             "type": "fill_blank",
             "ui_type": "short_writing_answer"
@@ -993,12 +958,7 @@
             "correct_answer": "Conversely, the adverse environmental impacts of mass tourism, such as congestion and waste, cannot be overlooked.",
             "explanation": "This option uses formal vocabulary ('adverse environmental impacts', 'cannot be overlooked') and a strong cohesive device ('Conversely') to clearly signal the shift to the opposing argument, maintaining the formal register required for IELTS Task 2.",
             "id": "ex_t2_disc_005",
-            "options": [
-              "But tourism also brings traffic and pollution to local areas.",
-              "Conversely, the adverse environmental impacts of mass tourism, such as congestion and waste, cannot be overlooked.",
-              "Also, tourists make a lot of trash and cars get stuck in traffic.",
-              "On the other hand, tourism is bad for the environment."
-            ],
+            "options": [],
             "question": "Write a sentence introducing the second viewpoint in a discussion essay about tourism, using a phrase that indicates an alternative perspective to the previously mentioned economic benefits.",
             "type": "fill_blank",
             "ui_type": "short_writing_answer"
@@ -1035,12 +995,7 @@
             "correct_answer": "Parents should limit the amount of time their children spend on digital devices.",
             "explanation": "This answer uses the action-focused modal verb 'should limit' to propose a clear solution, which is required for a Problem-Solution essay. The other options describe the problem or state a fact, rather than proposing an action.",
             "id": "ex_76ff8063-aba4-46f3-a7fe-9e2948c953cc_1",
-            "options": [
-              "Teenagers spend too much time on screens.",
-              "Parents should limit the amount of time their children spend on digital devices.",
-              "Screen time is a big problem for teenagers today.",
-              "Digital devices are popular among young people."
-            ],
+            "options": [],
             "question": "Write a topic sentence for a solution paragraph addressing the problem of 'excessive screen time among teenagers'. Use an action-focused verb to introduce the primary solution.",
             "type": "fill_blank",
             "ui_type": "short_writing_answer"
@@ -1058,12 +1013,7 @@
             "correct_answer": "The air quality will deteriorate significantly if emissions are not regulated.",
             "explanation": "This sentence uses the passive voice ('are not regulated') to focus on the action required (regulation) rather than the agent. It also uses formal vocabulary ('deteriorate', 'emissions') suitable for Band 6-8 writing.",
             "id": "ex_9d8c7b6a-5e4f-3210-9876-543210987654",
-            "options": [
-              "People breathe dirty air if we do nothing.",
-              "The air quality will deteriorate significantly if emissions are not regulated.",
-              "We must stop pollution or people will get sick.",
-              "Urban pollution is bad for health."
-            ],
+            "options": [],
             "question": "Write a sentence explaining the consequence of *not* implementing a solution to urban pollution. Use a passive voice structure to emphasize the action.",
             "type": "fill_blank",
             "ui_type": "short_writing_answer"
@@ -1073,14 +1023,14 @@
             "explanation": "'Implement' is a precise, academic action verb meaning to put a plan or system into effect. 'Have', 'do', and 'make' are too generic and informal for high-scoring IELTS Task 2 essays.",
             "id": "ex_1f2e3d4c-5b6a-7980-1234-567890abcdef",
             "options": [
-              "have",
               "implement",
-              "do",
-              "make"
+              "discuss",
+              "consider",
+              "mention"
             ],
             "question": "Select the best action-focused verb to complete this solution for 'rising obesity rates': Schools should {blank} mandatory physical education classes to improve students' health.",
             "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "ui_type": "fill_in_the_blank"
           },
           {
             "correct_answer": "allocate",
@@ -1130,8 +1080,8 @@
               "unpaid community service"
             ],
             "question": "Read the essay question: 'Some people believe that unpaid community service should be a mandatory part of high school programs. To what extent do you agree or disagree?' Identify which part of the question requires you to state your level of agreement.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "better job opportunities",
@@ -1160,24 +1110,27 @@
             "correct_answer": "False",
             "explanation": "Task Response criteria require addressing all parts of the prompt. For 'Discuss both views', you must present arguments for both sides, even if you only support one, to fully answer the question.",
             "id": "ex_004",
-            "options": [],
+            "options": [
+              "True",
+              "False"
+            ],
             "question": "True or False: In a 'Discuss both views and give your opinion' essay, you only need to discuss the view you agree with to achieve a Band 7 for Task Response.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "true_false",
+            "ui_type": "true_or_false"
           },
           {
             "correct_answer": "List Advantages, List Disadvantages, Conclude which is stronger",
             "explanation": "An 'outweigh' essay requires an evaluation of both sides. The writer must present both advantages and disadvantages and explicitly judge which side is more significant, rather than just listing them neutrally.",
             "id": "ex_005",
             "options": [
-              "Discuss View A, Discuss View B, Give Opinion",
               "List Advantages, List Disadvantages, Conclude which is stronger",
-              "State Problem, Suggest Solution",
-              "State Opinion, Justify Opinion"
+              "List Advantages only",
+              "Describe the problem, then give solutions",
+              "Give your opinion without discussing either side"
             ],
-            "question": "Match the essay question type to the required response structure. Question: 'Do the advantages outweigh the disadvantages?'",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "question": "Which structure does this question need? 'Do the advantages outweigh the disadvantages?'",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           }
         ],
         "version": 1
@@ -1227,8 +1180,8 @@
               "Traffic jams are bad for the environment"
             ],
             "question": "When brainstorming arguments for 'Remote work increases productivity', which of the following is a valid main idea branch for your mind map?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "Overcrowding and traffic congestion",
@@ -1241,8 +1194,8 @@
               "Traffic congestion and higher crime rates"
             ],
             "question": "You have generated these ideas for 'Urbanization': overcrowding, higher crime rates, pollution, and traffic congestion. Which two ideas best group together under one mind map branch?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "It is argued",
@@ -1257,10 +1210,13 @@
             "correct_answer": "False",
             "explanation": "Effective planning requires a structured approach. Spending time writing without referencing the mind map risks losing coherence and task response alignment. The mind map serves as a checklist to ensure all planned points are covered logically.",
             "id": "ex_005_t2_time_management",
-            "options": [],
+            "options": [
+              "True",
+              "False"
+            ],
             "question": "In a 40-minute planning and drafting session for Task 2, is it advisable to spend the entire first 15 minutes writing the body paragraphs before checking the mind map?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "true_false",
+            "ui_type": "true_or_false"
           }
         ],
         "version": 1
@@ -1319,8 +1275,8 @@
               "Students pay for their education."
             ],
             "question": "Which of the following is the best paraphrase of the prompt: 'Some people believe that university education should be free for all students.'?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "leads to",
@@ -1342,8 +1298,8 @@
               "The situation where workers lose their positions"
             ],
             "question": "Identify the best way to paraphrase the phrase 'high levels of unemployment' in the context of a Task 2 essay about economic problems.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           }
         ],
         "version": 1
@@ -1457,8 +1413,8 @@
               "Therefore, companies should invest in better home office equipment for their staff."
             ],
             "question": "You are writing a Task 2 essay about the benefits of remote work. You have just finished a paragraph arguing that remote work saves employees time on commuting. You now want to introduce a paragraph discussing how remote work can lead to feelings of isolation. Which sentence best provides a cohesive transition between these two ideas?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "them",
@@ -1480,8 +1436,8 @@
               "Consequently, the graph shows a decline in usage during the second decade."
             ],
             "question": "You are writing a Task 1 Academic essay describing a line graph showing a steady increase in internet usage from 2000 to 2010, followed by a plateau from 2010 to 2020. You have written the sentence: 'Internet usage rose steadily between 2000 and 2010.' Which sentence best coheres with this statement to describe the subsequent period?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "Moreover",
@@ -1503,8 +1459,8 @@
               "As a result, children who speak two languages often have higher self-esteem."
             ],
             "question": "You are writing a Task 2 essay arguing that children should learn a second language at primary school. You have just finished a paragraph discussing the cognitive benefits of bilingualism. You now want to write a paragraph about the economic benefits. Which sentence best introduces this new paragraph while maintaining coherence?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           }
         ],
         "version": 1
@@ -1545,8 +1501,8 @@
               "Describing a specific personal experience of volunteering at a local charity last summer."
             ],
             "question": "Read the Task 2 prompt: 'Some people believe that unpaid community service should be a mandatory part of high school programs. To what extent do you agree or disagree?' Which of the following approaches best demonstrates 'Task Achievement' regarding the scope of the essay?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "highly beneficial",
@@ -1568,8 +1524,8 @@
               "This essay will explain why offices are bad for productivity."
             ],
             "question": "The prompt is: 'Discuss both views and give your own opinion.' The first paragraph introduces the topic. Which of the following thesis statements best ensures the writer fully answers the prompt?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "space exploration",
@@ -1591,8 +1547,8 @@
               "This was a difficult topic to write about in just two days."
             ],
             "question": "Which of the following concluding sentences best demonstrates 'Task Achievement' for the prompt: 'To what extent do you agree or disagree that university education should be free for all students?'",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           }
         ],
         "version": 1
@@ -1642,8 +1598,8 @@
               "Many people disagree about art funding."
             ],
             "question": "In a Task 2 essay discussing whether governments should fund arts, which sentence serves as the most effective overview of the main argument?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "is",
@@ -1665,8 +1621,8 @@
               "Both countries used a lot of energy."
             ],
             "question": "Which of the following is the best overview sentence for a Task 1 report comparing energy consumption in two countries?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "was",

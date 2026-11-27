@@ -927,8 +927,8 @@
               "The graph shows that City A is cooler than City B in all years, with the smallest gap occurring in 2012."
             ],
             "question": "You are writing the Overview paragraph for a line graph showing temperature changes in City A and City B from 2010 to 2020. City A fluctuates slightly between 15°C and 18°C, while City B rises steadily from 20°C to 35°C. Which sentence best selects the significant data for the overview?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "surged",
@@ -950,8 +950,8 @@
               "France had 1% less access than the UK, while Germany had 1% less than France."
             ],
             "question": "You are describing a bar chart comparing the percentage of households with internet access in four countries (USA: 90%, UK: 88%, France: 85%, Germany: 84%). Which sentence correctly omits minor differences to focus on the significant similarity?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "False",
@@ -969,10 +969,15 @@
             "correct_answer": "increased dramatically",
             "explanation": "This phrase selects the significant data point (the sharp rise) and contrasts it with the minor/stable data (no change). It uses appropriate B2-level vocabulary ('dramatically') to emphasize the magnitude of the difference, which is key for a high-scoring overview.",
             "id": "ex_b6_t1_sig_005",
-            "options": [],
+            "options": [
+              "increased dramatically",
+              "remained stable",
+              "fell slightly",
+              "fluctuated a little"
+            ],
             "question": "Complete the overview sentence to contrast a major trend with a stable one. Context: A graph shows CO2 emissions rising sharply in Industry A, while Industry B stays flat. 'While emissions in Industry A {blank}, Industry B saw no significant change.'",
             "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "ui_type": "fill_in_the_blank"
           }
         ],
         "version": 1
@@ -1013,8 +1018,8 @@
               "Overall, the graph shows that electricity use went up in Country A and stayed the same in Country B."
             ],
             "question": "Select the best overview sentence for a double graph showing that electricity consumption in Country A increased steadily from 2000 to 2010, while consumption in Country B remained relatively stable with minor fluctuations during the same period.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "converged",
@@ -1036,8 +1041,8 @@
               "There was a big difference in the increase between the two countries, with A being much higher than B."
             ],
             "question": "Which sentence best compares the data for two years in a body paragraph, given that Country A's consumption was 500 units in 2000 and 800 units in 2010, while Country B's consumption was 400 units in 2000 and 420 units in 2010?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "surged",
@@ -1059,8 +1064,8 @@
               "The graph shows that Country A is now bigger than Country B."
             ],
             "question": "Select the most accurate sentence to describe the final data points of a double graph where Country A ends at 600 units and Country B ends at 500 units in 2010, given that Country A started lower than Country B in 2000.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           }
         ],
         "version": 1
@@ -1174,8 +1179,8 @@
               "There were many changes in the graph, including a rise in internet and a fall in newspaper reading."
             ],
             "question": "In a Band 7 overview, you must summarize the most significant trend without listing specific data points. Which of the following sentences best demonstrates this skill for a line graph showing rising internet usage?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "that of",
@@ -1204,10 +1209,15 @@
             "correct_answer": "declined steadily",
             "explanation": "This answer is correct because it uses a contrastive structure ('While...') effectively, which is a hallmark of Band 7+ cohesion. It also provides a clear, data-driven trend ('declined steadily') that logically contrasts with 'rose significantly', demonstrating the ability to group and compare data rather than just listing it.",
             "id": "ex_b6t1_004",
-            "options": [],
+            "options": [
+              "declined steadily",
+              "also rose significantly",
+              "rose even faster",
+              "grew at the same rate"
+            ],
             "question": "Write a cohesive device to link two contrasting trends in a body paragraph. 'While car ownership rose significantly, public transport usage {blank}.'",
             "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "ui_type": "fill_in_the_blank"
           },
           {
             "correct_answer": "USA consumption was 50kg, which was higher than the UK's 40kg and Japan's 30kg.",
@@ -1220,8 +1230,8 @@
               "There was a difference in consumption: USA 50kg, UK 40kg, Japan 30kg."
             ],
             "question": "A Band 6 answer often lists data mechanically. Which revision transforms this mechanical list into a Band 7+ comparative statement?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           }
         ],
         "version": 1
@@ -1280,8 +1290,8 @@
               "The figures fell down."
             ],
             "question": "Which of the following sentences best demonstrates 'Lexical Resource' at Band 6.5-7.0 for describing a slight decrease in a pie chart?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "rose",
@@ -1303,8 +1313,8 @@
               "The price of oil increased, the demand remained stable."
             ],
             "question": "Select the sentence that correctly uses a concession clause to compare two data sets, a feature often seen in Band 7.0 Writing Task 1 responses.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           }
         ],
         "version": 1
@@ -1345,8 +1355,8 @@
               "The sentence repeats the prompt without adding analysis."
             ],
             "question": "Identify the common Band 5.0 error in the following Task 2 topic sentence. The topic is: 'Some people believe that unpaid community service should be a mandatory part of high school programs.'",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "remove who they",
@@ -1368,8 +1378,8 @@
               "This essay is about the difference between cities and countryside for children."
             ],
             "question": "Which of the following introductions best avoids the 'Band 5 Mistake' of lacking a clear position for the topic: 'Is it better for children to grow up in the countryside than in a city?'",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "is very limited",
@@ -1391,8 +1401,8 @@
               "The paragraph is too short."
             ],
             "question": "Identify the specific Band 5.0 coherence error in this paragraph. Topic: Remote work. Sentence: 'Remote work saves time. Also, it is cheaper. However, people feel lonely.'",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           }
         ],
         "version": 1
@@ -1433,8 +1443,8 @@
               "Traditional education is outdated and should be completely replaced by digital platforms to save money for the government."
             ],
             "question": "Topic: Some people believe that online learning will replace traditional classroom education. Discuss the advantages and disadvantages of this trend and give your opinion.\n\nTask: Write a thesis statement for an introduction that presents a nuanced position (acknowledging benefits but arguing that traditional education remains superior for social development).",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "personality",
@@ -1456,8 +1466,8 @@
               "I think that living in the city is dangerous for your health because of the dirty air."
             ],
             "question": "Task: Write a body paragraph topic sentence that introduces a disadvantage of urbanization, specifically focusing on environmental impact, while maintaining a formal academic tone.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "It is strong because it concisely restates the concession and the main position without introducing new information.",
@@ -1534,8 +1544,8 @@
               "Some people think that fees are a good idea for traffic."
             ],
             "question": "Which of the following options provides the most effective 'specific real-world example' to support the solution of implementing congestion charges?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "To combat the rising rates of obesity, governments could implement a sugar tax, thereby discouraging the consumption of high-calorie beverages.",
@@ -1631,11 +1641,11 @@
               "Social media causes anxiety. However, it is also good for networking.",
               "Social media causes anxiety. Therefore, it is also good for networking.",
               "Social media causes anxiety. In addition, it is also good for networking.",
-              "Social media causes anxiety. Despite this, it is also good for networking."
+              "Social media causes anxiety. Despite this, also good for networking."
             ],
-            "question": "Match the coherence error to its correction. Which correction best improves the flow between these two sentences? 'Social media causes anxiety. It is also good for networking.'",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "question": "Which correction best improves the flow between these two sentences? 'Social media causes anxiety. It is also good for networking.'",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "The primary environmental consequence of industrial pollution is the degradation of local ecosystems.",
@@ -1699,8 +1709,8 @@
               "Failing to write 250 words."
             ],
             "question": "In the context of Examiner-Modelled Feedback, which of the following represents a 'Task Response' error common in Band 6 essays?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "and",
@@ -1722,8 +1732,8 @@
               "Politicians should try to reduce the amount of smog."
             ],
             "question": "An examiner highlights a 'Lexical Resource' weakness in this sentence: 'The government should do something to stop pollution.' Which revision best demonstrates the 'precise word choice' required for Band 7?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "False",
@@ -1734,8 +1744,8 @@
               "False"
             ],
             "question": "True or False: In an examiner-modelled feedback session, replacing a simple sentence with a complex one always guarantees a higher band score in Grammatical Range and Accuracy.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "true_false",
+            "ui_type": "true_or_false"
           }
         ],
         "version": 1
@@ -1776,8 +1786,8 @@
               "No, I prefer watching TV."
             ],
             "question": "You are asked: 'Do you like reading?' Which note plan best supports an extended answer (3-4 sentences) by adding detail and reason?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "I live in a small apartment in the city center, which is convenient for commuting, although it can be a bit noisy at night.",
@@ -1817,18 +1827,18 @@
             "ui_type": "speaking_repeat"
           },
           {
-            "correct_answer": "Q: 'Do you like cooking?' -> A: 'Yes, I love trying new recipes from different cultures, especially Italian food.'",
+            "correct_answer": "Yes, I love trying new recipes from different cultures, especially Italian food.",
             "explanation": "This strategy adds detail about the type of cooking (new recipes, different cultures) and a specific preference (Italian food). This elaboration allows the speaker to demonstrate vocabulary range and grammatical complexity, key criteria for Band 6.5.",
             "id": "ex_b40cd96e-5c0d-431f-9507-bd0b8b7fe7a8_5",
             "options": [
-              "Q: 'Do you like cooking?' -> A: 'Yes, I love trying new recipes from different cultures, especially Italian food.'",
-              "Q: 'Do you like cooking?' -> A: 'Yes.'",
-              "Q: 'Do you like cooking?' -> A: 'Cooking is difficult.'",
-              "Q: 'Do you like cooking?' -> A: 'No, I hate it.'."
+              "Yes, I love trying new recipes from different cultures, especially Italian food.",
+              "Yes.",
+              "Yes, I do.",
+              "Cooking is a hobby."
             ],
-            "question": "Match the Part 1 question to the best extension strategy to avoid a one-sentence answer.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "question": "Part 1 question: 'Do you like cooking?' Which answer best avoids a one-sentence reply?",
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           }
         ],
         "version": 1
@@ -1903,8 +1913,8 @@
               "Memorizing a pre-prepared story that can fit any topic."
             ],
             "question": "When planning your 1-minute preparation for a Part 2 cue card, which note-taking strategy best supports a structured 2-minute response?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "False",
@@ -1957,8 +1967,8 @@
               "Use absolute language like 'Everyone knows that...' to sound confident."
             ],
             "question": "In Part 3, you are asked: 'Do you think government funding for the arts is a waste of money?' Instead of giving a simple 'Yes' or 'No', how should you structure your notes to achieve a Band 6.5+ for Lexical Resource and Grammatical Range? Select the best planning approach.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "It is quite possible that we will see a shift towards more immersive, virtual reality-based interactions rather than just text-based updates.",
@@ -1989,8 +1999,8 @@
               "I think tourism is bad for everyone."
             ],
             "question": "You are asked: 'Is tourism always beneficial for local economies?' Which of the following note structures best demonstrates 'Qualifying' your answer?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "One might argue that urban centers could potentially face a decline in retail activity.",
@@ -2128,8 +2138,8 @@
               "Work is good. Study is hard. I am tired."
             ],
             "question": "In the B6 Speaking Mock Interview (Part 1: Personal Questions), the examiner asks: 'Do you prefer working or studying?' Select the best note structure for a Band 6.0+ answer that expands on the initial response using a reason and an example.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "spend",
@@ -2165,8 +2175,8 @@
               "P: Tourism. E: Travel. Ex: Planes."
             ],
             "question": "For the Part 3 abstract discussion question: 'How has tourism impacted local communities?', plan your argument using the 'Point-Explanation-Example' framework. Which plan below best demonstrates the critical thinking required for Band 6.5?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "paradoxically",

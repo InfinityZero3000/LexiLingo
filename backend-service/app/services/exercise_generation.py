@@ -132,12 +132,20 @@ def exercises_from_payload(data) -> list:
     return []
 
 
+def is_production(exercise: dict) -> bool:
+    """Whether the learner produces the answer rather than picks it. A gap
+    with no options is typed from memory, which is production too."""
+    if exercise["ui_type"] in PRODUCTION_UI_TYPES:
+        return True
+    return exercise["ui_type"] == "fill_in_the_blank" and not exercise.get("options")
+
+
 def lesson_is_varied(exercises: list) -> bool:
     """Lesson-level bar: five recognition questions in a row is not a lesson."""
     ui_types = {exercise["ui_type"] for exercise in exercises}
     if len(ui_types) < min(MIN_DISTINCT_UI_TYPES, len(exercises)):
         return False
-    if not ui_types & PRODUCTION_UI_TYPES:
+    if not any(is_production(exercise) for exercise in exercises):
         return False
     return not any(
         GENERIC_QUESTION_RE.search(exercise["question"]) for exercise in exercises
@@ -201,9 +209,12 @@ def _build_prompt(course_title: str, level: str, unit_title: str, lesson_title: 
        and 'correct_answer' MUST be either "True" or "False".
     7. For vocabulary_flashcard, 'options' MUST contain at least 2 real choices and
        'correct_answer' MUST be one of them — never a single "Got it!" button.
-    7b. For short_writing_answer, 'correct_answer' is ONE model sentence in English
-       only. Never pack a translation next to it ("English | Tiếng Việt"): the
-       grader compares the learner's writing against this string verbatim.
+    7b. For short_writing_answer, 'correct_answer' is ONE model sentence in the
+       language the learner must write (English unless the prompt asks for
+       Vietnamese). Never pack a translation next to it ("English | Tiếng Việt").
+       short_writing_answer is only for writing: a True/False question is
+       true_or_false, a question with options to pick from is multiple_choice,
+       and a gap with one right answer is fill_in_the_blank.
     8. For arrange_the_sentence, 'options' MUST be the words of the sentence in
        shuffled order (one word per item, no punctuation) and 'correct_answer'
        MUST be the full sentence built from exactly those words — never a list of

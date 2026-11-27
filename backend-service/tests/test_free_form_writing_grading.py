@@ -15,9 +15,9 @@ BACKEND_ROOT = Path(__file__).resolve().parents[1]
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
+from app.core.free_form_writing import shape_problems  # noqa: E402
 from app.routes.learning import (  # noqa: E402
     _answers_match,
-    _free_form_answer_is_substantive,
     _is_free_form_writing,
 )
 
@@ -41,9 +41,52 @@ class TestFreeFormWriting:
                 answer, MODEL, "fill_blank", "short_writing_answer"
             ), f"{answer!r} should not count as an attempt"
 
-    def test_substantive_check_is_about_length_not_content(self):
-        assert _free_form_answer_is_substantive("soccer gives them reach")
-        assert not _free_form_answer_is_substantive("  ")
+    def test_a_keyboard_mash_or_another_language_is_wrong(self):
+        # The reported case: anything of 3+ characters used to pass.
+        prompt = 'Write in English: "Xin chào, chào buổi sáng".'
+        for answer in ("ádasdasdddddddddddddddddddd", "asdf qwer zxcv", "Xin chào buổi sáng"):
+            assert not _answers_match(
+                answer, "Hello, good morning", "fill_blank", "short_writing_answer", prompt
+            ), answer
+
+    def test_a_translation_must_carry_the_model_answers_meaning(self):
+        prompt = "Write in English: 'Cô ấy nói tiếng Anh.'"
+        model = "She speaks English"
+        for answer in ("She speaks English.", "she can speak english", "She speaks English very well"):
+            assert _answers_match(answer, model, "fill_blank", "short_writing_answer", prompt), answer
+        for answer in ("He plays football every day.", "Hello there friend"):
+            assert not _answers_match(answer, model, "fill_blank", "short_writing_answer", prompt), answer
+
+    def test_an_open_gap_accepts_any_real_answer_but_not_a_filler(self):
+        prompt = "I have a {blank} on my desk."
+        assert _answers_match("book", "pen", "fill_blank", "short_writing_answer", prompt)
+        assert not _answers_match("ok", "pen", "fill_blank", "short_writing_answer", prompt)
+
+    def test_true_false_and_choice_questions_are_not_free_writing(self):
+        assert shape_problems("True or False: Overviews come last.", "False")
+        assert shape_problems("Match the question type to the correct essay structure.", "Opinion essay")
+        assert shape_problems("Which phrase is most appropriate here?", "whereas")
+        assert not shape_problems("Describe your weekend in one sentence.", "I went to the beach.")
+
+    def test_a_vietnamese_task_wants_vietnamese(self):
+        prompt = "Translate into Vietnamese: 'I am a student.'"
+        model = "Tôi là sinh viên."
+        assert _answers_match("Tôi là một sinh viên", model, "fill_blank", "short_writing_answer", prompt)
+        assert not _answers_match("I am a student", model, "fill_blank", "short_writing_answer", prompt)
+        assert not _answers_match("ádasd đđđđđ", model, "fill_blank", "short_writing_answer", prompt)
+
+    def test_an_open_prompt_still_accepts_any_real_sentence(self):
+        prompt = "Describe your weekend in one sentence."
+        model = "I went to the beach with my family."
+        assert _answers_match(
+            "I visited my grandparents and played football.", model, "fill_blank",
+            "short_writing_answer", prompt,
+        )
+
+    def test_a_translation_prompt_without_a_model_answer_cannot_be_graded(self):
+        assert shape_problems("Write in English: 'Cảm ơn bạn.'", "")
+        assert shape_problems("Write a sentence in English.", "Cảm ơn | Thank you")
+        assert not shape_problems("Write in English: 'Cảm ơn bạn.'", "Thank you.")
 
 
 class TestNeighbouringTypesAreUnchanged:

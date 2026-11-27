@@ -22,3 +22,15 @@ async def test_count_due_vocabulary_returns_scalar_count():
 
     assert count == 4
     db.execute.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_due_words_returns_the_words():
+    db = MagicMock()
+    result = MagicMock()
+    result.scalars.return_value.all.return_value = ["resilient", None, "approve"]
+    db.execute = AsyncMock(return_value=result)
+
+    words = await FSRSSchedulerService().due_words(db, user_id=uuid4())
+
+    assert words == ["resilient", "approve"]

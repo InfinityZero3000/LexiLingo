@@ -158,3 +158,26 @@ async def test_first_social_login_receives_reward_only_once(db_session):
     assert second_user.id == first_user.id
     assert wallet.gems == 100
     assert transaction_count == 1
+
+
+async def test_starter_reward_notification_is_written_in_the_learners_language(db_session):
+    user = User(
+        email="ko@example.com",
+        username="ko_user",
+        hashed_password="not-used",
+        display_name="Ko",
+        provider=["local"],
+        native_language="ko",
+    )
+    db_session.add(user)
+    await db_session.commit()
+
+    await StarterRewardService.grant_new_user_reward(db_session, user.id)
+
+    note = (
+        await db_session.execute(
+            select(Notification).where(Notification.user_id == user.id)
+        )
+    ).scalar_one()
+    assert note.title == "🎁 환영 선물!"
+    assert note.body == "젬 100개가 지갑에 추가됐어요."

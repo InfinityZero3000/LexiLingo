@@ -517,7 +517,7 @@
             "options": [],
             "question": "The English word for the number 9 is {blank}.",
             "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "ui_type": "fill_in_the_blank"
           },
           {
             "correct_answer": "mười bốn",

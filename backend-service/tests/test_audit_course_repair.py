@@ -122,3 +122,35 @@ def test_unknown_ui_type_leaves_type_alone():
     exercise = {"id": "ex_6", "type": "multiple_choice", "ui_type": "made_up",
                 "question": "q", "correct_answer": "a"}
     assert _repair_exercise(exercise) is None
+
+
+def _writing(question, answer, options=()):
+    return {
+        "id": "w1", "type": "fill_blank", "ui_type": "short_writing_answer",
+        "question": question, "correct_answer": answer, "options": list(options),
+    }
+
+
+def test_true_false_typed_as_writing_becomes_true_or_false():
+    ex = _writing("True or False: Overviews come last.", "false")
+    assert _repair_exercise(ex)
+    assert (ex["ui_type"], ex["options"], ex["correct_answer"]) == ("true_or_false", ["True", "False"], "False")
+
+
+def test_a_choice_question_that_kept_its_options_becomes_multiple_choice():
+    options = ["Overall, sales rose.", "Sales were 10.", "I like sales.", "Sales."]
+    ex = _writing("Which of the following is the best overview sentence?", options[0], options)
+    assert _repair_exercise(ex)
+    assert ex["ui_type"] == "multiple_choice" and ex["type"] == "multiple_choice"
+
+
+def test_a_writing_task_keeps_being_written_and_loses_the_hidden_options():
+    options = ["Overall, sales rose.", "Sales were 10."]
+    ex = _writing("Write an overview sentence for the chart.", options[0], options)
+    assert _repair_exercise(ex)
+    assert ex["ui_type"] == "short_writing_answer" and ex["options"] == []
+
+
+def test_real_free_writing_is_left_alone():
+    ex = _writing("Describe your weekend in one sentence.", "I went to the beach.")
+    assert _repair_exercise(ex) is None

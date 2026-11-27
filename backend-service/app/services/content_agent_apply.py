@@ -16,7 +16,7 @@ from app.models.content_agent import (
     ContentProvenance,
     LessonVocabularyItem,
 )
-from app.models.course import Course, Lesson, Unit
+from app.models.course import Course, Lesson, Unit, retype_misused_writing
 from app.schemas.content_agent import ContentAgentArtifact, VocabularyArtifact
 from app.services.content_agent_jobs import ContentAgentJobService
 from app.services.content_agent_validation import validate_artifact
@@ -208,6 +208,10 @@ class ContentAgentApplyService:
                         exercise.model_dump(mode="json")
                         for exercise in lesson_data.exercises
                     ]
+                    # Generators label some True/False and pick-one questions
+                    # as free writing, which the app renders as a bare text box.
+                    for exercise in exercises:
+                        retype_misused_writing(exercise)
                     lesson = Lesson(
                         course_id=course.id,
                         unit_id=unit.id,

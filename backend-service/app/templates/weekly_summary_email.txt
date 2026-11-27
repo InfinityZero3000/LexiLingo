@@ -1,14 +1,13 @@
-Hi {display_name},
+{t_intro}
 
-Your last 7 days in LexiLingo:
+  {xp} {t_xp_label}
+  {streak_days} {t_streak_label}
+  {words_learned} {t_words_label}
 
-  {xp} XP earned
-  {streak_days} day streak
-  {words_learned} words learned
+{suggestion_block}{t_cta}: {settings_link}
 
-{suggestion_block}Open LexiLingo: {settings_link}
+{t_recap}
+{t_unsubscribe_label}: {unsubscribe_link}
+{t_settings_label}: {settings_link}
 
-A recap of your week, sent while you are active. Unsubscribe: {unsubscribe_link}
-Or change it in settings: {settings_link}
-
-LexiLingo Team
+{t_team}

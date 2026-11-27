@@ -17,6 +17,7 @@ from app.models.reminder import ReminderDelivery, UserReminderPreference
 from app.models.user import User, UserDevice
 from app.services.email_service import EmailService
 from app.services.fsrs_scheduler_service import FSRSSchedulerService
+from app.services.push_copy import review_reminder_copy
 from app.services.push_notification_service import PushNotificationService
 
 logger = logging.getLogger(__name__)
@@ -275,12 +276,16 @@ class ReminderService:
         await db.flush()
         return delivery
 
-    def _title_body(self, due_count: int) -> tuple[str, str]:
-        word_label = "word" if due_count == 1 else "words"
-        return (
-            "Vocabulary review is ready",
-            f"You have {due_count} {word_label} to review.",
-        )
+    async def _push_title_body(
+        self,
+        db: AsyncSession,
+        *,
+        user: User,
+        due_count: int,
+        now_utc: datetime,
+    ) -> tuple[str, str]:
+        words = await self.fsrs_scheduler.due_words(db, user_id=user.id, now=now_utc)
+        return review_reminder_copy(user.native_language, due_count, words)
 
     async def _send_push(
         self,
@@ -312,7 +317,9 @@ class ReminderService:
             delivery.status = "dry_run"
             return "dry_run"
 
-        title, body = self._title_body(due_count)
+        title, body = await self._push_title_body(
+            db, user=user, due_count=due_count, now_utc=now_utc
+        )
         db.add(
             Notification(
                 user_id=user.id,
@@ -398,6 +405,7 @@ class ReminderService:
             to_email=user.email,
             display_name=user.display_name or user.username,
             due_count=due_count,
+            lang=user.native_language,
         )
         if sent:
             delivery.status = "sent"

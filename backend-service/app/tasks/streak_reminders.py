@@ -11,7 +11,8 @@ from sqlalchemy import select
 from app.core.celery_app import celery_app
 from app.core.database import AsyncSessionLocal, close_db
 from app.models.progress import Streak
-from app.models.user import UserDevice
+from app.models.user import User, UserDevice
+from app.services.push_copy import nudge_copy
 from app.services.push_notification_service import PushNotificationService
 
 logger = logging.getLogger(__name__)
@@ -38,16 +39,18 @@ async def _send_streak_alerts() -> dict:
         # Users with an active streak but no activity today
         active_streaks = (
             await db.execute(
-                select(Streak).where(
+                select(Streak, User.native_language)
+                .join(User, User.id == Streak.user_id)
+                .where(
                     Streak.current_streak > 0,
                     Streak.last_activity_date < today,
                 )
             )
-        ).scalars().all()
+        ).all()
 
         push = PushNotificationService()
 
-        for streak in active_streaks:
+        for streak, native_language in active_streaks:
             # Get FCM tokens for this user
             devices = (
                 await db.execute(
@@ -64,11 +67,12 @@ async def _send_streak_alerts() -> dict:
                 continue
 
             days = streak.current_streak
+            title, body = nudge_copy("streak_at_risk", native_language, days=days)
             ok = await push.send_streak_at_risk(
                 tokens=tokens,
                 current_streak=days,
-                title="Don't break your streak! 🔥",
-                body=f"You have a {days}-day streak — keep it alive with one quick lesson!",
+                title=title,
+                body=body,
             )
             if ok:
                 sent += 1

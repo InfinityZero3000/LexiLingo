@@ -480,8 +480,8 @@
               "Dear Sir or Madam,"
             ],
             "question": "You are writing a letter to your neighbor, Mr. Henderson, regarding a noise complaint. Choose the most appropriate semi-formal opening line.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "by",
@@ -503,8 +503,8 @@
               "Sincerely yours,"
             ],
             "question": "You have written a letter to your manager, Sarah, asking for time off. You started the letter with 'Dear Sarah'. Which closing is appropriate?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "associated",
@@ -526,8 +526,8 @@
               "I would be grateful if you could assist me with the project."
             ],
             "question": "You are writing to a work colleague, Tom, to ask for help with a project. Which sentence best reflects a semi-formal tone?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           }
         ],
         "version": 1
@@ -665,8 +665,8 @@
               "Yours sincerely,"
             ],
             "question": "You are writing a formal letter to a company manager you do not know personally. Which closing phrase is most appropriate?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "Hope you're doing well!",
@@ -748,8 +748,8 @@
               "I want my money back for the noisy room."
             ],
             "question": "Choose the most appropriate opening sentence for a formal letter to a hotel manager complaining about a noisy room.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "hearing",
@@ -771,8 +771,8 @@
               "My cat is lost, so look everywhere."
             ],
             "question": "Which of the following sentences best fulfills the 'requesting information' bullet point in a semi-formal letter to a neighbor about a lost cat?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "would appreciate it if you could",
@@ -904,8 +904,8 @@
               "Many people say that students should do community service, but others disagree with this idea completely."
             ],
             "question": "Which of the following opening sentences best demonstrates the 'position stated clearly' criterion for a Band 7 essay on the topic: 'Some people think that unpaid community service should be a mandatory part of high school programs. To what extent do you agree or disagree?'",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "contrary",
@@ -936,8 +936,8 @@
               "Finally, everyone should agree that volunteering is important because it makes the world a better place for everyone."
             ],
             "question": "Read the following conclusion paragraph for a GT Task 2 essay. Which sentence represents a 'Band 7' summary of the main ideas without introducing new information?",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           }
         ],
         "version": 1
@@ -978,8 +978,8 @@
               "D) First, I went to the airport. Then I took a taxi. Then I arrived at the hotel. Then I ate dinner. (Simple sequence of actions)"
             ],
             "question": "Task: Plan a Band 7+ answer for the cue card: 'Describe a significant trip you took in the past.' Select the option that best represents a structured note plan focusing on experience and reflection.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "I’ve always been more inclined to travel with companions, as sharing the experience tends to enhance the enjoyment and helps with logistical planning.",
@@ -1015,8 +1015,8 @@
               "D) Climate change causes warming. Warming melts ice. Ice makes water. Water floods places. (Chain of events, no link to tourism)"
             ],
             "question": "Task: Plan a Band 7+ answer for Part 3: 'How might climate change affect future tourism?' Select the option that best represents a structured argument with supporting points.",
-            "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "type": "multiple_choice",
+            "ui_type": "multiple_choice"
           },
           {
             "correct_answer": "I’m hoping to pursue a career in data analysis, as I find it intellectually stimulating and there’s a growing demand in that sector.",

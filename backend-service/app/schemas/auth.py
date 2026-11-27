@@ -20,6 +20,9 @@ class RegisterRequest(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     password: str = Field(..., min_length=8, max_length=100)
     display_name: Optional[str] = None
+    # UI language, for the verification email sent before onboarding has
+    # saved the learner's native language.
+    locale: str | None = Field(None, max_length=16)
 
     @field_validator('username')
     @classmethod

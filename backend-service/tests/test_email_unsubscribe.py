@@ -189,7 +189,9 @@ async def test_every_nurture_email_carries_working_one_click_headers_and_a_foote
         for part in message.walk():
             if part.get_content_type() in ("text/html", "text/plain"):
                 assert target in part.get_content()
-        assert ">Unsubscribe</a>" in next(p.get_content() for p in message.walk() if p.get_content_type() == "text/html")
+        html_part = next(p.get_content() for p in message.walk() if p.get_content_type() == "text/html")
+        # Worded in the learner's language; what matters is a visible link to it.
+        assert re.search(r'<a href="[^"]*/email/unsubscribe\?token=[^"]*"[^>]*>[^<]+</a>', html_part)
 
 
 async def _no_push(self, **kwargs):

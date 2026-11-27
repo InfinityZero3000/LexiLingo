@@ -959,10 +959,15 @@
             "correct_answer": "next to",
             "explanation": "\"Next to\" describes something situated beside another object, which fits the location of the school relative to the park.",
             "id": "ex_8fb3f825-7185-44a5-b9ae-a27a13783e7d_3",
-            "options": [],
-            "question": "Write the correct preposition: 'My school is ___ the park.' Use {blank} to indicate the missing word.",
+            "options": [
+              "next to",
+              "between",
+              "in front",
+              "behind of"
+            ],
+            "question": "Choose the correct preposition: 'My school is {blank} the park.'",
             "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "ui_type": "fill_in_the_blank"
           },
           {
             "correct_answer": "phía sau",
@@ -991,6 +996,15 @@
             "question": "Match each preposition with its Vietnamese meaning.",
             "type": "matching",
             "ui_type": "match_word_to_meaning"
+          },
+          {
+            "correct_answer": "My lamp is next to my bed.",
+            "explanation": "Prepositions of place show where something is: in, on, next to, behind.",
+            "id": "ex_8fb3f825-7185-44a5-b9ae-a27a13783e7d_6",
+            "options": [],
+            "question": "Write a sentence about where something is in your room, using 'in', 'on', 'next to' or 'behind'.",
+            "type": "fill_blank",
+            "ui_type": "short_writing_answer"
           }
         ],
         "version": 1
@@ -1010,7 +1024,7 @@
       "prerequisites": [],
       "skill": null,
       "title": "Prepositions of Place: In, On, Next To, Behind",
-      "total_exercises": 5,
+      "total_exercises": 6,
       "unit_id": "eac25049-0cc4-4db3-b167-ef922571c783",
       "updated_at": {
         "__dt__": "2026-03-14T03:20:38.058125"
@@ -1569,7 +1583,7 @@
             "options": [],
             "question": "Complete the sentence with the correct past simple form: 'Yesterday, I {blank} to the park.'",
             "type": "fill_blank",
-            "ui_type": "short_writing_answer"
+            "ui_type": "fill_in_the_blank"
           },
           {
             "correct_answer": "Chúng tôi đã về nhà sau bộ phim.",
