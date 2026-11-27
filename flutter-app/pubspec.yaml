@@ -126,6 +126,7 @@ dependencies:
   # Localization
   easy_localization: ^3.0.7
   flutter_facebook_auth: ^7.1.5
+  crypto: ^3.0.7
   flutter_facebook_auth_web: ^6.1.2
   encrypt: ^5.0.3
   phosphor_flutter: ^2.1.0

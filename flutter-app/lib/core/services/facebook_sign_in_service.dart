@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'dart:math';
+
+import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, visibleForTesting;
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
@@ -157,8 +161,10 @@ class FacebookSignInService {
   /// Mobile: use flutter_facebook_auth package to authenticate, then Firebase Auth to exchange.
   Future<String?> _signInMobile() async {
     // Check if the user is already logged in with Facebook
+    final rawNonce = _randomNonce();
     final LoginResult result = await FacebookAuth.instance.login(
       permissions: ['email', 'public_profile'],
+      nonce: sha256.convert(utf8.encode(rawNonce)).toString(),
     );
 
     if (result.status != LoginStatus.success) {
@@ -169,8 +175,9 @@ class FacebookSignInService {
       return null;
     }
 
-    final facebookAuthCredential = FacebookAuthProvider.credential(
-      result.accessToken!.tokenString,
+    final facebookAuthCredential = firebaseCredential(
+      result.accessToken!,
+      rawNonce,
     );
 
     final userCredential = await FirebaseAuth.instance.signInWithCredential(
@@ -195,6 +202,22 @@ class FacebookSignInService {
 
     logInfo(_tag, 'Facebook Sign In successful (mobile)');
     return idToken;
+  }
+
+  /// iOS Limited Login returns an OIDC token, which Firebase only accepts with the raw nonce.
+  @visibleForTesting
+  static AuthCredential firebaseCredential(AccessToken token, String rawNonce) {
+    if (token.type == AccessTokenType.limited) {
+      return OAuthProvider(
+        'facebook.com',
+      ).credential(idToken: token.tokenString, rawNonce: rawNonce);
+    }
+    return FacebookAuthProvider.credential(token.tokenString);
+  }
+
+  static String _randomNonce() {
+    final random = Random.secure();
+    return base64Url.encode(List.generate(32, (_) => random.nextInt(256)));
   }
 
   /// Sign out from Facebook
