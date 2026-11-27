@@ -347,14 +347,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      notification.title,
+                      _titleOf(notification),
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      notification.body,
+                      _bodyOf(notification),
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: Theme.of(context).colorScheme.onSurfaceVariant,
                         height: 1.3,
@@ -395,6 +395,19 @@ class _NotificationsPageState extends State<NotificationsPage> {
     NotificationNavigationService.open(notification);
   }
 
+  // In the UI language now, not the one the server stored it in.
+  String _titleOf(NotificationEntity notification) =>
+      notification.isStarterReward
+      ? '🎁 ${'gamification.starterReward.title'.tr()}'
+      : notification.title;
+
+  String _bodyOf(NotificationEntity notification) =>
+      notification.isStarterReward
+      ? 'gamification.starterReward.confirmation'.tr(
+          namedArgs: {'gems': '${notification.data?['gems'] ?? 100}'},
+        )
+      : notification.body;
+
   IconData _getIconData(String? identifier) {
     switch (identifier) {
       case 'local_fire_department':
@@ -413,6 +426,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
         return Icons.info;
       case 'update':
         return Icons.update;
+      case 'mark_email_unread':
+        return Icons.mark_email_unread_outlined;
       default:
         return Icons.notifications;
     }

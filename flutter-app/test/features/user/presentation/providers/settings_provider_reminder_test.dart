@@ -14,6 +14,7 @@ class _RecordingNotifications extends NotificationService {
   int permissionRequests = 0;
   int scheduled = 0;
   int cancelled = 0;
+  int channelsEnsured = 0;
 
   @override
   Future<void> ensureInitialized() async {}
@@ -25,8 +26,13 @@ class _RecordingNotifications extends NotificationService {
   }
 
   @override
-  Future<void> scheduleDailyReminder(TimeOfDay time, {int dueCount = 0}) async {
+  Future<void> scheduleDailyReminder(TimeOfDay time) async {
     scheduled += 1;
+  }
+
+  @override
+  Future<void> ensureChannels() async {
+    channelsEnsured += 1;
   }
 
   @override
@@ -124,6 +130,9 @@ void main() {
 
       expect(notifications.scheduled, 0);
       expect(notifications.cancelled, greaterThan(0));
+      // The server's pushes name these channels; without them they would
+      // land in FCM's generic one.
+      expect(notifications.channelsEnsured, greaterThan(0));
     },
   );
 

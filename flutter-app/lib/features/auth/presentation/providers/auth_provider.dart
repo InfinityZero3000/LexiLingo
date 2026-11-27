@@ -768,7 +768,13 @@ class AuthProvider extends ChangeNotifier {
   ///
   /// [displayName] and [nativeLanguage] are optional overrides from the
   /// pre-auth questions page. If not provided, sensible defaults are used.
-  Future<void> submitOnboarding(
+  /// Saves the onboarding answers to the account; false if the server did
+  /// not take them, so the caller can keep them for a retry.
+  ///
+  /// A field left null is not sent: defaulting `native_language` to "vi" here
+  /// overwrote a learner's real language whenever the starter questions were
+  /// skipped, and push copy is now written in that language.
+  Future<bool> submitOnboarding(
     Map<String, dynamic> payload, {
     String? displayName,
     String? nativeLanguage,
@@ -779,20 +785,15 @@ class AuthProvider extends ChangeNotifier {
       displayName: displayName,
       level: selectedLevel,
       goal: payload['goal'] as String?,
-      interest: payload['interest'] as String?,
-      nativeLanguage: nativeLanguage ?? 'vi',
+      nativeLanguage: nativeLanguage,
       targetLanguage: 'en',
       isOnboardingCompleted: true,
     );
 
-    result.fold(
-      (_) {
-        // Keep onboarding non-blocking on backend issues.
-      },
-      (updatedUser) {
-        _user = updatedUser;
-      },
-    );
+    return result.fold((_) => false, (updatedUser) {
+      _user = updatedUser;
+      return true;
+    });
   }
 
   // Clear error message

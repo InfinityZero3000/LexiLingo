@@ -152,11 +152,8 @@
     "verifyEmailDoneMessage": "로그인하고 학습을 시작하세요.",
     "verifyEmailFailedTitle": "이 링크는 더 이상 유효하지 않습니다",
     "verifyEmailFailedMessage": "이미 사용되었거나 만료되었습니다. 새 링크를 받으려면 이메일을 입력하세요.",
-    "verifyEmailBanner": "이메일을 인증하면 상점과 추천 보상을 이용할 수 있습니다.",
-    "verifyEmailBannerAction": "링크 다시 보내기",
     "googleLoginFailed": "Google 로그인에 실패했어요. 다시 시도해 주세요.",
-    "facebookLoginFailed": "Facebook 로그인에 실패했어요. 다시 시도해 주세요.",
-    "facebookEmailInUse": "이 Facebook 계정의 이메일은 이미 다른 계정에서 사용 중이에요. 이전에 사용한 방법으로 로그인해 주세요."
+    "facebookLoginFailed": "Facebook 로그인에 실패했어요. 다시 시도해 주세요."
   },
   "home": {
     "wordsLeftToReview": "복습할 단어",
@@ -1040,11 +1037,11 @@
     "reviewReminderTitle": "단어를 복습할 시간이에요",
     "reviewChannelName": "일일 알림",
     "reviewChannelDescription": "매일 단어를 복습하도록 알려 줍니다",
-    "reviewTitle": "단어 복습",
-    "reviewBodyDue": "오늘 복습할 단어가 {count}개 있습니다!",
-    "reviewBodyStreak": "단어를 복습할 시간입니다 — 연속 기록을 이어가세요!",
-    "reviewBodyDueNow": "복습할 때가 된 단어가 {count}개 있습니다!",
+    "reviewTitle": "📚 단어 복습할 시간이에요",
+    "reviewBodyStreak": "지금 2분만 복습하면 오래 기억하고 연속 기록도 지킬 수 있어요! 🔥",
     "reviewWaitingBody": "{count}개 단어가 복습을 기다리고 있습니다.",
+    "verifyEmailTitle": "✉️ 이메일을 인증해 주세요",
+    "verifyEmailBody": "{email}(으)로 보낸 링크를 열면 상점과 추천 보상이 열려요.",
     "checkin": {
       "channelName": "출석 알림",
       "channelDescription": "선택한 시간에 학습 연속 기록을 지킬 수 있도록 알려드려요",

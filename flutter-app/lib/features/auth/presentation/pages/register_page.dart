@@ -17,7 +17,11 @@ class RegisterPage extends StatefulWidget {
   /// The name the pre-sign-up questions already asked for.
   final String? initialName;
 
-  const RegisterPage({super.key, this.initialName});
+  /// Reports the name field when the learner signs up by any route, so the
+  /// name they edited here is not overwritten by the starter answer later.
+  final Future<void> Function(String name)? onNameChosen;
+
+  const RegisterPage({super.key, this.initialName, this.onNameChosen});
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
@@ -29,6 +33,9 @@ class _RegisterPageState extends State<RegisterPage> {
     text: widget.initialName,
   );
   final _emailController = TextEditingController();
+
+  Future<void> _reportName() async =>
+      widget.onNameChosen?.call(_fullNameController.text.trim());
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _isPasswordVisible = false;
@@ -407,6 +414,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 }
 
                                 final nav = Navigator.of(context);
+                                await _reportName();
                                 await authProvider.register(
                                   email: _emailController.text.trim(),
                                   username: _deriveUsername(
@@ -507,6 +515,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         onPressed: authProvider.isLoading
                             ? null
                             : () async {
+                                await _reportName();
                                 await authProvider.signInWithGoogle();
                               },
                         icon: const Icon(Icons.g_mobiledata, size: 30),
@@ -537,6 +546,8 @@ class _RegisterPageState extends State<RegisterPage> {
                         onPressed: authProvider.isLoading
                             ? null
                             : () async {
+                                await _reportName();
+                                if (!context.mounted) return;
                                 await signInWithFacebookOrLink(
                                   context,
                                   authProvider,

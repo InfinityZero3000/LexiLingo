@@ -152,11 +152,8 @@
     "verifyEmailDoneMessage": "Vous pouvez vous connecter et commencer à apprendre.",
     "verifyEmailFailedTitle": "Ce lien ne fonctionne plus",
     "verifyEmailFailedMessage": "Il a déjà été utilisé ou a expiré. Saisissez votre e-mail pour en recevoir un nouveau.",
-    "verifyEmailBanner": "Vérifiez votre e-mail pour débloquer la boutique et les récompenses de parrainage.",
-    "verifyEmailBannerAction": "Renvoyer le lien",
     "googleLoginFailed": "La connexion Google a échoué. Réessayez.",
-    "facebookLoginFailed": "La connexion Facebook a échoué. Réessayez.",
-    "facebookEmailInUse": "L'e-mail de ce compte Facebook est déjà utilisé par un autre compte. Connectez-vous comme vous l'avez fait auparavant."
+    "facebookLoginFailed": "La connexion Facebook a échoué. Réessayez."
   },
   "home": {
     "wordsLeftToReview": "mots à réviser",
@@ -1040,11 +1037,11 @@
     "reviewReminderTitle": "C'est l'heure de réviser votre vocabulaire",
     "reviewChannelName": "Rappels quotidiens",
     "reviewChannelDescription": "Vous rappelle de réviser votre vocabulaire chaque jour",
-    "reviewTitle": "Révision de vocabulaire",
-    "reviewBodyDue": "Vous avez {count} mots à réviser aujourd'hui !",
-    "reviewBodyStreak": "C'est l'heure de réviser — gardez votre série !",
-    "reviewBodyDueNow": "{count} mots doivent être révisés !",
+    "reviewTitle": "📚 Petite révision ?",
+    "reviewBodyStreak": "Deux minutes maintenant pour retenir vos mots… et garder votre série ! 🔥",
     "reviewWaitingBody": "{count} mots attendent d'être révisés.",
+    "verifyEmailTitle": "✉️ Vérifiez votre e-mail",
+    "verifyEmailBody": "Ouvrez le lien envoyé à {email} pour débloquer la boutique et les récompenses de parrainage.",
     "checkin": {
       "channelName": "Rappels de présence",
       "channelDescription": "Vous rappelle de garder votre série d'apprentissage à l'heure choisie",

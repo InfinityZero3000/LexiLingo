@@ -19383,6 +19383,18 @@
       "status": "inventoried"
     },
     {
+      "id": "lib/features/profile/presentation/widgets/profile_page/profile_header.dart::ProfileHeader::MaterialPageRoute::2",
+      "path": "lib/features/profile/presentation/widgets/profile_page/profile_header.dart",
+      "entryPoint": "imperativeRoute",
+      "symbol": "ProfileHeader",
+      "callKind": "MaterialPageRoute",
+      "ordinal": 2,
+      "line": 527,
+      "category": "eligible",
+      "group": 6,
+      "status": "inventoried"
+    },
+    {
       "id": "lib/features/profile/presentation/widgets/profile_page/profile_header.dart::ProfileHeader::Navigator.push::0",
       "path": "lib/features/profile/presentation/widgets/profile_page/profile_header.dart",
       "entryPoint": "imperativeRoute",
@@ -19402,6 +19414,18 @@
       "callKind": "Navigator.push",
       "ordinal": 1,
       "line": 479,
+      "category": "eligible",
+      "group": 6,
+      "status": "inventoried"
+    },
+    {
+      "id": "lib/features/profile/presentation/widgets/profile_page/profile_header.dart::ProfileHeader::Navigator.push::2",
+      "path": "lib/features/profile/presentation/widgets/profile_page/profile_header.dart",
+      "entryPoint": "imperativeRoute",
+      "symbol": "ProfileHeader",
+      "callKind": "Navigator.push",
+      "ordinal": 2,
+      "line": 525,
       "category": "eligible",
       "group": 6,
       "status": "inventoried"
@@ -26846,6 +26870,18 @@
       "callKind": "namedRoute",
       "ordinal": 25,
       "line": 530,
+      "category": "eligible",
+      "group": 1,
+      "status": "inventoried"
+    },
+    {
+      "id": "lib/main.dart::_LexiLingoAppState::namedRoute::26",
+      "path": "lib/main.dart",
+      "entryPoint": "namedRoute",
+      "symbol": "_LexiLingoAppState",
+      "callKind": "namedRoute",
+      "ordinal": 26,
+      "line": 569,
       "category": "eligible",
       "group": 1,
       "status": "inventoried"

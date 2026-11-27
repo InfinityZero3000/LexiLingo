@@ -57,8 +57,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   String _onboardingCompletedKey(String userId) =>
       '${AppConstants.firstTimeUserKey}_completed_$userId';
-  String _onboardingConfigKey(String userId) =>
-      '${AppConstants.firstTimeUserKey}_config_$userId';
+  // Answers the server has not taken yet, per account, so a failed save is
+  // retried on the next launch instead of losing the starter answers.
+  String _unsentOnboardingKey(String userId) =>
+      '${AppConstants.firstTimeUserKey}_unsent_$userId';
 
   Future<void> _resolvePreAuthFlow() async {
     if (_isResolvingPreAuthFlow || _preAuthFlowResolved) {
@@ -107,6 +109,20 @@ class _AuthWrapperState extends State<AuthWrapper> {
       _showPreAuthWelcome = false;
       _showPreAuthQuestions = true;
     });
+  }
+
+  /// The register form starts from the starter-question name but may be
+  /// edited; whatever it holds when the learner signs up is their choice.
+  Future<void> _onRegisterNameChosen(String name) async {
+    final current = _pendingPreAuthAnswers;
+    if (name.isEmpty || current == null || current.name == name) return;
+    final updated = PreAuthAnswers(
+      name: name,
+      nativeLanguage: current.nativeLanguage,
+    );
+    _pendingPreAuthAnswers = updated;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_preAuthAnswersKey, jsonEncode(updated.toJson()));
   }
 
   /// Called when pre-auth questions are completed.
@@ -164,11 +180,20 @@ class _AuthWrapperState extends State<AuthWrapper> {
         prefs.getBool(_onboardingCompletedKey(userId)) ?? false;
     var isCompleted = currentUser?.isOnboardingCompleted ?? false;
 
-    // Backward compatibility: sync old local completion state to backend once.
+    // Onboarding finished on this device but the server never took it:
+    // send what was answered. Devices from before answers were kept here have
+    // only the level to send.
     if (!isCompleted && localCompleted) {
-      await authProvider.submitOnboarding({
-        'level': currentUser?.cefrLevel ?? 'A1',
-      });
+      final unsent = prefs.getString(_unsentOnboardingKey(userId));
+      final saved = unsent == null
+          ? null
+          : jsonDecode(unsent) as Map<String, dynamic>;
+      final ok = await authProvider.submitOnboarding(
+        saved ?? {'level': currentUser?.cefrLevel ?? 'A1'},
+        displayName: saved?['display_name'] as String?,
+        nativeLanguage: saved?['native_language'] as String?,
+      );
+      if (ok) await prefs.remove(_unsentOnboardingKey(userId));
       isCompleted = true;
     }
 
@@ -201,31 +226,33 @@ class _AuthWrapperState extends State<AuthWrapper> {
       }
     }
 
-    final prefs = await SharedPreferences.getInstance();
-    final config = <String, dynamic>{
-      'goal': answers.goal,
-      'level': answers.level,
-      'interest': answers.interest,
-      'theme_color': _themeColorForGoal(answers.goal),
-      'current_plan_id': _planIdForAnswers(answers),
-      'feature_flags': {
-        'show_advanced_grammar_tab':
-            answers.level != 'A1' && answers.level != 'A2',
-        'show_business_lessons':
-            answers.goal == 'business' || answers.interest == 'career',
-      },
-    };
+    final displayName = (preAuth?.name.isNotEmpty ?? false)
+        ? preAuth!.name
+        : null;
+    final nativeLanguage = preAuth?.nativeLanguage;
 
+    // Kept under this account before sending: the starter answers are the
+    // only copy, and a failed save must not be what deletes them.
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      _unsentOnboardingKey(userId),
+      jsonEncode({
+        ...answers.toJson(),
+        'display_name': ?displayName,
+        'native_language': ?nativeLanguage,
+      }),
+    );
     await prefs.setBool(_onboardingCompletedKey(userId), true);
-    await prefs.setString(_onboardingConfigKey(userId), jsonEncode(config));
     await prefs.remove(_preAuthAnswersKey);
     _pendingPreAuthAnswers = null;
 
-    await authProvider.submitOnboarding(
+    // The learner goes on either way; an unsent save is retried at next launch.
+    final saved = await authProvider.submitOnboarding(
       answers.toJson(),
-      displayName: (preAuth?.name.isNotEmpty ?? false) ? preAuth!.name : null,
-      nativeLanguage: preAuth?.nativeLanguage,
+      displayName: displayName,
+      nativeLanguage: nativeLanguage,
     );
+    if (saved) await prefs.remove(_unsentOnboardingKey(userId));
 
     // The onboarding answer set the working level: catch every holder up.
     if (mounted) {
@@ -262,23 +289,6 @@ class _AuthWrapperState extends State<AuthWrapper> {
     if (!mounted) return null;
     await authProvider.refreshCurrentUser();
     return authProvider.currentUser?.cefrLevel;
-  }
-
-  String _themeColorForGoal(String goal) {
-    switch (goal) {
-      case 'business':
-        return '#0EA5E9';
-      case 'exam':
-        return '#F59E0B';
-      case 'travel':
-        return '#14B8A6';
-      default:
-        return '#30E8E8';
-    }
-  }
-
-  String _planIdForAnswers(OnboardingAnswers answers) {
-    return '${answers.goal}_${answers.level}_${answers.interest}'.toLowerCase();
   }
 
   @override
@@ -407,7 +417,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
         );
       } else {
         currentPage = _isShowingRegister
-            ? RegisterPage(initialName: _pendingPreAuthAnswers?.name)
+            ? RegisterPage(
+                initialName: _pendingPreAuthAnswers?.name,
+                onNameChosen: _onRegisterNameChosen,
+              )
             : const LoginPage();
       }
     }

@@ -5,20 +5,15 @@ import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/level/presentation/widgets/cefr_level_picker.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
+/// What onboarding asks. No interest: that question was dropped (#733), and
+/// sending a fixed "daily-life" told Lexi every learner had answered it.
 class OnboardingAnswers {
   final String goal;
   final String level;
-  final String interest;
 
-  const OnboardingAnswers({
-    required this.goal,
-    required this.level,
-    this.interest = 'daily-life',
-  });
+  const OnboardingAnswers({required this.goal, required this.level});
 
-  Map<String, dynamic> toJson() {
-    return {'goal': goal, 'level': level, 'interest': interest};
-  }
+  Map<String, dynamic> toJson() => {'goal': goal, 'level': level};
 }
 
 class OnboardingPage extends StatefulWidget {

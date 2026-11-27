@@ -33,6 +33,7 @@ import 'package:lexilingo_app/features/lexi_chat/presentation/widgets/lexi_sugge
 import 'package:lexilingo_app/features/voice/data/datasources/speech_recognition_service.dart';
 import 'package:lexilingo_app/features/voice/domain/usecases/assess_pronunciation_usecase.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
+import 'package:lexilingo_app/core/services/podcast_audio_handler.dart';
 
 /// Lexi Chat Page — Minimalist design with clean conversation UI.
 ///
@@ -487,6 +488,7 @@ class _LexiChatPageState extends State<LexiChatPage>
       final recordingPath =
           '${Directory.systemTemp.path}/lexi_voice_${DateTime.now().millisecondsSinceEpoch}.m4a';
 
+      PodcastAudioHandler.pauseBackgroundPlayback();
       await _recorder.start(
         const RecordConfig(encoder: AudioEncoder.aacLc, numChannels: 1),
         path: recordingPath,

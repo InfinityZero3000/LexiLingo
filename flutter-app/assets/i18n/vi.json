@@ -152,11 +152,8 @@
     "verifyEmailDoneMessage": "Bạn có thể đăng nhập để bắt đầu học.",
     "verifyEmailFailedTitle": "Liên kết không còn hiệu lực",
     "verifyEmailFailedMessage": "Liên kết đã được dùng hoặc đã hết hạn. Nhập email để nhận liên kết mới.",
-    "verifyEmailBanner": "Xác minh email để mở khoá cửa hàng và thưởng giới thiệu.",
-    "verifyEmailBannerAction": "Gửi lại link",
     "googleLoginFailed": "Đăng nhập Google thất bại. Vui lòng thử lại.",
-    "facebookLoginFailed": "Đăng nhập Facebook thất bại. Vui lòng thử lại.",
-    "facebookEmailInUse": "Email của tài khoản Facebook này đã được sử dụng cho một tài khoản khác. Hãy đăng nhập bằng cách bạn đã dùng trước đó."
+    "facebookLoginFailed": "Đăng nhập Facebook thất bại. Vui lòng thử lại."
   },
   "home": {
     "wordsLeftToReview": "từ cần ôn",
@@ -1040,11 +1037,11 @@
     "reviewReminderTitle": "Đến giờ ôn từ vựng",
     "reviewChannelName": "Nhắc nhở hàng ngày",
     "reviewChannelDescription": "Nhắc bạn ôn tập từ vựng mỗi ngày",
-    "reviewTitle": "Ôn tập từ vựng",
-    "reviewBodyDue": "Bạn có {count} từ cần ôn tập hôm nay!",
-    "reviewBodyStreak": "Đã đến giờ ôn từ vựng – giữ vững streak của bạn!",
-    "reviewBodyDueNow": "Bạn có {count} từ đến hạn ôn tập!",
+    "reviewTitle": "📚 Đến giờ ôn từ vựng rồi",
+    "reviewBodyStreak": "Ôn 2 phút để nhớ lâu hơn và giữ vững chuỗi ngày học nhé! 🔥",
     "reviewWaitingBody": "{count} từ đang đợi bạn ôn tập.",
+    "verifyEmailTitle": "✉️ Xác minh email của bạn",
+    "verifyEmailBody": "Mở liên kết đã gửi tới {email} để mở khoá cửa hàng và thưởng giới thiệu.",
     "checkin": {
       "channelName": "Nhắc điểm danh",
       "channelDescription": "Nhắc bạn giữ chuỗi ngày học vào giờ bạn chọn",

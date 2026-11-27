@@ -84,4 +84,20 @@ void main() {
     expect(provider.watchHistory.map((v) => v.videoId), ['b', 'a']);
     provider.dispose();
   });
+
+  test('a sign-out during the load drops the previous learner\'s video', () async {
+    SharedPreferences.setMockInitialValues({});
+    await UserScopeService.setActiveUserId('user-a');
+    final provider = YouTubeProvider(repository: _Repo());
+
+    final pending = provider.addToHistory(_video('a-video'));
+    provider.reset(); // account switch while the stored lists load
+    await UserScopeService.setActiveUserId('user-b');
+    await pending;
+
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString('u:user-b:youtube_watch_history'), isNull);
+    expect(provider.watchHistory, isEmpty);
+    provider.dispose();
+  });
 }

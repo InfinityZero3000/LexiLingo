@@ -498,9 +498,12 @@ class SettingsProvider extends ChangeNotifier {
   }) async {
     await _notificationService.ensureInitialized();
 
-    if (!settings.notificationEnabled ||
-        !settings.pushReminderEnabled ||
-        (_hasServerPush?.call() ?? false)) {
+    if (_hasServerPush?.call() ?? false) {
+      await _notificationService.cancelDailyReminder();
+      await _notificationService.ensureChannels();
+      return;
+    }
+    if (!settings.notificationEnabled || !settings.pushReminderEnabled) {
       await _notificationService.cancelDailyReminder();
       return;
     }

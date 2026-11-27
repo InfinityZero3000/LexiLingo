@@ -49,6 +49,12 @@
 	<string>4db1a6d33987329b59863f04d66c7671</string>
 	<key>FacebookDisplayName</key>
 	<string>LexiLingo</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>LexiLingo uses the microphone to hear you speak in lessons, pronunciation practice and voice chat with Lexi.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>LexiLingo opens your photo library so you can choose a profile picture.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>LexiLingo uses your approximate location to suggest learners near you.</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>fbapi</string>
@@ -56,6 +62,10 @@
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+	</array>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

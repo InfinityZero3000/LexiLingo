@@ -48,6 +48,10 @@ Future<void> _registerPodcastAudioHandler() async {
         androidNotificationChannelName: 'LexiLingo Podcast',
         androidNotificationOngoing: true,
         androidShowNotificationBadge: true,
+        // The lock screen labels its skip buttons with these; the handler
+        // and the in-app buttons skip 15 s.
+        fastForwardInterval: PodcastAudioHandler.skipInterval,
+        rewindInterval: PodcastAudioHandler.skipInterval,
       ),
     ).timeout(const Duration(seconds: 8));
 

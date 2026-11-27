@@ -13,6 +13,7 @@ import '../network/backend_auth_header_provider.dart';
 import 'duplex_voice_phase.dart';
 import 'pcm_frame_chunker.dart';
 import 'voice_audio_normalizer.dart';
+import 'package:lexilingo_app/core/services/podcast_audio_handler.dart';
 
 typedef _StartArgs = ({
   String sessionId,
@@ -184,6 +185,7 @@ class DuplexVoiceClient {
       if (_stopping || _captureSubscription != null) return;
       _normalizer.reset();
       _chunker.reset();
+      PodcastAudioHandler.pauseBackgroundPlayback();
       final capture = await _recorder.startStream(
         const RecordConfig(
           encoder: AudioEncoder.pcm16bits,

@@ -129,6 +129,12 @@ class NotificationEntity extends Equatable {
   /// Get route from data if available
   String? get route => _readString(data?['route']);
 
+  /// The server's welcome-gift row. Its stored text is in whatever language
+  /// the account had at sign-up, so the app words it itself.
+  bool get isStarterReward =>
+      _readString(data?['type']) == 'starter_reward' ||
+      data?['reward_key'] != null;
+
   /// Whether this notification should close back to the app root.
   bool get opensRoot {
     final directRoute = route;

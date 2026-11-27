@@ -152,11 +152,8 @@
     "verifyEmailDoneMessage": "You can sign in and start learning.",
     "verifyEmailFailedTitle": "This link no longer works",
     "verifyEmailFailedMessage": "It was already used or has expired. Enter your email to get a new one.",
-    "verifyEmailBanner": "Verify your email to unlock the shop and referral rewards.",
-    "verifyEmailBannerAction": "Resend link",
     "googleLoginFailed": "Google sign-in failed. Please try again.",
-    "facebookLoginFailed": "Facebook sign-in failed. Please try again.",
-    "facebookEmailInUse": "The email on this Facebook account is already used by another account. Sign in the way you did before."
+    "facebookLoginFailed": "Facebook sign-in failed. Please try again."
   },
   "home": {
     "wordsLeftToReview": "words to review",
@@ -1040,11 +1037,11 @@
     "reviewReminderTitle": "Time to review your vocabulary",
     "reviewChannelName": "Daily reminders",
     "reviewChannelDescription": "Reminds you to review vocabulary every day",
-    "reviewTitle": "Vocabulary review",
-    "reviewBodyDue": "You have {count} words to review today!",
-    "reviewBodyStreak": "Time to review your vocabulary — keep your streak alive!",
-    "reviewBodyDueNow": "You have {count} words due for review!",
+    "reviewTitle": "📚 Time for a quick review",
+    "reviewBodyStreak": "Two minutes now keeps your words fresh — and your streak alive! 🔥",
     "reviewWaitingBody": "{count} words are waiting for you to review.",
+    "verifyEmailTitle": "✉️ Verify your email",
+    "verifyEmailBody": "Open the link we sent to {email} to unlock the shop and referral rewards.",
     "checkin": {
       "channelName": "Check-in reminders",
       "channelDescription": "Reminds you to keep your learning streak at the time you choose",

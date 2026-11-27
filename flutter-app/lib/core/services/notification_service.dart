@@ -12,6 +12,14 @@ class NotificationService {
   static const String _reviewRoute = '/vocabulary/review';
   static const String _checkinPayload = 'checkin';
 
+  // Monochrome status-bar icon (res/drawable): the colour launcher icon draws
+  // as a grey square. The server's pushes name the same icon and channels.
+  static const String _androidIcon = 'ic_stat_lexilingo';
+  static const String _reviewChannelId = 'daily_reminder_channel';
+  static const String _checkinChannelId = 'checkin_reminder_channel';
+  // Shared with the server's vocabulary pushes so iOS stacks them together.
+  static const String _reviewThread = 'vocabulary_review_reminder';
+
   static const checkinEnabledKey = 'checkin_reminder_enabled';
   static const checkinHourKey = 'checkin_reminder_hour';
   static const checkinMinuteKey = 'checkin_reminder_minute';
@@ -32,7 +40,7 @@ class NotificationService {
 
     tz.initializeTimeZones();
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+        AndroidInitializationSettings(_androidIcon);
 
     const DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings();
@@ -123,50 +131,68 @@ class NotificationService {
     return granted;
   }
 
-  Future<void> scheduleDailyReminder(TimeOfDay time, {int dueCount = 0}) async {
+  /// Creates the Android channels the server's pushes are addressed to.
+  ///
+  /// A push naming a channel the device does not have lands in FCM's generic
+  /// "Miscellaneous" one, where the learner cannot mute it on its own. Called
+  /// once translations are loaded, because the names show in system settings.
+  Future<void> ensureChannels() async {
     await ensureInitialized();
-    final body = dueCount > 0
-        ? 'notifications.reviewBodyDue'.tr(namedArgs: {'count': '$dueCount'})
-        : 'notifications.reviewBodyStreak'.tr();
+    final android = flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    if (android == null) return;
+    try {
+      await android.createNotificationChannel(
+        AndroidNotificationChannel(
+          _reviewChannelId,
+          'notifications.reviewChannelName'.tr(),
+          description: 'notifications.reviewChannelDescription'.tr(),
+          importance: Importance.high,
+        ),
+      );
+      await android.createNotificationChannel(
+        AndroidNotificationChannel(
+          _checkinChannelId,
+          'notifications.checkin.channelName'.tr(),
+          description: 'notifications.checkin.channelDescription'.tr(),
+          importance: Importance.high,
+        ),
+      );
+    } catch (e) {
+      // Best effort: a push still arrives in the fallback channel.
+      debugPrint('Notification channels not created: $e');
+    }
+  }
+
+  /// Daily review nudge, used only when the server is not sending pushes.
+  ///
+  /// It repeats unchanged every day, so it must not quote a count: one taken
+  /// when it was scheduled would be stale by the next morning.
+  Future<void> scheduleDailyReminder(TimeOfDay time) async {
+    await ensureInitialized();
+    final title = 'notifications.reviewTitle'.tr();
+    final body = 'notifications.reviewBodyStreak'.tr();
     await flutterLocalNotificationsPlugin.zonedSchedule(
       _dailyReminderId,
-      'notifications.reviewTitle'.tr(),
+      title,
       body,
       _nextInstanceOfTime(time.hour, time.minute),
       NotificationDetails(
         android: AndroidNotificationDetails(
-          'daily_reminder_channel',
+          _reviewChannelId,
           'notifications.reviewChannelName'.tr(),
           channelDescription: 'notifications.reviewChannelDescription'.tr(),
           importance: Importance.high,
+          category: AndroidNotificationCategory.reminder,
+          color: AppColors.primary,
+          styleInformation: BigTextStyleInformation(body, contentTitle: title),
         ),
-        iOS: DarwinNotificationDetails(
-          categoryIdentifier: 'vocabulary_review',
-        ),
+        iOS: const DarwinNotificationDetails(threadIdentifier: _reviewThread),
       ),
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
-      payload: _reviewRoute,
-    );
-  }
-
-  Future<void> showImmediateReviewReminder(int dueCount) async {
-    await ensureInitialized();
-    await flutterLocalNotificationsPlugin.show(
-      _dailyReminderId + 1,
-      'notifications.reviewTitle'.tr(),
-      'notifications.reviewBodyDueNow'.tr(namedArgs: {'count': '$dueCount'}),
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          'daily_reminder_channel',
-          'notifications.reviewChannelName'.tr(),
-          channelDescription: 'notifications.reviewChannelDescription'.tr(),
-          importance: Importance.high,
-        ),
-        iOS: DarwinNotificationDetails(
-          categoryIdentifier: 'vocabulary_review',
-        ),
-      ),
       payload: _reviewRoute,
     );
   }
@@ -216,7 +242,7 @@ class NotificationService {
         tz.TZDateTime.from(at, tz.local),
         NotificationDetails(
           android: AndroidNotificationDetails(
-            'checkin_reminder_channel',
+            _checkinChannelId,
             'notifications.checkin.channelName'.tr(),
             channelDescription: 'notifications.checkin.channelDescription'.tr(),
             importance: Importance.high,

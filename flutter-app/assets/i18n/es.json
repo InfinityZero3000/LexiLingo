@@ -152,11 +152,8 @@
     "verifyEmailDoneMessage": "Ya puedes iniciar sesión y empezar a aprender.",
     "verifyEmailFailedTitle": "Este enlace ya no funciona",
     "verifyEmailFailedMessage": "Ya se usó o ha caducado. Escribe tu correo para recibir uno nuevo.",
-    "verifyEmailBanner": "Verifica tu correo para desbloquear la tienda y las recompensas por invitación.",
-    "verifyEmailBannerAction": "Reenviar enlace",
     "googleLoginFailed": "Falló el inicio de sesión con Google. Inténtalo de nuevo.",
-    "facebookLoginFailed": "Falló el inicio de sesión con Facebook. Inténtalo de nuevo.",
-    "facebookEmailInUse": "El correo de esta cuenta de Facebook ya está en uso en otra cuenta. Inicia sesión como lo hiciste antes."
+    "facebookLoginFailed": "Falló el inicio de sesión con Facebook. Inténtalo de nuevo."
   },
   "home": {
     "wordsLeftToReview": "palabras por repasar",
@@ -1040,11 +1037,11 @@
     "reviewReminderTitle": "Es hora de repasar tu vocabulario",
     "reviewChannelName": "Recordatorios diarios",
     "reviewChannelDescription": "Te recuerda repasar vocabulario cada día",
-    "reviewTitle": "Repaso de vocabulario",
-    "reviewBodyDue": "¡Hoy tienes {count} palabras para repasar!",
-    "reviewBodyStreak": "Hora de repasar: ¡mantén tu racha!",
-    "reviewBodyDueNow": "¡Tienes {count} palabras pendientes de repaso!",
+    "reviewTitle": "📚 Hora de un repaso rápido",
+    "reviewBodyStreak": "Dos minutos ahora mantienen tus palabras frescas… ¡y tu racha viva! 🔥",
     "reviewWaitingBody": "{count} palabras esperan tu repaso.",
+    "verifyEmailTitle": "✉️ Verifica tu correo",
+    "verifyEmailBody": "Abre el enlace que enviamos a {email} para desbloquear la tienda y las recompensas por referidos.",
     "checkin": {
       "channelName": "Recordatorios de asistencia",
       "channelDescription": "Te recuerda mantener tu racha de estudio a la hora que elijas",

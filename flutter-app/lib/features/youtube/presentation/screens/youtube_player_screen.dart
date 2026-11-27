@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:youtube_player_iframe/youtube_player_iframe.dart';
 import 'package:lexilingo_app/core/services/content_time_tracker.dart';
 import 'package:lexilingo_app/core/di/service_locator.dart';
+import 'package:lexilingo_app/core/services/podcast_audio_handler.dart';
 import 'package:lexilingo_app/core/services/known_words_service.dart';
 import 'package:lexilingo_app/core/services/quick_save_vocabulary_service.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -53,6 +54,12 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
   /// credits nothing because the jump is clamped to [_kWatchTickCapMs].
   late final ContentTimeTracker _watchTime;
 
+  /// Wall time between polls. A poll credits no more than this, so 2x speed
+  /// earns real minutes, not video minutes.
+  final Stopwatch _sincePoll = Stopwatch();
+
+  late final AppLifecycleListener _lifecycle;
+
   static const _kWatchTickCapMs = 1000;
 
   static const _kSpeeds = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
@@ -90,6 +97,17 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
       sourceDetail: 'video_watch',
     );
 
+    // A WebView keeps the video's sound going after the app is hidden, which
+    // YouTube's terms forbid and which plays over everything else.
+    _lifecycle = AppLifecycleListener(
+      onHide: () => _ytController.pauseVideo().ignore(),
+    );
+
+    // Two soundtracks at once: the episode left playing in the background
+    // would talk over the video.
+    PodcastAudioHandler.pauseBackgroundPlayback();
+
+    _sincePoll.start();
     _positionTimer = Timer.periodic(const Duration(milliseconds: 500), (_) {
       _syncPosition();
     });
@@ -105,6 +123,7 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
   void dispose() {
     _fadeController.dispose();
     _tabController.dispose();
+    _lifecycle.dispose();
     _ytController.close();
     _positionTimer?.cancel();
     _watchTime.stop();
@@ -121,11 +140,16 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
     try {
       final seconds = await _ytController.currentTime;
       final posMs = (seconds * 1000).round();
+      final wallMs = _sincePoll.elapsedMilliseconds;
+      _sincePoll.reset();
       if (!mounted || posMs == _currentPositionMs) return;
 
       _watchTime.add(
         Duration(
-          milliseconds: (posMs - _currentPositionMs).clamp(0, _kWatchTickCapMs),
+          milliseconds: (posMs - _currentPositionMs).clamp(
+            0,
+            wallMs.clamp(0, _kWatchTickCapMs),
+          ),
         ),
       );
 
@@ -144,13 +168,13 @@ class _YouTubePlayerScreenState extends State<YouTubePlayerScreen>
         }
       }
 
-      final changed = newIndex != _activeCaptionIndex;
-      setState(() {
-        _currentPositionMs = posMs;
-        _activeCaptionIndex = newIndex;
-      });
+      _currentPositionMs = posMs;
+      // Only the caption highlight reads this; rebuilding the whole screen
+      // twice a second for an unchanged line was wasted work.
+      if (newIndex == _activeCaptionIndex) return;
+      setState(() => _activeCaptionIndex = newIndex);
 
-      if (changed && newIndex >= 0) _scrollToCaption(newIndex);
+      if (newIndex >= 0) _scrollToCaption(newIndex);
     } catch (_) {
     } finally {
       _polling = false;

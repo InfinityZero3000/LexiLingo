@@ -59,6 +59,7 @@ import 'package:lexilingo_app/features/level/presentation/providers/level_provid
 import 'package:lexilingo_app/features/level/presentation/providers/placement_test_provider.dart';
 import 'package:lexilingo_app/features/level/presentation/providers/proficiency_provider.dart';
 import 'package:lexilingo_app/features/notifications/presentation/providers/notification_provider.dart';
+import 'package:lexilingo_app/features/profile/presentation/pages/edit_profile_screen.dart';
 import 'package:lexilingo_app/features/profile/presentation/providers/profile_provider.dart';
 import 'package:lexilingo_app/features/progress/presentation/providers/progress_provider.dart';
 import 'package:lexilingo_app/features/social/presentation/providers/social_provider.dart';
@@ -471,6 +472,9 @@ class _LexiLingoAppState extends State<LexiLingoApp>
             ),
             '/profile': LearnerRoute.builder(
               (context) => const MainScreen(initialIndex: 4),
+            ),
+            '/profile/edit': LearnerRoute.builder(
+              (context) => const EditProfileScreen(),
             ),
             '/achievements': LearnerRoute.builder(
               (context) => const AchievementsScreen(),
