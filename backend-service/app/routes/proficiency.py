@@ -239,6 +239,14 @@ PLACEMENT_QUESTIONS = [
 # Max possible score: 4*5 + 4*10 + 4*15 + 4*20 + 2*25 + 2*30 = 20+40+60+80+50+60 = 310
 # But we use 305 as stated in docs for slight adjustment
 MAX_PLACEMENT_SCORE = sum(q["points"] for q in PLACEMENT_QUESTIONS)
+CHANCE_PLACEMENT_SCORE = sum(q["points"] / len(q["options"]) for q in PLACEMENT_QUESTIONS)
+
+
+def chance_corrected_percentage(total_score: float) -> float:
+    """Score above what blind guessing earns, as a share of what is left to earn."""
+    if total_score <= CHANCE_PLACEMENT_SCORE:
+        return 0.0
+    return (total_score - CHANCE_PLACEMENT_SCORE) / (MAX_PLACEMENT_SCORE - CHANCE_PLACEMENT_SCORE) * 100
 
 # Level thresholds by percentage of max score
 PLACEMENT_LEVEL_THRESHOLDS = [
@@ -873,7 +881,8 @@ async def submit_placement_test(
         })
 
     # Determine level
-    pct = (total_score / MAX_PLACEMENT_SCORE * 100) if MAX_PLACEMENT_SCORE else 0
+    raw_pct = (total_score / MAX_PLACEMENT_SCORE * 100) if MAX_PLACEMENT_SCORE else 0
+    pct = chance_corrected_percentage(total_score)
     assessed_level = "A1"
     for threshold_pct, level in PLACEMENT_LEVEL_THRESHOLDS:
         if pct >= threshold_pct:
@@ -935,6 +944,7 @@ async def submit_placement_test(
         "total_score": total_score,
         "max_score": MAX_PLACEMENT_SCORE,
         "score_percentage": round(pct, 1),
+        "raw_score_percentage": round(raw_pct, 1),
         "correct_count": correct_count,
         "total_questions": len(PLACEMENT_QUESTIONS),
         "level_changed": change is not None,
