@@ -2558,7 +2558,8 @@
         "productEvents": "Product events",
         "contentAgent": "Content agent",
         "celery": "Background jobs",
-        "backups": "Backups"
+        "backups": "Backups",
+        "errors": "Errors"
       },
       "health": {
         "system": "Server",

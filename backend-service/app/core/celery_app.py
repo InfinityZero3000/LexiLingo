@@ -32,6 +32,7 @@ if Celery is not None:
             "app.tasks.learner_state",
             "app.tasks.notification_campaign",
             "app.tasks.nurture",
+            "app.tasks.ops_errors",
             "app.tasks.ranking_agent",
             "app.tasks.reminders",
             "app.tasks.skill_history",
@@ -65,6 +66,14 @@ if Celery is not None:
         from app.core.celery_status import record_run
 
         record_run(getattr(sender, "name", None), "FAILURE", error=repr(exception))
+
+        from app.services.ops_errors import location_from_exc, record_error_sync
+
+        record_error_sync(
+            service="worker", kind="error", method="TASK", route=getattr(sender, "name", None) or "<unknown>",
+            status=500, error_type=type(exception).__name__, location=location_from_exc(exception),
+            message=str(exception),
+        )
 
     celery_app.conf.beat_schedule = {
         "scan-fsrs-reminders": {
@@ -150,6 +159,18 @@ if Celery is not None:
         "export-reference-corpus": {
             "task": "app.tasks.vocabulary_enrichment.export_reference_corpus",
             "schedule": crontab(hour=3, minute=15),
+        },
+        "flush-error-buffer": {
+            "task": "app.tasks.ops_errors.flush_error_buffer",
+            "schedule": crontab(),
+        },
+        "send-error-digest": {
+            "task": "app.tasks.ops_errors.send_error_digest",
+            "schedule": crontab(minute="*/5"),
+        },
+        "prune-error-counts": {
+            "task": "app.tasks.ops_errors.prune_error_counts",
+            "schedule": crontab(hour=3, minute=30),
         },
     }
 else:

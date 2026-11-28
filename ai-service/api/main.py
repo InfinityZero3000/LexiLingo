@@ -32,6 +32,7 @@ from api.core.redis_client import RedisClient, get_redis
 from api.core.groq_key_pool import build_groq_key_pool, GroqKeyPool
 from api.core.config import get_settings
 from api.services.lexi_session_store import LEXI_RETENTION_SECONDS
+from api.services.ops_error_reporter import OpsErrorMiddleware, unhandled_exception_handler
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -304,6 +305,22 @@ async def lifespan(app: FastAPI):
                 exc_info=True,
             )
 
+    if settings.OPS_ERROR_REPORTING_ENABLED:
+        # Error telemetry is the most skippable thing here: a missing token or
+        # an import failure costs the admin error page a source, not the process.
+        try:
+            from api.services.ops_error_reporter import start_ops_error_reporter
+
+            if start_ops_error_reporter():
+                logger.info(" Ops error reporter started")
+        except Exception as e:
+            logger.error(
+                "Ops error reporter failed to start; errors will not reach the "
+                "admin error page: %s",
+                e,
+                exc_info=True,
+            )
+
     if settings.CONTENT_ETL_ENABLED:
         # The ETL's optional dependencies are not installed in every image, so
         # the import itself can fail. Corpus refresh is the most skippable thing
@@ -396,6 +413,12 @@ async def lifespan(app: FastAPI):
     yield
     
     # Shutdown
+    try:
+        from api.services.ops_error_reporter import stop_ops_error_reporter
+
+        await stop_ops_error_reporter()
+    except Exception as e:
+        logger.warning(f"Failed to stop ops error reporter cleanly: {e}")
     if _http_client:
         await _http_client.aclose()
     try:
@@ -467,9 +490,16 @@ app.add_middleware(
 )
 
 
+app.add_middleware(OpsErrorMiddleware)
+app.add_exception_handler(Exception, unhandled_exception_handler)
+
+
 @app.exception_handler(StarletteHTTPException)
 async def _hide_internal_error_details(request: Request, exc: StarletteHTTPException):
     """Internal error text belongs in our logs, not in a production response."""
+    scope = getattr(request, "scope", None)
+    if isinstance(scope, dict):
+        scope.setdefault("state", {})["ops_detail"] = str(exc.detail)
     if exc.status_code == 500 and settings.ENVIRONMENT == "production":
         logger.error("500 on %s %s: %s", request.method, request.url.path, str(exc.detail)[:500])
         return JSONResponse({"detail": "Internal server error"}, status_code=500, headers=exc.headers)

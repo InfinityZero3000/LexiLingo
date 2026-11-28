@@ -102,6 +102,7 @@ class Settings(BaseSettings):
     LEARNER_STATE_MAX_KEEPALIVE: Optional[int] = Field(default=None, ge=1, le=1000)
     LEARNER_STATE_CIRCUIT_FAILURES: int = Field(default=5, ge=1, le=100)
     LEARNER_STATE_CIRCUIT_RESET_SECONDS: float = Field(default=30.0, ge=0.1, le=600.0)
+    OPS_ERROR_REPORTING_ENABLED: bool = True
     LEARNER_OBSERVATION_DIAGNOSED_ONLY: bool = False
     KUZU_USER_MASTERY_WRITES_ENABLED: bool = True
     KG_ENABLED: bool = True

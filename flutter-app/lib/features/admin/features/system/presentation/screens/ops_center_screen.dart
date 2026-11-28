@@ -6,7 +6,7 @@ import '../../data/system_models.dart';
 import '../../data/system_repository.dart';
 import '../widgets/system_widgets.dart';
 
-/// Reminders, product events, agent, celery and backup status: read only.
+/// Reminders, product events, agent, celery, backup status and error groups: read only.
 class OpsCenterScreen extends StatelessWidget {
   OpsCenterScreen({super.key, SystemRepository? repository})
     : repository = repository ?? SystemRepository();
@@ -24,6 +24,7 @@ class OpsCenterScreen extends StatelessWidget {
       ('admin.sys.ops.contentAgent', () => repository.ops('content-agent')),
       ('admin.sys.ops.celery', () => repository.ops('celery')),
       ('admin.sys.ops.backups', () => repository.ops('backups')),
+      ('admin.sys.ops.errors', () => repository.ops('errors')),
     ];
     return DefaultTabController(
       length: tabs.length,

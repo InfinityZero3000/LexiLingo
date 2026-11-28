@@ -127,6 +127,7 @@ from app.models.learner_state import (
 )
 
 from app.models.app_setting import AdminGemGrant, AppSetting
+from app.models.ops_error import OpsErrorCount, OpsErrorGroup
 from app.models.partner import PartnerApiKey
 from app.models.product_event import ProductEvent
 
@@ -136,6 +137,8 @@ from app.models.entitlement import UserEntitlement
 __all__ = [
     "AdminGemGrant",
     "AppSetting",
+    "OpsErrorCount",
+    "OpsErrorGroup",
     "PartnerApiKey",
     "ProductEvent",
     # User (Phase 1)

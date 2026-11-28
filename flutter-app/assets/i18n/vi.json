@@ -2558,7 +2558,8 @@
         "productEvents": "Sự kiện sản phẩm",
         "contentAgent": "Content agent",
         "celery": "Tác vụ nền",
-        "backups": "Sao lưu"
+        "backups": "Sao lưu",
+        "errors": "Lỗi hệ thống"
       },
       "health": {
         "system": "Máy chủ",

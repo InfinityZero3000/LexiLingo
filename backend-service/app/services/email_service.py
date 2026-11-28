@@ -453,6 +453,35 @@ class EmailService:
         )
 
     @staticmethod
+    def _build_staff_message(to_email: str, subject: str, text: str, html_body: str) -> EmailMessage:
+        """Plain English mail for the operations team; no layout, no per-language copy."""
+        msg = EmailMessage()
+        msg["Subject"] = subject
+        EmailService._set_sender(msg)
+        msg["To"] = to_email
+        msg.set_content(text)
+        msg.add_alternative(html_body, subtype="html")
+        return msg
+
+    @classmethod
+    async def send_staff_message(cls, *, to_email: str, subject: str, text: str, html_body: str) -> bool:
+        """Send an operations mail; never raises."""
+        if not settings.SMTP_HOST:
+            logger.warning("SMTP_HOST not configured. Staff email was not sent")
+            return False
+        if is_undeliverable(to_email):
+            logger.info("Skipped staff email to an undeliverable address")
+            return False
+        try:
+            await run_in_threadpool(
+                cls._send_message_blocking, cls._build_staff_message(to_email, subject, text, html_body)
+            )
+            return True
+        except Exception as exc:  # pragma: no cover - external IO
+            logger.exception("Failed to send staff email: %s", exc)
+            return False
+
+    @staticmethod
     def _build_otp_message(to_email: str, otp: str, display_name: str) -> EmailMessage:
         """Build an EmailMessage containing an admin login OTP."""
         from email.message import EmailMessage as _EM

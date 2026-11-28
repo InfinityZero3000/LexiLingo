@@ -1,12 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Clock, Gem, Globe, Info, Plug, Server, Settings } from "lucide-react";
+import { Clock, Gem, Globe, Info, Mail, Plug, Server, Settings } from "lucide-react";
 import { SectionHeader } from "../components/SectionHeader";
 import { StatCard } from "../components/StatCard";
 import { StatusPill } from "../components/StatusPill";
+import { TagInput } from "../components/TagInput";
 import { useAuth } from "../components/AuthProvider";
 import { getSystemInfo } from "../lib/adminApi";
 import { GemLimitsConfig, getGemLimits, updateGemLimits } from "../lib/gemLimitsApi";
+import {
+  DIGEST_INTERVALS,
+  getErrorReportSettings,
+  sendTestErrorReport,
+  updateErrorReportSettings,
+} from "../lib/opsApi";
 import { useI18n, localeNames, type Locale } from "../lib/i18n";
 
 const messageOf = (err: unknown, fallback: string) => (err instanceof Error && err.message ? err.message : fallback);
@@ -164,6 +171,143 @@ const GemLimitsPanel = () => {
   );
 };
 
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_RECIPIENTS = 10;
+const THRESHOLD_FIELDS = [
+  { key: "spike_threshold", label: "errorReportSpike" },
+  { key: "client_spike_threshold", label: "errorReportClientSpike" },
+  { key: "cooldown_minutes", label: "errorReportCooldown" },
+] as const;
+
+/** Who gets the error digest and alert emails, how often, and at what volume; super admins edit it. */
+const ErrorReportPanel = () => {
+  const { t } = useI18n();
+  const { role } = useAuth();
+  const queryClient = useQueryClient();
+  const editable = role === "super_admin";
+  const settings = useQuery({ queryKey: ["error-report-settings"], queryFn: getErrorReportSettings });
+  const [enabled, setEnabled] = useState(true);
+  const [recipients, setRecipients] = useState<string[]>([]);
+  const [digestInterval, setDigestInterval] = useState("60");
+  const [numbers, setNumbers] = useState<Record<string, string>>({});
+  const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<{ ok: boolean; text: string } | null>(null);
+
+  useEffect(() => {
+    const data = settings.data;
+    if (!data) return;
+    setEnabled(data.enabled);
+    setRecipients(data.recipients);
+    setDigestInterval(String(data.digest_interval_minutes));
+    setNumbers(Object.fromEntries(THRESHOLD_FIELDS.map((f) => [f.key, String(data[f.key])])));
+  }, [settings.data]);
+
+  const save = useMutation({
+    mutationFn: () =>
+      updateErrorReportSettings({
+        enabled,
+        recipients,
+        digest_interval_minutes: Number(digestInterval),
+        spike_threshold: Number(numbers.spike_threshold),
+        client_spike_threshold: Number(numbers.client_spike_threshold),
+        cooldown_minutes: Number(numbers.cooldown_minutes),
+      }),
+    onSuccess: () => { setSaved(true); queryClient.invalidateQueries({ queryKey: ["error-report-settings"] }); },
+    onError: (err) => setError(messageOf(err, t.settings.errorReportSaveFailed)),
+  });
+
+  const test = useMutation({
+    mutationFn: sendTestErrorReport,
+    onMutate: () => setTestResult(null),
+    onSuccess: (r) => setTestResult({ ok: true, text: t.settings.errorReportSentTo.replace("{to}", r.sent_to.join(", ")).replace("{n}", String(r.groups)) }),
+    onError: (err) => setTestResult({ ok: false, text: messageOf(err, t.settings.errorReportTestFailed) }),
+  });
+
+  const submit = () => {
+    setSaved(false);
+    const bad = recipients.find((r) => !EMAIL.test(r));
+    if (bad) return setError(t.settings.errorReportInvalidEmail.replace("{email}", bad));
+    if (recipients.length < 1 || recipients.length > MAX_RECIPIENTS) return setError(t.settings.errorReportRecipientCount);
+    setError(null);
+    save.mutate();
+  };
+
+  const data = settings.data;
+  const lastDigest = data?.last_digest_at ? new Date(data.last_digest_at).toLocaleString() : t.settings.errorReportNever;
+  const fieldStyle = { padding: "14px 16px", borderRadius: "var(--radius-inner)", background: "var(--panel-soft-2)", border: "1px solid var(--line)" };
+
+  return (
+    <div className="panel panel--pad">
+      <PanelHeading
+        icon={<Mail size={17} />}
+        title={t.settings.errorReport}
+        badge={data && <StatusPill tone={data.enabled ? "success" : "neutral"} label={data.enabled ? t.common.enabled : t.common.disabled} />}
+      />
+      <p className="text-muted" style={{ margin: 0, fontSize: 13 }}>{t.settings.errorReportHint}</p>
+      {settings.error && <div className="form-error" role="alert">{messageOf(settings.error, t.settings.loadFailed)}</div>}
+      {data && (
+        <form className="form" onSubmit={(e) => { e.preventDefault(); submit(); }}>
+          <fieldset disabled={!editable} style={{ border: 0, padding: 0, margin: 0, display: "grid", gap: 12 }}>
+            <label className="ud-field" style={{ ...fieldStyle, flexDirection: "row", alignItems: "center", gap: 10 }}>
+              <input type="checkbox" checked={enabled} onChange={(e) => { setSaved(false); setEnabled(e.target.checked); }} />
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>{t.settings.errorReportEnabled}</span>
+            </label>
+            <div style={fieldStyle}>
+              <TagInput
+                label={t.settings.errorReportRecipients}
+                value={recipients}
+                onChange={(next) => { setSaved(false); setError(null); setRecipients(next); }}
+                placeholder={t.settings.errorReportRecipientsPlaceholder}
+              />
+            </div>
+            <div className="form-grid">
+              <label className="ud-field" style={fieldStyle}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>{t.settings.errorReportInterval}</span>
+                <select value={digestInterval} onChange={(e) => { setSaved(false); setDigestInterval(e.target.value); }} style={{ background: "var(--panel)" }}>
+                  {DIGEST_INTERVALS.map((m) => <option key={m} value={m}>{t.settings.errorReportIntervals[String(m) as keyof typeof t.settings.errorReportIntervals]}</option>)}
+                </select>
+              </label>
+              {THRESHOLD_FIELDS.map(({ key, label }) => (
+                <label key={key} className="ud-field" style={fieldStyle}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "var(--text)" }}>{t.settings[label]}</span>
+                  <input
+                    type="number"
+                    min={0}
+                    step={1}
+                    value={numbers[key] ?? ""}
+                    onChange={(e) => { setSaved(false); setNumbers({ ...numbers, [key]: e.target.value }); }}
+                    required
+                    style={{ background: "var(--panel)" }}
+                  />
+                  <span className="text-muted text-small">{t.settings.errorReportZeroOff}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <ConfigRow label={t.settings.errorReportLastDigest} value={lastDigest} />
+          {!editable && <p className="text-muted text-small" style={{ margin: 0 }}>{t.settings.errorReportReadOnly}</p>}
+          {error && <div className="form-error" role="alert">{error}</div>}
+          {saved && <div className="form-success" role="status">{t.settings.errorReportSaved}</div>}
+          {testResult && (
+            <div className={testResult.ok ? "form-success" : "form-error"} role={testResult.ok ? "status" : "alert"}>{testResult.text}</div>
+          )}
+          {editable && (
+            <div className="ud-submit-row">
+              <button type="button" className="ghost-button" onClick={() => test.mutate()} disabled={test.isPending}>
+                {test.isPending ? t.settings.errorReportTesting : t.settings.errorReportTest}
+              </button>
+              <button type="submit" className="primary-button" disabled={save.isPending}>
+                {save.isPending ? t.common.saving : t.common.save}
+              </button>
+            </div>
+          )}
+        </form>
+      )}
+    </div>
+  );
+};
+
 export const SystemSettingsPage = () => {
   const { t, locale, setLocale } = useI18n();
   const info = useQuery({ queryKey: ["system-info"], queryFn: getSystemInfo });
@@ -249,6 +393,8 @@ export const SystemSettingsPage = () => {
       </div>
 
       <GemLimitsPanel />
+
+      <ErrorReportPanel />
 
       {data && (
         <>
