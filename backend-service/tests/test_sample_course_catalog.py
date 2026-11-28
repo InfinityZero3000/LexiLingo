@@ -115,3 +115,31 @@ async def test_reseeding_keeps_an_existing_course_and_the_progress_on_it(
     assert await db_session.scalar(
         select(UserCourseProgress.course_id).where(UserCourseProgress.user_id == test_user.id)
     ) == course_id
+
+
+@pytest.mark.asyncio
+async def test_seed_leaves_a_course_with_an_ambiguous_exercise_as_a_draft(
+    db_session: AsyncSession, monkeypatch
+):
+    import copy
+
+    from app.services import admin_seed_service
+
+    catalog = copy.deepcopy(admin_seed_service.SAMPLE_COURSES)
+    exercise = catalog[0]["units"][0]["lessons"][0]["exercises"][0]
+    exercise.update(
+        ui_type="multiple_choice",
+        question="Pick one",
+        options=["Cat", "cat.", "dog"],
+        correct_answer="dog",
+    )
+    monkeypatch.setattr(admin_seed_service, "SAMPLE_COURSES", catalog)
+
+    _, category_ids = await admin_seed_service.seed_course_categories(db_session)
+    await admin_seed_service.seed_courses(db_session, category_ids)
+    await db_session.commit()
+
+    flags = dict(
+        (await db_session.execute(select(Course.title, Course.is_published))).all()
+    )
+    assert flags[catalog[0]["title"]] is False

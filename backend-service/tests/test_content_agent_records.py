@@ -112,3 +112,24 @@ async def test_update_job_record_404_for_unknown_record_id(db_session):
             admin,
         )
     assert exc_info.value.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_update_job_record_422_when_the_edit_is_ambiguous(db_session):
+    admin = _admin()
+    job = _job(admin.id)
+    db_session.add(job)
+    await db_session.commit()
+
+    with pytest.raises(HTTPException) as exc_info:
+        await update_job_record(
+            job.id,
+            "exercise-0",
+            ContentAgentRecordUpdate(options=["Cat", "cat.", "dog"], correct_answer="dog"),
+            db_session,
+            admin,
+        )
+    assert exc_info.value.status_code == 422
+    assert "ambiguous" in exc_info.value.detail
+    exercise = job.artifact["courses"][0]["units"][0]["lessons"][0]["exercises"][0]
+    assert exercise["question"] == "Original question"

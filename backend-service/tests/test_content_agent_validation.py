@@ -424,6 +424,30 @@ def test_mc_with_only_one_option_is_blocking() -> None:
     assert "MC_INSUFFICIENT_OPTIONS" in codes
 
 
+def test_ambiguous_exercise_is_blocking() -> None:
+    art = _base_artifact()
+    exercise = art["courses"][0]["units"][0]["lessons"][0]["exercises"][0]
+    exercise["options"] = ["A greeting", "a greeting.", "Goodbye"]
+    report = validate_artifact(art)
+    errors = [e for e in report.blocking_errors if e.code == "EXERCISE_SHAPE_INVALID"]
+    assert errors and errors[0].path.endswith("exercises[0]")
+    assert "ambiguous" in errors[0].message
+
+
+def test_misused_writing_apply_would_repair_is_not_blocking() -> None:
+    art = _base_artifact()
+    exercise = art["courses"][0]["units"][0]["lessons"][0]["exercises"][0]
+    exercise.update(
+        type="fill_blank",
+        ui_type="short_writing_answer",
+        question="The sky is blue.",
+        options=["True", "False"],
+        correct_answer="True",
+    )
+    report = validate_artifact(art)
+    assert "EXERCISE_SHAPE_INVALID" not in {e.code for e in report.blocking_errors}
+
+
 # --- audio question gate ---
 
 

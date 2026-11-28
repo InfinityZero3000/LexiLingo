@@ -753,6 +753,20 @@ def _check_options(index: ArtifactIndex, report: ValidationReport) -> None:
                 )
 
 
+def _check_exercise_shape(index: ArtifactIndex, report: ValidationReport) -> None:
+    """Blocking: the app must be able to render and grade every exercise."""
+    from app.models.course import repaired_shape_problems
+
+    for exercise_node in index.exercises:
+        for problem in repaired_shape_problems(exercise_node.data):
+            _blocking(
+                report,
+                "EXERCISE_SHAPE_INVALID",
+                exercise_node.path,
+                problem,
+            )
+
+
 def _check_speaking_listening_text(
     index: ArtifactIndex, report: ValidationReport
 ) -> None:
@@ -837,6 +851,7 @@ def validate_artifact(
     _check_exercise_ids(artifact_index, report)
     _check_exercise_type_ui_type(artifact_index, report)
     _check_options(artifact_index, report)
+    _check_exercise_shape(artifact_index, report)
     _check_speaking_listening_text(artifact_index, report)
     _check_counts(artifact_index, report)
 

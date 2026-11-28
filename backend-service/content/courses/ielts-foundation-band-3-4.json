@@ -1973,13 +1973,13 @@
             "ui_type": "speaking_repeat"
           },
           {
-            "correct_answer": "de-LI-cious",
+            "correct_answer": "de-LI-cious (second syllable)",
             "explanation": "The word 'delicious' has stress on the second syllable (/dɪˈlɪʃəs/). When planning your answer, noting the stress helps you prepare to say it clearly. Example answer: 'Yes, I do. I find cooking delicious and fun.'",
             "id": "ex_005_part1_planning",
             "options": [
-              "de-LI-cious",
-              "DE-li-cious",
-              "de-li-CIOUS"
+              "de-LI-cious (second syllable)",
+              "DE-li-cious (first syllable)",
+              "de-li-CIOUS (third syllable)"
             ],
             "question": "Plan a short answer for Part 1: 'Do you like cooking?' You want to use the word 'delicious'. Which syllable is stressed?",
             "type": "multiple_choice",

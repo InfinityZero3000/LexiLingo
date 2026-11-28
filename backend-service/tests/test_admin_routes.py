@@ -146,7 +146,28 @@ class TestAdminCourses:
         assert response.status_code == 409
         assert "Draft lesson" in response.json()["error"]["message"]
 
-        empty_lesson.content = {"exercises": [{"id": "1", "type": "multiple_choice"}]}
+        broken = {
+            "id": "1",
+            "ui_type": "multiple_choice",
+            "question": "Pick one",
+            "options": ["Cat", "cat.", "dog"],
+            "correct_answer": "dog",
+        }
+        empty_lesson.content = {"exercises": [broken]}
+        await db_session.commit()
+
+        response = await async_client.put(
+            f"/api/v1/admin/courses/{course.id}",
+            headers=admin_headers,
+            json={"is_published": True}
+        )
+
+        assert response.status_code == 409
+        message = response.json()["error"]["message"]
+        assert 'lesson "Draft lesson" exercise #1 (multiple_choice)' in message
+        assert "ambiguous" in message
+
+        empty_lesson.content = {"exercises": [{**broken, "options": ["Cat", "dog"]}]}
         await db_session.commit()
 
         response = await async_client.put(

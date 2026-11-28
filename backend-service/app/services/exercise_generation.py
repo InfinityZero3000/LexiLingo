@@ -5,6 +5,7 @@ import logging
 import os
 import re
 import time
+from datetime import datetime, timezone
 
 import httpx
 
@@ -150,6 +151,17 @@ def lesson_is_varied(exercises: list) -> bool:
     return not any(
         GENERIC_QUESTION_RE.search(exercise["question"]) for exercise in exercises
     )
+
+
+def generated_content(exercises: list, model: str = GROQ_MODEL) -> dict:
+    """The lesson `content` a generation run writes, stamped with where it came from."""
+    return {
+        "exercises": exercises,
+        "version": 1,
+        "generated_by": "exercise-generation",
+        "model": model,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+    }
 
 
 def needs_regeneration(content) -> str | None:

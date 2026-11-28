@@ -2,10 +2,13 @@
 Generate High-Quality Course Exercises via Groq
 ===============================================
 Queries the database for lessons with empty content (or, with --regenerate,
-lessons whose content is playable but weak), calls Groq concurrently over the
+lessons whose content is playable but weak, skipping published courses unless
+--include-published), calls Groq concurrently over the
 configured key pool to generate 5 exercises per lesson from the course topic,
 level and lesson title, maps them to visual templates (ui_type), and saves
-them. A lesson is only overwritten once the new set passes sanitize_exercises.
+them through the ORM (so the content hook runs). A lesson is only overwritten
+once the new set passes sanitize_exercises, and what it held before is saved to
+backups/lesson-content-<timestamp>.json.
 
 Run:
     cd backend-service
@@ -18,7 +21,9 @@ import itertools
 import os
 import json
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
+from uuid import UUID
 from dotenv import load_dotenv
 import httpx
 
@@ -26,6 +31,7 @@ import httpx
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.core.database import AsyncSessionLocal
+from app.models.course import Lesson
 from app.services.exercise_generation import (  # noqa: F401  (re-exported for tests/tools)
     ExerciseGenerationFailed,
     ExerciseGenerationUnavailable,
@@ -35,6 +41,7 @@ from app.services.exercise_generation import (  # noqa: F401  (re-exported for t
     MIN_DISTINCT_UI_TYPES,
     PRODUCTION_UI_TYPES,
     exercises_from_payload,
+    generated_content,
     generate_lesson_exercises,
     lesson_is_varied,
     needs_regeneration,
@@ -62,6 +69,19 @@ _key_lock = asyncio.Lock()
 async def next_groq_key() -> str:
     async with _key_lock:
         return next(_key_cursor)
+
+
+BACKUP_PATH = (
+    Path(__file__).parent.parent
+    / "backups"
+    / f"lesson-content-{datetime.now(timezone.utc):%Y%m%dT%H%M%SZ}.json"
+)
+_previous_content: dict[str, object] = {}
+
+
+def save_backup() -> None:
+    BACKUP_PATH.parent.mkdir(parents=True, exist_ok=True)
+    BACKUP_PATH.write_text(json.dumps(_previous_content, ensure_ascii=False, indent=1, default=str))
 
 
 # Concurrency limit to prevent hitting API rate limits
@@ -92,16 +112,12 @@ async def process_lesson(sem: asyncio.Semaphore, client: httpx.AsyncClient, less
             # Save to DB
             async with AsyncSessionLocal() as db:
                 try:
-                    content_json = {"exercises": exercises, "version": 1}
-                    await db.execute(text('''
-                        UPDATE lessons 
-                        SET content = :content, total_exercises = :total 
-                        WHERE id = :lid
-                    '''), {
-                        'content': json.dumps(content_json),
-                        'total': len(exercises),
-                        'lid': lesson_id
-                    })
+                    lesson = await db.get(Lesson, UUID(lesson_id))
+                    _previous_content[lesson_id] = lesson.content
+                    save_backup()
+                    new_content = generated_content(exercises, GROQ_MODEL)
+                    lesson.content = new_content
+                    lesson.content_version = (lesson.content_version or 1) + 1
                     await db.commit()
                     print(f"   [SUCCESS] Saved {len(exercises)} exercises to '{lesson_title}'")
                     if delay > 0:
@@ -124,6 +140,7 @@ async def main():
     delay = 4.0
     concurrency = 2
     regenerate = "--regenerate" in sys.argv
+    include_published = "--include-published" in sys.argv
 
     for arg in sys.argv:
         if arg.startswith("--limit="):
@@ -137,7 +154,7 @@ async def main():
     print("LEXILINGO COURSE EXERCISES AI GENERATOR & SEEDER")
     print(
         f"Settings: concurrency={concurrency}, delay={delay}s, limit={limit}, "
-        f"regenerate={regenerate}"
+        f"regenerate={regenerate}, include_published={include_published}"
     )
     print("=" * 80)
 
@@ -147,14 +164,18 @@ async def main():
             # only overwritten once its replacement passes sanitize_exercises,
             # so a failed call leaves the existing content alone.
             result = await db.execute(text('''
-                SELECT l.id, c.title, c.level, u.title, l.title, l.content
+                SELECT l.id, c.title, c.level, u.title, l.title, l.content, c.is_published
                 FROM lessons l
                 JOIN courses c ON l.course_id = c.id
                 JOIN units u ON l.unit_id = u.id
                 ORDER BY c.created_at, u.order_index, l.order_index
             '''))
             lessons_to_process = []
+            skipped_published = 0
             for row in result.fetchall():
+                if row[6] and not include_published:
+                    skipped_published += 1
+                    continue
                 content = row[5]
                 if isinstance(content, str):
                     try:
@@ -176,6 +197,11 @@ async def main():
             '''))
             lessons_to_process = result.fetchall()
 
+    if regenerate and skipped_published:
+        print(
+            f"Skipped {skipped_published} lessons of published courses "
+            "(pass --include-published to rewrite them)."
+        )
     print(f"Found {len(lessons_to_process)} lessons requiring exercise data.")
     if not lessons_to_process:
         print("All lessons already have exercise content. Nothing to do!")
@@ -203,6 +229,8 @@ async def main():
     print(f"Processed: {len(lessons_to_process)} lessons")
     print(f"Successful: {success_count} lessons")
     print(f"Failed: {len(lessons_to_process) - success_count} lessons")
+    if _previous_content:
+        print(f"Previous content of {len(_previous_content)} lessons saved to {BACKUP_PATH}")
     print("=" * 80)
 
 

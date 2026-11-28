@@ -16,6 +16,7 @@ from app.core.config import settings
 from app.core.database import get_db
 from app.core.dependencies import _get_user_role_level, require_resource
 from app.models.content_agent import ContentAgentUpload
+from app.models.course import repaired_shape_problems
 from app.models.rbac import AuditLog
 from app.models.user import User
 from app.schemas.content_agent import (
@@ -374,6 +375,12 @@ async def update_job_record(
         validated = ExerciseArtifact.model_validate(merged)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
+    problems = repaired_shape_problems(validated.model_dump(mode="json"))
+    if problems:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail="Invalid exercise: " + "; ".join(problems),
+        )
     exercise_found.update(validated.model_dump(mode="json"))
 
     if payload.lesson_outcome is not None:

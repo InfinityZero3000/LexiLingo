@@ -12,7 +12,7 @@ from app.core.sample_data_catalog import (
     SAMPLE_COURSES,
 )
 from app.core.shop_catalog import SHOP_CATALOG
-from app.models.course import Course, Lesson, Unit
+from app.models.course import Course, Lesson, Unit, exercise_shape_problems
 from app.models.course_category import CourseCategory
 from app.models.gamification import Achievement, ShopItem
 
@@ -89,6 +89,7 @@ async def seed_courses(
         # empty roadmap. Seeding must not create what admin publishing rejects.
         playable = all(
             lesson.get("exercises")
+            and not any(exercise_shape_problems(e) for e in lesson["exercises"])
             for unit in unit_seed
             for lesson in unit["lessons"]
         )
