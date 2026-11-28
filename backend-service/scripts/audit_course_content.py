@@ -11,6 +11,8 @@ Run:
     venv/bin/python3 scripts/audit_course_content.py --unpublish     # demote to draft
     venv/bin/python3 scripts/audit_course_content.py --fix-counters  # repair total_exercises
     venv/bin/python3 scripts/audit_course_content.py --fix-unplayable  # repair broken exercises
+    venv/bin/python3 scripts/audit_course_content.py --level-fit       # report: text vs declared CEFR level
+    venv/bin/python3 scripts/audit_course_content.py --balance         # report: skills, production, outcomes
 
 Fix a reported course by authoring exercises in the admin dashboard or with
 `scripts/generate_exercises_ai.py`, then publish it again.
@@ -28,6 +30,14 @@ from sqlalchemy import select
 
 from app.core.database import AsyncSessionLocal
 from app.crud.course import CourseCRUD
+from app.services.cefr_level_fit import (
+    TABLE_HEADER,
+    course_balance,
+    course_level_fit,
+    format_row,
+    load_course_views,
+    load_lexicon,
+)
 from app.models.course import (
     Course,
     Lesson,
@@ -189,6 +199,36 @@ async def report_unplayable_shapes(db) -> int:
     return bad
 
 
+async def report_level_fit(db) -> None:
+    lexicon = await load_lexicon(db)
+    print(f"Lexicon: {len(lexicon)} vocabulary words\n\n{TABLE_HEADER}")
+    for view in await load_course_views(db):
+        print(format_row(view["title"], course_level_fit(view, lexicon)))
+
+
+async def report_balance(db) -> None:
+    for view in await load_course_views(db):
+        b = course_balance(view)
+        skills = ", ".join(f"{k} {v}" for k, v in sorted(b["skills"].items(), key=lambda kv: -kv[1]))
+        print(f"\n[{view['level']}] {view['title']}: {b['lessons']} lessons")
+        print(f"  skills: {skills or 'none'} (+{b['unattributed']} unattributed)")
+        print(
+            f"  declared skill: {b['declared_skill'] or '-'}, dominant: {b['dominant_skill']}"
+            + ("  <- MISMATCH" if b["skill_mismatch"] else "")
+        )
+        print(f"  outcomes: {b['outcome_share'] * 100:.0f}% of lessons, {b['can_do_outcomes']} start with 'You can'/'I can'")
+        for unit in b["units_without_production"]:
+            print(f"  unit without a production task: {unit}")
+
+
+async def audit_quality(level_fit: bool, balance: bool) -> None:
+    async with AsyncSessionLocal() as db:
+        if level_fit:
+            await report_level_fit(db)
+        if balance:
+            await report_balance(db)
+
+
 async def audit(
     unpublish: bool,
     repair_counters: bool,
@@ -264,7 +304,20 @@ if __name__ == "__main__":
             "image questions that have no image to plain multiple choice"
         ),
     )
+    parser.add_argument(
+        "--level-fit",
+        action="store_true",
+        help="report-only: share of each published course's words per CEFR level",
+    )
+    parser.add_argument(
+        "--balance",
+        action="store_true",
+        help="report-only: skills measured, units without production, lesson outcomes",
+    )
     args = parser.parse_args()
+    if args.level_fit or args.balance:
+        asyncio.run(audit_quality(args.level_fit, args.balance))
+        sys.exit(0)
     asyncio.run(
         audit(
             args.unpublish,
