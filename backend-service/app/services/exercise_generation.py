@@ -5,6 +5,7 @@ import logging
 import os
 import re
 import time
+from collections.abc import Awaitable, Callable
 from datetime import datetime, timezone
 
 import httpx
@@ -60,6 +61,21 @@ GENERIC_QUESTION_RE = re.compile(
     r"match (the |each )?(following )?(words?|items?)( with| to)? (their|its)?",
     re.I,
 )
+
+VERIFY_METHOD = "blind-answer-v1"
+MIN_VERIFIED_EXERCISES = 3
+VERIFY_MAX_TOKENS = 6000
+# One right option, graded by exact match against correct_answer. Free-form
+# writing has many right phrasings, speaking is graded by similarity, pair and
+# arrange types have no single option to pick, and a listen_and_choose key is
+# whatever the app speaks aloud, so a blind pick cannot check them.
+UNVERIFIABLE_UI_TYPES = {
+    "listen_and_choose",
+    "short_writing_answer",
+    "speaking_repeat",
+    "pronunciation_practice",
+    "arrange_the_sentence",
+} | PAIRED_UI_TYPES
 
 
 def sanitize_exercises(exercises: list) -> list:
@@ -175,6 +191,100 @@ def needs_regeneration(content) -> str | None:
         return "malformed exercise"
 
 
+class VerificationUnavailable(Exception):
+    """The blind pass could not be completed, so no key was checked."""
+
+
+class VerifiedExercises(list):
+    """The exercises, plus how far their answer keys were checked."""
+
+    verification: dict
+
+    def __init__(self, items=(), verification: dict | None = None) -> None:
+        super().__init__(items)
+        self.verification = verification or {}
+
+
+def is_verifiable(exercise: dict) -> bool:
+    options = exercise.get("options") or []
+    return (
+        exercise["ui_type"] not in UNVERIFIABLE_UI_TYPES
+        and len(options) >= 2
+        and exercise["correct_answer"] in options
+    )
+
+
+def _norm(value) -> str:
+    return " ".join(str(value).strip().lower().split())
+
+
+def _verification_prompt(course_title: str, level: str, lesson_title: str, items: list[dict]) -> str:
+    lines = [
+        json.dumps(
+            {"n": n, "question": item["question"], "options": item["options"]},
+            ensure_ascii=False,
+        )
+        for n, item in enumerate(items)
+    ]
+    return (
+        f"You are checking quiz questions for an English course ('{course_title}', level {level}, "
+        f"lesson '{lesson_title}'). Answer each question yourself; nothing tells you which option "
+        "the author intended, so decide from the language alone. A True/False question is about "
+        "whether the statement is true.\n\nQUESTIONS (one JSON object per line):\n"
+        + "\n".join(lines)
+        + "\n\nFor each question give the 0-based index of the single correct option, or -1 if "
+        "no option is correct or more than one is.\n"
+        'Return {"answers":[{"n":<n>,"index":<index>}]}'
+    )
+
+
+async def verify_exercises(
+    exercises: list[dict],
+    *,
+    course_title: str,
+    level: str,
+    lesson_title: str,
+    call: Callable[[str], Awaitable[dict]],
+) -> tuple[list[dict], dict]:
+    """Blind second pass: the model answers each choice question without the key or
+    the explanation, and an exercise survives only if it picks the stored answer.
+    Raises VerificationUnavailable when the pass cannot be completed (after one retry)."""
+    checked = [e for e in exercises if is_verifiable(e)]
+    stats = {"method": VERIFY_METHOD, "status": "verified", "checked": len(checked), "agreed": 0, "dropped": []}
+    if not checked:
+        return list(exercises), stats
+
+    prompt = _verification_prompt(course_title, level, lesson_title, checked)
+    picks: dict[int, int] = {}
+    for attempt in range(2):
+        try:
+            reply = await call(prompt)
+            answers = reply.get("answers") if isinstance(reply, dict) else None
+            if not isinstance(answers, list):
+                raise ValueError("no answers list")
+            picks = {
+                a["n"]: a["index"]
+                for a in answers
+                if isinstance(a, dict) and isinstance(a.get("n"), int) and isinstance(a.get("index"), int)
+            }
+            break
+        except Exception as exc:
+            logger.warning("answer-key verification failed (attempt %d): %s", attempt + 1, exc)
+    else:
+        raise VerificationUnavailable("blind pass failed twice")
+
+    dropped_ids = set()
+    for n, item in enumerate(checked):
+        index = picks.get(n)
+        options = item["options"]
+        if index is not None and 0 <= index < len(options) and _norm(options[index]) == _norm(item["correct_answer"]):
+            stats["agreed"] += 1
+        else:
+            dropped_ids.add(id(item))
+            stats["dropped"].append(item.get("id"))
+    return [e for e in exercises if id(e) not in dropped_ids], stats
+
+
 def _build_prompt(course_title: str, level: str, unit_title: str, lesson_title: str, lesson_id: str) -> str:
     prompt = f"""
     Generate exactly 5 structured learning exercises for an English learning course.
@@ -245,8 +355,11 @@ async def generate_lesson_exercises(
     keys: list[str] | None = None,
     client: httpx.AsyncClient | None = None,
     max_attempts: int | None = None,
-) -> list[dict]:
-    """Ask Groq for 5 exercises. Raises ExerciseGenerationUnavailable / ExerciseGenerationFailed.
+) -> VerifiedExercises:
+    """Ask Groq for 5 exercises and check each choice question's key with a blind second pass.
+    Raises ExerciseGenerationUnavailable / ExerciseGenerationFailed. The result is a list
+    carrying `.verification` (see verify_exercises); if the second pass itself cannot run,
+    the batch mode fails and the admin mode returns the draft with status "unverified".
 
     max_attempts=None is the bounded admin-request mode (attempt cap + time budget);
     an explicit value is the batch-script mode and runs without a deadline.
@@ -279,6 +392,28 @@ async def generate_lesson_exercises(
 
     owns_client = client is None
     http = client or httpx.AsyncClient()
+
+    async def verify_call(prompt: str) -> dict:
+        timeout = CALL_TIMEOUT_SECONDS
+        if deadline is not None:
+            timeout = min(timeout, deadline - time.monotonic())
+            if timeout <= 1:
+                raise TimeoutError("no time left to verify")
+        response = await http.post(
+            GROQ_URL,
+            json={
+                "model": GROQ_MODEL,
+                "messages": [{"role": "user", "content": prompt}],
+                "response_format": {"type": "json_object"},
+                "temperature": 0,
+                "max_tokens": VERIFY_MAX_TOKENS,
+            },
+            headers={"Authorization": f"Bearer {_next_key(keys)}"},
+            timeout=timeout,
+        )
+        response.raise_for_status()
+        return json.loads(response.json()["choices"][0]["message"]["content"])
+
     try:
         # Each attempt takes the next key in the rotation, so a key that is out
         # of daily quota costs one attempt rather than stalling the request.
@@ -300,8 +435,28 @@ async def generate_lesson_exercises(
                     content = response.json()["choices"][0]["message"]["content"]
                     exercises = sanitize_exercises(exercises_from_payload(json.loads(content)))
                     if exercises and lesson_is_varied(exercises):
-                        return exercises
-                    reason = "invalid payload" if not exercises else "too uniform"
+                        try:
+                            survivors, stats = await verify_exercises(
+                                exercises,
+                                course_title=course_title,
+                                level=level,
+                                lesson_title=lesson_title,
+                                call=verify_call,
+                            )
+                        except VerificationUnavailable:
+                            if deadline is None:
+                                raise ExerciseGenerationFailed("answer keys could not be verified")
+                            return VerifiedExercises(
+                                exercises,
+                                {"method": VERIFY_METHOD, "status": "unverified", "checked": 0, "agreed": 0, "dropped": []},
+                            )
+                        if not stats["dropped"] or (
+                            len(survivors) >= MIN_VERIFIED_EXERCISES and lesson_is_varied(survivors)
+                        ):
+                            return VerifiedExercises(survivors, stats)
+                        reason = "answer keys disagreed"
+                    else:
+                        reason = "invalid payload" if not exercises else "too uniform"
                     logger.warning("exercise generation %s for lesson %s - retrying", reason, lesson_id)
                 elif response.status_code in (401, 403) or (
                     response.status_code == 400 and "json_validate_failed" not in response.text

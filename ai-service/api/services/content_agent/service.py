@@ -262,7 +262,7 @@ class ContentAgentService:
                 sort_keys=True,
             ).encode("utf-8")
         ).hexdigest()
-        warnings = list(enrichment_warnings)
+        warnings = [*enrichment_warnings, *getattr(self.generator, "warnings", [])]
         if plan.rejected_low_confidence:
             warnings.append(
                 f"Rejected {plan.rejected_low_confidence} low-confidence records"

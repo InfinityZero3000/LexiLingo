@@ -8,6 +8,7 @@ import hashlib
 import json
 import logging
 import os
+import re
 from typing import Protocol
 
 import httpx
@@ -28,6 +29,8 @@ from api.services.content_agent.planner import (
     CurriculumPlan,
     PlannedLesson,
 )
+from api.services.content_agent.policies import lesson_survives_verification
+from api.services.content_agent.verification import verify_exercises
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +63,74 @@ def _generated_definition(record: NormalizedSourceRecord) -> str:
     return f"An original {level}-level word or phrase for discussing {topic}."
 
 
+def _real_definition(record: NormalizedSourceRecord) -> str | None:
+    return (record.definition or "").strip() or None
+
+
+def _meaning(record: NormalizedSourceRecord) -> str | None:
+    return (record.translation_vi or "").strip() or _real_definition(record)
+
+
+def _cloze(example: str | None, word: str | None) -> tuple[str, str] | None:
+    """The example with the word blanked, and the text that was blanked."""
+    if not example or not word:
+        return None
+    match = re.search(rf"\b{re.escape(word)}\b", example, re.IGNORECASE)
+    if not match:
+        return None
+    return f"{example[: match.start()]}{{blank}}{example[match.end():]}", match.group(0)
+
+
+def _matching_pairs(lesson: PlannedLesson, start: int) -> list[tuple[str, str]]:
+    """Up to three word/meaning pairs. A "," or ":" inside a pair would be split
+    by the grader, and a repeated meaning makes the pairing ambiguous."""
+    words = list(lesson.vocabulary)
+    pairs: list[tuple[str, str]] = []
+    for record in words[start:] + words[:start]:
+        meaning = _meaning(record)
+        if not record.word or not meaning:
+            continue
+        if any(ch in text for ch in ",:" for text in (record.word, meaning)):
+            continue
+        if any(record.word == key or meaning == value for key, value in pairs):
+            continue
+        pairs.append((record.word, meaning))
+        if len(pairs) == 3:
+            break
+    return pairs
+
+
+def _true_false(
+    lesson: PlannedLesson, lesson_key: tuple, start: int
+) -> ExerciseArtifact | None:
+    """A statement about what a lesson word means; false ones borrow another
+    word's definition. Which of the two a lesson gets is fixed by its own key."""
+    words = list(lesson.vocabulary)
+    rotated = words[start:] + words[:start]
+    defined = [r for r in rotated if r.word and _real_definition(r)]
+    if not defined:
+        return None
+    target = defined[0]
+    definition = _real_definition(target)
+    answer = "True"
+    if int(_stable_id(*lesson_key, "tf"), 16) % 2:
+        other = next(
+            (r for r in defined[1:] if _real_definition(r) != definition), None
+        )
+        if other is not None:
+            definition, answer = _real_definition(other), "False"
+    return ExerciseArtifact(
+        id=_stable_id(*lesson_key, 7),
+        type="true_false",
+        ui_type="true_or_false",
+        concept_id=_vocab_concept_id(target),
+        question=f"True or false: the word '{target.word}' means \"{definition}\".",
+        options=["True", "False"],
+        correct_answer=answer,
+        explanation=f"'{target.word}' means \"{_real_definition(target)}\".",
+    )
+
+
 def _generated_example(record: NormalizedSourceRecord) -> str:
     if record.example:
         return record.example
@@ -86,7 +157,44 @@ def _choice_options(
     return sorted(options)
 
 
-def _base_exercises(lesson: PlannedLesson) -> list[ExerciseArtifact]:
+def _matching_exercise(
+    lesson: PlannedLesson, lesson_key: tuple, record: NormalizedSourceRecord
+) -> ExerciseArtifact | None:
+    pairs = _matching_pairs(lesson, 5)
+    if len(pairs) < 2:
+        return None
+    return ExerciseArtifact(
+        id=_stable_id(*lesson_key, 5),
+        type="matching",
+        ui_type="match_word_to_meaning",
+        concept_id=_vocab_concept_id(record),
+        question=f"Pair each word with its meaning: {', '.join(key for key, _ in pairs)}.",
+        options=[key for key, _ in pairs] + [value for _, value in pairs],
+        correct_answer=", ".join(f"{key}:{value}" for key, value in pairs),
+    )
+
+
+def _cloze_exercise(
+    lesson_key: tuple, record: NormalizedSourceRecord
+) -> ExerciseArtifact | None:
+    blanked = _cloze(record.example, record.word)
+    if blanked is None:
+        return None
+    question, answer = blanked
+    return ExerciseArtifact(
+        id=_stable_id(*lesson_key, 6),
+        type="fill_blank",
+        ui_type="fill_in_the_blank",
+        concept_id=_vocab_concept_id(record),
+        question=f"Complete the sentence: {question}",
+        correct_answer=answer,
+        explanation=_real_definition(record),
+    )
+
+
+def _base_exercises(lesson: PlannedLesson) -> list[ExerciseArtifact | None]:
+    """One slot per template; a slot is None when the lesson's words cannot
+    support it truthfully (no real definition, no usable example)."""
     vocabulary = list(lesson.vocabulary)
     first = vocabulary[0]
     second = vocabulary[1]
@@ -95,7 +203,6 @@ def _base_exercises(lesson: PlannedLesson) -> list[ExerciseArtifact]:
     fifth = vocabulary[4]
     sixth = vocabulary[5]
     seventh = vocabulary[6]
-    eighth = vocabulary[7]
     lesson_key = (
         lesson.level.value,
         lesson.topic,
@@ -140,60 +247,34 @@ def _base_exercises(lesson: PlannedLesson) -> list[ExerciseArtifact]:
             options=_choice_options(lesson, 3),
             correct_answer=fourth.word or "",
         ),
-        ExerciseArtifact(
-            id=_stable_id(*lesson_key, 4),
-            type="multiple_choice",
-            ui_type="multiple_choice",
-            concept_id=_vocab_concept_id(fifth),
-            question="Which lesson word best matches the generated definition?",
-            options=_choice_options(lesson, 4),
-            correct_answer=fifth.word or "",
-            explanation=_generated_definition(fifth),
+        (
+            ExerciseArtifact(
+                id=_stable_id(*lesson_key, 4),
+                type="multiple_choice",
+                ui_type="multiple_choice",
+                concept_id=_vocab_concept_id(fifth),
+                question=f'Which lesson word means: "{_real_definition(fifth)}"?',
+                options=_choice_options(lesson, 4),
+                correct_answer=fifth.word or "",
+            )
+            if _real_definition(fifth)
+            else None
         ),
-        ExerciseArtifact(
-            id=_stable_id(*lesson_key, 5),
-            type="matching",
-            ui_type="match_word_to_meaning",
-            concept_id=_vocab_concept_id(sixth),
-            question="Match the lesson word with its generated meaning.",
-            options=[
-                sixth.word or "",
-                _generated_definition(sixth),
-            ],
-            correct_answer=f"{sixth.word}:{_generated_definition(sixth)}",
-        ),
-        ExerciseArtifact(
-            id=_stable_id(*lesson_key, 6),
-            type="fill_blank",
-            ui_type="fill_in_the_blank",
-            concept_id=_vocab_concept_id(seventh),
-            question="Complete the sentence: We use {blank} in this topic.",
-            correct_answer=seventh.word or "",
-            explanation=_generated_definition(seventh),
-        ),
-        ExerciseArtifact(
-            id=_stable_id(*lesson_key, 7),
-            type="true_false",
-            ui_type="true_or_false",
-            concept_id=_vocab_concept_id(eighth),
-            question=(
-                f"The word '{eighth.word}' belongs to the "
-                f"{lesson.topic.replace('_', ' ')} topic."
-            ),
-            options=["True", "False"],
-            correct_answer="True",
-        ),
-        ExerciseArtifact(
-            id=_stable_id(*lesson_key, 8),
-            type="translate",
-            ui_type="translation_choice",
-            concept_id=_vocab_concept_id(first),
-            question=(
-                f"Choose the English lesson word for: "
-                f"{first.translation_vi or _generated_definition(first)}"
-            ),
-            options=_choice_options(lesson, 0),
-            correct_answer=first.word or "",
+        _matching_exercise(lesson, lesson_key, sixth),
+        _cloze_exercise(lesson_key, seventh),
+        _true_false(lesson, lesson_key, 7),
+        (
+            ExerciseArtifact(
+                id=_stable_id(*lesson_key, 8),
+                type="translate",
+                ui_type="translation_choice",
+                concept_id=_vocab_concept_id(first),
+                question=f"Choose the English lesson word for: {_meaning(first)}",
+                options=_choice_options(lesson, 0),
+                correct_answer=first.word or "",
+            )
+            if _meaning(first)
+            else None
         ),
         ExerciseArtifact(
             id=_stable_id(*lesson_key, 9),
@@ -214,15 +295,15 @@ def _configured_exercises(
 ) -> list[ExerciseArtifact]:
     base = _base_exercises(lesson)
     groups = {
-        "speaking": base[:2],
-        "listening": base[2:4],
-        "knowledge": base[4:],
+        "speaking": [e for e in base[:2] if e],
+        "listening": [e for e in base[2:4] if e],
+        "knowledge": [e for e in base[4:] if e],
     }
     selected: list[ExerciseArtifact] = []
 
     def append_from(group_name: str, count: int) -> None:
         templates = groups[group_name]
-        for index in range(count):
+        for index in range(count if templates else 0):
             exercise = templates[index % len(templates)].model_copy(deep=True)
             exercise.id = _stable_id(
                 lesson.level.value,
@@ -294,6 +375,7 @@ def _deterministic_lesson(
         exercises=_configured_exercises(planned_lesson, request),
         estimated_minutes=max(10, request.exercises_per_lesson * 2),
         xp_reward=request.exercises_per_lesson * 2,
+        generation_mode="template",
     )
 
 
@@ -479,13 +561,16 @@ class LLMMissionGenerator:
         self._url = _GEMINI_URL_TEMPLATE.format(model=model, api_key=api_key)
         self._timeout_seconds = timeout_seconds
         self._max_attempts = max_attempts
+        self.warnings: list[str] = []
 
     async def generate_courses(
         self,
         plan: CurriculumPlan,
         request: GenerationRequest,
     ) -> list[CourseArtifact]:
+        self.warnings = []
         if not self._api_key:
+            self.warnings.append("template fallback for every lesson: no API key")
             return await DeterministicCourseGenerator().generate_courses(plan, request)
 
         courses: list[CourseArtifact] = []
@@ -530,14 +615,32 @@ class LLMMissionGenerator:
     ) -> LessonArtifact:
         try:
             raw = await self._call_model(client, planned_lesson, level, request)
-            return self._to_lesson_artifact(raw, planned_lesson, level, request)
+            lesson = self._to_lesson_artifact(raw, planned_lesson, level, request)
+
+            async def call(prompt: str) -> dict:
+                return await self._call_json(client, prompt, temperature=0)
+
+            kept, stats = await verify_exercises(
+                lesson.exercises, level=level.value, lesson_title=lesson.title, call=call
+            )
+            if stats["dropped"]:
+                self.warnings.append(
+                    f'answer key disagreed in lesson "{lesson.title}": dropped '
+                    f"{len(stats['dropped'])} of {stats['checked']} checked exercises"
+                )
+                if not lesson_survives_verification(kept):
+                    raise ValueError(
+                        f"only {len(kept)} of {len(lesson.exercises)} exercises survived verification"
+                    )
+            return lesson.model_copy(update={"exercises": kept, "verification": stats})
         except (
             httpx.HTTPError,
             ValueError,
             ValidationError,
             KeyError,
             # e.g. "No Groq key available (all rate limited)" — one throttled
-            # lesson must not take the whole job down with it.
+            # lesson must not take the whole job down with it. VerificationUnavailable
+            # is one too: an unchecked lesson is not shipped as model-written.
             RuntimeError,
         ) as exc:
             logger.warning(
@@ -545,6 +648,9 @@ class LLMMissionGenerator:
                 "deterministic template: %s",
                 planned_lesson.title,
                 exc,
+            )
+            self.warnings.append(
+                f'template fallback for lesson "{planned_lesson.title}": {exc}'
             )
             return _deterministic_lesson(planned_lesson, level, request)
 
@@ -555,11 +661,22 @@ class LLMMissionGenerator:
         level: object,
         request: GenerationRequest,
     ) -> dict:
+        return await self._call_json(
+            client, _mission_prompt(planned_lesson, level, request)
+        )
+
+    async def _call_json(
+        self,
+        client: httpx.AsyncClient,
+        prompt: str,
+        temperature: float | None = None,
+    ) -> dict:
+        config: dict = {"responseMimeType": "application/json"}
+        if temperature is not None:
+            config["temperature"] = temperature
         payload = {
-            "contents": [
-                {"parts": [{"text": _mission_prompt(planned_lesson, level, request)}]}
-            ],
-            "generationConfig": {"responseMimeType": "application/json"},
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": config,
         }
         last_error: Exception | None = None
         for attempt in range(self._max_attempts):
@@ -639,6 +756,7 @@ class LLMMissionGenerator:
             exercises=exercises,
             estimated_minutes=max(10, request.exercises_per_lesson * 2),
             xp_reward=request.exercises_per_lesson * 2,
+            generation_mode="llm",
         )
 
 
@@ -672,23 +790,17 @@ class GroqMissionGenerator(LLMMissionGenerator):
             model or os.getenv("CONTENT_AGENT_GROQ_MODEL") or "qwen/qwen3.8-27b"
         )
 
-    async def _call_model(
+    async def _call_json(
         self,
         client: httpx.AsyncClient,
-        planned_lesson: PlannedLesson,
-        level: object,
-        request: GenerationRequest,
+        prompt: str,
+        temperature: float | None = None,
     ) -> dict:
         payload = {
             "model": self._model,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": _mission_prompt(planned_lesson, level, request),
-                }
-            ],
+            "messages": [{"role": "user", "content": prompt}],
             "response_format": {"type": "json_object"},
-            "temperature": 0.7,
+            "temperature": 0.7 if temperature is None else temperature,
             # This is the fifth caller that posts to Groq with a raw client, so
             # it has to spread the override in by hand. Without it qwen writes
             # <think> prose, Groq's JSON validator answers 400, and every job

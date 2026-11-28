@@ -790,7 +790,11 @@ async def generate_lesson_exercises_draft(
         )
 
     _unique_exercise_ids(exercises, taken, lesson_uuid)
-    return ApiResponse(success=True, message="Draft generated", data={"exercises": exercises})
+    return ApiResponse(
+        success=True,
+        message="Draft generated",
+        data={"exercises": exercises, "verification": getattr(exercises, "verification", None)},
+    )
 
 
 async def _assert_word_free(

@@ -70,3 +70,30 @@ def test_vocabulary_normalization_converts_curly_apostrophe() -> None:
     raw = "it’s"
     result = normalize_word(raw)
     assert result == "it's"
+
+
+def test_lesson_artifact_accepts_generation_mode_and_verification_and_rejects_others() -> None:
+    from app.schemas.content_agent import LessonArtifact
+
+    base = {
+        "title": "L",
+        "order_index": 0,
+        "vocabulary": [
+            {"word": "dog", "definition": "an animal", "part_of_speech": "noun", "difficulty_level": "A1"}
+        ],
+        "exercises": [
+            {"id": "e1", "type": "multiple_choice", "ui_type": "multiple_choice",
+             "question": "Q?", "options": ["a", "b"], "correct_answer": "a"}
+        ],
+    }
+    lesson = LessonArtifact(
+        **base,
+        generation_mode="llm",
+        verification={"method": "blind-answer-v1", "checked": 1, "agreed": 1, "dropped": []},
+    )
+    assert lesson.generation_mode == "llm" and lesson.verification["agreed"] == 1
+    assert LessonArtifact(**base).generation_mode is None
+    with pytest.raises(ValidationError):
+        LessonArtifact(**base, generation_mode="magic")
+    with pytest.raises(ValidationError):
+        LessonArtifact(**base, surprise=1)

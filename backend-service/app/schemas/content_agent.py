@@ -214,6 +214,8 @@ class LessonArtifact(BaseModel):
     exercises: list[ExerciseArtifact] = Field(min_length=1)
     estimated_minutes: int = Field(default=10, ge=1, le=120)
     xp_reward: int = Field(default=20, ge=0)
+    generation_mode: Literal["llm", "template"] | None = None
+    verification: dict[str, Any] | None = None
 
 
 class UnitArtifact(BaseModel):
