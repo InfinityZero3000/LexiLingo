@@ -40,6 +40,15 @@ class MainScreen extends StatefulWidget {
     return true;
   }
 
+  /// Bottom scroll clearance so content clears the floating bottom bar on
+  /// compact phones (including iPhone 7/8 with zero home-indicator inset).
+  static double bottomBarClearance(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final bottomPadding = MediaQuery.paddingOf(context).bottom;
+    if (width >= 840) return bottomPadding + 24;
+    return bottomPadding + 88;
+  }
+
   @override
   State<MainScreen> createState() => _MainScreenState();
 }

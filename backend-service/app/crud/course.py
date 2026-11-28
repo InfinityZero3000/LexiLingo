@@ -73,9 +73,35 @@ class CourseCRUD:
         if published_only:
             filters.append(Course.is_published == True)
         if language:
-            filters.append(Course.language == language)
+            lang_norm = language.strip().lower()
+            lang_map = {
+                "english": ["en", "English"],
+                "en": ["en", "English"],
+                "vietnamese": ["vi", "Vietnamese"],
+                "vi": ["vi", "Vietnamese"],
+                "spanish": ["es", "Spanish"],
+                "es": ["es", "Spanish"],
+            }
+            candidates = lang_map.get(lang_norm, [language.strip()])
+            filters.append(Course.language.in_(candidates))
         if level:
-            filters.append(Course.level == level)
+            lvl_norm = level.strip().lower().replace("_", "-")
+            lvl_map = {
+                "a1": ["A1", "Beginner"],
+                "beginner": ["A1", "Beginner"],
+                "a2": ["A2", "Elementary"],
+                "elementary": ["A2", "Elementary"],
+                "b1": ["B1", "Pre-Intermediate", "Intermediate"],
+                "pre-intermediate": ["B1", "Pre-Intermediate"],
+                "intermediate": ["B1", "Intermediate"],
+                "b2": ["B2", "Upper-Intermediate"],
+                "upper-intermediate": ["B2", "Upper-Intermediate"],
+                "c1": ["C1", "Advanced"],
+                "c2": ["C2", "Advanced"],
+                "advanced": ["C1", "C2", "Advanced"],
+            }
+            candidates = lvl_map.get(lvl_norm, [level.strip()])
+            filters.append(Course.level.in_(candidates))
         
         if filters:
             query = query.where(and_(*filters))

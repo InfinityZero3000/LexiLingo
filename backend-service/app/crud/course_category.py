@@ -142,14 +142,43 @@ class CourseCategoryCRUD:
         return True
     
     @staticmethod
+    def _extract_tag_set(tags) -> set[str]:
+        if not tags:
+            return set()
+        if isinstance(tags, list):
+            return {str(t).strip().lower() for t in tags if t}
+        if isinstance(tags, dict):
+            out: set[str] = set()
+            for v in tags.values():
+                if isinstance(v, list):
+                    out.update(str(t).strip().lower() for t in v if t)
+            return out
+        return set()
+
+    @staticmethod
     async def published_course_counts(db: AsyncSession) -> dict[uuid.UUID, int]:
-        """Published courses per category, read live so the number cannot go stale."""
-        result = await db.execute(
-            select(Course.category_id, func.count(Course.id))
-            .where(Course.is_published.is_(True), Course.category_id.is_not(None))
-            .group_by(Course.category_id)
+        """Published courses per category (matching by category_id or tag), read live so the number cannot go stale."""
+        cat_result = await db.execute(select(CourseCategory))
+        categories = list(cat_result.scalars().all())
+        if not categories:
+            return {}
+        course_result = await db.execute(
+            select(Course.id, Course.category_id, Course.tags).where(
+                Course.is_published.is_(True)
+            )
         )
-        return {category_id: count for category_id, count in result.all()}
+        course_rows = course_result.all()
+        counts: dict[uuid.UUID, int] = {}
+        for cat in categories:
+            labels = {cat.slug.lower(), cat.name.lower()}
+            matched = 0
+            for _cid, c_cat_id, c_tags in course_rows:
+                if c_cat_id == cat.id or labels.intersection(
+                    CourseCategoryCRUD._extract_tag_set(c_tags)
+                ):
+                    matched += 1
+            counts[cat.id] = matched
+        return counts
 
     @staticmethod
     async def get_courses_by_category(
@@ -172,11 +201,13 @@ class CourseCategoryCRUD:
         # page for a category the list showed five courses under.
         # ponytail: filtered in Python because tags is portable JSON; move to
         # SQL (or backfill category_id) if published courses reach thousands.
-        labels = {category.slug, category.name.lower()}
+        labels = {category.slug.lower(), category.name.lower()}
         courses = [
             course
             for course in result.scalars().all()
             if course.category_id == category_id
-            or labels.intersection(course.tags or [])
+            or labels.intersection(
+                CourseCategoryCRUD._extract_tag_set(course.tags)
+            )
         ]
         return courses[skip : skip + limit], len(courses)

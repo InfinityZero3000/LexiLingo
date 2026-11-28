@@ -68,6 +68,8 @@ class CourseBackendDataSourceImpl implements CourseBackendDataSource {
     required int page,
     required int pageSize,
     String? category,
+    String? language,
+    String? level,
     bool enrolledOnly = false,
   }) async {
     final db = await _dbHelper.database;
@@ -76,18 +78,31 @@ class CourseBackendDataSourceImpl implements CourseBackendDataSource {
     final safePageSize = pageSize < 1 ? 20 : pageSize;
     final offset = (safePage - 1) * safePageSize;
 
-    String whereClause = '';
+    final conditions = <String>[];
     final whereArgs = <Object?>[];
     if (category != null && category.isNotEmpty) {
-      whereClause = 'WHERE c.category = ?';
+      conditions.add('c.category = ?');
       whereArgs.add(category);
     }
+    if (level != null && level.isNotEmpty) {
+      final lvlNorm = level.trim().toUpperCase();
+      conditions.add('UPPER(c.level) = ?');
+      whereArgs.add(lvlNorm);
+    }
+    if (language != null && language.isNotEmpty) {
+      final langNorm = language.trim().toLowerCase();
+      if (langNorm != 'en' && langNorm != 'english') {
+        // Local seeded courses are all English ('en')
+        conditions.add('1 = 0');
+      }
+    }
     if (enrolledOnly) {
-      whereClause = whereClause.isEmpty
-          ? 'WHERE e.userId = ?'
-          : '$whereClause AND e.userId = ?';
+      conditions.add('e.userId = ?');
       whereArgs.add('demo_user_001');
     }
+    final whereClause = conditions.isEmpty
+        ? ''
+        : 'WHERE ${conditions.join(' AND ')}';
 
     final countResult = await db.rawQuery('''
       SELECT COUNT(DISTINCT c.id) as total
@@ -130,15 +145,16 @@ class CourseBackendDataSourceImpl implements CourseBackendDataSource {
 
     final data = rows.map((row) {
       final lessonsCount = (row['lessonsCount'] as int?) ?? 0;
+      final catName = row['category']?.toString();
+      final catSlug = catName?.toLowerCase().replaceAll(' ', '-');
       return CourseModel(
         id: (row['id'] ?? '').toString(),
         title: (row['title'] ?? '').toString(),
         description: row['description']?.toString(),
         language: 'en',
         level: (row['level'] ?? 'A1').toString(),
-        tags: row['category'] == null
-            ? []
-            : [row['category'].toString().toLowerCase()],
+        categoryId: catSlug,
+        tags: catSlug == null ? [] : [catSlug],
         thumbnailUrl: row['imageUrl']?.toString(),
         totalXp: lessonsCount * 50,
         estimatedDuration: lessonsCount * 10,
@@ -311,7 +327,12 @@ class CourseBackendDataSourceImpl implements CourseBackendDataSource {
       // Fall through to local SQLite fallback.
     }
 
-    return _localCoursesPage(page: page, pageSize: pageSize);
+    return _localCoursesPage(
+      page: page,
+      pageSize: pageSize,
+      language: language,
+      level: level,
+    );
   }
 
   @override

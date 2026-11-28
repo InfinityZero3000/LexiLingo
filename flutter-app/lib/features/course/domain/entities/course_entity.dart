@@ -8,6 +8,7 @@ class CourseEntity extends Equatable {
   final String? description;
   final String language;
   final String level;
+  final String? categoryId;
   final List<String> tags;
   final String? thumbnailUrl;
   final int totalXp;
@@ -25,6 +26,7 @@ class CourseEntity extends Equatable {
     this.description,
     required this.language,
     required this.level,
+    this.categoryId,
     required this.tags,
     this.thumbnailUrl,
     required this.totalXp,
@@ -43,6 +45,7 @@ class CourseEntity extends Equatable {
     String? description,
     String? language,
     String? level,
+    String? categoryId,
     List<String>? tags,
     String? thumbnailUrl,
     int? totalXp,
@@ -60,6 +63,7 @@ class CourseEntity extends Equatable {
       description: description ?? this.description,
       language: language ?? this.language,
       level: level ?? this.level,
+      categoryId: categoryId ?? this.categoryId,
       tags: tags ?? this.tags,
       thumbnailUrl: thumbnailUrl ?? this.thumbnailUrl,
       totalXp: totalXp ?? this.totalXp,
@@ -80,6 +84,7 @@ class CourseEntity extends Equatable {
     description,
     language,
     level,
+    categoryId,
     tags,
     thumbnailUrl,
     totalXp,

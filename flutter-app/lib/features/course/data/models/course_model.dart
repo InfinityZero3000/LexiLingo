@@ -9,6 +9,7 @@ class CourseModel extends CourseEntity {
     super.description,
     required super.language,
     required super.level,
+    super.categoryId,
     required super.tags,
     super.thumbnailUrl,
     required super.totalXp,
@@ -29,6 +30,7 @@ class CourseModel extends CourseEntity {
       description: json['description'] as String?,
       language: json['language'] as String,
       level: json['level'] as String,
+      categoryId: json['category_id']?.toString(),
       tags:
           (json['tags'] as List<dynamic>?)?.map((e) => e as String).toList() ??
           [],
@@ -56,6 +58,7 @@ class CourseModel extends CourseEntity {
       'description': description,
       'language': language,
       'level': level,
+      'category_id': categoryId,
       'tags': tags,
       'thumbnail_url': thumbnailUrl,
       'total_xp': totalXp,
@@ -77,6 +80,7 @@ class CourseModel extends CourseEntity {
       description: entity.description,
       language: entity.language,
       level: entity.level,
+      categoryId: entity.categoryId,
       tags: entity.tags,
       thumbnailUrl: entity.thumbnailUrl,
       totalXp: entity.totalXp,

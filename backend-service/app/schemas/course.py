@@ -132,6 +132,7 @@ class CourseListItem(BaseModel):
     description: Optional[str] = None
     language: str
     level: str
+    category_id: Optional[uuid.UUID] = None
     tags: Optional[List[str]] = Field(default_factory=list)
     thumbnail_url: Optional[str] = None
     total_lessons: int = 0

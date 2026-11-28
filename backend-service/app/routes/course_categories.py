@@ -166,6 +166,7 @@ async def get_courses_by_category(
             "description": course.description,
             "language": course.language,
             "level": course.level,
+            "category_id": course.category_id,
             "tags": course.tags or [],
             "thumbnail_url": course.thumbnail_url,
             "total_lessons": course.total_lessons,
