@@ -1331,6 +1331,7 @@ abstract class LocaleKeys {
   static const admin_sys_ops_contentAgent = 'admin.sys.ops.contentAgent';
   static const admin_sys_ops_celery = 'admin.sys.ops.celery';
   static const admin_sys_ops_backups = 'admin.sys.ops.backups';
+  static const admin_sys_ops_errors = 'admin.sys.ops.errors';
   static const admin_sys_health = 'admin.sys.health';
   static const admin_sys_health_system = 'admin.sys.health.system';
   static const admin_sys_health_services = 'admin.sys.health.services';

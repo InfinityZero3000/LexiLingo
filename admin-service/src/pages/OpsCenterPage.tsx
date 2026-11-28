@@ -14,12 +14,17 @@ import {
   getBackupOverview,
   getCeleryOverview,
   getContentAgentOverview,
+  getErrorGroups,
   getIntegrationHealth,
   getProductEventOverview,
   getQuotaUsage,
   getReminderOverview,
   getSchemaDrift,
   resetQuota,
+  setErrorGroupState,
+  ErrorGroup,
+  ErrorKind,
+  ErrorState,
   IntegrationResult,
   QuotaUsage,
   SchemaDriftIssue,
@@ -65,6 +70,173 @@ const Section = ({ title, description, action, children }: {
     {children}
   </section>
 );
+
+const ERROR_STATE_TONE: Record<ErrorState, Tone> = { open: "danger", resolved: "success", muted: "neutral" };
+const ERROR_SERVICES = ["backend", "ai-service", "worker"];
+
+const CopyId = ({ value }: { value: string }) => {
+  const { t } = useI18n();
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    void navigator.clipboard?.writeText(value).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  };
+  return (
+    <button type="button" className="ghost-button small mono" onClick={copy} title={t.ops.errCopy} aria-label={`${t.ops.errCopy} ${value}`}>
+      {copied ? t.ops.errCopied : value.slice(0, 8)}
+    </button>
+  );
+};
+
+const ErrorsSection = () => {
+  const { t } = useI18n();
+  const { role } = useAuth();
+  const confirm = useConfirm();
+  const queryClient = useQueryClient();
+  const [hours, setHours] = useState(24);
+  const [service, setService] = useState("");
+  const [state, setState] = useState<ErrorState | "all">("open");
+  const [kind, setKind] = useState<ErrorKind>("error");
+  const [actionError, setActionError] = useState<string | null>(null);
+  const canAct = role === "super_admin";
+
+  const groups = useQuery({
+    queryKey: ["ops-errors", hours, service, state, kind],
+    queryFn: () => getErrorGroups({ hours, service: service || undefined, state, kind }),
+    refetchInterval: 60_000,
+  });
+
+  const change = useMutation({
+    mutationFn: ({ fingerprint, next }: { fingerprint: string; next: ErrorState }) => setErrorGroupState(fingerprint, next),
+    onMutate: () => setActionError(null),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["ops-errors"] }),
+    onError: (err) => setActionError(messageOf(err, t.ops.errActionFailed)),
+  });
+
+  const ago = (iso: string) => {
+    const minutes = Math.max(Math.round((Date.now() - new Date(iso).getTime()) / 60_000), 0);
+    if (minutes < 1) return t.ops.errAgoNow;
+    if (minutes < 60) return t.ops.errAgoMinutes.replace("{n}", String(minutes));
+    if (minutes < 2880) return t.ops.errAgoHours.replace("{n}", String(Math.round(minutes / 60)));
+    return t.ops.errAgoDays.replace("{n}", String(Math.round(minutes / 1440)));
+  };
+
+  const act = async (g: ErrorGroup, next: ErrorState, label: string) => {
+    const ok = await confirm({
+      title: label,
+      message: t.ops.errActionMessage.replace("{action}", label).replace("{route}", `${g.method} ${g.route}`),
+      confirmLabel: label,
+    });
+    if (ok) change.mutate({ fingerprint: g.fingerprint, next });
+  };
+
+  const columns: Column<ErrorGroup>[] = [
+    { header: t.ops.errService, render: (g) => <strong>{g.service}</strong> },
+    { header: t.ops.errRequest, render: (g) => <span className="mono text-small">{g.method} {g.route}</span> },
+    {
+      header: t.ops.errStatus,
+      render: (g) => (g.status_code == null ? "—" : <StatusPill tone={g.status_code >= 500 ? "danger" : "warning"} label={String(g.status_code)} />),
+    },
+    {
+      header: t.ops.errType,
+      render: (g) => (
+        <div className="stack" style={{ gap: 2 }}>
+          <span className="mono text-small">{g.error_type ?? "—"}</span>
+          {g.location && <span className="mono text-small text-muted">{g.location}</span>}
+        </div>
+      ),
+    },
+    {
+      header: t.ops.errCount,
+      align: "right",
+      sortValue: (g) => g.count_window,
+      render: (g) => `${g.count_window.toLocaleString()} / ${g.total_count.toLocaleString()}`,
+    },
+    { header: t.ops.errLastSeen, sortValue: (g) => g.last_seen, render: (g) => <span title={new Date(g.last_seen).toLocaleString()}>{ago(g.last_seen)}</span> },
+    {
+      header: t.ops.errState,
+      render: (g) => (
+        <div className="cluster">
+          <StatusPill tone={ERROR_STATE_TONE[g.state]} label={t.ops.errorsStates[g.state]} />
+          {g.regressed && <StatusPill tone="danger" label={t.ops.errRegressed} />}
+        </div>
+      ),
+    },
+    {
+      header: t.ops.errMessage,
+      render: (g) =>
+        g.sample_message ? (
+          <span className="text-small" title={g.sample_message} style={{ display: "inline-block", maxWidth: 260, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", verticalAlign: "bottom" }}>
+            {g.sample_message}
+          </span>
+        ) : "—",
+    },
+    { header: t.ops.errRequestId, render: (g) => (g.sample_request_id ? <CopyId value={g.sample_request_id} /> : "—") },
+    ...(canAct
+      ? [{
+          header: t.common.actions,
+          render: (g: ErrorGroup) => (
+            <div className="cluster">
+              {g.state === "open" ? (
+                <>
+                  <button className="ghost-button small" onClick={() => act(g, "resolved", t.ops.errActions.resolve)} disabled={change.isPending}>{t.ops.errActions.resolve}</button>
+                  <button className="ghost-button small" onClick={() => act(g, "muted", t.ops.errActions.mute)} disabled={change.isPending}>{t.ops.errActions.mute}</button>
+                </>
+              ) : (
+                <button className="ghost-button small" onClick={() => act(g, "open", t.ops.errActions.reopen)} disabled={change.isPending}>{t.ops.errActions.reopen}</button>
+              )}
+            </div>
+          ),
+        }]
+      : []),
+  ];
+
+  return (
+    <Section
+      title={t.ops.errorsTitle}
+      description={t.ops.errorsHint}
+      action={
+        <div className="cluster">
+          <label className="filter-date">
+            <span>{t.ops.errorsFilterHours}</span>
+            <select className="filter-select" value={hours} onChange={(e) => setHours(Number(e.target.value))}>
+              {[1, 24, 168].map((h) => <option key={h} value={h}>{t.ops.errorsHours[String(h) as "1" | "24" | "168"]}</option>)}
+            </select>
+          </label>
+          <label className="filter-date">
+            <span>{t.ops.errorsFilterService}</span>
+            <select className="filter-select" value={service} onChange={(e) => setService(e.target.value)}>
+              <option value="">{t.ops.errorsServiceAll}</option>
+              {ERROR_SERVICES.map((x) => <option key={x} value={x}>{x}</option>)}
+            </select>
+          </label>
+          <label className="filter-date">
+            <span>{t.ops.errorsFilterState}</span>
+            <select className="filter-select" value={state} onChange={(e) => setState(e.target.value as ErrorState | "all")}>
+              {(["open", "resolved", "muted", "all"] as const).map((x) => <option key={x} value={x}>{t.ops.errorsStates[x]}</option>)}
+            </select>
+          </label>
+          <label className="filter-date">
+            <span>{t.ops.errorsFilterKind}</span>
+            <select className="filter-select" value={kind} onChange={(e) => setKind(e.target.value as ErrorKind)}>
+              {(["error", "client"] as const).map((x) => <option key={x} value={x}>{t.ops.errorsKinds[x]}</option>)}
+            </select>
+          </label>
+        </div>
+      }
+    >
+      {actionError && <div className="form-error" role="alert">{actionError}</div>}
+      {groups.error && <div className="form-error" role="alert">{messageOf(groups.error, t.ops.loadFailed)}</div>}
+      {groups.isLoading ? <TableSkeleton rows={4} cols={6} /> : (groups.data?.groups.length ?? 0) === 0 ? (
+        !groups.error && <EmptyState title={t.ops.errEmpty} description={t.ops.errEmptyHint} />
+      ) : (
+        <DataTable columns={columns} rows={groups.data!.groups} rowKey={(g) => g.fingerprint} />
+      )}
+    </Section>
+  );
+};
 
 export const OpsCenterPage = () => {
   const { t } = useI18n();
@@ -165,6 +337,8 @@ export const OpsCenterPage = () => {
           </label>
         }
       />
+
+      <ErrorsSection />
 
       <Section
         title={t.ops.integrationsTitle}

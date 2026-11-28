@@ -15,6 +15,16 @@ import 'package:lexilingo_app/features/admin/features/system_logs/presentation/l
 import 'package:lexilingo_app/core/state/paginated_list_controller.dart';
 import 'package:lexilingo_app/features/admin/shared/widgets/admin_async_body.dart';
 
+class _RecordingRepo extends _Repo {
+  final opsCalls = <String>[];
+
+  @override
+  Future<JsonSnapshot> ops(String name, {int? days}) {
+    opsCalls.add(name);
+    return super.ops(name, days: days);
+  }
+}
+
 class _Repo implements SystemRepository {
   _Repo({this.fail});
   final Object? fail;
@@ -194,6 +204,19 @@ void main() {
     expect(find.text('Queued'), findsOneWidget);
     expect(find.text('3'), findsOneWidget);
     expect(find.text('w1'), findsOneWidget);
+  });
+
+  testWidgets('ops center has a read-only errors tab that loads the groups', (
+    tester,
+  ) async {
+    final repo = _RecordingRepo();
+    await _pump(tester, OpsCenterScreen(repository: repo));
+    await tester.ensureVisible(find.text('admin.sys.ops.errors'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('admin.sys.ops.errors'));
+    await tester.pumpAndSettle();
+    expect(repo.opsCalls, contains('errors'));
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('ops center surfaces a 403 instead of an empty tab', (

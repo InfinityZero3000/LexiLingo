@@ -144,3 +144,85 @@ export type SchemaDriftIssue = {
 export type SchemaDrift = { ok: boolean; checked_at: string; issue_count: number; issues: SchemaDriftIssue[] };
 
 export const getSchemaDrift = () => apiFetch<SchemaDrift>(`${ENV.backendUrl}/admin/ops/schema-drift`);
+
+/* ─── Error monitoring ─── */
+
+export type ErrorState = "open" | "resolved" | "muted";
+export type ErrorKind = "error" | "client";
+
+export type ErrorGroup = {
+  fingerprint: string;
+  service: string;
+  kind: ErrorKind;
+  method: string;
+  route: string;
+  status_code: number | null;
+  error_type: string | null;
+  location: string | null;
+  sample_message: string | null;
+  sample_request_id: string | null;
+  first_seen: string;
+  last_seen: string;
+  total_count: number;
+  count_window: number;
+  state: ErrorState;
+  regressed: boolean;
+};
+
+export type ErrorGroupsResult = {
+  groups: ErrorGroup[];
+  totals: { errors: number; groups: number; by_service: Record<string, number> };
+};
+
+export type ErrorGroupParams = { hours: number; service?: string; state?: ErrorState | "all"; kind?: ErrorKind };
+
+export const getErrorGroups = async (params: ErrorGroupParams) => {
+  const query = new URLSearchParams({ hours: String(params.hours), state: params.state ?? "open" });
+  if (params.service) query.set("service", params.service);
+  if (params.kind) query.set("kind", params.kind);
+  const res = await apiFetch<Envelope<ErrorGroupsResult>>(`${ENV.backendUrl}/admin/ops/errors?${query}`);
+  return res.data;
+};
+
+export const setErrorGroupState = async (fingerprint: string, state: ErrorState) => {
+  const res = await apiFetch<Envelope<ErrorGroup>>(`${ENV.backendUrl}/admin/ops/errors/${encodeURIComponent(fingerprint)}`, {
+    method: "PATCH",
+    body: JSON.stringify({ state }),
+  });
+  return res.data;
+};
+
+export type ErrorReportSettings = {
+  enabled: boolean;
+  recipients: string[];
+  digest_interval_minutes: number;
+  spike_threshold: number;
+  client_spike_threshold: number;
+  cooldown_minutes: number;
+  last_digest_at: string | null;
+};
+
+export type ErrorReportSettingsPatch = Partial<Omit<ErrorReportSettings, "last_digest_at">>;
+
+export const DIGEST_INTERVALS = [15, 30, 60, 180, 360, 720, 1440];
+
+export const getErrorReportSettings = async () => {
+  const res = await apiFetch<Envelope<ErrorReportSettings>>(`${ENV.backendUrl}/admin/ops/error-report/settings`);
+  return res.data;
+};
+
+export const updateErrorReportSettings = async (patch: ErrorReportSettingsPatch) => {
+  const res = await apiFetch<Envelope<ErrorReportSettings>>(`${ENV.backendUrl}/admin/ops/error-report/settings`, {
+    method: "PUT",
+    body: JSON.stringify(patch),
+  });
+  return res.data;
+};
+
+export const sendTestErrorReport = async () => {
+  const res = await apiFetch<Envelope<{ sent_to: string[]; groups: number }>>(
+    `${ENV.backendUrl}/admin/ops/error-report/test`,
+    { method: "POST" },
+  );
+  return res.data;
+};

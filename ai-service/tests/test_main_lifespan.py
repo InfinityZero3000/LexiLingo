@@ -99,6 +99,7 @@ def _prepare_lifespan(
     monkeypatch.setattr(
         ai_main.settings, "LEARNER_STATE_MODE", learner_state_mode
     )
+    monkeypatch.setattr(ai_main.settings, "OPS_ERROR_REPORTING_ENABLED", False)
 
     http_client = MagicMock()
     http_client.aclose = AsyncMock()
@@ -268,3 +269,21 @@ def test_mongo_remains_the_one_fatal_dependency():
     ]
 
     assert "raise" in connect_block
+
+
+@pytest.mark.asyncio
+async def test_a_failing_ops_error_reporter_does_not_stop_startup(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    ai_main, http_client, _, _ = _prepare_lifespan(monkeypatch)
+    monkeypatch.setattr(ai_main.settings, "OPS_ERROR_REPORTING_ENABLED", True)
+    import api.services.ops_error_reporter as reporter
+
+    monkeypatch.setattr(
+        reporter, "start_ops_error_reporter", MagicMock(side_effect=RuntimeError("boom"))
+    )
+
+    async with ai_main.lifespan(FastAPI()):
+        pass
+
+    http_client.aclose.assert_awaited_once()
