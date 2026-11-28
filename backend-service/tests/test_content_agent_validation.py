@@ -448,6 +448,37 @@ def test_misused_writing_apply_would_repair_is_not_blocking() -> None:
     assert "EXERCISE_SHAPE_INVALID" not in {e.code for e in report.blocking_errors}
 
 
+def _lesson(art: dict) -> dict:
+    return art["courses"][0]["units"][0]["lessons"][0]
+
+
+def test_template_lesson_warns_but_does_not_block() -> None:
+    art = _base_artifact()
+    _lesson(art)["generation_mode"] = "template"
+    report = validate_artifact(art)
+    assert [w.code for w in report.warnings if w.code.startswith("LESSON_")] == [
+        "LESSON_TEMPLATE_FALLBACK"
+    ]
+    assert not [e for e in report.blocking_errors if e.code.startswith("LESSON_")]
+
+
+def test_llm_lesson_without_verification_warns() -> None:
+    art = _base_artifact()
+    _lesson(art)["generation_mode"] = "llm"
+    report = validate_artifact(art)
+    assert "LESSON_UNVERIFIED" in {w.code for w in report.warnings}
+
+
+def test_verified_llm_lesson_and_untagged_lesson_do_not_warn() -> None:
+    art = _base_artifact()
+    assert not [w for w in validate_artifact(art).warnings if w.code.startswith("LESSON_")]
+    _lesson(art).update(
+        generation_mode="llm",
+        verification={"method": "blind-answer-v1", "checked": 3, "agreed": 3, "dropped": []},
+    )
+    assert not [w for w in validate_artifact(art).warnings if w.code.startswith("LESSON_")]
+
+
 # --- audio question gate ---
 
 

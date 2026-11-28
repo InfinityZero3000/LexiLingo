@@ -55,8 +55,9 @@ def test_tampered_or_foreign_tokens_are_refused():
     body, sig = unsub.make_token(uid).split(".")
     other = unsub.make_token(uuid.uuid4()).split(".")[0]
 
-    # Change the last character to one it is not; "AA" was the signature 1 time in 4096.
-    tampered = sig[:-1] + ("B" if sig[-1] != "B" else "C")
+    # The first character: the last one of base64url also holds padding bits the
+    # decoder drops, so changing it can leave the signature bytes unchanged.
+    tampered = ("B" if sig[0] != "B" else "C") + sig[1:]
     for bad in ("", "x", "a.b", f"{other}.{sig}", f"{body}.{tampered}", f"{body}.{sig}.x", "é.é"):
         assert unsub.read_token(bad) is None
 

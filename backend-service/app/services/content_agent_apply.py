@@ -230,6 +230,14 @@ class ContentAgentApplyService:
                             "generated_by": "cefr-content-agent",
                             "source_job_id": str(job.id),
                             "exercises": exercises,
+                            **{
+                                key: value
+                                for key, value in (
+                                    ("generation_mode", lesson_data.generation_mode),
+                                    ("verification", lesson_data.verification),
+                                )
+                                if value is not None
+                            },
                         },
                     )
                     db.add(lesson)
