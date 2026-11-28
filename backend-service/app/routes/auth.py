@@ -20,7 +20,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.core.database import get_db
 from app.core.config import settings
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, has_google_admin_session
 from app.core.firebase_auth import revoke_all_refresh_tokens as _revoke_all_refresh_tokens
 from app.core import login_lockout
 from app.core.refusal import refusal
@@ -171,6 +171,7 @@ def _build_user_response(user: User) -> UserResponse:
         role_level=int(getattr(user, "role_level", 0) or 0),
         is_admin=bool(getattr(user, "is_admin", False)),
         is_super_admin=bool(getattr(user, "is_super_admin", False)),
+        admin_access=bool(getattr(user, "is_admin", False)) and has_google_admin_session(user),
     )
 
 # Pre-computed bcrypt hash used when a login email is not found.
@@ -297,7 +298,7 @@ async def login(
     except Exception:
         await db.rollback()
 
-    access_token, refresh_token = await issue_token_pair(db, uuid.UUID(user_id), hashed_password)
+    access_token, refresh_token = await issue_token_pair(db, uuid.UUID(user_id), hashed_password, method="password")
 
     return LoginResponse(
         access_token=access_token,
@@ -433,10 +434,12 @@ async def refresh_token(
         db_token.rotated_at = now
     
     # Create new tokens
-    auth_time = payload.get("auth_time")
-    access_token = create_user_access_token(user.id, user.hashed_password, auth_time=auth_time)
+    auth_time, amr = payload.get("auth_time"), payload.get("amr")
+    access_token = create_user_access_token(
+        user.id, user.hashed_password, auth_time=auth_time, amr=amr
+    )
     new_refresh_token = await issue_refresh_token(
-        db, user.id, db_token.family_id, commit=False, auth_time=auth_time
+        db, user.id, db_token.family_id, commit=False, auth_time=auth_time, amr=amr
     )
     await db.commit()
 
@@ -632,7 +635,7 @@ async def google_login(
     await db.commit()
 
     # Create tokens
-    access_token, refresh_token = await issue_token_pair(db, user.id, user.hashed_password)
+    access_token, refresh_token = await issue_token_pair(db, user.id, user.hashed_password, method="google")
     if use_cookie:
         set_refresh_cookie(response, refresh_token, await refresh_lifetime_days(db, user.id))
         refresh_token = ""
@@ -740,13 +743,12 @@ async def facebook_login(
 
     # For admin source verify the role (as done in Google logic)
     if request.source == "admin":
-        await db.refresh(user, ["role"])
-        if user.role_level < 1 or not user.is_verified:
-            await _audit_admin_login(db, http_request, "denied", user, via="facebook")
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied. Admin privileges required."
-            )
+        # Admins sign in with Google only.
+        await _audit_admin_login(db, http_request, "denied", user, via="facebook")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin sign-in uses Google."
+        )
 
     if not user.is_active:
         raise HTTPException(
@@ -756,12 +758,10 @@ async def facebook_login(
     
     # Update last login
     user.last_login = datetime.now(timezone.utc)
-    if request.source == "admin":
-        await _audit_admin_login(db, http_request, "ok", user, via="facebook")
     await db.commit()
     
     # Create tokens
-    access_token, refresh_token = await issue_token_pair(db, user.id, user.hashed_password)
+    access_token, refresh_token = await issue_token_pair(db, user.id, user.hashed_password, method="facebook")
     
     return LoginResponse(
         access_token=access_token,
@@ -985,7 +985,7 @@ async def verify_email(
     # transition: the "already verified" branch above returns no session, so a link is a
     # one-time login.
     user_id = str(user.id)
-    access_token, refresh_token = await issue_token_pair(db, user.id, user.hashed_password)
+    access_token, refresh_token = await issue_token_pair(db, user.id, user.hashed_password, method="email_link")
 
     return VerifyEmailResponse(
         verified=True,
@@ -1065,7 +1065,7 @@ async def admin_login(
     except Exception:
         await db.rollback()
 
-    access_token, refresh_token_val = await issue_token_pair(db, user.id, user.hashed_password)
+    access_token, refresh_token_val = await issue_token_pair(db, user.id, user.hashed_password, method="password")
 
     user_data = _build_user_response(user)
 
@@ -1265,7 +1265,7 @@ async def admin_verify_otp(
     user.last_login = datetime.now(timezone.utc)
     await _audit_admin_login(db, http_request, "ok", user, via="otp")
 
-    access_token, refresh_token_val = await issue_token_pair(db, user.id, user.hashed_password)
+    access_token, refresh_token_val = await issue_token_pair(db, user.id, user.hashed_password, method="otp")
 
     user_data = _build_user_response(user)
 

@@ -33,7 +33,7 @@ async def admin_headers(db_session):
         yield db_session
 
     app.dependency_overrides[get_db] = override
-    yield {"Authorization": f"Bearer {create_access_token(data={'sub': str(admin.id)})}"}
+    yield {"Authorization": f"Bearer {create_access_token(data={'sub': str(admin.id), 'amr': 'google'})}"}
     app.dependency_overrides.pop(get_db, None)
 
 

@@ -92,15 +92,21 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
 
 
 def create_user_access_token(
-    user_id: Any, hashed_password: Optional[str], auth_time: Optional[int] = None
+    user_id: Any,
+    hashed_password: Optional[str],
+    auth_time: Optional[int] = None,
+    amr: Optional[str] = None,
 ) -> str:
     """Access token that stops working once the account's password changes.
 
-    auth_time is when the holder last proved who they are; a refresh carries it over.
+    auth_time is when the holder last proved who they are, and amr how ("google",
+    "password", ...); a refresh carries both over.
     """
     claims = {"sub": str(user_id), "pwv": password_fingerprint(hashed_password)}
     if auth_time is not None:
         claims["auth_time"] = auth_time
+    if amr is not None:
+        claims["amr"] = amr
     return create_access_token(claims)
 
 

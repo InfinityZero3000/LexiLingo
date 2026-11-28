@@ -95,6 +95,7 @@ async def issue_refresh_token(
     *,
     commit: bool = True,
     auth_time: int | None = None,
+    amr: str | None = None,
 ) -> str:
     """Create a refresh token and store it, with the lifetime this user's role calls for.
 
@@ -105,6 +106,8 @@ async def issue_refresh_token(
     claims = {"sub": str(user_id)}
     if auth_time is not None:
         claims["auth_time"] = auth_time
+    if amr is not None:
+        claims["amr"] = amr
     token = create_refresh_token(claims, expires_days=days)
     await save_refresh_token(db, user_id, token, family_id, commit=commit, lifetime_days=days)
     return token
@@ -165,11 +168,14 @@ async def revoke_refresh_family(db: AsyncSession, db_token: RefreshToken) -> Non
 
 
 async def issue_token_pair(
-    db: AsyncSession, user_id: uuid.UUID, hashed_password: str | None
+    db: AsyncSession, user_id: uuid.UUID, hashed_password: str | None, *, method: str
 ) -> tuple[str, str]:
-    """A new sign-in: (access_token, refresh_token), the latter stored and role-aware."""
+    """A new sign-in: (access_token, refresh_token), the latter stored and role-aware.
+
+    method is how the user proved who they are; admin features accept only "google".
+    """
     now = int(time.time())
     return (
-        create_user_access_token(user_id, hashed_password, auth_time=now),
-        await issue_refresh_token(db, user_id, auth_time=now),
+        create_user_access_token(user_id, hashed_password, auth_time=now, amr=method),
+        await issue_refresh_token(db, user_id, auth_time=now, amr=method),
     )

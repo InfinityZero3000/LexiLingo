@@ -78,7 +78,7 @@ async def ensure_not_last_super_admin(db: AsyncSession, user: User) -> None:
 
 
 async def allowlisted_role_for_sign_in(
-    db: AsyncSession, email: str, *, email_verified: bool, is_new_account: bool
+    db: AsyncSession, email: str, *, email_verified: bool, is_new_account: bool, provider: str
 ) -> str | None:
     """The role the allowlist grants at this sign-in, if any.
 
@@ -86,7 +86,8 @@ async def allowlisted_role_for_sign_in(
     so a demotion stays a demotion. The one exception is recovery: with no active super
     admin left, a listed super admin is restored.
     """
-    if not email_verified:
+    # Admins sign in with Google only, so only a Google sign-in earns the role.
+    if not email_verified or provider != "google":
         return None
     role = settings.get_admin_role_for_email(email)
     if role is None or is_new_account:

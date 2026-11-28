@@ -210,13 +210,13 @@ def regular_headers(regular_user: User) -> dict:
 
 @pytest.fixture
 def admin_headers(admin_user: User) -> dict:
-    token = create_access_token(data={"sub": str(admin_user.id)})
+    token = create_access_token(data={"sub": str(admin_user.id), "amr": "google"})
     return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture
 def super_admin_headers(super_admin_user: User) -> dict:
-    token = create_access_token(data={"sub": str(super_admin_user.id)})
+    token = create_access_token(data={"sub": str(super_admin_user.id), "amr": "google"})
     return {"Authorization": f"Bearer {token}"}
 
 
@@ -335,9 +335,11 @@ class TestSuperAdminOnly:
 
     @pytest.mark.asyncio
     async def test_super_admin_can_change_user_role(
-        self, async_client: AsyncClient, super_admin_headers, regular_user
+        self, async_client: AsyncClient, db_session: AsyncSession, super_admin_headers, regular_user
     ):
         """Super admin (level 2) should be able to change user roles."""
+        regular_user.provider = ["google"]  # admin roles go to Google accounts only
+        await db_session.commit()
         response = await async_client.put(
             f"/api/v1/admin/users/{regular_user.id}/role",
             headers=super_admin_headers,
@@ -873,6 +875,7 @@ class TestTestRole:
         assert response.status_code == 200
         assert response.json()["data"] == {
             "user_id": str(regular_user.id), "new_level": 0, "new_role": "test",
+            "password_removed": False,
         }
 
         listed = await async_client.get(

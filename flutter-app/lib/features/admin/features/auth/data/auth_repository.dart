@@ -14,6 +14,10 @@ class AdminUser {
   final bool isAdmin;
   final bool hasUserAccount;
 
+  /// The learner session was signed in with Google. Admins sign in with Google
+  /// only, so a password or Facebook session gets the learner side alone.
+  final bool googleSession;
+
   const AdminUser({
     required this.id,
     required this.email,
@@ -24,6 +28,7 @@ class AdminUser {
     required this.isSuperAdmin,
     required this.isAdmin,
     required this.hasUserAccount,
+    this.googleSession = true,
   });
 
   /// The panel is opened from inside the learner app, so every admin signed in
@@ -31,7 +36,10 @@ class AdminUser {
   bool get hasUserZoneAccess => hasUserAccount;
 
   /// Whether the account may use the panel at all.
-  bool get mayUsePanel => isAdmin || isSuperAdmin;
+  bool get mayUsePanel => (isAdmin || isSuperAdmin) && googleSession;
+
+  /// An admin role, but this session did not sign in with Google.
+  bool get needsGoogleSignIn => (isAdmin || isSuperAdmin) && !googleSession;
 
   factory AdminUser.fromJson(Map<String, dynamic> json) {
     final roleSlug = (json['role_slug'] ?? json['role'] ?? 'user').toString();
@@ -50,6 +58,8 @@ class AdminUser {
       isSuperAdmin: json['is_super_admin'] == true || roleLevel >= 2,
       isAdmin: json['is_admin'] == true || roleLevel >= 1,
       hasUserAccount: true,
+      // Older servers do not send it; they did not require Google either.
+      googleSession: json['admin_access'] != false,
     );
   }
 

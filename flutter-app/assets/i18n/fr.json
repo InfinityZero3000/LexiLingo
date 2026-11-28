@@ -2826,7 +2826,9 @@
       "loadErrorTitle": "Couldn't check your account",
       "loadErrorBody": "Check your connection and try again.",
       "retry": "Try again",
-      "exit": "Back to the app"
+      "exit": "Back to the app",
+      "googleTitle": "Sign in with Google",
+      "googleBody": "The admin panel opens only from a Google sign-in. Sign out of LexiLingo, sign in with Google, then open it again."
     }
   },
   "adminGrowth": {

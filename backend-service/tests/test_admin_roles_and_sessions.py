@@ -52,7 +52,8 @@ async def _make(db, slug: str = "user", **fields) -> User:
 
 def _headers(user: User, signed_in: timedelta | None = None) -> dict:
     """`signed_in` is how long ago this session proved who it is; None is an older token without that."""
-    claims = {"sub": str(user.id)}
+    # Admin features need a Google session; the learner side ignores the claim.
+    claims = {"sub": str(user.id), "amr": "google"}
     if signed_in is not None:
         claims["auth_time"] = int((datetime.now(timezone.utc) - signed_in).timestamp())
     return {"Authorization": f"Bearer {create_access_token(claims)}"}
@@ -88,7 +89,7 @@ async def _create_role(client, actor, slug="editor", **body):
 async def test_super_admin_creates_delegates_assigns_and_deletes_a_role(async_client, db_session, super_admin_user):
     await _role(db_session, "user")
     boss = _headers(super_admin_user)
-    member = await _make(db_session)
+    member = await _make(db_session, provider=["google"])
 
     made = await _create_role(async_client, super_admin_user, description="Edits courses")
     assert made.status_code == 201
@@ -633,3 +634,125 @@ async def test_google_sign_in_keeps_a_picture_the_learner_chose(async_client, db
     assert r.status_code == 200, r.text
     await db_session.refresh(user)
     assert user.avatar_url == "/media/avatars/mine.png"
+
+
+# ---------------------------------------------------------------- admins sign in with Google only
+
+
+async def _grant(client, actor, target, **extra):
+    return await client.put(
+        f"{API}/admin/users/{target.id}/role", headers=_headers(actor), json={"slug": "admin", **extra}
+    )
+
+
+async def test_an_admin_role_goes_only_to_an_account_that_signed_in_with_google(async_client, db_session, super_admin_user):
+    for providers in (["local"], ["facebook"]):
+        target = await _make(db_session, provider=providers)
+        r = await _grant(async_client, super_admin_user, target)
+        assert r.status_code == 409
+        assert r.json()["error"]["details"]["reason"] == "google_sign_in_required"
+        assert await _role_of(db_session, target) == "user"
+
+
+async def test_an_unverified_google_account_cannot_be_made_admin(async_client, db_session, super_admin_user):
+    target = await _make(db_session, provider=["google"], is_verified=False)
+    r = await _grant(async_client, super_admin_user, target)
+    assert r.json()["error"]["details"]["reason"] == "google_sign_in_required"
+
+
+async def test_a_password_is_removed_only_after_the_grant_is_confirmed(async_client, db_session, super_admin_user, monkeypatch):
+    cut = AsyncMock()
+    monkeypatch.setattr(SessionCut, "publish", cut)
+    target = await _make(db_session, provider=["local", "google"])
+    await issue_refresh_token(db_session, target.id)
+    old_hash = target.hashed_password
+
+    asked = await _grant(async_client, super_admin_user, target)
+    assert asked.status_code == 409
+    assert asked.json()["error"]["details"] == {"reason": "password_will_be_removed", "email": target.email}
+    await db_session.refresh(target)
+    assert (target.hashed_password, target.provider) == (old_hash, ["local", "google"])
+    assert await _role_of(db_session, target) == "user"
+
+    done = await _grant(async_client, super_admin_user, target, remove_password=True)
+    assert done.status_code == 200, done.text
+    assert done.json()["data"]["password_removed"] is True
+    target_id = target.id
+    db_session.expire_all()
+    target = (await db_session.execute(select(User).where(User.id == target_id))).scalar_one()
+    await db_session.refresh(target, ["role"])
+    assert target.role.slug == "admin" and target.provider == ["google"] and target.hashed_password != old_hash
+    tokens = (await db_session.execute(select(RefreshToken).where(RefreshToken.user_id == target.id))).scalars().all()
+    assert tokens and all(t.is_revoked for t in tokens)
+    cut.assert_awaited_once_with(target.id)
+    login = await async_client.post(f"{API}/auth/login", json={"email": target.email, "password": PASSWORD})
+    assert login.status_code == 401
+    audit = (await db_session.execute(select(AuditLog.details).where(AuditLog.action == "assign_role"))).scalars().all()
+    assert any("password_removed" in (d or "") for d in audit)
+
+
+async def test_a_google_only_account_is_granted_without_a_question(async_client, db_session, super_admin_user):
+    target = await _make(db_session, provider=["google"])
+    r = await _grant(async_client, super_admin_user, target)
+    assert r.status_code == 200 and r.json()["data"]["password_removed"] is False
+
+
+async def test_demoting_never_needs_google(async_client, db_session, super_admin_user):
+    target = await _make(db_session, "admin", provider=["local"])
+    r = await async_client.put(f"{API}/admin/users/{target.id}/role", headers=_headers(super_admin_user), json={"slug": "user"})
+    assert r.status_code == 200
+
+
+@pytest.mark.parametrize("amr", [None, "password", "facebook", "email_link"])
+async def test_admin_routes_need_a_google_session(async_client, super_admin_user, amr):
+    claims = {"sub": str(super_admin_user.id)}
+    if amr:
+        claims["amr"] = amr
+    bearer = {"Authorization": f"Bearer {create_access_token(claims)}"}
+    r = await async_client.get(f"{API}/admin/rbac/roles", headers=bearer)
+    assert r.status_code == 403
+    assert r.json()["error"]["details"]["reason"] == "google_sign_in_required"
+    me = (await async_client.get(f"{API}/users/me", headers=bearer)).json()
+    me = me.get("data", me)
+    assert (me["is_super_admin"], me["admin_access"]) == (True, False)
+
+
+async def test_google_sign_in_session_reaches_admin_routes_and_survives_refresh(async_client, db_session, monkeypatch):
+    user = await _make(db_session, "admin", provider=["google"])
+    monkeypatch.setattr(settings, "GOOGLE_ADMIN_CLIENT_ID", "admin-client-id")
+    monkeypatch.setattr(
+        security, "verify_google_token",
+        AsyncMock(return_value={"email": user.email, "email_verified": True, "name": "a", "picture": None}),
+    )
+    tokens = (await async_client.post(f"{API}/auth/google", json={"id_token": "x", "source": "admin"})).json()
+    assert decode_token(tokens["access_token"])["amr"] == "google"
+    renewed = (await async_client.post(f"{API}/auth/refresh", json={"refresh_token": tokens["refresh_token"]})).json()
+    bearer = {"Authorization": f"Bearer {renewed['access_token']}"}
+    assert (await async_client.get(f"{API}/admin/rbac/me/permissions", headers=bearer)).status_code == 200
+    me = (await async_client.get(f"{API}/auth/me", headers=bearer)).json()
+    assert me["admin_access"] is True
+
+
+async def test_a_password_session_of_an_admin_works_for_learning_only(async_client, db_session):
+    user = await _make(db_session, "admin", provider=["local", "google"])
+    tokens = await _sign_in(async_client, user)
+    bearer = {"Authorization": f"Bearer {tokens['access_token']}"}
+    assert decode_token(tokens["access_token"])["amr"] == "password"
+    assert (await async_client.get(f"{API}/users/me", headers=bearer)).status_code == 200
+    assert (await async_client.get(f"{API}/admin/rbac/roles", headers=bearer)).status_code == 403
+
+
+async def test_facebook_cannot_open_the_admin_web(async_client, db_session, monkeypatch):
+    user = await _make(db_session, "admin", provider=["google", "facebook"])
+    claims = {"email": user.email, "email_verified": True, "uid": "x", "firebase": {"sign_in_provider": "facebook.com"}}
+    monkeypatch.setattr("app.core.firebase_auth.verify_firebase_token", lambda token: claims)
+    r = await async_client.post(f"{API}/auth/facebook", json={"id_token": "x", "source": "admin"})
+    assert r.status_code == 403
+
+
+async def test_the_allowlist_grants_a_role_only_through_google(db_session, monkeypatch):
+    await _role(db_session, "admin")
+    monkeypatch.setattr(settings, "ADMIN_EMAIL_WHITELIST", "listed@example.com")
+    claims = {"email": "listed@example.com", "email_verified": True, "uid": "x", "firebase": {"sign_in_provider": "facebook.com"}}
+    user = await firebase_auth.get_or_create_user_from_claims(db_session, claims)
+    assert await _role_of(db_session, user) == "user"

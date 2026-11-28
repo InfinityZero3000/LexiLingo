@@ -69,9 +69,10 @@ export interface UserUpdateData {
   bio?: string;
 }
 
-export interface RoleUpdateData {
-  slug: RoleSlug;
-}
+export type RoleUpdateData = ({ slug: RoleSlug } | { level: number }) & {
+  /** Confirms that granting an admin role may remove the account's password. */
+  remove_password?: boolean;
+};
 
 export interface StatusUpdateData {
   is_active: boolean;

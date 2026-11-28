@@ -6,6 +6,8 @@ import { StatusPill } from "../components/StatusPill";
 import { TableSkeleton } from "../components/Skeleton";
 import { useI18n } from "../lib/i18n";
 import { apiFetch } from "../lib/api";
+import { assignRole } from "../lib/roleGrant";
+import { useConfirm } from "../components/ConfirmDialog";
 import { ENV } from "../lib/env";
 import { Shield, UserPlus, Mail, Calendar, Users, CheckCircle2 } from "lucide-react";
 
@@ -22,6 +24,7 @@ interface AdminUser {
 
 export const AdminManagementPage = () => {
   const { t } = useI18n();
+  const confirm = useConfirm();
   const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -80,10 +83,10 @@ export const AdminManagementPage = () => {
         setModalError(t.adminPages.adminUserNotFound);
         return;
       }
-      await apiFetch(`${ENV.backendUrl}/admin/users/${target.id}/role`, {
-        method: "PUT",
-        body: JSON.stringify({ level: newRole === "super_admin" ? 2 : 1 }),
-      });
+      const granted = await assignRole(
+        target.id, { level: newRole === "super_admin" ? 2 : 1 }, confirm, t.roleGrant,
+      );
+      if (!granted) return;
       setShowAddModal(false);
       setNewEmail("");
       setModalError(null);

@@ -14,6 +14,8 @@ export type UserProfile = {
   role_slug?: string;
   is_admin?: boolean;
   is_super_admin?: boolean;
+  /** False when this session did not sign in with Google; admin features then refuse it. */
+  admin_access?: boolean;
 };
 
 const ACCESS_TOKEN_KEY = "lexi_admin_access";
@@ -77,6 +79,9 @@ export const authStore = {
 
 export const resolveRole = (user: UserProfile): Role | null => {
   if (!user) return null;
+  // Admins sign in with Google only: a session from before that rule, or from another
+  // sign-in method, is sent back to the Google sign-in instead of failing on every page.
+  if (user.admin_access === false) return null;
 
   const effectiveRole = user.role || user.role_slug;
   if (effectiveRole === "super_admin" || user.is_super_admin) return "super_admin";

@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { I18nProvider } from "../../lib/i18n";
 import { ConfirmProvider } from "../ConfirmDialog";
 import UserDetailModal from "./UserDetailModal";
+import { ApiError } from "../../lib/api";
 
 const api = vi.hoisted(() => ({
   getUserDetail: vi.fn(),
@@ -161,6 +162,51 @@ describe("UserDetailModal", () => {
     const dialog = await screen.findByText("Change this user's role to Admin?");
     fireEvent.click(within(dialog.closest('[role="dialog"]') as HTMLElement).getByRole("button", { name: "Change role" }));
     expect(await screen.findByText(/needs a recent sign-in/)).toBeTruthy();
+  });
+
+  const refusal = (reason: string, extra: object = {}) =>
+    new ApiError("refused", 409, { error: { message: "refused", details: { reason, ...extra } } });
+
+  it("asks before a grant removes the account's password, then sends the confirmation", async () => {
+    api.updateUserRole
+      .mockRejectedValueOnce(refusal("password_will_be_removed", { email: "ann@x.co" }))
+      .mockResolvedValueOnce({});
+    mount();
+    await screen.findByText("Personal info");
+    fireEvent.click(screen.getByRole("button", { name: "Admin" }));
+    const first = await screen.findByText("Change this user's role to Admin?");
+    fireEvent.click(within(first.closest('[role="dialog"]') as HTMLElement).getByRole("button", { name: "Change role" }));
+
+    const warning = await screen.findByText(/ann@x\.co also signs in with a password/);
+    expect(api.updateUserRole).toHaveBeenCalledTimes(1);
+    fireEvent.click(within(warning.closest('[role="dialog"]') as HTMLElement).getByRole("button", { name: "Remove password and grant" }));
+
+    await waitFor(() => expect(api.updateUserRole).toHaveBeenCalledTimes(2));
+    expect(api.updateUserRole.mock.calls[1].slice(0, 2)).toEqual(["u1", { slug: "admin", remove_password: true }]);
+  });
+
+  it("keeps the password when the super admin declines", async () => {
+    api.updateUserRole.mockRejectedValueOnce(refusal("password_will_be_removed", { email: "ann@x.co" }));
+    mount();
+    await screen.findByText("Personal info");
+    fireEvent.click(screen.getByRole("button", { name: "Admin" }));
+    const first = await screen.findByText("Change this user's role to Admin?");
+    fireEvent.click(within(first.closest('[role="dialog"]') as HTMLElement).getByRole("button", { name: "Change role" }));
+    const warning = await screen.findByText(/also signs in with a password/);
+    fireEvent.click(within(warning.closest('[role="dialog"]') as HTMLElement).getByRole("button", { name: "Cancel" }));
+
+    await waitFor(() => expect(screen.queryByText(/also signs in with a password/)).toBeNull());
+    expect(api.updateUserRole).toHaveBeenCalledTimes(1);
+  });
+
+  it("explains that admin roles need a Google account", async () => {
+    api.updateUserRole.mockRejectedValueOnce(refusal("google_sign_in_required"));
+    mount();
+    await screen.findByText("Personal info");
+    fireEvent.click(screen.getByRole("button", { name: "Admin" }));
+    const first = await screen.findByText("Change this user's role to Admin?");
+    fireEvent.click(within(first.closest('[role="dialog"]') as HTMLElement).getByRole("button", { name: "Change role" }));
+    expect(await screen.findByText(/Admin roles go only to accounts that have signed in with Google/)).toBeTruthy();
   });
 
   it("hides gifting without a backend grant", async () => {

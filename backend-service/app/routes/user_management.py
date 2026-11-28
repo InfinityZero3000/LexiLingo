@@ -2,6 +2,7 @@
 User Management Routes (Admin Panel - Phase 2)
 Provides user CRUD operations, role management, and activity tracking.
 """
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 from uuid import UUID
@@ -15,7 +16,9 @@ from app.core.database import get_db
 from app.schemas.response import ApiResponse
 from app.core.dependencies import get_current_super_admin, require_permission
 from app.core.firebase_auth import revoke_all_refresh_tokens
-from app.core.token_blacklist import InactiveUserFlag
+from app.core.refusal import refusal
+from app.core.security import get_password_hash_async
+from app.core.token_blacklist import InactiveUserFlag, SessionCut
 from app.models.user import User
 from app.models.rbac import Role
 from app.models.progress import DailyActivity, LessonCompletion, UserCourseProgress, Streak
@@ -99,6 +102,9 @@ class RoleUpdateRequest(BaseModel):
     """Update user role: by `slug` (any role), or by `level` for the three main roles."""
     level: Optional[int] = Field(None, ge=0, le=2, description="0=user, 1=admin, 2=super_admin")
     slug: Optional[str] = Field(None, pattern=r"^[a-z][a-z0-9_]{1,49}$")
+    # Admins sign in with Google only. Granting an admin role to an account that also has
+    # a password removes the password, so the caller confirms that explicitly.
+    remove_password: bool = False
 
     @model_validator(mode="after")
     def _one_target(self) -> "RoleUpdateRequest":
@@ -509,11 +515,41 @@ async def update_user_role(
         db, admin, user, revoking=new_role.level < user.role_level
     )
 
+    providers = list(user.provider or [])
+    password_removed = False
+    if new_role.level >= 1:
+        # Admins sign in with Google only: the account must already have done so.
+        if "google" not in providers or not user.is_verified:
+            raise refusal(
+                status.HTTP_409_CONFLICT,
+                "Admin roles go only to accounts that have signed in with Google. "
+                "Ask this person to sign in with Google once, then try again.",
+                {"reason": "google_sign_in_required"},
+            )
+        if user.has_local_auth:
+            if not data.remove_password:
+                raise refusal(
+                    status.HTTP_409_CONFLICT,
+                    "This account also signs in with a password. Admins sign in with Google "
+                    "only, so granting this role removes the password.",
+                    {"reason": "password_will_be_removed", "email": user.email},
+                )
+            user.hashed_password = await get_password_hash_async(uuid.uuid4().hex)
+            user.provider = [p for p in providers if p != "local"]
+            await revoke_all_refresh_tokens(db, user.id)
+            password_removed = True
+
     old_role = user.role_slug
     user.role_id = new_role.id
-    _audit(db, admin, "assign_role", user, {"from": old_role, "to": new_role.slug}, request)
+    details = {"from": old_role, "to": new_role.slug}
+    if password_removed:
+        details["password_removed"] = True
+    _audit(db, admin, "assign_role", user, details, request)
     await db.commit()
     await db.refresh(user)
+    if password_removed:
+        # The backend refuses old tokens by the password change; ai-service learns it here.
+        await SessionCut.publish(user.id)
     
     return ApiResponse(
         success=True,
@@ -521,7 +557,8 @@ async def update_user_role(
         data={
             "user_id": str(user.id),
             "new_level": new_role.level,
-            "new_role": user.role_slug
+            "new_role": user.role_slug,
+            "password_removed": password_removed,
         }
     )
 
