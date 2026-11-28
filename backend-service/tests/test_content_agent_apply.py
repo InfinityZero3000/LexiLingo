@@ -372,3 +372,52 @@ async def test_apply_never_replaces_curated_pronunciation_with_enriched(content_
     await content_agent_db.refresh(curated)
     assert curated.definition == "Curated definition"
     assert curated.pronunciation == "/həˈloʊ/"
+
+
+async def test_apply_records_how_each_lesson_was_generated_and_verified(content_agent_db):
+    artifact = _artifact()
+    verification = {"method": "blind-answer-v1", "checked": 3, "agreed": 3, "dropped": []}
+    lesson = artifact["courses"][0]["units"][0]["lessons"][0]
+    lesson.update(generation_mode="template", verification=verification)
+    upload = _upload()
+    job = ContentAgentJob(
+        requested_by_id=None,
+        upload_id=upload.id,
+        status="preview_ready",
+        request_hash="a" * 64,
+        revision=1,
+        config={},
+        progress={"stage": "preview_ready", "percent": 100},
+        artifact=artifact,
+    )
+    content_agent_db.add_all([upload, job])
+    await content_agent_db.commit()
+
+    await ContentAgentApplyService.apply(content_agent_db, job.id)
+    await content_agent_db.commit()
+
+    content = (await content_agent_db.scalar(select(Lesson))).content
+    assert content["generation_mode"] == "template"
+    assert content["verification"] == verification
+
+
+async def test_apply_leaves_provenance_out_when_the_artifact_has_none(content_agent_db):
+    upload = _upload()
+    job = ContentAgentJob(
+        requested_by_id=None,
+        upload_id=upload.id,
+        status="preview_ready",
+        request_hash="a" * 64,
+        revision=1,
+        config={},
+        progress={"stage": "preview_ready", "percent": 100},
+        artifact=_artifact(),
+    )
+    content_agent_db.add_all([upload, job])
+    await content_agent_db.commit()
+
+    await ContentAgentApplyService.apply(content_agent_db, job.id)
+    await content_agent_db.commit()
+
+    content = (await content_agent_db.scalar(select(Lesson))).content
+    assert "generation_mode" not in content and "verification" not in content

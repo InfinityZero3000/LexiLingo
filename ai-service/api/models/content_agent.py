@@ -279,6 +279,12 @@ class LessonArtifact(BaseModel):
     exercises: list[ExerciseArtifact] = Field(min_length=1)
     estimated_minutes: int = Field(default=10, ge=1, le=120)
     xp_reward: int = Field(default=20, ge=0)
+    generation_mode: Literal["llm", "template"] | None = Field(
+        default=None, description="How the exercises were made: model-written or fixed template"
+    )
+    verification: dict[str, Any] | None = Field(
+        default=None, description="Blind second-pass stats for the answer keys; None when not checked"
+    )
 
 
 class UnitArtifact(BaseModel):

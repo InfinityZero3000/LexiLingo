@@ -3,6 +3,7 @@ Course, Unit, and Lesson Models
 Extended for Phase 2: Advanced Content Management System
 """
 
+import copy
 import re
 import uuid
 from datetime import datetime, timezone
@@ -111,6 +112,29 @@ _SINGLE_CHOICE_UI_TYPES = {
     "vocabulary_flashcard",
 }
 _PAIR_UI_TYPES = {"match_word_to_meaning", "categorization", "cognitive_fluidity"}
+_OPTION_PICK_UI_TYPES = _SINGLE_CHOICE_UI_TYPES | {
+    "fill_in_the_blank",
+    "dialogue_completion",
+    "grammar_correction",
+}
+
+
+def _same_choice(text: str) -> str:
+    # A learner cannot tell "Cat" from "cat." apart, and the grader would accept either.
+    return " ".join(text.lower().split()).rstrip(".,!?;:")
+
+
+def _duplicate_options(options: list[str]) -> list[str]:
+    seen: set[str] = set()
+    repeated: list[str] = []
+    for option in options:
+        key = _same_choice(option)
+        if not key:
+            continue
+        if key in seen and option not in repeated:
+            repeated.append(option)
+        seen.add(key)
+    return repeated
 
 
 def retype_misused_writing(exercise: dict) -> str | None:
@@ -206,7 +230,23 @@ def exercise_shape_problems(exercise) -> list[str]:
     elif options and ui_type in {"fill_in_the_blank", "dialogue_completion", "grammar_correction"}:
         if answer not in options:
             problems.append("correct_answer is not one of the options")
+    if ui_type in _OPTION_PICK_UI_TYPES:
+        repeated = _duplicate_options(options)
+        if repeated:
+            problems.append(
+                "options repeat after ignoring case and punctuation, so the "
+                f"answer is ambiguous: {', '.join(repr(o) for o in repeated)}"
+            )
     return problems
+
+
+def repaired_shape_problems(exercise) -> list[str]:
+    """`exercise_shape_problems` after the repair every writer applies first."""
+    if not isinstance(exercise, dict):
+        return exercise_shape_problems(exercise)
+    candidate = copy.deepcopy(exercise)
+    retype_misused_writing(candidate)
+    return exercise_shape_problems(candidate)
 
 
 class Course(Base):

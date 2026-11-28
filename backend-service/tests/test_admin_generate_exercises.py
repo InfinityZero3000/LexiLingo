@@ -69,6 +69,18 @@ async def test_returns_draft_and_does_not_write(
 
 
 @pytest.mark.asyncio
+async def test_verification_stats_reach_the_admin(
+    async_client: AsyncClient, admin_headers: dict, lesson: Lesson
+):
+    stats = {"method": "blind-answer-v1", "status": "verified", "checked": 2, "agreed": 1, "dropped": ["x"]}
+    drafted = svc.VerifiedExercises([_ex("g1"), _ex("g2", 2)], stats)
+    with patch(PATCH, autospec=True, return_value=drafted):
+        response = await async_client.post(_url(lesson.id), headers=admin_headers)
+
+    assert response.json()["data"]["verification"] == stats
+
+
+@pytest.mark.asyncio
 async def test_colliding_and_missing_ids_are_reissued(
     async_client: AsyncClient, admin_headers: dict, lesson: Lesson
 ):

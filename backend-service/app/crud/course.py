@@ -11,7 +11,7 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 import uuid
 
-from app.models.course import Course, Unit, Lesson
+from app.models.course import Course, Unit, Lesson, exercise_shape_problems
 from app.models.progress import UserCourseProgress, LessonCompletion
 from app.schemas.course import CourseCreate, CourseUpdate, UnitCreate, UnitUpdate, LessonCreate, LessonUpdate
 
@@ -143,11 +143,18 @@ class CourseCRUD:
         lessons = list(result.scalars().all())
         if not lessons:
             return ["the course has no lessons yet"]
-        return [
-            f'lesson "{lesson.title}" has no exercises'
-            for lesson in lessons
-            if lesson.exercise_count == 0
-        ]
+        blockers: List[str] = []
+        for lesson in lessons:
+            if lesson.exercise_count == 0:
+                blockers.append(f'lesson "{lesson.title}" has no exercises')
+                continue
+            for number, exercise in enumerate(lesson.content["exercises"], start=1):
+                ui_type = exercise.get("ui_type") if isinstance(exercise, dict) else "?"
+                blockers.extend(
+                    f'lesson "{lesson.title}" exercise #{number} ({ui_type}): {problem}'
+                    for problem in exercise_shape_problems(exercise)
+                )
+        return blockers
 
     @staticmethod
     async def delete_course(db: AsyncSession, course_id: uuid.UUID) -> bool:

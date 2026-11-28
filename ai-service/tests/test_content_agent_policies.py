@@ -136,3 +136,58 @@ def test_lesson_with_production_exercise_passes():
     )
 
     assert find_missing_production_exercise_lessons([course]) == []
+
+
+def _exercise(ui_type: str, index: int = 0) -> ExerciseArtifact:
+    return ExerciseArtifact(
+        id=f"e{index}", type="multiple_choice", ui_type=ui_type, question="Q?", correct_answer="a"
+    )
+
+
+def test_lesson_that_lost_exercises_needs_three_and_a_production_task():
+    from api.services.content_agent.policies import lesson_survives_verification
+
+    choice = [_exercise("multiple_choice", i) for i in range(3)]
+    assert not lesson_survives_verification(choice)
+    assert not lesson_survives_verification([_exercise("dictation"), _exercise("multiple_choice", 1)])
+    assert lesson_survives_verification(choice[:2] + [_exercise("dictation", 5)])
+
+
+@pytest.mark.asyncio
+async def test_blind_pass_rejects_keys_missing_from_the_options_and_bad_indexes():
+    from api.services.content_agent.verification import verify_exercises
+
+    def choice(index: int, options: list[str], answer: str) -> ExerciseArtifact:
+        return ExerciseArtifact(
+            id=f"c{index}", type="multiple_choice", ui_type="multiple_choice",
+            question=f"Q{index}?", options=options, correct_answer=answer,
+        )
+
+    items = [choice(0, ["a", "b"], "z"), choice(1, ["a", "b"], "b"), choice(2, ["a", "b"], "a")]
+
+    async def call(prompt: str) -> dict:
+        return {"answers": [{"n": 0, "index": 0}, {"n": 1, "index": 9}, {"n": 2, "index": 0}]}
+
+    kept, stats = await verify_exercises(items, level="A1", lesson_title="L", call=call)
+
+    assert [e.id for e in kept] == ["c2"]
+    assert stats == {"method": "blind-answer-v1", "checked": 3, "agreed": 1, "dropped": ["c0", "c1"]}
+
+
+@pytest.mark.asyncio
+async def test_blind_pass_retries_once_then_raises():
+    from api.services.content_agent.verification import VerificationUnavailable, verify_exercises
+
+    calls = []
+
+    async def call(prompt: str) -> dict:
+        calls.append(1)
+        raise RuntimeError("down")
+
+    item = ExerciseArtifact(
+        id="c", type="multiple_choice", ui_type="multiple_choice",
+        question="Q?", options=["a", "b"], correct_answer="a",
+    )
+    with pytest.raises(VerificationUnavailable):
+        await verify_exercises([item], level="A1", lesson_title="L", call=call)
+    assert len(calls) == 2

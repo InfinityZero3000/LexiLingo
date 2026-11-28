@@ -1302,8 +1302,7 @@
             "options": [
               "I could care less about the outcome.",
               "I couldn't care less about the outcome.",
-              "I could not care less about the outcome.",
-              "I couldn't care less about the outcome."
+              "I couldn't care more about the outcome."
             ],
             "question": "Which of the following sentences correctly uses the idiom that conveys the strongest lack of interest?",
             "type": "multiple_choice",

@@ -2,7 +2,7 @@
 unanswerable question."""
 import pytest
 
-from app.models.course import Lesson, exercise_shape_problems
+from app.models.course import Lesson, exercise_shape_problems, repaired_shape_problems
 
 
 def _ex(ui_type, **fields):
@@ -81,3 +81,41 @@ def test_content_write_derives_type_from_ui_type():
     lesson = Lesson()
     lesson.content = {"exercises": [_ex("arrange_the_sentence", type="multiple_choice")]}
     assert lesson.content["exercises"][0]["type"] == "reorder"
+
+
+@pytest.mark.parametrize(
+    "exercise",
+    [
+        _ex("multiple_choice", options=["Cat", "cat.", "dog"], correct_answer="dog"),
+        _ex("multiple_choice", options=["a b", "a  b", "c"], correct_answer="c"),
+        _ex("listen_and_choose", options=["Yes!", "yes", "no"], correct_answer="no"),
+        _ex("fill_in_the_blank", options=["go", "Go", "went"], correct_answer="went"),
+    ],
+)
+def test_options_that_read_the_same_are_ambiguous(exercise):
+    problems = exercise_shape_problems(exercise)
+    assert any("ambiguous" in p for p in problems), problems
+
+
+@pytest.mark.parametrize(
+    "exercise",
+    [
+        _ex("multiple_choice", options=["a", "b", "c"], correct_answer="b"),
+        _ex(
+            "match_word_to_meaning",
+            options=["one", "One", "một", "Một"],
+            correct_answer="one:một, One:Một",
+        ),
+        _ex("arrange_the_sentence", options=["so", "So", "it", "is"], correct_answer="So so it is"),
+        _ex("categorization", options=["a", "b", "x", "x"], correct_answer="a:x, b:x"),
+    ],
+)
+def test_pair_and_arrange_types_keep_repeated_words(exercise):
+    assert exercise_shape_problems(exercise) == []
+
+
+def test_repaired_shape_problems_applies_the_retype_apply_would():
+    misused = _ex("short_writing_answer", options=["True", "False"], correct_answer="True")
+    assert exercise_shape_problems(misused)
+    assert repaired_shape_problems(misused) == []
+    assert misused["ui_type"] == "short_writing_answer"

@@ -9,6 +9,7 @@ from typing import Any, Literal
 from api.models.content_agent import (
     ContentUsage,
     CourseArtifact,
+    ExerciseArtifact,
     LicenseMode,
     NormalizedSourceRecord,
 )
@@ -29,6 +30,18 @@ PRODUCTION_UI_TYPES: frozenset[str] = frozenset(
 )
 
 
+MIN_EXERCISES_AFTER_VERIFICATION = 3
+
+
+def has_production_exercise(exercises: list[ExerciseArtifact]) -> bool:
+    return any(exercise.ui_type in PRODUCTION_UI_TYPES for exercise in exercises)
+
+
+def lesson_survives_verification(exercises: list[ExerciseArtifact]) -> bool:
+    """Whether a lesson that lost exercises to the blind pass is still worth shipping."""
+    return len(exercises) >= MIN_EXERCISES_AFTER_VERIFICATION and has_production_exercise(exercises)
+
+
 def find_missing_production_exercise_lessons(courses: list[CourseArtifact]) -> list[str]:
     """Return one message per lesson that has no production-type exercise.
 
@@ -40,10 +53,7 @@ def find_missing_production_exercise_lessons(courses: list[CourseArtifact]) -> l
     for course in courses:
         for unit in course.units:
             for lesson in unit.lessons:
-                if not any(
-                    exercise.ui_type in PRODUCTION_UI_TYPES
-                    for exercise in lesson.exercises
-                ):
+                if not has_production_exercise(lesson.exercises):
                     messages.append(
                         f"Lesson '{lesson.title}' (unit '{unit.title}') has no "
                         "production exercise (speaking/writing) — recognition-only "

@@ -241,6 +241,10 @@ A lesson is playable only if `content.exercises` is non-empty. Consequences:
 - All admin lesson edits must go through `_apply_lesson_update` in `routes/admin_courses.py` — both `PUT /lessons/{id}` and `PUT /lessons/{id}/content` share it.
 - `scripts/audit_course_content.py` reports/repairs existing data (`--fix-counters`, `--fix-matching`, `--fix-unplayable`).
 
+What content must satisfy, where each rule lives, which standards and sources it rests on, and the pre-publish
+checklist: `docs/COURSE_CONTENT_STANDARDS.md`. `publish_blockers` now runs the shape check too, so it is the one
+gate every writer passes; LLM-generated choice items go through a blind second pass (`blind-answer-v1`).
+
 Admin lesson writes are shape-checked by `exercise_shape_problems`
 (`app/models/course.py`) and refused with a 422 naming the exercise; the
 `@validates("content")` hook also derives `type` from `ui_type` for every
