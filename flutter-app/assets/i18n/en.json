@@ -165,7 +165,9 @@
     "fbMergedSignInAgain": "Merged. Tap Facebook once more to sign in.",
     "fbMergeLater": "You're signed in. Facebook isn't merged yet; try again from the Facebook button next time.",
     "fbMergeOtherAccount": "You signed in to a different account, so Facebook wasn't merged.",
-    "errFacebookInUse": "This Facebook account is already attached to another account."
+    "errFacebookInUse": "This Facebook account is already attached to another account.",
+    "fbMergeUsePassword": "Use password",
+    "errPopupBlocked": "Your browser blocked the sign-in window. Allow pop-ups for this site, then try again."
   },
   "home": {
     "wordsLeftToReview": "words to review",

@@ -193,25 +193,16 @@ class FacebookSignInService {
   /// Web: use Firebase Auth signInWithPopup
   Future<String?> _signInWeb() async {
     await _auth.signInWithPopup(_facebookProvider());
-
-    // With Firebase Auth, get the Firebase ID Token to send to our backend
-    final user = _auth.currentUser;
-    if (user == null) {
-      logError(_tag, 'Failed to get Firebase User after popup');
-      return null;
+    // The app keeps its own session with the backend, so Firebase is signed out.
+    try {
+      final idToken = await _auth.currentUser?.getIdToken();
+      if (idToken == null) {
+        logError(_tag, 'Failed to get Firebase ID token after popup');
+      }
+      return idToken;
+    } finally {
+      await _auth.signOut();
     }
-
-    final idToken = await user.getIdToken();
-    if (idToken == null) {
-      logError(_tag, 'Failed to get Firebase ID token from User');
-      return null;
-    }
-
-    // Sign out from Firebase immediately since the app manages its own session to the backend
-    await _auth.signOut();
-
-    logInfo(_tag, 'Facebook Sign In successful (web)');
-    return idToken;
   }
 
   /// Mobile: use flutter_facebook_auth package to authenticate, then Firebase Auth to exchange.
@@ -236,7 +227,7 @@ class FacebookSignInService {
       rawNonce,
     );
 
-    final userCredential = await FirebaseAuth.instance.signInWithCredential(
+    final userCredential = await _auth.signInWithCredential(
       facebookAuthCredential,
     );
     final user = userCredential.user;
@@ -253,7 +244,7 @@ class FacebookSignInService {
     }
 
     // Sign out from Firebase immediately
-    await FirebaseAuth.instance.signOut();
+    await _auth.signOut();
     await FacebookAuth.instance.logOut();
 
     logInfo(_tag, 'Facebook Sign In successful (mobile)');

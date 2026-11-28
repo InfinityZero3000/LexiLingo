@@ -16,7 +16,11 @@ Future<void> signInWithFacebookOrLink(
   await auth.signInWithFacebook();
   var step = auth.facebookMergeStep;
   while (step != FacebookMergeStep.none) {
-    if (!context.mounted) return;
+    if (!context.mounted) {
+      // A half-done proof holds a Firebase session; a waiting merge does not.
+      if (step != FacebookMergeStep.signInToMerge) auth.dismissFacebookLink();
+      return;
+    }
     final carryOn = await _ask(context, auth, step, toPasswordForm);
     if (!carryOn) return;
     step = auth.facebookMergeStep;
@@ -33,6 +37,7 @@ Future<bool> _ask(
   final email = auth.facebookMergeEmail;
   final usesGoogle =
       step == FacebookMergeStep.signInToMerge && auth.facebookMergeAllowsGoogle;
+  final offersPassword = usesGoogle && auth.facebookMergeAllowsPassword;
 
   final (title, message, confirm) = switch (step) {
     FacebookMergeStep.proveWithGoogle => (
@@ -64,10 +69,18 @@ Future<bool> _ask(
     title: title,
     message: message,
     confirmLabel: confirm,
-    cancelLabel: 'auth.fbMergeNotNow'.tr(),
+    cancelLabel:
+        (offersPassword ? 'auth.fbMergeUsePassword' : 'auth.fbMergeNotNow')
+            .tr(),
   );
   if (!confirmed) {
-    auth.dismissFacebookLink();
+    // With a password as the other way in, the merge waits for it; the hint on
+    // the form is where it can be dropped.
+    if (offersPassword) {
+      toPasswordForm?.call();
+    } else {
+      auth.dismissFacebookLink();
+    }
     return false;
   }
 

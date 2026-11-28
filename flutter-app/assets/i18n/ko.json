@@ -165,7 +165,9 @@
     "fbMergedSignInAgain": "합치기가 끝났습니다. Facebook을 한 번 더 눌러 로그인하세요.",
     "fbMergeLater": "로그인했습니다. Facebook은 아직 합쳐지지 않았습니다. 다음에 Facebook 버튼으로 다시 시도하세요.",
     "fbMergeOtherAccount": "다른 계정에 로그인하여 Facebook을 합치지 않았습니다.",
-    "errFacebookInUse": "이 Facebook 계정은 이미 다른 계정에 연결되어 있습니다."
+    "errFacebookInUse": "이 Facebook 계정은 이미 다른 계정에 연결되어 있습니다.",
+    "fbMergeUsePassword": "비밀번호 사용",
+    "errPopupBlocked": "브라우저가 로그인 창을 차단했습니다. 이 사이트의 팝업을 허용한 뒤 다시 시도하세요."
   },
   "home": {
     "wordsLeftToReview": "복습할 단어",

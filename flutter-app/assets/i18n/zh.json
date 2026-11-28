@@ -165,7 +165,9 @@
     "fbMergedSignInAgain": "合并完成。请再点一次 Facebook 登录。",
     "fbMergeLater": "您已登录。Facebook 尚未合并，下次请通过 Facebook 按钮重试。",
     "fbMergeOtherAccount": "您登录了另一个账号，因此未合并 Facebook。",
-    "errFacebookInUse": "此 Facebook 账号已绑定到另一个账号。"
+    "errFacebookInUse": "此 Facebook 账号已绑定到另一个账号。",
+    "fbMergeUsePassword": "使用密码",
+    "errPopupBlocked": "浏览器拦截了登录窗口。请允许本网站弹出窗口后重试。"
   },
   "home": {
     "wordsLeftToReview": "个单词待复习",

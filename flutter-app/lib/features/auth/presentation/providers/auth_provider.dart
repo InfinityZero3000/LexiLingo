@@ -97,9 +97,8 @@ class AuthProvider extends ChangeNotifier {
   void _onSessionExpired() {
     final ended = _user?.id;
     // A visitor with no session keeps the merge they are in the middle of.
-    if (ended != null) _clearFacebookMerge();
+    if (ended != null) _forgetAccountState();
     _user = null;
-    _pendingFacebookLink = null;
     _errorMessage = null;
     _isJustLoggedIn = false;
     UserScopeService.clearActiveUserId(expected: ended);
@@ -168,7 +167,13 @@ class AuthProvider extends ChangeNotifier {
     _pendingMerge = null;
   }
 
-  /// Runs after a password or Google sign-in: that proved the account, so the
+  /// Nothing about one account may reach the next one.
+  void _forgetAccountState() {
+    _clearFacebookMerge();
+    _accountNotice = null;
+  }
+
+  /// Runs after a sign-in other than Facebook: it proved the account, so the
   /// Facebook sign-in waiting for it can be merged.
   Future<void> _applyPendingMerge(UserEntity user) async {
     final merge = _pendingMerge;
@@ -618,6 +623,7 @@ class AuthProvider extends ChangeNotifier {
             sl<ApiClient>(),
           );
           unawaited(_claimPendingReferral());
+          unawaited(_applyPendingMerge(user));
           return VerifyEmailOutcome.signedIn;
         },
       );
@@ -683,7 +689,7 @@ class AuthProvider extends ChangeNotifier {
       _isLoading = true;
       _errorMessage = null;
       notifyListeners();
-      _clearFacebookMerge();
+      _forgetAccountState();
 
       // Needs the live session, so it goes before the sign-out request.
       await FirebaseMessagingService.instance.unregisterFromBackend(
@@ -713,6 +719,7 @@ class AuthProvider extends ChangeNotifier {
 
       final apiClient = sl<ApiClient>();
       await apiClient.delete('/users/me/permanent');
+      _forgetAccountState();
 
       await googleSignInService.signOut();
       await signOutUseCase(NoParams());
@@ -915,6 +922,9 @@ class AuthProvider extends ChangeNotifier {
       return const UiText.key('auth.errGoogleConfig');
     }
 
+    if (normalized.contains('popup-blocked')) {
+      return const UiText.key('auth.errPopupBlocked');
+    }
     if (normalized.contains('credential-already-in-use')) {
       return const UiText.key('auth.errFacebookInUse');
     }

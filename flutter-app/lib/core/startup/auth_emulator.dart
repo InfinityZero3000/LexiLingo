@@ -15,6 +15,11 @@ const _configured = String.fromEnvironment('FIREBASE_AUTH_EMULATOR');
   return port != null && local.contains(parts[0]) ? (parts[0], port) : null;
 }
 
+/// Its Google credential is not signed by Google, so sign-in must send the
+/// Firebase token, which the backend verifies against the same emulator.
+bool get usesAuthEmulator =>
+    authEmulatorTarget(_configured, release: kReleaseMode) != null;
+
 /// Offers unlimited fake Google and Facebook accounts, so the sign-in and
 /// merge flows can be tested without real ones. See docs/operations/AUTH_TESTING.md.
 Future<void> connectAuthEmulatorIfConfigured() async {

@@ -165,7 +165,9 @@
     "fbMergedSignInAgain": "Cuentas unidas. Toca Facebook otra vez para entrar.",
     "fbMergeLater": "Has iniciado sesión. Facebook aún no está unido; inténtalo la próxima vez con el botón de Facebook.",
     "fbMergeOtherAccount": "Entraste en otra cuenta, así que Facebook no se unió.",
-    "errFacebookInUse": "Esta cuenta de Facebook ya está vinculada a otra cuenta."
+    "errFacebookInUse": "Esta cuenta de Facebook ya está vinculada a otra cuenta.",
+    "fbMergeUsePassword": "Usar contraseña",
+    "errPopupBlocked": "El navegador bloqueó la ventana de inicio de sesión. Permite las ventanas emergentes de este sitio e inténtalo de nuevo."
   },
   "home": {
     "wordsLeftToReview": "palabras por repasar",

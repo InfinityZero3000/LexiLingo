@@ -165,7 +165,9 @@
     "fbMergedSignInAgain": "Đã gộp xong. Hãy bấm Facebook một lần nữa để đăng nhập.",
     "fbMergeLater": "Bạn đã đăng nhập. Chưa gộp được Facebook; hãy thử lại từ nút Facebook ở lần sau.",
     "fbMergeOtherAccount": "Bạn đã đăng nhập tài khoản khác, nên Facebook chưa được gộp.",
-    "errFacebookInUse": "Tài khoản Facebook này đã được gắn với một tài khoản khác."
+    "errFacebookInUse": "Tài khoản Facebook này đã được gắn với một tài khoản khác.",
+    "fbMergeUsePassword": "Dùng mật khẩu",
+    "errPopupBlocked": "Trình duyệt đã chặn cửa sổ đăng nhập. Hãy cho phép cửa sổ bật lên cho trang này rồi thử lại."
   },
   "home": {
     "wordsLeftToReview": "từ cần ôn",

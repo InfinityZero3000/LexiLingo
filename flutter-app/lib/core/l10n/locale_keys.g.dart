@@ -1641,4 +1641,6 @@ abstract class LocaleKeys {
   static const auth_fbMergeLater = 'auth.fbMergeLater';
   static const auth_fbMergeOtherAccount = 'auth.fbMergeOtherAccount';
   static const auth_errFacebookInUse = 'auth.errFacebookInUse';
+  static const auth_fbMergeUsePassword = 'auth.fbMergeUsePassword';
+  static const auth_errPopupBlocked = 'auth.errPopupBlocked';
 }

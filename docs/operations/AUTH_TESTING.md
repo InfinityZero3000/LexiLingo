@@ -52,6 +52,13 @@ by the emulator; `facebook_account_linking_test.dart` covers it.
 | Register `b@test.com` with a password | Sign in with Facebook as `b@test.com` | Asked to merge → sign in with the password → "merged" notice; Facebook works next time |
 | Facebook as `c@test.com` (new) | Sign out, sign in with Google as `c@test.com` | Signed in; using Facebook again asks to merge |
 | Any popup | Close it | No error shown |
+| `b@test.com` waiting to merge | Look at the login form | The email is filled in and a hint says what to do |
+| Sign-up page opened from the login page | Sign in with Google or Facebook | The app opens; the sign-up page does not stay on top |
+| `#/verify-email?token=broken` | Back to login, then sign in | The app opens |
+
+With the emulator configured, the app sends Google's sign-in as a Firebase token:
+the emulator's Google credential is not signed by Google and the backend would
+reject it.
 
 ## With real accounts
 

@@ -165,7 +165,9 @@
     "fbMergedSignInAgain": "Fusion terminée. Touchez Facebook encore une fois pour vous connecter.",
     "fbMergeLater": "Vous êtes connecté. Facebook n'est pas encore fusionné ; réessayez la prochaine fois avec le bouton Facebook.",
     "fbMergeOtherAccount": "Vous vous êtes connecté à un autre compte, Facebook n'a donc pas été fusionné.",
-    "errFacebookInUse": "Ce compte Facebook est déjà lié à un autre compte."
+    "errFacebookInUse": "Ce compte Facebook est déjà lié à un autre compte.",
+    "fbMergeUsePassword": "Mot de passe",
+    "errPopupBlocked": "Le navigateur a bloqué la fenêtre de connexion. Autorisez les pop-ups pour ce site, puis réessayez."
   },
   "home": {
     "wordsLeftToReview": "mots à réviser",

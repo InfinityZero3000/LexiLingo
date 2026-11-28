@@ -7,6 +7,7 @@ import 'package:lexilingo_app/core/error/failures.dart';
 import 'package:lexilingo_app/core/network/api_client.dart';
 import 'package:lexilingo_app/core/services/facebook_sign_in_service.dart';
 import 'package:lexilingo_app/core/services/google_sign_in_service.dart';
+import 'package:lexilingo_app/core/services/session_expired_service.dart';
 import 'package:lexilingo_app/core/startup/auth_emulator.dart';
 import 'package:lexilingo_app/features/auth/domain/entities/user_entity.dart';
 import 'package:lexilingo_app/features/auth/domain/repositories/auth_repository.dart';
@@ -55,6 +56,11 @@ class _Repo implements AuthRepository {
     required String email,
     required String password,
   }) async => Right(_user(passwordAccount));
+
+  @override
+  Future<Either<Failure, UserEntity?>> verifyEmailAndSignIn(
+    String token,
+  ) async => Right(_user(passwordAccount));
 
   @override
   Future<Either<Failure, void>> linkFacebook(String token) async {
@@ -210,6 +216,38 @@ void main() {
     auth.dismissFacebookLink();
     expect(auth.facebookMergeStep, FacebookMergeStep.none);
     expect(facebook.cancelled, 1);
+  });
+
+  test('a sign-in by email verification link merges too', () async {
+    final auth = provider(_Facebook(() async => token));
+    await auth.signInWithFacebook();
+
+    await auth.verifyEmailLink('mail-token');
+    await settle();
+
+    expect(repo.linked, [token]);
+  });
+
+  test('a visitor keeps the merge when a stale session expires', () async {
+    final auth = provider(
+      _Facebook(() async => throw const FacebookLinkRequired(null, null)),
+    );
+    await auth.signInWithFacebook();
+
+    SessionExpiredService.instance.notifyExpired();
+    await settle();
+
+    expect(auth.facebookMergeStep, FacebookMergeStep.proveWithGoogle);
+  });
+
+  test('a blocked popup says how to fix it', () async {
+    final auth = provider(
+      _Facebook(() async => throw Exception('popup-blocked')),
+    );
+
+    await auth.signInWithFacebook();
+
+    expect(auth.errorMessage, 'auth.errPopupBlocked');
   });
 
   test('the auth emulator is never used in a release or off this machine', () {

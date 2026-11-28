@@ -165,7 +165,9 @@
     "fbMergedSignInAgain": "統合しました。もう一度Facebookをタップしてログインしてください。",
     "fbMergeLater": "ログインしました。Facebookはまだ統合されていません。次回Facebookボタンからもう一度お試しください。",
     "fbMergeOtherAccount": "別のアカウントにログインしたため、Facebookは統合されませんでした。",
-    "errFacebookInUse": "このFacebookアカウントはすでに別のアカウントに紐付けられています。"
+    "errFacebookInUse": "このFacebookアカウントはすでに別のアカウントに紐付けられています。",
+    "fbMergeUsePassword": "パスワードを使う",
+    "errPopupBlocked": "ブラウザがログイン画面をブロックしました。このサイトのポップアップを許可して、もう一度お試しください。"
   },
   "home": {
     "wordsLeftToReview": "復習する単語",
