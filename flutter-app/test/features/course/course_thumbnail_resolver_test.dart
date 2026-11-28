@@ -1,8 +1,35 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
+import 'package:lexilingo_app/features/course/presentation/utils/course_labels.dart';
 import 'package:lexilingo_app/features/course/presentation/utils/course_thumbnail_resolver.dart';
 
 void main() {
+  group('courseLabels & CEFR colors', () {
+    test('maps CEFR codes and difficulty names to distinct semantic colors', () {
+      expect(courseLevelColor('A1'), AppColors.cefrA);
+      expect(courseLevelColor('Beginner'), AppColors.cefrA);
+      expect(courseLevelColor('A2'), AppColors.teal);
+      expect(courseLevelColor('B1'), AppColors.orange);
+      expect(courseLevelColor('B2'), AppColors.deepOrange);
+      expect(courseLevelColor('C1'), AppColors.cefrC);
+      expect(courseLevelColor('C2'), AppColors.errorBright);
+    });
+
+    test('assigns distinct icons and colors to different category slugs', () {
+      expect(
+        courseCategoryIcon(slugOrName: 'grammar'),
+        isNot(equals(courseCategoryIcon(slugOrName: 'vocabulary'))),
+      );
+      expect(
+        courseCategoryColor(slugOrName: 'grammar', isDark: false),
+        isNot(
+          equals(courseCategoryColor(slugOrName: 'vocabulary', isDark: false)),
+        ),
+      );
+    });
+  });
+
   group('courseFallbackThumbnailUrl', () {
     test('uses a matching tag before the course level', () {
       final course = _course(tags: const ['grammar'], level: 'advanced');
@@ -13,6 +40,19 @@ void main() {
           contains('photo-1471899236350'),
           contains('photo-1432821596592'),
           contains('photo-1455390582262'),
+        ),
+      );
+    });
+
+    test('prefers preferredCategorySlug when a multi-tag course is on a specific shelf', () {
+      final course = _course(tags: const ['grammar', 'vocabulary']);
+
+      expect(
+        courseFallbackThumbnailUrl(course, preferredCategorySlug: 'vocabulary'),
+        anyOf(
+          contains('photo-1512820790803'),
+          contains('photo-1476275466078'),
+          contains('photo-1434030216411'),
         ),
       );
     });

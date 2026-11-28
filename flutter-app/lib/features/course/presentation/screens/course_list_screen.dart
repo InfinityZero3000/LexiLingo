@@ -8,10 +8,12 @@ import 'package:provider/provider.dart';
 import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import 'package:lexilingo_app/core/widgets/widgets.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
+import 'package:lexilingo_app/features/home/presentation/pages/main_screen.dart';
 import 'package:lexilingo_app/features/course/presentation/providers/course_provider.dart';
 import 'package:lexilingo_app/features/course/presentation/screens/course_detail_screen.dart';
 import 'package:lexilingo_app/features/course/presentation/screens/category_detail_screen.dart';
 import 'package:lexilingo_app/features/course/presentation/utils/course_labels.dart';
+import 'package:lexilingo_app/features/course/presentation/utils/course_thumbnail_resolver.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_entity.dart';
 import 'package:lexilingo_app/features/course/domain/entities/course_category_entity.dart';
 import 'package:lexilingo_app/core/widgets/app_surface.dart';
@@ -65,6 +67,9 @@ class _CourseListScreenState extends State<CourseListScreen> {
 
   // Grouping is O(categories x courses x tags); redo it only when the inputs
   // change, not on every provider notification.
+  // Each course is assigned to at most ONE primary category shelf on the
+  // discovery screen (preferring explicit categoryId, then first matching tag)
+  // so the same course card never repeats across adjacent shelves.
   List<MapEntry<CourseCategoryEntity, List<CourseEntity>>> _sectionsFor(
     List<CourseEntity> courses,
     List<CourseCategoryEntity> categories,
@@ -73,18 +78,55 @@ class _CourseListScreenState extends State<CourseListScreen> {
         identical(categories, _sectionsCategories)) {
       return _sections;
     }
+    final buckets = <String, List<CourseEntity>>{
+      for (final category in categories) category.id: <CourseEntity>[],
+    };
+    final byId = <String, CourseCategoryEntity>{
+      for (final category in categories) category.id: category,
+    };
+    final bySlug = <String, CourseCategoryEntity>{
+      for (final category in categories)
+        category.slug.trim().toLowerCase(): category,
+      for (final category in categories)
+        category.name.trim().toLowerCase(): category,
+    };
+    final generalCategory = bySlug['general'];
+
+    for (final course in courses) {
+      CourseCategoryEntity? primary;
+
+      // 1. Explicit category_id link
+      final catId = course.categoryId;
+      if (catId != null && catId.isNotEmpty) {
+        primary = byId[catId] ?? bySlug[catId.toLowerCase()];
+      }
+
+      // 2. First tag in course.tags order that maps to a known category
+      if (primary == null) {
+        for (final rawTag in course.tags) {
+          final tag = rawTag.trim().toLowerCase();
+          final matchedCat = bySlug[tag];
+          if (matchedCat != null) {
+            primary = matchedCat;
+            break;
+          }
+        }
+      }
+
+      // 3. Fallback to 'general' category if untagged
+      primary ??= (course.tags.isEmpty ? generalCategory : null);
+
+      if (primary != null) {
+        buckets[primary.id]!.add(course);
+      }
+    }
+
     final result = <MapEntry<CourseCategoryEntity, List<CourseEntity>>>[];
     for (final category in categories) {
-      final name = category.name.toLowerCase();
-      final matched = courses
-          .where(
-            (c) =>
-                c.tags.contains(category.slug) ||
-                c.tags.contains(name) ||
-                (c.tags.isEmpty && category.slug == 'general'),
-          )
-          .toList();
-      if (matched.isNotEmpty) result.add(MapEntry(category, matched));
+      final matched = buckets[category.id]!;
+      if (matched.isNotEmpty) {
+        result.add(MapEntry(category, matched));
+      }
     }
     _sectionsCourses = courses;
     _sectionsCategories = categories;
@@ -110,149 +152,174 @@ class _CourseListScreenState extends State<CourseListScreen> {
             alignment: Alignment.topCenter,
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 1180),
-              child: CustomScrollView(
-                controller: _scrollController,
-                slivers: [
-                  // Keep the complete course header visible while scrolling.
-                  SliverAppBar(
-                    toolbarHeight: 100,
-                    pinned: true,
-                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                    surfaceTintColor: Colors.transparent,
-                    scrolledUnderElevation: 0,
-                    automaticallyImplyLeading: false,
-                    titleSpacing: 0,
-                    title: Padding(
-                      padding: const EdgeInsets.fromLTRB(
-                        20,
-                        AppSpacing.md,
-                        20,
-                        0,
-                      ),
-                      child: Row(
-                        children: [
-                          // A tab in MainScreen, but also pushed as a
-                          // route (Today Plan) — only then can it pop.
-                          if (ModalRoute.of(context)?.canPop ?? false)
-                            AppBackButton(
-                              onPressed: () => Navigator.of(context).pop(),
-                            ),
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: primaryAccent,
-                              borderRadius: BorderRadius.circular(AppRadius.md),
-                            ),
-                            child: Icon(
-                              Icons.explore,
-                              color: Theme.of(context).colorScheme.surface,
-                              size: 24,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'course.discoverCourses'.tr(),
-                                style: Theme.of(context).textTheme.headlineSmall
-                                    ?.copyWith(fontWeight: FontWeight.bold),
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  await Future.wait([
+                    provider.refreshCourses(),
+                    provider.loadCategories(),
+                  ]);
+                },
+                child: CustomScrollView(
+                  controller: _scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  slivers: [
+                    // Keep the complete course header visible while scrolling.
+                    SliverAppBar(
+                      toolbarHeight: 92,
+                      pinned: true,
+                      backgroundColor: Theme.of(
+                        context,
+                      ).scaffoldBackgroundColor,
+                      surfaceTintColor: Colors.transparent,
+                      scrolledUnderElevation: 0,
+                      automaticallyImplyLeading: false,
+                      titleSpacing: 0,
+                      title: Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          20,
+                          AppSpacing.sm,
+                          20,
+                          0,
+                        ),
+                        child: Row(
+                          children: [
+                            // A tab in MainScreen, but also pushed as a
+                            // route (Today Plan) — only then can it pop.
+                            if (ModalRoute.of(context)?.canPop ?? false)
+                              AppBackButton(
+                                onPressed: () => Navigator.of(context).pop(),
                               ),
-                              Text(
-                                'course.coursesAvailablePlural'.plural(
-                                  provider.courses.length,
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: primaryAccent,
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.md,
                                 ),
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSurfaceVariant,
+                              ),
+                              child: Icon(
+                                Icons.explore,
+                                color: Theme.of(context).colorScheme.surface,
+                                size: 24,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'course.discoverCourses'.tr(),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headlineSmall
+                                        ?.copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                  Text(
+                                    'course.coursesAvailablePlural'.plural(
+                                      provider.filteredCourses.length,
                                     ),
-                              ),
-                            ],
-                          ),
-                          const Spacer(),
-                          Stack(
-                            children: [
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: provider.hasActiveFilters
-                                      ? primaryAccent
-                                      : primaryAccent.withValues(alpha: 0.14),
-                                  borderRadius: BorderRadius.circular(
-                                    AppRadius.md,
+                                    style: Theme.of(context).textTheme.bodySmall
+                                        ?.copyWith(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onSurfaceVariant,
+                                        ),
                                   ),
-                                ),
-                                child: IconButton(
-                                  icon: Icon(
-                                    Icons.tune_rounded,
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Stack(
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
                                     color: provider.hasActiveFilters
-                                        ? AppColors.textInverted
-                                        : primaryAccent,
+                                        ? primaryAccent
+                                        : primaryAccent.withValues(alpha: 0.14),
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.md,
+                                    ),
                                   ),
-                                  onPressed: () => _showFilterSheet(context),
-                                  tooltip: 'common.filter'.tr(),
+                                  child: IconButton(
+                                    icon: Icon(
+                                      Icons.tune_rounded,
+                                      color: provider.hasActiveFilters
+                                          ? AppColors.textInverted
+                                          : primaryAccent,
+                                    ),
+                                    onPressed: () => _showFilterSheet(context),
+                                    tooltip: 'common.filter'.tr(),
+                                  ),
                                 ),
-                              ),
-                              if (provider.hasActiveFilters)
-                                Positioned(
-                                  top: 6,
-                                  right: 6,
-                                  child: Container(
-                                    width: 8,
-                                    height: 8,
-                                    decoration: BoxDecoration(
-                                      color: AppColors.warning,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: Theme.of(
-                                          context,
-                                        ).scaffoldBackgroundColor,
-                                        width: 1.5,
+                                if (provider.hasActiveFilters)
+                                  Positioned(
+                                    top: 6,
+                                    right: 6,
+                                    child: Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.warning,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Theme.of(
+                                            context,
+                                          ).scaffoldBackgroundColor,
+                                          width: 1.5,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                            ],
-                          ),
-                        ],
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
 
-                  // Hero banner below heading
-                  const SliverToBoxAdapter(child: _CourseBanner()),
+                    // Hero banner below heading
+                    const SliverToBoxAdapter(child: _CourseBanner()),
 
-                  // Content
-                  if ((provider.isLoadingCourses ||
-                          provider.isLoadingCategories) &&
-                      provider.courses.isEmpty &&
-                      provider.categories.isEmpty)
-                    const SliverFillRemaining(
-                      child: Center(child: LottieLoadingWidget.medium()),
-                    )
-                  else if (provider.coursesError != null &&
-                      provider.courses.isEmpty)
-                    SliverFillRemaining(
-                      child: ErrorDisplayWidget.fromMessage(
-                        message: provider.coursesError!,
-                        onRetry: () {
-                          provider.refreshCourses();
-                          provider.loadCategories();
-                        },
-                      ),
-                    )
-                  else if (provider.courses.isEmpty)
-                    SliverFillRemaining(child: EmptyStateWidget.courses())
-                  else
-                    SliverPadding(
-                      padding: EdgeInsets.only(
-                        bottom: MediaQuery.paddingOf(context).bottom,
-                      ),
-                      sliver: _buildCourseContent(context, provider),
+                    // Quick filter rail (levels, enrolled, clear)
+                    SliverToBoxAdapter(
+                      child: _QuickFilterBar(provider: provider),
                     ),
-                ],
+
+                    // Content
+                    if ((provider.isLoadingCourses ||
+                            provider.isLoadingCategories) &&
+                        provider.courses.isEmpty &&
+                        provider.categories.isEmpty)
+                      const SliverFillRemaining(
+                        child: Center(child: LottieLoadingWidget.medium()),
+                      )
+                    else if (provider.coursesError != null &&
+                        provider.courses.isEmpty)
+                      SliverFillRemaining(
+                        child: ErrorDisplayWidget.fromMessage(
+                          message: provider.coursesError!,
+                          onRetry: () {
+                            provider.refreshCourses();
+                            provider.loadCategories();
+                          },
+                        ),
+                      )
+                    else if (provider.courses.isEmpty &&
+                        !provider.hasActiveFilters)
+                      SliverFillRemaining(child: EmptyStateWidget.courses())
+                    else
+                      SliverPadding(
+                        padding: EdgeInsets.only(
+                          bottom: MainScreen.bottomBarClearance(context),
+                        ),
+                        sliver: _buildCourseContent(context, provider),
+                      ),
+                  ],
+                ),
               ),
             ),
           );
@@ -265,9 +332,25 @@ class _CourseListScreenState extends State<CourseListScreen> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final displayCourses = provider.filteredCourses;
 
-    // Show empty-filtered state when client-side filters result in nothing
+    // Show empty-filtered state when server or client-side filters result in nothing
     if (displayCourses.isEmpty) {
-      return SliverFillRemaining(child: EmptyStateWidget.searchResults());
+      return SliverFillRemaining(
+        hasScrollBody: false,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            EmptyStateWidget.searchResults(),
+            if (provider.hasActiveFilters) ...[
+              const SizedBox(height: 12),
+              FilledButton.tonalIcon(
+                onPressed: () => provider.clearFilters(),
+                icon: const Icon(Icons.filter_alt_off_rounded, size: 18),
+                label: Text('common.clear'.tr()),
+              ),
+            ],
+          ],
+        ),
+      );
     }
 
     final categories = provider.categories;
@@ -290,12 +373,13 @@ class _CourseListScreenState extends State<CourseListScreen> {
     final forceFlat = provider.sortOrder != 'default';
 
     if (forceFlat || !shouldUseCategories) {
-      // Flat grouped-by-level list
+      // Flat grouped-by-level list, ordered from A1 -> C2
       final grouped = <String, List<CourseEntity>>{};
       for (final course in displayCourses) {
         grouped.putIfAbsent(course.level, () => []).add(course);
       }
-      final levelKeys = grouped.keys.toList();
+      final levelKeys = grouped.keys.toList()
+        ..sort((a, b) => courseLevelOrder(a).compareTo(courseLevelOrder(b)));
 
       return SliverList(
         delegate: SliverChildBuilderDelegate((context, index) {
@@ -311,10 +395,11 @@ class _CourseListScreenState extends State<CourseListScreen> {
           final courses = grouped[levelKey]!;
           return _CategorySection(
             categoryId: levelKey,
-            title: levelKey,
+            categorySlug: null,
+            title: courseLevelBadgeLabel(levelKey),
             description: 'course.courseCount'.plural(courses.length),
             icon: _getLevelIcon(levelKey),
-            color: _getLevelColor(levelKey, isDark: isDark),
+            color: courseLevelColor(levelKey, isDark: isDark),
             courses: courses,
             onCourseTap: (course, heroTag, fallbackThumbnailUrl) =>
                 _navigateToCourseDetail(
@@ -347,10 +432,18 @@ class _CourseListScreenState extends State<CourseListScreen> {
 
           return _CategorySection(
             categoryId: category.id,
-            title: category.name,
+            categorySlug: category.slug,
+            title: courseCategoryTitle(category),
             description: 'course.courseCount'.plural(categoryCourses.length),
-            icon: _parseCategoryIcon(category.icon ?? 'book'),
-            color: _parseCategoryColor(category.color, isDark: isDark),
+            icon: courseCategoryIcon(
+              iconName: category.icon,
+              slugOrName: category.slug,
+            ),
+            color: courseCategoryColor(
+              colorHex: category.color,
+              slugOrName: category.slug,
+              isDark: isDark,
+            ),
             courses: categoryCourses,
             onCourseTap: (course, heroTag, fallbackThumbnailUrl) =>
                 _navigateToCourseDetail(
@@ -397,66 +490,20 @@ class _CourseListScreenState extends State<CourseListScreen> {
     );
   }
 
-  IconData _parseCategoryIcon(String iconName) {
-    switch (iconName.toLowerCase()) {
-      case 'school':
-        return Icons.school;
-      case 'menu_book':
-        return Icons.menu_book;
-      case 'work':
-        return Icons.work;
-      case 'chat':
-        return Icons.chat;
-      case 'flight':
-        return Icons.flight;
-      case 'psychology':
-        return Icons.psychology;
-      case 'star':
-        return Icons.star;
-      case 'category':
-        return Icons.category;
-      default:
-        return Icons.book;
-    }
-  }
-
-  Color _parseCategoryColor(String? colorHex, {required bool isDark}) {
-    if (colorHex == null || colorHex.isEmpty) {
-      return AppColorRoles.primary(isDark);
-    }
-    try {
-      // Remove # if present
-      final hex = colorHex.replaceAll('#', '');
-      // Parse hex color (supports both RGB and ARGB)
-      return Color(int.parse(hex.length == 6 ? 'FF$hex' : hex, radix: 16));
-    } catch (e) {
-      return AppColorRoles.primary(isDark);
-    }
-  }
-
   IconData _getLevelIcon(String level) {
-    switch (level.toLowerCase()) {
-      case 'beginner':
+    final code = courseCefrCode(level);
+    switch (code) {
+      case 'A1':
+      case 'A2':
         return Icons.school_outlined;
-      case 'intermediate':
+      case 'B1':
+      case 'B2':
         return Icons.trending_up;
-      case 'advanced':
+      case 'C1':
+      case 'C2':
         return Icons.emoji_events_outlined;
       default:
         return Icons.book_outlined;
-    }
-  }
-
-  Color _getLevelColor(String level, {bool isDark = false}) {
-    switch (level.toLowerCase()) {
-      case 'beginner':
-        return AppColors.greenSuccess;
-      case 'intermediate':
-        return AppColors.primary; // blue — on-theme
-      case 'advanced':
-        return AppColors.purple; // violet — premium feel
-      default:
-        return AppColorRoles.primary(isDark);
     }
   }
 
@@ -561,10 +608,138 @@ class _CourseBanner extends StatelessWidget {
   }
 }
 
+/// Quick horizontal filter bar below the hero banner for 1-tap CEFR level
+/// and enrolled-course filtering without opening the modal sheet.
+class _QuickFilterBar extends StatelessWidget {
+  final CourseProvider provider;
+
+  const _QuickFilterBar({required this.provider});
+
+  static const List<String> _cefrLevels = ['A1', 'A2', 'B1', 'B2', 'C1'];
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primary = AppColorRoles.primary(isDark);
+    final selectedLevel = provider.selectedLevel;
+    final enrolledOnly = provider.showEnrolledOnly;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: SizedBox(
+        height: 36,
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+          children: [
+            // "All" pill
+            _QuickPill(
+              label: 'course.langAll'.tr(),
+              isSelected: !provider.hasActiveFilters,
+              color: primary,
+              onTap: () {
+                if (provider.hasActiveFilters) {
+                  provider.clearFilters();
+                }
+              },
+            ),
+            const SizedBox(width: 8),
+
+            // "My Enrollments" pill
+            _QuickPill(
+              label: 'course.myEnrollments'.tr(),
+              icon: Icons.school_rounded,
+              isSelected: enrolledOnly,
+              color: AppColors.warningDark,
+              onTap: () {
+                provider.setClientFilters(enrolledOnly: !enrolledOnly);
+              },
+            ),
+            const SizedBox(width: 8),
+
+            // CEFR level pills
+            for (final lvl in _cefrLevels) ...[
+              _QuickPill(
+                label: courseLevelBadgeLabel(lvl),
+                isSelected: selectedLevel?.toUpperCase() == lvl,
+                color: courseLevelColor(lvl, isDark: isDark),
+                onTap: () {
+                  final next = selectedLevel?.toUpperCase() == lvl ? null : lvl;
+                  provider.filterByLevel(next);
+                },
+              ),
+              const SizedBox(width: 8),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _QuickPill extends StatelessWidget {
+  final String label;
+  final IconData? icon;
+  final bool isSelected;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _QuickPill({
+    required this.label,
+    this.icon,
+    required this.isSelected,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.pill),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? color
+                : color.withValues(alpha: isDark ? 0.16 : 0.10),
+            borderRadius: BorderRadius.circular(AppRadius.pill),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(
+                  icon,
+                  size: 14,
+                  color: isSelected ? AppColors.textInverted : color,
+                ),
+                const SizedBox(width: 5),
+              ],
+              Text(
+                label,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: isSelected ? AppColors.textInverted : color,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Category Section Widget
 /// Displays a category title with horizontally scrolling course cards
 class _CategorySection extends StatelessWidget {
   final String categoryId;
+  final String? categorySlug;
   final String title;
   final String description;
   final IconData icon;
@@ -580,6 +755,7 @@ class _CategorySection extends StatelessWidget {
 
   const _CategorySection({
     required this.categoryId,
+    this.categorySlug,
     required this.title,
     required this.description,
     required this.icon,
@@ -599,17 +775,19 @@ class _CategorySection extends StatelessWidget {
       children: [
         // Category Header
         Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: isCompactMobile ? 14 : AppSpacing.lg,
-            vertical: isCompactMobile ? 6 : AppSpacing.sm,
+          padding: EdgeInsets.fromLTRB(
+            isCompactMobile ? 14 : AppSpacing.lg,
+            isCompactMobile ? 8 : 10,
+            isCompactMobile ? 10 : AppSpacing.md,
+            isCompactMobile ? 6 : AppSpacing.sm,
           ),
           child: Row(
             children: [
               Container(
-                padding: EdgeInsets.all(isCompactMobile ? 7 : 8),
+                padding: EdgeInsets.all(isCompactMobile ? 8 : 9),
                 decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(AppRadius.md),
                 ),
                 child: Icon(
                   icon,
@@ -640,35 +818,49 @@ class _CategorySection extends StatelessWidget {
               if (onSeeAll != null)
                 TextButton(
                   onPressed: onSeeAll,
-                  child: Text('common.seeAll'.tr()),
+                  style: TextButton.styleFrom(
+                    foregroundColor: color,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'common.seeAll'.tr(),
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(width: 2),
+                      Icon(Icons.chevron_right_rounded, size: 18, color: color),
+                    ],
+                  ),
                 ),
             ],
           ),
         ),
 
-        // Horizontal Course List with staggered animation
+        // Horizontal Course List
         SizedBox(
-          height: isCompactMobile ? 220 : 250,
+          height: isCompactMobile ? 226 : 254,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: EdgeInsets.symmetric(
               horizontal: isCompactMobile ? 10 : AppSpacing.md,
             ),
             itemCount: courses.length,
-            itemExtent: (isCompactMobile ? 150.0 : 170.0) + 8,
+            itemExtent: (isCompactMobile ? 160.0 : 182.0) + 8,
             cacheExtent: 400,
             itemBuilder: (context, index) {
               final course = courses[index];
-              // A course can match multiple category tags, so the same
-              // course.id may render in more than one section on this
-              // screen. Scope the tag to this section to keep Hero tags
-              // unique within the route (duplicate tags crash the Hero
-              // flight on navigation).
+              // Scope Hero tag to this section to keep Hero tags unique.
               final heroTag = 'discovery-course-image-$categoryId-${course.id}';
               return RepaintBoundary(
                 child: _HorizontalCourseCard(
                   key: ValueKey(heroTag),
                   course: course,
+                  categorySlug: categorySlug,
                   heroTag: heroTag,
                   compact: isCompactMobile,
                   onTap: (fallbackThumbnailUrl) =>
@@ -679,7 +871,7 @@ class _CategorySection extends StatelessWidget {
           ),
         ),
 
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
       ],
     );
   }
@@ -689,6 +881,7 @@ class _CategorySection extends StatelessWidget {
 /// Compact card design for horizontal scrolling with enhanced hero images
 class _HorizontalCourseCard extends StatelessWidget {
   final CourseEntity course;
+  final String? categorySlug;
   final String heroTag;
   final bool compact;
   final ValueChanged<String> onTap;
@@ -696,18 +889,25 @@ class _HorizontalCourseCard extends StatelessWidget {
   const _HorizontalCourseCard({
     super.key,
     required this.course,
+    this.categorySlug,
     required this.heroTag,
     this.compact = false,
     required this.onTap,
   });
 
+  String get _fallbackUrl => courseFallbackThumbnailUrl(
+    course,
+    preferredCategorySlug: categorySlug,
+  );
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardWidth = compact ? 150.0 : 170.0;
+    final cardWidth = compact ? 160.0 : 182.0;
     const cardRadius = AppRadius.lg;
     final contentPadding = compact ? 10.0 : 12.0;
     final imageAspectRatio = compact ? 16 / 9 : 16 / 10;
+    final levelColor = courseLevelColor(course.level, isDark: isDark);
 
     return Container(
       width: cardWidth,
@@ -717,11 +917,11 @@ class _HorizontalCourseCard extends StatelessWidget {
       ),
       child: AppSurface(
         radius: BorderRadius.circular(cardRadius),
-        onTap: () => onTap(_getCourseImageUrl()),
+        onTap: () => onTap(_fallbackUrl),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Enhanced Hero Thumbnail with gradient overlay
+            // Enhanced Hero Thumbnail with subtle top scrim behind badge
             Hero(
               tag: heroTag,
               child: ClipRRect(
@@ -736,53 +936,57 @@ class _HorizontalCourseCard extends StatelessWidget {
                       // Background image or placeholder
                       _buildCourseThumbnail(context),
 
-                      // Gradient overlay for better text visibility
+                      // Top scrim where the CEFR badge actually sits
                       Container(
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
+                              AppColors.slate900.withValues(alpha: 0.35),
                               Colors.transparent,
-                              AppColors.slate900.withValues(alpha: 0.5),
                             ],
+                            stops: const [0.0, 0.55],
                           ),
                         ),
                       ),
 
-                      // Level badge
+                      // Level badge (CEFR + localized difficulty, e.g. "A1 · Người mới")
                       Positioned(
                         top: 8,
                         left: 8,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.sm,
-                            vertical: AppSpacing.xs,
-                          ),
-                          decoration: BoxDecoration(
-                            color: _getLevelColor(
-                              courseLevelLabel(course.level),
-                              isDark: isDark,
-                            ).withValues(alpha: 0.9),
-                            borderRadius: BorderRadius.circular(AppRadius.md),
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.slate900.withValues(
-                                  alpha: 0.2,
+                        right: 8,
+                        child: Align(
+                          alignment: Alignment.topLeft,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.sm,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: levelColor.withValues(alpha: 0.94),
+                              borderRadius: BorderRadius.circular(AppRadius.sm),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppColors.slate900.withValues(
+                                    alpha: 0.22,
+                                  ),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
                                 ),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: Text(
-                            courseLevelLabel(course.level),
-                            style: Theme.of(context).textTheme.labelSmall
-                                ?.copyWith(
-                                  color: AppColors.surfaceLight,
-
-                                  fontWeight: FontWeight.bold,
-                                ),
+                              ],
+                            ),
+                            child: Text(
+                              courseLevelBadgeLabel(course.level),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.labelSmall
+                                  ?.copyWith(
+                                    color: AppColors.surfaceLight,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: compact ? 10 : 10.5,
+                                  ),
+                            ),
                           ),
                         ),
                       ),
@@ -804,7 +1008,7 @@ class _HorizontalCourseCard extends StatelessWidget {
                       course.title,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
-                        height: 1.2,
+                        height: 1.22,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -812,33 +1016,42 @@ class _HorizontalCourseCard extends StatelessWidget {
 
                     const Spacer(),
 
-                    // Stats row with icons
+                    // Stats row with explicit unit ("20 bài học" + XP or progress)
                     Row(
                       children: [
-                        _buildStatChip(
-                          context,
-                          icon: Icons.book_outlined,
-                          value: '${course.totalLessons}',
-                          color: AppColorRoles.primary(isDark),
-                        ),
-                        const SizedBox(width: 8),
-                        if (course.isEnrolled == true)
-                          Expanded(
-                            child: _buildProgressChip(
-                              context,
-                              course.userProgress ?? 0,
+                        Flexible(
+                          child: _buildStatChip(
+                            context,
+                            icon: Icons.menu_book_rounded,
+                            value: 'course.totalLessonsCount'.tr(
+                              namedArgs: {'count': '${course.totalLessons}'},
                             ),
+                            color: AppColorRoles.primary(isDark),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        if (course.isEnrolled == true)
+                          _buildProgressChip(context, course.userProgress ?? 0)
+                        else if (course.totalXp > 0)
+                          _buildStatChip(
+                            context,
+                            icon: Icons.bolt_rounded,
+                            value: '${course.totalXp} XP',
+                            color: AppColors.warningDark,
                           ),
                       ],
                     ),
 
-                    // Progress or Enroll indicator
+                    // Progress indicator when enrolled
                     if (course.isEnrolled == true) ...[
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 5),
                       ClipRRect(
                         borderRadius: BorderRadius.circular(4),
                         child: LinearProgressIndicator(
-                          value: (course.userProgress ?? 0) / 100,
+                          value: ((course.userProgress ?? 0) / 100).clamp(
+                            0.0,
+                            1.0,
+                          ),
                           backgroundColor: isDark
                               ? AppColors.grey700
                               : AppColors.grey200,
@@ -862,119 +1075,9 @@ class _HorizontalCourseCard extends StatelessWidget {
     );
   }
 
-  String _getCourseImageUrl() {
-    final tags = course.tags.map((t) => t.toLowerCase()).toSet();
-    final level = course.level.toLowerCase();
-    final pick = course.id.hashCode.abs();
-
-    const ielts = [
-      'https://images.unsplash.com/photo-1588072432836-e10032774350?w=800&q=80', // exam pencil
-      'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80', // notepad + ruler
-      'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&q=80', // classroom
-    ];
-    const business = [
-      'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80', // glass office buildings
-      'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80', // financial charts
-      'https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&q=80', // laptop workspace
-    ];
-    const conversation = [
-      'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&q=80', // laptop at café
-      'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800&q=80', // coffee on book
-      'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=800&q=80', // laptop keyboard
-    ];
-    const grammar = [
-      'https://images.unsplash.com/photo-1471899236350-e3016bf1a395?w=800&q=80', // fountain pen
-      'https://images.unsplash.com/photo-1432821596592-e2c18b78144f?w=800&q=80', // spiral notebook
-      'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&q=80', // pen on paper
-    ];
-    const vocabulary = [
-      'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=800&q=80', // colorful books
-      'https://images.unsplash.com/photo-1476275466078-4007374efbbe?w=800&q=80', // stacked books
-      'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&q=80', // desk with books
-    ];
-    const reading = [
-      'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&q=80', // library hall
-      'https://images.unsplash.com/photo-1524578271613-d550eacf6090?w=800&q=80', // stacked books
-      'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800&q=80', // open book
-    ];
-    const listening = [
-      'https://images.unsplash.com/photo-1484704849700-f032a568e944?w=800&q=80', // headphones
-      'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80', // headphones 2
-      'https://images.unsplash.com/photo-1571330735066-03aaa9429d89?w=800&q=80', // headphones 3
-    ];
-    const writing = [
-      'https://images.unsplash.com/photo-1517842645767-c639042777db?w=800&q=80', // desk + notepad
-      'https://images.unsplash.com/photo-1513364776144-60967b0f800f?w=800&q=80', // notepad + ruler
-      'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=800&q=80', // pen on paper
-    ];
-    const travel = [
-      'https://images.unsplash.com/photo-1488085061387-422e29b40080?w=800&q=80', // world map
-      'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80', // open road
-      'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&q=80', // mountain lake
-    ];
-    const beginner = [
-      'https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=800&q=80', // colored crayons
-      'https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?w=800&q=80', // colored pencils
-      'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=800&q=80', // colorful books
-    ];
-    const intermediate = [
-      'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?w=800&q=80', // open book pages
-      'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800&q=80', // laptop on desk
-      'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=800&q=80', // coffee on book
-    ];
-    const advanced = [
-      'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&q=80', // library hall
-      'https://images.unsplash.com/photo-1588072432836-e10032774350?w=800&q=80', // exam paper
-      'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80', // office buildings
-    ];
-
-    if (tags.contains('ielts') ||
-        tags.contains('test-prep') ||
-        tags.contains('exam')) {
-      return ielts[pick % ielts.length];
-    }
-    if (tags.contains('business') || tags.contains('business-english')) {
-      return business[pick % business.length];
-    }
-    if (tags.contains('conversation') || tags.contains('speaking')) {
-      return conversation[pick % conversation.length];
-    }
-    if (tags.contains('grammar')) {
-      return grammar[pick % grammar.length];
-    }
-    if (tags.contains('vocabulary') || tags.contains('vocab')) {
-      return vocabulary[pick % vocabulary.length];
-    }
-    if (tags.contains('reading')) {
-      return reading[pick % reading.length];
-    }
-    if (tags.contains('listening')) {
-      return listening[pick % listening.length];
-    }
-    if (tags.contains('writing')) {
-      return writing[pick % writing.length];
-    }
-    if (tags.contains('travel')) {
-      return travel[pick % travel.length];
-    }
-
-    switch (level) {
-      case 'beginner':
-      case 'elementary':
-        return beginner[pick % beginner.length];
-      case 'intermediate':
-      case 'upper-intermediate':
-        return intermediate[pick % intermediate.length];
-      case 'advanced':
-        return advanced[pick % advanced.length];
-      default:
-        return reading[pick % reading.length];
-    }
-  }
-
   Widget _buildCourseThumbnail(BuildContext context) {
     final primaryUrl = course.thumbnailUrl?.trim();
-    final fallbackUrl = _getCourseImageUrl();
+    final fallbackUrl = _fallbackUrl;
     final hash = course.id.hashCode;
     final gradientColors = _getGradientFromHash(hash);
     Widget gradientLoading() => Container(
@@ -1037,23 +1140,6 @@ class _HorizontalCourseCard extends StatelessWidget {
     return gradients[hash.abs() % gradients.length];
   }
 
-  Color _getLevelColor(String level, {bool isDark = false}) {
-    switch (level.toLowerCase()) {
-      case 'beginner':
-        return AppColors.greenSuccessBright;
-      case 'elementary':
-        return AppColors.greenSuccessSoft;
-      case 'intermediate':
-        return AppColors.orange;
-      case 'upper-intermediate':
-        return AppColors.deepOrange;
-      case 'advanced':
-        return AppColors.errorBright;
-      default:
-        return AppColorRoles.primary(isDark);
-    }
-  }
-
   Color _getProgressColor(double progress, {bool isDark = false}) {
     if (progress >= 80) return AppColors.greenSuccessBright;
     if (progress >= 50) return AppColors.orange;
@@ -1067,10 +1153,7 @@ class _HorizontalCourseCard extends StatelessWidget {
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.sm,
-        vertical: 3,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -1080,11 +1163,16 @@ class _HorizontalCourseCard extends StatelessWidget {
         children: [
           Icon(icon, size: 12, color: color),
           const SizedBox(width: 4),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: color,
+          Flexible(
+            child: Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: color,
+                fontSize: compact ? 10 : 10.5,
+              ),
             ),
           ),
         ],
@@ -1148,18 +1236,14 @@ class _FilterSheetState extends State<_FilterSheet> {
   late bool _enrolledOnly;
   late String _sortOrder;
 
-  static const List<(String, String?, Color)> _levels = [
-    ('course.langAll', null, AppColors.grey500),
-    ('course.difficulty.beginner', 'Beginner', AppColors.greenSuccessBright),
-    ('course.difficulty.elementary', 'Elementary', AppColors.greenSuccessSoft),
-    ('course.difficulty.preIntermediate', 'Pre-Intermediate', AppColors.teal),
-    ('course.difficulty.intermediate', 'Intermediate', AppColors.orange),
-    (
-      'course.difficulty.upperIntermediate',
-      'Upper-Intermediate',
-      AppColors.deepOrange,
-    ),
-    ('course.difficulty.advanced', 'Advanced', AppColors.errorBright),
+  static const List<(String?, Color)> _levels = [
+    (null, AppColors.grey500),
+    ('A1', AppColors.cefrA),
+    ('A2', AppColors.teal),
+    ('B1', AppColors.orange),
+    ('B2', AppColors.deepOrange),
+    ('C1', AppColors.cefrC),
+    ('C2', AppColors.errorBright),
   ];
 
   static const _sortOptions = [
@@ -1318,36 +1402,39 @@ class _FilterSheetState extends State<_FilterSheet> {
                         ),
                         _Chip(
                           label: 'course.langEnglish'.tr(),
-                          isSelected: _language == 'English',
+                          isSelected:
+                              _language == 'en' || _language == 'English',
                           color: primaryAccent,
                           prefix: _LangBadge(
                             'EN',
                             primaryAccent,
-                            _language == 'English',
+                            _language == 'en' || _language == 'English',
                           ),
-                          onTap: () => setState(() => _language = 'English'),
+                          onTap: () => setState(() => _language = 'en'),
                         ),
                         _Chip(
                           label: 'course.langSpanish'.tr(),
-                          isSelected: _language == 'Spanish',
+                          isSelected:
+                              _language == 'es' || _language == 'Spanish',
                           color: AppColors.orange,
                           prefix: _LangBadge(
                             'ES',
                             AppColors.orange,
-                            _language == 'Spanish',
+                            _language == 'es' || _language == 'Spanish',
                           ),
-                          onTap: () => setState(() => _language = 'Spanish'),
+                          onTap: () => setState(() => _language = 'es'),
                         ),
                         _Chip(
                           label: 'course.langVietnamese'.tr(),
-                          isSelected: _language == 'Vietnamese',
+                          isSelected:
+                              _language == 'vi' || _language == 'Vietnamese',
                           color: AppColors.errorBright,
                           prefix: _LangBadge(
                             'VI',
                             AppColors.errorBright,
-                            _language == 'Vietnamese',
+                            _language == 'vi' || _language == 'Vietnamese',
                           ),
-                          onTap: () => setState(() => _language = 'Vietnamese'),
+                          onTap: () => setState(() => _language = 'vi'),
                         ),
                       ],
                     ),
@@ -1363,10 +1450,12 @@ class _FilterSheetState extends State<_FilterSheet> {
                       children: _levels
                           .map(
                             (e) => _Chip(
-                              label: e.$1.tr(),
-                              isSelected: _level == e.$2,
-                              color: e.$3,
-                              onTap: () => setState(() => _level = e.$2),
+                              label: e.$1 == null
+                                  ? 'course.langAll'.tr()
+                                  : courseLevelBadgeLabel(e.$1!),
+                              isSelected: _level?.toUpperCase() == e.$1,
+                              color: e.$2,
+                              onTap: () => setState(() => _level = e.$1),
                             ),
                           )
                           .toList(),
@@ -1389,10 +1478,11 @@ class _FilterSheetState extends State<_FilterSheet> {
                           ),
                           ...categories.map(
                             (cat) => _Chip(
-                              label: cat.name,
+                              label: courseCategoryTitle(cat),
                               isSelected: _categorySlug == cat.slug,
-                              color: _parseCategoryColor(
-                                cat.color,
+                              color: courseCategoryColor(
+                                colorHex: cat.color,
+                                slugOrName: cat.slug,
                                 isDark: isDark,
                               ),
                               onTap: () => setState(
@@ -1542,18 +1632,6 @@ class _FilterSheetState extends State<_FilterSheet> {
         );
       },
     );
-  }
-
-  Color _parseCategoryColor(String? colorHex, {required bool isDark}) {
-    if (colorHex == null || colorHex.isEmpty) {
-      return AppColorRoles.primary(isDark);
-    }
-    try {
-      final hex = colorHex.replaceAll('#', '');
-      return Color(int.parse(hex.length == 6 ? 'FF$hex' : hex, radix: 16));
-    } catch (_) {
-      return AppColorRoles.primary(isDark);
-    }
   }
 }
 

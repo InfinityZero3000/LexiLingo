@@ -109,9 +109,21 @@ class CourseProvider with ChangeNotifier, ResetEpoch {
   List<CourseEntity> get filteredCourses {
     if (_filteredVersion == _dataVersion) return _filteredCache;
     final slug = _selectedCategorySlug?.toLowerCase();
+    CourseCategoryEntity? selectedCategory;
+    if (slug != null) {
+      for (final cat in _categories) {
+        if (cat.slug.toLowerCase() == slug) {
+          selectedCategory = cat;
+          break;
+        }
+      }
+    }
     var result = _courses.where((c) {
-      if (slug != null && !c.tags.any((t) => t.toLowerCase() == slug)) {
-        return false;
+      if (slug != null) {
+        final matchesId =
+            selectedCategory != null && c.categoryId == selectedCategory.id;
+        final matchesTag = c.tags.any((t) => t.toLowerCase() == slug);
+        if (!matchesId && !matchesTag) return false;
       }
       if (_showEnrolledOnly && c.isEnrolled != true) return false;
       return true;
@@ -632,6 +644,9 @@ class CourseProvider with ChangeNotifier, ResetEpoch {
     _totalPages = 1;
     _selectedLanguage = null;
     _selectedLevel = null;
+    _selectedCategorySlug = null;
+    _showEnrolledOnly = false;
+    _sortOrder = 'default';
     notifyListeners();
   }
 }

@@ -61,13 +61,53 @@ const _advancedImages = [
   'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80',
 ];
 
-String courseFallbackThumbnailUrl(CourseEntity course) {
+String courseFallbackThumbnailUrl(
+  CourseEntity course, {
+  String? preferredCategorySlug,
+}) {
   final tags = course.tags.map((tag) => tag.toLowerCase()).toSet();
+  final preferred = preferredCategorySlug?.trim().toLowerCase();
+  if (preferred != null && preferred.isNotEmpty) {
+    final byCategory = _pickForDomain(
+      {preferred},
+      (course.id.hashCode ^ preferred.hashCode) & 0x7fffffff,
+    );
+    if (byCategory != null) return byCategory;
+  }
+
   final level = course.level.toLowerCase();
   final pick = course.id.hashCode & 0x7fffffff;
 
+  final byTag = _pickForDomain(tags, pick);
+  if (byTag != null) return byTag;
+
+  switch (level) {
+    case 'a1':
+    case 'a2':
+    case 'beginner':
+    case 'elementary':
+      return _pick(_beginnerImages, pick);
+    case 'b1':
+    case 'b2':
+    case 'pre-intermediate':
+    case 'intermediate':
+    case 'upper-intermediate':
+      return _pick(_intermediateImages, pick);
+    case 'c1':
+    case 'c2':
+    case 'advanced':
+      return _pick(_advancedImages, pick);
+    default:
+      return _pick(_readingImages, pick);
+  }
+}
+
+String? _pickForDomain(Set<String> tags, int pick) {
   if (tags.contains('ielts') ||
+      tags.contains('toeic') ||
+      tags.contains('toefl') ||
       tags.contains('test-prep') ||
+      tags.contains('test-preparation') ||
       tags.contains('exam')) {
     return _pick(_ieltsImages, pick);
   }
@@ -82,32 +122,30 @@ String courseFallbackThumbnailUrl(CourseEntity course) {
     return _pick(_vocabularyImages, pick);
   }
   if (tags.contains('reading')) return _pick(_readingImages, pick);
-  if (tags.contains('listening')) return _pick(_listeningImages, pick);
-  if (tags.contains('writing')) return _pick(_writingImages, pick);
-  if (tags.contains('travel')) return _pick(_travelImages, pick);
-
-  switch (level) {
-    case 'beginner':
-    case 'elementary':
-      return _pick(_beginnerImages, pick);
-    case 'intermediate':
-    case 'upper-intermediate':
-      return _pick(_intermediateImages, pick);
-    case 'advanced':
-      return _pick(_advancedImages, pick);
-    default:
-      return _pick(_readingImages, pick);
+  if (tags.contains('listening') || tags.contains('pronunciation')) {
+    return _pick(_listeningImages, pick);
   }
+  if (tags.contains('writing')) return _pick(_writingImages, pick);
+  if (tags.contains('travel') || tags.contains('travel-english')) {
+    return _pick(_travelImages, pick);
+  }
+  return null;
 }
 
-List<String> buildCourseCardThumbnailCandidates(CourseEntity course) {
+List<String> buildCourseCardThumbnailCandidates(
+  CourseEntity course, {
+  String? preferredCategorySlug,
+}) {
   final urls = <String>[];
   final primaryUrl = course.thumbnailUrl?.trim();
   if (primaryUrl != null && primaryUrl.isNotEmpty) {
     urls.add(primaryUrl);
   }
 
-  final fallbackUrl = courseFallbackThumbnailUrl(course);
+  final fallbackUrl = courseFallbackThumbnailUrl(
+    course,
+    preferredCategorySlug: preferredCategorySlug,
+  );
   if (!urls.contains(fallbackUrl)) {
     urls.add(fallbackUrl);
   }
