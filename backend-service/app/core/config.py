@@ -364,6 +364,9 @@ class Settings(BaseSettings):
     REMINDER_MAX_LATENESS_MINUTES: int = 180
     REMINDER_DEFAULT_TIMEZONE: str = "Asia/Ho_Chi_Minh"
 
+    # Comma-separated default recipients of error reports; the admin setting overrides it.
+    OPS_ERROR_REPORT_RECIPIENTS: str = "support@lexilingo.me"
+
     # The sign-up page advertises learner counts only above this floor.
     PUBLIC_STATS_MIN_LEARNERS: int = 1000
     PUBLIC_STATS_CACHE_SECONDS: int = 600

@@ -57,6 +57,8 @@ from app.routes.ielts import router as ielts_router
 from app.routes.admin_gamification import router as admin_gamification_router
 from app.routes.admin_system import router as admin_system_router
 from app.routes.admin_ops import router as admin_ops_router
+from app.routes.admin_ops_errors import router as admin_ops_errors_router
+from app.routes.internal_ops import router as internal_ops_router
 from app.routes.admin_user_support import router as admin_user_support_router
 from app.routes.admin_gem_ledger import router as admin_gem_ledger_router
 from app.routes.admin_partner_keys import router as admin_partner_keys_router
@@ -429,6 +431,8 @@ app.include_router(ielts_router, prefix=f"{settings.API_V1_PREFIX}", tags=["IELT
 app.include_router(admin_gamification_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin"])
 app.include_router(admin_system_router, prefix=f"{settings.API_V1_PREFIX}", tags=["Admin"])
 app.include_router(admin_ops_router, prefix=f"{settings.API_V1_PREFIX}")
+app.include_router(admin_ops_errors_router, prefix=f"{settings.API_V1_PREFIX}")
+app.include_router(internal_ops_router, prefix=f"{settings.API_V1_PREFIX}")
 app.include_router(admin_user_support_router, prefix=f"{settings.API_V1_PREFIX}")
 app.include_router(admin_gem_ledger_router, prefix=f"{settings.API_V1_PREFIX}")
 app.include_router(admin_partner_keys_router, prefix=f"{settings.API_V1_PREFIX}")

@@ -15,6 +15,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from app.schemas.common import ErrorResponse, ErrorDetail, RequestMeta, ErrorCodes
 from app.core.logging_config import set_request_id
+from app.services.ops_errors import record_request_error
 
 logger = logging.getLogger(__name__)
 
@@ -421,6 +422,8 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             )
             raise
         
+        await record_request_error(request, response.status_code)
+
         # Calculate duration
         duration_ms = (time.time() - start_time) * 1000
         

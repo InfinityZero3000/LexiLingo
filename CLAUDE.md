@@ -485,6 +485,10 @@ Full text in `docs/operations/WORKFLOW.md`. `dev` is the trunk **and production*
 - Fill the PR template's **Deploy impact**. Compose, `gateway/` and `.env.production*` are not carried by images; they need `scripts/deploy-one-shot.sh`.
 - Releases: `scripts/release.sh patch|minor|major` opens `chore(release): vX.Y.Z`; merging it tags, publishes the GitHub Release and tags the images. One version, five files, `scripts/check-versions.sh`. Do not bump versions by hand.
 
+## Error monitoring
+
+Backend, worker and ai-service errors are grouped in Redis then Postgres and mailed as a digest plus spike alerts; the request path never touches the DB. How it works, the settings and how to mute a group: `docs/operations/ERROR_MONITORING.md`.
+
 ## Production Deploy — hard rules
 
 Prod is the LXD container `lexilingo` on the shared OVH VPS (`ovh-vps`), at

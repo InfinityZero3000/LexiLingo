@@ -11,12 +11,15 @@ from fastapi.responses import JSONResponse
 
 from app.core.config import settings
 from app.schemas.common import ErrorResponse, ErrorDetail, ErrorCodes, RequestMeta
+from app.services.ops_errors import record_request_error
 
 logger = logging.getLogger(__name__)
 
 
 async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
     """Handle FastAPI's built-in HTTPException."""
+    if exc.status_code >= 500:
+        await record_request_error(request, exc.status_code, exc, message=str(exc.detail))
     error_code = ErrorCodes.INTERNAL_ERROR
 
     # Map status codes to standard error codes
@@ -76,7 +79,8 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Catch-all for any unhandled exceptions."""
     logger.exception(f"Unhandled exception: {exc}")
-    
+    await record_request_error(request, status.HTTP_500_INTERNAL_SERVER_ERROR, exc)
+
     error_response = ErrorResponse(
         error=ErrorDetail(
             code=ErrorCodes.INTERNAL_ERROR,
