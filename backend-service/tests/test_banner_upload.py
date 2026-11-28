@@ -19,6 +19,7 @@ def _admin():
     user.id = uuid.UUID("550e8400-e29b-41d4-a716-446655440002")
     user.role_id = uuid.uuid4()
     user.role_level = 1
+    user.signed_in_with = "google"
     return user
 
 

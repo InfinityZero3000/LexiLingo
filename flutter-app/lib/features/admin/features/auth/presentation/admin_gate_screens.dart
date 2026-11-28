@@ -21,10 +21,16 @@ class AdminNoAccessScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final needsGoogle =
+        context.watch<AuthProvider>().user?.needsGoogleSignIn ?? false;
     return _GateMessage(
       icon: Icons.lock_outline_rounded,
-      title: 'admin.gate.noAccessTitle'.tr(),
-      body: 'admin.gate.noAccessBody'.tr(),
+      title: needsGoogle
+          ? 'admin.gate.googleTitle'.tr()
+          : 'admin.gate.noAccessTitle'.tr(),
+      body: needsGoogle
+          ? 'admin.gate.googleBody'.tr()
+          : 'admin.gate.noAccessBody'.tr(),
     );
   }
 }

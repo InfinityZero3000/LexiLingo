@@ -62,13 +62,38 @@ void main() {
     await tester.pumpWidget(
       AdminExitScope(
         onExit: () => exits++,
-        child: const MaterialApp(home: AdminNoAccessScreen()),
+        child: ChangeNotifierProvider<AuthProvider>.value(
+          value: AuthProvider(repository: _Repo([null])),
+          child: const MaterialApp(home: AdminNoAccessScreen()),
+        ),
       ),
     );
     expect(find.text('admin.gate.noAccessTitle'), findsOneWidget);
     expect(find.text('admin.gate.retry'), findsNothing);
     await tester.tap(find.text('admin.gate.exit'));
     expect(exits, 1);
+  });
+
+  testWidgets('an admin who did not sign in with Google is told to', (
+    tester,
+  ) async {
+    const notGoogle = AdminUser(
+      id: '1',
+      email: 'a@b.c',
+      displayName: 'A',
+      roleSlug: 'admin',
+      roleLevel: 1,
+      isSuperAdmin: false,
+      isAdmin: true,
+      hasUserAccount: true,
+      googleSession: false,
+    );
+    final auth = AuthProvider(repository: _Repo([notGoogle]));
+    await auth.init();
+    expect(auth.state, AuthState.forbidden);
+    await pump(tester, const AdminNoAccessScreen(), auth);
+    expect(find.text('admin.gate.googleTitle'), findsOneWidget);
+    expect(find.text('admin.gate.noAccessTitle'), findsNothing);
   });
 
   testWidgets('the load-error page retries, and can be left', (tester) async {

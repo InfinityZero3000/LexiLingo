@@ -1103,6 +1103,12 @@ const en: Translations = {
   },
 
   // ============== User detail modal ==============
+  roleGrant: {
+    passwordTitle: "Remove this account's password?",
+    passwordMessage: "{email} also signs in with a password. Admins sign in with Google only, so granting this role removes the password and signs the account out everywhere. From now on it signs in with Google.",
+    passwordConfirm: "Remove password and grant",
+    googleRequired: "Admin roles go only to accounts that have signed in with Google. Ask this person to sign in to LexiLingo with Google once, then try again.",
+  },
   userDetail: {
     loading: "Loading user...",
     loadFailed: "Could not load the user.",

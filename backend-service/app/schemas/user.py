@@ -76,6 +76,8 @@ class UserResponse(UserBase):
     role_level: int = 0
     is_admin: bool = False
     is_super_admin: bool = False
+    # An admin role and a Google sign-in: what admin features require.
+    admin_access: bool = False
     
     # RBAC
     role_id: Optional[UUID] = None

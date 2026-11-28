@@ -343,13 +343,13 @@ async def super_admin_user(db_session: AsyncSession) -> User:
 
 @pytest.fixture
 def super_admin_headers(super_admin_user: User) -> dict:
-    return {"Authorization": f"Bearer {create_access_token(data={'sub': str(super_admin_user.id)})}"}
+    return {"Authorization": f"Bearer {create_access_token(data={'sub': str(super_admin_user.id), 'amr': 'google'})}"}
 
 
 @pytest.fixture
 def admin_headers(admin_user: User) -> dict:
     """Create authentication headers with JWT token for an admin user."""
-    access_token = create_access_token(data={"sub": str(admin_user.id)})
+    access_token = create_access_token(data={"sub": str(admin_user.id), "amr": "google"})
     return {"Authorization": f"Bearer {access_token}"}
 
 

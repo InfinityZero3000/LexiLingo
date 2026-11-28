@@ -1101,6 +1101,12 @@ const vi = {
   },
 
   // ============== User detail modal ==============
+  roleGrant: {
+    passwordTitle: "Xoá mật khẩu của tài khoản này?",
+    passwordMessage: "{email} đang đăng nhập được bằng mật khẩu. Quản trị viên chỉ đăng nhập bằng Google, nên cấp quyền sẽ xoá mật khẩu và đăng xuất tài khoản khỏi mọi thiết bị. Từ nay tài khoản này đăng nhập bằng Google.",
+    passwordConfirm: "Xoá mật khẩu và cấp quyền",
+    googleRequired: "Chỉ cấp quyền quản trị cho tài khoản đã đăng nhập bằng Google. Hãy nhờ người này đăng nhập LexiLingo bằng Google một lần rồi thử lại.",
+  },
   userDetail: {
     loading: "Đang tải thông tin...",
     loadFailed: "Không tải được thông tin người dùng.",

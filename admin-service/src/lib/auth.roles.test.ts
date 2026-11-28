@@ -10,6 +10,11 @@ describe("resolveRole", () => {
     expect(resolveRole(profile("editor", true))).toBe("admin");
   });
 
+  it("sends a session that did not sign in with Google back to sign-in", () => {
+    expect(resolveRole({ ...profile("super_admin", true, true), admin_access: false })).toBeNull();
+    expect(resolveRole({ ...profile("admin", true), admin_access: true })).toBe("admin");
+  });
+
   it("keeps the built-in roles as they were", () => {
     expect(resolveRole(profile("admin", true))).toBe("admin");
     expect(resolveRole(profile("super_admin", true, true))).toBe("super_admin");

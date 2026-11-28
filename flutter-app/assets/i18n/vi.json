@@ -2826,7 +2826,9 @@
       "loadErrorTitle": "Không kiểm tra được tài khoản",
       "loadErrorBody": "Kiểm tra kết nối và thử lại.",
       "retry": "Thử lại",
-      "exit": "Quay lại ứng dụng"
+      "exit": "Quay lại ứng dụng",
+      "googleTitle": "Đăng nhập bằng Google",
+      "googleBody": "Bảng quản trị chỉ mở được khi đăng nhập bằng Google. Hãy đăng xuất khỏi LexiLingo, đăng nhập bằng Google rồi mở lại."
     }
   },
   "adminGrowth": {

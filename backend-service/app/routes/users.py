@@ -13,7 +13,7 @@ from datetime import UTC, datetime
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
+from app.core.dependencies import get_current_user, has_google_admin_session
 from app.core.token_blacklist import InactiveUserFlag
 from app.core.firebase_auth import revoke_all_refresh_tokens
 from app.services.role_guard import ensure_not_last_super_admin, ensure_recent_sign_in
@@ -108,6 +108,7 @@ def _serialize_user_response(user: User, lessons_completed: int = 0) -> UserResp
         role_level=role_level,
         is_admin=role_level >= 1,
         is_super_admin=role_level >= 2,
+        admin_access=role_level >= 1 and has_google_admin_session(user),
     )
 
 

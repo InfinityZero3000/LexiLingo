@@ -10,7 +10,6 @@ import { BookOpen, Gem, ShoppingBag, UserRound } from 'lucide-react';
 import {
   getUserDetail,
   updateUser,
-  updateUserRole,
   getUserActivity,
   getRoleLabel,
   ROLE_LABELS,
@@ -24,6 +23,7 @@ import { usePermissions } from '../../lib/usePermissions';
 import { getGemLimits } from '../../lib/gemLimitsApi';
 import { getUserWallet } from '../../lib/userSupportApi';
 import { getRoles } from '../../lib/rbacApi';
+import { assignRole } from '../../lib/roleGrant';
 import { UserWalletPanel } from './UserWalletPanel';
 import { UserPremiumPanel } from './UserPremiumPanel';
 import { useI18n } from '../../lib/i18n';
@@ -106,7 +106,7 @@ export default function UserDetailModal({ userId, onClose }: UserDetailModalProp
   });
   
   const roleChangeMutation = useMutation({
-    mutationFn: (slug: RoleSlug) => updateUserRole(userId, { slug }),
+    mutationFn: (slug: RoleSlug) => assignRole(userId, { slug }, confirm, t.roleGrant),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-detail', userId] });
       queryClient.invalidateQueries({ queryKey: ['users'] });

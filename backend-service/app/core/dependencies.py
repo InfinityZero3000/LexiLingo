@@ -58,7 +58,7 @@ async def get_current_user(
             )
             user = result.scalar_one_or_none()
             if user and user.is_active and password_still_matches(payload, user.hashed_password):
-                user.signed_in_with_firebase = False
+                user.signed_in_with = payload.get("amr")
                 user.authenticated_at = payload.get("auth_time")
                 return user
         except (ValueError, TypeError):
@@ -87,7 +87,8 @@ async def get_current_user(
                     .options(selectinload(User.role))
                 )
                 loaded = result.scalar_one_or_none() or user
-                loaded.signed_in_with_firebase = True
+                # A raw Firebase token: no session this backend issued.
+                loaded.signed_in_with = None
                 loaded.authenticated_at = claims.get("auth_time")
                 return loaded
         except ValueError:
@@ -191,13 +192,19 @@ def _get_user_role_level(user: User) -> int:
     return 0
 
 
+def has_google_admin_session(user: User) -> bool:
+    """Admins sign in with Google only. A password, Facebook or emailed-link session,
+    a raw Firebase token, or a token from before sign-in methods were recorded, gives
+    the account's learner side only."""
+    return getattr(user, "signed_in_with", None) == "google"
+
+
 def _require_backend_session(user: User) -> None:
-    # A raw Firebase token passes get_current_user. Admin rights need a session this
-    # backend issued, so every admin sign-in goes through a login route and its audit.
-    if getattr(user, "signed_in_with_firebase", False) is True:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Sign in to LexiLingo to use admin features",
+    if not has_google_admin_session(user):
+        raise refusal(
+            status.HTTP_403_FORBIDDEN,
+            "Admin features need a Google sign-in. Sign out, then sign in with Google.",
+            {"reason": "google_sign_in_required"},
         )
 
 

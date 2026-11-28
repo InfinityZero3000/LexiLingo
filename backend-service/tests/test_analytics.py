@@ -51,7 +51,7 @@ async def admin_token(db_session):
 
     app.dependency_overrides[get_db] = override_get_db
 
-    access_token = create_access_token(data={"sub": str(admin_user.id)})
+    access_token = create_access_token(data={"sub": str(admin_user.id), "amr": "google"})
     yield access_token
 
     app.dependency_overrides.pop(get_db, None)

@@ -160,7 +160,7 @@ async def get_or_create_user_from_claims(db: AsyncSession, claims: Dict[str, Any
             raise ValueError("Email already registered. Please login with your existing method.")
 
     allowlisted_role = await allowlisted_role_for_sign_in(
-        db, email, email_verified=is_verified, is_new_account=user is None
+        db, email, email_verified=is_verified, is_new_account=user is None, provider=provider_tag
     )
 
     if user:
