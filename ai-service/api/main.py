@@ -497,7 +497,9 @@ app.add_exception_handler(Exception, unhandled_exception_handler)
 @app.exception_handler(StarletteHTTPException)
 async def _hide_internal_error_details(request: Request, exc: StarletteHTTPException):
     """Internal error text belongs in our logs, not in a production response."""
-    request.scope.setdefault("state", {})["ops_detail"] = str(exc.detail)
+    scope = getattr(request, "scope", None)
+    if isinstance(scope, dict):
+        scope.setdefault("state", {})["ops_detail"] = str(exc.detail)
     if exc.status_code == 500 and settings.ENVIRONMENT == "production":
         logger.error("500 on %s %s: %s", request.method, request.url.path, str(exc.detail)[:500])
         return JSONResponse({"detail": "Internal server error"}, status_code=500, headers=exc.headers)

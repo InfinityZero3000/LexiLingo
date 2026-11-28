@@ -285,6 +285,7 @@ jobs:
             tests/trace_cag/test_system_tracecag.py \
             tests/test_groq_key_pool.py \
             tests/test_llm_client_pacing.py \
+            tests/test_ops_error_reporter.py \
             --tb=short -q
 
       # The licensed-content ETL, its adapters and the content-agent that
