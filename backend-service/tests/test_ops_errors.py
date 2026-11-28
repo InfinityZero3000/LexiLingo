@@ -210,6 +210,7 @@ async def test_two_ids_on_one_route_make_one_group_and_a_failing_request_counts_
     (meta,) = metas(redis)
     assert meta["route"] == "/boom/{item_id}"
     assert meta["error_type"] == "RuntimeError"
+    assert meta["location"] is None, "a middleware frame is not where the error happened"
     assert meta["message"].endswith("for [email]")
     assert "owner@mail.com" not in meta["message"]
     assert meta["request_id"]
@@ -589,3 +590,16 @@ def test_a_failed_celery_task_is_recorded_under_the_worker_service(monkeypatch):
     assert (meta["service"], meta["method"], meta["route"], meta["location"]) == (
         "worker", "TASK", "app.tasks.x.y", "ops_errors.py:redact"
     )
+
+
+async def test_reopening_a_group_lets_it_alert_again(async_client, super_admin_headers, db_session, redis):
+    await err(count=3)
+    await ops_errors.flush_buffer(db_session, redis, datetime.now(UTC))
+    fp = (await async_client.get(f"{ROUTE}/errors", headers=super_admin_headers)).json()["data"]["groups"][0]["fingerprint"]
+    key = ops_errors.ALERTED_KEY.format(fp=fp)
+
+    await async_client.patch(f"{ROUTE}/errors/{fp}", json={"state": "muted"}, headers=super_admin_headers)
+    redis.data[key] = "1"
+    await async_client.patch(f"{ROUTE}/errors/{fp}", json={"state": "open"}, headers=super_admin_headers)
+
+    assert key not in redis.data

@@ -98,6 +98,8 @@ async def set_error_state(
         {"fingerprint": fingerprint, "before": before, "after": body.state}, request,
     )
     await db.commit()
+    if before != body.state:
+        await ops_errors.clear_alert_cooldown(fingerprint)
     return ApiResponse(
         success=True, message="Error group updated",
         data=ops_errors.group_dict(group, await _count_window(db, fingerprint)),

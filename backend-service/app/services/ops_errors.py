@@ -87,13 +87,20 @@ def fingerprint(
     return hashlib.sha1("|".join(parts).encode()).hexdigest()
 
 
+_PASS_THROUGH_FILES = frozenset(
+    os.path.join(_APP_DIR, "core", name) for name in ("middleware.py", "exceptions.py")
+)
+
+
 def location_from_exc(exc: BaseException | None) -> str | None:
     """`file.py:function` of the last traceback frame inside the app package."""
     if exc is None or exc.__traceback__ is None:
         return None
     found = None
     for frame in traceback.extract_tb(exc.__traceback__):
-        if os.path.abspath(frame.filename).startswith(_APP_DIR):
+        path = os.path.abspath(frame.filename)
+        # The middleware re-raises every exception, so its frame says nothing about the cause.
+        if path.startswith(_APP_DIR) and path not in _PASS_THROUGH_FILES:
             found = f"{os.path.basename(frame.filename)}:{frame.name}"
     return found
 
@@ -151,6 +158,16 @@ async def record_error(
     except Exception as exc:  # noqa: BLE001 - monitoring must never break a request
         _warn_unavailable(repr(exc))
         return False
+
+
+async def clear_alert_cooldown(fingerprint: str) -> None:
+    """An admin changing a group's state starts its alerting afresh."""
+    try:
+        redis = await asyncio.wait_for(RedisClient.get_instance(), REDIS_TIMEOUT_SECONDS)
+        if redis is not None:
+            await asyncio.wait_for(redis.delete(ALERTED_KEY.format(fp=fingerprint)), REDIS_TIMEOUT_SECONDS)
+    except Exception as exc:  # noqa: BLE001
+        _warn_unavailable(repr(exc))
 
 
 _sync_client: Any = None
