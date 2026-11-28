@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/core/startup/auth_emulator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
@@ -34,8 +35,8 @@ class GoogleSignInService {
             serverClientId: kIsWeb
                 ? null
                 : (dotenv.env['GOOGLE_SERVER_CLIENT_ID']?.isNotEmpty == true
-                    ? dotenv.env['GOOGLE_SERVER_CLIENT_ID']
-                    : null),
+                      ? dotenv.env['GOOGLE_SERVER_CLIENT_ID']
+                      : null),
           );
 
   /// Sign in with Google and return the Firebase ID token.
@@ -133,7 +134,7 @@ class GoogleSignInService {
 
     // Extract the Google ID token from the OAuth credential
     final oauthCredential = userCredential.credential as OAuthCredential?;
-    String? googleIdToken = oauthCredential?.idToken;
+    String? googleIdToken = usesAuthEmulator ? null : oauthCredential?.idToken;
 
     // Web fallback: some browsers/policies return a credential without idToken.
     // In that case we use Firebase ID token and let backend verify it.

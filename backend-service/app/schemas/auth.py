@@ -115,6 +115,11 @@ class FacebookLoginRequest(BaseModel):
     source: Literal["app", "admin"] = Field(default="app", description="Login source: 'app' for Flutter, 'admin' for web admin")
 
 
+class FacebookLinkRequest(BaseModel):
+    """Merge a Facebook sign-in into the signed-in account."""
+    id_token: str = Field(..., description="Firebase ID token of a Facebook sign-in")
+
+
 class ForgotPasswordRequest(BaseModel):
     """Forgot password request."""
     email: EmailStr

@@ -82,7 +82,7 @@ class _ConfirmSheetState extends State<ConfirmSheet> {
     final accent = widget.danger ? scheme.error : scheme.primary;
     final onAccent = widget.danger ? scheme.onError : scheme.onPrimary;
 
-    return Padding(
+    return SingleChildScrollView(
       padding: EdgeInsets.only(
         left: AppSpacing.lg,
         right: AppSpacing.lg,
@@ -125,32 +125,42 @@ class _ConfirmSheetState extends State<ConfirmSheet> {
             ),
           ],
           const SizedBox(height: AppSpacing.xl),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(0, kMinTapTarget),
+          // Both buttons take the taller label's height.
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, kMinTapTarget),
+                    ),
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: Text(
+                      widget.cancelLabel ?? 'common.cancel'.tr(),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: Text(widget.cancelLabel ?? 'common.cancel'.tr()),
                 ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: FilledButton(
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size(0, kMinTapTarget),
-                    backgroundColor: accent,
-                    foregroundColor: onAccent,
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size(0, kMinTapTarget),
+                      backgroundColor: accent,
+                      foregroundColor: onAccent,
+                    ),
+                    onPressed: _matches
+                        ? () => Navigator.of(context).pop(true)
+                        : null,
+                    child: Text(
+                      widget.confirmLabel ?? 'common.confirm'.tr(),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
-                  onPressed: _matches
-                      ? () => Navigator.of(context).pop(true)
-                      : null,
-                  child: Text(widget.confirmLabel ?? 'common.confirm'.tr()),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),

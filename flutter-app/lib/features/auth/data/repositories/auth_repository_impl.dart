@@ -120,13 +120,35 @@ class AuthRepositoryImpl implements AuthRepository {
       }
       return Right(user);
     } on ApiErrorException catch (e) {
-      return Left(_mapApiErrorToFailure(e));
+      return Left(_linkRequired(e) ?? _mapApiErrorToFailure(e));
     } on AuthException catch (_) {
       return Left(AuthFailure('auth.facebookLoginFailed'.tr()));
     } catch (e) {
       debugPrint('Facebook login failed: $e');
       return const Left(AuthFailure());
     }
+  }
+
+  @override
+  Future<Either<Failure, void>> linkFacebook(String firebaseIdToken) async {
+    try {
+      await backendDataSource.linkFacebook(firebaseIdToken);
+      return const Right(null);
+    } on ApiErrorException catch (e) {
+      return Left(_mapApiErrorToFailure(e));
+    } catch (e) {
+      debugPrint('Linking Facebook failed: $e');
+      return const Left(ServerFailure());
+    }
+  }
+
+  AccountLinkRequiredFailure? _linkRequired(ApiErrorException e) {
+    if (e.details?['reason'] != 'account_link_required') return null;
+    final methods = e.details?['methods'];
+    return AccountLinkRequiredFailure(
+      methods is List ? methods.whereType<String>().toList() : const [],
+      e.message,
+    );
   }
 
   @override

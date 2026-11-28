@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import uuid
 from functools import lru_cache
 from typing import Any, Dict, Optional
@@ -38,6 +39,11 @@ def _init_firebase_app() -> None:
 
     cred: Optional[credentials.Base] = None
 
+    if os.getenv("FIREBASE_AUTH_EMULATOR_HOST") and not settings.is_production:
+        # Local emulator (docs/operations/AUTH_TESTING.md): no credentials exist or are needed.
+        firebase_admin.initialize_app(options={'projectId': settings.FIREBASE_PROJECT_ID})
+        return
+
     if settings.FIREBASE_CREDENTIALS_FILE:
         # Option 1: Load from file path (recommended)
         cred = credentials.Certificate(settings.FIREBASE_CREDENTIALS_FILE)
@@ -57,6 +63,11 @@ def _init_firebase_app() -> None:
 
 def verify_firebase_token(id_token: str) -> Optional[Dict[str, Any]]:
     """Verify Firebase ID token and return claims, or None if invalid."""
+    # With an emulator host set, the SDK accepts unsigned tokens: fine on a developer's
+    # machine, a sign-in as anyone in production.
+    if settings.is_production and os.getenv("FIREBASE_AUTH_EMULATOR_HOST"):
+        logger.critical("FIREBASE_AUTH_EMULATOR_HOST is set in production; refusing every Firebase token")
+        return None
     try:
         _init_firebase_app()
         decoded = firebase_auth.verify_id_token(id_token)
@@ -104,6 +115,18 @@ async def drop_unproven_credentials(user: User) -> None:
         user.provider = [p for p in user.provider if p != "facebook"]
 
 
+class AccountLinkRequired(ValueError):
+    """The address already has an account; its owner has to merge Facebook into it."""
+
+    def __init__(self, providers: list[str]) -> None:
+        super().__init__("Email already registered. Please login with your existing method.")
+        # How the owner can prove the account. Without Google, a password always works
+        # because it can be reset through the inbox.
+        self.methods = [
+            method for method, tag in (("google", "google"), ("password", "local")) if tag in providers
+        ] or ["password"]
+
+
 async def get_or_create_user_from_claims(db: AsyncSession, claims: Dict[str, Any]) -> User:
     """Map Firebase claims to local User. Create user if missing."""
     email = claims.get("email")
@@ -132,6 +155,8 @@ async def get_or_create_user_from_claims(db: AsyncSession, claims: Dict[str, Any
             provider_tag == "facebook" or not user.is_verified
         )
         if not returning:
+            if provider_tag == "facebook":
+                raise AccountLinkRequired(user.provider or [])
             raise ValueError("Email already registered. Please login with your existing method.")
 
     allowlisted_role = await allowlisted_role_for_sign_in(

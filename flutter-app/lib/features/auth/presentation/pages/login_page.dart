@@ -43,7 +43,22 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
-    _loadSavedCredentials();
+    _loadSavedCredentials().then((_) => _prefillMergeEmail());
+  }
+
+  /// A waiting merge is for one account: start the form on it, without a saved
+  /// password that belongs to another.
+  void _prefillMergeEmail() {
+    if (!mounted) return;
+    final auth = context.read<AuthProvider>();
+    final email = auth.facebookMergeEmail;
+    if (auth.facebookMergeStep != FacebookMergeStep.signInToMerge ||
+        email == null ||
+        _emailController.text.trim().toLowerCase() == email.toLowerCase()) {
+      return;
+    }
+    _emailController.text = email;
+    _passwordController.clear();
   }
 
   @override
@@ -242,6 +257,11 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                     SizedBox(height: gap(24, 12)),
+
+                    // Above the form: it says what to type there.
+                    Consumer<AuthProvider>(
+                      builder: (_, auth, _) => FacebookMergeHint(auth: auth),
+                    ),
 
                     Text(
                       'auth.email'.tr(),
@@ -572,6 +592,7 @@ class _LoginPageState extends State<LoginPage> {
                                       await signInWithFacebookOrLink(
                                         context,
                                         authProvider,
+                                        toPasswordForm: _prefillMergeEmail,
                                       );
                                     },
                               icon: const Icon(Icons.facebook, size: 22),
@@ -605,12 +626,13 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         TextButton(
-                          onPressed: () {
-                            Navigator.of(context).push(
+                          onPressed: () async {
+                            await Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (_) => const RegisterPage(),
                               ),
                             );
+                            _prefillMergeEmail();
                           },
                           child: Text(
                             'auth.signUpForFree'.tr(),

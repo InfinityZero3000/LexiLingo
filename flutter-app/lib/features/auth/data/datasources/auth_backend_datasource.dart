@@ -123,6 +123,14 @@ class AuthBackendDataSource {
     return loginResponse;
   }
 
+  /// POST /auth/facebook/link
+  Future<void> linkFacebook(String firebaseIdToken) async {
+    await apiClient.post(
+      '/auth/facebook/link',
+      body: {'id_token': firebaseIdToken},
+    );
+  }
+
   /// Logout user
   /// POST /auth/logout
   Future<void> logout() async {

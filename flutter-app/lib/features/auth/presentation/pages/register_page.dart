@@ -1,3 +1,4 @@
+import 'package:lexilingo_app/features/auth/presentation/auth_navigation.dart';
 import 'package:lexilingo_app/core/widgets/tap_target.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
@@ -7,7 +8,6 @@ import 'package:lexilingo_app/core/widgets/app_back_button.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
-import 'login_page.dart';
 import 'email_verification_pending_page.dart';
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
@@ -107,6 +107,15 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
+  void _goToLogin() {
+    if (!mounted) return;
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+      return;
+    }
+    openLogin(Navigator.of(context));
+  }
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -137,17 +146,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     Row(
                       children: [
                         AppBackButton(
-                          onPressed: () {
-                            if (Navigator.of(context).canPop()) {
-                              Navigator.of(context).pop();
-                              return;
-                            }
-                            Navigator.of(context).pushReplacement(
-                              MaterialPageRoute(
-                                builder: (_) => const LoginPage(),
-                              ),
-                            );
-                          },
+                          onPressed: _goToLogin,
                           icon: Icons.arrow_back,
                           color: strongText,
                         ),
@@ -515,8 +514,13 @@ class _RegisterPageState extends State<RegisterPage> {
                         onPressed: authProvider.isLoading
                             ? null
                             : () async {
+                                final nav = Navigator.of(context);
                                 await _reportName();
                                 await authProvider.signInWithGoogle();
+                                closeAuthPagesWhenSignedIn(
+                                  nav,
+                                  signedIn: authProvider.isAuthenticated,
+                                );
                               },
                         icon: const Icon(Icons.g_mobiledata, size: 30),
                         label: Text(
@@ -546,11 +550,17 @@ class _RegisterPageState extends State<RegisterPage> {
                         onPressed: authProvider.isLoading
                             ? null
                             : () async {
+                                final nav = Navigator.of(context);
                                 await _reportName();
                                 if (!context.mounted) return;
                                 await signInWithFacebookOrLink(
                                   context,
                                   authProvider,
+                                  toPasswordForm: _goToLogin,
+                                );
+                                closeAuthPagesWhenSignedIn(
+                                  nav,
+                                  signedIn: authProvider.isAuthenticated,
                                 );
                               },
                         icon: Icon(
@@ -586,17 +596,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             ),
                           ),
                           TapTarget(
-                            onTap: () {
-                              if (Navigator.of(context).canPop()) {
-                                Navigator.of(context).pop();
-                                return;
-                              }
-                              Navigator.of(context).pushReplacement(
-                                MaterialPageRoute(
-                                  builder: (_) => const LoginPage(),
-                                ),
-                              );
-                            },
+                            onTap: _goToLogin,
                             child: Text(
                               'auth.login'.tr(),
                               style: textTheme.titleMedium?.copyWith(

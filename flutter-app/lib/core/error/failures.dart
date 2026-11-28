@@ -6,6 +6,14 @@ abstract class Failure {
   String toString() => message;
 }
 
+/// Facebook cannot open this account until its owner signs in another way and
+/// merges the two. [methods] holds `google` and/or `password`.
+class AccountLinkRequiredFailure extends Failure {
+  const AccountLinkRequiredFailure(this.methods, [super.message = '']);
+
+  final List<String> methods;
+}
+
 class ServerFailure extends Failure {
   const ServerFailure([super.message = 'Server Failure']);
 }

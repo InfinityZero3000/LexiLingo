@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter/material.dart';
+import 'package:lexilingo_app/core/startup/auth_emulator.dart';
 import 'package:lexilingo_app/core/widgets/content_width.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode, debugPrint;
@@ -174,6 +175,7 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    await connectAuthEmulatorIfConfigured();
     debugPrint('Firebase initialized successfully');
 
     // Crashlytics: route Flutter framework errors to Crashlytics in release

@@ -1,10 +1,10 @@
+import 'package:lexilingo_app/features/auth/presentation/auth_navigation.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:lexilingo_app/core/theme/app_theme.dart';
 import '../providers/auth_provider.dart';
-import 'login_page.dart';
 import 'package:lexilingo_app/core/theme/app_tokens.dart';
 
 class EmailVerificationPendingPage extends StatefulWidget {
@@ -139,12 +139,7 @@ class _EmailVerificationPendingPageState
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (_) => const LoginPage()),
-                        (route) => false,
-                      );
-                    },
+                    onPressed: () => openLogin(Navigator.of(context)),
                     child: Text(
                       'auth.emailVerificationBackToLogin'.tr(),
                       style: TextStyle(
